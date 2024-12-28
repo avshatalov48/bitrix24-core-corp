@@ -2,8 +2,7 @@
 
 namespace Bitrix\Tasks\Flow\Responsible;
 
-use Bitrix\Tasks\Flow\FlowFeature;
-use Bitrix\Tasks\Flow\Responsible\Agent\RemoveUserFromFlowResponsible;
+use Bitrix\Tasks\Flow\Responsible\Agent\RemoveUserFromFlowResponsible\RemoveUserFromFlowResponsible;
 
 final class EventHandler
 {

@@ -12,5 +12,7 @@ class User implements Contract\Item
 		public ?string $lastName = null,
 		public ?string $secondName = null,
 		public ?int $personalPhotoId = null,
+		public ?string $workPosition = null,
+		public ?string $personalGender = null,
 	){}
 }

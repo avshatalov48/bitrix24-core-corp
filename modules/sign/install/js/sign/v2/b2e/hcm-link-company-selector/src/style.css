@@ -1,0 +1,68 @@
+
+.sign-document-b2e-company__hcmlink {
+	padding: 8px 10px 8px 10px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	flex-wrap: wrap;
+	font-family: var(--ui-font-family-primary);
+	border: 1px solid var(--ui-color-palette-gray-10);
+	border-radius: 10px;
+	margin-top: 10px;
+}
+
+.sign-document-b2e-company__hcmlink-select {
+	flex-grow: 1;
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.sign-document-b2e-company__hcmlink-select-text {
+	font: 16px/20px var(--ui-font-family-system);
+	flex-grow: 1;
+	color: var(--ui-color-palette-gray-90);
+}
+
+.sign-document-b2e-company__hcmlink-info-img {
+	content: '';
+	display: inline-block;
+	background: url(./images/1c-gray.svg) center no-repeat;
+	background-size: contain !important;
+	width: 36px;
+	height: 36px;
+	margin-right: 7px;
+}
+
+.sign-document-b2e-company__hcmlink-info-img.--active {
+	background: url(./images/1c-red.svg) center no-repeat;
+}
+
+.sign-document-b2e-company__hcmlink-edit {
+	cursor: pointer;
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='4' viewBox='0 0 16 4'%3E%3Cpath fill='%23525C69' fill-rule='evenodd' d='M6,10 C7.1045695,10 8,10.8954305 8,12 C8,13.1045695 7.1045695,14 6,14 C4.8954305,14 4,13.1045695 4,12 C4,10.8954305 4.8954305,10 6,10 Z M12,10 C13.1045695,10 14,10.8954305 14,12 C14,13.1045695 13.1045695,14 12,14 C10.8954305,14 10,13.1045695 10,12 C10,10.8954305 10.8954305,10 12,10 Z M18,10 C19.1045695,10 20,10.8954305 20,12 C20,13.1045695 19.1045695,14 18,14 C16.8954305,14 16,13.1045695 16,12 C16,10.8954305 16.8954305,10 18,10 Z' transform='translate(-4 -10)'/%3E%3C/svg%3E%0A") center no-repeat;
+	width: 32px;
+	height: 32px;
+	min-width: 32px;
+	min-height: 32px;
+	opacity: .5;
+	margin-left: auto;
+}
+
+.sign-document-b2e-company__hcmlink-select-subtitle {
+	font: 12px/14.32px var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-60);
+}
+
+.sign-document-b2e-company__hcmlink-name-container {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	margin-right: auto;
+}
+
+.sign-document-b2e-company__hcmlink-select-header {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}

@@ -4,6 +4,7 @@ $MESS["INTRANET_INVITATION_PHONE_ERROR"] = "Неверно введены ном
 $MESS["INTRANET_INVITATION_EMAIL_LIMIT_EXCEEDED"] = "Превышен лимит количества адресов e-mail в приглашении.";
 $MESS["INTRANET_INVITATION_PHONE_LIMIT_EXCEEDED"] = "Превышен лимит количества номеров телефонов в приглашении.";
 $MESS["INTRANET_INVITATION_DAILY_PHONE_LIMIT_EXCEEDED"] = "Превышен дневной лимит количества приглашений по номеру телефона.";
+$MESS["INTRANET_INVITATION_DAILY_EMAIL_LIMIT_EXCEEDED"] = "Превышен дневной лимит количества приглашений по e-mail.";
 $MESS["INTRANET_INVITATION_USER_EXIST_ERROR"] = "Пользователи с такими email уже существуют: #EMAIL_LIST#";
 $MESS["INTRANET_INVITATION_USER_PHONE_EXIST_ERROR"] = "Пользователи с такими номерами телефонов уже существуют: #PHONE_LIST#";
 $MESS["INTRANET_INVITATION_MAX_COUNT_ERROR"] = "Количество приглашаемых сотрудников больше, чем позволяет ограничение тарифного плана.";

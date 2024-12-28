@@ -16,6 +16,7 @@ jn.define('calendar/ajax/sharing', (require, exports, module) => {
 		SET_SORT_JOINT_LINKS_BY_FREQUENT_USE: 'setSortJointLinksByFrequentUse',
 		SAVE_LINK_RULE: 'saveLinkRule',
 		INIT_CRM: 'initCrm',
+		GENERATE_GROUP_JOINT_SHARING_LINK: 'generateGroupJointSharingLink',
 	};
 
 	/**
@@ -109,10 +110,20 @@ jn.define('calendar/ajax/sharing', (require, exports, module) => {
 		{
 			return this.fetch(SharingActions.INIT_CRM, data);
 		}
+
+		/**
+		 * @param memberIds {array}
+		 * @param groupId {number}
+		 * @param dialogId {string}
+		 * @returns {Promise<Object, void>}
+		 */
+		generateGroupJointSharingLink({ memberIds, groupId, dialogId = '' })
+		{
+			return this.fetch(SharingActions.GENERATE_GROUP_JOINT_SHARING_LINK, { memberIds, groupId, dialogId });
+		}
 	}
 
 	module.exports = {
 		SharingAjax: new SharingAjax(),
-		SharingActions,
 	};
 });

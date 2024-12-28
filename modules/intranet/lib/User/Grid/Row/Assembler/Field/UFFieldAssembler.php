@@ -6,9 +6,6 @@ use Bitrix\Intranet\User\Grid\Settings\UserSettings;
 use Bitrix\Main\Grid\Row\FieldAssembler;
 use Bitrix\Main\Grid\Settings;
 
-/**
- * @method UserSettings getSettings()
- */
 class UFFieldAssembler extends FieldAssembler
 {
 	public function __construct(array $columnIds, ?Settings $settings = null)

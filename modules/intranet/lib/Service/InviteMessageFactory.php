@@ -4,12 +4,16 @@ namespace Bitrix\Intranet\Service;
 
 use Bitrix\Intranet\CurrentUser;
 use Bitrix\Intranet\Entity\User;
+use Bitrix\Intranet\Enum\InvitationStatus;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Socialnetwork\Collab\Collab;
 
 class InviteMessageFactory
 {
 	public function __construct(
-		private string $message
+		private string $message,
+		private ?Collab $collab = null,
 	)
 	{
 	}
@@ -34,7 +38,22 @@ class InviteMessageFactory
 			"SITE_ID" => SITE_ID
 		]);
 
-		if ($bExtranet)
+		if ($this->collab)
+		{
+			$messageId = \CIntranetInviteDialog::getMessageId("COLLAB_INVITATION", $siteIdByDepartmentId, LANGUAGE_ID);
+			$eventName = 'COLLAB_INVITATION';
+			$params = [
+				"USER_ID" => $user->getId(),
+				"USER_ID_FROM" => CurrentUser::get()->getId(),
+				"CHECKWORD" => $user->getConfirmCode(),
+				"EMAIL" => $emailTo,
+				"USER_TEXT" => $this->message,
+				"COLLAB_NAME" => $this->collab->getName(),
+				"ACTIVE_USER" => $user->getInviteStatus() === InvitationStatus::ACTIVE,
+				'COLLAB_INVITATION_SUBJECT' => $this->createCollabSubject()
+			];
+		}
+		elseif ($bExtranet)
 		{
 			$messageId = \CIntranetInviteDialog::getMessageId("EXTRANET_INVITATION", $siteIdByDepartmentId, LANGUAGE_ID);
 			$eventName = 'EXTRANET_INVITATION';
@@ -76,5 +95,24 @@ class InviteMessageFactory
 			$params,
 			$messageId
 		);
+	}
+
+	private function createCollabSubject()
+	{
+		Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"].'/bitrix/components/bitrix/intranet.template.mail/templates/.default/collab.php');
+
+		if (Loader::includeModule('bitrix24') && \CBitrix24::isLicenseNeverPayed())
+		{
+			return Loc::getMessage('INTRANET_INVITATION_COLLAB_TITLE');
+		}
+
+		$formattedName = \CUser::FormatName('#NAME# #LAST_NAME#', [
+			'NAME' => CurrentUser::get()->getFirstName(),
+			'LAST_NAME' => CurrentUser::get()->getLastName(),
+			'SECOND_NAME' => CurrentUser::get()->getSecondName(),
+			'LOGIN' => CurrentUser::get()->getLogin()
+		], true);
+
+		return $formattedName.' '.Loc::getMessage('INTRANET_INVITATION_COLLAB_INVITE_YOU').' '.$this->collab->getName();
 	}
 }

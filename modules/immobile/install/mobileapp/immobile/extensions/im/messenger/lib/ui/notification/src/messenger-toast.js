@@ -17,9 +17,12 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		unsubscribeFromComments: 'unsubscribeFromComments',
 		subscribeToComments: 'subscribeToComments',
 		deleteChat: 'deleteChat',
+		deleteCollab: 'deleteCollab',
 		deleteChannel: 'deleteChannel',
 		chatAccessDenied: 'chatAccessDenied',
 		messageNotFound: 'messageNotFound',
+		selectMessageLimit: 'selectMessageLimit',
+		sendFilesGalleryLimitExceeded: 'sendFilesGalleryLimitExceeded',
 	};
 
 	const InlineSvg = {
@@ -40,9 +43,12 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		get unsubscribeFromComments() { return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_UNSUBSCRIBE_COMMENTS'); },
 		get subscribeToComments() { return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_SUBSCRIBE_COMMENTS'); },
 		get deleteChat() { return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_DELETE_CHAT'); },
+		get deleteCollab() { return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_DELETE_COLLAB'); },
 		get deleteChannel() { return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_DELETE_CHANNEL'); },
 		get chatAccessDenied() { return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_CHAT_ACCESS_DENIED'); },
 		get messageNotFound() { return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_MESSAGE_NOT_FOUND'); },
+		get sendFilesGalleryLimitExceeded() { return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_SEND_FILES_GALLERY_LIMIT_EXCEEDED'); },
+		get selectMessageLimit() { return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_SELECT_MESSAGE_LIMIT'); },
 	};
 
 	const DEFAULT_MESSENGER_TOAST_OFFSET = 75;
@@ -67,6 +73,12 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		},
 		deleteChat: {
 			iconName: Icon.TRASHCAN.getIconName(),
+		},
+		selectMessageLimit: {
+			iconName: Icon.CIRCLE_CHECK.getIconName(),
+		},
+		sendFilesGalleryLimitExceeded: {
+			iconName: Icon.ALERT.getIconName(),
 		},
 	};
 

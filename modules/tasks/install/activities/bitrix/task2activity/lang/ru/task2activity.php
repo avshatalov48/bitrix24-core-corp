@@ -1,15 +1,13 @@
 <?php
 
-$MESS["BPSNMA_EMPTY_TASKASSIGNEDTO"] = "Свойство 'Ответственный' не указано.";
-$MESS["BPSNMA_EMPTY_TASKNAME"] = "Свойство 'Название задачи' не указано.";
 $MESS["BPSNMA_EMPTY_REQUIRED_PROPERTY"] = "Свойство '#PROPERTY_NAME#' не указано.";
 $MESS["TASK_EMPTY_GROUP"] = "Персональная задача";
 $MESS["BPSA_TRACK_OK"] = "Создана задача с ID ##VAL#";
 $MESS["BPSA_TRACK_ERROR"] = "При создании задачи произошла ошибка.";
 $MESS["BPSA_CREATED_BY_ERROR"] = "Не указан постановщик задачи.";
 $MESS["BPTA1A_TASKGROUPID"] = "Задача в проекте (группе)";
+$MESS['BPTA1A_TASK_FLOW_ID'] = 'Поток';
 $MESS["BPTA1A_TASKCREATEDBY"] = "Постановщик";
-$MESS["BPTA1A_TASKASSIGNEDTO"] = "Ответственный";
 $MESS['BPTA1A_TASKASSIGNEDTO_V2'] = 'Исполнитель';
 $MESS["BPTA1A_TASKACTIVEFROM"] = "Начало";
 $MESS["BPTA1A_TASKACTIVETO"] = "Окончание";
@@ -24,7 +22,7 @@ $MESS["BPTA1A_TASKFORUM"] = "Форум для комментариев";
 $MESS["BPTA1A_CHECK_RESULT"] = "Принять работу после завершения задачи";
 $MESS["BPTA1A_CHECK_RESULT_V2"] = "Проконтролировать задачу после завершения";
 $MESS["BPTA1A_ADD_TO_REPORT_2"] = "Включить задачу в отчет по эффективности";
-$MESS["BPTA1A_CHANGE_DEADLINE"] = "Разрешить ответственному менять крайний срок";
+$MESS["BPTA1A_CHANGE_DEADLINE_MSGVER_1"] = "Разрешить исполнителю менять крайний срок";
 $MESS["BPTA1A_ALLOW_TIME_TRACKING"] = "Включить учет времени по задаче";
 $MESS["BPCDA_FIELD_REQUIED"] = "Поле '#FIELD#' обязательно для заполнения.";
 $MESS["BPSA_TRACK_SUBSCR"] = "Процесс ожидает завершения задачи";
@@ -35,6 +33,7 @@ $MESS["BPSA_CHECK_LIST_ITEMS"] = "Чек-лист";
 $MESS["BPTA1A_TIME_TRACKING_H"] = "Время выполнения, часов";
 $MESS["BPTA1A_TIME_TRACKING_M"] = "Время выполнения, минут";
 $MESS["BPTA1A_TASK_TASK_PRESENCE_ERROR"] = "Не существует задачи с id \"#TASK_ID#\"";
+$MESS["BPTA1A_TASK_FLOW_PRESENCE_ERROR"] = "Не указан ID или такого потока не существует";
 $MESS["BPTA1A_MAKE_SUBTASK"] = "Сделать подзадачей";
 $MESS['BPTA1A_FIELD_NAME_TAGS'] = 'Теги';
 $MESS['BPTA1A_HOLD_TO_CLOSE'] = 'Остановить процесс на время выполнения задачи';

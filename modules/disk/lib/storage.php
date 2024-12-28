@@ -19,9 +19,11 @@ use Bitrix\Main\Event;
 use Bitrix\Main\Filter\Filter;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\SystemException;
+use Psr\Container\NotFoundExceptionInterface;
 
 Loc::loadMessages(__FILE__);
 
@@ -57,6 +59,7 @@ final class Storage extends Internals\Model implements \JsonSerializable
 	protected $cacheSecurityContext = array();
 	/** @var ProxyType\Base */
 	protected $proxyType;
+	protected array $specificFolders = [];
 
 	/**
 	 * Gets the fully qualified name of table class which belongs to current model.
@@ -546,9 +549,16 @@ final class Storage extends Internals\Model implements \JsonSerializable
 	 * @param string $code Code of specific folder.
 	 * @return Folder|null Specific folder.
 	 */
-	public function getSpecificFolderByCode($code)
+	public function getSpecificFolderByCode(string $code): ?Folder
 	{
-		return SpecificFolder::getFolder($this, $code);
+		if (isset($this->specificFolders[$code]))
+		{
+			return $this->specificFolders[$code];
+		}
+
+		$this->specificFolders[$code] = SpecificFolder::getFolder($this, $code);
+
+		return $this->specificFolders[$code];
 	}
 
 	/**
@@ -945,6 +955,43 @@ final class Storage extends Internals\Model implements \JsonSerializable
 	}
 
 	/**
+	 * Returns list of models by specific filter by id.
+	 * @param array $ids List of storages.
+	 * @param array $with List of eager loading.
+	 * @return array
+	 * @throws ObjectNotFoundException
+	 * @throws NotFoundExceptionInterface
+	 */
+	public static function loadBatchById(array $ids, array $with = []): array
+	{
+		$result = [];
+		$runtimeCache = ServiceLocator::getInstance()->get('disk.storageRuntimeCache');
+
+		$shouldLoadFromDb = [];
+		foreach ($ids as $id)
+		{
+			if ($runtimeCache->isLoadedById($id))
+			{
+				$result[] = $runtimeCache->getById($id);
+			}
+			else
+			{
+				$shouldLoadFromDb[] = $id;
+			}
+		}
+
+		$storages = parent::loadBatchById($shouldLoadFromDb, $with);
+		foreach ($storages as $storage)
+		{
+			$runtimeCache->store($storage);
+			$result[] = $storage;
+		}
+
+		return $result;
+
+	}
+
+	/**
 	 * @inheritdoc
 	 */
 	public static function loadById($id, array $with = array())
@@ -1141,11 +1188,18 @@ final class Storage extends Internals\Model implements \JsonSerializable
 	{
 		$type = Type::tryFromProxyType($this->getProxyType());
 
-		return [
+		$fields = [
 			'id' => (int)$this->getId(),
 			'name' => $this->getName(),
 			'rootObjectId' => (int)$this->getRootObjectId(),
 			'type' => $type->value,
 		];
+
+		if ($type === Type::USER || $type === Type::GROUP)
+		{
+			$fields['entityId'] = (int)$this->getEntityId();
+		}
+
+		return $fields;
 	}
 }

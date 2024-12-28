@@ -25,7 +25,7 @@ final class AutomatedSolutionDataProvider extends DataProvider
 	public function prepareActions(): array
 	{
 		$actions = [];
-		if ($this->userPermissions->canWriteConfig())
+		if ($this->userPermissions->canEditAutomatedSolutions())
 		{
 			$actions[] = new EditAction($this->router);
 			$actions[] = new DeleteAction($this->getSettings(), $this->automatedSolutionManager, $this->userPermissions);

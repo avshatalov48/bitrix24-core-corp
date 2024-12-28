@@ -53,9 +53,12 @@ class Docx extends ZipDocument
 	 */
 	public function isFileProcessable(): bool
 	{
-		if(parent::isFileProcessable())
+		if (parent::isFileProcessable())
 		{
-			return $this->zip->getFromName(static::PATH_DOCUMENT) !== false;
+			return (
+				!empty($this->zip->getFromName(static::PATH_DOCUMENT))
+				&& !empty($this->zip->getFromName(static::PATH_CONTENT_TYPES))
+			);
 		}
 
 		return false;
@@ -462,6 +465,7 @@ class Docx extends ZipDocument
 		return [
 			'image/jpeg' => 'jpeg',
 			'image/png'  => 'png',
+			'image/webp' => 'webp',
 			'image/bmp'  => 'bmp',
 			'image/gif'  => 'gif',
 			'application/pdf' => 'pdf',

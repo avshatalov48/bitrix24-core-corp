@@ -1,8 +1,24 @@
 <?php
 namespace Bitrix\Crm\Format;
 
+use CCrmContentType;
+use CTextParser;
+
 class TextHelper
 {
+	public const SANITIZE_BB_CODE_WHITE_LIST =  [
+		'b', //bold
+		'i', //italic
+		'u', //underlined
+		's', //strike
+		'list', //ul and ol,
+		'\*', //* - list item
+		'user', //mention
+		'img',
+		'disk file id',
+		'url',
+	];
+
 	public static function convertHtmlToBbCode($html)
 	{
 		$html = strval($html);
@@ -156,6 +172,7 @@ class TextHelper
 	 *
 	 * @param $bb - string with bb content
 	 * @param array $excludeFromWhitelist - tags that are additionally removed from the input string
+	 * @param array $extraWhiteList
 	 * @return string
 	 */
 	final public static function sanitizeBbCode($bb, array $excludeFromWhitelist = [], array $extraWhiteList = []): string
@@ -166,29 +183,25 @@ class TextHelper
 			return '';
 		}
 
-		static $whitelist = [
-			'b', //bold
-			'i', //italic
-			'u', //underlined
-			's', //strike
-			'list', //ul and ol,
-			'\*', //* - list item
-			'user', //mention
-			'img',
-			'disk file id',
-			'url',
-		];
-
-		$tags = array_diff($whitelist, $excludeFromWhitelist);
+		$tags = array_diff(self::SANITIZE_BB_CODE_WHITE_LIST, $excludeFromWhitelist);
 		$tags = array_merge($tags, $extraWhiteList);
 
-		$pattern =
-			'#\[(\/?)(?!\b'
-			. implode('\b|\b', $tags)
-			. '\b)\w+\b[^\]]*\]#iu'
-		;
+		$tagsPattern = '';
+		if (!empty($tags))
+		{
+			$tagsPattern = '(?!\b' . implode('\b|\b', $tags) . '\b)';
+		}
 
-		return (string)preg_replace($pattern, '', $bb);
+		$pattern = "#\[(\/?){$tagsPattern}\w+\b[^\]]*\]#iu";
+		$result = (string)preg_replace($pattern, '', $bb);
+
+		if (in_array('\*',$excludeFromWhitelist, true))
+		{
+			$listItemPattern = '#\[\*]#u';
+			$result = (string)preg_replace($listItemPattern, '', $result);
+		}
+
+		return $result;
 	}
 
 	final public static function removeParagraphs(string $bbcode): string
@@ -219,5 +232,50 @@ class TextHelper
 		while ($replaced > 0);
 
 		return $text;
+	}
+
+	final public static function convertHtmlToText(string $html, bool $saveBreaks = false): string
+	{
+		$text = preg_replace(['/<p[^>]*>/isu', '/<\\/p[^>]*>/isu'], ['', '<br><br>'], $html);
+		if (str_ends_with($text, '<br><br>'))
+		{
+			$text = mb_substr($text, 0, -8);
+		}
+
+		if (!$saveBreaks)
+		{
+			$text = preg_replace('/(<br[^>]*>)+/isu', "\n", $text);
+		}
+
+		return strip_tags($text, $saveBreaks ? '<br>' : null);
+	}
+
+	final public static function cleanTextByType(?string $text, int $contentType = CCrmContentType::PlainText): string
+	{
+		$cleanedText = '';
+		if (!$text)
+		{
+			return '';
+		}
+
+		if (!CCrmContentType::IsDefined($contentType))
+		{
+			return $text;
+		}
+
+		if ($contentType === CCrmContentType::Html)
+		{
+			$cleanedText = strip_tags($text);
+		}
+		else if ($contentType === CCrmContentType::BBCode)
+		{
+			$cleanedText = strip_tags((new CTextParser())->convertText($text));
+		}
+		else if ($contentType === CCrmContentType::PlainText)
+		{
+			$cleanedText = $text;
+		}
+
+		return $cleanedText;
 	}
 }

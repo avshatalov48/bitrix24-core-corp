@@ -1,7 +1,8 @@
 <?php
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Tasks\Update\Preset;
+// use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
+use Bitrix\Main\UI\Extension;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -10,7 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
 
 \Bitrix\Main\Loader::includeModule('ui');
-\Bitrix\Main\UI\Extension::load([
+Extension::load([
 	"ui.entity-selector",
 	"ui.buttons",
 	"ui.buttons.icons",
@@ -18,9 +19,11 @@ $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
 	"ui.fonts.opensans",
 	"ui.dialogs.checkbox-list",
 	'ui.tour',
+	'ui.design-tokens',
 ]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+// $isCollab = isset($arParams['CONTEXT']) && $arParams['CONTEXT'] === Context::getCollab();
 
 if ($isBitrix24Template)
 {
@@ -66,11 +69,17 @@ if ($arResult['SPRINT'])
 {
 	include(__DIR__.'/sprint_selector.php');
 }
+
+$contentClass = 'pagetitle-container pagetitle-align-right-container ';
 ?>
 
-<div class="pagetitle-container pagetitle-align-right-container">
-
+<div class="<?=$contentClass?>">
 	<?php
+	// if ($isCollab)
+	// {
+	// 	include(__DIR__.'/reports.php');
+	// }
+
 	if ($arParams['SHOW_USER_SORT'] === 'Y' ||
 			  $arParams['USE_GROUP_BY_SUBTASKS'] === 'Y' ||
 			  $arParams['USE_GROUP_BY_GROUPS'] === 'Y' ||
@@ -118,3 +127,4 @@ if ($arResult['showPresetTourGuide'])
 </script>
 <?php
 }
+

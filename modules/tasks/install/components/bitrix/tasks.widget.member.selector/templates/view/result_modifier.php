@@ -1,4 +1,6 @@
 <?
+
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\Site;
@@ -83,4 +85,9 @@ $arResult['JS_DATA'] = array(
 	'taskMailUserIntegrationFeatureId' => $arResult['taskMailUserIntegrationFeatureId'],
 	'networkEnabled' => \Bitrix\Tasks\Integration\Network\MemberSelector::isNetworkEnabled(),
 	'context' => $arParams['CONTEXT'],
+	'readOnly' => $arResult['TEMPLATE_DATA']['READ_ONLY'],
+	'currentUser' => (int)CurrentUser::get()->getId(),
+	'leaveAuditorMessage' => $arParams['TASKS_LEAVE_AUDITOR_MESSAGE'] ?? null,
+	'enterAuditorMessage' => $arParams['TASKS_ENTER_AUDITOR_MESSAGE'] ?? null,
+	'flowId' => (int)($arParams['FLOW_ID'] ?? 0),
 );

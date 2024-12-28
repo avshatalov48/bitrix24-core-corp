@@ -4,10 +4,10 @@ namespace Bitrix\Crm\UI\Tools;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Router;
-use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\UI\Buttons\JsCode;
 use Bitrix\UI\Buttons\JsEvent;
+use Bitrix\UI\Buttons\JsHandler;
 use CCrmOwnerType;
 
 class ToolBar
@@ -68,6 +68,11 @@ class ToolBar
 			if (isset($item['onclick']))
 			{
 				$item['onclick'] = new JsCode($item['onclick']);
+			}
+
+			if (isset($item['handler']))
+			{
+				$item['onclick'] = new JsHandler($item['handler']);
 			}
 
 			if (isset($item['jsevent']))

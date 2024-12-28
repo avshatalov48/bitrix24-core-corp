@@ -7,7 +7,6 @@ use Bitrix\DocumentGenerator\Model\FileTable;
 use Bitrix\DocumentGenerator\Value\Multiple;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Result;
-use Bitrix\Main\Text\BinaryString;
 
 abstract class Body
 {
@@ -163,7 +162,7 @@ abstract class Body
 			$filename = randString(5);
 		}
 
-		if(BinaryString::getSubstring($filename, -5) !== '.'.$this->getFileExtension())
+		if(substr($filename, -5) !== '.'.$this->getFileExtension())
 		{
 			$filename = $filename.'.'.$this->getFileExtension();
 		}
@@ -358,9 +357,9 @@ abstract class Body
 			{
 				return $value->toString($modifier);
 			}
-			if (class_exists($value) && method_exists($value, '__toString'))
+			if ($value instanceof \Stringable)
 			{
-				return $value->__toString();
+				return (string)$value;
 			}
 
 			return '';

@@ -1,0 +1,153 @@
+.ai__role-master_saving-status,
+.ai__role-master_saving-loading,
+.ai__role-master_saving-success,
+.ai__role-master_saving-error {
+	box-sizing: border-box;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	padding: 0 40px 44px 40px;
+	background-color: #fff;
+	font-size: var(--ui-font-size-xl);
+	line-height: var(--ui-font-line-height-2xs);
+	color: var(--ui-color-text-primary);
+	z-index: 9999;
+}
+
+.ai__role-master_saving-loading {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.ai__role-master_saving-loader {
+	position: relative;
+	width: 80px;
+	height: 80px;
+	margin-bottom: 32px;
+}
+
+.ai__role-master_saving-loading {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.ai__role-master_saving-success {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.ai__role-master_saving-success-top {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.ai__role-master_saving-success-icon {
+	--ui-icon-set__icon-color: var(--ui-color-copilot-primary);
+
+	width: 100px;
+	height: 100px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	border-radius: var(--ui-border-radius-circle);
+	background-color: #F7F3FD;
+}
+
+.ai__role-master_saving-success-text {
+	margin-top: 25px;
+	text-align: center;
+}
+
+.ai__role-master_saving-success-bottom {
+	margin-bottom: 44px;
+}
+
+
+.ai__role-master_saving-error {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.ai__role-master_saving-error-center {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	flex: 1;
+}
+
+.ai__role-master_saving-error-icon {
+	--ui-icon-set__icon-color: var(--ui-color-text-alert);
+
+	width: 98px;
+	height: 98px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	border-radius: var(--ui-border-radius-circle);
+	background-color: rgba(var(--ui-color-text-alert-rgb), 0.1);
+}
+
+.ai__role-master_saving-error-status-text {
+	margin-top: 20px;
+	margin-bottom: 15px;
+}
+
+.ai__role-master_saving-error-bottom {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.ai__role-master_saving-error-description-text {
+	margin-bottom: 15px;
+	color: var(--ui-color-base-60);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-2xs);
+	text-align: center;
+}
+
+.ai__role-master_back-to-editor-btn {
+	--ai__role-master_back-to-editor-btn-color: var(--ui-color-base-70);
+	--ui-icon-set__icon-color: var(--ai__role-master_back-to-editor-btn-color);
+
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+	padding: 0;
+	margin: 0;
+	border: none;
+	outline: none;
+	background: none;
+	color: var(--ai__role-master_back-to-editor-btn-color);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-3xs);
+	cursor: pointer;
+}
+
+.ai__role-master_back-to-editor-btn-text {
+	margin-left: 3px;
+}
+
+.ai__role-master_back-to-editor-btn:hover,
+.ai__role-master_back-to-editor-btn:focus {
+	--ai__role-master_back-to-editor-btn-color: var(--ui-color-base-80);
+}
+
+.ai__role-master_back-to-editor-btn:active {
+	--ai__role-master_back-to-editor-btn-color: var(--ui-color-base-90);
+}

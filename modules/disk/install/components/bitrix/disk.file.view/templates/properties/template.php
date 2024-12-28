@@ -22,6 +22,7 @@ $messages = Loc::loadLanguageFile(__FILE__);
 CJSCore::Init([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
+	'ui.avatar',
 	'disk',
 	'disk_information_popups',
 	'sidepanel',
@@ -84,7 +85,7 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 				<? endif; ?>
 			</table>
 			<div class="disk-detail-properties-owner">
-				<div class="disk-detail-properties-owner-avatar" style="background-image: url('<?= Uri::urnEncode($arResult['FILE']['CREATE_USER']['AVA']) ?>');"></div>
+				<?= $arResult['FILE']['CREATE_USER']['AVA_HTML'] ?>
 				<div class="disk-detail-properties-owner-name">
 					<a class="disk-detail-properties-owner-link" target="_top" href="<?= $arResult['FILE']['CREATE_USER']['LINK'] ?>"><?= htmlspecialcharsbx($arResult['FILE']['CREATE_USER']['NAME']) ?></a>
 					<div class="disk-detail-properties-owner-position"><?= htmlspecialcharsbx($arResult['FILE']['CREATE_USER']['WORK_POSITION']) ?></div>

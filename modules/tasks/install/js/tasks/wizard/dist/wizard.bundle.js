@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core,ui_buttons) {
+(function (exports,main_core,main_core_events,ui_buttons) {
 	'use strict';
 
 	let _ = t => t,
@@ -28,6 +28,7 @@ this.BX = this.BX || {};
 	var _renderArticle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderArticle");
 	var _openHelpDesk = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openHelpDesk");
 	var _renderStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderStep");
+	var _subscribeToPopupInit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToPopupInit");
 	var _updateFade = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateFade");
 	var _renderBackButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderBackButton");
 	var _renderCancelButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderCancelButton");
@@ -37,7 +38,7 @@ this.BX = this.BX || {};
 	var _renderSaveChangesButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderSaveChangesButton");
 	var _openStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openStep");
 	class Wizard {
-	  constructor(params) {
+	  constructor(_params2) {
 	    Object.defineProperty(this, _openStep, {
 	      value: _openStep2
 	    });
@@ -61,6 +62,9 @@ this.BX = this.BX || {};
 	    });
 	    Object.defineProperty(this, _updateFade, {
 	      value: _updateFade2
+	    });
+	    Object.defineProperty(this, _subscribeToPopupInit, {
+	      value: _subscribeToPopupInit2
 	    });
 	    Object.defineProperty(this, _renderStep, {
 	      value: _renderStep2
@@ -104,8 +108,8 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = params;
-	    babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps] = params.steps;
+	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = _params2;
+	    babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps] = _params2.steps;
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout] = {};
 	  }
 	  render() {
@@ -123,6 +127,24 @@ this.BX = this.BX || {};
 	  }
 	  update() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _updateStepsAvailability)[_updateStepsAvailability]();
+	  }
+	  initHints() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].forEach(step => {
+	      step.hintManager = top.BX.UI.Hint.createInstance({
+	        id: `tasks-flow-edit-form-${step.id}-${main_core.Text.getRandom()}`,
+	        className: 'skipInitByClassName',
+	        popupParameters: {
+	          targetContainer: step.node
+	        }
+	      });
+	      step.hintManager.init(step.node);
+	    });
+	  }
+	  hideHints() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].forEach(step => {
+	      var _step$hintManager;
+	      (_step$hintManager = step.hintManager) == null ? void 0 : _step$hintManager.hide();
+	    });
 	  }
 	}
 	function _getPreviousStep2() {
@@ -241,7 +263,18 @@ this.BX = this.BX || {};
 	  });
 	  observer.observe(step.node);
 	  main_core.Event.bind(step.node, 'scroll', () => babelHelpers.classPrivateFieldLooseBase(this, _updateFade)[_updateFade](step.node, fadeTop, fadeBottom));
+	  babelHelpers.classPrivateFieldLooseBase(this, _subscribeToPopupInit)[_subscribeToPopupInit](step.node);
 	  return step.node;
+	}
+	function _subscribeToPopupInit2(stepContainer) {
+	  main_core_events.EventEmitter.subscribe('BX.Main.Popup:onInit', event => {
+	    const data = event.getCompatData();
+	    const bindElement = data[1];
+	    const params = data[2];
+	    if (main_core.Type.isDomNode(bindElement) && stepContainer.contains(bindElement)) {
+	      params.targetContainer = stepContainer;
+	    }
+	  });
 	}
 	function _updateFade2(container, fadeTop, fadeBottom) {
 	  const scrollTop = container.scrollTop;
@@ -365,5 +398,5 @@ this.BX = this.BX || {};
 
 	exports.Wizard = Wizard;
 
-}((this.BX.Tasks = this.BX.Tasks || {}),BX,BX.UI));
+}((this.BX.Tasks = this.BX.Tasks || {}),BX,BX.Event,BX.UI));
 //# sourceMappingURL=wizard.bundle.js.map

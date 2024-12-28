@@ -1,8 +1,6 @@
 <?php
 
 use Bitrix\Crm\Component\Base;
-use Bitrix\Main\Application;
-use Bitrix\Main\Composite\Engine;
 use Bitrix\Main\Web\Uri;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -32,26 +30,7 @@ class CrmRouterDefaultRoot extends Base
 
 	private function processPageNotFound(): never
 	{
-		if (!defined('ERROR_404'))
-		{
-			define('ERROR_404', 'Y');
-		}
-
-		CHTTP::setStatus('404 Not Found');
-		if ($this->getApplication()->RestartWorkarea())
-		{
-			if (!defined('BX_URLREWRITE'))
-			{
-				define('BX_URLREWRITE', true);
-			}
-
-			Engine::setEnable(false);
-
-			global $APPLICATION;
-			require Application::getDocumentRoot() . '/404.php';
-		}
-
-		die();
+		\Bitrix\Crm\Router\ResponseHelper::showPageNotFound();
 	}
 
 	private function isRequestUriEqualsCrm(): bool

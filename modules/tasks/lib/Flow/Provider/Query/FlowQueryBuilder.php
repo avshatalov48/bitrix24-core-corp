@@ -4,14 +4,12 @@ namespace Bitrix\Tasks\Flow\Provider\Query;
 
 use Bitrix\Main\Access\User\UserSubordinate;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Access\Model\UserModel;
-use Bitrix\Tasks\Flow\Internal\Entity\Role;
-use Bitrix\Tasks\Flow\Internal\FlowMemberTable;
 use Bitrix\Tasks\Flow\Internal\FlowTable;
+use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Provider\QueryBuilderInterface;
 use Bitrix\Tasks\Provider\TaskQueryInterface;
 
@@ -178,7 +176,13 @@ class FlowQueryBuilder implements QueryBuilderInterface
 	 */
 	protected function getAccessCodeFiler(): ConditionTree
 	{
-		$accessCodes = ['UA', 'U' . $this->getUserModel()->getUserId()]; // UA - user_all
+		$accessCodes = ['U' . $this->flowQuery->getUserId()];
+
+		if (!$this->getUserModel()->isExtranet())
+		{
+			$accessCodes = array_merge($accessCodes, ['UA']);
+		}
+
 		$accessCodes = array_merge($accessCodes, $this->getUserDepartmentsFlat());
 		$accessCodes = array_merge($accessCodes, $this->getUserDepartmentsRecursive());
 

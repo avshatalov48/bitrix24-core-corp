@@ -4,6 +4,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Integration\SocialNetwork\Collab\Url\UrlManager;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Site;
@@ -200,6 +201,7 @@ if(array_key_exists($template['GROUP_ID'], $groups))
 {
 	$group = $groups[$template['GROUP_ID']];
 	$group['ENTITY_TYPE'] = 'SG';
+	$group['URL'] = UrlManager::getUrlByType((int)$group['ID'], $group['TYPE'] ?? null);
 	$seProject[] = $group;
 }
 $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_PROJECT'] = $seProject;

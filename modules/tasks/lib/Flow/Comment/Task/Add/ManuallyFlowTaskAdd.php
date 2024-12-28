@@ -42,7 +42,7 @@ class ManuallyFlowTaskAdd implements FlowCommentInterface
 		}
 
 		$messageKey = 'COMMENT_POSTER_COMMENT_TASK_ADD_TO_FLOW_WITH_MANUAL_DISTRIBUTION';
-		$replace = ['#RESPONSIBLE#' => $this->parseUserToLinked($responsibleId)];
+		$replace = ['#RESPONSIBLE#' => $this->getUserBBCodes($responsibleId)];
 
 		return [[$messageKey, $replace]];
 	}

@@ -331,3 +331,31 @@
 	mask-size: contain;
 	mask-position: center;
 }
+
+.crm-timeline__card_icon.--code-ai-process i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__ai-process-icon.svg');
+	width: 24px;
+	height: 24px;
+	mask-size: contain;
+	mask-position: center;
+}
+
+.crm-timeline__card_icon.--code-cycle-equal i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__cycle-equal-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-message-with-point i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__message-with-point-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-bizproc i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__bizproc-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-booking i {
+	mask-image: url("../../images/timeline-card-icons/crm-timeline__booking-icon.svg");
+	width: 24px;
+	height: 24px;
+	mask-size: contain;
+	mask-position: center;
+}

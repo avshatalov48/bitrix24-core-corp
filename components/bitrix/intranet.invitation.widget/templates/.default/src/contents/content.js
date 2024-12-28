@@ -122,7 +122,6 @@ export class Content extends EventEmitter
 			Analytics.send(Analytics.EVENT_OPEN_SLIDER_INVITATION);
 		}
 
-		this.analytics.sendLegacy(Analytics.SECTION_POPUP);
 		BX.SidePanel.Instance.open(
 			link,
 			{ cacheable: false, allowChangeHistory: false, width: 1100 }

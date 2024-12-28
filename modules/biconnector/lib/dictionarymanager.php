@@ -1,6 +1,11 @@
 <?php
 namespace Bitrix\BIConnector;
 
+use Bitrix\HumanResources\Item\NodeMember;
+use Bitrix\HumanResources\Service\Container;
+use Bitrix\HumanResources\Type\MemberEntityType;
+use Bitrix\HumanResources\Type\NodeEntityType;
+use Bitrix\Main\Loader;
 use Bitrix\Main\EO_User;
 use Bitrix\Main\Localization\Loc;
 
@@ -91,6 +96,9 @@ class DictionaryManager
 			if (static::arrayToKey($departmentBefore) !== static::arrayToKey($departmentAfter))
 			{
 				static::invalidateCache(Dictionary::USER_DEPARTMENT);
+				static::invalidateCache(Dictionary::USER_DEPARTMENT_HEAD);
+				static::invalidateCache(Dictionary::USER_STRUCTURE_DEPARTMENT);
+				static::invalidateCache(Dictionary::DEPARTMENT_PARENT_AGGREGATION);
 				static::$userBefore = null;
 			}
 		}
@@ -185,11 +193,20 @@ class DictionaryManager
 
 		try
 		{
-			DictionaryDataTable::deleteByFilter([
-				'=DICTIONARY_ID' => $dictionaryId,
-			]);
-
-			DictionaryDataTable::insertSelect($select);
+			if (Dictionary::DEPARTMENT_PARENT_AGGREGATION === $dictionaryId)
+			{
+				DictStructureAggTable::deleteByFilter([
+					'>DEP_ID' => 0,
+				]);
+				DictStructureAggTable::insertSelect($select);
+			}
+			else
+			{
+				DictionaryDataTable::deleteByFilter([
+					'=DICTIONARY_ID' => $dictionaryId,
+				]);
+				DictionaryDataTable::insertSelect($select);
+			}
 		}
 		catch (\Exception $exception)
 		{
@@ -214,25 +231,38 @@ class DictionaryManager
 	{
 		$select = '';
 
-		if ($dictionaryId == Dictionary::USER_DEPARTMENT)
-		{
-			$manager = Manager::getInstance();
-			$connection = $manager->getDatabaseConnection();
-			$structureIblockId = (int)$connection->queryScalar("
+		return match ($dictionaryId) {
+			Dictionary::USER_DEPARTMENT => static::getUserDepartmentSelect(),
+			Dictionary::USER_STRUCTURE_DEPARTMENT => static::getUserStructureDepartmentSelect(),
+			Dictionary::USER_DEPARTMENT_HEAD => static::getUserDepartmentHeadSelect(),
+			Dictionary::DEPARTMENT_PARENT_AGGREGATION => static::getDepartmentParentAggregationSelect(),
+			default => $select,
+		};
+	}
+
+	private static function getUserDepartmentSelect(): string
+	{
+		$manager = Manager::getInstance();
+		$connection = $manager->getDatabaseConnection();
+		$structureIblockId = (int)$connection->queryScalar(
+			"
 				select value
 				from b_option
 				where module_id = 'intranet' and name = 'iblock_structure'
-			");
+			",
+		);
 
-			if (
-				$structureIblockId > 0
-				&& $connection->isTableExists('b_utm_user')
-				&& $connection->isTableExists('b_iblock_section')
-			)
-			{
-				$select = '
+		if (
+			$structureIblockId > 0
+			&& $connection->isTableExists('b_utm_user')
+			&& $connection->isTableExists('b_iblock_section')
+		)
+		{
+			return '
 					select
-						' . Dictionary::USER_DEPARTMENT . " AS DICTIONARY_ID
+						'
+				. Dictionary::USER_DEPARTMENT
+				. " AS DICTIONARY_ID
 						,U.ID AS VALUE_ID
 						,D.DEPARTMENT_PATH AS VALUE_STR
 					from
@@ -261,16 +291,108 @@ class DictionaryManager
 									and p.left_margin < c.left_margin
 									and p.right_margin > c.right_margin
 							where
-								c.iblock_id = " . $structureIblockId . "
+								c.iblock_id = "
+				. $structureIblockId
+				. "
 							group by
 								c.id
 						) D on D.DEPARTMENT_ID = UD.USER_DEPARTMENT_ID
 					where
-						U.EXTERNAL_AUTH_ID NOT IN ('" . implode("', '", \Bitrix\Main\UserTable::getExternalUserTypes()) . "') OR U.EXTERNAL_AUTH_ID IS NULL
+						U.EXTERNAL_AUTH_ID NOT IN ('"
+				. implode("', '", \Bitrix\Main\UserTable::getExternalUserTypes())
+				. "') OR U.EXTERNAL_AUTH_ID IS NULL
 					";
-			}
 		}
 
-		return $select;
+		return '';
+	}
+
+	private static function getUserDepartmentHeadSelect()
+	{
+		$manager = Manager::getInstance();
+		$connection = $manager->getDatabaseConnection();
+
+		if (!Loader::includeModule('humanresources'))
+		{
+			return '';
+		}
+
+		$headRoleId = Container::getRoleRepository()
+			->findByXmlId(NodeMember::DEFAULT_ROLE_XML_ID['HEAD'])?->id;
+
+		if (
+			!$headRoleId
+			|| !$connection->isTableExists('b_hr_structure_node_member')
+		)
+		{
+			return  '';
+		}
+
+		return '
+		SELECT '
+			. Dictionary::USER_DEPARTMENT_HEAD
+			. ' AS DICTIONARY_ID
+			,NODE_ID as VALUE_ID
+			,GROUP_CONCAT(hsnm.ENTITY_ID) as VALUE_ID
+		FROM b_user bu
+			JOIN b_hr_structure_node_member hsnm ON bu.ID = hsnm.ENTITY_ID AND hsnm.ENTITY_TYPE = \'' .
+					MemberEntityType::USER->value . '\' AND hsnm.ACTIVE = \'Y\'
+			JOIN b_hr_structure_node_member_role hsnmr ON hsnm.ID = hsnmr.MEMBER_ID
+			JOIN b_hr_structure_node bhsn ON bhsn.ID = hsnm.NODE_ID
+		WHERE hsnmr.ROLE_ID = ' . $headRoleId . '
+		GROUP BY hsnm.NODE_ID
+		';
+	}
+
+	private static function getUserStructureDepartmentSelect()
+	{
+		$manager = Manager::getInstance();
+		$connection = $manager->getDatabaseConnection();
+
+		if (
+			!Loader::includeModule('humanresources')
+			|| !$connection->isTableExists('b_hr_structure_node_member')
+		)
+		{
+			return '';
+		}
+
+		return 'SELECT '
+			. Dictionary::USER_STRUCTURE_DEPARTMENT . ' AS DICTIONARY_ID,
+			U.ID AS VALUE_ID,
+			GROUP_CONCAT(bhsn.ID) AS DEPARTMENT_PATH
+			FROM b_user U
+					 INNER JOIN b_hr_structure_node_member bhsnm ON bhsnm.ENTITY_TYPE = \'' . MemberEntityType::USER->value . '\'
+											   AND bhsnm.ENTITY_ID = U.ID
+					 LEFT JOIN b_hr_structure_node bhsn ON bhsn.ID = bhsnm.NODE_ID
+			WHERE bhsn.TYPE = \'' . NodeEntityType::DEPARTMENT->value . '\'
+			GROUP BY U.ID
+			ORDER BY U.ID';
+	}
+
+	private static function getDepartmentParentAggregationSelect()
+	{
+		$manager = Manager::getInstance();
+		$connection = $manager->getDatabaseConnection();
+
+		if (
+			!Loader::includeModule('humanresources')
+			|| !$connection->isTableExists('b_hr_structure_node')
+		)
+		{
+			return '';
+		}
+
+		return 'SELECT
+			SN.ID as DEP_ID,
+			SN.NAME as DEP_NAME,
+			GROUP_CONCAT(SN2.ID ORDER BY bhsnp.DEPTH DESC) AS DEP_IDS,
+			GROUP_CONCAT(SN2.NAME ORDER BY bhsnp.DEPTH DESC) AS DEP_NAMES,
+			GROUP_CONCAT(CONCAT(\'[\', SN2.ID, \'] \', SN2.NAME) ORDER BY bhsnp.DEPTH DESC) AS DEP_NAME_IDS
+		FROM
+			b_hr_structure_node SN
+			INNER JOIN b_hr_structure_node_path bhsnp ON SN.ID = bhsnp.CHILD_ID
+			INNER JOIN b_hr_structure_node SN2 ON SN2.ID = bhsnp.PARENT_ID
+		GROUP BY SN.ID, SN.NAME;';
 	}
 }

@@ -328,12 +328,14 @@ $mainPage = new \Bitrix\Intranet\Site\FirstPage\MainFirstPage();
 			</div>
 			<? endif ?>
 
+			<?php if ($arResult['CURRENT_PRESET_ID'] !== 'collab'): ?>
 			<div data-bx-role="settings-container" class="menu-settings-btn">
 				<span class="menu-settings-icon-box">
 					<span class="menu-settings-icon"></span>
 				</span>
 				<span class="menu-settings-btn-text"><?=Loc::getMessage("MENU_SETTINGS_TITLE")?></span>
 			</div>
+			<?php endif; ?>
 
 			<?
 			if (CModule::IncludeModule("bitrix24") && CBitrix24::isInvitingUsersAllowed()):?>

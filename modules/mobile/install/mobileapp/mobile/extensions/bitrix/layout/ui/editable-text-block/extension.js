@@ -6,10 +6,11 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 	const { TextEditor } = require('layout/ui/text-editor');
 	const { TextEditor: BBCodeTextEditor } = require('text-editor');
 	const { CollapsibleText } = require('layout/ui/collapsible-text');
-	const { Type } = require('type');
+	const { PlainTextFormatter } = require('bbcode/formatter/plain-text-formatter');
 	const { pen } = require('assets/common');
 	const { inAppUrl } = require('in-app-url');
 	const { isOffline } = require('device/connection');
+	const { Loc } = require('loc');
 
 	/**
 	 * @class EditableTextBlock
@@ -19,67 +20,84 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 		/**
 		 * @param {Object} props
 		 * @param {string} props.value
-		 * @param {string} [props.placeholder]
-		 * @param {Function} [props.onSave] - callback with newValue onSave(value)
+		 * @param {string} [props.placeholder=Loc.getMessage('MOBILE_EDITABLE_TEXT_BLOCK_PLACEHOLDER')]
+		 * @param {Function} [props.onSave] - callback with newValue onSave(value, files=[])
 		 * @param {Function} [props.onBeforeSave]
 		 * @param {Object} [props.externalStyles]
-		 * @param {Object} [props.textProps] - props for CollapsibleText
-		 * @param {Object} [props.editorProps]
-		 * @param {string} [props.editorProps.placeholder]
+		 * @param {string} [props.testId]
+		 * @param {boolean} [props.showEditIcon=true]
+		 * @param {string} [props.editIconTestId='TextEditorEditIcon']
+		 * @param {Object} [props.textProps={}] - props for CollapsibleText
+		 * @param {Object} [props.editorProps={}]
 		 * @param {string} [props.editorProps.title]
+		 * @param {string} [props.editorProps.placeholder]
 		 * @param {string} [props.editorProps.required]
-		 * @param {Function} [props.editorProps.onLinkClick]
+		 * @param {string} [props.editorProps.readOnly]
 		 * @param {object} [props.editorProps.textAreaStyle]
 		 * @param {boolean} [props.editorProps.useBBCodeEditor]
-		 * @param {string} [props.testId]
-		 * @param {string} [props.editIconTestId]
-		 * @param {boolean} [props.showEditIcon]
+		 * @param {Object} [props.editorProps.bbCodeEditorParams]
+		 * @param {Function} [props.editorProps.onLinkClick]
+		 * @param {PageManager} [props.editorProps.parentWidget]
 		 */
 		constructor(props)
 		{
 			super(props);
 
-			this.textEditorLayout = null;
-		}
-
-		shouldShowEditIcon()
-		{
-			return BX.prop.getBoolean(this.props, 'showEditIcon', true);
+			this.setTextEditorLayout(null);
 		}
 
 		render()
 		{
+			const { value, externalStyles = {}, testId } = this.props;
+
 			return View(
 				{
+					testId,
 					style: {
 						paddingBottom: 15,
-						paddingTop: this.props.value.length > 0 ? 14 : 30,
+						paddingTop: value.length > 0 ? 14 : 30,
 						paddingLeft: 16,
 						paddingRight: 47,
 						borderWidth: 1,
 						borderColor: AppTheme.colors.bgSeparatorPrimary,
 						borderRadius: 12,
-						...this.props.externalStyles,
+						...externalStyles,
 					},
-					testId: this.props.testId,
 				},
-				this.shouldShowEditIcon() && this.renderEditIcon(),
+				this.renderEditIcon(),
 				this.renderText(),
 			);
 		}
 
 		renderText()
 		{
+			const { textProps, editorProps, value, placeholder } = this.props;
+			const { bbCodeMode = false } = textProps;
+			const { useBBCodeEditor = false, bbCodeEditorParams = {} } = editorProps;
+
 			const params = {
-				value: this.props.value || this.props.placeholder,
-				...this.props.textProps,
-				useBBCodeEditor: this.props.editorProps.useBBCodeEditor,
+				value: value || placeholder,
+				...textProps,
+				useBBCodeEditor,
 				onClick: () => this.openEditor(),
 				onLongClick: () => this.openEditor(),
 			};
 
-			if (this.props.editorProps.useBBCodeEditor)
+			if (useBBCodeEditor)
 			{
+				if (!bbCodeMode)
+				{
+					const plainTextFormatter = new PlainTextFormatter();
+					const plainAst = plainTextFormatter.format({
+						source: params.value,
+						data: {
+							files: bbCodeEditorParams.fileField?.value ?? [],
+						},
+					});
+
+					params.value = plainAst.toString();
+				}
+
 				params.onLinkClick = () => this.openEditor();
 			}
 
@@ -88,24 +106,24 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 
 		renderEditIcon()
 		{
-			if (this.props?.value.trim() === '')
+			const { showEditIcon, value, externalStyles = {}, editIconTestId } = this.props;
+
+			if (!showEditIcon || value.trim() === '')
 			{
 				return null;
 			}
 
-			const paddingTop = Type.isNil(this.props.externalStyles?.paddingTop) ? 14 : this.props.externalStyles.paddingTop;
-
 			return View(
 				{
-					onClick: () => this.openEditor(),
 					style: {
 						position: 'absolute',
 						right: 0,
 						top: 0,
 						paddingHorizontal: 11,
-						paddingTop,
+						paddingTop: externalStyles.paddingTop ?? 14,
 					},
-					testId: this.props.editIconTestId || 'TextEditorEditIcon',
+					testId: editIconTestId,
+					onClick: () => this.openEditor(),
 				},
 				Image({
 					svg: {
@@ -121,83 +139,71 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 
 		openEditor()
 		{
+			const { value, editorProps } = this.props;
 			const {
 				title,
 				placeholder,
 				required,
+				readOnly,
 				textAreaStyle,
 				useBBCodeEditor,
 				bbCodeEditorParams = {},
 				parentWidget,
-			} = this.props.editorProps;
-			const { value } = this.props;
+			} = editorProps;
 
 			if (useBBCodeEditor)
 			{
+				const bbCodeReadOnly = readOnly ?? bbCodeEditorParams.readOnly;
 				const editorParams = {
 					...bbCodeEditorParams,
 					title,
+					value,
 					textInput: {
 						...bbCodeEditorParams.textInput,
 						placeholder,
 					},
-					value,
-					readOnly: (!bbCodeEditorParams.readOnly && isOffline() ? true : bbCodeEditorParams.readOnly),
-					onSave: ({ bbcode, files }) => {
-						if (this.props.onSave)
-						{
-							this.props.onSave(bbcode, files);
-						}
-						this.textEditorLayout = null;
-					},
+					readOnly: (!bbCodeReadOnly && isOffline() ? true : bbCodeReadOnly),
+					onSave: ({ bbcode, files }) => this.onSave(bbcode, files),
 				};
 
 				BBCodeTextEditor.edit(editorParams)
-					.then((layout) => {
-						this.textEditorLayout = layout;
-					})
+					.then((layout) => this.setTextEditorLayout(layout))
 					.catch(console.error)
 				;
 
 				return;
 			}
 
+			if (readOnly)
+			{
+				return;
+			}
+
 			TextEditor.open({
 				title,
+				placeholder,
+				required,
+				textAreaStyle,
 				parentWidget,
 				text: value,
-				required,
-				placeholder,
-				textAreaStyle,
 				onSave: (text) => this.onSave(text),
 				onBeforeSave: (editor) => this.onBeforeSave(editor),
 				onLinkClick: ({ url }) => this.onEditorLinkClick(url),
 			})
-				.then(({ layout }) => {
-					this.textEditorLayout = layout;
-				})
+				.then(({ layout }) => this.setTextEditorLayout(layout))
 				.catch((error) => console.error(error))
 			;
 		}
 
-		onSave(value)
+		onSave(value, files = [])
 		{
-			const trimmedValue = value.trim();
-			this.textEditorLayout = null;
-			if (this.props.onSave)
-			{
-				this.props.onSave(trimmedValue);
-			}
+			this.setTextEditorLayout(null);
+			this.props.onSave?.(value.trim(), files);
 		}
 
 		async onBeforeSave(editor)
 		{
-			if (this.props.onBeforeSave)
-			{
-				return this.props.onBeforeSave(editor);
-			}
-
-			return null;
+			return this.props.onBeforeSave?.(editor) ?? null;
 		}
 
 		onEditorLinkClick(url)
@@ -214,22 +220,42 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 				parentWidget: this.textEditorLayout,
 			});
 		}
+
+		setTextEditorLayout(layout)
+		{
+			this.textEditorLayout = layout;
+		}
 	}
 
+	EditableTextBlock.defaultProps = {
+		value: '',
+		placeholder: Loc.getMessage('MOBILE_EDITABLE_TEXT_BLOCK_PLACEHOLDER'),
+		showEditIcon: true,
+		editIconTestId: 'TextEditorEditIcon',
+		textProps: {},
+		editorProps: {},
+	};
+
 	EditableTextBlock.propTypes = {
-		style: PropTypes.object,
 		value: PropTypes.string,
 		placeholder: PropTypes.string,
 		onSave: PropTypes.func,
 		onBeforeSave: PropTypes.func,
+		externalStyles: PropTypes.object,
 		testId: PropTypes.string,
+		showEditIcon: PropTypes.bool,
 		editIconTestId: PropTypes.string,
 		textProps: PropTypes.object,
 		editorProps: PropTypes.shape({
 			title: PropTypes.string,
 			placeholder: PropTypes.string,
-			onLinkClick: PropTypes.func,
 			required: PropTypes.bool,
+			readOnly: PropTypes.bool,
+			textAreaStyle: PropTypes.object,
+			useBBCodeEditor: PropTypes.bool,
+			bbCodeEditorParams: PropTypes.object,
+			onLinkClick: PropTypes.func,
+			parentWidget: PropTypes.object,
 		}),
 	};
 

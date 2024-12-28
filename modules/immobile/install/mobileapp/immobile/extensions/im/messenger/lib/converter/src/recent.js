@@ -10,6 +10,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 	const {
 		RecentItem,
 		ChatItem,
+		CollabItem,
 		CopilotItem,
 		UserItem,
 		CallItem,
@@ -22,6 +23,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 		SupportBotItem,
 		ConnectorUserItem,
 		ExtranetUserItem,
+		CollaberUserItem,
 		InvitedUserItem,
 		NetworkUserItem,
 		ChannelItem,
@@ -30,6 +32,8 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 		DialogType,
 		BotType,
 		ComponentCode,
+		UserType,
+		MessageStatus,
 	} = require('im/messenger/const');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('recent--converter');
@@ -60,7 +64,6 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 			recentItems.forEach((item) => {
 				listItems.push(this.prepareItemToNative(this.toItem(item)));
 			});
-
 			return listItems;
 		}
 
@@ -92,6 +95,11 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 				logger.error(`RecentConverter.toChatItem: there is no dialog "${modelItem.id}" in model`);
 
 				return new RecentItem(modelItem);
+			}
+
+			if (dialog.type === DialogType.collab)
+			{
+				return new CollabItem(modelItem);
 			}
 
 			if (dialog.extranet === true)
@@ -167,6 +175,11 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 			if (user.bot === true)
 			{
 				return new BotItem(modelItem);
+			}
+
+			if (user.type === UserType.collaber)
+			{
+				return new CollaberUserItem(modelItem);
 			}
 
 			if (user.extranet === true)
@@ -245,6 +258,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 				newElement.message.id = id;
 				newElement.message.text = ChatMessengerCommon.purifyText(element.message.text, element.message.params);
 				newElement.message.author_id = element.message.senderId && element.message.system !== 'Y' ? element.message.senderId : 0;
+				newElement.message.senderId = element.message.senderId && element.message.system !== 'Y' ? element.message.senderId : 0;
 				newElement.message.date = new Date(element.message.date);
 				newElement.message.file = element.message.params && element.message.params.FILE_ID ? element.message.params.FILE_ID.length > 0 : false;
 				newElement.message.attach = element.message.params && element.message.params.ATTACH ? element.message.params.ATTACH : false;
@@ -369,6 +383,48 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 			};
 
 			return removeProperty(recentItem, 'model');
+		}
+
+		/**
+		 * @param {Object} params
+		 * @param {Object} params.user
+		 * @param {Object} params.invited
+		 * @return {RecentModelState}
+		 */
+		fromPushUserInviteToModel(params)
+		{
+			const { user, invited } = params;
+
+			return {
+				id: Number(user.id),
+				message: {
+					id: 0,
+					senderId: 0,
+					date: new Date(),
+					status: MessageStatus.received,
+					subTitleIcon: '',
+					sending: false,
+					text: '',
+					params: {
+						withFile: false,
+						withAttach: false,
+					},
+				},
+				dateMessage: null,
+				lastActivityDate: user.last_activity_date,
+				unread: false,
+				pinned: false,
+				liked: false,
+				avatar: user.avatar,
+				color: user.color,
+				title: user.name,
+				counter: 0,
+				invitation: {
+					isActive: user.active,
+					...invited,
+				},
+				options: {},
+			};
 		}
 	}
 

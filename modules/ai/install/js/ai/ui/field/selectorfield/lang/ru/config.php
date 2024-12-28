@@ -1,0 +1,2 @@
+<?
+$MESS["AI_SELECTORFIELD_RECOMMENDED_LABEL"] = "Рекомендуем";

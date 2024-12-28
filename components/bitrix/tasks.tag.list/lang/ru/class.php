@@ -13,6 +13,7 @@ $MESS['TAG_ACTION_NOT_ALLOWED'] = 'Недостаточно прав';
 $MESS['TASKS_TAG_LIST_MY_TAGS_GRID_APP_TITLE'] = 'Мои теги';
 $MESS['TASKS_TAG_LIST_TAGS_APP_TITLE'] = 'Теги';
 $MESS['TASKS_TAG_LIST_GROUP_TAGS_GRID_APP_TITLE'] = 'Теги проекта #PROJECT#';
+$MESS['TASKS_TAG_LIST_GROUP_TAGS_COLLAB_APP_TITLE'] = 'Теги коллабы #PROJECT#';
 $MESS['TAGS_IS_CONVERTING_TITLE'] = 'Подождите немного,#BR#теги скоро появятся';
 $MESS['TAGS_IS_CONVERTING_TEXT'] = 'Прямо сейчас мы обновляем теги, чтобы они стали ещё удобнее. Вы можете продолжить работу в других разделах Битрикс24 и вернуться чуть позже, обновление не займёт много времени.';
 $MESS['TASKS_TAG_GRID_TASK_ROW_CONTENT_STATUS_1'] = 'Новая';

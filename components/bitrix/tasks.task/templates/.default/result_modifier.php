@@ -10,6 +10,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 use Bitrix\Main\Localization\Loc;
 
+use Bitrix\Tasks\Integration\SocialNetwork\Collab\Url\UrlManager;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Internals\Task\Status;
@@ -289,7 +290,7 @@ if ($arParams["SET_NAVCHAIN"])
 	}
 	else
 	{
-		$APPLICATION->AddChainItem($arResult['DATA']['GROUP'][$arParams["GROUP_ID"]]["NAME"], CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_GROUP"], array("group_id" => $arParams["GROUP_ID"])));
+		$APPLICATION->AddChainItem($arResult['DATA']['GROUP'][$arParams["GROUP_ID"]]["NAME"] ?? null, CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_GROUP"], array("group_id" => $arParams["GROUP_ID"])));
 		$APPLICATION->AddChainItem($sTitle);
 	}
 }
@@ -613,6 +614,7 @@ if(
 {
 	$project = $taskData['SE_PROJECT'];
 	$project['ENTITY_TYPE'] = \Bitrix\Tasks\Integration\SocialNetwork::getGroupEntityPrefix();
+	$project['URL'] = UrlManager::getUrlByType((int)$project['ID'], $project['TYPE'] ?? null);
 
 	$project = array($project);
 }

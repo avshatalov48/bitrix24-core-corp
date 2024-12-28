@@ -14,6 +14,10 @@ class AtWorkTaskPreloader extends TaskDirectorPreloader
 			'@STATUS' => Status::STATUS_MAP[Status::FLOW_AT_WORK]
 		];
 
-		$this->load($filter, ...$flowIds);
+		$order = [
+			'DATE_START' => 'DESC',
+		];
+
+		$this->load($filter, $order, ...$flowIds);
 	}
 }

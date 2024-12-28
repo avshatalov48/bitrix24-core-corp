@@ -2,22 +2,24 @@
 
 namespace Bitrix\HumanResources\Service;
 
-use Bitrix\HumanResources\Enum\EventName;
+use Bitrix\HumanResources\Contract\Enum\EventName;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
 
 class EventSenderService implements \Bitrix\HumanResources\Contract\Service\EventSenderService
 {
+	public const MODULE_NAME = 'humanresources';
 	private EventManager $eventManager;
 
 	public function __construct(?EventManager $eventManager = null)
 	{
 		$this->eventManager = $eventManager ?? EventManager::getInstance();
 	}
+
 	public function send(EventName $event, array $eventData): Event
 	{
 		$event = new Event(
-			'humanresources',
+			self::MODULE_NAME,
 			$event->name,
 			$eventData,
 		);
@@ -42,7 +44,7 @@ class EventSenderService implements \Bitrix\HumanResources\Contract\Service\Even
 
 		foreach ($handlers as $key => $handler)
 		{
-			if (isset($handler['TO_MODULE_ID']) && $handler['TO_MODULE_ID'] === 'humanresources')
+			if (isset($handler['TO_MODULE_ID']) && $handler['TO_MODULE_ID'] === self::MODULE_NAME)
 			{
 				$this->eventManager->removeEventHandler(
 					$fromModuleId,

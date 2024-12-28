@@ -11,7 +11,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/action', (require, ex
 	const { Url } = require('im/messenger/lib/helper');
 
 	const baseColor = AppTheme.colors.base1;
-	const deleteColor = Application.getPlatform() === 'ios' ? AppTheme.colors.accentMainAlert : baseColor;
+	const deleteColor = AppTheme.colors.accentMainAlert;
 
 	const ActionViewType = Object.freeze({
 		button: 'button',
@@ -228,6 +228,34 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/action', (require, ex
 		},
 	};
 
+	/** @type MessageContextMenuButton */
+	const ResendAction = {
+		id: ActionType.resend,
+		testId: 'MESSAGE_MENU_ACTION_RESEND',
+		type: ActionViewType.button,
+		text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_RESEND'),
+		iconName: Icon.REFRESH.getIconName(),
+		iconFallbackUrl: Url.createFromPath(Icon.FEEDBACK.getPath()).href,
+		iconSvg: icon.feedback,
+		style: {
+			fontColor: baseColor,
+		},
+	};
+
+	/** @type MessageContextMenuButton */
+	const MultiSelectAction = {
+		id: ActionType.multiselect,
+		testId: 'messageMenuAction_item_multiselect',
+		type: ActionViewType.button,
+		text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_MULTISELECT'),
+		iconName: Icon.CIRCLE_CHECK.getIconName(),
+		iconFallbackUrl: Url.createFromPath(Icon.CIRCLE_CHECK.getPath()).href,
+		iconSvg: Icon.CIRCLE_CHECK.getSvg(),
+		style: {
+			fontColor: baseColor,
+		},
+	};
+
 	/** @type MessageContextMenuSeparator */
 	const SeparatorAction = {
 		type: ActionViewType.separator,
@@ -250,6 +278,8 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/action', (require, ex
 		FeedbackAction,
 		SubscribeAction,
 		UnsubscribeAction,
+		ResendAction,
 		SeparatorAction,
+		MultiSelectAction,
 	};
 });

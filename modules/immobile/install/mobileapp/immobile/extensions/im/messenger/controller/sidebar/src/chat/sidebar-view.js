@@ -2,10 +2,8 @@
  * @module im/messenger/controller/sidebar/chat/sidebar-view
  */
 jn.define('im/messenger/controller/sidebar/chat/sidebar-view', (require, exports, module) => {
-	const { SidebarFriendlyDate } = require('im/messenger/controller/sidebar/chat/friendly-date');
 	const { SidebarProfileBtn } = require('im/messenger/controller/sidebar/chat/sidebar-profile-btn');
 	const { SidebarTabView } = require('im/messenger/controller/sidebar/chat/tabs/tab-view');
-	const { SidebarProfileUserCounter } = require('im/messenger/controller/sidebar/chat/sidebar-profile-user-counter');
 	const { SidebarProfileInfo } = require('im/messenger/controller/sidebar/chat/sidebar-profile-info');
 	const { SidebarPlanLimitBanner } = require('im/messenger/controller/sidebar/chat/sidebar-plan-limit-banner');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -119,50 +117,12 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-view', (require, exports
 						justifyContent: 'center',
 						alignItems: 'center',
 						flexDirection: 'column',
+						width: '100%',
+						paddingHorizontal: 18,
+						marginTop: 12,
 					},
 				},
 				new SidebarProfileInfo(this.props),
-				this.props.isGroupDialog ? this.renderDialogUserCounter() : this.renderUserLastTime(),
-			);
-		}
-
-		renderDialogUserCounter()
-		{
-			return new SidebarProfileUserCounter({ dialogId: this.props.dialogId, isCopilot: this.props.isCopilot });
-		}
-
-		renderUserLastTime()
-		{
-			const { userData } = this.state;
-
-			const textStyle = {
-				color: Theme.colors.base3,
-				fontSize: 14,
-				fontWeight: 400,
-				textStyle: 'normal',
-				textAlign: 'center',
-			};
-
-			if (Type.isUndefined(userData.lastActivityDate) || Type.isNull(userData.lastActivityDate))
-			{
-				return null;
-			}
-
-			return View(
-				{
-					style: {
-						marginTop: 5,
-						flexDirection: 'row',
-					},
-				},
-				new SidebarFriendlyDate({
-					moment: userData.lastActivityDate,
-					style: textStyle,
-					showTime: true,
-					useTimeAgo: true,
-					futureAllowed: true,
-					userData: userData.userModelData,
-				}),
 			);
 		}
 

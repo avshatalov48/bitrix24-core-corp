@@ -417,6 +417,11 @@ BX.Crm.KanbanComponent.onSpecialItemDraw = function(item, layout)
 
 					if (typeof gridData.linksPath[urlMarker] !== "undefined")
 					{
+						if (['rest_demo', 'contact_center', 'marketplace'].includes(urlMarker))
+						{
+							item.getGrid().registerAnalyticsSpecialItemLinkClick(item, urlMarker);
+						}
+
 						var skipslider = BX.data(this, "skipslider") ||
 										gridData.linksPath[urlMarker].skipslider;
 						if (parseInt(skipslider) == 1)

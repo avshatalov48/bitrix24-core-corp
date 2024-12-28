@@ -3,6 +3,7 @@
 class CBIConnectorSqlBuilder extends CSQLWhere
 {
 	protected $select;
+	protected array $selectFieldNames = [];
 
 	public function SetSelect($selectedFields, $options = [])
 	{
@@ -11,17 +12,32 @@ class CBIConnectorSqlBuilder extends CSQLWhere
 		$this->select = [];
 		foreach ($selectedFields as $fieldName => $fieldInfo)
 		{
+			$this->selectFieldNames[] = $fieldName;
 			if ($fieldInfo['FIELD_TYPE'] === 'datetime' && isset($options['datetime_format']))
 			{
-				$this->select[] = 'date_format(' . $fieldInfo['FIELD_NAME'] . ',\'' . $DB->forSql($options['datetime_format']) . '\') AS ' . $fieldName;
+				$this->select[] = sprintf(
+					'date_format(%s, \'%s\') AS `%s`',
+					$fieldInfo['FIELD_NAME'],
+					$DB->forSql($options['datetime_format']),
+					$fieldName
+				);
 			}
 			elseif ($fieldInfo['FIELD_TYPE'] === 'date' && isset($options['date_format']))
 			{
-				$this->select[] = 'date_format(' . $fieldInfo['FIELD_NAME'] . ',\'' . $DB->forSql($options['date_format']) . '\') AS ' . $fieldName;
+				$this->select[] = sprintf(
+					'date_format(%s, \'%s\') AS `%s`',
+					$fieldInfo['FIELD_NAME'],
+					$DB->forSql($options['date_format']),
+					$fieldName
+				);
 			}
 			else
 			{
-				$this->select[] = $fieldInfo['FIELD_NAME'] . ' AS ' . $fieldName;
+				$this->select[] = sprintf(
+					'%s AS `%s`',
+					$fieldInfo['FIELD_NAME'],
+					$fieldName
+				);
 			}
 
 			if (!isset($this->c_joins[$fieldName]))
@@ -50,6 +66,11 @@ class CBIConnectorSqlBuilder extends CSQLWhere
 	public function GetSelect()
 	{
 		return implode("\n  ,", $this->select);
+	}
+
+	public function GetSelectFieldNames()
+	{
+		return $this->selectFieldNames;
 	}
 
 	public function GetJoins()

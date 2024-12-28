@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,main_popup,ui_buttons,tasks_wizard,ui_sidepanel_layout,tasks_intervalSelector,pull_client,ui_entitySelector,main_core_events,main_core,ui_formElements_view,ui_lottie) {
+(function (exports,main_popup,ui_buttons,tasks_wizard,tasks_intervalSelector,main_polyfill_intersectionobserver,pull_client,ui_entitySelector,main_core_events,main_core,ui_formElements_view,ui_lottie) {
 	'use strict';
 
 	class FormPage {
@@ -32,13 +32,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
 	var _layout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
 	var _renderChecker = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderChecker");
+	var _setHint = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setHint");
 	var _renderValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderValue");
 	var _renderInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderInput");
 	var _renderEntitySelectorValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderEntitySelectorValue");
 	var _onEntitySelectorItemSelectedHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onEntitySelectorItemSelectedHandler");
 	var _getSelectedItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSelectedItem");
-	class ValueChecker {
+	class ValueChecker extends main_core_events.EventEmitter {
 	  constructor(params) {
+	    super(params);
 	    Object.defineProperty(this, _getSelectedItem, {
 	      value: _getSelectedItem2
 	    });
@@ -54,6 +56,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    Object.defineProperty(this, _renderValue, {
 	      value: _renderValue2
 	    });
+	    Object.defineProperty(this, _setHint, {
+	      value: _setHint2
+	    });
 	    Object.defineProperty(this, _renderChecker, {
 	      value: _renderChecker2
 	    });
@@ -65,6 +70,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    this.setEventNamespace('BX.Tasks.Flow.EditForm.ValueChecker');
 	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = params;
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout] = {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].entitySelector) {
@@ -90,6 +96,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }
 	  getInputNode() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _renderInput)[_renderInput]();
+	  }
+	  getChecker() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checker;
+	  }
+	  disable(disabled) {
+	    if (disabled) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checker.switcher.check(true);
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checker.switcher.disable(disabled);
 	  }
 	  render() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].wrap = main_core.Tag.render(_t || (_t = _`
@@ -134,12 +149,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }
 	}
 	function _renderChecker2() {
-	  var _babelHelpers$classPr9;
+	  var _babelHelpers$classPr9, _babelHelpers$classPr10, _babelHelpers$classPr11;
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checker = new ui_formElements_view.Checker({
-	    checked: !!babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].value,
+	    checked: Boolean(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].value),
 	    title: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].title,
 	    hideSeparator: true,
-	    size: (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].size) != null ? _babelHelpers$classPr9 : 'small'
+	    size: (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].size) != null ? _babelHelpers$classPr9 : 'small',
+	    isFieldDisabled: (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].isFieldDisabled) != null ? _babelHelpers$classPr10 : false
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checker.subscribe('change', baseEvent => {
 	    const isChecked = baseEvent.getData();
@@ -150,10 +166,32 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checkerValue.setSelectionRange(length, length);
 	    }
 	  });
-	  return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checker.render();
+	  main_core_events.EventEmitter.subscribe(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checker.switcher, 'lock', () => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _setHint)[_setHint](true);
+	    this.emit('lock', babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checkerContentField);
+	  });
+	  main_core_events.EventEmitter.subscribe(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checker.switcher, 'unlock', () => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _setHint)[_setHint](false);
+	    this.emit('unlock', babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checkerContentField);
+	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checkerContentField = babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checker.render();
+	  babelHelpers.classPrivateFieldLooseBase(this, _setHint)[_setHint]((_babelHelpers$classPr11 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].isFieldDisabled) != null ? _babelHelpers$classPr11 : false);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checkerContentField;
+	}
+	function _setHint2(isDisabled) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].hintText) {
+	    return;
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].hintOnDisabled === true && isDisabled === false) {
+	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checkerContentField, 'data-hint', null);
+	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checkerContentField, 'data-hint-no-icon', null);
+	  } else {
+	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checkerContentField, 'data-hint', babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].hintText);
+	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checkerContentField, 'data-hint-no-icon', true);
+	  }
 	}
 	function _renderValue2() {
-	  var _babelHelpers$classPr10;
+	  var _babelHelpers$classPr12;
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].placeholder) {
 	    return '';
 	  }
@@ -166,16 +204,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 				<span>${0}</span>
 				${0}
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _renderInput)[_renderInput](), (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].unit) != null ? _babelHelpers$classPr10 : '', babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].disabledValue);
+		`), babelHelpers.classPrivateFieldLooseBase(this, _renderInput)[_renderInput](), (_babelHelpers$classPr12 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].unit) != null ? _babelHelpers$classPr12 : '', babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].disabledValue);
 	}
 	function _renderInput2() {
-	  var _babelHelpers$classPr11;
+	  var _babelHelpers$classPr13;
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checkerValue) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checkerValue;
 	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checkerValue = main_core.Tag.render(_t4 || (_t4 = _`
 			<input class="ui-ctl-element" placeholder="${0}" value="${0}">
-		`), babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].placeholder, (_babelHelpers$classPr11 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].value) != null ? _babelHelpers$classPr11 : babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].placeholder);
+		`), babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].placeholder, (_babelHelpers$classPr13 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].value) != null ? _babelHelpers$classPr13 : babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].placeholder);
 	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checkerValue, 'input', () => this.update());
 	  return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checkerValue;
 	}
@@ -204,8 +242,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].entitySelector.hide();
 	}
 	function _getSelectedItem2() {
-	  var _babelHelpers$classPr12;
-	  return (_babelHelpers$classPr12 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].entitySelector) == null ? void 0 : _babelHelpers$classPr12.getSelectedItems()[0];
+	  var _babelHelpers$classPr14;
+	  return (_babelHelpers$classPr14 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].entitySelector) == null ? void 0 : _babelHelpers$classPr14.getSelectedItems()[0];
 	}
 
 	var _params$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
@@ -282,12 +320,21 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _layout$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
 	var _flow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("flow");
 	var _getTasksCreatorsFromSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTasksCreatorsFromSelector");
+	var _isShortInterval = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isShortInterval");
 	var _renderPlannedCompletionTime = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPlannedCompletionTime");
+	var _needUseSchedule = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needUseSchedule");
 	class AboutPage extends FormPage {
 	  constructor(params) {
 	    super();
+	    Object.defineProperty(this, _needUseSchedule, {
+	      get: _get_needUseSchedule,
+	      set: void 0
+	    });
 	    Object.defineProperty(this, _renderPlannedCompletionTime, {
 	      value: _renderPlannedCompletionTime2
+	    });
+	    Object.defineProperty(this, _isShortInterval, {
+	      value: _isShortInterval2
 	    });
 	    Object.defineProperty(this, _getTasksCreatorsFromSelector, {
 	      value: _getTasksCreatorsFromSelector2
@@ -326,6 +373,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	    if (incorrectData.includes('plannedCompletionTime')) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTime.setErrors([main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_PLANNED_COMPLETION_TIME_ERROR')]);
+	      babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTime.emit('onSetErrors');
 	    }
 	    if (incorrectData.includes('taskCreators')) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].taskCreatorsSelector.setErrors([main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_TASKS_CREATORS_ERROR')]);
@@ -335,17 +383,20 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].flowName.cleanError();
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTime.cleanError();
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].taskCreatorsSelector.cleanError();
+	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTime.emit('onCleanErrors');
 	  }
 	  getFields(flowData = {}) {
-	    var _babelHelpers$classPr, _babelHelpers$classPr2, _flowData$name, _babelHelpers$classPr3, _flowData$description, _babelHelpers$classPr4, _flowData$taskCreator, _flowData$plannedComp, _flowData$matchWorkTi, _babelHelpers$classPr5, _babelHelpers$classPr6;
+	    var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3, _flowData$name, _babelHelpers$classPr4, _flowData$description, _babelHelpers$classPr5, _flowData$taskCreator, _flowData$plannedComp, _flowData$matchSchedu, _flowData$matchWorkTi, _babelHelpers$classPr6, _babelHelpers$classPr7;
 	    const plannedCompletionTimeValue = parseInt((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTime) == null ? void 0 : _babelHelpers$classPr.getValue(), 10);
 	    const intervalDuration = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTimeIntervalSelector) == null ? void 0 : _babelHelpers$classPr2.getDuration();
+	    const interval = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTimeIntervalSelector) == null ? void 0 : _babelHelpers$classPr3.getInterval();
 	    return {
-	      name: (_flowData$name = flowData.name) != null ? _flowData$name : (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].flowName) == null ? void 0 : _babelHelpers$classPr3.getValue().trim(),
-	      description: (_flowData$description = flowData.description) != null ? _flowData$description : (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].flowDescription) == null ? void 0 : _babelHelpers$classPr4.getValue(),
+	      name: (_flowData$name = flowData.name) != null ? _flowData$name : (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].flowName) == null ? void 0 : _babelHelpers$classPr4.getValue().trim(),
+	      description: (_flowData$description = flowData.description) != null ? _flowData$description : (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].flowDescription) == null ? void 0 : _babelHelpers$classPr5.getValue(),
 	      taskCreators: (_flowData$taskCreator = flowData.taskCreators) != null ? _flowData$taskCreator : babelHelpers.classPrivateFieldLooseBase(this, _getTasksCreatorsFromSelector)[_getTasksCreatorsFromSelector](),
 	      plannedCompletionTime: (_flowData$plannedComp = flowData.plannedCompletionTime) != null ? _flowData$plannedComp : plannedCompletionTimeValue * intervalDuration || 0,
-	      matchWorkTime: (_flowData$matchWorkTi = flowData.matchWorkTime) != null ? _flowData$matchWorkTi : (_babelHelpers$classPr5 = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].skipWeekends) == null ? void 0 : _babelHelpers$classPr6.isChecked()) != null ? _babelHelpers$classPr5 : true
+	      matchSchedule: (_flowData$matchSchedu = flowData.matchSchedule) != null ? _flowData$matchSchedu : babelHelpers.classPrivateFieldLooseBase(this, _isShortInterval)[_isShortInterval](interval),
+	      matchWorkTime: (_flowData$matchWorkTi = flowData.matchWorkTime) != null ? _flowData$matchWorkTi : (_babelHelpers$classPr6 = (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].skipWeekends) == null ? void 0 : _babelHelpers$classPr7.isChecked()) != null ? _babelHelpers$classPr6 : true
 	    };
 	  }
 	  render() {
@@ -403,19 +454,31 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }
 	}
 	function _getTasksCreatorsFromSelector2() {
-	  var _babelHelpers$classPr7;
-	  let taskCreators = (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].taskCreatorsSelector) == null ? void 0 : _babelHelpers$classPr7.getSelector().getTags().map(tag => [tag.entityId, tag.id]);
+	  var _babelHelpers$classPr8;
+	  let taskCreators = (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].taskCreatorsSelector) == null ? void 0 : _babelHelpers$classPr8.getSelector().getTags().map(tag => [tag.entityId, tag.id]);
 	  if (main_core.Type.isUndefined(taskCreators) || taskCreators.length === 0) {
-	    var _babelHelpers$classPr8, _babelHelpers$classPr9;
-	    taskCreators = (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].taskCreatorsSelector) == null ? void 0 : (_babelHelpers$classPr9 = _babelHelpers$classPr8.getSelector()) == null ? void 0 : _babelHelpers$classPr9.getDialog().getPreselectedItems();
+	    var _babelHelpers$classPr9, _babelHelpers$classPr10;
+	    taskCreators = (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].taskCreatorsSelector) == null ? void 0 : (_babelHelpers$classPr10 = _babelHelpers$classPr9.getSelector()) == null ? void 0 : _babelHelpers$classPr10.getDialog().getPreselectedItems();
 	  }
 	  return taskCreators;
+	}
+	function _isShortInterval2(interval) {
+	  const shortIntervals = ['minutes', 'hours'];
+	  return shortIntervals.includes(interval);
 	}
 	function _renderPlannedCompletionTime2() {
 	  const value = babelHelpers.classPrivateFieldLooseBase(this, _flow)[_flow].plannedCompletionTime;
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTimeIntervalSelector = new tasks_intervalSelector.IntervalSelector({
 	    value
 	  });
+	  const needUseSchedule = babelHelpers.classPrivateFieldLooseBase(this, _needUseSchedule)[_needUseSchedule];
+	  if (needUseSchedule) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTimeIntervalSelector.subscribe('intervalChanged', event => {
+	      const interval = event.getData().interval;
+	      const isSkipWeekendsDisabled = babelHelpers.classPrivateFieldLooseBase(this, _isShortInterval)[_isShortInterval](interval);
+	      babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].skipWeekends.disable(isSkipWeekendsDisabled);
+	    });
+	  }
 	  const duration = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTimeIntervalSelector.getDuration();
 	  const plannedCompletionTimeLabel = `
 			<div class="tasks-flow__create-title-with-hint">
@@ -442,10 +505,28 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    input: babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTime.getInputNode(),
 	    max: Math.floor(maxInt / monthDuration)
 	  });
+	  const interval = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTimeIntervalSelector.getInterval();
+	  const isSkipWeekendsDisabled = needUseSchedule && babelHelpers.classPrivateFieldLooseBase(this, _isShortInterval)[_isShortInterval](interval);
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].skipWeekends = new ValueChecker({
+	    id: 'planned-completion-time-skip-weekends',
 	    title: main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_SKIP_WEEKENDS'),
-	    value: babelHelpers.classPrivateFieldLooseBase(this, _flow)[_flow].id === 0 || babelHelpers.classPrivateFieldLooseBase(this, _flow)[_flow].matchWorkTime,
-	    size: 'extra-small'
+	    value: isSkipWeekendsDisabled ? true : babelHelpers.classPrivateFieldLooseBase(this, _flow)[_flow].id === 0 || babelHelpers.classPrivateFieldLooseBase(this, _flow)[_flow].matchWorkTime,
+	    size: 'extra-small',
+	    isFieldDisabled: isSkipWeekendsDisabled,
+	    hintText: main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_DISABLED_SKIP_WEEKENDS_HINT'),
+	    hintOnDisabled: true
+	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].skipWeekends.subscribe('lock', baseEvent => {
+	    requestAnimationFrame(() => {
+	      const hintManager = top.BX.UI.Hint.createInstance({
+	        id: `tasks-flow-edit-form-about-page-${main_core.Text.getRandom()}`,
+	        className: 'skipInitByClassName',
+	        popupParameters: {
+	          targetContainer: babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].aboutPageForm.closest('.tasks-wizard__step')
+	        }
+	      });
+	      hintManager.initNode(baseEvent.getData());
+	    });
 	  });
 	  const root = main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
 			<div data-id="tasks-flow-edit-form-field-planned-time">
@@ -459,6 +540,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 			</div>
 		`), babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTime.render(), babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTimeIntervalSelector.render(), babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].skipWeekends.render());
 	  return root;
+	}
+	function _get_needUseSchedule() {
+	  const settings = main_core.Extension.getSettings('tasks.flow.edit-form');
+	  return settings.get('needUseSchedule');
 	}
 
 	var _userId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userId");
@@ -511,6 +596,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  _t$2,
 	  _t2$2,
 	  _t3$1;
+	const BIG_DEPARTMENT_USER_COUNT = 30;
+	const HINT_MESSAGES_BY_COUNT = [{
+	  condition: count => count === 0,
+	  message: 'TASKS_FLOW_EDIT_FORM_THIS_IS_EMPTY_DEPARTMENT_HINT'
+	}, {
+	  condition: count => count > BIG_DEPARTMENT_USER_COUNT,
+	  message: 'TASKS_FLOW_EDIT_FORM_THIS_IS_BIG_DEPARTMENT_HINT'
+	}];
 	var _params$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
 	var _layout$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
 	var _flow$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("flow");
@@ -519,13 +612,30 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _subscribeToPull = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToPull");
 	var _onTemplateAddedHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onTemplateAddedHandler");
 	var _onTemplateUpdatedHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onTemplateUpdatedHandler");
+	var _showResponsibleListError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showResponsibleListError");
+	var _getResponsiblesByDistributionType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getResponsiblesByDistributionType");
+	var _getResponsiblesFromSelectorByDistributionType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getResponsiblesFromSelectorByDistributionType");
+	var _getResponsiblesFromSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getResponsiblesFromSelector");
 	var _renderDistribution = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderDistribution");
+	var _getResponsiblesSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getResponsiblesSelector");
 	var _renderDistributionType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderDistributionType");
 	var _getTaskTemplateDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTaskTemplateDialog");
 	var _getProjectLabel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getProjectLabel");
+	var _getHintMessageCodeByCount = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getHintMessageCodeByCount");
+	var _showDepartmentHint = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showDepartmentHint");
+	var _getDepartmentsUsersCount = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDepartmentsUsersCount");
 	class SettingsPage extends FormPage {
 	  constructor(params) {
 	    super();
+	    Object.defineProperty(this, _getDepartmentsUsersCount, {
+	      value: _getDepartmentsUsersCount2
+	    });
+	    Object.defineProperty(this, _showDepartmentHint, {
+	      value: _showDepartmentHint2
+	    });
+	    Object.defineProperty(this, _getHintMessageCodeByCount, {
+	      value: _getHintMessageCodeByCount2
+	    });
 	    Object.defineProperty(this, _getProjectLabel, {
 	      value: _getProjectLabel2
 	    });
@@ -535,8 +645,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    Object.defineProperty(this, _renderDistributionType, {
 	      value: _renderDistributionType2
 	    });
+	    Object.defineProperty(this, _getResponsiblesSelector, {
+	      value: _getResponsiblesSelector2
+	    });
 	    Object.defineProperty(this, _renderDistribution, {
 	      value: _renderDistribution2
+	    });
+	    Object.defineProperty(this, _getResponsiblesFromSelector, {
+	      value: _getResponsiblesFromSelector2
+	    });
+	    Object.defineProperty(this, _getResponsiblesFromSelectorByDistributionType, {
+	      value: _getResponsiblesFromSelectorByDistributionType2
+	    });
+	    Object.defineProperty(this, _getResponsiblesByDistributionType, {
+	      value: _getResponsiblesByDistributionType2
+	    });
+	    Object.defineProperty(this, _showResponsibleListError, {
+	      value: _showResponsibleListError2
 	    });
 	    Object.defineProperty(this, _onTemplateUpdatedHandler, {
 	      value: _onTemplateUpdatedHandler2
@@ -581,7 +706,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    return main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_SETTINGS');
 	  }
 	  getRequiredData() {
-	    const requiredData = ['groupId', this.getFields().distributionType === 'manually' ? 'manualDistributorId' : 'responsibleQueue'];
+	    const requiredData = ['groupId', 'responsibleList'];
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskTemplate.isChecked()) {
 	      requiredData.push('templateId');
 	    }
@@ -598,13 +723,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].manuallyRadio.checked) {
 	      main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].manuallyDistribution, '--active');
 	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].himselfRadio.checked) {
+	      main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].himselfDistribution, '--active');
+	    }
 	  }
 	  showErrors(incorrectData) {
-	    if (incorrectData.includes('responsibleQueue')) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesSelector.setErrors([main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_TASKS_RESPONSIBLES_ERROR')]);
-	    }
-	    if (incorrectData.includes('manualDistributorId')) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].moderatorSelector.setErrors([main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_TASKS_MODERATOR_ERROR')]);
+	    if (incorrectData.includes('responsibleList')) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _showResponsibleListError)[_showResponsibleListError]();
 	    }
 	    if (incorrectData.includes('groupId')) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].projectSelector.setErrors([main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_PROJECT_FOR_TASKS_ERROR')]);
@@ -615,36 +740,29 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }
 	  cleanErrors() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].projectSelector.cleanError();
-	    babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesSelector.cleanError();
+	    babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesQueueSelector.cleanError();
+	    babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesHimselfSelector.cleanError();
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].moderatorSelector.cleanError();
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskTemplate.cleanError();
 	  }
 	  getFields(flowData = {}) {
-	    var _babelHelpers$classPr, _babelHelpers$classPr3, _babelHelpers$classPr5, _flowData$distributio, _flowData$responsible, _flowData$manualDistr, _flowData$responsible2, _babelHelpers$classPr7, _babelHelpers$classPr8, _flowData$notifyAtHal, _babelHelpers$classPr9, _babelHelpers$classPr10, _flowData$taskControl, _babelHelpers$classPr11, _babelHelpers$classPr12, _flowData$groupId, _flowData$templateId, _babelHelpers$classPr13;
-	    let responsibleQueue = babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].responsibleQueue;
-	    if ((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesSelector) != null && _babelHelpers$classPr.getSelector().getDialog().isLoaded()) {
-	      var _babelHelpers$classPr2;
-	      responsibleQueue = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesSelector) == null ? void 0 : _babelHelpers$classPr2.getSelector().getTags().map(tag => tag.id);
-	    }
-	    let manualDistributorId = babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].manualDistributorId;
-	    if ((_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].moderatorSelector) != null && _babelHelpers$classPr3.getSelector().getDialog().isLoaded()) {
-	      var _babelHelpers$classPr4;
-	      manualDistributorId = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].moderatorSelector.getSelector().getTags()[0]) == null ? void 0 : _babelHelpers$classPr4.id;
-	    }
+	    var _flowData$distributio, _babelHelpers$classPr, _flowData$responsible, _babelHelpers$classPr3, _babelHelpers$classPr4, _flowData$notifyAtHal, _babelHelpers$classPr5, _babelHelpers$classPr6, _flowData$taskControl, _babelHelpers$classPr7, _babelHelpers$classPr8, _flowData$groupId, _flowData$templateId, _babelHelpers$classPr9;
+	    const selectedDistributionType = new FormData(babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].settingsPageForm).get('distribution');
+	    const distributionType = (_flowData$distributio = flowData.distributionType) != null ? _flowData$distributio : selectedDistributionType || 'queue';
+	    const responsibleList = babelHelpers.classPrivateFieldLooseBase(this, _getResponsiblesByDistributionType)[_getResponsiblesByDistributionType](distributionType, flowData);
 	    let groupId = babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].groupId;
-	    if ((_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].projectSelector) != null && _babelHelpers$classPr5.getSelector().getDialog().isLoaded()) {
-	      var _babelHelpers$classPr6;
-	      groupId = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].projectSelector.getSelector().getTags()[0]) == null ? void 0 : _babelHelpers$classPr6.id;
+	    if ((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].projectSelector) != null && _babelHelpers$classPr.getSelector().getDialog().isLoaded()) {
+	      var _babelHelpers$classPr2;
+	      groupId = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].projectSelector.getSelector().getTags()[0]) == null ? void 0 : _babelHelpers$classPr2.id;
 	    }
 	    return {
-	      distributionType: (_flowData$distributio = flowData.distributionType) != null ? _flowData$distributio : new FormData(babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].settingsPageForm).get('distribution') || 'queue',
-	      responsibleQueue: (_flowData$responsible = flowData.responsibleQueue) != null ? _flowData$responsible : responsibleQueue,
-	      manualDistributorId: (_flowData$manualDistr = flowData.manualDistributorId) != null ? _flowData$manualDistr : manualDistributorId || 0,
-	      responsibleCanChangeDeadline: (_flowData$responsible2 = flowData.responsibleCanChangeDeadline) != null ? _flowData$responsible2 : (_babelHelpers$classPr7 = (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsibleCanChangeDeadline) == null ? void 0 : _babelHelpers$classPr8.isChecked()) != null ? _babelHelpers$classPr7 : false,
-	      notifyAtHalfTime: (_flowData$notifyAtHal = flowData.notifyAtHalfTime) != null ? _flowData$notifyAtHal : (_babelHelpers$classPr9 = (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].notifyAtHalfTime) == null ? void 0 : _babelHelpers$classPr10.isChecked()) != null ? _babelHelpers$classPr9 : false,
-	      taskControl: (_flowData$taskControl = flowData.taskControl) != null ? _flowData$taskControl : (_babelHelpers$classPr11 = (_babelHelpers$classPr12 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskControl) == null ? void 0 : _babelHelpers$classPr12.isChecked()) != null ? _babelHelpers$classPr11 : false,
+	      distributionType,
+	      responsibleList,
+	      responsibleCanChangeDeadline: (_flowData$responsible = flowData.responsibleCanChangeDeadline) != null ? _flowData$responsible : (_babelHelpers$classPr3 = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsibleCanChangeDeadline) == null ? void 0 : _babelHelpers$classPr4.isChecked()) != null ? _babelHelpers$classPr3 : false,
+	      notifyAtHalfTime: (_flowData$notifyAtHal = flowData.notifyAtHalfTime) != null ? _flowData$notifyAtHal : (_babelHelpers$classPr5 = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].notifyAtHalfTime) == null ? void 0 : _babelHelpers$classPr6.isChecked()) != null ? _babelHelpers$classPr5 : false,
+	      taskControl: (_flowData$taskControl = flowData.taskControl) != null ? _flowData$taskControl : (_babelHelpers$classPr7 = (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskControl) == null ? void 0 : _babelHelpers$classPr8.isChecked()) != null ? _babelHelpers$classPr7 : false,
 	      groupId: (_flowData$groupId = flowData.groupId) != null ? _flowData$groupId : groupId || 0,
-	      templateId: (_flowData$templateId = flowData.templateId) != null ? _flowData$templateId : (_babelHelpers$classPr13 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskTemplate) != null && _babelHelpers$classPr13.isChecked() ? babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskTemplate.getValue() : 0
+	      templateId: (_flowData$templateId = flowData.templateId) != null ? _flowData$templateId : (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskTemplate) != null && _babelHelpers$classPr9.isChecked() ? babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskTemplate.getValue() : 0
 	    };
 	  }
 	  render() {
@@ -687,7 +805,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          features: {
 	            tasks: []
 	          },
-	          checkFeatureForCreate: true
+	          checkFeatureForCreate: true,
+	          '!type': ['collab'],
+	          isFromFlowCreationForm: true
 	        }
 	      }],
 	      values: babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].groupId ? [['project', babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].groupId]] : []
@@ -712,6 +832,31 @@ this.BX.Tasks = this.BX.Tasks || {};
 		`), babelHelpers.classPrivateFieldLooseBase(this, _renderDistribution)[_renderDistribution](), babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsibleCanChangeDeadline.render(), babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].notifyAtHalfTime.render(), babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskControl.render(), babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].projectSelector.render(), babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskTemplate.render());
 	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].settingsPageForm, 'change', babelHelpers.classPrivateFieldLooseBase(this, _params$3)[_params$3].onChangeHandler);
 	    return babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].settingsPageForm;
+	  }
+	  checkDepartmentUsersCount(selector) {
+	    const selectedTags = selector.getTags();
+	    const selectedDepartments = selectedTags.filter(tag => tag.getEntityId() === 'department');
+	    let addedDepartments = [];
+	    if (main_core.Type.isUndefined(this.selectedDepartments) || this.selectedDepartments.length === 0) {
+	      addedDepartments = selectedDepartments;
+	    } else {
+	      addedDepartments = selectedDepartments.filter(departmentTag => !this.selectedDepartments.includes(departmentTag));
+	    }
+	    this.selectedDepartments = selectedDepartments;
+	    if (addedDepartments.length === 0) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _getDepartmentsUsersCount)[_getDepartmentsUsersCount](addedDepartments).then(countArray => {
+	      const departmentForHint = countArray.find(departmentData => departmentData.count > BIG_DEPARTMENT_USER_COUNT || departmentData.count === 0);
+	      if (departmentForHint) {
+	        const tag = addedDepartments.find(item => item.getId().toString() === departmentForHint.departmentId);
+	        if (tag) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _showDepartmentHint)[_showDepartmentHint](tag, babelHelpers.classPrivateFieldLooseBase(this, _getHintMessageCodeByCount)[_getHintMessageCodeByCount](departmentForHint.count));
+	        }
+	      }
+	    }).catch(error => {
+	      console.error(error);
+	    });
 	  }
 	}
 	function _get_currentUser() {
@@ -749,34 +894,80 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    entityId: 'task-template'
 	  });
 	  if (main_core.Type.isStringFilled(template.title)) {
-	    var _babelHelpers$classPr14;
+	    var _babelHelpers$classPr10;
 	    templateItem == null ? void 0 : templateItem.setTitle(template.title);
-	    (_babelHelpers$classPr14 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskTemplate) == null ? void 0 : _babelHelpers$classPr14.update();
+	    (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskTemplate) == null ? void 0 : _babelHelpers$classPr10.update();
 	  }
 	  if (!main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskTemplateDialog.getSelectedItems())) {
 	    templateItem == null ? void 0 : templateItem.select();
 	  }
 	}
+	function _showResponsibleListError2() {
+	  const distributionType = new FormData(babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].settingsPageForm).get('distribution');
+
+	  // eslint-disable-next-line default-case
+	  switch (distributionType) {
+	    case 'manually':
+	      babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].moderatorSelector.setErrors([main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_TASKS_MODERATOR_ERROR')]);
+	      break;
+	    case 'queue':
+	      babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesQueueSelector.setErrors([main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_TASKS_RESPONSIBLES_ERROR')]);
+	      break;
+	    case 'himself':
+	      babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesHimselfSelector.setErrors([main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_TASKS_RESPONSIBLES_ERROR')]);
+	      break;
+	  }
+	}
+	function _getResponsiblesByDistributionType2(distributionType, flowData = {}) {
+	  let responsibleList = [];
+	  const isConsiderFlowResponsible = babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].distributionType === distributionType;
+	  if (isConsiderFlowResponsible) {
+	    responsibleList = babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].responsibleList;
+	  }
+	  const responsibleListFromSelector = babelHelpers.classPrivateFieldLooseBase(this, _getResponsiblesFromSelectorByDistributionType)[_getResponsiblesFromSelectorByDistributionType](distributionType);
+	  if (!main_core.Type.isNull(responsibleListFromSelector)) {
+	    responsibleList = responsibleListFromSelector;
+	  }
+	  const isConsiderFlowDataResponsible = flowData.distributionType === distributionType;
+	  if (isConsiderFlowDataResponsible) {
+	    var _flowData$responsible2;
+	    return (_flowData$responsible2 = flowData.responsibleList) != null ? _flowData$responsible2 : responsibleList;
+	  }
+	  return responsibleList;
+	}
+	function _getResponsiblesFromSelectorByDistributionType2(distributionType) {
+	  switch (distributionType) {
+	    case 'manually':
+	      return babelHelpers.classPrivateFieldLooseBase(this, _getResponsiblesFromSelector)[_getResponsiblesFromSelector](babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].moderatorSelector);
+	    case 'queue':
+	      return babelHelpers.classPrivateFieldLooseBase(this, _getResponsiblesFromSelector)[_getResponsiblesFromSelector](babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesQueueSelector);
+	    case 'himself':
+	      return babelHelpers.classPrivateFieldLooseBase(this, _getResponsiblesFromSelector)[_getResponsiblesFromSelector](babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesHimselfSelector);
+	    default:
+	      return null;
+	  }
+	}
+	function _getResponsiblesFromSelector2(selector) {
+	  if (selector != null && selector.getSelector().getDialog().isLoaded()) {
+	    return selector == null ? void 0 : selector.getSelector().getTags().map(tag => [tag.entityId, tag.id]);
+	  }
+	  return null;
+	}
 	function _renderDistribution2() {
-	  var _babelHelpers$classPr15;
-	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesSelector = new ui_formElements_view.UserSelector({
-	    enableAll: false,
-	    enableDepartments: false,
-	    values: (_babelHelpers$classPr15 = babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].responsibleQueue) == null ? void 0 : _babelHelpers$classPr15.map(responsibleId => ['user', responsibleId]),
-	    label: main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_DISTRIBUTION_QUEUE_SELECTOR_LABEL')
-	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesQueueSelector = babelHelpers.classPrivateFieldLooseBase(this, _getResponsiblesSelector)[_getResponsiblesSelector](babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].distributionType === 'queue' ? babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].responsibleList : [], false);
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesHimselfSelector = babelHelpers.classPrivateFieldLooseBase(this, _getResponsiblesSelector)[_getResponsiblesSelector](babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].distributionType === 'himself' ? babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].responsibleList : []);
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].moderatorSelector = new ui_formElements_view.UserSelector({
 	    enableAll: false,
 	    enableDepartments: false,
 	    multiple: false,
-	    values: [['user', babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].manualDistributorId || babelHelpers.classPrivateFieldLooseBase(this, _currentUser)[_currentUser]]]
+	    values: [['user', babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].distributionType === 'manually' && main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].responsibleList) ? babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].responsibleList[0][1] : babelHelpers.classPrivateFieldLooseBase(this, _currentUser)[_currentUser]]]
 	  });
 	  const {
 	    root: queueDistribution,
 	    radio: queueRadio
 	  } = babelHelpers.classPrivateFieldLooseBase(this, _renderDistributionType)[_renderDistributionType]({
 	    type: 'queue',
-	    selector: babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesSelector
+	    selector: babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesQueueSelector
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].queueDistribution = queueDistribution;
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].queueRadio = queueRadio;
@@ -793,13 +984,17 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    root: himselfDistribution,
 	    radio: himselfRadio
 	  } = babelHelpers.classPrivateFieldLooseBase(this, _renderDistributionType)[_renderDistributionType]({
-	    type: 'himself'
+	    type: 'himself',
+	    selector: babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesHimselfSelector
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].himselfDistribution = himselfDistribution;
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].himselfRadio = himselfRadio;
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].queueRadio.checked = babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].distributionType === 'queue';
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].manuallyRadio.checked = babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].distributionType === 'manually';
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].himselfRadio.checked = babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].distributionType === 'himself';
 	  this.update();
+	  const selector = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesHimselfSelector.getSelector();
+	  selector.getDialog().subscribe('onHide', this.checkDepartmentUsersCount.bind(this, selector));
 	  return main_core.Tag.render(_t2$2 || (_t2$2 = _$2`
 			<div class="ui-section__field-container">
 				<div class="ui-section__field-label_box">
@@ -812,6 +1007,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 				${0}
 			</div>
 		`), main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_DISTRIBUTION_TYPE'), babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].queueDistribution, babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].manuallyDistribution, babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].himselfDistribution);
+	}
+	function _getResponsiblesSelector2(responsibleValues, enableDepartments = true, multiple = true) {
+	  return new ui_formElements_view.UserSelector({
+	    enableAll: false,
+	    multiple,
+	    enableDepartments,
+	    values: responsibleValues,
+	    label: main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_DISTRIBUTION_QUEUE_SELECTOR_LABEL')
+	  });
 	}
 	function _renderDistributionType2({
 	  type,
@@ -876,6 +1080,36 @@ this.BX.Tasks = this.BX.Tasks || {};
 				${babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].id ? '' : notifyEmptyProject}
 			</div>
 		`;
+	}
+	function _getHintMessageCodeByCount2(count) {
+	  const hintMessage = HINT_MESSAGES_BY_COUNT.find(hint => hint.condition(count));
+	  return hintMessage ? hintMessage.message : '';
+	}
+	function _showDepartmentHint2(tag, code) {
+	  const popup = new BX.PopupWindow({
+	    content: BX.Loc.getMessage(code),
+	    darkMode: true,
+	    bindElement: tag.getContainer(),
+	    angle: true,
+	    contentPadding: 5,
+	    maxWidth: 400,
+	    offsetLeft: tag.getContainer().offsetWidth / 2,
+	    autoHide: true,
+	    closeByEsc: true
+	  });
+	  popup.show();
+	}
+	function _getDepartmentsUsersCount2(departments) {
+	  const departmentsToBackend = departments.map(department => [department.getEntityId(), department.getId()]);
+	  return main_core.ajax.runAction('tasks.flow.Flow.getDepartmentsMemberCount', {
+	    data: {
+	      departments: departmentsToBackend
+	    }
+	  }).then(result => {
+	    return main_core.Type.isArrayFilled(result.errors) ? null : result.data;
+	  }).catch(errors => {
+	    console.error(errors);
+	  });
 	}
 
 	let _$3 = t => t,
@@ -2876,7 +3110,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _flowLottieAnimation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("flowLottieAnimation");
 	var _lottieIconContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lottieIconContainer");
 	var _pageChanging = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pageChanging");
-	var _hintManager = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hintManager");
 	var _render = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("render");
 	var _renderHeader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderHeader");
 	var _renderWizard = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderWizard");
@@ -2988,10 +3221,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      writable: true,
 	      value: false
 	    });
-	    Object.defineProperty(this, _hintManager, {
-	      writable: true,
-	      value: null
-	    });
 	    this.setEventNamespace('BX.Tasks.Flow.EditForm');
 	    babelHelpers.classPrivateFieldLooseBase(this, _params$5)[_params$5] = params;
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$4)[_layout$4] = {};
@@ -3007,7 +3236,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    })];
 	    const initFlowData = {
 	      notifyAtHalfTime: true,
-	      responsibleCanChangeDeadline: true,
+	      responsibleCanChangeDeadline: false,
 	      taskControl: true,
 	      notifyOnQueueOverflow: 50,
 	      notifyOnTasksInProgressOverflow: 50,
@@ -3019,7 +3248,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _flow$3)[_flow$3] = babelHelpers.classPrivateFieldLooseBase(this, _getFlow)[_getFlow](initFlowData);
 	  }
-	  static createInstance(params = {}) {
+	  static async createInstance(params = {}) {
+	    const {
+	      EditForm
+	    } = await top.BX.Runtime.loadExtension('tasks.flow.edit-form');
 	    const instance = new EditForm(params);
 	    instance.openInSlider();
 	    return instance;
@@ -3028,59 +3260,45 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    const sidePanelId = `tasks-flow-create-slider-${main_core.Text.getRandom()}`;
 	    BX.SidePanel.Instance.open(sidePanelId, {
 	      cacheable: true,
-	      contentCallback: slider => {
-	        return ui_sidepanel_layout.Layout.createContent({
-	          extensions: ['tasks.flow.edit-form'],
-	          design: {
-	            section: false
-	          },
-	          content: async () => {
-	            this.slider = slider;
-	            const {
-	              data: noAccess
-	            } = await main_core.ajax.runAction('tasks.flow.View.Access.check', {
-	              data: {
-	                flowId: babelHelpers.classPrivateFieldLooseBase(this, _flow$3)[_flow$3].id > 0 ? babelHelpers.classPrivateFieldLooseBase(this, _flow$3)[_flow$3].id : 0,
-	                context: 'edit-form',
-	                demoFlow: babelHelpers.classPrivateFieldLooseBase(this, _params$5)[_params$5].demoFlow,
-	                guideFlow: babelHelpers.classPrivateFieldLooseBase(this, _params$5)[_params$5].guideFlow
-	              }
-	            });
-	            if (noAccess !== null) {
-	              return main_core.Tag.render(_t$4 || (_t$4 = _$4`${0}`), noAccess.html);
-	            }
-	            if (babelHelpers.classPrivateFieldLooseBase(this, _flow$3)[_flow$3].id > 0) {
-	              const {
-	                data: flowData,
-	                error
-	              } = await main_core.ajax.runAction('tasks.flow.Flow.get', {
-	                data: {
-	                  flowId: babelHelpers.classPrivateFieldLooseBase(this, _flow$3)[_flow$3].id
-	                }
-	              });
-	              babelHelpers.classPrivateFieldLooseBase(this, _flow$3)[_flow$3] = babelHelpers.classPrivateFieldLooseBase(this, _getFlow)[_getFlow](flowData);
-	            }
-	            babelHelpers.classPrivateFieldLooseBase(this, _pages)[_pages].forEach(page => page.setFlow(babelHelpers.classPrivateFieldLooseBase(this, _flow$3)[_flow$3]));
-	            return babelHelpers.classPrivateFieldLooseBase(this, _render)[_render]();
-	          },
-	          buttons: []
+	      contentCallback: async slider => {
+	        this.slider = slider;
+	        const {
+	          data: noAccess
+	        } = await main_core.ajax.runAction('tasks.flow.View.Access.check', {
+	          data: {
+	            flowId: babelHelpers.classPrivateFieldLooseBase(this, _flow$3)[_flow$3].id > 0 ? babelHelpers.classPrivateFieldLooseBase(this, _flow$3)[_flow$3].id : 0,
+	            context: 'edit-form',
+	            demoFlow: babelHelpers.classPrivateFieldLooseBase(this, _params$5)[_params$5].demoFlow,
+	            guideFlow: babelHelpers.classPrivateFieldLooseBase(this, _params$5)[_params$5].guideFlow
+	          }
 	        });
+	        if (noAccess !== null) {
+	          return main_core.Tag.render(_t$4 || (_t$4 = _$4`${0}`), noAccess.html);
+	        }
+	        if (babelHelpers.classPrivateFieldLooseBase(this, _flow$3)[_flow$3].id > 0) {
+	          const {
+	            data: flowData
+	          } = await main_core.ajax.runAction('tasks.flow.Flow.get', {
+	            data: {
+	              flowId: babelHelpers.classPrivateFieldLooseBase(this, _flow$3)[_flow$3].id
+	            }
+	          });
+	          babelHelpers.classPrivateFieldLooseBase(this, _flow$3)[_flow$3] = babelHelpers.classPrivateFieldLooseBase(this, _getFlow)[_getFlow](flowData);
+	        }
+	        babelHelpers.classPrivateFieldLooseBase(this, _pages)[_pages].forEach(page => page.setFlow(babelHelpers.classPrivateFieldLooseBase(this, _flow$3)[_flow$3]));
+	        return babelHelpers.classPrivateFieldLooseBase(this, _render)[_render]();
 	      },
 	      width: SLIDER_WIDTH,
 	      events: {
 	        onLoad: event => {
 	          const aboutPage = babelHelpers.classPrivateFieldLooseBase(this, _pages)[_pages].find(page => page.getId() === 'about-flow');
 	          aboutPage.focusToEmptyName();
-	          babelHelpers.classPrivateFieldLooseBase(this, _hintManager)[_hintManager] = top.BX.UI.Hint.createInstance({
-	            id: sidePanelId,
-	            popupParameters: {
-	              targetContainer: window.top.document.body
-	            }
+	          requestAnimationFrame(() => {
+	            babelHelpers.classPrivateFieldLooseBase(this, _wizard)[_wizard].initHints();
 	          });
-	          babelHelpers.classPrivateFieldLooseBase(this, _hintManager)[_hintManager].init(event.slider.getContainer());
 	        },
 	        onClose: () => {
-	          babelHelpers.classPrivateFieldLooseBase(this, _hintManager)[_hintManager].hide();
+	          babelHelpers.classPrivateFieldLooseBase(this, _wizard)[_wizard].hideHints();
 	          this.emit('afterClose');
 	        }
 	      }
@@ -3247,7 +3465,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 				</div>
 				${0}
 			</div>
-		`), main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_DEMO_INFO_TITLE'), main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_DEMO_INFO_TEXT'), main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_DEMO_INFO_TEXT_TRIAL'), main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_DEMO_INFO_BTN'), babelHelpers.classPrivateFieldLooseBase(this, _getLottieIconContainer)[_getLottieIconContainer]());
+		`), main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_DEMO_INFO_TITLE_1'), main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_DEMO_INFO_TEXT_1'), main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_DEMO_INFO_TEXT_TRIAL_1'), main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_DEMO_INFO_BTN_1'), babelHelpers.classPrivateFieldLooseBase(this, _getLottieIconContainer)[_getLottieIconContainer]());
 	}
 	function _getLottieIconContainer2() {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _lottieIconContainer)[_lottieIconContainer]) {
@@ -3293,11 +3511,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  if (!main_core.Type.isArrayFilled(flowData.taskCreators)) {
 	    incorrectData.push('taskCreators');
 	  }
-	  if (flowData.distributionType === 'manually' && flowData.manualDistributorId <= 0) {
-	    incorrectData.push('manualDistributorId');
-	  }
-	  if (flowData.distributionType === 'queue' && !main_core.Type.isArrayFilled(flowData.responsibleQueue)) {
-	    incorrectData.push('responsibleQueue');
+	  if (!main_core.Type.isArrayFilled(flowData.responsibleList) || flowData.distributionType === 'manually' && flowData.responsibleList[0] <= 0) {
+	    incorrectData.push('responsibleList');
 	  }
 	  if (flowData.id > 0 && flowData.groupId <= 0 && flowData.demo === false) {
 	    incorrectData.push('groupId');
@@ -3345,5 +3560,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.EditForm = EditForm;
 
-}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.Main,BX.UI,BX.Tasks,BX.UI.SidePanel,BX.Tasks,BX,BX.UI.EntitySelector,BX.Event,BX,BX.UI.FormElements,BX.UI));
+}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.Main,BX.UI,BX.Tasks,BX.Tasks,BX,BX,BX.UI.EntitySelector,BX.Event,BX,BX.UI.FormElements,BX.UI));
 //# sourceMappingURL=edit-form.bundle.js.map

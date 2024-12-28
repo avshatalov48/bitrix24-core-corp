@@ -48,7 +48,7 @@ class BizpocTab implements Tabable
 		return [
 			'id' => $this->getId(),
 			'sort' => $this->defaultSortValue(),
-			'imageName' => 'bizproc',
+			'imageName' => $this->getIconId(),
 			'badgeCode' => 'bp_tasks',
 			'component' => $this->getComponentParams(),
 		];
@@ -91,6 +91,7 @@ class BizpocTab implements Tabable
 			'min_api_version' => self::MINIMAL_API_VERSION,
 			'color' => '#00ace3',
 			'imageUrl' => 'favorite/icon-bp.png',
+			'imageName' => $this->getIconId(),
 			'params' => [
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
 				'counter' => $counterId,
@@ -135,7 +136,7 @@ class BizpocTab implements Tabable
 
 	public function getIconId(): string
 	{
-		return $this->getId();
+		return Mobile::getApiVersion() < 56 ?  $this->getId() : 'business_process';
 	}
 
 	public static function onBeforeTabsGet(): array

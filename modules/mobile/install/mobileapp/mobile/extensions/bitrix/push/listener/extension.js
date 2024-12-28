@@ -174,7 +174,7 @@
 	BX.addCustomEvent('onAppActive', onAppActive);
 
 	// fake timeout to wait subscribers on initialization
-	setTimeout(() => onAppActive(), 100);
+	setTimeout(() => onAppActive(), 300);
 
 	/**
 	 * @class PushListener

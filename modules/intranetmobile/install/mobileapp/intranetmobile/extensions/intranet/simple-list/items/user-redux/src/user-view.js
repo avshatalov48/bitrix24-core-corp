@@ -12,7 +12,8 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 	const { ChipButton, ChipButtonDesign, ChipButtonMode } = require('ui-system/blocks/chips/chip-button');
 	const { BadgeCounter, BadgeCounterDesign } = require('ui-system/blocks/badges/counter');
 	const { Button, ButtonSize } = require('ui-system/form/buttons');
-	const { ReduxAvatar } = require('layout/ui/user/avatar');
+	const { Avatar } = require('ui-system/blocks/avatar');
+	const { UserName } = require('layout/ui/user/user-name');
 	const { ActionMenu } = require('intranet/simple-list/items/user-redux/action-menu');
 	const { Actions } = require('intranet/simple-list/items/user-redux/src/actions');
 	const { EmployeeActions, EmployeeStatus, RequestStatus } = require('intranet/enum');
@@ -48,6 +49,8 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 
 		renderHeader()
 		{
+			const { id } = this.props;
+
 			return View(
 				{
 					style: {
@@ -65,7 +68,12 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 							paddingTop: 10, // hack to align with buttons
 						},
 					},
-					ReduxAvatar({ id: this.props.id, size: 40 }),
+					Avatar({
+						id,
+						size: 40,
+						testId: `USER_VIEW_${id}`,
+						withRedux: true,
+					}),
 				),
 				this.renderInfo(),
 				this.renderButtons(),
@@ -74,8 +82,7 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 
 		renderInfo()
 		{
-			const { fullName, isAdmin, workPosition, department = [] } = this.props;
-			const departmentNames = Object.values(department).join(', ');
+			const { id, fullName, isAdmin, workPosition } = this.props;
 
 			return View(
 				{
@@ -98,8 +105,10 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 							paddingTop: 10, // hack to align with buttons
 						},
 					},
-					Text2({
-						color: Color.base1,
+					UserName({
+						id,
+						testId: `USER_VIEW_PROFILE_NAME_${id}`,
+						textElement: Text2,
 						accent: true,
 						style: {
 							paddingRight: Indent.XS.toNumber(),
@@ -123,16 +132,39 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 							text: workPosition,
 						}),
 					),
-					departmentNames && View(
-						{
-							style: { marginTop: Indent.XS.toNumber() },
-						},
-						Text6({
-							color: Color.base4,
-							text: departmentNames,
-						}),
-					),
+					this.renderDepartment(),
 				),
+			);
+		}
+
+		renderDepartment()
+		{
+			const { department = [] } = this.props;
+			let departmentNames = Object.values(department).join(', ');
+
+			if (this.isExtranet())
+			{
+				departmentNames = Loc.getMessage('M_INTRANET_USER_STATUS_EXTRANET');
+			}
+
+			if (this.isCollaber())
+			{
+				departmentNames = Loc.getMessage('M_INTRANET_USER_STATUS_GUEST');
+			}
+
+			if (!departmentNames)
+			{
+				return null;
+			}
+
+			return View(
+				{
+					style: { marginTop: Indent.XS.toNumber() },
+				},
+				Text6({
+					color: Color.base4,
+					text: departmentNames,
+				}),
 			);
 		}
 
@@ -394,6 +426,7 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 				{
 					number: personalMobile || personalPhone,
 					canUseTelephony,
+					analyticsSection: 'userList',
 				},
 			);
 		};
@@ -409,6 +442,20 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 		isAwaitingResponse(requestStatus)
 		{
 			return requestStatus === RequestStatus.PENDING.getValue();
+		}
+
+		isExtranet()
+		{
+			const { isExtranet } = this.props;
+
+			return Boolean(isExtranet);
+		}
+
+		isCollaber()
+		{
+			const { isCollaber } = this.props;
+
+			return Boolean(isCollaber);
 		}
 	}
 

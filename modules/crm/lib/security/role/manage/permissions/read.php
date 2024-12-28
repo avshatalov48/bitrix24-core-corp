@@ -23,5 +23,4 @@ class Read extends Permission
 	{
 		return 1;
 	}
-
 }

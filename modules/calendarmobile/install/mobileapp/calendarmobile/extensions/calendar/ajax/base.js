@@ -27,6 +27,7 @@ jn.define('calendar/ajax/base', (require, exports, module) => {
 			return new Promise((resolve) => {
 				const endpoint = `${this.getEndpoint()}.${action}`;
 
+				// eslint-disable-next-line no-undef
 				new RunActionExecutor(endpoint, ajaxParams)
 					.setHandler((result) => resolve(result))
 					.call(false);

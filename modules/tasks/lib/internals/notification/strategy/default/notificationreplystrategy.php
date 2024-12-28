@@ -18,7 +18,9 @@ class NotificationReplyStrategy implements RecipientStrategyInterface
 
 	public function getRecipients(): array
 	{
-		return [$this->userRepository->getUserById($this->task->getResponsibleId())];
+		$responsible = $this->userRepository->getUserById($this->task->getResponsibleId());
+
+		return (null === $responsible) ? [] : [$responsible];
 	}
 
 	public function getSender(): ?User

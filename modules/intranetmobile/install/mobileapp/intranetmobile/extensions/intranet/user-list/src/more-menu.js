@@ -111,6 +111,7 @@ jn.define('intranet/user-list/src/more-menu', (require, exports, module) => {
 				hintText: Loc.getMessage('MOBILE_USERS_MORE_MENU_COMPANY_STRUCTURE_HINT_TEXT'),
 				redirectUrl: '/company/vis_structure.php',
 				layout,
+				analyticsSection: 'visualStructure',
 			});
 		}
 	}

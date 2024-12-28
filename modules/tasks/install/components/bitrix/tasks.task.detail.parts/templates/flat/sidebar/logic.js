@@ -44,9 +44,40 @@ BX.namespace("Tasks.Component");
 		this.initAuditorThing();
 		this.initStages();
 		this.initIntranetControlButton();
+		this.subscribeEvents();
+	};
 
+	BX.Tasks.Component.TaskViewSidebar.prototype.subscribeEvents = function()
+	{
 		BX.addCustomEvent(window, "tasksTaskEvent", BX.delegate(this.onTaskEvent, this));
 		BX.addCustomEvent(window, "onChangeProjectLink", BX.delegate(this.onChangeProjectLink, this));
+
+		BX.PULL.subscribe({
+			type: BX.PullClient.SubscriptionType.Server,
+			moduleId: 'tasks',
+			command: 'task_update',
+			callback: this.onTaskUpdated.bind(this),
+		});
+	};
+
+	BX.Tasks.Component.TaskViewSidebar.prototype.onTaskUpdated = function(params, extra, command)
+	{
+		const isEventByCurrentTask = parseInt(params?.TASK_ID, 10) === this.taskId;
+		const isEventContainsDeadline = !BX.Type.isUndefined(params.AFTER.DEADLINE);
+
+		if (!isEventByCurrentTask || !isEventContainsDeadline)
+		{
+			return;
+		}
+
+		const deadline = Number(params.AFTER.DEADLINE ?? 0);
+		const deadlineString = (deadline === 0) ? '' : BX.calendar.ValueToString(deadline, true, false);
+
+		const isDeadlineChanged = this.deadline !== deadlineString;
+		if (isDeadlineChanged)
+		{
+			this.rerenderDeadline(deadline);
+		}
 	};
 
 	BX.Tasks.Component.TaskViewSidebar.prototype.initIntranetControlButton = function()
@@ -541,6 +572,11 @@ BX.namespace("Tasks.Component");
 		}
 	};
 
+	BX.Tasks.Component.TaskViewSidebar.prototype.setAmIAuditorValue = function(amIAuditor)
+	{
+		this.isAmAuditor = amIAuditor;
+	};
+
 	BX.Tasks.Component.TaskViewSidebar.prototype.syncAuditor = function()
 	{
 		var action = this.isAmAuditor ? 'leaveAuditor' : 'enterAuditor';
@@ -695,6 +731,20 @@ BX.namespace("Tasks.Component");
 
 	BX.Tasks.Component.TaskViewSidebar.prototype.setDeadline = function(deadline)
 	{
+		this.rerenderDeadline(deadline);
+		this.updateDeadline();
+	};
+
+	BX.Tasks.Component.TaskViewSidebar.prototype.rerenderDeadline = function(deadline)
+	{
+		if (Number(deadline) === 0)
+		{
+			this.layout.deadline.innerHTML = this.messages.emptyDeadline;
+			this.layout.deadlineClear.style.display = "none";
+
+			return;
+		}
+
 		this.deadline = BX.calendar.ValueToString(deadline, true, false);
 
 		this.layout.deadline.innerHTML = BX.date.format(
@@ -705,16 +755,13 @@ BX.namespace("Tasks.Component");
 			false
 		);
 		this.layout.deadlineClear.style.display = "";
-
-		this.updateDeadline();
 	};
 
 	BX.Tasks.Component.TaskViewSidebar.prototype.clearDeadline = function()
 	{
-		this.deadline = "";
-		this.layout.deadline.innerHTML = this.messages.emptyDeadline;
-		this.layout.deadlineClear.style.display = "none";
+		this.deadline = '';
 
+		this.rerenderDeadline(this.deadline);
 		this.updateDeadline();
 	};
 

@@ -9,8 +9,24 @@ use Bitrix\Mobile\AvaMenu\AbstractMenuItem;
 
 class Calendar extends AbstractMenuItem
 {
+	/**
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\IO\FileNotFoundException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public function isAvailable(): bool
 	{
+		$manager = new \Bitrix\Mobile\Tab\Manager($this->context);
+		$activeTabs = $manager->getActiveTabs();
+
+		if (isset($activeTabs['calendar']))
+		{
+			return false;
+		}
+
 		$enabled = Loader::includeModule('intranet')
 			&& ToolsManager::getInstance()->checkAvailabilityByToolId('calendar')
 		;
@@ -24,7 +40,7 @@ class Calendar extends AbstractMenuItem
 			return false;
 		}
 
-		return !$this->context->extranet;
+		return !$this->context->extranet || $this->context->isCollaber;
 	}
 
 	public function getData(): array
@@ -39,7 +55,10 @@ class Calendar extends AbstractMenuItem
 
 	private function getEntryParams(): array
 	{
-		return (new \Bitrix\Mobile\AppTabs\Calendar())->getComponentParams();
+		$tab = new \Bitrix\Mobile\AppTabs\Calendar();
+		$tab->setContext($this->context);
+
+		return $tab->getComponentParams();
 	}
 
 	public function getId(): string
@@ -58,6 +77,6 @@ class Calendar extends AbstractMenuItem
 
 		$value = \CUserCounter::GetValue($userId, 'calendar') ?: 0;
 
-		return "$value";
+		return (string)$value;
 	}
 }

@@ -9366,7 +9366,7 @@ class CCrmActivityRestProxy extends CCrmRestProxyBase
 				return false;
 			}
 
-			if(!$factory->getItem($binding['OWNER_ID']))
+			if(!$factory->getItem($binding['OWNER_ID'], ['ID']))
 			{
 				$errors[] = "Could not find '{$bindingOwnerTypeName}' with ID: {$binding['OWNER_ID']}";
 				return false;
@@ -14653,10 +14653,12 @@ class CCrmPersonTypeRestProxy extends CCrmRestProxyBase
 			}
 		}
 
+		/** @todo Use SiteTable::getDefaultSiteId() */
 		$siteId = '';
 		$siteIterator = Bitrix\Main\SiteTable::getList(array(
 			'select' => array('LID', 'LANGUAGE_ID'),
-			'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y')
+			'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y'),
+			'cache' => ['ttl' => 86400],
 		));
 		if ($defaultSite = $siteIterator->fetch())
 		{

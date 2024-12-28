@@ -25,7 +25,10 @@ this.BX = this.BX || {};
 	  },
 	  computed: {
 	    isShow: function () {
-	      return BX.Type.isArray(this.info) && this.info.length > 0;
+	      return this.countItems > 0;
+	    },
+	    countItems: function () {
+	      return BX.Type.isArray(this.info) ? this.info.length : 0;
 	    },
 	    isImageViewer: function () {
 	      return this.options.hasOwnProperty('viewerGroupBy') && this.options.viewerGroupBy.length > 0;
@@ -49,8 +52,9 @@ this.BX = this.BX || {};
 	      this.controls = this.options.controls || true;
 	      this.borderRadius = this.options.borderRadius;
 	      this.column = this.options.column || 1;
-	      // this.column = 2;
-
+	      if (this.countItems === 1) {
+	        this.arrows = false;
+	      }
 	      this.create();
 	    },
 	    create: function () {

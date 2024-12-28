@@ -26,6 +26,11 @@ class OpenLines extends BaseRecent
 		{
 			return false;
 		}
+
+		if ($this->context->isCollaber)
+		{
+			return false;
+		}
 		
 		if (!ModuleManager::isModuleInstalled('imopenlines'))
 		{

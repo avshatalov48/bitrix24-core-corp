@@ -187,6 +187,10 @@ final class TaskTagProvider extends BaseProvider
 			}
 
 			$groupIds = array_slice(array_keys($groups), 0, $limit);
+			if (empty($groupIds))
+			{
+				return $tagCollection;
+			}
 
 			$groupTagsQuery
 				->setSelect($this->getSelect())

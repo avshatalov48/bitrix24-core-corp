@@ -232,7 +232,7 @@ class IblockDepartmentRepository implements DepartmentRepositoryContract
 	{
 		$currentUserId = CurrentUser::get()?->getId() ?? 0;
 		$department->setCreatedBy($currentUserId);
-		$arFields = [
+		$departmentFields = [
 			"NAME" => $department->getName(),
 			"IBLOCK_ID" => $this->getIblockId(),
 			'IBLOCK_SECTION_ID' => $department->getParentId() ?? null,
@@ -242,7 +242,7 @@ class IblockDepartmentRepository implements DepartmentRepositoryContract
 			'CREATED_BY' => $department->getCreatedBy(),
 		];
 		$iBlockSection = new \CIBlockSection();
-		$id = $iBlockSection->Add($arFields);
+		$id = $iBlockSection->Add($departmentFields);
 		if ($id === false)
 		{
 			throw new ArgumentException($iBlockSection->LAST_ERROR);
@@ -396,10 +396,10 @@ class IblockDepartmentRepository implements DepartmentRepositoryContract
 		$iblockId = \COption::GetOptionInt('intranet', 'iblock_structure');
 		if ($iblockId <= 0)
 		{
-			$rsIBlock = \CIBlock::GetList(array(), array("CODE" => "departments"));
-			$arIBlock = $rsIBlock->Fetch();
+			$result = \CIBlock::GetList(array(), array("CODE" => "departments"));
+			$departmentData = $result->Fetch();
 
-			$iblockId = (int)$arIBlock["ID"];
+			$iblockId = (int)$departmentData["ID"];
 		}
 
 		return $iblockId;

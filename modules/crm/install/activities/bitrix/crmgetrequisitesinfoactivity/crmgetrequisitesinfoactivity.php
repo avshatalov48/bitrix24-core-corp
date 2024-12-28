@@ -94,7 +94,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 
 		if ($entityTypeId === CCrmOwnerType::Lead || $entityTypeId === CCrmOwnerType::Deal)
 		{
-			$entity = 
+			$entity =
 				$entityTypeId === CCrmOwnerType::Lead
 					? CCrmLead::GetByID($entityId, false)
 					: CCrmDeal::GetByID($entityId, false)
@@ -529,29 +529,28 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 			EntityPreset::getSingleInstance()->getSettingsFieldsOfPresets(EntityPreset::Requisite),
 			[self::class, 'isUserField']
 		);
-		$userFieldIds = \Bitrix\Main\UserFieldTable::getList(
+		$userFields = \Bitrix\Main\UserFieldTable::getList(
 			[
-				'select' => ['ID'],
+				'select' => ['FIELD_NAME', 'USER_TYPE_ID'],
 				'filter' => [
-					'ENTITY_ID' => EntityRequisite::getSingleInstance()->getUfId(),
-					'?FIELD_NAME' => implode(' | ', $userFieldNames),
+					'=ENTITY_ID' => EntityRequisite::getSingleInstance()->getUfId(),
+					'@FIELD_NAME' => $userFieldNames,
 				],
 			]
 		)->fetchAll();
 		$userFieldTitles = EntityRequisite::getSingleInstance()->getUserFieldsTitles();
 
 		$userFieldsMap = [];
-		foreach ($userFieldIds as $id)
+		foreach ($userFields as $userField)
 		{
-			$field = \Bitrix\Main\UserFieldTable::getFieldData($id['ID']);
-			$fieldName = $field['FIELD_NAME'];
+			$fieldName = $userField['FIELD_NAME'];
 
 			$name = $userFieldTitles[$fieldName];
 
 			$userFieldsMap[$fieldName] = [
 				'Name' => $name,
 				'FieldName' => $fieldName,
-				'Type' => $field['USER_TYPE_ID'] === 'boolean' ? 'bool' : $field['USER_TYPE_ID'],
+				'Type' => $userField['USER_TYPE_ID'] === 'boolean' ? 'bool' : $userField['USER_TYPE_ID'],
 			];
 		}
 
@@ -723,7 +722,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 		}
 		return $countryNames;
 	}
-	
+
 	protected function getRequisitePresetId(): int
 	{
 		if ($this->requisitePresetId)
@@ -737,7 +736,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 			$requisitePresetId = CBPHelper::flatten($this->RequisitePresetId)[0] ?? null;
 		}
 		$this->requisitePresetId = (int)$requisitePresetId;
-		
+
 		return $this->requisitePresetId;
 	}
 }

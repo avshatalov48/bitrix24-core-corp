@@ -34,7 +34,7 @@
 	    babelHelpers.defineProperty(this, "isExternal", false);
 	    babelHelpers.defineProperty(this, "isSaveFromTypeDetail", true);
 	    babelHelpers.defineProperty(this, "isCreateSectionsViaAutomatedSolutionDetails", false);
-	    babelHelpers.defineProperty(this, "isCrmAdmin", false);
+	    babelHelpers.defineProperty(this, "canEditAutomatedSolution", false);
 	    _classPrivateFieldInitSpec(this, _isCancelEventRegistered, {
 	      writable: true,
 	      value: false
@@ -52,7 +52,7 @@
 	      this.restrictionSliderCode = main_core.Type.isStringFilled(params.restrictionSliderCode) && this.isRestricted ? params.restrictionSliderCode : null;
 	      this.isExternal = Boolean(params.isExternal);
 	      this.isCreateSectionsViaAutomatedSolutionDetails = Boolean(params.isCreateSectionsViaAutomatedSolutionDetails);
-	      this.isCrmAdmin = Boolean(params.isCrmAdmin);
+	      this.canEditAutomatedSolution = Boolean(params.canEditAutomatedSolution);
 	    }
 	    this.buttonsPanel = document.getElementById('ui-button-panel');
 	    this.saveButton = document.getElementById('ui-button-panel-save');
@@ -572,7 +572,7 @@
 	        selectorContainer: this.container.querySelector('[data-role="crm-type-custom-section-selector"]'),
 	        customSections: this.type.getCustomSections() || [],
 	        isCreateSectionsViaAutomatedSolutionDetails: this.isCreateSectionsViaAutomatedSolutionDetails,
-	        isCrmAdmin: this.isCrmAdmin
+	        canEditAutomatedSolution: this.canEditAutomatedSolution
 	      });
 	    }
 	  }], [{
@@ -820,8 +820,8 @@
 	    if (main_core.Type.isBoolean(options.isCreateSectionsViaAutomatedSolutionDetails)) {
 	      this.isCreateSectionsViaAutomatedSolutionDetails = options.isCreateSectionsViaAutomatedSolutionDetails;
 	    }
-	    if (main_core.Type.isBoolean(options.isCrmAdmin)) {
-	      this.isCrmAdmin = options.isCrmAdmin;
+	    if (main_core.Type.isBoolean(options.canEditAutomatedSolution)) {
+	      this.canEditAutomatedSolution = options.canEditAutomatedSolution;
 	    }
 	    this.initSelector();
 	    this.settingsContainer = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-type-hidden crm-type-custom-sections-settings-container\">\n\t\t\t\t<div class=\"crm-type-relation-subtitle\">", "</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_LIST_MSGVER_1'));
@@ -874,7 +874,7 @@
 	          onCreateButtonClick: this.onCreateButtonClick.bind(this)
 	        };
 	      }
-	      if (!this.isCrmAdmin) {
+	      if (!this.canEditAutomatedSolution) {
 	        tagSelectorOptions.locked = true;
 	      }
 	      this.selector = new ui_entitySelector.TagSelector(tagSelectorOptions);

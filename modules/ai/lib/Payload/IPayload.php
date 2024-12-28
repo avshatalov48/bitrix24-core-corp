@@ -3,6 +3,7 @@
 namespace Bitrix\AI\Payload;
 
 use Bitrix\AI\Engine\IEngine;
+use Bitrix\AI\Payload\Tokens\TokenProcessor;
 use Bitrix\AI\Prompt\Role;
 
 interface IPayload
@@ -22,6 +23,12 @@ interface IPayload
 	 * @return array
 	 */
 	public function getMarkers(): array;
+
+	public function setHiddenTokens(array $tokens): static;
+	public function getHiddenTokens(): array;
+	public function getProcessedReplacements(): array;
+	public function setProcessedReplacements(array $processedReplacements): void;
+	public function getTokenProcessor(): TokenProcessor;
 
 	/**
 	 * Sets Engine instance for Payload.

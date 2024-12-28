@@ -28,7 +28,7 @@ class ToEmployee extends Message
 	public function getFallbackText(): string
 	{
 		return $this->getLocalizedFallbackMessage(
-			'SIGN_CALLBACK_CHAT_DONE_EMPLOYEE_MSGVER_1',
+			'SIGN_CALLBACK_CHAT_DONE_EMPLOYEE_MSGVER_2',
 			[
 				'#DOC_NAME#' => $this->getDocumentName($this->getDocument()),
 				'#SIGN_URL#' => $this->getLink(),

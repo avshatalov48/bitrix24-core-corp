@@ -36,7 +36,6 @@
 
 .crm-timeline__client-mark_icon {
 	fill: var(--icon-color);
-	margin-bottom: 3px;
 }
 
 .crm-timeline__client-mark_icon.--flipped {

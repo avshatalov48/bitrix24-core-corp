@@ -16,7 +16,12 @@ import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Menu, MenuItem, MenuItemOptions } from 'main.popup';
 import { Dialog } from 'ui.entity-selector';
 import { SortController as GridSortController } from './grid/sort-controller';
-import { requireClass, requireClassOrNull, requireStringOrNull } from './params-handling';
+import {
+	requireClass,
+	requireClassOrNull,
+	requireStringOrNull,
+	requireArrayOfString,
+} from './params-handling';
 
 const EntityType = Reflection.getClass('BX.CrmEntityType');
 
@@ -44,6 +49,7 @@ export type SettingsButtonExtenderParams = {
 	rootMenu: Menu,
 	todoCreateNotificationSkipPeriod: ?string,
 	targetItemId: ?string,
+	expandsBehindThan: Array<string>;
 	controller: ?SettingsController,
 	restriction: ?Restriction,
 	grid: ?BX.Main.grid,
@@ -59,6 +65,7 @@ export class SettingsButtonExtender
 	#pingSettings: Object;
 	#rootMenu: Menu;
 	#targetItemId: ?string;
+	#expandsBehindThan: Array<string>;
 	#kanbanController: ?SettingsController;
 	#restriction: ?Restriction;
 	#gridController: ?GridSortController = null;
@@ -80,6 +87,7 @@ export class SettingsButtonExtender
 		this.#entityTypeId = Text.toInteger(params.entityTypeId);
 		this.#categoryId = Type.isInteger(params.categoryId) ? params.categoryId : null;
 		this.#pingSettings = Type.isPlainObject(params.pingSettings) ? params.pingSettings : {};
+		this.#expandsBehindThan = requireArrayOfString(params.expandsBehindThan ?? [], 'params.expandsBehindThan');
 		this.#smartActivityNotificationSupported = Text.toBoolean(params.smartActivityNotificationSupported);
 
 		if (EntityType && !EntityType.isDefined(this.#entityTypeId))
@@ -148,7 +156,7 @@ export class SettingsButtonExtender
 				this.#rootMenu.removeMenuItem(createdMenuItemIds.pop());
 			}
 
-			let targetItemId = this.#targetItemId;
+			let targetItemId = this.#resolveEarlyTargetId();
 			for (const item of items.reverse()) // new item is *prepended* on top of target item, therefore reverse
 			{
 				const newItem = this.#rootMenu.addMenuItem(
@@ -156,8 +164,11 @@ export class SettingsButtonExtender
 					targetItemId,
 				);
 
-				targetItemId = newItem.getId();
-				createdMenuItemIds.push(newItem.getId());
+				if (newItem)
+				{
+					targetItemId = newItem.getId();
+					createdMenuItemIds.push(newItem.getId());
+				}
 			}
 		});
 	}
@@ -179,6 +190,14 @@ export class SettingsButtonExtender
 		}
 
 		return items;
+	}
+
+	#resolveEarlyTargetId(): ?string
+	{
+		const items = this.#rootMenu.getMenuItems();
+		const earlyItem = items.find((item: MenuItem) => this.#expandsBehindThan.includes(item.getId()));
+
+		return earlyItem?.getId() ?? this.#targetItemId;
 	}
 
 	#getPushCrmSettings(): ?MenuItemOptions
@@ -292,6 +311,11 @@ export class SettingsButtonExtender
 		{
 			console.error('Can not handle last activity toggle click');
 		}
+	}
+
+	#closeMenuWindow(event: PointerEvent, item: MenuItem): void
+	{
+		item.getMenuWindow()?.close();
 	}
 
 	#shouldShowTodoSkipMenu(): boolean

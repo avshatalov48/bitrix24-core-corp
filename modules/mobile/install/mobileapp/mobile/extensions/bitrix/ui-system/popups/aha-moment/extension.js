@@ -11,10 +11,17 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 	const { PropTypes } = require('utils/validation');
 	const { Button, ButtonSize, ButtonDesign } = require('ui-system/form/buttons/button');
 	const { AhaMomentDirection } = require('ui-system/popups/aha-moment/src/direction-enum');
+	const { AnalyticsEvent } = require('analytics');
+	const { Type } = require('type');
 
 	const FIXED_WIDTH = 339;
 	const FIXED_IMAGE_WIDTH = 98;
 	const CLOSE_SIZE = 24;
+
+	const ButtonType = {
+		CLOSE: 'close',
+		GO_TO_FEATURE: 'go_to_feature',
+	};
 
 	/**
 	 * @class AhaMoment
@@ -42,30 +49,56 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 		 * @param {object} props
 		 * @param {number} props.testId
 		 * @param {object} props.targetRef
+		 * @param {boolean} [props.disableHideByOutsideClick]
+		 * @param {object} [props.analyticsLabel]
+		 * @param {string} [props.bottomButtonType]
 		 * @param {object} [props.spotlightParams]
 		 * @param {string} [props.title]
 		 * @param {string} [props.description]
 		 * @param {boolean} [props.closeButton=true]
 		 * @param {function} [props.onClose]
 		 * @param {function} [props.onClick]
+		 * @param {function} [props.onHide]
+		 * @param {number} [props.fadeInDuration=10]
 		 * @param {object} [props.image]
 		 * @param {number} [props.image.size=78]
 		 */
 		static show(props)
 		{
-			const { targetRef, spotlightParams = {}, ...restProps } = props;
+			const {
+				targetRef,
+				spotlightParams = {},
+				closeButton = true,
+				buttonText,
+				...restProps
+			} = props;
+
+			let { disableHideByOutsideClick } = props;
 
 			if (!targetRef)
 			{
 				return;
 			}
 
+			if (Type.isNil(disableHideByOutsideClick))
+			{
+				disableHideByOutsideClick = Boolean(buttonText) || closeButton;
+			}
+
 			const spotlight = dialogs.createSpotlight();
 			const targetParams = spotlight.setTarget(targetRef, {
 				useHighlight: false,
 				type: 'rectangle',
+				disableHideByOutsideClick,
 			});
-			const component = new AhaMoment({ ...restProps, spotlightRef: spotlight, targetParams });
+			const component = new AhaMoment({
+				...restProps,
+				spotlightRef: spotlight,
+				targetParams,
+				disableHideByOutsideClick,
+				closeButton,
+				buttonText,
+			});
 			spotlight.setHandler(component.#eventHandler);
 			spotlight.setComponent(component, {
 				showPointer: false,
@@ -78,6 +111,31 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 				AhaMoment.isShown = true;
 				spotlight.show();
 			}
+
+			component.sendAnalytics({
+				event: 'show',
+			});
+		}
+
+		sendAnalytics(params)
+		{
+			const { analyticsLabel } = this.props;
+
+			if (!analyticsLabel)
+			{
+				console.warn('\'c_section\', \'c_sub_section\' and \'p1\' for analyticsLabel in AhaMoment is not provided');
+
+				return;
+			}
+
+			new AnalyticsEvent({
+				tool: 'intranet',
+				category: 'aha',
+				c_section: analyticsLabel.c_section,
+				c_sub_section: analyticsLabel.c_sub_section,
+				p1: analyticsLabel.p1,
+				...params,
+			}).send();
 		}
 
 		/**
@@ -90,7 +148,21 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 		onHide()
 		{
 			AhaMoment.isShown = false;
+
+			this.props.onHide?.();
 		}
+
+		onOutsideClick = () => {
+			if (this.props.disableHideByOutsideClick)
+			{
+				return;
+			}
+
+			this.sendAnalytics({
+				event: 'сlick_button',
+				type: 'close',
+			});
+		};
 
 		closeSpotlight()
 		{
@@ -114,11 +186,16 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 				{
 					onClose();
 				}
+
+				this.sendAnalytics({
+					event: 'сlick_button',
+					type: 'close',
+				});
 			}
 		};
 
 		handleOnClick = () => {
-			const { spotlightRef, onClick } = this.props;
+			const { spotlightRef, onClick, bottomButtonType } = this.props;
 
 			if (spotlightRef)
 			{
@@ -128,6 +205,16 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 				{
 					onClick();
 				}
+
+				if (!bottomButtonType)
+				{
+					console.warn('\'bottomButtonType\' for AhaMoment is not provided');
+				}
+
+				this.sendAnalytics({
+					event: 'сlick_button',
+					type: bottomButtonType,
+				});
 			}
 		};
 
@@ -346,13 +433,15 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 
 			if (popupRect && !isEqual(popupRect, this.state.popupRect))
 			{
+				const duration = this.props.fadeInDuration ?? 10;
+
 				const animate = chain(
 					transition(this.earRef, {
-						duration: 10,
+						duration,
 						opacity: 1,
 					}),
 					transition(this.ref, {
-						duration: 10,
+						duration,
 						opacity: 1,
 					}),
 				);
@@ -404,22 +493,25 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 		closeButton: true,
 		onClick: null,
 		onClose: null,
+		onHide: null,
 		image: null,
 	};
 
 	AhaMoment.propTypes = {
 		testId: PropTypes.string.isRequired,
-		targetRef: PropTypes.object.isRequired,
 		title: PropTypes.string,
 		description: PropTypes.string,
 		buttonText: PropTypes.string,
 		image: PropTypes.object,
 		closeButton: PropTypes.bool,
+		disableHideByOutsideClick: PropTypes.bool,
 		onClick: PropTypes.func,
 		onClose: PropTypes.func,
+		onHide: PropTypes.func,
 	};
 
 	module.exports = {
 		AhaMoment,
+		ButtonType,
 	};
 });

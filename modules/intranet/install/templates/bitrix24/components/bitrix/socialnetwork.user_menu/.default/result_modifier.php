@@ -83,6 +83,7 @@ if(
 	|| !CBXFeatures::IsFeatureEnabled('timeman')
 	|| in_array($arResult['User']['EXTERNAL_AUTH_ID'], \Bitrix\Main\UserTable::getExternalUserTypes())
 	|| $arResult['isExtranetSite']
+	|| ($arResult['User']['IS_COLLABER'] ?? 'N') === 'Y'
 )
 {
 	$arResult["CurrentUserPerms"]["Operations"]["timeman"] = false;

@@ -5,6 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Tasks\Flow\Control\Task\Field\FlowFieldHandler;
+
 \Bitrix\Main\Page\Asset::getInstance()->addJs(getLocalPath('activities/bitrix/task2activity/script.js'));
 
 \Bitrix\Main\UI\Extension::load(['ui.entity-selector', 'tasks.entity-selector']);
@@ -55,6 +57,7 @@ $renderField = function (array $field, $value = null) use ($dialog, $renderCheck
 			'GROUP_ID' => 'group-id',
 			'TAG_NAMES' => 'tags',
 			'DEPENDS_ON' => 'depends-on',
+			'FLOW_ID' => 'flow-id',
 		];
 
 		$controlHtml = null;
@@ -240,15 +243,33 @@ elseif (is_string($selectedGroupId))
 	$selectedGroupId = '"' . CUtil::JSEscape($selectedGroupId) . '"';
 }
 
+$selectedFlowId = null;
+if (isset($documentValues['FLOW_ID']))
+{
+	$flowId = $documentValues['FLOW_ID'];
+	$selectedFlowId = is_string($flowId) ? '"' . CUtil::JSEscape($flowId) . '"' : null;
+	if (!is_string($flowId) || !CBPDocument::isExpression($flowId))
+	{
+		$selectedFlowId = $flowId ? (int)$flowId : null;
+	}
+}
+
 $runtimeData = $dialog->getRuntimeData();
 
 ?>
 <script>
-	BX.ready(function()
+	BX.message({
+		TASKS_BP_RPD_FLOW_CONTROLLED_SHORT_VALUE: '<?=GetMessageJS('TASKS_BP_RPD_FLOW_CONTROLLED_SHORT_VALUE')?>',
+		TASKS_BP_RPD_FLOW_CONTROLLED_VALUE: '<?=GetMessageJS('TASKS_BP_RPD_FLOW_CONTROLLED_VALUE')?>',
+	})
+	BX.Event.ready(function()
 	{
 		const script = new BX.Tasks.Automation.Activity.Task2Activity({
+			isRobot: true,
+			controlledByFlowFields: <?=\Bitrix\Main\Web\Json::encode((new FlowFieldHandler(0))->getModifiedFields())?>,
 			formName: '<?= CUtil::JSEscape($dialog->getFormName()) ?>',
 			selectedGroupId: <?= $selectedGroupId ?? 'undefined' ?>,
+			selectedFlowId: <?= $selectedFlowId ?? 'undefined' ?>,
 			selectedTags: <?= \Bitrix\Main\Web\Json::encode($runtimeData['tags']) ?>,
 			dependsOn: <?= \Bitrix\Main\Web\Json::encode($runtimeData['dependsOn']) ?>,
 		});

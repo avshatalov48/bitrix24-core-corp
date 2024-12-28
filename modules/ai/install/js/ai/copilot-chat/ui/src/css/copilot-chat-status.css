@@ -1,0 +1,42 @@
+.ai__copilot-chat_status-wrapper {
+	display: flex;
+	align-items: flex-end;
+}
+
+.ai__copilot-chat_status {
+	box-sizing: border-box;
+	min-height: 28px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+	padding: 2px 16px 2px 12px;
+	margin-top: 12px;
+	border-radius: var(--ui-border-radius-md) var(--ui-border-radius-md) var(--ui-border-radius-md) var(--ui-border-radius-3xs);
+	background-color: rgba(var(--ui-color-base-70-rgb), 0.12);
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-2xs);
+	color: var(--ui-color-on-primary);
+}
+
+.ai__copilot-chat_status:empty {
+	padding: 0;
+}
+
+.ai__copilot-chat_status-icon.--typing {
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	margin-right: 4px;
+	animation: ai__copilot-chat_status-typing-icon 1.6s linear infinite;
+}
+
+@keyframes ai__copilot-chat_status-typing-icon {
+	0% { transform: translateX(0px) rotate(0deg); }
+	20% { transform: translateX(3px) rotate(-20deg); }
+	35% { transform: translateX(3px) rotate(0deg); }
+	50% { transform: translateX(3px) rotate(-30deg); }
+	65% { transform: translateX(3px) rotate(0deg); }
+	80% { transform: translateX(2px) translateY(-1px) rotate(0deg); }
+	100% { transform: translateX(0px) translateY(0) rotate(0deg); }
+}

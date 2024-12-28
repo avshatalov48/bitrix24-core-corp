@@ -1,10 +1,14 @@
-import { Tag, Loc, Dom, Reflection, Text } from 'main.core';
+import { Tag, Loc, Dom, Reflection, Text, Type } from 'main.core';
+import { MemoryCache } from 'main.core.cache';
+import type { AnalyticsOptions } from 'sign.v2.analytics';
 import { Wizard, type WizardOptions, type Metadata } from 'ui.wizard';
 import { type DocumentData } from 'sign.v2.document-setup';
 import { Preview } from 'sign.v2.preview';
+import { Analytics, Context } from 'sign.v2.analytics';
 import type { SignOptions, SignOptionsConfig } from './types';
 import type { Editor } from 'sign.v2.editor';
 import './style.css';
+import { decorateResultBeforeCompletion, isTemplateMode } from './functions';
 
 export type { SignOptions, SignOptionsConfig };
 
@@ -13,13 +17,12 @@ export const DocumentMode: Readonly<Record<string, DocumentModeType>> = Object.f
 	document: 'document',
 	template: 'template',
 });
-export function isTemplateMode(mode: string): boolean
-{
-	return mode === DocumentMode.template;
-}
+
+export { decorateResultBeforeCompletion, isTemplateMode };
 
 export class SignSettings
 {
+	#cache: MemoryCache<any> = new MemoryCache();
 	#containerId: string;
 	#preview: Preview;
 	#type: string;
@@ -33,30 +36,28 @@ export class SignSettings
 	#overlayContainer: HTMLElement | null = null;
 	#currentOverlay: HTMLElement | null = null;
 	documentMode: DocumentModeType;
+	#isEditMode: boolean = false;
 
 	constructor(containerId: string, signOptions: SignOptions = {}, wizardOptions: WizardOptions = {})
 	{
 		this.#containerId = containerId;
 		this.#preview = new Preview();
 		this.#wizardOptions = wizardOptions;
-		const { type = '', config = {}, documentMode } = signOptions;
+		const { type = '', config = {}, documentMode, initiatedByType } = signOptions;
 		this.documentMode = documentMode;
 		this.#type = type;
 		const { languages } = config.documentSendConfig ?? {};
 		const EditorConstructor = Reflection.getClass('top.BX.Sign.V2.Editor');
-		this.editor = new EditorConstructor(type, { languages });
+		this.editor = new EditorConstructor(
+			type,
+			{ languages, isTemplateMode: this.isTemplateMode(), documentInitiatedByType: initiatedByType },
+		);
 	}
 
 	#createHead(): HTMLElement
 	{
-		const headerTitle = this.isTemplateMode()
-			? Loc.getMessage('SIGN_SETTINGS_TITLE_TEMPLATE')
-			: Loc.getMessage('SIGN_SETTINGS_TITLE');
-
-		const headerTitleSub = this.#type === 'b2b'
-			? Loc.getMessage('SIGN_SETTINGS_B2B_TITLE_SUB')
-			: Loc.getMessage('SIGN_SETTINGS_B2E_TITLE_SUB')
-		;
+		const headerTitle = this.#getHeaderTitleText();
+		const headerTitleSub = this.#getHeaderTitleSubText();
 
 		return Tag.render`
 			<div class="sign-settings__head">
@@ -70,9 +71,41 @@ export class SignSettings
 		`;
 	}
 
+	#getHeaderTitleSubText(): ?string
+	{
+		if (this.#type === 'b2b')
+		{
+			return Loc.getMessage('SIGN_SETTINGS_B2B_TITLE_SUB');
+		}
+
+		if (this.isTemplateMode() && this.#isEditMode)
+		{
+			return null;
+		}
+
+		return Loc.getMessage('SIGN_SETTINGS_B2E_TITLE_SUB');
+	}
+
+	#getHeaderTitleText(): ?string
+	{
+		if (this.isTemplateMode())
+		{
+			return this.#isEditMode
+				? Loc.getMessage('SIGN_SETTINGS_TITLE_TEMPLATE_EDIT')
+				: Loc.getMessage('SIGN_SETTINGS_TITLE_TEMPLATE');
+		}
+
+		return Loc.getMessage('SIGN_SETTINGS_TITLE');
+	}
+
 	isTemplateMode(): boolean
 	{
 		return this.documentMode === DocumentMode.template;
+	}
+
+	isDocumentMode(): boolean
+	{
+		return this.documentMode === DocumentMode.document;
 	}
 
 	#getLayout(): HTMLElement
@@ -285,14 +318,15 @@ export class SignSettings
 		}
 
 		const { blocks } = setupData;
-		this.#renderPages(blocks, preparedPages);
+		await this.#renderPages(blocks, preparedPages);
 
 		return setupData;
 	}
 
-	async init(uid: ?string): void
+	async init(uid: ?string, templateUid?: string): void
 	{
-		const metadata = this.getStepsMetadata(this);
+		this.#isEditMode = Type.isStringFilled(uid) || Type.isStringFilled(templateUid);
+		const metadata = this.getStepsMetadata(this, uid, templateUid);
 		const { complete, ...rest } = this.#wizardOptions;
 
 		const title = this.isTemplateMode()
@@ -314,20 +348,30 @@ export class SignSettings
 			await this.applyDocumentData(uid);
 		}
 
-		this.#render();
+		if (templateUid)
+		{
+			await this.applyTemplateData(templateUid);
+		}
+
+		this.#render(uid);
 	}
 
-	#render(): void
+	async applyTemplateData(templateUid: string): Promise<void>
+	{}
+
+	#render(uid): void
 	{
 		const container = document.getElementById(this.#containerId);
 		Dom.append(this.#getOverlayContainer(), container);
 		Dom.append(this.#getLayout(), container);
 		const step = this.documentSetup.setupData ? 1 : 0;
-		this.wizard.toggleBtnActiveState('next', true);
+
+		const isDraft = Type.isStringFilled(uid);
+		this.wizard.toggleBtnActiveState('next', !isDraft);
 		this.wizard.moveOnStep(step);
 	}
 
-	getStepsMetadata(): Metadata
+	getStepsMetadata(signSettings: this, documentUid?: string, templateUid?: string): Metadata
 	{
 		return {};
 	}
@@ -342,5 +386,20 @@ export class SignSettings
 	{
 		Dom.style(this.#container, 'display', 'flex');
 		Dom.hide(this.#overlayContainer);
+	}
+
+	setAnalyticsContext(context: Partial<AnalyticsOptions>): void
+	{
+		this.getAnalytics().setContext(new Context(context));
+	}
+
+	getAnalytics(): Analytics
+	{
+		return this.#cache.remember('analytics', () => new (top.BX?.Sign.V2.Analytics ?? Analytics)());
+	}
+
+	isEditMode(): boolean
+	{
+		return this.#isEditMode;
 	}
 }

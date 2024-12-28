@@ -5,12 +5,12 @@ jn.define('calendar/sync-page/settings', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { SyncAjax } = require('calendar/ajax');
 	const { BottomSheet } = require('bottom-sheet');
+	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 	const { Loc } = require('loc');
 	const { TimeAgoFormat } = require('layout/ui/friendly-date/time-ago-format');
 	const { Moment } = require('utils/date/moment');
 	const { SyncSettingsSection } = require('calendar/sync-page/settings/section');
 	const { SyncSettingsMenu } = require('calendar/sync-page/settings/menu');
-	const { CalendarLoader } = require('calendar/layout/ui/loader');
 	const { Color } = require('tokens');
 
 	/**
@@ -31,7 +31,7 @@ jn.define('calendar/sync-page/settings', (require, exports, module) => {
 
 			this.onShowMoreMenu = this.showMoreMenu.bind(this);
 
-			this.loadData();
+			void this.loadData();
 		}
 
 		show(parentWidget = PageManager)
@@ -79,7 +79,7 @@ jn.define('calendar/sync-page/settings', (require, exports, module) => {
 				this.renderHeader(),
 				!this.state.loading && this.renderSyncInfo(),
 				!this.state.loading && this.renderDivider(),
-				this.state.loading ? CalendarLoader() : this.renderContent(),
+				this.state.loading ? this.renderLoader() : this.renderContent(),
 			);
 		}
 
@@ -353,6 +353,23 @@ jn.define('calendar/sync-page/settings', (require, exports, module) => {
 						},
 					},
 				),
+			);
+		}
+
+		renderLoader()
+		{
+			return View(
+				{
+					style: {
+						height: device.screen.height - 90,
+						width: device.screen.width,
+						alignItems: 'center',
+						justifyContent: 'center',
+					},
+				},
+				new LoadingScreenComponent({
+					backgroundColor: Color.bgContentPrimary.toHex(),
+				}),
 			);
 		}
 

@@ -2,7 +2,6 @@
 
 namespace Bitrix\Mobile\AvaMenu\Items;
 
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Mobile\AvaMenu\AbstractMenuItem;
 
 class GoToWeb extends AbstractMenuItem
@@ -22,14 +21,6 @@ class GoToWeb extends AbstractMenuItem
 		];
 	}
 
-	private function getEntryParams(): array
-	{
-		return [
-			'type' => 'qrauth',
-			'showHint' => false,
-		];
-	}
-
 	public function getId(): string
 	{
 		return 'go_to_web';
@@ -38,5 +29,19 @@ class GoToWeb extends AbstractMenuItem
 	public function getIconId(): string
 	{
 		return 'go_to';
+	}
+
+	public function getMessageCode(): string
+	{
+		return 'AVA_MENU_NAME_GO_TO_WEB_MSGVER_1';
+	}
+
+	private function getEntryParams(): array
+	{
+		return [
+			'type' => 'qrauth',
+			'analyticsSection' => 'profile',
+			'showHint' => false,
+		];
 	}
 }

@@ -51,6 +51,7 @@ abstract class AbstractOperation
 	protected const ENGINE_CODE = EventHandler::SETTINGS_FILL_ITEM_FROM_CALL_ENGINE_TEXT_CODE;
 
 	private bool $isManualLaunch = true;
+	private ?string $scenario;
 	private ?string $contextLanguageId;
 
 	public function __construct(
@@ -61,6 +62,7 @@ abstract class AbstractOperation
 	{
 		$this->userId ??= Container::getInstance()->getContext()->getUserId();
 		$this->contextLanguageId = $this->getContextLanguageId();
+		$this->scenario = Scenario::FULL_SCENARIO;
 	}
 
 	public static function isSuitableTarget(ItemIdentifier $target): bool
@@ -119,6 +121,13 @@ abstract class AbstractOperation
 		return $this;
 	}
 
+	public function setScenario(string $scenario): self
+	{
+		$this->scenario = $scenario;
+
+		return $this;
+	}
+
 	public function launch(): Result
 	{
 		AIManager::logger()->debug(
@@ -169,11 +178,16 @@ abstract class AbstractOperation
 			return $result;
 		}
 
-		if (!AIManager::isEnabledInGlobalSettings())
+		if (!Scenario::isEnabledScenario($this->scenario))
 		{
 			AIManager::logger()->error(
-				'{date}: {class}: Cant start operation because AI in CRM is disabled. Target {target}, operation {operationType}' . PHP_EOL,
-				['class' => static::class, 'target' => $this->target, 'operationType' => static::TYPE_ID],
+				'{date}: {class}: Cant start operation because AI operations in CRM is disabled (see settings). Target {target}, operation {operationType}, scenario {scenario}' . PHP_EOL,
+				[
+					'class' => static::class,
+					'target' => $this->target,
+					'operationType' => static::TYPE_ID,
+					'scenario' => $this->scenario,
+				],
 			);
 
 			$result->addError(ErrorCode::getAIDisabledError(['sliderCode' => AIManager::AI_DISABLED_SLIDER_CODE]));
@@ -479,6 +493,7 @@ abstract class AbstractOperation
 			'IS_MANUAL_LAUNCH' => $this->isManualLaunch,
 			'LANGUAGE_ID' => $this->contextLanguageId,
 			'ENGINE_ID' => self::$engineId,
+			'NEXT_TYPE_ID' => Scenario::getNextTypeIdByScenario($this->scenario),
 		];
 	}
 
@@ -493,6 +508,7 @@ abstract class AbstractOperation
 			'IS_MANUAL_LAUNCH' => $this->isManualLaunch,
 			'LANGUAGE_ID' => $this->contextLanguageId,
 			'ENGINE_ID' => self::$engineId,
+			'NEXT_TYPE_ID' => Scenario::getNextTypeIdByScenario($this->scenario),
 		];
 	}
 
@@ -626,9 +642,11 @@ abstract class AbstractOperation
 				$payload->getValidationErrors()->toArray()
 			);
 
+			$result = self::saveErrorToJobAndReturnResult($job, $dummyResult);
+
 			static::notifyAboutJobError($dummyResult);
 
-			return self::saveErrorToJobAndReturnResult($job, $dummyResult);
+			return $result;
 		}
 
 		$job->setResult(Json::encode($payload, 0));
@@ -668,7 +686,7 @@ abstract class AbstractOperation
 
 		if ($result->isSuccess())
 		{
-			static::onAfterSuccessfulJobFinish($result);
+			static::onAfterSuccessfulJobFinish($result, $event->getParameter('engine')?->getContext());
 			self::logOperationProgress('operationComplete',$result->getTarget(), $job->requireHash(), $result->getParentJobId());
 
 			AIManager::logger()->debug(
@@ -767,7 +785,7 @@ abstract class AbstractOperation
 		return $result;
 	}
 
-	protected static function onAfterSuccessfulJobFinish(Result $result): void
+	protected static function onAfterSuccessfulJobFinish(Result $result, ?Context $context = null): void
 	{
 	}
 
@@ -917,7 +935,8 @@ abstract class AbstractOperation
 			$job->requireParentId(),
 			$job->requireRetryCount(),
 			$job->requireIsManualLaunch(),
-			$job->requireLanguageId()
+			$job->requireLanguageId(),
+			$job->requireNextTypeId()
 		);
 
 		if ($job->requireExecutionStatus() === QueueTable::EXECUTION_STATUS_ERROR)
@@ -1043,6 +1062,51 @@ abstract class AbstractOperation
 			->buildEvent()
 			->send()
 		;
+	}
+
+	final protected static function extractPayloadPrettifiedData(\Bitrix\AI\Result $result): array
+	{
+		try
+		{
+			$prettifiedData = $result->getPrettifiedData() ?: '';
+			$prettifiedData = trim($prettifiedData);
+
+			$startPos = strpos($prettifiedData, '{');
+			$endPos = strrpos($prettifiedData, '}');
+
+			if ($startPos === false || $endPos === false)
+			{
+				return [];
+			}
+
+			$prettifiedData = substr($prettifiedData, $startPos, $endPos - $startPos + 1);
+			$json = Json::decode($prettifiedData);
+		}
+		catch (ArgumentException)
+		{
+			$json = [];
+		}
+
+		if (!is_array($json))
+		{
+			$json = [];
+		}
+
+		return $json;
+	}
+
+	final protected static function extractPayloadString(mixed $input): ?string
+	{
+		$result = null;
+		if (!empty($input))
+		{
+			$result = is_array($input)
+				? implode(PHP_EOL, $input)
+				: (string)$input
+			;
+		}
+
+		return $result;
 	}
 
 	private static function constructJobFinishEventBuilder(EO_Queue $job): ?AIBaseEvent

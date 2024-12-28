@@ -4,14 +4,18 @@ namespace Bitrix\Crm\Badge;
 
 use Bitrix\Crm\Badge\Model\BadgeTable;
 use Bitrix\Crm\Badge\Type\AiCallFieldsFillingResult;
+use Bitrix\Crm\Badge\Type\BizprocWorkflowStatus;
 use Bitrix\Crm\Badge\Type\CalendarSharingStatus;
 use Bitrix\Crm\Badge\Type\CallStatus;
+use Bitrix\Crm\Badge\Type\CopilotCallAssessmentStatus;
 use Bitrix\Crm\Badge\Type\MailMessageDeliveryStatus;
 use Bitrix\Crm\Badge\Type\OpenLineStatus;
 use Bitrix\Crm\Badge\Type\PaymentStatus;
 use Bitrix\Crm\Badge\Type\RestAppStatus;
 use Bitrix\Crm\Badge\Type\SmsStatus;
 use Bitrix\Crm\Badge\Type\TaskStatus;
+use Bitrix\Crm\Badge\Type\TodoStatus;
+use Bitrix\Crm\Badge\Type\WorkflowCommentStatus;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Result;
@@ -29,6 +33,10 @@ abstract class Badge
 	public const TASK_STATUS_TYPE = 'task_status';
 	public const MAIL_MESSAGE_DELIVERY_STATUS_TYPE = 'mail_message_delivery_status';
 	public const AI_CALL_FIELDS_FILLING_RESULT = 'ai_call_fields_filling_result';
+	public const TODO_STATUS_TYPE = 'todo_status';
+	public const BIZPROC_WORKFLOW_STATUS_TYPE = 'workflow_status';
+	public const WORKFLOW_COMMENT_STATUS_TYPE = 'workflow_comment_status';
+	public const COPILOT_CALL_ASSESSMENT_STATUS_TYPE = 'copilot_call_assessment_status';
 
 	public static function createByType(string $type, string $value): Badge
 	{
@@ -80,6 +88,26 @@ abstract class Badge
 		if ($type === self::AI_CALL_FIELDS_FILLING_RESULT)
 		{
 			return new AiCallFieldsFillingResult($value);
+		}
+
+		if ($type === self::BIZPROC_WORKFLOW_STATUS_TYPE)
+		{
+			return new BizprocWorkflowStatus($value);
+		}
+
+		if ($type === self::WORKFLOW_COMMENT_STATUS_TYPE)
+		{
+			return new WorkflowCommentStatus($value);
+		}
+
+		if ($type === self::TODO_STATUS_TYPE)
+		{
+			return new TodoStatus($value);
+		}
+
+		if ($type === self::COPILOT_CALL_ASSESSMENT_STATUS_TYPE)
+		{
+			return new CopilotCallAssessmentStatus($value);
 		}
 
 		throw new ArgumentException('Unknown badge type: ' . $type);

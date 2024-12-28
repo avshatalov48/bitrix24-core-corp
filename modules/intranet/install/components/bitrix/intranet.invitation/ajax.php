@@ -14,6 +14,7 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Bitrix24\Integrator;
 use Bitrix\Main\Config\Option;
+use Bitrix\Socialnetwork\Collab\CollabFeature;
 use Bitrix\Socialnetwork\Integration\UI\EntitySelector;
 use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Web\Json;
@@ -311,6 +312,11 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 		if (!empty($strError))
 		{
+			$this->getAnalyticsInstance()->sendInvitation(
+				0,
+				Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_EMAIL,
+				false
+			);
 			$this->addError(new \Bitrix\Main\Error($strError));
 			return false;
 		}
@@ -332,6 +338,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			$this->getAnalyticsInstance()->sendInvitation(
 				$obj->getId(),
 				Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_EMAIL,
+				true,
 				$isEmail ? $analyticEmails : 0,
 				$isEmail ? 0 : $analyticPhones
 			);
@@ -372,6 +379,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			$this->getAnalyticsInstance()->sendInvitation(
 				$obj->getId(),
 				Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_DEPARTMENT,
+				true,
 				$countEmails,
 				$countPhones
 			);
@@ -379,6 +387,11 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 		if (!empty($strError))
 		{
+			$this->getAnalyticsInstance()->sendInvitation(
+				0,
+				Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_DEPARTMENT,
+				false
+			);
 			$this->addError(new \Bitrix\Main\Error($strError));
 
 			return false;
@@ -459,6 +472,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 				$this->getAnalyticsInstance()->sendInvitation(
 					$obj->getId(),
 					Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_MASS,
+					true,
 					$countEmails,
 					$countPhones
 				);
@@ -467,6 +481,11 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 		if (!empty($strError))
 		{
+			$this->getAnalyticsInstance()->sendInvitation(
+				0,
+				Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_MASS,
+				false
+			);
 			$this->addError(new \Bitrix\Main\Error($strError));
 
 			return false;
@@ -636,16 +655,25 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 		if (!empty($strError))
 		{
+			$this->getAnalyticsInstance()->sendInvitation(
+				0,
+				Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_INTEGRATOR,
+				false
+			);
 			$this->addError(new \Bitrix\Main\Error($strError));
 
 			return false;
 		}
 
-		$this->getAnalyticsInstance()->sendInvitation(
-			$newIntegratorId,
-			Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_INTEGRATOR,
-			1
-		);
+		if ($newIntegratorId > 0)
+		{
+			$this->getAnalyticsInstance()->sendInvitation(
+				$newIntegratorId,
+				Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_INTEGRATOR,
+			true,
+				1
+			);
+		}
 
 		CIntranetInviteDialog::logAction($newIntegratorId, 'intranet', 'invite_user', 'integrator_dialog');
 

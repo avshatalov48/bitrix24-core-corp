@@ -147,7 +147,17 @@ class Requisite
 
 	public function getPresets(): array
 	{
-		$list = [];
+		$key = $this->splitAccountFields ? 'split' : 'unsplit';
+
+		static $list = [];
+
+		if (isset($list[$key]))
+		{
+			return $list[$key];
+		}
+
+		$list[$key] = [];
+
 		foreach (array_keys(EntityPreset::getActiveItemList()) as $id)
 		{
 			$preset = EntityPreset::getSingleInstance()->getById($id);
@@ -222,7 +232,7 @@ class Requisite
 				$fields
 			);
 
-			$list[] = [
+			$list[$key][] = [
 				'id' => (int)$preset['ID'],
 				'label' => $preset['NAME'],
 				'countryId' => $countryId,
@@ -230,7 +240,7 @@ class Requisite
 			];
 		}
 
-		return $list;
+		return $list[$key];
 	}
 
 	private function getReqFields(int $countryId, array $whiteNamesList): array

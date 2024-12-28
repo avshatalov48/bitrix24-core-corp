@@ -161,6 +161,7 @@
 					style: styles.imagePreview,
 					uri: imageUri,
 					resizeMode: 'cover',
+					clickable: false,
 				}),
 				View(
 					{

@@ -9,6 +9,10 @@ use Bitrix\HumanResources\Item\NodeMember;
 use Bitrix\HumanResources\Type;
 use Bitrix\HumanResources\Type\MemberEntityType;
 use Bitrix\HumanResources\Type\MemberSubordinateRelationType;
+use Bitrix\HumanResources\Type\NodeEntityType;
+use Bitrix\HumanResources\Util\StructureHelper;
+use Bitrix\HumanResources\Exception\DeleteFailedException;
+use Bitrix\Main\Application;
 
 class NodeMemberService implements Contract\Service\NodeMemberService
 {
@@ -231,7 +235,7 @@ class NodeMemberService implements Contract\Service\NodeMemberService
 				withAllChildNodes: $withAllChildNodes,
 				limit: $limit,
 				offset: $offset,
-				onlyActive: $onlyActive
+				onlyActive: $onlyActive,
 			))
 			&& !$memberCollection->empty())
 		{
@@ -260,7 +264,7 @@ class NodeMemberService implements Contract\Service\NodeMemberService
 			withAllChildNodes: $withAllChildNodes,
 			limit: $limit,
 			offset: $offset,
-			onlyActive: $onlyActive
+			onlyActive: $onlyActive,
 		);
 	}
 
@@ -285,5 +289,286 @@ class NodeMemberService implements Contract\Service\NodeMemberService
 		$this->nodeMemberRepository->update($nodeMember);
 
 		return $nodeMember;
+	}
+
+	/**
+	 * @param NodeMember $nodeMember
+	 *
+	 * @return NodeMember|null
+	 * @throws UpdateFailedException
+	 * @throws \Bitrix\HumanResources\Exception\WrongStructureItemException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function removeUserMemberFromDepartment(Item\NodeMember $nodeMember): ?Item\NodeMember
+	{
+		$rootNode = StructureHelper::getRootStructureDepartment();
+
+		if (
+			$nodeMember->entityType !== MemberEntityType::USER
+			|| !$rootNode
+		)
+		{
+			return null;
+		}
+
+		$nodeMemberCollection = $this->nodeMemberRepository->findAllByEntityIdAndEntityTypeAndNodeType(
+			entityId: $nodeMember->entityId,
+			entityType: $nodeMember->entityType,
+			nodeType: NodeEntityType::DEPARTMENT,
+			limit: 2,
+		);
+
+		$departmentsCollectionCount = $nodeMemberCollection->count();
+		if (
+			$nodeMember->nodeId === $rootNode->id
+			&& $departmentsCollectionCount === 1
+		)
+		{
+			return null;
+		}
+
+		if ($departmentsCollectionCount === 1)
+		{
+			$nodeMember->role = $this->roleRepository->findByXmlId(NodeMember::DEFAULT_ROLE_XML_ID['EMPLOYEE'])->id;
+			$nodeMember->nodeId = $rootNode->id;
+
+			return $this->nodeMemberRepository->update($nodeMember);
+		}
+
+		$this->nodeMemberRepository->remove($nodeMember);
+
+		return null;
+	}
+
+	/**
+	 * @param Item\Node $node
+	 * @param array $departmentUserIds
+	 *
+	 * @return Item\Collection\NodeMemberCollection
+	 * @throws \Bitrix\HumanResources\Exception\CreationFailedException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\DB\DuplicateEntryException
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 * @throws \Exception
+	 */
+	public function saveUsersToDepartment(Item\Node $node, array $departmentUserIds = []): Item\Collection\NodeMemberCollection
+	{
+		$nodeMemberCollection = new Item\Collection\NodeMemberCollection();
+
+		$oldMembersCollection =
+			$this->nodeMemberRepository->findAllByNodeIdAndEntityType(
+				$node->id,
+				MemberEntityType::USER,
+				false,
+				0,
+			);
+		$newUserIdList = [];
+
+		$nodeMemberCollectionToAdd = new Item\Collection\NodeMemberCollection();
+		$nodeMemberCollectionToUpdate = new Item\Collection\NodeMemberCollection();
+		foreach ($departmentUserIds as $roleXmlId => $userIds)
+		{
+			$role = $this->roleRepository->findByXmlId($roleXmlId);
+
+			if (!$role)
+			{
+				continue;
+			}
+			$userIds = array_filter(array_map('intval', $userIds));
+			$newUserIdList = array_merge($newUserIdList, $userIds);
+
+			foreach ($userIds as $userId)
+			{
+				$userMember = $oldMembersCollection->getFirstByEntityId($userId);
+
+				if ($userMember)
+				{
+					if (($userMember->roles[0] ?? 0) !== $role->id)
+					{
+						$updatedMember = $userMember;
+						$updatedMember->role = $role->id;
+						$nodeMemberCollectionToUpdate->add($updatedMember);
+						$nodeMemberCollection->add($updatedMember);
+					}
+
+					continue;
+				}
+
+				$nodeMemberToAdd = new NodeMember(
+					entityType: MemberEntityType::USER,
+					entityId: $userId,
+					nodeId: $node->id,
+					active: true,
+					role: $role->id,
+				);
+				$nodeMemberCollectionToAdd->add($nodeMemberToAdd);
+				$nodeMemberCollection->add($nodeMemberToAdd);
+			}
+		}
+
+		$nodeMemberCollectionToRemove = $oldMembersCollection->filter(
+			static function (Item\NodeMember $nodeMember) use ($newUserIdList)
+			{
+				return !in_array($nodeMember->entityId, $newUserIdList, true);
+			},
+		);
+
+		$this->nodeMemberRepository->createByCollection($nodeMemberCollectionToAdd);
+		$this->nodeMemberRepository->updateByCollection($nodeMemberCollectionToUpdate);
+		$movedToRootUserNodeMemberCollection =
+			$this->removeUserMembersFromDepartmentByCollection($nodeMemberCollectionToRemove)
+		;
+
+		foreach ($movedToRootUserNodeMemberCollection as $nodeMember)
+		{
+			$nodeMemberCollection->add($nodeMember);
+		}
+
+		return $nodeMemberCollection;
+	}
+
+	/**
+	 * @param Item\Collection\NodeMemberCollection $nodeMemberCollection
+	 *
+	 * @return array|Item\Collection\NodeMemberCollection
+	 * @throws UpdateFailedException
+	 * @throws \Bitrix\HumanResources\Exception\WrongStructureItemException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function removeUserMembersFromDepartmentByCollection(
+		Item\Collection\NodeMemberCollection $nodeMemberCollection,
+	): Item\Collection\NodeMemberCollection
+	{
+		$movedToRootUserNodeMemberCollection = new Item\Collection\NodeMemberCollection();
+		$connection = Application::getConnection();
+		try
+		{
+			$connection->startTransaction();
+			foreach ($nodeMemberCollection as $nodeMember)
+			{
+				$movedToRootUserNodeMember = $this->removeUserMemberFromDepartment($nodeMember);
+				if (!$movedToRootUserNodeMember)
+				{
+					continue;
+				}
+				$movedToRootUserNodeMemberCollection->add($movedToRootUserNodeMember);
+			}
+			$connection->commitTransaction();
+		}
+		catch (\Exception $exception)
+		{
+			$connection->rollbackTransaction();
+			throw $exception;
+		}
+
+		return $nodeMemberCollection;
+	}
+
+	/**
+	 * @param Item\Node $node
+	 * @param array{
+	 *      MEMBER_HEAD?: list<int>,
+	 *      MEMBER_EMPLOYEE?: list<int>,
+	 *      MEMBER_DEPUTY_HEAD?: list<int>
+	 * } $departmentUserIds
+	 *
+	 * @return bool
+	 *
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\DB\DuplicateEntryException
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 * @throws \Bitrix\HumanResources\Exception\CreationFailedException
+	 */
+	public function moveUsersToDepartment(Item\Node $node, array $departmentUserIds = []): Item\Collection\NodeMemberCollection
+	{
+		$nodeMemberCollection = new Item\Collection\NodeMemberCollection();
+		$nodeMemberCollectionToAdd = new Item\Collection\NodeMemberCollection();
+		$nodeMemberCollectionToUpdate = new Item\Collection\NodeMemberCollection();
+		$nodeMemberCollectionToRemove = new Item\Collection\NodeMemberCollection();
+
+		foreach ($departmentUserIds as $roleXmlId => $userIds)
+		{
+			$role = $this->roleRepository->findByXmlId($roleXmlId);
+
+			if (!$role)
+			{
+				continue;
+			}
+
+			$userIds = array_filter(array_map('intval', $userIds));
+
+			$userCollection = $this->nodeMemberRepository->findAllByEntityIdsAndEntityTypeAndNodeType(
+				entityIds: $userIds,
+				entityType: MemberEntityType::USER,
+				nodeType: NodeEntityType::DEPARTMENT,
+			);
+
+			$userAlreadyBelongsToNode = [];
+			foreach ($userCollection as $userMember)
+			{
+				if (
+					$userMember->nodeId === $node->id
+				)
+				{
+					$userAlreadyBelongsToNode[] = $userMember->entityId;
+
+					continue;
+				}
+
+				if (
+					$nodeMemberCollectionToUpdate->getFirstByEntityId($userMember->entityId)
+					|| in_array($userMember->entityId, $userAlreadyBelongsToNode, true)
+				)
+				{
+					$nodeMemberCollectionToRemove->add($userMember);
+
+					continue;
+				}
+
+				$updatedUserMember = $userMember;
+				$updatedUserMember->nodeId = $node->id;
+				$updatedUserMember->role = $role->id;
+				$nodeMemberCollectionToUpdate->add($updatedUserMember);
+				$nodeMemberCollection->add($updatedUserMember);
+			}
+
+			foreach ($userIds as $userId)
+			{
+				if ($nodeMemberCollectionToUpdate->getFirstByEntityId($userId))
+				{
+					continue;
+				}
+
+				if (in_array($userId, $userAlreadyBelongsToNode, true))
+				{
+					continue;
+				}
+
+				$nodeMemberToAdd = new NodeMember(
+					entityType: MemberEntityType::USER,
+					entityId: $userId,
+					nodeId: $node->id,
+					active: true,
+					role: $role->id,
+				);
+				$nodeMemberCollectionToAdd->add($nodeMemberToAdd);
+				$nodeMemberCollectionToUpdate->add($nodeMemberToAdd);
+			}
+		}
+
+		$this->nodeMemberRepository->createByCollection($nodeMemberCollectionToAdd);
+		$this->nodeMemberRepository->updateByCollection($nodeMemberCollectionToUpdate);
+		$this->nodeMemberRepository->removeByCollection($nodeMemberCollectionToRemove);
+
+		return $nodeMemberCollection;
 	}
 }

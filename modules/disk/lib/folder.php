@@ -7,6 +7,7 @@ use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\FileTable;
 use Bitrix\Disk\Internals\FolderTable;
 use Bitrix\Disk\Internals\ObjectNameService;
+use Bitrix\Disk\Internals\ObjectPathTable;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\RightTable;
 use Bitrix\Disk\Internals\SharingTable;
@@ -14,6 +15,7 @@ use Bitrix\Disk\Internals\SimpleRightTable;
 use Bitrix\Disk\Internals\VersionTable;
 use Bitrix\Disk\ProxyType\Group;
 use Bitrix\Disk\Security\SecurityContext;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
@@ -22,6 +24,8 @@ use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Collection;
 use Bitrix\Main\Type\DateTime;
 use CFile;
@@ -295,6 +299,21 @@ class Folder extends BaseObject
 		if ($fileModel)
 		{
 			Driver::getInstance()->getRightsManager()->setAsNewLeaf($fileModel, $rights);
+
+			$objectEvent = $this->makeObjectEvent(
+				'objectAdded',
+				[
+					'object' => [
+						'id' => (int)$this->getId(),
+						'type' => FileTable::TYPE,
+						'name' => $this->getName(),
+					],
+					'addedObject' => [
+						'id' => (int)$fileModel->getId(),
+					],
+				]
+			);
+			$objectEvent->sendToObjectChannel();
 		}
 
 		return $fileModel;
@@ -386,6 +405,22 @@ class Folder extends BaseObject
 
 //			$this->notifySonetGroup($fileLinkModel);
 		}
+
+		$objectEvent = $this->makeObjectEvent(
+			'objectAdded',
+			[
+				'object' => [
+					'id' => (int)$this->getId(),
+					'type' => FileTable::TYPE,
+					'name' => $this->getName(),
+				],
+				'addedObject' => [
+					'id' => (int)$fileLinkModel->getId(),
+				],
+			]
+		);
+		$objectEvent->sendToObjectChannel();
+
 
 		return $fileLinkModel;
 	}
@@ -518,6 +553,21 @@ class Folder extends BaseObject
 		$this->changeSelfUpdateTime();
 		Driver::getInstance()->getRightsManager()->setAsNewLeaf($folderModel, $rights);
 
+		$objectEvent = $this->makeObjectEvent(
+			'objectAdded',
+			[
+				'object' => [
+					'id' => (int)$this->getId(),
+					'type' => FolderTable::TYPE,
+					'name' => $this->getName(),
+				],
+				'addedObject' => [
+					'id' => (int)$folderModel->getId(),
+				],
+			]
+		);
+		$objectEvent->sendToObjectChannel();
+
 		return $folderModel;
 	}
 
@@ -548,6 +598,21 @@ class Folder extends BaseObject
 		}
 		$this->changeSelfUpdateTime();
 		Driver::getInstance()->getRightsManager()->setAsNewLeaf($fileLinkModel, $rights);
+
+		$objectEvent = $this->makeObjectEvent(
+			'objectAdded',
+			[
+				'object' => [
+					'id' => (int)$this->getId(),
+					'type' => FolderTable::TYPE,
+					'name' => $this->getName(),
+				],
+				'addedObject' => [
+					'id' => (int)$fileLinkModel->getId(),
+				],
+			]
+		);
+		$objectEvent->sendToObjectChannel();
 
 		return $fileLinkModel;
 	}
@@ -786,6 +851,18 @@ class Folder extends BaseObject
 		$filter['PARENT_ID'] = $this->id;
 
 		return BaseObject::load($filter, $with);
+	}
+
+	/**
+	 * Checks if folder has children.
+	 * @return bool
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public function hasChildren(): bool
+	{
+		return ObjectPathTable::hasChildren($this->getRealObjectId());
 	}
 
 	/**

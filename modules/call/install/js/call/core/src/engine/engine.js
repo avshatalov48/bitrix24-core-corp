@@ -7,6 +7,7 @@ import {CallStub} from './stub'
 import {Hardware} from '../hardware';
 import Util from '../util'
 import {AbstractCall} from './abstract_call';
+import {CallAI} from '../call_ai';
 
 export const CallState = {
 	Idle: 'Idle',
@@ -123,6 +124,7 @@ export const CallEvent = {
 	onGetUserMediaEnded: 'onGetUserMediaEnded',
 	onUpdateLastUsedCameraId: 'onUpdateLastUsedCameraId',
 	onToggleRemoteParticipantVideo: 'onToggleRemoteParticipantVideo',
+	onSwitchTrackRecordStatus: 'onSwitchTrackRecordStatus',
 };
 
 const ajaxActions = {
@@ -269,6 +271,11 @@ class Engine
 				{
 					this.getPullClient().setPublicIds(Object.values(createCallResponse.publicChannels))
 				}
+				if (createCallResponse.ai)
+				{
+					CallAI.setup(createCallResponse.ai);
+				}
+
 				const callFields = createCallResponse.call;
 				if (this.calls[callFields['ID']])
 				{
@@ -288,6 +295,7 @@ class Engine
 
 				const callFactory = this.#getCallFactory(callFields['PROVIDER']);
 				Hardware.isCameraOn = config.videoEnabled === true;
+
 				const call = callFactory.createCall({
 					id: parseInt(callFields['ID']),
 					instanceId: Util.getUuidv4(),
@@ -304,6 +312,7 @@ class Engine
 					debug: config.debug === true,
 					logToken: createCallResponse.logToken,
 					connectionData: createCallResponse.connectionData,
+					isCopilotActive: callFields['RECORD_AUDIO'],
 					// jwt: callFields['JWT'],
 					// endpoint: callFields['ENDPOINT'],
 				});
@@ -382,6 +391,7 @@ class Engine
 					logToken: createCallResponse.logToken,
 					connectionData: createCallResponse.connectionData,
 					debug: config.debug,
+					isCopilotActive: callFields['RECORD_AUDIO'],
 					// jwt: callFields['JWT'],
 					// endpoint: callFields['ENDPOINT']
 				});
@@ -421,6 +431,7 @@ class Engine
 			startDate: callFields['START_DATE'],
 			logToken: logToken,
 			connectionData: connectionData,
+			isCopilotActive: callFields['RECORD_AUDIO'],
 			// jwt: callFields['JWT'],
 			// endpoint: callFields['ENDPOINT'],
 
@@ -590,6 +601,7 @@ class Engine
 				events: {
 					onDestroy: this.#onCallDestroy.bind(this)
 				},
+				isCopilotActive: callFields['RECORD_AUDIO'],
 				// jwt: callFields['JWT'],
 				// endpoint: callFields['ENDPOINT']
 			});

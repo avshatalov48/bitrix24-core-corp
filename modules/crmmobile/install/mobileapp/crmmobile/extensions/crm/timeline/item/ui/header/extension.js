@@ -222,13 +222,15 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 
 		renderUser()
 		{
-			if (!this.props.user)
+			const { user } = this.props;
+
+			if (!user)
 			{
 				return null;
 			}
 
 			return TimelineItemUserAvatar({
-				...this.props.user,
+				...user,
 				testId: 'TimelineItemHeaderUserAvatar',
 			});
 		}
@@ -240,28 +242,28 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 				return null;
 			}
 
-			const { analyticsEvent } = this.props;
-			const { type, action, disableIfReadonly } = this.props.changeStreamButton;
+			const { analyticsEvent, isReadonly, changeStreamButton, activityType, confirmationTexts } = this.props;
+			const { type, action, disableIfReadonly } = changeStreamButton;
 
 			const props = {
 				onClick: () => {
 					Haptics.impactMedium();
 					this.onAction(action);
 				},
-				isReadonly: this.props.isReadonly && disableIfReadonly,
+				isReadonly: isReadonly && disableIfReadonly,
 			};
 
 			const cancelButton = makeCancelButton(
 				() => this.changeStreamButtonRef.uncheck(),
 
-				this.props.confirmationTexts.cancelButton,
+				confirmationTexts.cancelButton,
 			);
 
 			const confirmButton = makeButton(
-				this.props.confirmationTexts.confirmButton,
+				confirmationTexts.confirmButton,
 
 				() => {
-					this.sharedStorage.set(`${this.props.activityType}_showConfirm`, 'N');
+					this.sharedStorage.set(`${activityType}_showConfirm`, 'N');
 					this.onAction(action, analyticsEvent);
 				},
 			);
@@ -269,15 +271,15 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 			const onCompleteButtonClick = () => {
 				Haptics.impactMedium();
 
-				if (this.sharedStorage.get(`${this.props.activityType}_showConfirm`) === 'N')
+				if (this.sharedStorage.get(`${activityType}_showConfirm`) === 'N')
 				{
 					this.onAction(action, analyticsEvent);
 				}
 				else
 				{
 					Alert.confirm(
-						this.props.confirmationTexts.title,
-						this.props.confirmationTexts.description,
+						confirmationTexts.title,
+						confirmationTexts.description,
 						[confirmButton, cancelButton],
 					);
 				}
@@ -288,10 +290,12 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 				{
 					case ChangeStreamButtonTypes.COMPLETE:
 						return new Checkbox({
-							ref: (ref) => this.changeStreamButtonRef = ref,
+							ref: (ref) => {
+								this.changeStreamButtonRef = ref;
+							},
 							onClick: onCompleteButtonClick,
 							testId: 'TimelineItemChangeStreamComplete',
-							isReadonly: this.props.isReadonly && disableIfReadonly,
+							isReadonly: isReadonly && disableIfReadonly,
 						});
 
 					case ChangeStreamButtonTypes.PIN:
@@ -307,6 +311,8 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 							pinned: true,
 							testId: 'TimelineItemChangeStreamUnpin',
 						});
+					default:
+						return null;
 				}
 			};
 

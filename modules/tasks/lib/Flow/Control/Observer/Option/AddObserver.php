@@ -2,11 +2,12 @@
 
 namespace Bitrix\Tasks\Flow\Control\Observer\Option;
 
+use Bitrix\Main\LoaderException;
 use Bitrix\Tasks\Flow\Control\Command\AddCommand;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotAddedException;
 use Bitrix\Tasks\Flow\Control\Observer\AddObserverInterface;
-use Bitrix\Tasks\Flow\Control\Observer\Trait\AddUsersToGroupTrait;
-use Bitrix\Tasks\Flow\Flow;
+use Bitrix\Tasks\Flow\Distribution\FlowDistributionType;
+use Bitrix\Tasks\Flow\Integration\HumanResources\AccessCodeConverter;
 use Bitrix\Tasks\Flow\Internal\Entity\FlowEntity;
 use Bitrix\Tasks\Flow\Notification\NotificationService;
 use Bitrix\Tasks\Flow\Option\OptionDictionary;
@@ -15,7 +16,6 @@ use Bitrix\Tasks\Flow\Option\OptionService;
 final class AddObserver implements AddObserverInterface
 {
 	use OptionTrait;
-	use AddUsersToGroupTrait;
 
 	protected AddCommand $command;
 	protected FlowEntity $flowEntity;
@@ -31,6 +31,7 @@ final class AddObserver implements AddObserverInterface
 	}
 
 	/**
+	 * @throws LoaderException
 	 * @throws FlowNotAddedException
 	 */
 	public function update(AddCommand $command, FlowEntity $flowEntity): void
@@ -39,22 +40,14 @@ final class AddObserver implements AddObserverInterface
 		$this->command = $command;
 		$this->flowEntity = $flowEntity;
 
-		if (
-			$this->command->distributionType === Flow::DISTRIBUTION_TYPE_MANUALLY
-			&& $this->command->manualDistributorId <= 0
-		)
+		if ($this->command->distributionType === FlowDistributionType::MANUALLY->value)
 		{
-			throw new FlowNotAddedException('Empty manual distributor');
-		}
+			if (!$this->hasManualDistributor())
+			{
+				throw new FlowNotAddedException('Empty manual distributor');
+			}
 
-		if ($this->hasManualDistributor())
-		{
-			$this->optionService->save(
-				$this->flowEntity->getId(),
-				OptionDictionary::MANUAL_DISTRIBUTOR_ID->value,
-				$this->command->manualDistributorId,
-			);
-			$this->addUsersToGroup($this->flowEntity->getGroupId(), [$this->command->manualDistributorId]);
+			$this->saveManualDistributor();
 		}
 
 		$this->optionService->save(
@@ -67,6 +60,12 @@ final class AddObserver implements AddObserverInterface
 			$this->flowEntity->getId(),
 			OptionDictionary::MATCH_WORK_TIME->value,
 			$this->command->matchWorkTime,
+		);
+
+		$this->optionService->save(
+			$this->flowEntity->getId(),
+			OptionDictionary::MATCH_SCHEDULE->value,
+			$this->command->matchSchedule,
 		);
 
 		$this->optionService->save(
@@ -102,6 +101,15 @@ final class AddObserver implements AddObserverInterface
 			);
 		}
 
+		if ($flowEntity->getDistributionType() === FlowDistributionType::HIMSELF->value)
+		{
+			$this->optionService->save(
+				$flowEntity->getId(),
+				OptionDictionary::NOTIFY_WHEN_TASK_NOT_TAKEN->value,
+				$command->notifyWhenTaskNotTaken,
+			);
+		}
+
 		$this->optionService->save(
 			$flowEntity->getId(),
 			OptionDictionary::TASK_CONTROL->value,
@@ -109,5 +117,22 @@ final class AddObserver implements AddObserverInterface
 		);
 
 		$this->notificationService->saveConfig($flowEntity->getId(), $this->optionService);
+	}
+
+	/**
+	 * @throws LoaderException
+	 */
+	private function saveManualDistributor(): void
+	{
+		$manualDistributorAccessCode = $this->command->responsibleList[0];
+		$manualDistributorId = (new AccessCodeConverter($manualDistributorAccessCode))
+			->getAccessCodeIdList()[0]
+		;
+
+		$this->optionService->save(
+			$this->flowEntity->getId(),
+			OptionDictionary::MANUAL_DISTRIBUTOR_ID->value,
+			$manualDistributorId,
+		);
 	}
 }

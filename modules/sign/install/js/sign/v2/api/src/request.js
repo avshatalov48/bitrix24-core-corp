@@ -1,6 +1,6 @@
 import { ajax, Loc, Text } from 'main.core';
 import { UI } from 'ui.notification';
-import { StubNotAvailable, StubType, StubLinkType } from 'ui.sidepanel-content';
+import { StubLinkType, StubNotAvailable, StubType } from 'ui.sidepanel-content';
 
 export async function request(
 	method: string,
@@ -9,7 +9,7 @@ export async function request(
 	notifyError: ?boolean = true,
 ): Promise<Object>
 {
-	const config = { method };
+	const config: Parameters<typeof BX.ajax.runAction>[2] = { method };
 	if (method === 'POST')
 	{
 		Object.assign(config, { data }, {

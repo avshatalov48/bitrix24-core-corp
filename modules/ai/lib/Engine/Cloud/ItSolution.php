@@ -18,7 +18,7 @@ final class ItSolution extends CloudEngine implements IContext, IQueueOptional
 
 	protected const CATEGORY_CODE = Engine::CATEGORIES['text'];
 	protected const ENGINE_NAME = 'IT-Solution';
-	protected const ENGINE_CODE = 'ItSolution';
+	public const ENGINE_CODE = 'ItSolution';
 
 	protected const URL_COMPLETIONS = 'https://it-solution.ru/llm/v1/completions';
 
@@ -153,9 +153,12 @@ final class ItSolution extends CloudEngine implements IContext, IQueueOptional
 		$text = $rawResult['choices'][0]['message']['content'] ?? null;
 		$dataJson =  null;
 
+		$text = $this->restoreReplacements($text);
+		$rawResult['choices'][0]['message']['content'] = $text;
+
 		if ($text && $this->isModeResponseJson)
 		{
-			$dataJson = json_decode($rawResult['choices'][0]['message']['content'], true) ?? null;
+			$dataJson = json_decode($text, true) ?? null;
 		}
 
 		return new Result($rawResult, $text, $cached, $dataJson);

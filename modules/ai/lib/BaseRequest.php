@@ -225,4 +225,15 @@ abstract class BaseRequest
 
 		return (bool)$value;
 	}
+
+	protected function getFile(string $name, array $defaultValue = []): array
+	{
+		$value = $this->request->getFile($name);
+		if (empty($value) || !is_array($value))
+		{
+			return $defaultValue;
+		}
+
+		return $value;
+	}
 }

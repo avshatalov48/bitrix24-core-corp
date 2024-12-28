@@ -10,7 +10,6 @@ class CacheManager implements \Bitrix\HumanResources\Contract\Util\CacheManager
 {
 	private Cache $bitrixCache;
 	private const CACHE_DIR = 'cache/humanresources';
-	private string $cacheSubDir = '';
 	private int $ttl = 3600;
 
 	public function __construct()
@@ -23,14 +22,14 @@ class CacheManager implements \Bitrix\HumanResources\Contract\Util\CacheManager
 	 *
 	 * @return mixed
 	 */
-	public function getData(string $key): mixed
+	public function getData(string $key, string $cacheSubDir = ''): mixed
 	{
 		$this->bitrixCache->forceRewriting(false);
 		if (
 			$this->bitrixCache->initCache(
 				$this->ttl,
 				$key,
-				$this->cacheSubDir,
+				$cacheSubDir,
 				self::CACHE_DIR,
 			)
 		)
@@ -49,16 +48,20 @@ class CacheManager implements \Bitrix\HumanResources\Contract\Util\CacheManager
 	}
 
 	/**
-	 * @throws \Bitrix\Main\ArgumentException
+	 * @param string $key
+	 * @param mixed $data
+	 * @param string $cacheSubDir *
+	 *
+* @throws \Bitrix\Main\ArgumentException
 	 */
-	public function setData(string $key, mixed $data): static
+	public function setData(string $key, mixed $data, string $cacheSubDir = ''): static
 	{
 		$this->bitrixCache->forceRewriting(true);
 		if (
 			$this->bitrixCache->startDataCache(
 				$this->ttl,
 				$key,
-				$this->cacheSubDir,
+				$cacheSubDir,
 				baseDir: self::CACHE_DIR,
 			)
 		)
@@ -70,13 +73,19 @@ class CacheManager implements \Bitrix\HumanResources\Contract\Util\CacheManager
 	}
 
 	/**
-	 * @param string $key
 	 *
-	 * @return $this
+	 * @param string $key
+	 * @param string $cacheSubDir *
+	 *
+* @return $this
 	 */
-	public function clean(string $key): static
+	public function clean(string $key, string $cacheSubDir = ''): static
 	{
-		$this->bitrixCache->clean($key, $this->cacheSubDir, self::CACHE_DIR);
+		$this->bitrixCache->clean(
+			$key,
+			$cacheSubDir,
+			self::CACHE_DIR
+		);
 
 		return $this;
 	}
@@ -94,23 +103,18 @@ class CacheManager implements \Bitrix\HumanResources\Contract\Util\CacheManager
 	}
 
 	/**
-	 * @param string $dir
-	 *
 	 * @return $this
 	 */
-	public function setDir(string $dir): static
+	public function cleanDir(string $cacheSubDir): static
 	{
-		$this->cacheSubDir = str_starts_with($dir, "/") ? $dir : "/$dir";
+		if (empty($cacheSubDir))
+		{
+			$this->bitrixCache->cleanDir($cacheSubDir, self::CACHE_DIR);
 
-		return $this;
-	}
+			return $this;
+		}
 
-	/**
-	 * @return $this
-	 */
-	public function cleanDir(): static
-	{
-		$this->bitrixCache->cleanDir($this->cacheSubDir, self::CACHE_DIR);
+		$this->bitrixCache->cleanDir($cacheSubDir, self::CACHE_DIR);
 
 		return $this;
 	}

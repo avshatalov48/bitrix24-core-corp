@@ -91,13 +91,14 @@ jn.define('tasks/layout/task/fields/auditors', (require, exports, module) => {
 					style: (this.props.style || {}),
 				},
 				UserField({
-					analytics: new AnalyticsEvent().setSection('task'),
+					analytics: new AnalyticsEvent().setSection('tasks'),
 					readOnly: this.state.readOnly,
 					showEditIcon: true,
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_AUDITORS'),
 					multiple: true,
 					value: Object.keys(this.state.auditors),
 					config: {
+						enableCreation: !(env.isCollaber || env.extranet),
 						canOpenUserList: true,
 						mode: UserFieldMode.ICONS,
 						useLettersForEmptyAvatar: true,

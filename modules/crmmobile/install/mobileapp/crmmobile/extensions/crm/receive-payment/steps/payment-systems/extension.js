@@ -176,6 +176,7 @@ jn.define('crm/receive-payment/steps/payment-systems', (require, exports, module
 					qrauth.open({
 						title: Loc.getMessage('M_RP_PS_SETTINGS_TITLE'),
 						redirectUrl: '/saleshub/',
+						analyticsSection: 'crm',
 					});
 				}
 			};
@@ -227,6 +228,7 @@ jn.define('crm/receive-payment/steps/payment-systems', (require, exports, module
 				qrauth.open({
 					title: Loc.getMessage('M_RP_PS_CASHBOX_SETTINGS_QRAUTH_TITLE'),
 					redirectUrl: '/saleshub/',
+					analyticsSection: 'crm',
 				});
 			};
 

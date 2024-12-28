@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/company-editor.bundle.js',
 	'rel' => [
 		'main.core',
-		'main.loader',
 		'main.core.events',
+		'main.loader',
 		'ui.sidepanel.layout',
 	],
 	'skip_core' => false,

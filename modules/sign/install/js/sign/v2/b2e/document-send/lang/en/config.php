@@ -1,5 +1,4 @@
 <?php
-$MESS["SIGN_DOCUMENT_INFO_SEND"] = "Check the information before submitting";
 $MESS["SIGN_DOCUMENT_SEND_COMMUNICATION_CHANEL_EMAIL"] = "also use email";
 $MESS["SIGN_DOCUMENT_SEND_COMMUNICATION_CHANEL_HINT"] = "Document link will be delivered to Bitrix24 messenger.";
 $MESS["SIGN_DOCUMENT_SEND_COMMUNICATION_CHANEL_IDLE"] = "Bitrix24 chat";
@@ -8,11 +7,13 @@ $MESS["SIGN_DOCUMENT_SEND_COMMUNICATION_CHANEL_SMS"] = "also use SMS";
 $MESS["SIGN_DOCUMENT_SEND_COMMUNICATION_TITLE"] = "Send document link";
 $MESS["SIGN_DOCUMENT_SEND_DEADLINE"] = "Deadline: none";
 $MESS["SIGN_DOCUMENT_SEND_FIRST_PARTY"] = "Sender";
-$MESS["SIGN_DOCUMENT_SEND_HEADER"] = "Check the information before submitting";
+$MESS["SIGN_DOCUMENT_SEND_FIRST_PARTY_TEMPLATE"] = "Signing party on behalf of the company (representative)";
+$MESS["SIGN_DOCUMENT_SEND_HEADER_1"] = "Check document data";
 $MESS["SIGN_DOCUMENT_SEND_LANG_SELECTOR_HINT"] = "Signature certificate will be created in the selected language.";
 $MESS["SIGN_DOCUMENT_SEND_REMINDER_TYPE_SELECTOR_HINT"] = "HR bot will be reminding the responsible person of the new document for three days.";
 $MESS["SIGN_DOCUMENT_SEND_SECOND_PARTY"] = "Recipient";
 $MESS["SIGN_DOCUMENT_SUMMARY_COMPANY_INN"] = "Taxpayer ID %innValue%";
+$MESS["SIGN_DOCUMENT_SUMMARY_TEMPLATE_TITLE"] = "Template";
 $MESS["SIGN_DOCUMENT_SUMMARY_TITLE"] = "Document for signing";
 $MESS["SIGN_SEND_CLOSE_BTN"] = "Close this page";
 $MESS["SIGN_SEND_CLOSE_DESCRIPTION"] = "This can take a while.<br />You can close this page; the sending will continue in the background.";
@@ -22,5 +23,6 @@ $MESS["SIGN_SEND_SIGNING_EMPLOYEES"] = "Employees";
 $MESS["SIGN_SEND_SIGNING_REPRESENTATIVE"] = "Representative";
 $MESS["SIGN_SEND_SIGNING_VALIDATION_HEAD_EDITOR"] = "Fill out fields";
 $MESS["SIGN_SEND_SIGNING_VALIDATION_HEAD_REVIEWER"] = "Approve";
+$MESS["SIGN_SEND_SIGNING_VALIDATION_HEAD_REVIEWER_TEMPLATE"] = "Approver";
 $MESS["SIGN_SEND_SIGNING_VALIDATION_TITLE_EDITOR"] = "Complete employee information";
 $MESS["SIGN_SEND_SIGNING_VALIDATION_TITLE_REVIEWER"] = "Approve document";

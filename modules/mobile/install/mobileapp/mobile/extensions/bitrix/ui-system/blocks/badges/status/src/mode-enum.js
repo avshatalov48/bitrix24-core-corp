@@ -40,6 +40,11 @@ jn.define('ui-system/blocks/badges/status/src/mode-enum', (require, exports, mod
 			icon: icons.WARNING,
 		});
 
+		static WARNING_GREY = new BadgeStatusMode('WARNING_GREY', {
+			color: Color.base3,
+			icon: icons.WARNING,
+		});
+
 		static DECLINE = new BadgeStatusMode('DECLINE', {
 			color: Color.accentMainAlert,
 			icon: icons.DECLINE,

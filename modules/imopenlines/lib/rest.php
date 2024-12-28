@@ -116,6 +116,48 @@ class Rest extends \IRestService
 				'imopenlines.crm.chat.get' => [__CLASS__, 'getCrmChats'],
 				'imopenlines.crm.message.add' => [__CLASS__, 'crmChatMessageAdd'],
 				'imopenlines.crm.lead.create' => [__CLASS__, 'crmCreateLead'],
+				\CRestUtil::EVENTS => [
+					'OnOpenLineMessageAdd' => [
+						'imopenlines',
+						'OnOpenLineMessageAdd',
+						[__CLASS__, 'OnOpenLineMessageAdd'],
+						[
+							"category" => \Bitrix\Rest\Sqs::CATEGORY_DEFAULT,
+						]
+					],
+					'OnOpenLineMessageUpdate' => [
+						'imopenlines',
+						'OnOpenLineMessageUpdate',
+						[__CLASS__, 'OnOpenLineMessageUpdate'],
+						[
+							"category" => \Bitrix\Rest\Sqs::CATEGORY_DEFAULT,
+						]
+					],
+					'OnOpenLineMessageDelete' => [
+						'imopenlines',
+						'OnOpenLineMessageDelete',
+						[__CLASS__, 'OnOpenLineMessageDelete'],
+						[
+							"category" => \Bitrix\Rest\Sqs::CATEGORY_DEFAULT,
+						]
+					],
+					'OnSessionStart' => [
+						'imopenlines',
+						'OnSessionStart',
+						[__CLASS__, 'OnOpenLineDialogStart'],
+						[
+							"category" => \Bitrix\Rest\Sqs::CATEGORY_DEFAULT,
+						]
+					],
+					'OnSessionFinish' => [
+						'imopenlines',
+						'OnSessionFinish',
+						[__CLASS__, 'OnOpenLineDialogFinish'],
+						[
+							"category" => \Bitrix\Rest\Sqs::CATEGORY_DEFAULT,
+						]
+					],
+				],
 			],
 		];
 	}
@@ -400,10 +442,12 @@ class Rest extends \IRestService
 			throw new RestException('Chat ID can\'t be empty', 'CHAT_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$transferId = null;
-		if (isset($arParams['TRANSFER_ID']))
+		if (
+			isset($arParams['TRANSFER_ID'])
+			&& (is_string($arParams['TRANSFER_ID']) || is_int($arParams['TRANSFER_ID']))
+		)
 		{
-			if (mb_substr($arParams['TRANSFER_ID'], 0, 5) == 'queue')
+			if (mb_substr((string)$arParams['TRANSFER_ID'], 0, 5) == 'queue')
 			{
 				$arParams['QUEUE_ID'] = mb_substr($arParams['TRANSFER_ID'], 5);
 			}
@@ -413,6 +457,7 @@ class Rest extends \IRestService
 			}
 		}
 
+		$transferId = null;
 		if (isset($arParams['USER_ID']))
 		{
 			$arParams['USER_ID'] = (int)$arParams['USER_ID'];
@@ -424,7 +469,7 @@ class Rest extends \IRestService
 
 			$transferId = $arParams['USER_ID'];
 		}
-		else if (isset($arParams['QUEUE_ID']))
+		elseif (isset($arParams['QUEUE_ID']))
 		{
 			$arParams['QUEUE_ID'] = (int)$arParams['QUEUE_ID'];
 
@@ -2002,7 +2047,9 @@ class Rest extends \IRestService
 			throw new AccessException('You dont have access to this action');
 		}
 
-		return Crm\Common::getChatsByCrmEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']);
+		$activeOnly = $arParams['ACTIVE_ONLY'] !== 'N';
+
+		return Crm\Common::getChatsByCrmEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY'], $activeOnly);
 	}
 
 	/**
@@ -2195,6 +2242,65 @@ class Rest extends \IRestService
 			(int)$arParams['CONFIG_ID'] ?? 0,
 			(int)$arParams['USER_ID'] ?? 0
 		);
+	}
+
+	public static function OnOpenLineMessageAdd($params, $arHandler)
+	{
+		$parameters = $params[0]->getParameters();
+
+		return $parameters;
+	}
+
+	public static function OnOpenLineMessageUpdate($params, $arHandler)
+	{
+		$parameters = $params[0]->getParameters();
+
+		return $parameters;
+	}
+
+	public static function OnOpenLineMessageDelete($params, $arHandler)
+	{
+		$parameters = $params[0]->getParameters();
+
+		return $parameters;
+	}
+
+	public static function OnOpenLineDialogStart($params, $arHandler)
+	{
+		$result = ['DATA' => self::prepareEventsParams($params)];
+
+		return $result;
+	}
+
+	public static function OnOpenLineDialogFinish($params, $arHandler)
+	{
+		$result = ['DATA' => self::prepareEventsParams($params)];
+
+		return $result;
+	}
+
+	private static function prepareEventsParams(array $params): array
+	{
+		$parameters = $params[0]->getParameters();
+
+		$result = [
+			'connector' => [
+				'connector_id' => $parameters['SESSION']['SOURCE'],
+				'line_id' => $parameters['SESSION']['CONFIG_ID'],
+				'chat_id' => $parameters['SESSION']['CHAT_ID'],
+				'user_id' => $parameters['SESSION']['USER_ID'],
+			],
+			'chat' => [
+				'chat_id' => $parameters['SESSION']['CHAT_ID'],
+			],
+			'line' => [
+				'id' => $parameters['CONFIG']['ID'],
+				'name' => $parameters['CONFIG']['LINE_NAME'],
+			],
+		];
+
+
+		return $result;
 	}
 
 	private static function getChatId(array $params)

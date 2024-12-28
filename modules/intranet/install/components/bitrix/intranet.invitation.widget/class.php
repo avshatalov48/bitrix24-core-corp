@@ -19,7 +19,10 @@ class IntranetInvitationWidgetComponent extends \CBitrixComponent
 			return;
 		}
 
-		if (Loader::includeModule('extranet') && \CExtranet::isExtranetSite())
+		if (
+			Loader::includeModule('extranet')
+			&& (\CExtranet::isExtranetSite() || !\CExtranet::IsIntranetUser())
+		)
 		{
 			return;
 		}
@@ -34,10 +37,20 @@ class IntranetInvitationWidgetComponent extends \CBitrixComponent
 				'mode' => Engine\Router::COMPONENT_MODE_AJAX,
 				'analyticsLabel[source]' => 'headerPopup',
 			]) : '';
-		$this->arResult['isExtranetAvailable'] = Main\ModuleManager::isModuleInstalled('extranet');
+		$this->arResult['isExtranetAvailable'] = Main\ModuleManager::isModuleInstalled('extranet') && !\Bitrix\Socialnetwork\Collab\CollabFeature::isOn();
+		$this->arResult['isCollabAvailable'] = Main\ModuleManager::isModuleInstalled('extranet') && \Bitrix\Socialnetwork\Collab\CollabFeature::isOn();
 		$this->arResult['invitationCounter'] = $intranetUser->getTotalInvitationCounterValue();
 		$this->arResult['counterId'] = Intranet\Invitation::getTotalInvitationCounterId();
+		$this->arResult['shouldShowStructureCounter'] = $this->shouldShowStructureCounter();
 
 		$this->includeComponentTemplate();
+	}
+
+	private function shouldShowStructureCounter(): bool
+	{
+		return
+			(bool)Main\Config\Option::get('humanresources', 'public_structure_is_available', false) === true
+			&& \CUserOptions::GetOption("humanresources", 'first_time_opened', 'N') === 'N'
+		;
 	}
 }

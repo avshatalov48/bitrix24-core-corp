@@ -147,16 +147,9 @@ BX.namespace('Tasks.Component');
 						targetNode: this.control('open-menu'),
 						enableSearch: true,
 						multiple: false,
+						dropdownMode: this.option('flowId') > 0,
 						context: 'TASKS_MEMBER_SELECTOR_EDIT_responsible',
-						entities: [
-							{
-								id: 'user',
-								options: {
-									emailUsers: true,
-									analyticsSource: 'task',
-								}
-							},
-						],
+						entities: this.getSelectorEntities(),
 						events: {
 							'Item:onSelect': function(event) {
 								var item = event.getData().item;
@@ -166,6 +159,35 @@ BX.namespace('Tasks.Component');
 					});
 				}
 				this.userSelector.show();
+			},
+
+			getSelectorEntities()
+			{
+				if (this.option('flowId') > 0)
+				{
+					return [
+						{
+							id: 'flow-user',
+							options: {
+								flowId: this.option('flowId'),
+							},
+							dynamicLoad: true,
+						},
+						{
+							id: 'department',
+						},
+					];
+				}
+
+				return [
+					{
+						id: 'user',
+						options: {
+							emailUsers: true,
+							analyticsSource: 'tasks',
+						},
+					},
+				];
 			},
 
 			doMenuAction: function(menu, e, item)
@@ -312,12 +334,54 @@ BX.namespace('Tasks.Component');
 						;
 					}.bind(this));
 				}
+				else if (code === 'TAKE')
+				{
+					this.onTaskTakeButtonClicked(args, false);
+				}
 				else
 				{
 					this.doDynamicTaskAction(code, args);
 				}
 
 				this.togglePanelActivity(true);
+			},
+
+			onTaskTakeButtonClicked(args) {
+				if (this.vars.data.ALLOW_TIME_TRACKING !== 'Y')
+				{
+					this.doDynamicTaskAction('TAKE', args);
+
+					return;
+				}
+
+				// eslint-disable-next-line promise/catch-or-return
+				BX.ajax.runComponentAction('bitrix:tasks.task', 'getTaskFromTimer', {
+					mode: 'class',
+					data: {},
+				}).then(
+					(response) => {
+						const data = response.data;
+
+						if (data.id)
+						{
+							let body = BX.Loc.getMessage('TASKS_TASK_CONFIRM_START_TIMER');
+							body = body.replace('{{TITLE}}', BX.type.isNotEmptyString(data.title)
+								? BX.util.htmlspecialchars(data.title)
+								: BX.Loc.getMessage('TASKS_UNKNOWN'));
+
+							BX.Tasks.confirm(body, BX.delegate(function(result) {
+								if (result)
+								{
+									this.doDynamicTaskAction('TAKE', args);
+								}
+							}, this), { title: BX.Loc.getMessage('TASKS_TASK_CONFIRM_START_TIMER_TITLE') });
+						}
+						else
+						{
+							this.doDynamicTaskAction('TAKE', args);
+						}
+					},
+				);
 			},
 
 			doDynamicTaskAction: function(code, args)
@@ -467,7 +531,8 @@ BX.namespace('Tasks.Component');
 					'approve': can.APPROVE,
 					'disapprove': can.DISAPPROVE,
 					'edit': can.EDIT && !this.vars.publicMode,
-					'more-button': !this.vars.publicMode || can.RENEW
+					'more-button': !this.vars.publicMode || can.RENEW,
+					'take': can.TAKE,
 				};
 
 				this.toggleCSSMap(map);
@@ -562,22 +627,25 @@ BX.namespace('Tasks.Component');
 					return menu;
 				}
 
-				menu.push(
-					{
-						code: 'COPY',
-						text: BX.message('TASKS_COPY_TASK'),
-						title: BX.message('TASKS_COPY_TASK_EX'),
-						className: 'menu-popup-item-copy',
-						onclick: this.passCtx(this.doMenuAction)
-					},
-					{
-						code: 'CREATE_SUBTASK',
-						text: BX.message('TASKS_ADD_SUBTASK'),
-						title: BX.message('TASKS_ADD_SUBTASK'),
-						className: 'menu-popup-item-create',
-						onclick: this.passCtx(this.doMenuAction)
-					}
-				);
+				if (can.CREATE)
+				{
+					menu.push(
+						{
+							code: 'COPY',
+							text: BX.message('TASKS_COPY_TASK'),
+							title: BX.message('TASKS_COPY_TASK_EX'),
+							className: 'menu-popup-item-copy',
+							onclick: this.passCtx(this.doMenuAction)
+						},
+						{
+							code: 'CREATE_SUBTASK',
+							text: BX.message('TASKS_ADD_SUBTASK'),
+							title: BX.message('TASKS_ADD_SUBTASK'),
+							className: 'menu-popup-item-create',
+							onclick: this.passCtx(this.doMenuAction)
+						},
+					);
+				}
 
 				if (can['DAYPLAN.ADD'])
 				{
@@ -670,13 +738,16 @@ BX.namespace('Tasks.Component');
 						});
 					}
 
-					menu.push({
-						code: '',
-						text: BX.message('TASKS_REST_BUTTON_TITLE_2'),
-						title: BX.message('TASKS_REST_BUTTON_TITLE_2'),
-						className: 'menu-popup-item-',
-						items: items
-					});
+					if (!this.option('isExtranetUser'))
+					{
+						menu.push({
+							code: '',
+							text: BX.message('TASKS_REST_BUTTON_TITLE_2'),
+							title: BX.message('TASKS_REST_BUTTON_TITLE_2'),
+							className: 'menu-popup-item-',
+							items: items
+						});
+					}
 				}
 
 				return menu;
@@ -696,7 +767,7 @@ BX.namespace('Tasks.Component');
 
 			sendAnalyticsOnTaskComplete: function ()
 			{
-				const analyticsData = {
+				let analyticsData = {
 					tool: 'tasks',
 					category: 'task_operations',
 					event: 'task_complete',
@@ -705,6 +776,13 @@ BX.namespace('Tasks.Component');
 					c_element: 'complete_button',
 					c_sub_section: 'task_card',
 				};
+
+				if (this.option('isCollab'))
+				{
+					analyticsData.c_section = 'collab';
+					analyticsData.p2 = this.option('collabAnalytics')?.p2;
+					analyticsData.p4 = this.option('collabAnalytics')?.p4;
+				}
 
 				if (BX.UI.Analytics)
 				{

@@ -712,6 +712,31 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 				},
 			);
 		}
+
+		/**
+		 * @param {number} userId
+		 * @param {PageManager} [parentWidget=PageManager]
+		 * @param {object} [userData={}]
+		 */
+		static openInBottomSheet(userId, parentWidget = PageManager, userData = {})
+		{
+			parentWidget.openWidget(
+				'list',
+				{
+					groupStyle: true,
+					backdrop: {
+						bounceEnable: false,
+						swipeAllowed: true,
+						showOnTop: true,
+						hideNavigationBar: false,
+						horizontalSwipeAllowed: false,
+					},
+				},
+			)
+				.then((list) => ProfileView.open({ ...userData, userId, isBackdrop: true }, list))
+				.catch(console.error)
+			;
+		}
 	}
 
 	module.exports = { ProfileView };

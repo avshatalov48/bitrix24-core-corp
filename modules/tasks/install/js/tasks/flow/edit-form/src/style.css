@@ -1,6 +1,7 @@
 .tasks-flow__create {
 	display: flex;
 	flex-direction: column;
+	padding: 20px;
 	min-height: 100%;
 	max-height: 100%;
 	box-sizing: border-box;
@@ -144,17 +145,6 @@
 	background-color: var(--ui-color-background-info);
 }
 
-.tasks-flow__create-distribution-type.--himself {
-	pointer-events: none;
-	background-color: var(--ui-color-base-02);
-}
-
-.tasks-flow__create-distribution-type.--himself .ui-ctl-element,
-.tasks-flow__create-distribution-type.--himself .tasks-flow__create-distribution-type_hint,
-.tasks-flow__create-distribution-type.--himself .tasks-flow__create-distribution-type_title-text {
-	opacity: 0.5;
-}
-
 .tasks-flow__create-distribution-type_title-container {
 	flex: 1;
 	display: flex;
@@ -252,10 +242,6 @@
 
 .tasks-flow__create-distribution-type_label.ui-label {
 	display: none;
-}
-
-.tasks-flow__create-distribution-type.--himself .tasks-flow__create-distribution-type_label {
-	display: block;
 }
 
 .tasks-flow__task-demo-info {

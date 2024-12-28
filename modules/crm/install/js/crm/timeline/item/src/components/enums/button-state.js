@@ -5,4 +5,5 @@ export class ButtonState
 	static DISABLED = 'disabled';
 	static HIDDEN = 'hidden';
 	static AI_LOADING = 'ai-loading';
+	static AI_SUCCESS = 'ai-success';
 }

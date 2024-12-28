@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
-(function (exports,sign_v2_helper,main_popup,sign_tour,spotlight,ui_buttons,ui_dialogs_messagebox,ui_infoHelper,sign_backend,date,ui_notification,ui_stamp_uploader,crm_form_fields_selector,crm_requisite_fieldsetViewer,sign_v2_b2e_fieldSelector,sign_ui,color_picker,sign_document,main_core,ui_draganddrop_draggable,main_core_events,sign_v2_api) {
+(function (exports,sign_v2_helper,main_popup,sign_tour,spotlight,ui_buttons,ui_dialogs_messagebox,ui_infoHelper,sign_backend,date,ui_notification,ui_stamp_uploader,crm_form_fields_selector,crm_requisite_fieldsetViewer,sign_v2_documentSetup,sign_v2_b2e_fieldSelector,sign_ui,color_picker,sign_document,main_core,ui_draganddrop_draggable,main_core_events,sign_v2_api) {
 	'use strict';
 
 	let _ = t => t,
@@ -937,7 +937,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  _t$6,
 	  _t2$3;
 	var _onActionClick$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onActionClick");
-	class Number extends Dummy {
+	class Number$1 extends Dummy {
 	  constructor(...args) {
 	    super(...args);
 	    Object.defineProperty(this, _onActionClick$2, {
@@ -996,14 +996,14 @@ this.BX.Sign = this.BX.Sign || {};
 	  getStyles() {
 	    return {
 	      ...super.getStyles(),
-	      ...Number.defaultTextBlockPaddingStyles
+	      ...Number$1.defaultTextBlockPaddingStyles
 	    };
 	  }
 	}
 	function _onActionClick2$2(event) {
 	  event.stopPropagation();
-	  if (!Number.sliderOnMessageBind) {
-	    Number.sliderOnMessageBind = true;
+	  if (!Number$1.sliderOnMessageBind) {
+	    Number$1.sliderOnMessageBind = true;
 	    BX.addCustomEvent(window, 'SidePanel.Slider:onMessage', async event => {
 	      var _event$slider;
 	      const isEditor = ((_event$slider = event.slider) == null ? void 0 : _event$slider.url) === 'editor';
@@ -1032,7 +1032,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    }
 	  });
 	}
-	Number.sliderOnMessageBind = false;
+	Number$1.sliderOnMessageBind = false;
 
 	let _$7 = t => t,
 	  _t$7,
@@ -1935,9 +1935,17 @@ this.BX.Sign = this.BX.Sign || {};
 	var _emitOnFieldSelectEvent$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitOnFieldSelectEvent");
 	var _onFieldSelectorCloseComplete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFieldSelectorCloseComplete");
 	var _updateFieldsList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateFieldsList");
+	var _getSelectorFieldTypes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSelectorFieldTypes");
+	var _getSelectorFieldsFactory = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSelectorFieldsFactory");
 	class B2eReference extends Dummy {
 	  constructor(...args) {
 	    super(...args);
+	    Object.defineProperty(this, _getSelectorFieldsFactory, {
+	      value: _getSelectorFieldsFactory2
+	    });
+	    Object.defineProperty(this, _getSelectorFieldTypes, {
+	      value: _getSelectorFieldTypes2
+	    });
 	    Object.defineProperty(this, _onFieldSelectorCloseComplete, {
 	      value: _onFieldSelectorCloseComplete2
 	    });
@@ -2007,7 +2015,7 @@ this.BX.Sign = this.BX.Sign || {};
 				<div class="sign-document__block-content_member-nodata">
 					${0}
 				</div>
-			`), main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE'));
+			`), main_core.Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E'));
 	    }
 	    if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _field$2)[_field$2])) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _loadFieldAndCategoryCaption)[_loadFieldAndCategoryCaption]().then(({
@@ -2020,7 +2028,7 @@ this.BX.Sign = this.BX.Sign || {};
 	          babelHelpers.classPrivateFieldLooseBase(this, _setContentText)[_setContentText](main_core.Type.isStringFilled(categoryCaption) && main_core.Type.isStringFilled(fieldCaption) ? main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE_NO_DATA_CONTENT_TEMPLATE', {
 	            '#CATEGORY#': categoryCaption,
 	            '#FIELD#': fieldCaption
-	          }) : main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE'));
+	          }) : main_core.Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E'));
 	          const blockLayout = this.block.getLayout();
 	          const resizeNode = blockLayout.querySelector('.--b2ereference');
 	          this.block.resizeText({
@@ -2068,7 +2076,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  }
 	}
 	function _setContentText2(value) {
-	  const text = main_core.Type.isStringFilled(value) ? value : main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE');
+	  const text = main_core.Type.isStringFilled(value) ? value : main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1');
 	  babelHelpers.classPrivateFieldLooseBase(this, _content)[_content].textContent = text;
 	  babelHelpers.classPrivateFieldLooseBase(this, _content)[_content].title = text;
 	}
@@ -2076,10 +2084,10 @@ this.BX.Sign = this.BX.Sign || {};
 	  if (!main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _field$2)[_field$2])) {
 	    return Promise.resolve({
 	      categoryCaption: '',
-	      fieldCaption: main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE')
+	      fieldCaption: main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1')
 	    });
 	  }
-	  const defaultCaption = main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE');
+	  const defaultCaption = main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1');
 	  if (babelHelpers.classPrivateFieldLooseBase(B2eReference, _loadFieldsPromise)[_loadFieldsPromise] === null) {
 	    babelHelpers.classPrivateFieldLooseBase(B2eReference, _loadFieldsPromise)[_loadFieldsPromise] = sign_v2_b2e_fieldSelector.FieldSelector.loadFieldList({});
 	  }
@@ -2098,7 +2106,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    return;
 	  }
 	  const actionButton = babelHelpers.classPrivateFieldLooseBase(this, _actionButton$2)[_actionButton$2].querySelector('button');
-	  actionButton.textContent = main_core.Type.isStringFilled(label) ? label : main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE');
+	  actionButton.textContent = main_core.Type.isStringFilled(label) ? label : main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1');
 	}
 	function _getFieldSelectorPanel2() {
 	  const blocksManager = this.block.blocksManager;
@@ -2113,19 +2121,16 @@ this.BX.Sign = this.BX.Sign || {};
 	      languages: blocksManager.getLanguages(),
 	      filter: {
 	        '+categories': ['PROFILE'],
-	        '+fields': ['list', 'string',
-	        // 'date',
-	        'typed_string', 'text',
-	        //'datetime',
-	        'enumeration', 'address', 'url', 'double', 'integer', 'snils'],
+	        '+fields': babelHelpers.classPrivateFieldLooseBase(this, _getSelectorFieldTypes)[_getSelectorFieldTypes](),
 	        '-fields': [({
 	          entity_field_name: fieldName
 	        }) => babelHelpers.classPrivateFieldLooseBase(this, _getFieldsNameBlackList$2)[_getFieldsNameBlackList$2]().has(fieldName)]
 	      },
-	      title: main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE'),
+	      title: main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1'),
 	      categoryCaptions: {
 	        'PROFILE': main_core.Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E')
-	      }
+	      },
+	      fieldsFactory: babelHelpers.classPrivateFieldLooseBase(this, _getSelectorFieldsFactory)[_getSelectorFieldsFactory]()
 	    });
 	    selector.subscribe('onSliderCloseComplete', event => babelHelpers.classPrivateFieldLooseBase(this, _onFieldSelectorCloseComplete)[_onFieldSelectorCloseComplete](event));
 	    return selector;
@@ -2176,6 +2181,21 @@ this.BX.Sign = this.BX.Sign || {};
 	}
 	function _updateFieldsList2(fields) {
 	  babelHelpers.classPrivateFieldLooseBase(B2eReference, _loadFieldsPromise)[_loadFieldsPromise] = Promise.resolve(fields);
+	}
+	function _getSelectorFieldTypes2() {
+	  const types = ['list', 'string', 'date', 'typed_string', 'text', 'datetime', 'enumeration', 'url', 'double', 'integer', 'snils'];
+	  if (!this.block.blocksManager.isTemplateMode) {
+	    types.push('address');
+	  }
+	  return types;
+	}
+	function _getSelectorFieldsFactory2() {
+	  if (this.block.blocksManager.isTemplateMode) {
+	    return {
+	      filter: fields => fields.filter(field => main_core.Type.isObject(field) && main_core.Type.isStringFilled(field.name) && ['list', 'string', 'date', 'enumeration'].includes(field.name))
+	    };
+	  }
+	  return null;
 	}
 	Object.defineProperty(B2eReference, _updateFieldsList, {
 	  value: _updateFieldsList2
@@ -2283,7 +2303,7 @@ this.BX.Sign = this.BX.Sign || {};
 				<div class="sign-document__block-content_member-nodata">
 					${0}
 				</div>
-			`), main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE'));
+			`), main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_MSG_VER_1'));
 	    }
 	    if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _field$3)[_field$3])) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _loadFieldAndCategoryCaption$1)[_loadFieldAndCategoryCaption$1]().then(({
@@ -2296,7 +2316,7 @@ this.BX.Sign = this.BX.Sign || {};
 	          babelHelpers.classPrivateFieldLooseBase(this, _setContentText$1)[_setContentText$1](main_core.Type.isStringFilled(categoryCaption) && main_core.Type.isStringFilled(fieldCaption) ? main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE_NO_DATA_CONTENT_TEMPLATE', {
 	            '#CATEGORY#': categoryCaption,
 	            '#FIELD#': fieldCaption
-	          }) : main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE'));
+	          }) : main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_MSG_VER_1'));
 	          const blockLayout = this.block.getLayout();
 	          const resizeNode = blockLayout.querySelector('.--myb2ereference');
 	          this.block.resizeText({
@@ -2349,7 +2369,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    return;
 	  }
 	  const actionButton = babelHelpers.classPrivateFieldLooseBase(this, _actionButton$3)[_actionButton$3].querySelector('button');
-	  actionButton.textContent = main_core.Type.isStringFilled(label) ? label : main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE');
+	  actionButton.textContent = main_core.Type.isStringFilled(label) ? label : main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_MSG_VER_1');
 	}
 	function _getFieldSelectorPanel2$1() {
 	  const blocksManager = this.block.blocksManager;
@@ -2358,6 +2378,10 @@ this.BX.Sign = this.BX.Sign || {};
 	    presetId
 	  } = member;
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$6)[_cache$6].remember('fieldSelector', () => {
+	    const categories = ['COMPANY', 'PROFILE'];
+	    if (this.block.blocksManager.documentInitiatedByType !== sign_v2_documentSetup.DocumentInitiated.employee) {
+	      categories.push('SMART_B2E_DOC');
+	    }
 	    const selector = new sign_v2_b2e_fieldSelector.FieldSelector({
 	      multiple: false,
 	      controllerOptions: {
@@ -2369,12 +2393,8 @@ this.BX.Sign = this.BX.Sign || {};
 	      languages: blocksManager.getLanguages(),
 	      presetId,
 	      filter: {
-	        '+categories': ['COMPANY', 'SMART_B2E_DOC', 'PROFILE'],
-	        '+fields': ['list', 'string',
-	        // 'date',
-	        'typed_string', 'text',
-	        //'datetime',
-	        'enumeration', 'address', 'url', 'double', 'integer', 'snils'],
+	        '+categories': categories,
+	        '+fields': ['list', 'string', 'date', 'typed_string', 'text', 'enumeration', 'address', 'url', 'double', 'integer', 'snils'],
 	        '-fields': [babelHelpers.classPrivateFieldLooseBase(this, _getFieldNegativeFilter$1)[_getFieldNegativeFilter$1](), ({
 	          entity_field_name: fieldName
 	        }) => babelHelpers.classPrivateFieldLooseBase(this, _getCrmFieldsNameBlackList$3)[_getCrmFieldsNameBlackList$3]().has(fieldName)]
@@ -2443,10 +2463,10 @@ this.BX.Sign = this.BX.Sign || {};
 	  if (!main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _field$3)[_field$3])) {
 	    return Promise.resolve({
 	      categoryCaption: '',
-	      fieldCaption: main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE')
+	      fieldCaption: main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_MSG_VER_1')
 	    });
 	  }
-	  const defaultCaption = main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE');
+	  const defaultCaption = main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_MSG_VER_1');
 	  if (babelHelpers.classPrivateFieldLooseBase(MyB2eReference, _loadFieldsPromise$1)[_loadFieldsPromise$1] === null) {
 	    const blocksManager = this.block.blocksManager;
 	    const member = blocksManager.getMemberByPart(this.block.getMemberPart());
@@ -2497,7 +2517,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  });
 	}
 	function _setContentText2$1(value) {
-	  const text = main_core.Type.isStringFilled(value) ? value : main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE');
+	  const text = main_core.Type.isStringFilled(value) ? value : main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_MSG_VER_1');
 	  babelHelpers.classPrivateFieldLooseBase(this, _content$1)[_content$1].textContent = text;
 	  babelHelpers.classPrivateFieldLooseBase(this, _content$1)[_content$1].title = text;
 	}
@@ -2515,7 +2535,604 @@ this.BX.Sign = this.BX.Sign || {};
 	let _$f = t => t,
 	  _t$f,
 	  _t2$b,
-	  _t3$7,
+	  _t3$7;
+	var _cache$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
+	var _field$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("field");
+	var _actionButton$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("actionButton");
+	var _content$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("content");
+	var _loadFieldsPromise$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadFieldsPromise");
+	var _setContentText$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setContentText");
+	var _loadFieldAndCategoryCaption$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadFieldAndCategoryCaption");
+	var _setActionButtonLabel$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setActionButtonLabel");
+	var _getFieldSelectorPanel$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFieldSelectorPanel");
+	var _getFieldsNameBlackList$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFieldsNameBlackList");
+	var _onActionClick$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onActionClick");
+	var _emitOnFieldSelectEvent$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitOnFieldSelectEvent");
+	var _onFieldSelectorCloseComplete$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFieldSelectorCloseComplete");
+	var _updateFieldsList$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateFieldsList");
+	class EmployeeDynamic extends Dummy {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _onFieldSelectorCloseComplete$2, {
+	      value: _onFieldSelectorCloseComplete2$2
+	    });
+	    Object.defineProperty(this, _emitOnFieldSelectEvent$4, {
+	      value: _emitOnFieldSelectEvent2$4
+	    });
+	    Object.defineProperty(this, _onActionClick$8, {
+	      value: _onActionClick2$8
+	    });
+	    Object.defineProperty(this, _getFieldsNameBlackList$4, {
+	      value: _getFieldsNameBlackList2$4
+	    });
+	    Object.defineProperty(this, _getFieldSelectorPanel$2, {
+	      value: _getFieldSelectorPanel2$2
+	    });
+	    Object.defineProperty(this, _setActionButtonLabel$4, {
+	      value: _setActionButtonLabel2$4
+	    });
+	    Object.defineProperty(this, _loadFieldAndCategoryCaption$2, {
+	      value: _loadFieldAndCategoryCaption2$2
+	    });
+	    Object.defineProperty(this, _setContentText$2, {
+	      value: _setContentText2$2
+	    });
+	    Object.defineProperty(this, _cache$7, {
+	      writable: true,
+	      value: new main_core.Cache.MemoryCache()
+	    });
+	    Object.defineProperty(this, _field$4, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _actionButton$4, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _content$2, {
+	      writable: true,
+	      value: void 0
+	    });
+	  }
+	  /**
+	   * Sets new data.
+	   * @param {any} data
+	   */
+	  setData(data) {
+	    var _this$data$field;
+	    this.data = data || {};
+	    babelHelpers.classPrivateFieldLooseBase(this, _field$4)[_field$4] = (_this$data$field = this.data.field) != null ? _this$data$field : '';
+	  }
+
+	  /**
+	   * Returns type's content in view mode.
+	   * @return {HTMLElement | string}
+	   */
+	  getViewContent() {
+	    var _this$data;
+	    babelHelpers.classPrivateFieldLooseBase(this, _setActionButtonLabel$4)[_setActionButtonLabel$4]();
+	    if (main_core.Type.isStringFilled((_this$data = this.data) == null ? void 0 : _this$data.text)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2] = main_core.Tag.render(_t$f || (_t$f = _$f`
+				<div class="sign-document__block-b2e-reference">
+					${0}
+				</div>
+			`), main_core.Text.encode(this.data.text || '').toString());
+	    } else {
+	      babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2] = main_core.Tag.render(_t2$b || (_t2$b = _$f`
+				<div class="sign-document__block-content_member-nodata">
+					${0}
+				</div>
+			`), main_core.Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E'));
+	    }
+	    if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _field$4)[_field$4])) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _loadFieldAndCategoryCaption$2)[_loadFieldAndCategoryCaption$2]().then(({
+	        categoryCaption,
+	        fieldCaption
+	      }) => {
+	        var _this$data2;
+	        babelHelpers.classPrivateFieldLooseBase(this, _setActionButtonLabel$4)[_setActionButtonLabel$4](fieldCaption);
+	        if (!main_core.Type.isStringFilled((_this$data2 = this.data) == null ? void 0 : _this$data2.text)) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _setContentText$2)[_setContentText$2](main_core.Type.isStringFilled(categoryCaption) && main_core.Type.isStringFilled(fieldCaption) ? main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_EMPLOYEE_DYNAMIC_NO_DATA_CONTENT_TEMPLATE', {
+	            '#CATEGORY#': categoryCaption,
+	            '#FIELD#': fieldCaption
+	          }) : main_core.Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E'));
+	          const blockLayout = this.block.getLayout();
+	          const resizeNode = blockLayout.querySelector('.--employeedynamic');
+	          this.block.resizeText({
+	            element: resizeNode,
+	            step: 0.5
+	          });
+	        }
+	      }).catch(err => {
+	        console.error(err);
+	      });
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2];
+	  }
+
+	  /**
+	   * Calls when block has placed on document.
+	   */
+	  onPlaced() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _onActionClick$8)[_onActionClick$8]();
+	  }
+	  /**
+	   * Returns action button for edit content.
+	   * @return {HTMLElement | null}
+	   */
+	  getActionButton() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _actionButton$4)[_actionButton$4] = main_core.Tag.render(_t3$7 || (_t3$7 = _$f`
+			<div class="sign-document__block-style-btn --funnel">
+				<button onclick="${0}" data-role="action" data-id="action-${0}">
+				</button>
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _onActionClick$8)[_onActionClick$8].bind(this), this.block.getCode());
+	    babelHelpers.classPrivateFieldLooseBase(this, _setActionButtonLabel$4)[_setActionButtonLabel$4]();
+	    return babelHelpers.classPrivateFieldLooseBase(this, _actionButton$4)[_actionButton$4];
+	  }
+
+	  /**
+	   * Sets label to action button.
+	   */
+
+	  getStyles() {
+	    return {
+	      ...super.getStyles(),
+	      ...EmployeeDynamic.defaultTextBlockPaddingStyles
+	    };
+	  }
+	}
+	function _setContentText2$2(value) {
+	  const text = main_core.Type.isStringFilled(value) ? value : main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_EMPLOYEE_DYNAMIC');
+	  babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].textContent = text;
+	  babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].title = text;
+	}
+	function _loadFieldAndCategoryCaption2$2() {
+	  if (!main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _field$4)[_field$4])) {
+	    return Promise.resolve({
+	      categoryCaption: '',
+	      fieldCaption: main_core.Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E')
+	    });
+	  }
+	  const defaultCaption = main_core.Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E');
+	  if (babelHelpers.classPrivateFieldLooseBase(EmployeeDynamic, _loadFieldsPromise$2)[_loadFieldsPromise$2] === null) {
+	    babelHelpers.classPrivateFieldLooseBase(EmployeeDynamic, _loadFieldsPromise$2)[_loadFieldsPromise$2] = sign_v2_b2e_fieldSelector.FieldSelector.loadFieldList({});
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(EmployeeDynamic, _loadFieldsPromise$2)[_loadFieldsPromise$2].then(fieldList => {
+	    var _fieldList$DYNAMIC_ME, _fieldList$DYNAMIC_ME2;
+	    const fields = [...((_fieldList$DYNAMIC_ME = fieldList == null ? void 0 : (_fieldList$DYNAMIC_ME2 = fieldList.DYNAMIC_MEMBER) == null ? void 0 : _fieldList$DYNAMIC_ME2.FIELDS) != null ? _fieldList$DYNAMIC_ME : [])];
+	    const field = fields.find(item => item.name === babelHelpers.classPrivateFieldLooseBase(this, _field$4)[_field$4]);
+	    return {
+	      categoryCaption: main_core.Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E'),
+	      fieldCaption: field ? field.caption : defaultCaption
+	    };
+	  });
+	}
+	function _setActionButtonLabel2$4(label) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _actionButton$4)[_actionButton$4]) {
+	    return;
+	  }
+	  const actionButton = babelHelpers.classPrivateFieldLooseBase(this, _actionButton$4)[_actionButton$4].querySelector('button');
+	  actionButton.textContent = main_core.Type.isStringFilled(label) ? label : main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_EMPLOYEE_DYNAMIC');
+	}
+	function _getFieldSelectorPanel2$2() {
+	  const blocksManager = this.block.blocksManager;
+	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$7)[_cache$7].remember('fieldSelector', () => {
+	    const selector = new sign_v2_b2e_fieldSelector.FieldSelector({
+	      multiple: false,
+	      controllerOptions: {
+	        hideVirtual: 1,
+	        hideRequisites: 1,
+	        hideSmartB2eDocument: 1
+	      },
+	      languages: blocksManager.getLanguages(),
+	      filter: {
+	        '+categories': ['DYNAMIC_MEMBER'],
+	        '+fields': ['list', 'string', 'date', 'typed_string', 'text', 'datetime', 'enumeration', 'url', 'double', 'integer', 'snils'],
+	        '-fields': [({
+	          entity_field_name: fieldName
+	        }) => babelHelpers.classPrivateFieldLooseBase(this, _getFieldsNameBlackList$4)[_getFieldsNameBlackList$4]().has(fieldName)],
+	        allowEmptyFieldList: true
+	      },
+	      title: main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_EMPLOYEE_DYNAMIC'),
+	      categoryCaptions: {
+	        DYNAMIC_MEMBER: main_core.Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E')
+	      },
+	      fieldsFactory: {
+	        filter: fields => fields.filter(field => main_core.Type.isObject(field) && main_core.Type.isStringFilled(field.name) && ['list', 'string', 'date', 'enumeration'].includes(field.name))
+	      }
+	    });
+	    selector.subscribe('onSliderCloseComplete', event => babelHelpers.classPrivateFieldLooseBase(this, _onFieldSelectorCloseComplete$2)[_onFieldSelectorCloseComplete$2](event));
+	    return selector;
+	  });
+	}
+	function _getFieldsNameBlackList2$4() {
+	  return new Set(['ADDRESS', 'REG_ADDRESS']);
+	}
+	function _onActionClick2$8() {
+	  const fieldSelector = babelHelpers.classPrivateFieldLooseBase(this, _getFieldSelectorPanel$2)[_getFieldSelectorPanel$2]();
+	  fieldSelector.show().then(selectedNames => {
+	    babelHelpers.classPrivateFieldLooseBase(EmployeeDynamic, _updateFieldsList$2)[_updateFieldsList$2](fieldSelector.getFieldsList(false));
+	    const eventSelectedNames = [...selectedNames];
+	    if (selectedNames.length === 0 && main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _field$4)[_field$4])) {
+	      eventSelectedNames.push(babelHelpers.classPrivateFieldLooseBase(this, _field$4)[_field$4]);
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitOnFieldSelectEvent$4)[_emitOnFieldSelectEvent$4](eventSelectedNames);
+	    if (selectedNames.length === 0) {
+	      return;
+	    }
+	    main_core.Dom.removeClass(this.block.getLayout(), '--invalid');
+	    babelHelpers.classPrivateFieldLooseBase(this, _field$4)[_field$4] = selectedNames[0];
+	    this.setData({
+	      field: babelHelpers.classPrivateFieldLooseBase(this, _field$4)[_field$4]
+	    });
+	    setTimeout(() => {
+	      this.block.assign();
+	    }, 0);
+	  });
+	}
+	function _emitOnFieldSelectEvent2$4(selectedNames) {
+	  const onFieldSelectEventData = {
+	    selectedFieldNames: selectedNames
+	  };
+	  const onFieldSelectEvent = new main_core_events.BaseEvent({
+	    data: onFieldSelectEventData
+	  });
+	  this.emit('onFieldSelect', onFieldSelectEvent);
+	}
+	function _onFieldSelectorCloseComplete2$2(event) {
+	  setTimeout(() => {
+	    // event already sended
+	    if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _field$4)[_field$4])) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitOnFieldSelectEvent$4)[_emitOnFieldSelectEvent$4]([]);
+	  });
+	}
+	function _updateFieldsList2$2(fields) {
+	  babelHelpers.classPrivateFieldLooseBase(EmployeeDynamic, _loadFieldsPromise$2)[_loadFieldsPromise$2] = Promise.resolve(fields);
+	}
+	Object.defineProperty(EmployeeDynamic, _updateFieldsList$2, {
+	  value: _updateFieldsList2$2
+	});
+	Object.defineProperty(EmployeeDynamic, _loadFieldsPromise$2, {
+	  writable: true,
+	  value: null
+	});
+
+	let _$g = t => t,
+	  _t$g,
+	  _t2$c,
+	  _t3$8;
+	var _cache$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
+	var _field$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("field");
+	var _actionButton$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("actionButton");
+	var _content$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("content");
+	var _loadFieldsPromise$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadFieldsPromise");
+	var _lastLoadFieldsDocumentUid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lastLoadFieldsDocumentUid");
+	var _setContentText$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setContentText");
+	var _loadFieldAndCategoryCaption$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadFieldAndCategoryCaption");
+	var _setActionButtonLabel$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setActionButtonLabel");
+	var _getFieldSelectorPanel$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFieldSelectorPanel");
+	var _getFieldsNameBlackList$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFieldsNameBlackList");
+	var _onActionClick$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onActionClick");
+	var _emitOnFieldSelectEvent$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitOnFieldSelectEvent");
+	var _onFieldSelectorCloseComplete$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFieldSelectorCloseComplete");
+	var _extractPartyFromSelectedField = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extractPartyFromSelectedField");
+	var _updateFieldsList$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateFieldsList");
+	var _getCustomBackendSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCustomBackendSettings");
+	class HcmLinkReference extends Dummy {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _getCustomBackendSettings, {
+	      value: _getCustomBackendSettings2
+	    });
+	    Object.defineProperty(this, _extractPartyFromSelectedField, {
+	      value: _extractPartyFromSelectedField2
+	    });
+	    Object.defineProperty(this, _onFieldSelectorCloseComplete$3, {
+	      value: _onFieldSelectorCloseComplete2$3
+	    });
+	    Object.defineProperty(this, _emitOnFieldSelectEvent$5, {
+	      value: _emitOnFieldSelectEvent2$5
+	    });
+	    Object.defineProperty(this, _onActionClick$9, {
+	      value: _onActionClick2$9
+	    });
+	    Object.defineProperty(this, _getFieldsNameBlackList$5, {
+	      value: _getFieldsNameBlackList2$5
+	    });
+	    Object.defineProperty(this, _getFieldSelectorPanel$3, {
+	      value: _getFieldSelectorPanel2$3
+	    });
+	    Object.defineProperty(this, _setActionButtonLabel$5, {
+	      value: _setActionButtonLabel2$5
+	    });
+	    Object.defineProperty(this, _loadFieldAndCategoryCaption$3, {
+	      value: _loadFieldAndCategoryCaption2$3
+	    });
+	    Object.defineProperty(this, _setContentText$3, {
+	      value: _setContentText2$3
+	    });
+	    Object.defineProperty(this, _cache$8, {
+	      writable: true,
+	      value: new main_core.Cache.MemoryCache()
+	    });
+	    Object.defineProperty(this, _field$5, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _actionButton$5, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _content$3, {
+	      writable: true,
+	      value: void 0
+	    });
+	  }
+	  /**
+	   * Sets new data.
+	   * @param {any} data
+	   */
+	  setData(data) {
+	    var _this$data$field;
+	    this.data = data ? data : {};
+	    babelHelpers.classPrivateFieldLooseBase(this, _field$5)[_field$5] = (_this$data$field = this.data.field) != null ? _this$data$field : '';
+	    const party = babelHelpers.classPrivateFieldLooseBase(this, _extractPartyFromSelectedField)[_extractPartyFromSelectedField](babelHelpers.classPrivateFieldLooseBase(this, _field$5)[_field$5]);
+	    if (party > 0) {
+	      this.block.setMemberParty(party);
+	    }
+	  }
+
+	  /**
+	   * Returns type's content in view mode.
+	   * @return {HTMLElement | string}
+	   */
+	  getViewContent() {
+	    var _this$data;
+	    babelHelpers.classPrivateFieldLooseBase(this, _setActionButtonLabel$5)[_setActionButtonLabel$5]();
+	    if (main_core.Type.isStringFilled((_this$data = this.data) == null ? void 0 : _this$data.text)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _content$3)[_content$3] = main_core.Tag.render(_t$g || (_t$g = _$g`
+				<div class="sign-document__block-b2e-hcmlinkreference">
+					${0}
+				</div>
+			`), main_core.Text.encode(this.data.text || '').toString());
+	    } else {
+	      babelHelpers.classPrivateFieldLooseBase(this, _content$3)[_content$3] = main_core.Tag.render(_t2$c || (_t2$c = _$g`
+				<div class="sign-document__block-content_member-nodata">
+					${0}
+				</div>
+			`), main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_HCMLINK_TITLE'));
+	    }
+	    if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _field$5)[_field$5])) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _loadFieldAndCategoryCaption$3)[_loadFieldAndCategoryCaption$3]().then(({
+	        categoryCaption,
+	        fieldCaption
+	      }) => {
+	        var _this$data2;
+	        babelHelpers.classPrivateFieldLooseBase(this, _setActionButtonLabel$5)[_setActionButtonLabel$5](fieldCaption);
+	        if (!main_core.Type.isStringFilled((_this$data2 = this.data) == null ? void 0 : _this$data2.text)) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _setContentText$3)[_setContentText$3](main_core.Type.isStringFilled(categoryCaption) && main_core.Type.isStringFilled(fieldCaption) ? main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE_NO_DATA_CONTENT_TEMPLATE', {
+	            '#CATEGORY#': categoryCaption,
+	            '#FIELD#': fieldCaption
+	          }) : main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_HCMLINK_TITLE'));
+	          const blockLayout = this.block.getLayout();
+	          const resizeNode = blockLayout.querySelector('.--hcmlinkreference');
+	          this.block.resizeText({
+	            element: resizeNode,
+	            step: 0.5
+	          });
+	        }
+	      }).catch(err => {
+	        console.error(err);
+	      });
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _content$3)[_content$3];
+	  }
+
+	  /**
+	   * Calls when block has placed on document.
+	   */
+	  onPlaced() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _onActionClick$9)[_onActionClick$9]();
+	  }
+	  /**
+	   * Returns action button for edit content.
+	   * @return {HTMLElement | null}
+	   */
+	  getActionButton() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _actionButton$5)[_actionButton$5] = main_core.Tag.render(_t3$8 || (_t3$8 = _$g`
+			<div class="sign-document__block-style-btn --funnel">
+				<button onclick="${0}" data-role="action" data-id="action-${0}">
+				</button>
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _onActionClick$9)[_onActionClick$9].bind(this), this.block.getCode());
+	    babelHelpers.classPrivateFieldLooseBase(this, _setActionButtonLabel$5)[_setActionButtonLabel$5]();
+	    return babelHelpers.classPrivateFieldLooseBase(this, _actionButton$5)[_actionButton$5];
+	  }
+
+	  /**
+	   * Sets label to action button.
+	   */
+
+	  getStyles() {
+	    return {
+	      ...super.getStyles(),
+	      ...this.defaultTextBlockPaddingStyles
+	    };
+	  }
+	}
+	function _setContentText2$3(value) {
+	  const text = main_core.Type.isStringFilled(value) ? value : main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_HCMLINK_TITLE');
+	  babelHelpers.classPrivateFieldLooseBase(this, _content$3)[_content$3].textContent = text;
+	  babelHelpers.classPrivateFieldLooseBase(this, _content$3)[_content$3].title = text;
+	}
+	function _loadFieldAndCategoryCaption2$3() {
+	  if (!main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _field$5)[_field$5])) {
+	    return Promise.resolve({
+	      categoryCaption: '',
+	      fieldCaption: main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_HCMLINK_TITLE')
+	    });
+	  }
+	  const defaultCaption = main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_HCMLINK_TITLE');
+	  const documentUid = this.block.blocksManager.getDocumentUid();
+	  if (babelHelpers.classPrivateFieldLooseBase(HcmLinkReference, _loadFieldsPromise$3)[_loadFieldsPromise$3] === null || documentUid !== babelHelpers.classPrivateFieldLooseBase(HcmLinkReference, _lastLoadFieldsDocumentUid)[_lastLoadFieldsDocumentUid]) {
+	    babelHelpers.classPrivateFieldLooseBase(HcmLinkReference, _lastLoadFieldsDocumentUid)[_lastLoadFieldsDocumentUid] = documentUid;
+	    babelHelpers.classPrivateFieldLooseBase(HcmLinkReference, _loadFieldsPromise$3)[_loadFieldsPromise$3] = sign_v2_b2e_fieldSelector.FieldSelector.loadFieldList({}, babelHelpers.classPrivateFieldLooseBase(this, _getCustomBackendSettings)[_getCustomBackendSettings]());
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(HcmLinkReference, _loadFieldsPromise$3)[_loadFieldsPromise$3].then(fieldList => {
+	    var _fieldList$REPRESENTA, _fieldList$REPRESENTA2, _fieldList$EMPLOYEE$F, _fieldList$EMPLOYEE, _fieldList$COMPANY$FI, _fieldList$COMPANY;
+	    const categories = {
+	      representative: fieldList == null ? void 0 : fieldList.REPRESENTATIVE,
+	      employee: fieldList == null ? void 0 : fieldList.EMPLOYEE,
+	      company: fieldList == null ? void 0 : fieldList.COMPANY
+	    };
+	    Object.entries(categories).forEach(([key, category]) => {
+	      var _category$FIELDS;
+	      if (category === undefined) {
+	        return;
+	      }
+	      category.FIELDS = ((_category$FIELDS = category == null ? void 0 : category.FIELDS) != null ? _category$FIELDS : []).map(field => {
+	        return {
+	          ...field,
+	          category: key
+	        };
+	      });
+	    });
+	    const fields = [...((_fieldList$REPRESENTA = fieldList == null ? void 0 : (_fieldList$REPRESENTA2 = fieldList.REPRESENTATIVE) == null ? void 0 : _fieldList$REPRESENTA2.FIELDS) != null ? _fieldList$REPRESENTA : []), ...((_fieldList$EMPLOYEE$F = fieldList == null ? void 0 : (_fieldList$EMPLOYEE = fieldList.EMPLOYEE) == null ? void 0 : _fieldList$EMPLOYEE.FIELDS) != null ? _fieldList$EMPLOYEE$F : []), ...((_fieldList$COMPANY$FI = fieldList == null ? void 0 : (_fieldList$COMPANY = fieldList.COMPANY) == null ? void 0 : _fieldList$COMPANY.FIELDS) != null ? _fieldList$COMPANY$FI : [])];
+	    const field = fields.find(field => field.name === babelHelpers.classPrivateFieldLooseBase(this, _field$5)[_field$5]);
+	    let categoryCaption = '';
+	    if (main_core.Type.isObject(field)) {
+	      if ((field == null ? void 0 : field.category) === 'representative') {
+	        categoryCaption = main_core.Loc.getMessage('SIGN_EDITOR_BLOCKS_REPRESENTATIVE_B2E');
+	      } else if ((field == null ? void 0 : field.category) === 'employee') {
+	        categoryCaption = main_core.Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E');
+	      } else if ((field == null ? void 0 : field.category) === 'company') {
+	        categoryCaption = main_core.Loc.getMessage('SIGN_EDITOR_BLOCKS_COMPANY');
+	      } else {
+	        var _categories$field$cat, _categories$field$cat2;
+	        categoryCaption = (_categories$field$cat = (_categories$field$cat2 = categories[field == null ? void 0 : field.category]) == null ? void 0 : _categories$field$cat2.CAPTION) != null ? _categories$field$cat : '';
+	      }
+	    }
+	    return {
+	      categoryCaption,
+	      fieldCaption: field ? field.caption : defaultCaption
+	    };
+	  });
+	}
+	function _setActionButtonLabel2$5(label) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _actionButton$5)[_actionButton$5]) {
+	    return;
+	  }
+	  const actionButton = babelHelpers.classPrivateFieldLooseBase(this, _actionButton$5)[_actionButton$5].querySelector('button');
+	  actionButton.textContent = main_core.Type.isStringFilled(label) ? label : main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_HCMLINK_TITLE');
+	}
+	function _getFieldSelectorPanel2$3() {
+	  const blocksManager = this.block.blocksManager;
+	  const fieldSelector = babelHelpers.classPrivateFieldLooseBase(this, _cache$8)[_cache$8].remember('fieldSelector', () => {
+	    const selector = new sign_v2_b2e_fieldSelector.FieldSelector({
+	      multiple: false,
+	      languages: blocksManager.getLanguages(),
+	      filter: {
+	        '+categories': ['REPRESENTATIVE', 'EMPLOYEE'],
+	        '+fields': [],
+	        '-fields': [({
+	          entity_field_name: fieldName
+	        }) => babelHelpers.classPrivateFieldLooseBase(this, _getFieldsNameBlackList$5)[_getFieldsNameBlackList$5]().has(fieldName)]
+	      },
+	      title: main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_HCMLINK_TITLE'),
+	      categoryCaptions: {
+	        'REPRESENTATIVE': main_core.Loc.getMessage('SIGN_EDITOR_BLOCKS_REPRESENTATIVE_B2E'),
+	        'EMPLOYEE': main_core.Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E'),
+	        'COMPANY': main_core.Loc.getMessage('SIGN_EDITOR_BLOCKS_COMPANY')
+	      },
+	      alwaysHideCreateFieldButton: true
+	    });
+	    selector.subscribe('onSliderCloseComplete', event => babelHelpers.classPrivateFieldLooseBase(this, _onFieldSelectorCloseComplete$3)[_onFieldSelectorCloseComplete$3](event));
+	    return selector;
+	  });
+	  fieldSelector.setCustomBackendSettings(babelHelpers.classPrivateFieldLooseBase(this, _getCustomBackendSettings)[_getCustomBackendSettings]());
+	  return fieldSelector;
+	}
+	function _getFieldsNameBlackList2$5() {
+	  return new Set([]);
+	}
+	function _onActionClick2$9() {
+	  const fieldSelector = babelHelpers.classPrivateFieldLooseBase(this, _getFieldSelectorPanel$3)[_getFieldSelectorPanel$3]();
+	  fieldSelector.show().then(selectedNames => {
+	    let list = fieldSelector.getFieldsList(false);
+	    babelHelpers.classPrivateFieldLooseBase(HcmLinkReference, _updateFieldsList$3)[_updateFieldsList$3](list);
+	    const eventSelectedNames = [...selectedNames];
+	    if (selectedNames.length === 0 && main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _field$5)[_field$5])) {
+	      eventSelectedNames.push(babelHelpers.classPrivateFieldLooseBase(this, _field$5)[_field$5]);
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitOnFieldSelectEvent$5)[_emitOnFieldSelectEvent$5](eventSelectedNames);
+	    if (selectedNames.length === 0) {
+	      return;
+	    }
+	    main_core.Dom.removeClass(this.block.getLayout(), '--invalid');
+	    babelHelpers.classPrivateFieldLooseBase(this, _field$5)[_field$5] = selectedNames[0];
+	    this.setData({
+	      field: babelHelpers.classPrivateFieldLooseBase(this, _field$5)[_field$5]
+	    });
+	    setTimeout(() => {
+	      this.block.assign();
+	    }, 0);
+	  });
+	}
+	function _emitOnFieldSelectEvent2$5(selectedNames) {
+	  const onFieldSelectEventData = {
+	    selectedFieldNames: selectedNames
+	  };
+	  const onFieldSelectEvent = new main_core_events.BaseEvent({
+	    data: onFieldSelectEventData
+	  });
+	  this.emit('onFieldSelect', onFieldSelectEvent);
+	}
+	function _onFieldSelectorCloseComplete2$3(event) {
+	  setTimeout(() => {
+	    // event already sended
+	    if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _field$5)[_field$5])) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitOnFieldSelectEvent$5)[_emitOnFieldSelectEvent$5]([]);
+	  });
+	}
+	function _extractPartyFromSelectedField2(fieldName) {
+	  if (!main_core.Type.isStringFilled(fieldName)) {
+	    return null;
+	  }
+	  const splitedName = fieldName.split('_');
+	  return splitedName[3] ? Number(splitedName[3]) : null;
+	}
+	function _updateFieldsList2$3(fields) {
+	  babelHelpers.classPrivateFieldLooseBase(HcmLinkReference, _loadFieldsPromise$3)[_loadFieldsPromise$3] = Promise.resolve(fields);
+	}
+	function _getCustomBackendSettings2() {
+	  return {
+	    uri: 'sign.api_v1.integration.humanresources.hcmLink.loadFields',
+	    requestOptions: {
+	      documentUid: this.block.blocksManager.getDocumentUid()
+	    }
+	  };
+	}
+	Object.defineProperty(HcmLinkReference, _updateFieldsList$3, {
+	  value: _updateFieldsList2$3
+	});
+	Object.defineProperty(HcmLinkReference, _loadFieldsPromise$3, {
+	  writable: true,
+	  value: null
+	});
+	Object.defineProperty(HcmLinkReference, _lastLoadFieldsDocumentUid, {
+	  writable: true,
+	  value: null
+	});
+
+	let _$h = t => t,
+	  _t$h,
+	  _t2$d,
+	  _t3$9,
 	  _t4$1,
 	  _t5$1,
 	  _t6$1,
@@ -2531,7 +3148,7 @@ this.BX.Sign = this.BX.Sign || {};
 	   */
 	  static setRect(element, rect) {
 	    Object.keys(rect).map(key => {
-	      rect[key] = parseInt(rect[key]) + 'px';
+	      rect[key] = `${Math.round(rect[key])}px`;
 	    });
 	    main_core.Dom.style(element, rect);
 	  }
@@ -2542,7 +3159,7 @@ this.BX.Sign = this.BX.Sign || {};
 	   * @return {HTMLElement}
 	   */
 	  static getBlockLayout(options) {
-	    return main_core.Tag.render(_t$f || (_t$f = _$f`
+	    return main_core.Tag.render(_t$h || (_t$h = _$h`
 			<div class="sign-document__block-wrapper">
 				<div class="sign-document__block-panel--wrapper" data-role="sign-block__actions">
 				</div>
@@ -2575,7 +3192,7 @@ this.BX.Sign = this.BX.Sign || {};
 	        selectedName = member.name;
 	      }
 	    });
-	    const memberSelector = members.length > 1 ? main_core.Tag.render(_t2$b || (_t2$b = _$f`<span>${0}</span>`), main_core.Text.encode(selectedName)) : main_core.Tag.render(_t3$7 || (_t3$7 = _$f`<i>${0}</i>`), main_core.Text.encode(selectedName));
+	    const memberSelector = members.length > 1 ? main_core.Tag.render(_t2$d || (_t2$d = _$h`<span>${0}</span>`), main_core.Text.encode(selectedName)) : main_core.Tag.render(_t3$9 || (_t3$9 = _$h`<i>${0}</i>`), main_core.Text.encode(selectedName));
 	    if (members.length > 1) {
 	      sign_ui.UI.bindSimpleMenu({
 	        bindElement: memberSelector,
@@ -2586,7 +3203,7 @@ this.BX.Sign = this.BX.Sign || {};
 	        }
 	      });
 	    }
-	    return main_core.Tag.render(_t4$1 || (_t4$1 = _$f`
+	    return main_core.Tag.render(_t4$1 || (_t4$1 = _$h`
 			<div class="sign-document-block-member-wrapper">
 				${0}
 			</div>
@@ -2598,7 +3215,7 @@ this.BX.Sign = this.BX.Sign || {};
 	   * @return {HTMLElement}
 	   */
 	  static getResizeArea() {
-	    return main_core.Tag.render(_t5$1 || (_t5$1 = _$f`
+	    return main_core.Tag.render(_t5$1 || (_t5$1 = _$h`
 			<div class="sign-document__resize-area">
 				<div class="sign-area-resizable-controls">
 					<span class="sign-document__move-control"></span>
@@ -2631,7 +3248,7 @@ this.BX.Sign = this.BX.Sign || {};
 	      'Georgia, serif': '<span style="font-family: Georgia, serif">Georgia</span>',
 	      'monospace': '<span style="font-family: monospace">monospace</span>'
 	    };
-	    const fontFamily = main_core.Tag.render(_t6$1 || (_t6$1 = _$f`<div class="sign-document__block-style-btn --btn-font-family">${0}</div>`), fonts[collectStyles['fontFamily']] || 'Font');
+	    const fontFamily = main_core.Tag.render(_t6$1 || (_t6$1 = _$h`<div class="sign-document__block-style-btn --btn-font-family">${0}</div>`), fonts[collectStyles['fontFamily']] || 'Font');
 	    sign_ui.UI.bindSimpleMenu({
 	      bindElement: fontFamily,
 	      items: fonts,
@@ -2648,7 +3265,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    if (fontSizereal) {
 	      fontSizeValue = fontSizereal;
 	    }
-	    const fontSize = main_core.Tag.render(_t7$1 || (_t7$1 = _$f`<div class="sign-document__block-style-btn --btn-fontsize">${0}</div>`), fontSizeValue + 'px' || '<i></i>');
+	    const fontSize = main_core.Tag.render(_t7$1 || (_t7$1 = _$h`<div class="sign-document__block-style-btn --btn-fontsize">${0}</div>`), fontSizeValue + 'px' || '<i></i>');
 	    sign_ui.UI.bindSimpleMenu({
 	      bindElement: fontSize,
 	      items: ['6px', '7px', '8px', '9px', '10px', '11px', '12px', '13px', '14px', '15px', '16px', '18px', '20px', '22px', '24px', '26px', '28px', '36px', '48px', '72px'],
@@ -2661,7 +3278,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    const {
 	      layout: fontColor
 	    } = UI$1.getColorSelectorBtn((_collectStyles$color = collectStyles.color) != null ? _collectStyles$color : '#000', color => actionHandler('color', color));
-	    return main_core.Tag.render(_t8$1 || (_t8$1 = _$f`
+	    return main_core.Tag.render(_t8$1 || (_t8$1 = _$h`
 			<div class="sign-document__block-style--panel">
 <!--				<div class="sign-document__block-style&#45;&#45;move-control"></div>-->
 				${0}
@@ -2680,7 +3297,7 @@ this.BX.Sign = this.BX.Sign || {};
 		`), fontFamily, fontSize, fontColor);
 	  }
 	  static getColorSelectorBtn(defaultColorPickerColor, onColorSelect, colorPickerOptions = {}) {
-	    const layout = main_core.Tag.render(_t9$1 || (_t9$1 = _$f`<div class="sign-document__block-style-btn --btn-color">
+	    const layout = main_core.Tag.render(_t9$1 || (_t9$1 = _$h`<div class="sign-document__block-style-btn --btn-color">
 				<span class="sign-document__block-style-btn--color-block"></span> 
 				<span>${0}</span>
 			</div>`), main_core.Loc.getMessage('SIGN_JS_DOCUMENT_STYLE_COLOR'));
@@ -2918,7 +3535,7 @@ this.BX.Sign = this.BX.Sign || {};
 	var _code = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("code");
 	var _layout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
 	var _stylePanel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("stylePanel");
-	var _content$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("content");
+	var _content$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("content");
 	var _memberPart = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("memberPart");
 	var _panelCreated = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("panelCreated");
 	var _allowMembers = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("allowMembers");
@@ -2980,7 +3597,7 @@ this.BX.Sign = this.BX.Sign || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _content$2, {
+	    Object.defineProperty(this, _content$4, {
 	      writable: true,
 	      value: null
 	    });
@@ -3011,7 +3628,7 @@ this.BX.Sign = this.BX.Sign || {};
 	        myrequisites: MyRequisites,
 	        mysign: MySign,
 	        mystamp: MyStamp,
-	        number: Number,
+	        number: Number$1,
 	        reference: Reference,
 	        myreference: MyReference,
 	        requisites: Requisites,
@@ -3019,7 +3636,9 @@ this.BX.Sign = this.BX.Sign || {};
 	        stamp: Stamp,
 	        text: Text,
 	        b2ereference: B2eReference,
-	        myb2ereference: MyB2eReference
+	        myb2ereference: MyB2eReference,
+	        employeedynamic: EmployeeDynamic,
+	        hcmlinkreference: HcmLinkReference
 	      }
 	    });
 	    Object.defineProperty(this, _currentFontSize, {
@@ -3059,17 +3678,17 @@ this.BX.Sign = this.BX.Sign || {};
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _contentProviders)[_contentProviders][babelHelpers.classPrivateFieldLooseBase(this, _code)[_code]]) {
 	      throw new Error(`Content provider for '${babelHelpers.classPrivateFieldLooseBase(this, _code)[_code]}' not found.`);
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2] = new (babelHelpers.classPrivateFieldLooseBase(this, _contentProviders)[_contentProviders][babelHelpers.classPrivateFieldLooseBase(this, _code)[_code]])(this);
+	    babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4] = new (babelHelpers.classPrivateFieldLooseBase(this, _contentProviders)[_contentProviders][babelHelpers.classPrivateFieldLooseBase(this, _code)[_code]])(this);
 	    if (['sign', 'mysign'].includes(babelHelpers.classPrivateFieldLooseBase(this, _code)[_code]) && main_core.Type.isString((_options$style = options.style) == null ? void 0 : _options$style.color)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].changeStyleColor(options.style.color, false);
+	      babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].changeStyleColor(options.style.color, false);
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _createLayout)[_createLayout]();
 	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], 'click', babelHelpers.classPrivateFieldLooseBase(this, _onClick)[_onClick].bind(this));
-	    if (options.party > 1) {
+	    if (options.party > 1 && !['b2ereference', 'employeedynamic', 'hcmlinkreference'].includes(babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase())) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _allowMembers)[_allowMembers] = true;
 	    }
 	    this.renderStyle();
-	    this.setPosition((_options$position = options.position) != null ? _options$position : babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].getInitDimension());
+	    this.setPosition((_options$position = options.position) != null ? _options$position : babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].getInitDimension());
 	    if (options.data) {
 	      setTimeout(() => {
 	        this.setData(options.data);
@@ -3091,7 +3710,7 @@ this.BX.Sign = this.BX.Sign || {};
 	   * @param {any} data
 	   */
 	  setData(data) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].setData(data);
+	    babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].setData(data);
 	    this.renderView();
 	  }
 
@@ -3108,7 +3727,7 @@ this.BX.Sign = this.BX.Sign || {};
 	   * @return {any}
 	   */
 	  getData() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].getData();
+	    return babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].getData();
 	  }
 
 	  /**
@@ -3144,7 +3763,7 @@ this.BX.Sign = this.BX.Sign || {};
 	   */
 	  getStyle() {
 	    return {
-	      ...babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].getStyles(),
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].getStyles(),
 	      ...babelHelpers.classPrivateFieldLooseBase(this, _stylePanel)[_stylePanel].collectStyles()
 	    };
 	  }
@@ -3200,11 +3819,11 @@ this.BX.Sign = this.BX.Sign || {};
 	   * Calls block's action.
 	   */
 	  fireAction() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2]['onActionClick']) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4]['onActionClick']) {
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _code)[_code] === 'text') {
 	        main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], babelHelpers.classPrivateFieldLooseBase(this, _style$1)[_style$1].blockEditing);
 	      }
-	      babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2]['onActionClick']();
+	      babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4]['onActionClick']();
 	    }
 	  }
 
@@ -3223,7 +3842,7 @@ this.BX.Sign = this.BX.Sign || {};
 	   */
 	  await(flag) {
 	    const blockLayouts = [];
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].isSingleton()) {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].isSingleton()) {
 	      blockLayouts.push(this.getLayout());
 	    } else {
 	      const currentCode = this.getCode();
@@ -3252,7 +3871,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    const blocksData = [];
 	    const blocksInstance = [];
 	    this.await(true);
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].isSingleton()) {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].isSingleton()) {
 	      blocksData.push({
 	        code: babelHelpers.classPrivateFieldLooseBase(this, _code)[_code],
 	        part: babelHelpers.classPrivateFieldLooseBase(this, _memberPart)[_memberPart],
@@ -3301,10 +3920,10 @@ this.BX.Sign = this.BX.Sign || {};
 	      case 'mysign':
 	        main_core.Dom.addClass(contentTag, '--image');
 	    }
-	    const resizeNode = babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].getViewContent();
+	    const resizeNode = babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].getViewContent();
 	    main_core.Dom.append(resizeNode, contentTag);
 	    main_core.Dom.addClass(resizeNode, '--' + babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase());
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'requisites' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'myrequisites' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'date' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'number' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'stamp' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'mystamp' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'sign' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'mysign' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'reference' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'myreference' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'text' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'b2ereference' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'myb2ereference') {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'requisites' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'myrequisites' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'date' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'number' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'stamp' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'mystamp' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'sign' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'mysign' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'reference' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'myreference' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'text' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'b2ereference' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'myb2ereference' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'employeedynamic' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'hcmlinkreference') {
 	      resizeNode.style.setProperty('display', 'block');
 	      resizeNode.style.setProperty('overflow', 'hidden');
 	      if (!this.observerReady) {
@@ -3340,12 +3959,10 @@ this.BX.Sign = this.BX.Sign || {};
 	          let i = minSize;
 	          let overflow = false;
 	          const parent = element.parentNode;
-	          while (!overflow && i < this.maxTextSize) {
+	          while (!overflow && i <= this.maxTextSize) {
 	            element.style.fontSize = `${i}${unit}`;
 	            overflow = this.isOverflownX(parent);
-	            if (!overflow) {
-	              i += step;
-	            }
+	            i += step;
 	          }
 	          babelHelpers.classPrivateFieldLooseBase(this, _currentFontSize)[_currentFontSize] = `${i - step}${unit}`;
 	          element.style.fontSize = babelHelpers.classPrivateFieldLooseBase(this, _currentFontSize)[_currentFontSize];
@@ -3361,9 +3978,9 @@ this.BX.Sign = this.BX.Sign || {};
 	            step: 0.5
 	          });
 	        }
-	        babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].subscribe(babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].events.onChange, babelHelpers.classPrivateFieldLooseBase(this, _onContentChange)[_onContentChange].bind(this));
-	        babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].subscribe(babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].events.onColorStyleChange, babelHelpers.classPrivateFieldLooseBase(this, _onContentColorStyleChange)[_onContentColorStyleChange].bind(this));
-	        babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].subscribe('onFieldSelect', babelHelpers.classPrivateFieldLooseBase(this, _onFieldSelect)[_onFieldSelect].bind(this));
+	        babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].subscribe(babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].events.onChange, babelHelpers.classPrivateFieldLooseBase(this, _onContentChange)[_onContentChange].bind(this));
+	        babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].subscribe(babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].events.onColorStyleChange, babelHelpers.classPrivateFieldLooseBase(this, _onContentColorStyleChange)[_onContentColorStyleChange].bind(this));
+	        babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].subscribe('onFieldSelect', babelHelpers.classPrivateFieldLooseBase(this, _onFieldSelect)[_onFieldSelect].bind(this));
 	        this.observerReady = true;
 	      }
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _firstRenderReady)[_firstRenderReady]) {
@@ -3383,19 +4000,19 @@ this.BX.Sign = this.BX.Sign || {};
 	    main_core.Dom.clean(panelTag);
 
 	    // style
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].isStyleAllowed()) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].isStyleAllowed()) {
 	      main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _stylePanel)[_stylePanel].getLayout(), panelTag);
 	    }
 
 	    // action
-	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].getActionButton(), panelTag);
+	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].getActionButton(), panelTag);
 
 	    // block caption
-	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].getBlockCaption(), panelTag);
+	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].getBlockCaption(), panelTag);
 
 	    // member selector
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _allowMembers)[_allowMembers]) {
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'b2ereference') {
+	      if (['hcmlinkreference', 'b2ereference'].includes(babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase())) {
 	        return;
 	      }
 	      const allMembers = this.blocksManager.getMembers();
@@ -3414,17 +4031,17 @@ this.BX.Sign = this.BX.Sign || {};
 	   * Calls when block starts being resized or moved.
 	   */
 	  onStartChangePosition() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].onStartChangePosition();
+	    babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].onStartChangePosition();
 	  }
 
 	  /**
 	   * Calls when block has placed on document.
 	   */
 	  onPlaced() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].onPlaced();
+	    babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].onPlaced();
 	  }
 	  updateColor(color, emitEvent = true) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].changeStyleColor(color, emitEvent);
+	    babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].changeStyleColor(color, emitEvent);
 	    babelHelpers.classPrivateFieldLooseBase(this, _stylePanel)[_stylePanel].updateColor(color);
 	  }
 
@@ -3432,21 +4049,21 @@ this.BX.Sign = this.BX.Sign || {};
 	   * Calls when block saved.
 	   */
 	  onSave() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].onSave();
+	    babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].onSave();
 	  }
 
 	  /**
 	   * Calls when block removed.
 	   */
 	  onRemove() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].onRemove();
+	    babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].onRemove();
 	  }
 
 	  /**
 	   * Calls when click was out the block.
 	   */
 	  onClickOut() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].onClickOut();
+	    babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].onClickOut();
 	  }
 
 	  /**
@@ -3500,6 +4117,9 @@ this.BX.Sign = this.BX.Sign || {};
 	  isRemoved() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].hidden === true;
 	  }
+	  setMemberParty(party) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _memberPart)[_memberPart] = party;
+	  }
 	}
 	function _onClick2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _onClickCallback)[_onClickCallback]) {
@@ -3522,7 +4142,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  const nodeForPosition = document.body.querySelector('.sign-editor__content');
 	  const documentLayout = this.blocksManager.getLayout();
 	  const documentLayoutRect = documentLayout.getBoundingClientRect();
-	  const blockInitDim = babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].getInitDimension();
+	  const blockInitDim = babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].getInitDimension();
 	  const position = {
 	    top: Math.min(nodeForPosition.scrollTop + nodeForPosition.offsetHeight / 2, documentLayoutRect.height - blockInitDim.height),
 	    left: documentLayoutRect.width / 2 - 100
@@ -3537,7 +4157,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  event.stopPropagation();
 	}
 	function _onContentChange2() {
-	  const content = babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2];
+	  const content = babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4];
 	  if (!(content instanceof Text)) {
 	    return;
 	  }
@@ -3549,9 +4169,9 @@ this.BX.Sign = this.BX.Sign || {};
 	function _onContentColorStyleChange2(event) {
 	  var _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4, _babelHelpers$classPr5;
 	  this.emit(this.events.onColorStyleChange, {
-	    color: (_babelHelpers$classPr2 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].getStyles()) == null ? void 0 : _babelHelpers$classPr3.color) != null ? _babelHelpers$classPr2 : null
+	    color: (_babelHelpers$classPr2 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].getStyles()) == null ? void 0 : _babelHelpers$classPr3.color) != null ? _babelHelpers$classPr2 : null
 	  });
-	  const color = (_babelHelpers$classPr4 = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _content$2)[_content$2].getStyles()) == null ? void 0 : _babelHelpers$classPr5.color) != null ? _babelHelpers$classPr4 : null;
+	  const color = (_babelHelpers$classPr4 = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].getStyles()) == null ? void 0 : _babelHelpers$classPr5.color) != null ? _babelHelpers$classPr4 : null;
 	  if (main_core.Type.isString(color)) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _stylePanel)[_stylePanel].updateColor(color);
 	  }
@@ -3952,7 +4572,7 @@ this.BX.Sign = this.BX.Sign || {};
 	var _helpBtnHelperArticleCode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("helpBtnHelperArticleCode");
 	var _api$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("api");
 	var _lastContainerSize = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lastContainerSize");
-	var _cache$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
+	var _cache$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
 	var _pixelToPercent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pixelToPercent");
 	var _percentToPixel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("percentToPixel");
 	var _addBlock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addBlock");
@@ -4103,14 +4723,20 @@ this.BX.Sign = this.BX.Sign || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _cache$7, {
+	    Object.defineProperty(this, _cache$9, {
 	      writable: true,
 	      value: new main_core.Cache.MemoryCache()
 	    });
+	    this.isTemplateMode = false;
+	    this.documentInitiatedByType = null;
 	    const {
 	      documentLayout,
-	      disableEdit
+	      disableEdit,
+	      isTemplateMode,
+	      documentInitiatedByType
 	    } = options;
+	    this.isTemplateMode = Boolean(isTemplateMode);
+	    this.documentInitiatedByType = documentInitiatedByType;
 	    babelHelpers.classPrivateFieldLooseBase(this, _documentLayout)[_documentLayout] = documentLayout;
 	    babelHelpers.classPrivateFieldLooseBase(this, _disableEdit)[_disableEdit] = disableEdit;
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _disableEdit)[_disableEdit]) {
@@ -4755,7 +5381,7 @@ this.BX.Sign = this.BX.Sign || {};
 	      eventName: 'onFieldSelect'
 	    });
 	    newBlock.subscribe('onFieldSelect', onFieldSelectListener);
-	  } else if (['b2ereference', 'myb2ereference'].includes(newBlockCode)) {
+	  } else if (['b2ereference', 'myb2ereference', 'employeedynamic', 'hcmlinkreference'].includes(newBlockCode)) {
 	    const onFieldSelectListener = event => babelHelpers.classPrivateFieldLooseBase(this, _onB2eReferenceBlockFieldSelect)[_onB2eReferenceBlockFieldSelect](newBlock, event);
 	    babelHelpers.classPrivateFieldLooseBase(this, _eventListeners)[_eventListeners].blockB2eReferenceFieldSelect.set(newBlock, {
 	      subscription: onFieldSelectListener,
@@ -4860,7 +5486,7 @@ this.BX.Sign = this.BX.Sign || {};
 	function _onBlockDeleteBecauseFieldNotSelected2(block) {
 	  block.remove();
 	  // show notification once
-	  babelHelpers.classPrivateFieldLooseBase(this, _cache$7)[_cache$7].remember('notify', () => ui_notification.UI.Notification.Center.notify({
+	  babelHelpers.classPrivateFieldLooseBase(this, _cache$9)[_cache$9].remember('notify', () => ui_notification.UI.Notification.Center.notify({
 	    content: main_core.Text.encode(main_core.Loc.getMessage('SIGN_EDITOR_ERROR_REFERENCE_BLOCK_FIELD_NOT_SELECTED_HINT_TEXT')),
 	    autoHideDelay: 3000,
 	    width: 480
@@ -4869,7 +5495,7 @@ this.BX.Sign = this.BX.Sign || {};
 	function _onB2eReferenceBlockDeleteBecauseFieldNotSelected2(block) {
 	  block.remove();
 	  // show notification once
-	  babelHelpers.classPrivateFieldLooseBase(this, _cache$7)[_cache$7].remember('notifyB2e', () => ui_notification.UI.Notification.Center.notify({
+	  babelHelpers.classPrivateFieldLooseBase(this, _cache$9)[_cache$9].remember('notifyB2e', () => ui_notification.UI.Notification.Center.notify({
 	    content: main_core.Text.encode(main_core.Loc.getMessage('SIGN_EDITOR_ERROR_B2E_REFERENCE_BLOCK_FIELD_NOT_SELECTED_HINT_TEXT')),
 	    autoHideDelay: 3000,
 	    width: 480
@@ -4886,10 +5512,10 @@ this.BX.Sign = this.BX.Sign || {};
 	  Object.values(babelHelpers.classPrivateFieldLooseBase(this, _eventListeners)[_eventListeners]).forEach(eventListenerCache => eventListenerCache.clear());
 	}
 
-	let _$g = t => t,
-	  _t$g,
-	  _t2$c,
-	  _t3$8,
+	let _$i = t => t,
+	  _t$i,
+	  _t2$e,
+	  _t3$a,
 	  _t4$2,
 	  _t5$2,
 	  _t6$2,
@@ -4901,7 +5527,8 @@ this.BX.Sign = this.BX.Sign || {};
 	const SectionType = Object.freeze({
 	  General: 0,
 	  FirstParty: 1,
-	  SecondParty: 2
+	  SecondParty: 2,
+	  HcmLinkIntegration: 3
 	});
 	var _sidePanel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sidePanel");
 	var _closeSidePanel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeSidePanel");
@@ -4927,9 +5554,18 @@ this.BX.Sign = this.BX.Sign || {};
 	var _toggleEditMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toggleEditMode");
 	var _getSectionsData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSectionsData");
 	var _onSidePanelCloseStart = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSidePanelCloseStart");
+	var _isDynamicEmployeeFieldAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDynamicEmployeeFieldAvailable");
+	var _isBlockCanBeInitialized = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isBlockCanBeInitialized");
 	class Editor extends main_core_events.EventEmitter {
 	  constructor(wizardType, options) {
+	    var _options$documentInit;
 	    super();
+	    Object.defineProperty(this, _isBlockCanBeInitialized, {
+	      value: _isBlockCanBeInitialized2
+	    });
+	    Object.defineProperty(this, _isDynamicEmployeeFieldAvailable, {
+	      value: _isDynamicEmployeeFieldAvailable2
+	    });
 	    Object.defineProperty(this, _onSidePanelCloseStart, {
 	      value: _onSidePanelCloseStart2
 	    });
@@ -5021,14 +5657,16 @@ this.BX.Sign = this.BX.Sign || {};
 	      Instance
 	    } = main_core.Reflection.getClass('BX.SidePanel');
 	    babelHelpers.classPrivateFieldLooseBase(this, _sidePanel)[_sidePanel] = Instance;
-	    babelHelpers.classPrivateFieldLooseBase(this, _dom)[_dom] = main_core.Tag.render(_t$g || (_t$g = _$g`<div class="sign-wizard__scope sign-editor"></div>`));
-	    babelHelpers.classPrivateFieldLooseBase(this, _documentLayout$1)[_documentLayout$1] = main_core.Tag.render(_t2$c || (_t2$c = _$g`
+	    babelHelpers.classPrivateFieldLooseBase(this, _dom)[_dom] = main_core.Tag.render(_t$i || (_t$i = _$i`<div class="sign-wizard__scope sign-editor"></div>`));
+	    babelHelpers.classPrivateFieldLooseBase(this, _documentLayout$1)[_documentLayout$1] = main_core.Tag.render(_t2$e || (_t2$e = _$i`
 			<div class="sign-editor__document"></div>
 		`));
 	    babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager] = new BlocksManager({
 	      documentLayout: babelHelpers.classPrivateFieldLooseBase(this, _documentLayout$1)[_documentLayout$1],
 	      disableEdit: false,
-	      languages: options.languages
+	      languages: options.languages,
+	      isTemplateMode: Boolean(options.isTemplateMode),
+	      documentInitiatedByType: (_options$documentInit = options.documentInitiatedByType) != null ? _options$documentInit : sign_v2_documentSetup.DocumentInitiated.company
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _wizardType)[_wizardType] = wizardType;
 	    babelHelpers.classPrivateFieldLooseBase(this, _urls)[_urls] = [];
@@ -5097,7 +5735,7 @@ this.BX.Sign = this.BX.Sign || {};
 	        promises
 	      } = acc;
 	      const promise = new Promise(resolve => {
-	        const page = main_core.Tag.render(_t3$8 || (_t3$8 = _$g`
+	        const page = main_core.Tag.render(_t3$a || (_t3$a = _$i`
 					<div class="sign-editor__document_page">
 						<img src="${0}" onload="${0}"  alt=""/>
 					</div>
@@ -5119,7 +5757,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    main_core_events.EventEmitter.unsubscribeAll('SidePanel.Slider:onOpenComplete');
 	    main_core_events.EventEmitter.subscribeOnce('SidePanel.Slider:onOpenComplete', () => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].initPagesRect();
-	      babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].initBlocks(babelHelpers.classPrivateFieldLooseBase(this, _documentData)[_documentData].blocks.filter(block => !babelHelpers.classPrivateFieldLooseBase(this, _disabledSections)[_disabledSections].has(block.party)));
+	      babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].initBlocks(babelHelpers.classPrivateFieldLooseBase(this, _documentData)[_documentData].blocks.filter(block => babelHelpers.classPrivateFieldLooseBase(this, _isBlockCanBeInitialized)[_isBlockCanBeInitialized](block)));
 	    });
 	  }
 	  show() {
@@ -5187,7 +5825,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  const saveButtonTitle = main_core.Loc.getMessage('SIGN_EDITOR_SAVE');
 	  let helpArticleElement = '';
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _getArticleCode)[_getArticleCode]()) {
-	    helpArticleElement = main_core.Tag.render(_t4$2 || (_t4$2 = _$g`
+	    helpArticleElement = main_core.Tag.render(_t4$2 || (_t4$2 = _$i`
 				<span
 								onclick="${0}"
 								class="sign-editor__header_help"
@@ -5197,7 +5835,7 @@ this.BX.Sign = this.BX.Sign || {};
 	      Helper.show(`redirect=detail&code=${babelHelpers.classPrivateFieldLooseBase(this, _getArticleCode)[_getArticleCode]()}`);
 	    });
 	  }
-	  const headTitleNode = main_core.Tag.render(_t5$2 || (_t5$2 = _$g`
+	  const headTitleNode = main_core.Tag.render(_t5$2 || (_t5$2 = _$i`
 			<p class="sign-editor__header_title">
 				<span>${0}</span>
 				<span
@@ -5206,7 +5844,7 @@ this.BX.Sign = this.BX.Sign || {};
 			</p>
 		`), main_core.Loc.getMessage('SIGN_EDITOR_EDITING'), main_core.Loc.getMessage('SIGN_EDITOR_EDITING_HINT'));
 	  sign_v2_helper.Hint.create(headTitleNode);
-	  return main_core.Tag.render(_t6$2 || (_t6$2 = _$g`
+	  return main_core.Tag.render(_t6$2 || (_t6$2 = _$i`
 			<div class="sign-editor__header">
 				${0}
 				<div class="sign-editor__header_right">
@@ -5251,7 +5889,7 @@ this.BX.Sign = this.BX.Sign || {};
 	}
 	function _createContent2() {
 	  const sections = babelHelpers.classPrivateFieldLooseBase(this, _createSections)[_createSections]();
-	  const editorContent = main_core.Tag.render(_t7$2 || (_t7$2 = _$g`
+	  const editorContent = main_core.Tag.render(_t7$2 || (_t7$2 = _$i`
 			<div class="sign-editor__content">
 				<div class="sign-editor__document-container">
 					${0}
@@ -5272,7 +5910,9 @@ this.BX.Sign = this.BX.Sign || {};
 	  return editorContent;
 	}
 	function _createSections2() {
-	  const sections = babelHelpers.classPrivateFieldLooseBase(this, _getSectionsData)[_getSectionsData]();
+	  const sections = babelHelpers.classPrivateFieldLooseBase(this, _getSectionsData)[_getSectionsData]().filter(({
+	    singleBlockSection
+	  }) => singleBlockSection !== true);
 	  const sectionsNodes = sections.map(section => {
 	    const entries = Object.entries(section.blocks);
 	    const blocks = entries.map(([code, block]) => {
@@ -5280,13 +5920,13 @@ this.BX.Sign = this.BX.Sign || {};
 	        title,
 	        hint
 	      } = block;
-	      return main_core.Tag.render(_t8$2 || (_t8$2 = _$g`
+	      return main_core.Tag.render(_t8$2 || (_t8$2 = _$i`
 					<div
 						class="sign-editor__section_block"
 						data-code="${0}"
 						data-part="${0}"
 					>
-						<div>
+						<div class="sign-editor__section_block-subject">
 							<span>${0}</span>
 							<span data-hint="${0}"></span>
 						</div>
@@ -5297,14 +5937,16 @@ this.BX.Sign = this.BX.Sign || {};
 				`), code, section.part, main_core.Loc.getMessage(title), main_core.Loc.getMessage(hint), main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_ADD_TO_DOCUMENT'));
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].initRepository(blocks);
-	    const sectionElement = main_core.Tag.render(_t9$2 || (_t9$2 = _$g`
+	    const sectionElement = main_core.Tag.render(_t9$2 || (_t9$2 = _$i`
 				<div class="sign-editor__section">
-					<p class="sign-editor__section_title">
+					<p class="sign-editor__section_title"
+						style="display: ${0}"
+					>
 						${0}
 					</p>
 					${0}
 				</div>
-			`), main_core.Loc.getMessage(section.title), blocks);
+			`), section.title ? 'block' : 'none', section.title ? main_core.Loc.getMessage(section.title) : '', blocks);
 	    babelHelpers.classPrivateFieldLooseBase(this, _sectionElementByType)[_sectionElementByType].set(section.part, sectionElement);
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _disabledSections)[_disabledSections].has(section.part)) {
 	      // eslint-disable-next-line @bitrix24/bitrix24-rules/no-style
@@ -5312,7 +5954,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    }
 	    return sectionElement;
 	  });
-	  return main_core.Tag.render(_t10 || (_t10 = _$g`
+	  return main_core.Tag.render(_t10 || (_t10 = _$i`
 			<div class="sign-editor__sections">
 				${0}
 			</div>
@@ -5351,24 +5993,54 @@ this.BX.Sign = this.BX.Sign || {};
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _wizardType)[_wizardType] === 'b2e') {
 	    Object.assign(firstPartyBlocks, {
 	      myb2ereference: {
-	        title: 'SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE',
+	        title: 'SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_MSG_VER_1',
 	        hint: 'SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_HINT'
 	      },
 	      myrequisites: {
-	        title: 'SIGN_EDITOR_BLOCK_REQUISITES',
+	        title: 'SIGN_EDITOR_BLOCK_REQUISITES_MSG_VER_1',
 	        hint: 'SIGN_EDITOR_BLOCK_FIRST_PARTY_REQUISITES_HINT'
 	      }
 	    });
 	    Object.assign(partnerBlocks, {
 	      b2ereference: {
-	        title: 'SIGN_EDITOR_BLOCK_B2E_REFERENCE',
+	        title: 'SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1',
 	        hint: 'SIGN_EDITOR_BLOCK_B2E_REFERENCE_HINT'
 	      }
 	    });
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isDynamicEmployeeFieldAvailable)[_isDynamicEmployeeFieldAvailable]()) {
+	      Object.assign(partnerBlocks, {
+	        employeedynamic: {
+	          title: 'SIGN_EDITOR_BLOCK_B2E_EMPLOYEE_DYNAMIC',
+	          hint: 'SIGN_EDITOR_BLOCK_B2E_EMPLOYEE_DYNAMIC_HINT'
+	        }
+	      });
+	    }
 	    titles = {
 	      firstParty: 'SIGN_EDITOR_BLOCKS_FIRST_PARTY_B2E',
 	      partner: 'SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E'
 	    };
+	    return [{
+	      title: titles.firstParty,
+	      blocks: firstPartyBlocks,
+	      part: 1
+	    }, {
+	      title: titles.partner,
+	      blocks: partnerBlocks,
+	      part: 2
+	    }, {
+	      title: 'SIGN_EDITOR_BLOCKS_GENERAL',
+	      blocks: generalBlocks,
+	      part: 0
+	    }, {
+	      title: null,
+	      blocks: {
+	        hcmlinkreference: {
+	          title: 'SIGN_EDITOR_BLOCK_B2E_HCMLINK_TITLE',
+	          hint: 'SIGN_EDITOR_BLOCK_B2E_HCMLINK_HINT'
+	        }
+	      },
+	      part: 3
+	    }];
 	  } else {
 	    Object.assign(firstPartyBlocks, {
 	      myreference: {
@@ -5376,7 +6048,7 @@ this.BX.Sign = this.BX.Sign || {};
 	        hint: 'SIGN_EDITOR_BLOCK_CRM_HINT'
 	      },
 	      myrequisites: {
-	        title: 'SIGN_EDITOR_BLOCK_REQUISITES',
+	        title: 'SIGN_EDITOR_BLOCK_REQUISITES_MSG_VER_1',
 	        hint: 'SIGN_EDITOR_BLOCK_FIRST_PARTY_REQUISITES_HINT'
 	      },
 	      mysign: {
@@ -5405,20 +6077,20 @@ this.BX.Sign = this.BX.Sign || {};
 	        hint: 'SIGN_EDITOR_BLOCK_PARTNER_STAMP_HINT'
 	      }
 	    });
+	    return [{
+	      title: titles.firstParty,
+	      blocks: firstPartyBlocks,
+	      part: 1
+	    }, {
+	      title: titles.partner,
+	      blocks: partnerBlocks,
+	      part: 2
+	    }, {
+	      title: 'SIGN_EDITOR_BLOCKS_GENERAL',
+	      blocks: generalBlocks,
+	      part: 0
+	    }];
 	  }
-	  return [{
-	    title: titles.firstParty,
-	    blocks: firstPartyBlocks,
-	    part: 1
-	  }, {
-	    title: titles.partner,
-	    blocks: partnerBlocks,
-	    part: 2
-	  }, {
-	    title: 'SIGN_EDITOR_BLOCKS_GENERAL',
-	    blocks: generalBlocks,
-	    part: 0
-	  }];
 	}
 	function _onSidePanelCloseStart2(event) {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _needSaveBlocksOnSidePanelClose)[_needSaveBlocksOnSidePanelClose]) {
@@ -5440,9 +6112,18 @@ this.BX.Sign = this.BX.Sign || {};
 	    });
 	  });
 	}
+	function _isDynamicEmployeeFieldAvailable2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _isB2e)[_isB2e]() && babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].isTemplateMode;
+	}
+	function _isBlockCanBeInitialized2(block) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _disabledSections)[_disabledSections].has(block.party)) {
+	    return false;
+	  }
+	  return !babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].isTemplateMode || !String(block.data.field).startsWith('SMART_B2E_DOC');
+	}
 
 	exports.SectionType = SectionType;
 	exports.Editor = Editor;
 
-}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX.Sign.V2,BX.Main,BX.Sign.Tour,BX,BX.UI,BX.UI.Dialogs,BX.UI,BX.Sign,BX,BX,BX.UI.Stamp,BX.Crm.Form.Fields,BX.Crm.Requisite,BX.Sign.B2e,BX.Sign,BX,BX.Sign,BX,BX.UI.DragAndDrop,BX.Event,BX.Sign.V2));
+}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX.Sign.V2,BX.Main,BX.Sign.Tour,BX,BX.UI,BX.UI.Dialogs,BX.UI,BX.Sign,BX,BX,BX.UI.Stamp,BX.Crm.Form.Fields,BX.Crm.Requisite,BX.Sign.V2,BX.Sign.B2e,BX.Sign,BX,BX.Sign,BX,BX.UI.DragAndDrop,BX.Event,BX.Sign.V2));
 //# sourceMappingURL=editor.bundle.js.map

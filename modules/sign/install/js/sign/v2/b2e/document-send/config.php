@@ -20,6 +20,7 @@ return [
 		'sign.v2.lang-selector',
 		'sign.v2.helper',
 		'ui.progressbar',
+		'sign.v2.b2e.hcm-link-mapping',
 	],
 	'skip_core' => false,
 ];

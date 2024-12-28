@@ -1,0 +1,19 @@
+.ai__role-master_progress {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0 4px;
+}
+
+.ai__role-master_progress-step {
+	width: 100%;
+	height: 3px;
+	background-color: var(--ui-color-base-15);
+	border-radius: 10px;
+}
+
+.ai__role-master_progress-step.--active {
+	background-color: var(--ui-color-copilot-primary);
+}

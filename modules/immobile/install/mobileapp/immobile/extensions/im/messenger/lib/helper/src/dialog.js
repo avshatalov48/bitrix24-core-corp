@@ -123,6 +123,11 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			return [DialogType.generalChannel, DialogType.openChannel, DialogType.channel].includes(this.dialogModel.type);
 		}
 
+		get isCollab()
+		{
+			return this.dialogModel.type === DialogType.collab;
+		}
+
 		get isOpenChannel()
 		{
 			return this.dialogModel.type === DialogType.openChannel;

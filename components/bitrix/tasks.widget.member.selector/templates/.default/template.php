@@ -10,6 +10,7 @@ Loc::loadMessages(__FILE__);
 $helper = $arResult['HELPER'];
 
 Extension::load(['ui.entity-selector', 'ui.icon-set.main',]);
+$isExtranet = $arParams['isExtranet'] ?? false;
 ?>
 
 <?$helper->displayFatals();?>
@@ -60,8 +61,7 @@ Extension::load(['ui.entity-selector', 'ui.icon-set.main',]);
 						<?endif?>
 					</div>
 				<?php else: ?>
-					<span
-						class="js-id-tdp-mem-sel-is-item js-id-tdp-mem-sel-is-item-{{VALUE}} task-form-field-item {{ITEM_SET_INVISIBLE}}"
+					<span class="js-id-tdp-mem-sel-is-item js-id-tdp-mem-sel-is-item-{{VALUE}} task-form-field-item {{ITEM_SET_INVISIBLE}} <?=$isExtranet ? '--hide-delet-btn' : ''?>"
 						data-item-value="{{VALUE}}"
 						data-bx-type="{{TYPE_SET}}"
 					>
@@ -137,6 +137,6 @@ Extension::load(['ui.entity-selector', 'ui.icon-set.main',]);
 
 	</div>
 
-	<?$helper->initializeExtension();?>
+	<?php $helper->initializeExtension(); ?>
 
 <?endif?>

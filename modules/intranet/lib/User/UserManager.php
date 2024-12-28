@@ -16,6 +16,7 @@ use Bitrix\Intranet\User\Filter\Provider\StringUserDataProvider;
 use Bitrix\Intranet\User\Filter\UserFilter;
 use Bitrix\Intranet\UserTable;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Filter\UserDataProvider;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\ObjectPropertyException;
@@ -38,9 +39,10 @@ final class UserManager
 	 */
 	public function __construct(string $filterId, array $additionalPresets = [])
 	{
-		$filterSettings = new IntranetUserSettings([
-			'ID' => $filterId,
-		]);
+		$filterParams = ['ID' => $filterId];
+		$filterSettings = ModuleManager::isModuleInstalled('extranet')
+			? new ExtranetUserSettings($filterParams)
+			: new IntranetUserSettings($filterParams);
 
 		$extraProviders = [
 			new IntranetUserDataProvider($filterSettings),
@@ -50,10 +52,7 @@ final class UserManager
 
 		if (ModuleManager::isModuleInstalled('extranet'))
 		{
-			$extranetSettings = new ExtranetUserSettings([
-				'ID' => $filterId,
-			]);
-			$extraProviders[] = new \Bitrix\Intranet\User\Filter\Provider\ExtranetUserDataProvider($extranetSettings);
+			$extraProviders[] = new \Bitrix\Intranet\User\Filter\Provider\ExtranetUserDataProvider($filterSettings);
 		}
 
 		$this->filter = new UserFilter(
@@ -139,6 +138,14 @@ final class UserManager
 			->setFilter($params['filter'])
 			->setDistinct(true);
 
+		// remove this after b_extranet_user migration
+		$extranetGroupId = \Bitrix\Main\Loader::includeModule('extranet') ? \CExtranet::getExtranetUserGroupId() : 0;
+
+		if ($extranetGroupId)
+		{
+			$query->addSelect('EXTRANET_GROUP');
+		}
+
 		if (isset($params['order']))
 		{
 			$query->setOrder($params['order']);
@@ -158,9 +165,16 @@ final class UserManager
 		{
 			if (!empty($user['UF_DEPARTMENT']))
 			{
-				$user['UF_DEPARTMENT'] = $this->getDepartmentCollection()
-					->filterByUsersDepartmentIdList($user['UF_DEPARTMENT'])
-					->map(fn(Department $department) => htmlspecialcharsbx($department->getName()));
+				$filteredDepartments = $this
+					->getDepartmentCollection()
+					->filterByUsersDepartmentIdList($user['UF_DEPARTMENT']);
+
+				$user['UF_DEPARTMENT'] = [];
+
+				foreach ($filteredDepartments as $department)
+				{
+					$user['UF_DEPARTMENT'][$department->getId()] = htmlspecialcharsbx($department->getName());
+				}
 			}
 
 			$userId = $user['ID'];

@@ -38,9 +38,13 @@ class Invite extends Base
 	{
 		$canCurrentUserInvite = Invitation::canCurrentUserInvite();
 		$isBitrix24Included = Loader::includeModule('bitrix24');
-		$creatorEmailConfirmed = !$isBitrix24Included || \CBitrix24::isEmailConfirmed();
+		$creatorEmailConfirmed = !$isBitrix24Included
+			|| !\Bitrix\Bitrix24\Service\PortalSettings::getInstance()
+				->getEmailConfirmationRequirements()
+				->isRequiredByType(\Bitrix\Bitrix24\Portal\Settings\EmailConfirmationRequirements\Type::INVITE_USERS);
 
 		return [
+			'adminConfirm' => $canCurrentUserInvite ? Invitation::getRegisterAdminConfirm() : null,
 			'canInviteByPhone' => Invitation::canCurrentUserInviteByPhone(),
 			'canInviteByLink' => Invitation::canCurrentUserInviteByLink(),
 			'canCurrentUserInvite' => $canCurrentUserInvite,
@@ -88,7 +92,8 @@ class Invite extends Base
 			$result['DEPARTMENT_ID'] = ServiceContainer::getInstance()
 				->departmentRepository()
 				->getRootDepartment()
-				?->getId();;
+				?->getId()
+			;
 		}
 		else
 		{
@@ -112,7 +117,8 @@ class Invite extends Base
 			$phoneNumbersDto = $this->createPhoneNumbersDto($phoneNumbers);
 			$phoneUsers = $numberExtractor
 				->addPhoneUsersByNumbers($phoneNumbersDto)
-				->getPhoneUsers();
+				->getPhoneUsers()
+			;
 		}
 
 		return $this->getPhoneNumbersStatus($phoneUsers);

@@ -1,0 +1,46 @@
+.hr-hcmlink-item-employee__container {
+	display: flex;
+	flex-grow: 4;
+	flex-basis: 250px;
+	align-items: center;
+}
+
+.hr-hcmlink-selector-entity__border {
+	border: 12px solid var(--ui-color-palette-orange-30);
+	border-radius: 6px;
+}
+
+.hr-hcmlink-item-employee_item-wrapper {
+	border: 1px solid var(--ui-color-palette-gray-40);
+	display: flex;
+	align-items: center;
+	padding: 3px 5px;
+	margin-right: 5px;
+}
+
+.hr-hcmlink-item-employee_info {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-around;
+	min-width: 0;
+	margin-right: 10px;
+}
+
+.hr-hcmlink-item-employee_info-name {
+	font-size: var(--ui-font-size-xl);
+	color: var(--ui-color-palette-gray-90);
+	font-family: var(--ui-font-family-system);
+}
+
+.hr-hcmlink-item-employee_info-position {
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-palette-gray-60);
+	font-family: var(--ui-font-family-system);
+}
+
+.hr-hcmlink-item-employee_close-icon {
+	cursor: pointer;
+}
+
+
+

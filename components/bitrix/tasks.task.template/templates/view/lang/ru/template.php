@@ -88,7 +88,6 @@ $MESS["TASKS_HOURS_G"] = "часа";
 $MESS["TASKS_HOURS_P"] = "часов";
 $MESS["TASKS_NO_TEMPLATES"] = "Шаблонов пока нет";
 $MESS["TASKS_PARENT_TASK"] = "Базовая задача";
-$MESS["TASKS_TASK_GROUP"] = "Задача в проекте (группе)";
 $MESS["TASKS_NO_SUBTASKS"] = "нет подзадач";
 $MESS["TASKS_LOG_NEW"] = "Создана задача";
 $MESS["TASKS_LOG_TITLE"] = "Название задачи";
@@ -212,7 +211,7 @@ $MESS["TASKS_TTDP_DATES"] = "Сроки";
 $MESS["TASKS_TTV_TYPE_FOR_NEW_USER_HINT"] = "По данному шаблону создается задача для каждого вновь зарегистрированного пользователя";
 $MESS["TASKS_TTV_TEMPLATE_INACCESSIBLE"] = "шаблон недоступен для просмотра";
 $MESS["TASKS_TTV_TASK_INACCESSIBLE"] = "задача недоступна для просмотра";
-$MESS["TASKS_TTDP_PROJECT_TASK_IN"] = "Задача в проекте (группе)";
+$MESS["TASKS_TTDP_PROJECT_TASK_IN_IN_MSGVER_1"] = "Задача в проекте (группе):";
+$MESS['TASKS_TTDP_PROJECT_TASK_IN_IN_COLLAB'] = 'Задача в коллабе:';
 $MESS["TASKS_TTV_SUB_TITLE"] = "Шаблон задачи № #ID#";
 $MESS["TASKS_TTV_CANCEL_BUTTON_TEXT"] = "Отменить";
-?>

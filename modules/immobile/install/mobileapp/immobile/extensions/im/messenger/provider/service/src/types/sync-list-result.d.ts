@@ -222,3 +222,12 @@ export type RawRecentItem = {
 	has_reminder: boolean,
 	options: [],
 };
+
+export type SyncLoadServiceLoadPageResult = {
+	hasMore: boolean,
+	lastId: number,
+	lastServerDate: string,
+	addedMessageIdList: Array<number>,
+	deletedChatIdList: Array<number>,
+	deletedMessageIdList: Array<number>,
+};

@@ -293,7 +293,20 @@
 			restClient.callMethod('voximplant.user.getNode').then((result) => {
 				const data = result.data();
 
-				resolve(data);
+				if (data.error)
+				{
+					const e = {
+						name: 'OtherError',
+						code: data.code,
+						message: data.message,
+					};
+
+					reject(e);
+				}
+				else
+				{
+					resolve(data.node);
+				}
 			}).catch((error) => {
 				reject(error);
 			})

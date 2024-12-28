@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Text\HtmlFilter;
 
 \Bitrix\Main\Loader::includeModule('ui');
 /** intranet-settings-support */
@@ -37,6 +38,7 @@ use Bitrix\Tasks\Kanban\Sort\Menu;
 use Bitrix\Tasks\UI\Filter;
 use Bitrix\Tasks\Kanban\StagesTable;
 use Bitrix\Tasks\UI\ScopeDictionary;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 /** @var array $arResult */
 /** @var array $arParams */
@@ -90,15 +92,31 @@ Extension::load([
 	'ui.label',
 	'ui.tour',
 	'pull.queuemanager',
+	'ui.avatar',
 ]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+$collabClass = $arResult['IS_COLLAB'] ? 'sn-collab-tasks__wrapper' : '';
+
+if ($arResult['IS_COLLAB'])
+{
+	Toolbar::deleteFavoriteStar();
+	$this->SetViewTarget('in_pagetitle') ?>
+
+	<div class="sn-collab-icon__wrapper">
+		<div id="sn-collab-icon-<?=HtmlFilter::encode($arParams["GROUP_ID"])?>" class="sn-collab-icon__hexagon-bg"></div>
+	</div>
+	<div class="sn-collab__subtitle"><?=HtmlFilter::encode($arResult["COLLAB_NAME"])?></div>
+
+	<?php $this->EndViewTarget();
+}
+
 
 if (!$emptyKanban)
 {
 	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 	$APPLICATION->SetPageProperty('BodyClass',
-		($bodyClass ? $bodyClass . ' ' : '') . 'no-all-paddings no-background no-hidden');
+		($bodyClass ? $bodyClass . ' ' : '') . 'no-all-paddings no-background no-hidden' . ' ' . $collabClass);
 }
 
 $workMode = StagesTable::getWorkMode();
@@ -281,6 +299,7 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 			'DEFAULT_ROLEID' => $arParams['DEFAULT_ROLEID'] ?? null,
 
 			'SCOPE' => $scope,
+			'CONTEXT' => $arResult['CONTEXT'] ?? null,
 		],
 		$component,
 		['HIDE_ICONS' => true]
@@ -425,6 +444,7 @@ else
 			ownerId: <?= (int)$arParams["USER_ID"] ?>,
 			groupId: <?= (int)$arParams['GROUP_ID'] ?>,
 			isSprintView: '<?= ($isSprintView ? 'Y' : 'N') ?>',
+			isCollab: '<?= $arResult['IS_COLLAB'] ? 'Y' : 'N' ?>',
 			networkEnabled: <?= MemberSelector::isNetworkEnabled() ? "true"
 				: "false"; ?>,
 		});
@@ -552,6 +572,12 @@ if ($show)
 		 ?>data-type="<?= $type ?>"<?php
 	?>>
 		<div class="tasks-kanban-popup-title"><?= Loc::getMessage('KANBAN_POPUP_' . $type . '_TITLE'); ?></div>
+		<?php if($arResult['IS_COLLAB'] && $type !== 'P'): ?>
+			<div class="tasks-kanban-popup-text"><?= Loc::getMessage('KANBAN_POPUP_COLLAB_' . $type . '_TEXT_1'); ?></div>
+			<img src="<?= $this->getFolder() ?>/popup/kanban_img.png" alt="" class="tasks-kanban-popup-img">
+			<div class="tasks-kanban-popup-text"><?= Loc::getMessage('KANBAN_POPUP_COLLAB_' . $type . '_TEXT_2'); ?></div>
+			<div class="tasks-kanban-popup-text"><?= Loc::getMessage('KANBAN_POPUP_COLLAB_' . $type . '_TEXT_3'); ?></div>
+		<?else:?>
 		<div class="tasks-kanban-popup-text"><?= Loc::getMessage('KANBAN_POPUP_' . $type . '_TEXT_1'); ?></div>
 		<img src="<?= $this->getFolder() ?>/popup/kanban_img.png" alt="" class="tasks-kanban-popup-img">
 		<div class="tasks-kanban-popup-text"><?= Loc::getMessage('KANBAN_POPUP_' . $type . '_TEXT_2'); ?></div>
@@ -559,6 +585,7 @@ if ($show)
 		<div class="tasks-kanban-popup-text tasks-kanban-popup-text-italic"><?= Loc::getMessage('KANBAN_POPUP_'
 				. $type
 				. '_TEXT_4'); ?></div>
+		<?php endif;?>
 		<a href="https://helpdesk.bitrix24.<?= $popupDomain ?>/open/<?= $popupUrlId ?>/" target="_blank"
 		   data-helpId="<?= $popupUrlId ?>"<?php
 		if (SITE_TEMPLATE_ID === 'bitrix24')
@@ -580,6 +607,19 @@ CJSCore::Init("spotlight");
 			showPopup();
 		}
 		BX.Tasks.KanbanComponent.filterId = '<?=$gridID?>';
+
+		<?php if ($arResult['IS_COLLAB']): ?>
+			const collabImagePath = "<?=$arResult["COLLAB_IMAGE"]?>" || null;
+			const collabName = "<?=HtmlFilter::encode($arResult["COLLAB_NAME"])?>";
+			const groupId = "<?=HtmlFilter::encode($arParams["GROUP_ID"])?>";
+			const avatar = new BX.UI.AvatarHexagonGuest({
+				size: 42,
+				userName: collabName.toUpperCase(),
+				baseColor: '#19CC45',
+				userpicPath: collabImagePath,
+			});
+			avatar.renderTo(BX('sn-collab-icon-' + groupId));
+		<?php endif; ?>
 	});
 
 	BX.message({

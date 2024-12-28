@@ -1,0 +1,14 @@
+.ai__copilot-chat-header-menu {
+	--ui-icon-set__icon-color: rgba(var(--ui-color-on-primary-rgb), 0.4);
+
+	margin: 0;
+	padding: 0;
+	background: none;
+	border: none;
+	cursor: pointer;
+}
+
+.ai__copilot-chat-header-menu:hover,
+.ai__copilot-chat-header-menu:focus {
+	--ui-icon-set__icon-color: rgba(var(--ui-color-on-primary-rgb), 0.5);
+}

@@ -19,7 +19,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', 
 	const metaData = {
 		[MessageParams.ComponentId.ChatCreationMessage]: {
 			banner: {
-				title: Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_GROUP'),
+				title: Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_GROUP_MSGVER_1'),
 				imageName: ImageNameType.chat,
 				backgroundColor: Theme.colors.chatOtherMessage1,
 				picBackgroundColor: transparent(Theme.colors.accentMainPrimaryalt, 0.2),

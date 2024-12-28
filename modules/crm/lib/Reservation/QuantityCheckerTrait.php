@@ -38,7 +38,7 @@ trait QuantityCheckerTrait
 		}
 
 		$reservationService = ReservationService::getInstance();
-		$defaultStore = StoreTable::getDefaultStoreId();
+		$defaultStore = (int)StoreTable::getDefaultStoreId();
 
 		$productRowDeductedQuantities = [];
 		if ($ownerId > 0)

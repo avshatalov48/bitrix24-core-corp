@@ -12,6 +12,8 @@ use Bitrix\Main\Web\Uri;
 UI\Extension::load("ui.tooltip");
 
 $userClassAdditional = "";
+$userAvatarClassAdditional = '';
+
 if (
 	isset($arParams['USER'])
 	&& isset($arParams['USER']['TYPE'])
@@ -25,13 +27,17 @@ if (
 		case 'extranet':
 			$userClassAdditional = " feed-workday-user-name-extranet";
 			break;
+		case 'collaber':
+			$userClassAdditional = ' feed-workday-user-name-collaber';
+			$userAvatarClassAdditional = ' feed-user-avatar-collaber';
+			break;
 		default:
 			$userClassAdditional = '';
 	}
 }
 ?>
 <span class="feed-workday-left-side">
-	<div class="ui-icon ui-icon-common-user feed-user-avatar">
+	<div class="ui-icon ui-icon-common-user feed-user-avatar<?= $userAvatarClassAdditional ?>">
 		<i
 			<? if ($arParams['AVATAR_SRC']):?>
 				style="background: url('<?=Uri::urnEncode($arParams['AVATAR_SRC'])?>'); background-size: cover;"

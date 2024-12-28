@@ -14,11 +14,13 @@ class FactoryIntranet
 			EventResult::SUCCESS,
 			[
 				'callbacks' => [
-					\Bitrix\Main\UserTable::getUfId() => function($entityTypeName, array $settingsParams, array $additionalParams = null) {
+					'USER_INTRANET' => function($entityTypeName, array $settingsParams, array $additionalParams = null) {
 
-						if ($entityTypeName == \Bitrix\Main\UserTable::getUfId())
+						if ($entityTypeName == 'USER_INTRANET')
 						{
-							$settings = new IntranetUserSettings($settingsParams);
+							$settings = ModuleManager::isModuleInstalled('extranet')
+								? new ExtranetUserSettings($settingsParams)
+								: new IntranetUserSettings($settingsParams);
 							$filterID = $settings->getID();
 
 							$extraProviders = [
@@ -32,8 +34,7 @@ class FactoryIntranet
 
 							if (ModuleManager::isModuleInstalled('extranet'))
 							{
-								$extranetSettings = new ExtranetUserSettings($settingsParams);
-								$extraProviders[] = new \Bitrix\Intranet\User\Filter\Provider\ExtranetUserDataProvider($extranetSettings);
+								$extraProviders[] = new \Bitrix\Intranet\User\Filter\Provider\ExtranetUserDataProvider($settings);
 							}
 
 							return new \Bitrix\Main\Filter\Filter(
@@ -44,7 +45,8 @@ class FactoryIntranet
 						}
 					}
 				]
-			]
+			],
+			'intranet',
 		);
 	}
 }

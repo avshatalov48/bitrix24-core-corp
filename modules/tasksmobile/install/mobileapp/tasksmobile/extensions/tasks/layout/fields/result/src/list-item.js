@@ -4,7 +4,7 @@
 jn.define('tasks/layout/fields/result/list-item', (require, exports, module) => {
 	const { Color, Indent } = require('tokens');
 	const { PureComponent } = require('layout/pure-component');
-	const { ReduxAvatar } = require('layout/ui/user/avatar');
+	const { Avatar } = require('ui-system/blocks/avatar');
 	const { connect } = require('statemanager/redux/connect');
 	const { selectById } = require('tasks/statemanager/redux/slices/tasks-results');
 	const { Text4, Text5 } = require('ui-system/typography/text');
@@ -75,10 +75,11 @@ jn.define('tasks/layout/fields/result/list-item', (require, exports, module) => 
 
 		#renderCreator()
 		{
-			return ReduxAvatar({
+			return Avatar({
 				id: this.#result.createdBy,
 				size: 32,
 				testId: `${this.#testId}_CREATOR`,
+				withRedux: true,
 			});
 		}
 

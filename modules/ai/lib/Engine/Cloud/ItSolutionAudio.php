@@ -12,7 +12,7 @@ final class ItSolutionAudio extends CloudEngine implements IQueueOptional
 {
 	protected const CATEGORY_CODE = Engine::CATEGORIES['audio'];
 	protected const ENGINE_NAME = 'IT-Solution Audio';
-	protected const ENGINE_CODE = 'ItSolutionAudio';
+	public const ENGINE_CODE = 'ItSolutionAudio';
 	protected const URL_COMPLETIONS = 'https://it-solution.ru/llm/v1/transcriptions';
 
 	/**

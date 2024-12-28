@@ -5,18 +5,23 @@ jn.define('layout/ui/plan-restriction', (require, exports, module) => {
 	const { Color, Indent } = require('tokens');
 	const { Type } = require('type');
 	const { Loc } = require('loc');
+	const { BottomSheet } = require('bottom-sheet');
+	const { qrauth } = require('qrauth/utils');
 	const { Box } = require('ui-system/layout/box');
 	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 	const { StatusBlock } = require('ui-system/blocks/status-block');
 	const { Button, ButtonSize, ButtonDesign } = require('ui-system/form/buttons');
-	const { qrauth } = require('qrauth/utils');
 	const { getIsDemoAvailable, activateDemo } = require('layout/ui/plan-restriction/provider');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 	const { AnalyticsEvent } = require('analytics');
+	const { getMediumHeight } = require('utils/page-manager');
 
 	const PlanId = {
 		PRO: 'PRO',
 	};
+
+	const safeAreaBottom = true;
+	const BACKDROP_HEIGHT = 434;
 
 	/**
 	 * @class PlanRestriction
@@ -32,7 +37,7 @@ jn.define('layout/ui/plan-restriction', (require, exports, module) => {
 					text: props.title || '',
 				},
 				backdrop: {
-					mediumPositionHeight: 420,
+					mediumPositionHeight: getMediumHeight({ height: BACKDROP_HEIGHT }),
 					onlyMediumPosition: true,
 					forceDismissOnSwipeDown: true,
 					horizontalSwipeAllowed: false,
@@ -41,18 +46,28 @@ jn.define('layout/ui/plan-restriction', (require, exports, module) => {
 			};
 		}
 
-		static open(props, parentWidget = PageManager)
+		static async open(props, parentWidget = PageManager)
 		{
-			return new Promise((resolve) => {
-				parentWidget
-					.openWidget('layout', PlanRestriction.getWidgetParams(props))
-					.then((layout) => {
-						layout.showComponent(new PlanRestriction({ ...props, layout }));
-						resolve(layout);
-					})
-					.catch(console.error)
-				;
+			const widgetParams = PlanRestriction.getWidgetParams(props);
+			const component = new PlanRestriction({ ...props, parentWidget });
+			const entityBottomSheet = new BottomSheet({
+				component,
+				titleParams: widgetParams.titleParams,
 			});
+
+			const bottomLayout = await entityBottomSheet
+				.setParentWidget(parentWidget)
+				.setMediumPositionHeight(BACKDROP_HEIGHT, true)
+				.enableOnlyMediumPosition()
+				.enableForceDismissOnSwipeDown()
+				.disableHorizontalSwipe()
+				.setNavigationBarColor(Color.bgContentPrimary.toHex())
+				.open()
+				.catch(console.error);
+
+			component.setParentWidget(bottomLayout);
+
+			return bottomLayout;
 		}
 
 		static openComponent(props, parentWidget = PageManager)
@@ -88,6 +103,8 @@ jn.define('layout/ui/plan-restriction', (require, exports, module) => {
 		{
 			super(props);
 
+			this.setParentWidget(props.parentWidget);
+
 			this.state = {
 				isLoading: true,
 				isDemoAvailable: false,
@@ -117,11 +134,12 @@ jn.define('layout/ui/plan-restriction', (require, exports, module) => {
 
 			return Box(
 				{
+					safeArea: {
+						bottom: safeAreaBottom,
+					},
 					backgroundColor: Color.bgContentPrimary,
 					footer: BoxFooter(
-						{
-							safeArea: true,
-						},
+						{},
 						...this.getButtons(),
 					),
 				},
@@ -171,8 +189,9 @@ jn.define('layout/ui/plan-restriction', (require, exports, module) => {
 				isPromo = false,
 				planId = PlanId.PRO,
 				featureId = '',
-				layout,
 			} = this.props;
+
+			const layout = this.getParentWidget();
 
 			if (isPromo)
 			{
@@ -186,6 +205,7 @@ jn.define('layout/ui/plan-restriction', (require, exports, module) => {
 							layout,
 							showHint: true,
 							redirectUrl: `/?feature_promoter_by_id=${featureId}&utm_medium=b24_slider_mobile&utm_source=${featureId}`,
+							analyticsSection: 'tariff_slider',
 						});
 						this.sendAnalyticsEvent('button_gift_click');
 					},
@@ -235,6 +255,7 @@ jn.define('layout/ui/plan-restriction', (require, exports, module) => {
 								? `/settings/license_all.php?utm_medium=b24_slider_mobile&utm_source=${featureId}`
 								: '/settings/license_all.php?utm_medium=b24_slider_mobile'
 						),
+						analyticsSection: 'tariff_slider',
 					});
 					this.sendAnalyticsEvent('button_buy_click');
 				},
@@ -257,6 +278,16 @@ jn.define('layout/ui/plan-restriction', (require, exports, module) => {
 				event: action,
 				type: (Type.isStringFilled(featureId) ? featureId : null),
 			}).send();
+		}
+
+		getParentWidget()
+		{
+			return this.parentWidget;
+		}
+
+		setParentWidget(parentWidget)
+		{
+			this.parentWidget = parentWidget;
 		}
 	}
 

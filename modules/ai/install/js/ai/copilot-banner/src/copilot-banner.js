@@ -1,6 +1,6 @@
+import { bind, Extension, Loc, Tag } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
-import { Tag, Loc, bind, Extension } from 'main.core';
 import { Icon, Main as MainIconSet } from 'ui.icon-set.api.core';
 import 'ui.hint';
 
@@ -58,7 +58,8 @@ export class CopilotBanner extends EventEmitter
 	#createPopup(): Popup
 	{
 		this.#popup = new Popup({
-			width: 854,
+			maxWidth: 854,
+			minWidth: 700,
 			minHeight: 520,
 			content: this.#renderPopupContent(),
 			padding: 0,

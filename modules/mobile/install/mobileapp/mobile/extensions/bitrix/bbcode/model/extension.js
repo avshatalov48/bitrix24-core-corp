@@ -1500,11 +1500,10 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      allowedChildren: ['#text', '#format', 'img'],
 	      canBeEmpty: false,
 	      stringify(node) {
-	        const encoder = node.getEncoder();
 	        const openingTag = node.getOpeningTag();
 	        const closingTag = node.getClosingTag();
 	        const content = node.getContent();
-	        return `${openingTag}${encoder.decodeText(content)}${closingTag}`;
+	        return `${openingTag}${content}${closingTag}`;
 	      }
 	    }), new BBCodeTagScheme({
 	      name: 'p',

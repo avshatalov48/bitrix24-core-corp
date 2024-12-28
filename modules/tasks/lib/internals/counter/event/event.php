@@ -158,6 +158,11 @@ class Event
 		return $groupId;
 	}
 
+	public function getRawGroupId(): int
+	{
+		return (int)($this->data['GROUP_ID'] ?? 0);
+	}
+
 	/**
 	 * @param array $data
 	 * @return array

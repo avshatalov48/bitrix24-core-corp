@@ -9,6 +9,7 @@ use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Log\LogFacade;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Ui\Avatar;
@@ -16,6 +17,7 @@ use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Access\TemplateAccessController;
 use Bitrix\Tasks\Access\Model\TemplateModel;
+use Bitrix\Tasks\Integration\Extranet;
 
 Loc::loadMessages(__FILE__);
 
@@ -29,6 +31,7 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 
 	private const ALLOWED_AVATAR_SIZE = 100;
 
+	/** @var \Bitrix\Tasks\Util\Error\Collection */
 	private $errorCollection;
 
 	protected function checkParameters()
@@ -77,6 +80,9 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 
 		$this->arResult['isProjectLimitExceeded'] = static::tryParseBooleanParameter($this->arParams['isProjectLimitExceeded']);
 		$this->arResult['projectFeatureId'] = static::tryParseStringParameterStrict($this->arParams['projectFeatureId'], '');
+		$this->arResult['isCollab'] = static::tryParseBooleanParameter($this->arParams['IS_COLLAB']);
+		$this->arResult['isCollaber'] = static::tryParseBooleanParameter($this->arParams['isCollaber']);
+		$this->arResult['isNeedShowPreselectedCollabHint'] = static::tryParseBooleanParameter($this->arParams['isNeedShowPreselectedCollabHint']);
 
 		return $this->errors->checkNoFatals();
 	}
@@ -134,6 +140,11 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
+			'getResponsible' => [
+				'+prefilters' => [
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				]
+			]
 		];
 	}
 
@@ -151,7 +162,6 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 		}
 		return $this->errorCollection->toArray();
 	}
-
 	/**
 	 * @param $context
 	 *
@@ -770,6 +780,83 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 		}
 	}
 
+	public function getResponsibleAction(int $taskId): ?array
+	{
+		if ($taskId <= 0)
+		{
+			return [];
+		}
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskId))
+		{
+			$this->addForbiddenError();
+			return null;
+		}
+
+		$task = TaskRegistry::getInstance()->getObject($taskId);
+		if (is_null($task))
+		{
+			return [];
+		}
+
+		if (
+			!in_array($this->userId, $task->getAllMemberIds(), true)
+		)
+		{
+			return [];
+		}
+
+		$responsibleId = $task->getResponsibleId();
+
+		$responsible = User::getData([$responsibleId], [
+			'ID',
+			'NAME',
+			'LAST_NAME',
+			'EMAIL',
+			'SECOND_NAME',
+			'WORK_POSITION',
+			'PERSONAL_PHOTO',
+		])[$responsibleId];
+
+		return
+		[
+			'id' => $responsible['ID'],
+			'nameFormatted' => User::formatName($responsible),
+			'entityType' => RoleDictionary::ROLE_AUDITOR,
+			'nameTemplate' => 'default',
+			'WORK_POSITION' => $responsible['WORK_POSITION'],
+			'AVATAR' => Avatar::getSrc($responsible['PERSONAL_PHOTO']),
+			'type' =>
+				[
+					'extranet' => \Bitrix\Tasks\Integration\Extranet\User::isExtranet($responsible['ID']),
+				],
+		];
+	}
+
+	public function getTaskGroupAction(int $taskId): ?array
+	{
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskId))
+		{
+			$this->addForbiddenError();
+
+			return null;
+		}
+
+		$task = TaskRegistry::getInstance()->getObject($taskId);
+		if (null === $task)
+		{
+			return null;
+		}
+
+		$groupId = $task->getGroupId();
+		if ($groupId === 0)
+		{
+			return null;
+		}
+
+		return Group::getById($groupId)?->toArray();
+	}
+
 	public function getMemberAction(array $userIds, int $taskId): ?array
 	{
 		Collection::normalizeArrayValuesByInt($userIds, false);
@@ -824,6 +911,7 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 		$response = [];
 		foreach ($users as $user)
 		{
+			$isExtranet = Extranet\User::isExtranet((int)$user['ID']);
 			$response[] = [
 				'id' => $user['ID'],
 				'nameFormatted' => User::formatName($user),
@@ -832,7 +920,8 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 				'WORK_POSITION' => $user['WORK_POSITION'],
 				'AVATAR' => Avatar::getSrc($user['PERSONAL_PHOTO']),
 				'type' => [
-					'extranet' => \Bitrix\Tasks\Integration\Extranet\User::isExtranet($user['ID']),
+					'extranet' => $isExtranet,
+					'collaber' => $isExtranet && Extranet\User::isCollaber((int)$user['ID']),
 				],
 			];
 		}

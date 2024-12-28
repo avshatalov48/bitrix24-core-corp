@@ -327,7 +327,7 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 		}
 
 		$this->arResult['UF_CHECKLIST_FILES'] = array_filter(
-			$this->arResult['UF_CHECKLIST_FILES'],
+			$this->arResult['UF_CHECKLIST_FILES'] ?? [],
 			static function($item)
 			{
 				return !empty($item);

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Mobile\AppTabs;
 
+use Bitrix\Extranet\Service\ServiceContainer;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
@@ -48,6 +49,7 @@ class Task implements Tabable
 			'params' => [
 				'id' => 'tasks_tabs',
 			],
+			'imageName' => $this->getIconId(),
 		];
 
 		$data = $this->getDataInternal();
@@ -110,10 +112,10 @@ class Task implements Tabable
 	{
 		return [
 			'sort' => 400,
-			'imageName' => 'task',
+			'imageName' => $this->getIconId(),
 			'badgeCode' => 'tasks',
 			'id' => 'tasks',
-			'component' => $this->getTabsComponent(),
+			'component' => ($this->isCollaber() ? $this->getTasksDashboardComponent() : $this->getTabsComponent()),
 		];
 	}
 
@@ -170,39 +172,49 @@ class Task implements Tabable
 			'id' => 'tasks.dashboard',
 			'testId' => 'tasks_list',
 			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_TASKS'),
-			'component' => [
-				'name' => 'JSStackComponent',
-				'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER'),
-				'componentCode' => 'tasks.dashboard',
-				'scriptPath' => Manager::getComponentPath('tasks:tasks.dashboard'),
+			'component' => $this->getTasksDashboardComponent(),
+		];
+	}
+
+	private function getTasksDashboardComponent(): array
+	{
+		return [
+			'name' => 'JSStackComponent',
+			'title' => (
+				$this->isCollaber()
+					? Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_TASKS')
+					: Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER')
+			),
+			'componentCode' => 'tasks.dashboard',
+			'scriptPath' => Manager::getComponentPath('tasks:tasks.dashboard'),
+			'settings' => [
+				'preload' => true,
+			],
+			'rootWidget' => [
+				'name' => 'layout',
 				'settings' => [
-					'preload' => true,
+					'objectName' => 'layout',
+					'useSearch' => true,
+					'useLargeTitleMode' => true,
 				],
-				'rootWidget' => [
-					'name' => 'layout',
-					'settings' => [
-						'objectName' => 'layout',
-						'useSearch' => true,
-						'useLargeTitleMode' => true,
-					],
-				],
-				'params' => [
-					'COMPONENT_CODE' => 'tasks.dashboard',
-					'USER_ID' => $this->context->userId,
-					'SITE_ID' => $this->context->siteId,
-					'SITE_DIR' => $this->context->siteDir,
-					'LANGUAGE_ID' => LANGUAGE_ID,
-					'PATH_TO_TASK_ADD' => "{$this->context->siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#",
-					'PROJECT_NEWS_PATH_TEMPLATE' => Helper::getProjectNewsPathTemplate([
-						'siteDir' => $this->context->siteDir,
-					]),
-					'PROJECT_CALENDAR_WEB_PATH_TEMPLATE' => Helper::getProjectCalendarWebPathTemplate([
-						'siteId' => $this->context->siteId,
-						'siteDir' => $this->context->siteDir,
-					]),
-					'MESSAGES' => [],
-					'IS_TABS_MODE' => true,
-				],
+			],
+			'params' => [
+				'COMPONENT_CODE' => 'tasks.dashboard',
+				'USER_ID' => $this->context->userId,
+				'SITE_ID' => $this->context->siteId,
+				'SITE_DIR' => $this->context->siteDir,
+				'LANGUAGE_ID' => LANGUAGE_ID,
+				'PATH_TO_TASK_ADD' => "{$this->context->siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#",
+				'PROJECT_NEWS_PATH_TEMPLATE' => Helper::getProjectNewsPathTemplate([
+					'siteDir' => $this->context->siteDir,
+				]),
+				'PROJECT_CALENDAR_WEB_PATH_TEMPLATE' => Helper::getProjectCalendarWebPathTemplate([
+					'siteId' => $this->context->siteId,
+					'siteDir' => $this->context->siteDir,
+				]),
+				'MESSAGES' => [],
+				'IS_TABS_MODE' => !$this->isCollaber(),
+				'IS_ROOT_COMPONENT' => $this->isCollaber(),
 			],
 		];
 	}
@@ -352,6 +364,14 @@ class Task implements Tabable
 		];
 	}
 
+	private function isCollaber(): bool
+	{
+		return (
+			Loader::includeModule('extranet')
+			&& ServiceContainer::getInstance()->getCollaberService()->isCollaberById($this->context->userId)
+		);
+	}
+
 	public function getId(): string
 	{
 		return 'tasks';
@@ -398,6 +418,6 @@ class Task implements Tabable
 
 	public function getIconId(): string
 	{
-		return 'task';
+		return 'circle_check';
 	}
 }

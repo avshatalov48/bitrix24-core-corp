@@ -7,6 +7,7 @@ use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\EO_Status_Collection;
+use Bitrix\Crm\Feature;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Security\AttributesProvider;
@@ -18,8 +19,15 @@ use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
 use Bitrix\Crm\Security\QueryBuilder\Result\JoinWithUnionSpecification;
 use Bitrix\Crm\Security\QueryBuilder\Result\RawQueryObserverUnionResult;
 use Bitrix\Crm\Security\QueryBuilderFactory;
+use Bitrix\Crm\Security\Role\Manage\Entity\AutomatedSolutionConfig;
+use Bitrix\Crm\Security\Role\Manage\Entity\AutomatedSolutionList;
+use Bitrix\Crm\Security\Role\Manage\Entity\Button;
+use Bitrix\Crm\Security\Role\Manage\Entity\ButtonConfig;
+use Bitrix\Crm\Security\Role\Manage\Entity\WebForm;
+use Bitrix\Crm\Security\Role\Manage\Entity\WebFormConfig;
 use Bitrix\Crm\Security\Role\Manage\Permissions\MyCardView;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Transition;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\PermIdentifier;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Loader;
 use CCrmOwnerType;
@@ -163,30 +171,79 @@ class UserPermissions
 	 */
 	public function isAutomatedSolutionAdmin(int $automatedSolutionId): bool
 	{
-		// Here will be a real rights check for the automated solution soon.
-		// Temporary you can use this option to test admin behavior:
-
-		/*
-		\Bitrix\Main\Config\Option::set('crm', 'AutomatedSolutionAdmins', \Bitrix\Main\Web\Json::encode([
-			1 => [2,3],
-			2 => [4,5],
-		]));
-		*/
-
-		try
+		if (!Feature::enabled(Feature\PermissionsLayoutV2::class))
 		{
-			$data = (array)\Bitrix\Main\Web\Json::decode(\Bitrix\Main\Config\Option::get('crm', 'AutomatedSolutionAdmins', null));
-		}
-		catch (\Bitrix\Main\ArgumentException $e)
-		{
-			$data = [];
-		}
-		if (isset($data[$automatedSolutionId]))
-		{
-			return in_array($this->userId, (array)$data[$automatedSolutionId]);
+			return $this->isCrmAdmin();
 		}
 
-		return $this->isCrmAdmin();
+		if ($this->isAdmin())
+		{
+
+			return true;
+		}
+
+		if ($this->canEditAutomatedSolutions())
+		{
+			return true;
+		}
+
+		return $this->getCrmPermissions()->havePerm(
+			\Bitrix\Crm\Security\Role\Manage\Entity\AutomatedSolutionConfig::generateEntity($automatedSolutionId),
+			static::PERMISSION_CONFIG,
+			static::OPERATION_UPDATE
+	);
+	}
+
+	/**
+	 * Is user an admin of all automated solutions
+	 *
+	 * @return bool
+	 */
+	public function isAutomatedSolutionsAdmin(): bool
+	{
+		if (!Feature::enabled(Feature\PermissionsLayoutV2::class))
+		{
+			return $this->isCrmAdmin();
+		}
+		if ($this->isAdmin())
+		{
+			return true;
+		}
+
+		return $this->getCrmPermissions()->havePerm(
+			\Bitrix\Crm\Security\Role\Manage\Entity\AutomatedSolutionList::ENTITY_CODE,
+			static::PERMISSION_ALL,
+			'CONFIG'
+		);
+	}
+
+	/**
+	 * Can user create, update or delete automated solutions
+	 *
+	 * @return bool
+	 */
+	public function canEditAutomatedSolutions(): bool
+	{
+		if (!Feature::enabled(Feature\PermissionsLayoutV2::class))
+		{
+			return $this->isCrmAdmin();
+		}
+
+		if ($this->isAdmin())
+		{
+			return true;
+		}
+
+		if ($this->isAutomatedSolutionsAdmin())
+		{
+			return true;
+		}
+
+		return $this->getCrmPermissions()->havePerm(
+			\Bitrix\Crm\Security\Role\Manage\Entity\AutomatedSolutionList::ENTITY_CODE,
+			static::PERMISSION_ALL,
+			static::OPERATION_UPDATE
+		);
 	}
 
 	/**
@@ -229,6 +286,69 @@ class UserPermissions
 	public function canWriteConfig(): bool
 	{
 		return $this->getCrmPermissions()->havePerm('CONFIG', static::PERMISSION_CONFIG, static::OPERATION_UPDATE);
+	}
+
+	public function canWriteWebFormConfig(): bool
+	{
+		return
+			$this->isAdmin()
+			|| $this->getCrmPermissions()->havePerm(WebFormConfig::CODE, BX_CRM_PERM_ALL, static::OPERATION_UPDATE)
+		;
+	}
+
+	public function canWriteButtonConfig(): bool
+	{
+		return
+			$this->isAdmin()
+			|| $this->getCrmPermissions()->havePerm(ButtonConfig::CODE, BX_CRM_PERM_ALL, static::OPERATION_UPDATE)
+		;
+	}
+
+	public function canUpdatePermission(PermIdentifier $permission): bool
+	{
+		$entity = $permission->entityCode;
+		$buttonEntities = [
+			Button::ENTITY_CODE,
+			ButtonConfig::CODE,
+		];
+		$webFormEntities = [
+			WebForm::ENTITY_CODE,
+			WebFormConfig::CODE,
+		];
+		$automatedSolutionListEntities = [
+			AutomatedSolutionList::ENTITY_CODE,
+		];
+
+		if (in_array($entity, $buttonEntities, true))
+		{
+			return $this->canWriteButtonConfig();
+		}
+
+		if (in_array($entity, $webFormEntities, true))
+		{
+			return $this->canWriteWebFormConfig();
+		}
+
+		if (in_array($entity, $automatedSolutionListEntities, true))
+		{
+			return $this->isAutomatedSolutionsAdmin();
+		}
+
+		if (str_starts_with($entity, AutomatedSolutionConfig::ENTITY_CODE_PREFIX))
+		{
+			$automatedSolutionId = AutomatedSolutionConfig::decodeAutomatedSolutionId($entity);
+			if ($automatedSolutionId === null)
+			{
+				return false;
+			}
+
+			return $this->isAutomatedSolutionAdmin($automatedSolutionId);
+		}
+
+		$entityName = self::getEntityNameByPermissionEntityType($entity);
+		$entityTypeId = CCrmOwnerType::ResolveID($entityName);
+
+		return $this->isAdminForEntity($entityTypeId);
 	}
 
 	/**
@@ -282,8 +402,13 @@ class UserPermissions
 	 *
 	 * @return bool
 	 */
-	public function canAddType(): bool
+	public function canAddType(?int $automatedSolutionId = null): bool
 	{
+		if ($automatedSolutionId)
+		{
+			return $this->isAutomatedSolutionAdmin($automatedSolutionId);
+		}
+
 		return $this->isCrmAdmin();
 	}
 
@@ -300,7 +425,7 @@ class UserPermissions
 			return false;
 		}
 
-		return $this->isAdminForEntity($entityTypeId) || $this->isCrmAdmin();
+		return $this->isAdminForEntity($entityTypeId);
 	}
 
 	/**
@@ -1152,9 +1277,8 @@ class UserPermissions
 
 	public static function isPersonalViewAllowed(int $entityTypeId, ?int $categoryId): bool
 	{
-		$permissionCode = (new MyCardView([]))->code();
-
-		if ((new ApproveCustomPermsToExistRole())->hasWaitingPermission($permissionCode))
+		$permission = new MyCardView();
+		if ((new ApproveCustomPermsToExistRole())->hasWaitingPermission($permission))
 		{
 			return true;
 		}
@@ -1185,7 +1309,7 @@ class UserPermissions
 			return true;
 		}
 
-		return $userPermissions->GetPermType($entityName, $permissionCode) === \CCrmPerms::PERM_ALL;
+		return $userPermissions->GetPermType($entityName, $permission->code()) === \CCrmPerms::PERM_ALL;
 	}
 
 	private function getStageTransitions(int $entityTypeId, string $currentStage, ?int $categoryId): array
@@ -1196,7 +1320,7 @@ class UserPermissions
 			$entityTypeName = self::getPermissionEntityType($entityTypeId, $categoryId);
 		}
 		$stageFieldName = $this->getStageFieldName($entityTypeId);
-		$permission = (new Transition([]))->code();
+		$permission = (new Transition())->code();
 		$userPermissions = \CCrmRole::GetUserPerms($this->userId);
 		$entityPermissions = $userPermissions['settings'][$entityTypeName][$permission]['-'] ?? [];
 
@@ -1222,7 +1346,7 @@ class UserPermissions
 
 	public function isStageTransitionAllowed(string $currentStage, string $newStageId, ItemIdentifier $itemIdentifier): bool
 	{
-		if ((new ApproveCustomPermsToExistRole())->hasWaitingPermission((new Transition([]))->code()))
+		if ((new ApproveCustomPermsToExistRole())->hasWaitingPermission(new Transition()))
 		{
 			return true;
 		}
@@ -1251,5 +1375,33 @@ class UserPermissions
 	public static function isAlwaysAllowedEntity(int $entityTypeId): bool
 	{
 		return in_array($entityTypeId, [\CCrmOwnerType::SmartDocument, \CCrmOwnerType::SmartB2eDocument]);
+	}
+
+	public function canEditCopilotCallAssessmentSettings(): bool
+	{
+		if ($this->isCrmAdmin())
+		{
+			return true;
+		}
+
+		return $this->getCrmPermissions()->HavePerm(
+			'CCA',
+			BX_CRM_PERM_ALL,
+			self::OPERATION_UPDATE
+		);
+	}
+
+	public function canReadCopilotCallAssessmentSettings(): bool
+	{
+		if ($this->isCrmAdmin())
+		{
+			return true;
+		}
+
+		return $this->getCrmPermissions()->HavePerm(
+			'CCA',
+			BX_CRM_PERM_ALL,
+			self::OPERATION_READ
+		);
 	}
 }

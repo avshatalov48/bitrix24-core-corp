@@ -160,6 +160,11 @@ jn.define('im/messenger/provider/pull/lib/recent/base/message-manager', (require
 			return this.getChatType() === DialogType.copilot;
 		}
 
+		isCollabChat()
+		{
+			return this.getChatType() === DialogType.collab;
+		}
+
 		isUserInChat()
 		{
 			if (Type.isArray(this.params.userInChat))

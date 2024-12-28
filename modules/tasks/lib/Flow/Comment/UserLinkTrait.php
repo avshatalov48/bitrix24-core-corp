@@ -8,10 +8,22 @@ trait UserLinkTrait
 {
 	protected static array $userNames = [];
 
-	protected function parseUserToLinked(int $userId): string
+	protected function getUserBBCodes(mixed $userIds): string
 	{
-		$userName = $this->getUserNames([$userId])[$userId];
-		return "[USER={$userId}]{$userName}[/USER]";
+		if (!is_array($userIds))
+		{
+			$userIds = [$userIds];
+		}
+
+		$userNames = $this->getUserNames($userIds);
+
+		$result = '';
+		foreach ($userNames as $userId => $userName)
+		{
+			$result .= "[USER={$userId}]{$userName}[/USER], ";
+		}
+
+		return rtrim($result, ', ');
 	}
 
 	protected function getUserNames(array $users): array

@@ -21,10 +21,11 @@ use Bitrix\Tasks\Integration\Extranet;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Integration\Timeman;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
-use Bitrix\Tasks\Internals\Task\RegularParametersTable;
+use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Manager\Task\Accomplice;
 use Bitrix\Tasks\Manager\Task\Auditor;
 use Bitrix\Tasks\Manager\Task\Checklist;
+use Bitrix\Tasks\Manager\Task\Description;
 use Bitrix\Tasks\Manager\Task\ElapsedTime;
 use Bitrix\Tasks\Manager\Task\Log;
 use Bitrix\Tasks\Manager\Task\Originator;
@@ -35,6 +36,7 @@ use Bitrix\Tasks\Manager\Task\RelatedTask;
 use Bitrix\Tasks\Manager\Task\Reminder;
 use Bitrix\Tasks\Manager\Task\Responsible;
 use Bitrix\Tasks\Manager\Task\Tag;
+use Bitrix\Tasks\Manager\Task\TaskWebdavFiles;
 use Bitrix\Tasks\Manager\Task\Template;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Util\User;
@@ -45,6 +47,8 @@ use TasksException;
 final class Task extends \Bitrix\Tasks\Manager
 {
 	// standard CRUD
+
+	public const UF_PREFIX = 'UF_';
 
 	/**
 	 * @param int $userId
@@ -1021,47 +1025,28 @@ final class Task extends \Bitrix\Tasks\Manager
 
 		$userId = $user->getUserId();
 
-		if (
-			array_key_exists('SE_PROJECT', $data)
-			&& isset($data['SE_PROJECT']['ID'])
-		)
-		{
-			$groupId = (int) $data['SE_PROJECT']['ID'];
-			if (
-				!FeaturePermRegistry::getInstance()->get(
-					$groupId,
-					'tasks',
-					'create_tasks',
-					$userId
-				)
-				&& !FeaturePermRegistry::getInstance()->get(
-					$groupId,
-					'tasks',
-					'edit_tasks',
-					$userId
-				)
-			)
-			{
-				$data['SE_PROJECT']['ID'] = 0;
-			}
-
-		}
-
 		if (!$user->isExtranet())
 		{
 			return $data;
 		}
 
+		$isCollaber = Extranet\User::isCollaber($userId);
+
 		if (
 			array_key_exists('SE_ORIGINATOR', $data)
 			&& isset($data['SE_ORIGINATOR']['ID'])
+			&& !Group::usersHasCommonGroup($userId, (int)$data['SE_ORIGINATOR']['ID'])
 		)
 		{
-			if (!Group::usersHasCommonGroup($userId, (int) $data['SE_ORIGINATOR']['ID']))
+			if (!$isCollaber)
 			{
 				$data['SE_ORIGINATOR']['ID'] = $userId;
 			}
-		}
+			else
+			{
+				$data['SE_ORIGINATOR']['COLLABER_NO_HAS_COMMON_GROUP'] = true;
+			}
+		};
 
 		if (
 			array_key_exists('SE_RESPONSIBLE', $data)
@@ -1070,9 +1055,16 @@ final class Task extends \Bitrix\Tasks\Manager
 		{
 			foreach ($data['SE_RESPONSIBLE'] as $code => $member)
 			{
-				if (!Group::usersHasCommonGroup($userId, (int) $member['ID']))
+				if (!Group::usersHasCommonGroup($userId, (int)$member['ID']))
 				{
-					unset($data['SE_RESPONSIBLE'][$code]);
+					if (!$isCollaber)
+					{
+						unset($data['SE_RESPONSIBLE'][$code]);
+					}
+					else
+					{
+						$data['SE_RESPONSIBLE'][$code]['COLLABER_NO_HAS_COMMON_GROUP'] = true;
+					}
 				}
 			}
 		}
@@ -1095,9 +1087,16 @@ final class Task extends \Bitrix\Tasks\Manager
 		{
 			foreach ($data['SE_ACCOMPLICE'] as $code => $member)
 			{
-				if (!Group::usersHasCommonGroup($userId, (int) $member['ID']))
+				if (!Group::usersHasCommonGroup($userId, (int)$member['ID']))
 				{
-					unset($data['SE_ACCOMPLICE'][$code]);
+					if (!$isCollaber)
+					{
+						unset($data['SE_ACCOMPLICE'][$code]);
+					}
+					else
+					{
+						$data['SE_ACCOMPLICE'][$code]['COLLABER_NO_HAS_COMMON_GROUP'] = true;
+					}
 				}
 			}
 		}
@@ -1109,9 +1108,16 @@ final class Task extends \Bitrix\Tasks\Manager
 		{
 			foreach ($data['SE_AUDITOR'] as $code => $member)
 			{
-				if (!Group::usersHasCommonGroup($userId, (int) $member['ID']))
+				if (!Group::usersHasCommonGroup($userId, (int)$member['ID']))
 				{
-					unset($data['SE_AUDITOR'][$code]);
+					if (!$isCollaber)
+					{
+						unset($data['SE_AUDITOR'][$code]);
+					}
+					else
+					{
+						$data['SE_AUDITOR'][$code]['COLLABER_NO_HAS_COMMON_GROUP'] = true;
+					}
 				}
 			}
 		}
@@ -1119,28 +1125,61 @@ final class Task extends \Bitrix\Tasks\Manager
 		return $data;
 	}
 
-	public static function mergeData($primary = array(), $secondary = array())
+	public static function mergeData($primary = [], $secondary = [], bool $withAddition = true)
 	{
-		if (is_array($secondary) && is_array($primary))
+		if (!is_array($primary) || !is_array($secondary))
 		{
-			foreach ($secondary as $k => $v)
+			return $primary;
+		}
+
+		foreach ($secondary as $secondaryKey => $secondaryValue)
+		{
+			$isSecondaryExistsInPrimary = array_key_exists($secondaryKey, $primary);
+			$isAction = ($secondaryKey === self::ACT_KEY);
+
+			if (!$isSecondaryExistsInPrimary || $isAction) // force rights merging
 			{
-				if (!array_key_exists($k, $primary) || $k == static::ACT_KEY) // force rights merging
-				{
-					$primary[ $k ] = $secondary[ $k ];
-				}
-				elseif ($seName = static::checkIsSubEntityKey($k))
-				{
-					$fName = __NAMESPACE__ . '\\Task\\' . $seName . '::mergeData';
-					if (is_callable($fName))
-					{
-						$primary[ $k ] = call_user_func_array($fName, array($primary[ $k ], $secondary[ $k ]));
-					}
-				}
+				$primary[$secondaryKey] = $secondaryValue;
+
+				continue;
+			}
+
+			if ($callable = self::getMergeHandler($secondaryKey))
+			{
+				$primary[$secondaryKey] = $callable($primary[$secondaryKey], $secondaryValue, $withAddition);
 			}
 		}
 
 		return $primary;
+	}
+
+	private static function getMergeHandler(string $propertyName): ?string
+	{
+		if (!self::isAllowUseHandler($propertyName))
+		{
+			return null;
+		}
+
+		$handlerClass = self::getMergeHandlerClassName($propertyName);
+		$callable = __NAMESPACE__ . '\\Task\\' . $handlerClass . '::mergeData';
+
+		return is_callable($callable) ? $callable : null;
+	}
+
+	private static function getMergeHandlerClassName(string $propertyName): string
+	{
+		$className = $propertyName;
+		if (str_starts_with($propertyName, self::SE_PREFIX))
+		{
+			$className = mb_substr($propertyName, mb_strlen(self::SE_PREFIX));
+		}
+
+		if (str_starts_with($propertyName, self::UF_PREFIX))
+		{
+			$className = mb_substr($propertyName, mb_strlen(self::UF_PREFIX));
+		}
+
+		return str_replace('_', '', $className);
 	}
 
 	/**
@@ -1274,6 +1313,33 @@ final class Task extends \Bitrix\Tasks\Manager
 		$strIndex = mb_strtoupper($strIndex);
 
 		return $strIndex;
+	}
+
+	private static function isAllowUseHandler(string $propertyName): bool
+	{
+		$propertyNameWithoutSubEntityPrefix = $propertyName;
+		if (str_starts_with($propertyName, self::SE_PREFIX))
+		{
+			$propertyNameWithoutSubEntityPrefix = mb_substr($propertyName, mb_strlen(self::SE_PREFIX));
+		}
+
+		return in_array($propertyNameWithoutSubEntityPrefix, self::getAllowedPropertiesToUseHandler(), true);
+	}
+
+	private static function getAllowedPropertiesToUseHandler(): array
+	{
+		static $allowedPropertyList = [];
+
+		if (empty($allowedPropertyList))
+		{
+			$allowedPropertyList = [
+				...self::getLegalSubEntities(),
+				Description::getCode(),
+				TaskWebdavFiles::getCode(),
+			];
+		}
+
+		return $allowedPropertyList;
 	}
 
 	protected static function getLegalSubEntities()

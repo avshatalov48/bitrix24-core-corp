@@ -4,15 +4,16 @@
 jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 	const { Type } = require('type');
 	const { isEmpty } = require('utils/object');
+	const { debounce } = require('utils/function');
 	const { Color, Indent, Component } = require('tokens');
 	const { Text7 } = require('ui-system/typography/text');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { TextInput } = require('ui-system/typography/text-input');
 	const { PropTypes } = require('utils/validation');
-	const { InputVisualDecorator } = require('ui-system/form/inputs/input/src/visual-decorator');
 	const { InputMode } = require('ui-system/form/inputs/input/src/enums/mode-enum');
 	const { InputSize } = require('ui-system/form/inputs/input/src/enums/size-enum');
 	const { InputDesign } = require('ui-system/form/inputs/input/src/enums/design-enum');
+	const { InputVisualDecorator } = require('ui-system/form/inputs/input/src/visual-decorator');
 
 	const ALIGN = {
 		left: 'flex-start',
@@ -20,7 +21,12 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		right: 'flex-end',
 	};
 
-	const ICON_SIZE = 20;
+	const ICON_SIZE = 22;
+
+	const ICON_CONTENT_SIZE = {
+		width: 26,
+		height: 22,
+	};
 
 	/**
 	 * @typedef {Object} InputProps
@@ -90,11 +96,11 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			this.handleOnChange = this.handleOnChange.bind(this);
 			this.handleOnChangeText = this.handleOnChangeText.bind(this);
 			this.handleOnContentClick = this.handleOnContentClick.bind(this);
-			this.handleOnSelectionChange = this.handleOnSelectionChange.bind(this);
-			this.handleOnCursorPositionChange = this.handleOnCursorPositionChange.bind(this);
 			this.handleOnContentLongClick = this.handleOnContentLongClick.bind(this);
 			this.handleOnClickLeftContent = this.handleOnClickLeftContent.bind(this);
 			this.handleOnClickRightContent = this.handleOnClickRightContent.bind(this);
+			this.handleOnCursorPositionChange = this.handleOnCursorPositionChange.bind(this);
+			this.handleOnSelectionChange = debounce(this.handleOnSelectionChange, 200, this);
 		}
 
 		get field()
@@ -139,16 +145,13 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		}
 
 		initProperties()
-		{
-		}
+		{}
 
 		render()
 		{
-			const { testId } = this.props;
-
 			return View(
 				{
-					testId,
+					testId: this.getTestId(),
 					style: this.getContainerStyle(),
 				},
 				...this.renderBaseContent(),
@@ -172,33 +175,24 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 					onClick: this.handleOnContentClick,
 					onLongClick: this.handleOnContentLongClick,
 				},
-				View(
-					{
-						style: {
-							flex: 1,
-							flexDirection: 'row',
-							alignItems: 'center',
-						},
-					},
+				this.renderWrapperContent([
 					this.renderLeftContent(),
-					this.renderWrapperContent(),
+					this.renderContent(),
 					this.renderRightContent(),
 					this.renderLockIcon(),
 					this.renderEditIcon(),
-				),
+				]),
 				this.renderRightStick(),
 			);
 		}
 
-		renderWrapperContent()
+		renderWrapperContent(content)
 		{
 			return View(
 				{
-					style: {
-						flex: 1,
-					},
+					style: this.getWrapperContentStyle(),
 				},
-				this.renderContent(),
+				...content,
 			);
 		}
 
@@ -208,7 +202,14 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 
 			const inputElement = element ?? TextInput;
 
-			return inputElement(this.getFieldProps());
+			return View(
+				{
+					style: {
+						flex: 1,
+					},
+				},
+				inputElement(this.getFieldProps()),
+			);
 		}
 
 		renderLabel()
@@ -225,6 +226,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 
 			return View(
 				{
+					testId: this.getTestId('label'),
 					style: {
 						position: 'absolute',
 						top: 0,
@@ -243,6 +245,8 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 					Text({
 						text: label,
 						color: Color.base3,
+						numberOfLines: 1,
+						ellipsize: 'end',
 					}),
 				),
 			);
@@ -261,6 +265,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 
 			return View(
 				{
+					testId: this.getTestId('error'),
 					style: {
 						position: 'absolute',
 						bottom: 0,
@@ -335,7 +340,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 				position: 'left',
 				content: leftContent,
 				style: {
-					marginRight: Indent.XS2.toNumber(),
+					marginRight: Indent.XS.toNumber(),
 				},
 				onClick: this.handleOnClickLeftContent,
 			});
@@ -399,7 +404,8 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			}
 
 			return IconView({
-				size: ICON_SIZE,
+				testId: this.getTestId('erase'),
+				size: Input.getIconSize(),
 				icon: Icon.CROSS,
 				color: Color.base2,
 				onClick: this.handleOnErase,
@@ -414,6 +420,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			}
 
 			return IconView({
+				testId: this.getTestId('dropdown'),
 				size: Input.getIconSize(),
 				icon: Icon.CHEVRON_DOWN_SIZE_M,
 				color: Color.base2,
@@ -430,12 +437,18 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 				return null;
 			}
 
-			const contentWrapper = (element) => View(
+			const iconWrapper = (element) => View(
 				{
+					testId: this.getTestId(`${position}-content`),
 					ref: (ref) => {
 						this.refMap.set(position, ref);
 					},
-					style,
+					style: {
+						...style,
+						...Input.getIconContentSize(),
+						justifyContent: 'center',
+						alignItems: 'center',
+					},
 					onClick,
 				},
 				element,
@@ -443,14 +456,14 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 
 			if (content instanceof Icon)
 			{
-				return contentWrapper(IconView({
+				return iconWrapper(IconView({
 					size: Input.getIconSize(),
 					icon: content,
 					color: iconColor || Color.base3,
 				}));
 			}
 
-			return contentWrapper(
+			return iconWrapper(
 				Type.isFunction(content)
 					? content()
 					: content,
@@ -468,7 +481,6 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			return {
 				height,
 				paddingTop,
-				paddingBottom,
 				position: 'relative',
 				width: '100%',
 				backgroundColor: this.getBackgroundColor(),
@@ -554,7 +566,15 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		{
 			return {
 				textAlign: this.getAlign(true),
-				textAlignVertical: 'center',
+			};
+		}
+
+		getWrapperContentStyle()
+		{
+			return {
+				flex: 1,
+				alignItems: 'center',
+				flexDirection: 'row',
 			};
 		}
 
@@ -607,7 +627,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		{
 			const { value } = this.props;
 
-			return this.currentValue ?? value;
+			return String(this.currentValue ?? value);
 		}
 
 		isValid()
@@ -898,6 +918,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		getFieldProps()
 		{
 			const props = {
+				testId: this.getTestId(this.isEmpty() ? 'placeholder' : 'value'),
 				ref: (ref) => {
 					this.#handleOnForwardRef(ref);
 					this.contentFieldRef = ref;
@@ -947,6 +968,11 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			return ICON_SIZE;
 		}
 
+		static getIconContentSize()
+		{
+			return ICON_CONTENT_SIZE;
+		}
+
 		getLeftContent()
 		{
 			const { leftContent } = this.props;
@@ -978,6 +1004,13 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			return InputMode.resolve(mode, InputMode.STROKE);
 		}
 
+		getTestId(suffix)
+		{
+			const { testId } = this.props;
+
+			return [testId, suffix].join('-').trim();
+		}
+
 		isEmpty()
 		{
 			return isEmpty(this.getValue());
@@ -994,7 +1027,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		{
 			const { erase } = this.props;
 
-			return Boolean(erase) && !this.isEmpty();
+			return Boolean(erase);
 		}
 
 		isIOS()
@@ -1023,6 +1056,13 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		}
 
 		focus = () => {
+			if (this.isReadOnly())
+			{
+				this.handleOnClick();
+
+				return;
+			}
+
 			if (!this.contentFieldRef && !this.isMounted())
 			{
 				this.actionsAfterMounted.push(this.focus);
@@ -1065,7 +1105,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 	Input.propTypes = {
 		testId: PropTypes.string.isRequired,
 		forwardRef: PropTypes.func,
-		value: PropTypes.string,
+		value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 		placeholder: PropTypes.string,
 		label: PropTypes.string,
 		size: PropTypes.instanceOf(InputSize),

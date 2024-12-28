@@ -9,7 +9,9 @@ return [
 	'js' => 'dist/wizard.bundle.js',
 	'rel' => [
 		'main.core',
+		'main.core.events',
 		'ui.buttons',
+		'main.polyfill.intersectionobserver',
 		'ui.icon-set.main',
 	],
 	'skip_core' => false,

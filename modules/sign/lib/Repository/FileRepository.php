@@ -24,13 +24,40 @@ class FileRepository
 			return $result->addError(new Main\Error('Can not save file. Content data is not set.'));
 		}
 
-		if (basename($file->name) !== $file->name)
+		if (Main\IO\Path::getName($file->name) !== $file->name)
 		{
 			return $result->addError(new Main\Error('Can not save file. Wrong file name.'));
 		}
 
-		$uploadDirName = Main\Config\Option::get("main", "upload_dir", "upload") . '/' . $this->path;
-		$path = Main\Application::getDocumentRoot() . "/$uploadDirName/{$file->dir}/{$file->name}";
+		if (!Main\IO\Path::validateFilename($file->name))
+		{
+			return $result->addError(new Main\Error('Can not save file. Invalid file name format.'));
+		}
+
+		$documentRoot = Main\Application::getDocumentRoot();
+		if ($documentRoot === null)
+		{
+			return $result->addError(new Main\Error('Can not save file. Invalid document root.'));
+		}
+
+		$fileDir = $this->trimSlashes($file->dir);
+		$paths[] = $documentRoot;
+		$paths[] = $this->trimSlashes(Main\Config\Option::get('main', 'upload_dir', 'upload'));
+		$paths[] = $this->trimSlashes($this->path);
+		$paths[] = $fileDir;
+		$paths[] = $file->name;
+		$path = implode('/', array_filter($paths));
+
+		if (!preg_match('/^((?!\.\/).)*$/', $path))
+		{
+			return $result->addError(new Main\Error('Can not save file. You can use only absolute path.'));
+		}
+
+		if (!Main\IO\Path::validate($path))
+		{
+			return $result->addError(new Main\Error('Can not save file. Invalid path: ' . $path));
+		}
+
 		if (Main\IO\File::isFileExists($path))
 		{
 			return $result->addError(new Main\Error('Can not save file. File already exists in filesystem.'));
@@ -47,7 +74,7 @@ class FileRepository
 				'content' => $file->content->data,
 			],
 			strSavePath: $this->path,
-			dirAdd: $file->dir,
+			dirAdd: $fileDir,
 		);
 		if ($id)
 		{
@@ -57,6 +84,13 @@ class FileRepository
 		}
 
 		return $result->addError(new Main\Error('Can not save file'));
+	}
+
+	private function trimSlashes(string $path): string
+	{
+		$path = rtrim($path, '/');
+
+		return trim($path, '/');
 	}
 
 	public function copyById(int $id): ?Item\Fs\File

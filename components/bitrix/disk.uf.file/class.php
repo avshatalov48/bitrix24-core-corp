@@ -374,8 +374,8 @@ class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\
 			{
 				if($fileModel->getView()->isHtmlAvailable())
 				{
-					$maxWidth = \Bitrix\Main\Config\Option::get('blog', 'image_max_width', 800);
-					$maxHeight = $maxWidth * 9 / 16;
+					$maxWidth = 560;
+					$maxHeight = 480;
 					if($fileModel->getView()->getId() > 0)
 					{
 						$previewPath = '';

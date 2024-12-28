@@ -30,12 +30,12 @@ class NodeService implements Contract\Service\NodeService
 		$this->nodeRepository = $nodeRepository ?? Container::getNodeRepository();
 		$this->structureWalkerService = $structureWalkerService ?? Container::getStructureWalkerService();
 	}
-	public function getNodesByUserId(int $userId, NodeActiveFilter $activeFilter = NodeActiveFilter::ALL): NodeCollection
+	public function getNodesByUserId(int $userId, NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE): NodeCollection
 	{
 		return $this->nodeRepository->findAllByUserId($userId, $activeFilter);
 	}
 
-	public function getNodesByUserIdAndUserRoleId(int $userId, int $roleId, NodeActiveFilter $activeFilter = NodeActiveFilter::ALL): NodeCollection
+	public function getNodesByUserIdAndUserRoleId(int $userId, int $roleId, NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE): NodeCollection
 	{
 		return $this->nodeRepository->findAllByUserIdAndRoleId($userId, $roleId, $activeFilter);
 	}
@@ -155,6 +155,12 @@ class NodeService implements Contract\Service\NodeService
 			if (!$targetNode)
 			{
 				throw (new UpdateFailedException())->addError(new Error("Parent node with id $node->parentId dont exist"));
+			}
+
+			$isAncestor = $this->nodeRepository->isAncestor($node, $targetNode);
+			if ($isAncestor)
+			{
+				throw (new UpdateFailedException())->addError(new Error("Child node with id $node->id cannot become the parent of its own parent node with id $node->parentId"));
 			}
 
 			$this->moveNode($nodeEntity, $targetNode);

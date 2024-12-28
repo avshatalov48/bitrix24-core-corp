@@ -37,8 +37,7 @@ class Settings extends AbstractMenuItem
 		global $USER;
 
 		$settingsUserId = $USER->GetID();
-		$isUserAdmin = ($USER->isAdmin() || (\CModule::IncludeModule('bitrix24') && \CBitrix24::isPortalAdmin($settingsUserId)))
-			? "true" : "false";
+		$isUserAdmin = ($USER->isAdmin() || (\CModule::IncludeModule('bitrix24') && \CBitrix24::isPortalAdmin($settingsUserId)));
 
 		return [
 			'type' => 'component',
@@ -65,6 +64,6 @@ class Settings extends AbstractMenuItem
 
 	public function separatorBefore(): bool
 	{
-		return true;
+		return !$this->context->isCollaber;
 	}
 }

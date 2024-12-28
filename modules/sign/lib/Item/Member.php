@@ -36,6 +36,10 @@ class Member implements Contract\Item
 		public ?string $role = null,
 		public ?int $configured = null,
 		?Reminder $reminder = null,
+		public ?DateTime $dateSend = null,
+		public ?int $employeeId = null,
+		public ?int $hcmLinkJobId = null,
+		public ?DateTime $dateStatusChanged = null,
 	)
 	{
 		$this->reminder = $reminder ?? new Reminder(
@@ -51,6 +55,8 @@ class Member implements Contract\Item
 	{
 		$this->dateSigned = CloneHelper::cloneIfNotNull($this->dateSigned);
 		$this->dateCreated = CloneHelper::cloneIfNotNull($this->dateCreated);
+		$this->dateSend = CloneHelper::cloneIfNotNull($this->dateSend);
+		$this->dateStatusChanged = CloneHelper::cloneIfNotNull($this->dateStatusChanged);
 		$this->reminder = clone $this->reminder;
 		$this->reminder->lastSendDate = CloneHelper::cloneIfNotNull($this->reminder->lastSendDate);
 		$this->reminder->plannedNextSendDate = CloneHelper::cloneIfNotNull($this->reminder->plannedNextSendDate);

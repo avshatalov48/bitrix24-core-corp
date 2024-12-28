@@ -302,9 +302,11 @@ class SpdUfCleanerAgent extends AgentBase
 
 	private function getDefaultSiteLangId(): string
 	{
+		/** @todo Use SiteTable::getDefaultLanguageId() */
 		$iterator = \Bitrix\Main\SiteTable::getList([
-			'select' => ['LANGUAGE_ID'],
-			'filter' => ['=DEF' => 'Y', '=ACTIVE' => 'Y']
+			'select' => ['LID', 'LANGUAGE_ID'],
+			'filter' => ['=DEF' => 'Y', '=ACTIVE' => 'Y'],
+			'cache' => ['ttl' => 86400],
 		]);
 		if ($defaultSite = $iterator->fetch())
 		{

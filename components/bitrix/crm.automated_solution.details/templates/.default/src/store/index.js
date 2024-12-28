@@ -8,6 +8,11 @@ type StateShape = {
 		typeIds?: number[],
 	},
 
+	permissions: {
+		canMoveSmartProcessFromCrm: boolean,
+		canMoveSmartProcessFromAnotherAutomatedSolution: boolean,
+	},
+
 	dynamicTypesTitles: {[key: number]: string},
 
 	errors: Error[],
@@ -29,6 +34,11 @@ export const store = {
 				id: null,
 				title: null,
 				typeIds: [],
+			},
+
+			permissions: {
+				canMoveSmartProcessFromCrm: false,
+				canMoveSmartProcessFromAnotherAutomatedSolution: false,
 			},
 
 			dynamicTypesTitles: {},

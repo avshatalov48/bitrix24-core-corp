@@ -527,11 +527,15 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			return {
 				id: itemId.toString(),
 				title: chatTitleParams.getTitle(),
-				description: chatTitleParams.getDescription(),
-				imageUrl: avatarTitleParams.getAvatarUrl(),
-				imageColor: avatarTitleParams.getColor(),
 				titleColor: chatTitleParams.getTitleColor(),
+				description: chatTitleParams.getDescription(),
+				/** @deprecated use to avatar {AvatarDetail} */
+				imageUrl: avatarTitleParams.getAvatarUrl(),
+				/** @deprecated use to avatar {AvatarDetail} */
+				imageColor: avatarTitleParams.getColor(),
+				/** @deprecated use to avatar {AvatarDetail} */
 				isSuperEllipseIcon: avatarTitleParams.getIsSuperEllipseIcon(),
+				avatar: avatarTitleParams.getMentionAvatarProps(),
 				testId: itemId.toString(),
 			};
 		}

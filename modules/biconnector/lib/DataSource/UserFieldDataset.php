@@ -47,16 +47,21 @@ abstract class UserFieldDataset extends Dataset
 
 			if ($dbType === 'date' && $userField['MULTIPLE'] === 'N')
 			{
-				$field = new DateField($userField['FIELD_NAME']);
+				$field = (new DateField($userField['FIELD_NAME']))
+					->setSystem(false)
+				;
 			}
 			elseif ($dbType === 'datetime' && $userField['MULTIPLE'] === 'N')
 			{
-				$field = new DateTimeField($userField['FIELD_NAME']);
+				$field = (new DateTimeField($userField['FIELD_NAME']))
+					->setSystem(false)
+				;
 			}
 			else
 			{
 				$field =
 					(new StringField($userField['FIELD_NAME']))
+						->setSystem(false)
 						->setCallback(
 							function($value, $dateFormats) use($userField, $dbType)
 							{

@@ -24,6 +24,7 @@ export const ReviewItem = {
 			savingReview: false,
 			newReviewText: '',
 			newReviewRating: 0,
+			MarketLinks: MarketLinks,
 		};
 	},
 	computed: {
@@ -35,6 +36,19 @@ export const ReviewItem = {
 		},
 		editReviewNotAllowedText: function() {
 			return this.review.EDIT_REVIEW_NOT_ALLOWED_TEXT ?? '';
+		},
+		isSiteTemplate: function () {
+			return this.review.IS_SITE_TEMPLATE === 'Y';
+		},
+		getBackgroundPath: function () {
+			if (this.isSiteTemplate) {
+				return this.review.SITE_PREVIEW;
+			}
+
+			return "/bitrix/js/market/images/backgrounds/" + this.getIndex + ".png";
+		},
+		getIndex: function () {
+			return (parseInt(this.reviewIndex, 10) % 30) + 1;
 		},
 	},
 	mounted: function() {
@@ -101,16 +115,19 @@ export const ReviewItem = {
 		saveReview: function() {
 			this.savingReview = true;
 
+			const isSiteTemplate = this.isSiteTemplate === true ? 'Y' : 'N';
 			BX.ajax.runAction('market.Application.editReview', {
 				data: {
 					reviewId: this.review.ID,
 					appCode: this.review.APP_CODE,
 					reviewText: this.newReviewText,
 					currentRating: this.newReviewRating,
+					isSite: isSiteTemplate,
 				},
 				analyticsLabel: {
 					appCode: this.review.APP_CODE,
 					currentRating: this.newReviewRating,
+					isSite: isSiteTemplate,
 				},
 			}).then(
 				response => {
@@ -200,14 +217,19 @@ export const ReviewItem = {
 				</template>
 			</div>
 			<div class="market-reviews__item-content">
-				<a class="market-reviews__item-logo"
-				   :href="getDetailLink(review)"
-				>
-					<img class="market-reviews__item-logo-img"
-						 :src="review.APP_LOGO"
-						 alt="img"
+				<div class="market-reviews__item-content-logo">
+					<a class="market-reviews__item-content-logo-link"
+					   :style="{'background-image': 'url(\\'' + getBackgroundPath + '\\')'}"
+					   :href="getDetailLink(review)"
+					   @click="MarketLinks.openSiteTemplate($event, this.isSiteTemplate)"
 					>
-				</a>
+						<img class="market-reviews__item-content-logo-img"
+							 :src="review.APP_LOGO"
+							 v-if="!isSiteTemplate"
+							 alt="img"
+						>
+					</a>
+				</div>
 				<div class="market-reviews__item-main-content">
 					<div class="market-reviews__item-title-wrapper">
 						<a class="market-reviews__item-title"

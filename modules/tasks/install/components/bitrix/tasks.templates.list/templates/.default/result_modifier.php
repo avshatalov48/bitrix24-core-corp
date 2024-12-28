@@ -352,7 +352,7 @@ function prepareTaskRowUserBaloonHtml($arParams)
 
 	$arParams['USER_PROFILE_URL'] = $user['IS_EXTERNAL'] ? Socialnetwork\Task::addContextToURL(
 		$arParams['USER_PROFILE_URL'],
-		$arParams['TASK_ID']
+		isset($arParams['TASK_ID']) ?? null
 	) : $arParams['USER_PROFILE_URL'];
 
 	$userIcon = '';
@@ -367,6 +367,10 @@ function prepareTaskRowUserBaloonHtml($arParams)
 	if ($user["IS_CRM"])
 	{
 		$userIcon = 'tasks-grid-avatar-crm';
+	}
+	if ($user['IS_COLLABER_USER'] ?? false)
+	{
+		$userIcon = 'tasks-grid-avatar-collaber';
 	}
 
 	$userAvatar = 'tasks-grid-avatar-empty';
@@ -556,26 +560,29 @@ if (!empty($arResult['GRID']['DATA']))
 {
 
 	$users = [];
+	$groups = [];
 	foreach ($arResult['GRID']['DATA'] as $row)
 	{
 		$users[] = $row['CREATED_BY'];
 		$users[] = $row['RESPONSIBLE_ID'];
+		$groups[] = (int)$row['GROUP_ID'];
 	}
 	$arParams['~USER_NAMES'] = \Bitrix\Tasks\Util\User::getUserName(array_unique($users));
 	$arParams['~USER_DATA'] = Util\User::getData(array_unique($users));
 
+	$groups = array_unique($groups);
+	$groups = SocialNetwork\Group::getData($groups, ['TYPE'], ['WITH_CHAT']);
 
 	$prevGroupId = 0;
 	foreach ($arResult['GRID']['DATA'] as $row)
 	{
 		if ($prevGroupId != (int)$row['GROUP_ID'])
 		{
-			$group = SocialNetwork\Group::getData(array($row['GROUP_ID']));
-			$groupName = htmlspecialcharsbx($group[$row['GROUP_ID']]['NAME']);
-			$groupUrl = CComponentEngine::MakePathFromTemplate(
-				$arParams['PATH_TO_GROUP'],
-				array("group_id" => $row["GROUP_ID"])
-			);
+			$group = $groups[$row['GROUP_ID']];
+			$groupName = htmlspecialcharsbx($group['NAME']);
+			$groupType = $group['TYPE'] ?? null;
+			$groupChatId = $group['CHAT_ID'] ?? 0;
+			$groupUrl = SocialNetwork\Collab\Url\UrlManager::getUrlByType((int)$row['GROUP_ID'], $groupType, ['chatId' => $groupChatId]);
 
 			$groupItem = array(
 				"id" => 'group_'.$row["GROUP_ID"],

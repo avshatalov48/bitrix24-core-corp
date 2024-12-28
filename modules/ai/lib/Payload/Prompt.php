@@ -72,7 +72,19 @@ class Prompt extends Text implements IPayload
 	public function getData(): string
 	{
 		$prompt = $this->promptItem ? $this->promptItem->getPrompt() : $this->payload;
-		return (new Formatter($prompt, $this->engine))->format($this->markers);
+
+		$markers = $this->getMarkers();
+		if ($markers && $this->hasHiddenTokens())
+		{
+			$markersWithHiddenTokens = [];
+			foreach ($markers as $key => $marker)
+			{
+				$markersWithHiddenTokens[$key] = $this->hideTokens($marker);
+			}
+			$markers = $markersWithHiddenTokens;
+		}
+
+		return (new Formatter($prompt, $this->engine))->format($markers);
 	}
 
 	/**
@@ -109,11 +121,6 @@ class Prompt extends Text implements IPayload
 	public function getCost(): int
 	{
 		$promptCode = $this->promptItem?->getCode();
-
-		if ($promptCode === self::SPEC_CODES['set_ai_session_name'])
-		{
-			return 0;
-		}
 
 		if (!empty(self::SPEC_CODES[$promptCode]) && Bitrix24::isDemoLicense())
 		{

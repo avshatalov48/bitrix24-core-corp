@@ -3,39 +3,65 @@
  */
 jn.define('qrauth/src/auth', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { BottomSheet } = require('bottom-sheet');
 	const { Box, BoxFooter } = require('ui-system/layout/box');
 	const { QRCodeScannerComponent } = require('qrauth/src/scanner');
 	const { Button, ButtonSize } = require('ui-system/form/buttons/button');
-	const { Color, Indent, Component, Corner } = require('tokens');
+	const { Color, Indent, Component } = require('tokens');
 	const { Link2 } = require('ui-system/blocks/link');
 	const { Card, CardDesign } = require('ui-system/layout/card');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
-	const { Text2, Text4, Text6, H3, BBCodeText } = require('ui-system/typography');
+	const { Area } = require('ui-system/layout/area');
+	const { AreaList } = require('ui-system/layout/area-list');
+	const { Text2, Text4, Text6, BBCodeText } = require('ui-system/typography');
+	const { AnalyticsEvent } = require('analytics');
 
-	const contentHeight = 144;
-	const pageManagerHeight = 450;
+	const CONTENT_SIZE = {
+		height: 144,
+		width: 339,
+	};
+	const PAGE_MANAGER_HEIGHT = 450;
+
+	const DEMO_CONTENT = {
+		image: 'qrdemo_v3.png',
+		video: 'qrdemo_v1.mp4',
+	};
+
 	const cloud = Boolean(jnExtensionData.get('qrauth').cloud);
-	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/qrauth/';
+	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/qrauth';
 
 	/**
+	 * @typedef {Object} QRCodeAuthProps
+	 * @property {boolean} [showHint]
+	 * @property {boolean} [showAnimation]
+	 * @property {string} [title]
+	 * @property {string} [hintText]
+	 * @property {string} [redirectUrl]
+	 * @property {string} [description]
+	 *
 	 * @class QRCodeAuthComponent
 	 */
 	class QRCodeAuthComponent extends LayoutComponent
 	{
+		/**
+		 * @param parentWidget
+		 * @param {QRCodeAuthProps} params
+		 * @returns {Promise<PageManager>}
+		 */
 		static async open(parentWidget, params)
 		{
 			const { title } = params;
 			const component = new QRCodeAuthComponent(params);
 			const bottomSheet = new BottomSheet({
 				titleParams: {
-					text: title || Loc.getMessage('QRAUTH_AUTH_TITLE'),
+					text: title || Loc.getMessage('LOGIN_ON_DESKTOP_DEFAULT_TITLE_MSGVER_3'),
 					type: 'dialog',
 				},
 				component,
 			});
 
-			const positionHeight = QRCodeAuthComponent.getContentHeight() + pageManagerHeight;
+			const positionHeight = QRCodeAuthComponent.getContentHeight() + PAGE_MANAGER_HEIGHT;
 			const bottomSheetLayout = await bottomSheet
 				.setParentWidget(parentWidget || PageManager)
 				.setMediumPositionHeight(positionHeight)
@@ -56,12 +82,25 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 			this.parentWidget = props.parentWidget;
 		}
 
+		componentDidMount()
+		{
+			const { analyticsSection } = this.props;
+
+			const event = new AnalyticsEvent({
+				tool: 'intranet',
+				category: 'activation',
+				event: 'qr_scanner_shown',
+				c_section: analyticsSection,
+			});
+
+			event.send();
+		}
+
 		render()
 		{
 			return Box(
 				{
 					withScroll: true,
-					withPaddingHorizontal: true,
 					footer: this.renderBoxFooter(),
 					safeArea: {
 						bottom: true,
@@ -97,7 +136,7 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 					leftIcon: Icon.CAMERA,
 					testId: 'QRAUTH_OPEN_CAMERA_QR',
 					stretched: true,
-					text: Loc.getMessage('SCAN_QR_BUTTON'),
+					text: Loc.getMessage('SCAN_QR_BUTTON_MSGVER_2'),
 					size: ButtonSize.L,
 					onClick: this.onClickScan,
 				}),
@@ -106,18 +145,17 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 
 		static getContentHeight()
 		{
-			return contentHeight + Indent.XL3.toNumber();
+			return CONTENT_SIZE.height + Indent.XL3.toNumber();
 		}
 
 		renderGuide()
 		{
-			return View(
-				{},
+			return AreaList(
+				{
+					withScroll: false,
+				},
 				this.renderHint(),
-				this.renderHeader(),
-				this.renderAnimation(),
-				this.renderDemoVideo(),
-				this.renderDemoImage(),
+				this.renderDemo(),
 				this.renderStepsGuide(),
 			);
 		}
@@ -131,83 +169,42 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 				return null;
 			}
 
-			return Card(
+			return Area(
 				{
-					testId: 'QR_SCANNER_HINT',
-					design: CardDesign.ACCENT,
-					style: {
-						marginBottom: Indent.XL3.toNumber(),
+					isFirst: true,
+					excludePaddingSide: {
+						horizontal: false,
 					},
 				},
-				View(
+				Card(
 					{
-						style: {
-							flexShrink: 1,
-							flexDirection: 'row',
-						},
+						testId: 'QR_SCANNER_HINT',
+						design: CardDesign.ACCENT,
 					},
-					IconView({
-						size: 24,
-						icon: Icon.INFO_CIRCLE,
-						color: Color.accentMainPrimaryalt,
-						style: {
-
-							marginRight: Indent.M.toNumber(),
+					View(
+						{
+							style: {
+								flexShrink: 1,
+								flexDirection: 'row',
+							},
 						},
-					}),
-					Text4({
-						text: hintText || Loc.getMessage('QR_SCANNER_HINT_MSGVER_1'),
-						color: Color.accentMainPrimaryalt,
-						style: {
-							flexShrink: 1,
-						},
-					}),
+						Text4({
+							text: hintText || Loc.getMessage('QR_SCANNER_HINT_MSGVER_2'),
+							color: Color.accentMainPrimaryalt,
+							style: {
+								flexShrink: 1,
+							},
+						}),
+					),
 				),
 			);
-		}
-
-		renderHeader()
-		{
-			return View(
-				{
-					style: {
-						flexDirection: 'row',
-						alignItems: 'center',
-						marginBottom: Indent.XL3.toNumber(),
-					},
-				},
-				H3({
-					text: Loc.getMessage('QR_HOW_TO_AUTH_MSGVER_1'),
-				}),
-				IconView({
-					icon: Icon.ARROW_DOWN,
-					size: 20,
-					color: Color.base4,
-				}),
-			);
-		}
-
-		renderAnimation()
-		{
-			const { showAnimation } = this.props;
-
-			if (!showAnimation)
-			{
-				return null;
-			}
-
-			return View({
-				style: {
-					marginBottom: Indent.XL3.toNumber(),
-				},
-			});
 		}
 
 		renderStepsGuide()
 		{
 			const steps = this.getStepsGuide();
 
-			return View(
+			return Area(
 				{},
 				...steps.map((step, index) => {
 					const isFirst = index === 0;
@@ -219,42 +216,39 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 			);
 		}
 
-		renderStepGuide({ step, stepNumber, isFirst, isLast })
+		renderStepGuide({ step, stepNumber, isFirst })
 		{
-			const badgeSize = 20;
+			const marginTop = isFirst ? Indent.XL : Indent.XL3;
 
 			return View(
-				{},
-				View(
-					{
-						style: {
-							flexDirection: 'row',
-							marginTop: isFirst ? 0 : Indent.L.toNumber(),
-						},
+				{
+					style: {
+						flexDirection: 'row',
+						marginTop: marginTop.toNumber(),
 					},
-					this.renderStepRow({ step, stepNumber, badgeSize }),
-				),
-				this.renderDivider({ isLast, badgeSize }),
+				},
+				this.renderStepRow({ step, stepNumber }),
 			);
 		}
 
-		renderStepRow({ step, stepNumber, badgeSize })
+		renderStepRow({ step, stepNumber })
 		{
 			return View(
 				{
 					style: {
 						flexDirection: 'row',
-						alignItems: 'center',
 						width: '100%',
 					},
 				},
-				this.renderStepBadge({ stepNumber, badgeSize }),
+				this.renderStepBadge({ stepNumber }),
 				step,
 			);
 		}
 
-		renderStepBadge({ stepNumber, badgeSize })
+		renderStepBadge({ stepNumber })
 		{
+			const badgeSize = 22;
+
 			return View(
 				{
 					style: {
@@ -274,79 +268,41 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 			);
 		}
 
-		renderDivider({ isLast, badgeSize })
+		renderDemo()
 		{
-			if (isLast)
-			{
-				return null;
-			}
+			const renderDemoContent = cloud
+				? this.renderDemoVideo
+				: this.renderDemoImage;
 
-			return View({
-				style: {
-					height: 1,
-					width: '100%',
-					marginLeft: badgeSize + Indent.XL.toNumber(),
-					marginTop: Indent.XL.toNumber(),
-					backgroundColor: Color.bgSeparatorSecondary.toHex(),
-				},
-			});
-		}
-
-		renderDemoImage()
-		{
-			if (cloud)
-			{
-				return null;
-			}
-
-			return this.renderContentWrapper(
-				Image({
-					style: {
-						width: '100%',
-						height: contentHeight,
-					},
-					uri: `${currentDomain}${pathToExtension}images/qrdemo.png`,
-				}),
-			);
-		}
-
-		renderDemoVideo()
-		{
-			if (!cloud)
-			{
-				return null;
-			}
-
-			return this.renderContentWrapper(
-				Video(
-					{
-						style: {
-							height: contentHeight,
-							backgroundColor: Color.bgPrimary.toHex(),
-						},
-						scaleMode: 'fit',
-						// eslint-disable-next-line no-undef
-						uri: sharedBundle.getVideo('demo.mp4'),
-						enableControls: false,
-						loop: true,
-					},
-				),
-			);
-		}
-
-		renderContentWrapper(content)
-		{
-			return View(
+			return Area(
 				{
+					excludePaddingSide: {
+						bottom: true,
+					},
 					style: {
-						height: contentHeight,
-						borderRadius: Corner.S.toNumber(),
-						marginBottom: Indent.XL3.toNumber(),
+						alignItems: 'center',
 					},
 				},
-				content,
+				renderDemoContent(),
 			);
 		}
+
+		renderDemoImage = () => Image({
+			resizeMode: 'contain',
+			style: CONTENT_SIZE,
+			uri: QRCodeAuthComponent.getDemoImagePath(),
+		});
+
+		renderDemoVideo = () => Video({
+			style: {
+				...CONTENT_SIZE,
+				backgroundColor: Color.bgPrimary.toHex(),
+			},
+			scaleMode: 'fit',
+			uri: QRCodeAuthComponent.getDemoVideoPath(),
+			enableControls: false,
+			loop: true,
+		});
 
 		getStepsGuide()
 		{
@@ -397,7 +353,7 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 				BBCodeText({
 					size: 2,
 					color: Color.base2,
-					value: Loc.getMessage('STEP_PRESS_SELF_HOSTED'),
+					value: Loc.getMessage('STEP_PRESS_SELF_HOSTED_MSGVER_2'),
 				}),
 				this.renderRoundedQRView(),
 			);
@@ -417,8 +373,8 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 				{
 					style: {
 						position: 'relative',
-						width: 24,
-						height: 24,
+						width: 22,
+						height: 22,
 						borderWidth: 1,
 						alignItems: 'center',
 						justifyContent: 'center',
@@ -471,9 +427,10 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 				navigationBarColor: Color.bgSecondary.toHex(),
 				title: Loc.getMessage('STEP_CAMERA_TITLE'),
 				onReady: (layout) => {
-					const { redirectUrl } = this.props;
+					const { redirectUrl, analyticsSection } = this.props;
 					const component = new QRCodeScannerComponent({
 						redirectUrl,
+						analyticsSection,
 						ui: layout,
 					});
 
@@ -481,6 +438,32 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 				},
 			});
 		};
+
+		/**
+		 * @returns {string}
+		 */
+		static getDemoImagePath()
+		{
+			return QRCodeAuthComponent.getContentPath('images', DEMO_CONTENT.image);
+		}
+
+		/**
+		 * @returns {string}
+		 */
+		static getDemoVideoPath()
+		{
+			return QRCodeAuthComponent.getContentPath('videos', DEMO_CONTENT.video);
+		}
+
+		/**
+		 * @param {string} folder
+		 * @param {string} name
+		 * @returns {string}
+		 */
+		static getContentPath(folder, name)
+		{
+			return `${currentDomain}${pathToExtension}/${folder}/${AppTheme.id}/${name}`;
+		}
 	}
 
 	module.exports = {

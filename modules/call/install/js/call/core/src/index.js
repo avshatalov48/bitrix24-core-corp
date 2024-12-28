@@ -9,9 +9,13 @@ import {CallController} from './controller';
 import {CallEngine, CallEvent, EndpointDirection, UserState, Provider, CallType, CallState} from './engine/engine';
 import {Hardware} from './hardware';
 import Util from './util';
+import { CallAI } from './call_ai';
 import {VideoStrategy} from './video_strategy';
 import {View} from './view/view';
+import { CopilotPopup } from './view/copilot-popup';
 import {WebScreenSharePopup} from './web_screenshare_popup';
+import { UserListPopup } from 'call.component.user-list-popup';
+import { UserList } from 'call.component.user-list';
 import 'loader';
 import 'resize_observer';
 import 'webrtc_adapter';
@@ -41,6 +45,10 @@ export {
 	VideoStrategy,
 	View,
 	WebScreenSharePopup,
+	UserListPopup,
+	CopilotPopup,
+	UserList,
+	CallAI,
 };
 
 // compatibility

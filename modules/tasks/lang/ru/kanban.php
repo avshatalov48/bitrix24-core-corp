@@ -73,3 +73,6 @@ $MESS["TASKS_SCRUM_KANBAN_PARENT_RENEW_MESSAGE"] = "Возобновлена р�
 $MESS["TASKS_KANBAN_ITEM_STORY_POINTS_TITLE"] = "Стори Поинты";
 $MESS['TASKS_KANBAN_POPUP_SETTINGS_TITLE'] = 'Настроить карточку просмотра';
 $MESS['TASKS_KANBAN_POPUP_AT_LEAST_ONE_FIELD'] = 'В форме должно быть хотя бы одно поле';
+$MESS['TASKS_KANBAN_COLLAB_NOTIFY_HEADER'] = 'Недостаточно прав на настройку стадий';
+$MESS['TASKS_KANBAN_COLLAB_NOTIFY_TEXT'] = 'Попросите владельца коллабы добавить или изменить стадии канбана';
+$MESS['TASKS_KANBAN_COLLAB_NOTIFY_BUTTON'] = 'Понятно';

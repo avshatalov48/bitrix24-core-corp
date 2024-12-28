@@ -69,7 +69,7 @@
 	        box-sizing: border-box;
 	padding: 56px 65px 60px 65px;
 	background: #0E1622;
-	background-image: url('../../../images/pattern-white.png'), url('../../../images/highlights.png');
+	background-image: url('../../../images/pattern-white.png'), url('../../../images/highlights-v2.png');
 	background-position: top right, center;
 	background-repeat: repeat, no-repeat;
 	background-size: auto, cover;
@@ -620,7 +620,7 @@
 
 .bx-messenger-videocall-wrap {
 	background: #0E1622;
-	background-image: url('../../../images/pattern-white-op.png'), url('../../../images/highlights.png');
+	background-image: url('../../../images/pattern-white-op-v2.png'), url('../../../images/highlights-v2.png');
 	background-position: top right, center;
 	background-repeat: repeat, no-repeat;
 	background-size: auto, cover;
@@ -637,6 +637,17 @@
 	-webkit-box-pack: justify;
 	    -ms-flex-pack: justify;
 	        justify-content: space-between;
+	-webkit-transition: background 0.25s linear;
+	-o-transition: background 0.25s linear;
+	transition: background 0.25s linear;
+}
+
+.bx-messenger-videocall-wrap-with-copilot {
+	background: #241A4A;
+	background-image: url('data:image/png;base64,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'), url('../../../images/highlights-copilot.png');
+	background-position: top right, center;
+	background-repeat: repeat, no-repeat;
+	background-size: auto, cover;
 }
 
 .bx-messenger-videocall-top-panel {
@@ -752,7 +763,7 @@
 	height: 24px;
 	margin-left: 14px;
 	border-radius: 12px;
-	background-color: #053C69;
+	background: rgba(0, 145, 227, 0.28);
 	overflow: hidden;
 }
 .bx-messenger-videocall-top-participants-inner {
@@ -1330,8 +1341,8 @@
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
-	-ms-flex-preferred-size: 33%;
-	    flex-basis: 33%;
+	-ms-flex-preferred-size: 30%;
+	    flex-basis: 30%;
 	height: 100%;
 	-webkit-box-pack: start;
 	    -ms-flex-pack: start;
@@ -1353,16 +1364,16 @@
 	gap: 10px;
 	-ms-flex-negative: 0;
 	    flex-shrink: 0;
-	-ms-flex-preferred-size: 33%;
-	    flex-basis: 33%;
+	-ms-flex-preferred-size: 40%;
+	    flex-basis: 40%;
 	height: 100%;
 }
 .bx-messenger-videocall-panel-inner-right {
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
-	-ms-flex-preferred-size: 33%;
-	    flex-basis: 33%;
+	-ms-flex-preferred-size: 30%;
+	    flex-basis: 30%;
 	height: 100%;
 	-webkit-box-pack: end;
 	    -ms-flex-pack: end;
@@ -1863,6 +1874,10 @@
 	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' fill='none'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M24.664 14.082c0 5.844-4.738 10.582-10.582 10.582S3.5 19.926 3.5 14.082 8.238 3.5 14.082 3.5s10.582 4.738 10.582 10.582zm-2.293 0a8.288 8.288 0 11-16.576 0 8.288 8.288 0 0116.576 0zM14.08 18.7a4.619 4.619 0 100-9.238 4.619 4.619 0 000 9.238z' fill='%23EDEEF0'/%3E%3C/svg%3E");
 }
 
+.bx-messenger-videocall-panel-icon-copilot {
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='28' height='28' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d_2105_370426)' fill='%23fff' fill-opacity='.9'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M14.001 20.122c3.358 0 6.08-2.74 6.08-6.118 0-3.38-2.722-6.119-6.08-6.119-3.357 0-6.08 2.74-6.08 6.119 0 3.379 2.722 6.118 6.08 6.118zm-.971-10.7a.17.17 0 00-.32 0l-.605 1.646c-.172.469-.54.838-1.005 1.012l-1.635.609a.172.172 0 000 .321l1.635.609c.466.173.833.543 1.005 1.011l.605 1.646a.17.17 0 00.32 0l.605-1.646c.172-.468.539-.838 1.005-1.011l1.635-.609a.172.172 0 000-.321l-1.635-.61a1.707 1.707 0 01-1.005-1.01l-.605-1.647zm3.474 4.757a.098.098 0 00-.184 0l-.35.95a.986.986 0 01-.58.585l-.946.352a.1.1 0 000 .186l.945.352c.27.1.481.313.58.584l.35.951a.098.098 0 00.185 0l.35-.951c.1-.27.311-.484.58-.584l.945-.352a.1.1 0 000-.186l-.945-.352a.986.986 0 01-.58-.584l-.35-.951z'/%3E%3Cpath d='M22.75 14.375c.596.026 1.066.536.976 1.131-.72 4.754-4.8 8.395-9.725 8.395-5.433 0-9.838-4.432-9.838-9.9 0-5.469 4.405-9.901 9.838-9.901a9.77 9.77 0 016.7 2.65c.438.411.384 1.106-.07 1.5-.453.392-1.133.334-1.584-.062a7.613 7.613 0 00-5.046-1.906c-4.236 0-7.67 3.456-7.67 7.72 0 4.263 3.434 7.72 7.67 7.72 3.757 0 6.883-2.72 7.542-6.31.11-.592.607-1.063 1.206-1.037z'/%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_d_2105_370426' x='-2' y='-1' width='32' height='32' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.12 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_2105_370426'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_2105_370426' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
+}
+
 /* TODO: Change */
 .bx-messenger-videocall-panel-icon-document {
 	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' fill='none'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.118 5.02c-.645 0-1.167.523-1.167 1.167v15.717c0 .644.522 1.167 1.167 1.167h11.764c.644 0 1.167-.523 1.167-1.167v-10.84c0-.586-.22-1.15-.618-1.581l-3.248-3.71a2.333 2.333 0 00-1.716-.752h-7.35zm2.125 4.855a.925.925 0 000 1.852h6.832a.925.925 0 000-1.852h-6.832zm0 3.517a.925.925 0 000 1.853h6.832a.925.925 0 000-1.853h-6.832zm-.921 4.397c0-.509.412-.926.921-.926h4.833a.925.925 0 010 1.852h-4.833a.925.925 0 01-.921-.926z' fill='%23EDEEF0'/%3E%3C/svg%3E");
@@ -1917,6 +1932,12 @@
 .bx-messenger-videocall-panel-item.active .bx-messenger-videocall-panel-background-record {
 	background-color: rgba(244, 67, 62, 0.40);
 }
+
+.bx-messenger-videocall-panel-item.active .bx-messenger-videocall-panel-background-copilot {
+	background: -o-radial-gradient(-3.11% -15.22%, 109.46% 109.46%, #C8A9F8 0%, #711BF9 100%);
+	background: radial-gradient(109.46% 109.46% at -3.11% -15.22%, #C8A9F8 0%, #711BF9 100%);
+}
+
 
 .bx-messenger-videocall-panel-item.active .bx-messenger-videocall-panel-background-floor-request {
 	background-color: rgba(255, 195, 77, .25);

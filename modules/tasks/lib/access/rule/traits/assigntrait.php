@@ -70,14 +70,6 @@ trait AssignTrait
 			return true;
 		}
 
-		if (
-			$responsible->isExtranet()
-			&& !$this->isMemberOfUserGroups($director->getUserId(), $responsibleId)
-		)
-		{
-			return false;
-		}
-
 		// can assign to himself or responsible is not changed
 		if (
 			$responsibleId === $director->getUserId()
@@ -85,6 +77,14 @@ trait AssignTrait
 		)
 		{
 			return true;
+		}
+
+		if (
+			$responsible->isExtranet()
+			&& !$this->isMemberOfUserGroups($director->getUserId(), $responsibleId, true)
+		)
+		{
+			return false;
 		}
 
 		// can assign task to group members
@@ -99,7 +99,7 @@ trait AssignTrait
 		// extranet user can assign tasks to any member of group which contains both users
 		if (
 			$director->isExtranet()
-			&& $this->isMemberOfUserGroups($director->getUserId(), $responsibleId)
+			&& $this->isMemberOfUserGroups($director->getUserId(), $responsibleId, true)
 		)
 		{
 			return true;
@@ -152,9 +152,10 @@ trait AssignTrait
 		return false;
 	}
 
-	private function isMemberOfUserGroups(int $userId, int $responsibleId): bool
+	private function isMemberOfUserGroups(int $userId, int $responsibleId, bool $includeInvited = false): bool
 	{
-		return Group::usersHasCommonGroup($userId, $responsibleId);
+		// todo: use \Bitrix\Socialnetwork\Helper\Workgroup::isUsersHaveCommonGroups
+		return Group::usersHasCommonGroup($userId, $responsibleId, $includeInvited);
 	}
 
 	private function isInGroup(int $userId, int $groupId, int $responsibleId): bool

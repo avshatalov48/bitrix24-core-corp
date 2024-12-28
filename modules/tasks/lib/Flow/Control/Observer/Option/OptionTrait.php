@@ -2,23 +2,32 @@
 
 namespace Bitrix\Tasks\Flow\Control\Observer\Option;
 
-use Bitrix\Tasks\Flow\Flow;
+use Bitrix\Tasks\Flow\Distribution\FlowDistributionType;
 
 trait OptionTrait
 {
 	private function hasManualDistributor(): bool
 	{
 		return
-			$this->flowEntity->getDistributionType() === Flow::DISTRIBUTION_TYPE_MANUALLY
-			&& $this->command->manualDistributorId > 0
+			$this->flowEntity->getDistributionType() === FlowDistributionType::MANUALLY->value
+			&& isset($this->command->responsibleList[0])
+			&& $this->command->responsibleList[0] > 0
 		;
 	}
 
-	private function hasQueue(): bool
+	private function hasResponsibleQueue(): bool
 	{
 		return
-			$this->flowEntity->getDistributionType() === Flow::DISTRIBUTION_TYPE_QUEUE
-			&& !empty($this->command->responsibleQueue)
+			$this->flowEntity->getDistributionType() === FlowDistributionType::QUEUE->value
+			&& !empty($this->command->responsibleList)
+		;
+	}
+
+	private function hasResponsibleHimself(): bool
+	{
+		return
+			$this->flowEntity->getDistributionType() === FlowDistributionType::HIMSELF->value
+			&& !empty($this->command->responsibleList)
 		;
 	}
 }

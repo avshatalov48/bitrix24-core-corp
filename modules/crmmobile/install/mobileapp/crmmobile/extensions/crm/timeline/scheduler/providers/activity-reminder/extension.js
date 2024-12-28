@@ -10,7 +10,6 @@ jn.define('crm/timeline/scheduler/providers/activity-reminder', (require, export
 	const { getEntityMessage } = require('crm/loc');
 	const { TimelineSchedulerActivityProvider } = require('crm/timeline/scheduler/providers/activity');
 
-	const EXTENSION_IMAGE_PATH = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/timeline/scheduler/providers/activity-reminder/images`;
 	const isAndroid = Application.getPlatform() === 'android';
 
 	/**

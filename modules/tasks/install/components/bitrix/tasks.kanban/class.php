@@ -1385,7 +1385,7 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 			'date_deadline_parse' => ParseDateTime($item['DEADLINE']),
 			'date_start' => $item['DATE_START'] != '' ? new DateTime($item['DATE_START']) : '',
 			'date_view' => new DateTime($item['CREATED_DATE']),
-			'date_day_end' => mktime((int)($endDayTime - $this->timeOffset / 3600), 0, 0),
+			'date_day_end' => mktime((int)((int)$endDayTime - $this->timeOffset / 3600), 0, 0),
 			// counts
 			'count_comments' => 0,
 			'count_files' => 0,
@@ -1599,7 +1599,6 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 			{
 				continue;
 			}
-
 
 			// todo have subtask then not get
 			if ($column['ADDITIONAL_FILTER'])
@@ -1874,7 +1873,11 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 			&& $params['SET_TITLE'] === 'Y'
 		)
 		{
-			if (
+			if ($this->arResult['IS_COLLAB'])
+			{
+				$this->application->setTitle(Loc::getMessage('TASK_LIST_TITLE'));
+			}
+			elseif (
 				isset($params['PROJECT_VIEW'])
 				&& $params['PROJECT_VIEW'] === 'Y'
 			)
@@ -2146,6 +2149,14 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 		{
 			$this->arResult['ADMINS'] = $this->getAdmins();
 		}
+
+		$this->arResult['IS_COLLAB'] = isset($this->arResult['CONTEXT']) && $this->arResult['CONTEXT'] === Context::getCollab();
+		if ($this->arResult['IS_COLLAB'])
+		{
+			$group = SocialNetwork\Group::getGroupData((int) $this->arParams['GROUP_ID']);
+			$this->arResult["COLLAB_NAME"] = $group["NAME"] ?? '';
+			$this->arResult["COLLAB_IMAGE"] = $group["IMAGE"] ?? '';
+		}
 	}
 
 	private function processTours(): array
@@ -2320,7 +2331,7 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 		}
 
 		// if need converter, check current task count
-		if ($this->arResult['MP_CONVERTER'] > 0)
+		if (isset($this->arResult['MP_CONVERTER']) && $this->arResult['MP_CONVERTER'] > 0)
 		{
 			$res = \CTasks::GetList(array(
 				//
@@ -4349,14 +4360,14 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 			);
 		}
 	}
-	
+
 	private function getStageIdsWithTasks(array $stages): array
 	{
 		$stagesWithTasks = array_filter($stages, static fn (array $column): bool => (int)$column['total'] > 0 || $column['type'] === StagesTable::SYS_TYPE_NEW);
 		$stagesWithTasks = array_column($stagesWithTasks, 'id');
 
 		Collection::normalizeArrayValuesByInt($stagesWithTasks, false);
-		
+
 		return $stagesWithTasks;
 	}
 

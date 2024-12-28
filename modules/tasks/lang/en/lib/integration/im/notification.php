@@ -1,7 +1,10 @@
 <?php
-$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_F"] = "Flow [url=/company/personal/user/#RECEPIENT_ID#/tasks/flow/?apply_filter=Y&ID_numsel=exact&ID_from=#FLOW_ID#]#FLOW_NAME#[/url]: added task #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Select a person to assign the task to.";
-$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_M"] = "Flow [url=/company/personal/user/#RECEPIENT_ID#/tasks/flow/?apply_filter=Y&ID_numsel=exact&ID_from=#FLOW_ID#]#FLOW_NAME#[/url]: added task #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Select a person to assign the task to.";
-$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_N"] = "Flow [url=/company/personal/user/#RECEPIENT_ID#/tasks/flow/?apply_filter=Y&ID_numsel=exact&ID_from=#FLOW_ID#]#FLOW_NAME#[/url]: added task #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Select a person to assign the task to.";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_HIMSELF_DISTRIBUTION_F"] = "Task #TASK_URL_BEGIN##TASK_TITLE##URL_END# has been added to the flow [url=#FLOW_URL#]#FLOW_NAME#[/url]. Please accept the task.";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_HIMSELF_DISTRIBUTION_M"] = "Task #TASK_URL_BEGIN##TASK_TITLE##URL_END# has been added to the flow [url=#FLOW_URL#]#FLOW_NAME#[/url]. Please accept the task.";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_HIMSELF_DISTRIBUTION_N"] = "Task #TASK_URL_BEGIN##TASK_TITLE##URL_END# has been added to the flow [url=#FLOW_URL#]#FLOW_NAME#[/url]. Please accept the task.";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_F"] = "Flow [url=#FLOW_URL#]#FLOW_NAME#[/url]: added task #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Select a person to assign the task to.";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_M"] = "Flow [url=#FLOW_URL#]#FLOW_NAME#[/url]: added task #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Select a person to assign the task to.";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_N"] = "Flow [url=#FLOW_URL#]#FLOW_NAME#[/url]: added task #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Select a person to assign the task to.";
 $MESS["TASKS_COMMENT_MESSAGE_ADD_F"] = "added a comment to task #TASK_URL_BEGIN##TASK_TITLE##URL_END#.";
 $MESS["TASKS_COMMENT_MESSAGE_ADD_M"] = "added a comment to task #TASK_URL_BEGIN##TASK_TITLE##URL_END#.";
 $MESS["TASKS_COMMENT_MESSAGE_ADD_N"] = "added a comment to task #TASK_URL_BEGIN##TASK_TITLE##URL_END#.";
@@ -191,10 +194,14 @@ $MESS["TASKS_TASK_EXPIRED_AUDITOR_MESSAGE_N"] = "Task #TASK_URL_BEGIN##TASK_TITL
 $MESS["TASKS_TASK_EXPIRED_AUDITOR_MESSAGE_PUSH_N"] = "Task #TASK_TITLE# is overdue.";
 $MESS["TASKS_TASK_EXPIRED_CREATOR_MESSAGE_N"] = "Task #TASK_URL_BEGIN##TASK_TITLE##URL_END# is overdue.";
 $MESS["TASKS_TASK_EXPIRED_CREATOR_MESSAGE_PUSH_N"] = "Task #TASK_TITLE# is overdue.";
+$MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_MESSAGE_HIDE_EFFICIENCY_PART_N"] = "Task #TASK_URL_BEGIN##TASK_TITLE##URL_END# is overdue.";
+$MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_MESSAGE_HIDE_EFFICIENCY_PART_PUSH_N"] = "Task #TASK_TITLE# is overdue.";
 $MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_MESSAGE_N"] = "Task #TASK_URL_BEGIN##TASK_TITLE##URL_END# is now overdue; your performance has been decreased. Finish the task or extend the deadline.";
 $MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_MESSAGE_PUSH_N"] = "Task #TASK_TITLE# is overdue.";
 $MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_SAME_CREATOR_MESSAGE_N"] = "Task #TASK_URL_BEGIN##TASK_TITLE##URL_END# is overdue.";
 $MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_SAME_CREATOR_MESSAGE_PUSH_N"] = "Task #TASK_TITLE# is overdue.";
+$MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE_HIDE_EFFICIENCY_PART_N"] = "Task #TASK_URL_BEGIN##TASK_TITLE##URL_END# will be overdue tomorrow at #DEADLINE_TIME#.";
+$MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE_HIDE_EFFICIENCY_PART_PUSH_N"] = "Task #TASK_TITLE# is almost overdue.";
 $MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE_N"] = "Task #TASK_URL_BEGIN##TASK_TITLE##URL_END# will be overdue tomorrow at #DEADLINE_TIME#. Finish the task or extend the deadline within 24 hours. Otherwise, your performance will decrease.";
 $MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE_PUSH_N"] = "Task #TASK_TITLE# is almost overdue.";
 $MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_SAME_CREATOR_MESSAGE_N"] = "Task #TASK_URL_BEGIN##TASK_TITLE##URL_END# will be overdue tomorrow at #DEADLINE_TIME#.";

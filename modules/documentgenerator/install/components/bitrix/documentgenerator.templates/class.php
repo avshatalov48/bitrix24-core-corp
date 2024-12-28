@@ -756,7 +756,10 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 		$actionName = $request->getPost('action_button_' . $this->gridId);
 		if ($actionName === 'delete')
 		{
-			foreach ($request->getPost("ID") as $id)
+			$ids = $request->getPost('ID');
+			\Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($ids);
+
+			foreach ($ids as $id)
 			{
 				if ($userPermissions->canModifyTemplate($id))
 				{

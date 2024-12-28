@@ -321,7 +321,7 @@ $APPLICATION->ShowViewContent('im-fullscreen');
 		<?
 		$counters = $isCompositeMode ? \CUtil::PhpToJSObject($arAllItemsCounters) : '{}';
 		?>
-		BX.Intranet.DescktopLeftMenu = new BX.Intranet.DescktopMenu(<?=\CUtil::PhpToJSObject($arAllItemsCounters)?>);
+		BX.Intranet.DescktopLeftMenu = new BX.Intranet.DesktopMenu(<?=\CUtil::PhpToJSObject($arAllItemsCounters)?>);
 		BX.Intranet.DescktopLeftMenu.updateCounters(<?=$counters?>);
 	});
 </script>

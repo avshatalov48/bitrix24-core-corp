@@ -224,7 +224,7 @@ class Rest extends \IRestService
 				);
 			}
 
-			$result = $tmUser->CloseDay($timeInfo['TIME'], trim($query['REPORT']));
+			$result = $tmUser->CloseDay($timeInfo['TIME'], trim($query['REPORT'] ?? ''));
 		}
 		else
 		{
@@ -834,7 +834,9 @@ class Rest extends \IRestService
 	{
 		global $DB;
 
-		$date = \DateTime::createFromFormat(\DateTime::ATOM, $isoTime);
+		$correctedIsoTime = str_replace(' ', '+', trim($isoTime));
+
+		$date = \DateTime::createFromFormat(\DateTime::ATOM, $correctedIsoTime);
 		if(!$date)
 		{
 			throw new RestException(

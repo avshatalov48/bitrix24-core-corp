@@ -11,9 +11,11 @@
 namespace Bitrix\Tasks\Util;
 
 use Bitrix\Main;
+use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\OperationTable;
+use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\TaskOperationTable;
 use Bitrix\Main\UserTable;
 use Bitrix\Tasks\Integration\Extranet;
@@ -89,9 +91,9 @@ final class User
 		}
 
 		$user = UserTable::getList(array('filter' => array(
-			'=ID' => $userId
+			'=ID' => $userId,
 		), 'select' => array(
-			'ID', 'ACTIVE'
+			'ID', 'ACTIVE',
 		)))->fetch();
 
 		return $user['ACTIVE'] == 'Y';
@@ -314,16 +316,28 @@ final class User
 			$filter['!=EXTERNAL_AUTH_ID'] = $externalAuthIds;
 		}
 
-		$res = UserTable::getList([
-			'select' => $select,
-			'filter' => $filter,
-		]);
+		$sqlHelper = Application::getConnection()->getSqlHelper();
+		$orderField = new ExpressionField(
+			'ID_SEQUENCE',
+			$sqlHelper->getOrderByIntField('%s', $parsed, false),
+			array_fill(0, count($parsed), 'ID')
+		);
+
+		$query = UserTable::query()
+			->setSelect($select)
+			->setFilter($filter)
+			->registerRuntimeField($orderField)
+			->setOrder($orderField->getName())
+		;
+
+		$res = $query->exec();
 		while ($user = $res->fetch())
 		{
 			$user['IS_EXTRANET_USER'] = Extranet\User::isExtranet($user);
 			$user['IS_EMAIL_USER'] = Mail\User::isEmail($user);
 			$user['IS_CRM_EMAIL_USER'] = ($user['IS_EMAIL_USER'] && !empty($user['UF_USER_CRM_ENTITY']));
 			$user['IS_NETWORK_USER'] = (isset($user['EXTERNAL_AUTH_ID']) && $user['EXTERNAL_AUTH_ID'] === Replica\User::getExternalCode());
+			$user['IS_COLLABER_USER'] = Extranet\User::isCollaber($user['ID']);
 
 			$users[$user['ID']] = $user;
 		}
@@ -372,6 +386,7 @@ final class User
 		$keys[] = 'IS_CRM_EMAIL_USER';
 		$keys[] = 'IS_EMAIL_USER';
 		$keys[] = 'IS_NETWORK_USER';
+		$keys[] = 'IS_COLLABER_USER';
 		$safe = array();
 
 		foreach($keys as $key)
@@ -509,7 +524,7 @@ final class User
 				'filter' => array(
 					'=TASK.MODULE_ID' => 'tasks',
 					'=OPERATION.MODULE_ID' => 'tasks',
-				)
+				),
 			));
 			while($item = $res->fetch())
 			{
@@ -589,7 +604,7 @@ final class User
 				'filter' => array(
 					'=MODULE_ID' => 'tasks',
 					'=BINDING' => $entityName,
-				)
+				),
 			));
 			$operations = array();
 			while($item = $res->fetch())
@@ -694,6 +709,43 @@ final class User
         }
 
 	    return $users[$userID];
+	}
+
+	public static function getAbsences(Main\Type\DateTime $from, Main\Type\DateTime $to, int ...$userIds): array
+	{
+		if (!Loader::includeModule('intranet'))
+		{
+			return [];
+		}
+
+		$usersAbsence = \CIntranetUtils::GetAbsenceData([
+			'USERS' => $userIds,
+			'DATE_START' => $from,
+			'DATE_FINISH' => $to,
+			'PER_USER' => true,
+		]);
+
+		$result = [];
+		foreach ($usersAbsence as $userId => $absenceData)
+		{
+			foreach ($absenceData as $event)
+			{
+				$from = Main\Type\DateTime::tryParse($event['DATE_FROM'] ?? '');
+				$to = Main\Type\DateTime::tryParse($event['DATE_TO'] ?? '');
+
+				if (null === $from || null === $to)
+				{
+					continue;
+				}
+
+				$result[$userId][] = [
+					'from' => $from,
+					'to' => $to,
+				];
+			}
+		}
+
+		return $result;
 	}
 
 	/**

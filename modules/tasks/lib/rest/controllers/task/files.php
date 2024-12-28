@@ -7,6 +7,7 @@ use Bitrix\Main\Error;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Rest\Controllers\Base;
+use CAdminException;
 use CTaskItem;
 
 class Files extends Base
@@ -47,9 +48,16 @@ class Files extends Base
 			global $APPLICATION;
 
 			$exception = $APPLICATION->GetException();
-			foreach ($exception->GetMessages() as $message)
+			if ($exception instanceof CAdminException)
 			{
-				$this->errorCollection->add([new Error($message['text'])]);
+				foreach ($exception->GetMessages() as $message)
+				{
+					$this->errorCollection->add([new Error($message['text'])]);
+				}
+			}
+			else
+			{
+				$this->errorCollection->add([new Error('Unexpected error')]);
 			}
 
 			return null;

@@ -477,17 +477,17 @@ export class SprintCompletionForm extends EventEmitter
 
 		plannedSprints.forEach((sprint: PlannedSprint) => {
 			sprintsOptions += `<option value="${sprint.id}">${Text.encode(sprint.name)}</option>`;
-		})
+		});
 
 		return Tag.render`
 			<div class="tasks-scrum__side-panel-completion--info-select ${uiClasses}">
 				<div class="ui-ctl-after ui-ctl-icon-angle"></div>
 				<select class="ui-ctl-element">
-					<option value="backlog">
-						${Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_SELECTOR_BACKLOG')}
-					</option>
 					<option value="0">
 						${Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_SELECTOR_SPRINT')}
+					</option>
+					<option value="backlog">
+						${Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_SELECTOR_BACKLOG')}
 					</option>
 					${sprintsOptions}
 				</select>

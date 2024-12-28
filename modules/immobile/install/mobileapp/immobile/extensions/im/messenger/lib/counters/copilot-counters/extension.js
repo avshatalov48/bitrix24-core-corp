@@ -2,11 +2,12 @@
  * @module im/messenger/lib/counters/copilot-counters
  */
 jn.define('im/messenger/lib/counters/copilot-counters', (require, exports, module) => {
+	const { Type } = require('type');
+
 	const { BaseCounters } = require('im/messenger/lib/counters/lib/base-counters');
 	const { Counter } = require('im/messenger/lib/counters/lib/counter');
 	const { LoggerManager } = require('im/messenger/lib/logger');
-	const { Type } = require('type');
-	const logger = LoggerManager.getInstance().getLogger('copilot-counters');
+	const logger = LoggerManager.getInstance().getLogger('counters--copilot');
 
 	/**
 	 * @class ChatCounters

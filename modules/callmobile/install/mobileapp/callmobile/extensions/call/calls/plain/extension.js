@@ -70,8 +70,9 @@
 			});
 
 			this.localStream = null;
-			this.videoEnabled = !!params.videoEnabled;
-			this.muted = params.muted === true;
+			this.videoEnabled = Boolean(params.videoEnabled);
+			this.muted = Boolean(params.muted);
+			this.isCopilotActive = Boolean(params.isCopilotActive);
 
 			/** @var {Peer[]} */
 			this.peers = [];
@@ -256,33 +257,39 @@
 			}
 
 			this.videoEnabled = videoEnabled;
-			if (this.ready)
+			if (this.videoEnabled)
 			{
-				if (this.videoEnabled)
+				if (this.localStream?.getVideoTracks().length > 0)
 				{
-					if (this.localStream.getVideoTracks().length > 0)
-					{
-						MediaDevices.startCapture();
-						this.peers.forEach(peer => peer.replaceMedia());
-						this.eventEmitter.emit(BX.Call.Event.onLocalMediaReceived, [this.localStream]);
-					}
-					else
-					{
-						this.getLocalMedia().then(() =>
-						{
-							this.peers.forEach(peer => peer.replaceMedia());
-						});
-					}
+					MediaDevices.startCapture();
+					this.eventEmitter.emit(BX.Call.Event.onLocalMediaReceived, [this.localStream]);
+
+					this.replaceAllMedia();
 				}
 				else
 				{
-					MediaDevices.stopCapture();
-					this.peers.forEach(peer => peer.replaceMedia());
-					this.eventEmitter.emit(BX.Call.Event.onLocalMediaStopped);
+					this.getLocalMedia().then(() =>
+					{
+						this.replaceAllMedia();
+					});
 				}
+			}
+			else
+			{
+				MediaDevices.stopCapture();
+				this.eventEmitter.emit(BX.Call.Event.onLocalMediaStopped);
+				this.replaceAllMedia();
 			}
 
 			this.signaling.sendCameraState(this.users, this.videoEnabled);
+		}
+
+		replaceAllMedia()
+		{
+			if (this.ready)
+			{
+				this.peers.forEach(peer => peer.replaceMedia());
+			}
 		}
 
 		setVideoPaused(videoPaused)

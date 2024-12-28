@@ -3,7 +3,6 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Crm\UserField\Types\StatusType;
-use Bitrix\Main\Web\Json;
 use Bitrix\Main\Page\Asset;
 
 if($this->getComponent()->isMobileMode())
@@ -72,7 +71,7 @@ else
 		$arResult['attrList'][] = $attrList;
 	}
 
-	if ($arResult['userField']['MULTIPLE'] !== 'Y')
+	if ($arResult['userField']['MULTIPLE'] !== 'Y' && isset($startValue[0]))
 	{
 		$startValue = $startValue[0];
 	}

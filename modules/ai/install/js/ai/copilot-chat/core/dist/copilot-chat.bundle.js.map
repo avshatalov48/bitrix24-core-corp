@@ -1,0 +1,1 @@
+{"version":3,"file":"copilot-chat.bundle.js","sources":["../src/copilot-chat.js"],"sourcesContent":["import { CopilotChat as CopilotChatComponent } from 'ai.copilot-chat.ui';\n\nexport class CopilotChat\n{\n\t#chatInstance: CopilotChatComponent;\n}\n"],"names":["CopilotChat"],"mappings":";;;;;;;CAAyE;AAEzE,CAAO,MAAMA,WAAW,CACxB;GAAA;KAAA;OAAA;OAAA;;;CAEA;;;;;;;;"}

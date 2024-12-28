@@ -51,8 +51,11 @@ create table if not exists b_sign_document
 	EXTERNAL_DATE_CREATE datetime null default null,
 	PROVIDER_CODE varchar(255) null default null,
 	TEMPLATE_ID bigint unsigned null default null,
+	CHAT_ID bigint unsigned null default null,
 	CREATED_FROM_DOCUMENT_ID int null default null,
 	INITIATED_BY_TYPE tinyint default 0,
+	HCMLINK_COMPANY_ID int(18) unsigned null default null,
+	DATE_STATUS_CHANGED datetime null default null,
 	PRIMARY KEY(ID),
 	INDEX IX_B_ENTITY (ENTITY_TYPE, ENTITY_ID),
 	INDEX IX_B_HOST (HOST),
@@ -99,6 +102,10 @@ create table if not exists b_sign_member
 	REMINDER_PLANNED_NEXT_SEND_DATE datetime null default null,
 	REMINDER_COMPLETED tinyint default 0,
 	REMINDER_START_DATE datetime null default null,
+	EMPLOYEE_ID int null default null,
+	HCMLINK_JOB_ID int null default null,
+	DATE_SEND datetime null default null,
+	DATE_STATUS_CHANGED datetime null default null,
 	PRIMARY KEY(ID),
 	INDEX IX_B_DOCUMENT_ID (DOCUMENT_ID),
 	INDEX IX_B_HASH (HASH)
@@ -232,6 +239,46 @@ CREATE TABLE IF NOT EXISTS `b_sign_document_template`
 	`MODIFIED_BY_ID` INT NULL,
 	`DATE_CREATE` TIMESTAMP NOT NULL,
 	`DATE_MODIFY` TIMESTAMP NULL,
+	`VISIBILITY` TINYINT NOT NULL DEFAULT 0,
 	PRIMARY KEY (`ID`),
 	UNIQUE INDEX `UK_B_SIGN_DOCUMENT_TEMPLATE_UID` (`UID`)
+);
+
+CREATE TABLE IF NOT EXISTS b_sign_node_sync
+(
+	ID bigint unsigned not null auto_increment,
+	DOCUMENT_ID int(18) not null,
+	NODE_ID bigint unsigned not null,
+	IS_FLAT TINYINT(1) unsigned not null,
+	STATUS tinyint(1) unsigned not null,
+	PAGE int unsigned not null,
+	DATE_CREATE datetime,
+	DATE_MODIFY datetime,
+	PRIMARY KEY (ID),
+	UNIQUE INDEX IX_B_SIGN_NODE_SYNC_DOCUMENT_NODE (DOCUMENT_ID, NODE_ID, IS_FLAT),
+	INDEX IX_B_SIGN_NODE_SYNC_DOCUMENT_STATUS (DOCUMENT_ID, STATUS)
+);
+
+CREATE TABLE IF NOT EXISTS b_sign_member_node
+(
+	MEMBER_ID bigint unsigned not null,
+	NODE_SYNC_ID bigint unsigned not null,
+	USER_ID bigint unsigned not null,
+	DOCUMENT_ID int(18) not null,
+	DATE_CREATE datetime,
+	PRIMARY KEY (MEMBER_ID, NODE_SYNC_ID),
+	INDEX IX_B_SIGN_MEMBER_NODE_DOCUMENT_NODE (DOCUMENT_ID, NODE_SYNC_ID)
+);
+
+
+CREATE TABLE IF NOT EXISTS `b_sign_field_value`
+(
+	`ID` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	`MEMBER_ID` BIGINT UNSIGNED NOT NULL,
+	`FIELD_NAME` VARCHAR(255) NOT NULL,
+	`VALUE` TEXT not null,
+	`DATE_CREATE` DATETIME NOT NULL,
+	`DATE_MODIFY` DATETIME NULL,
+	PRIMARY KEY (`ID`),
+	UNIQUE INDEX `UK_B_SIGN_FIELD_VALUE_FIELD_NAME_MEMBER_ID` (`FIELD_NAME`, `MEMBER_ID`)
 );

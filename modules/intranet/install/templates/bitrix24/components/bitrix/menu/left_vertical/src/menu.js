@@ -128,7 +128,7 @@ export default class Menu
 		{
 			settingsSaveBtn.addEventListener('click', this.handleViewMode.bind(this));
 		}
-		this.menuContainer.querySelector(".menu-settings-btn").addEventListener('click', () => {
+		this.menuContainer.querySelector(".menu-settings-btn")?.addEventListener('click', () => {
 			this.getSettingsController().show();
 		})
 	}
@@ -186,11 +186,18 @@ export default class Menu
 		});
 	}
 
-	getSettingsController(): SettingsController
+	getSettingsController(): ?SettingsController
 	{
 		return this.cache.remember('presetController', () => {
+			const node = this.menuContainer.querySelector(".menu-settings-btn");
+
+			if (!node)
+			{
+				return null;
+			}
+
 			return new SettingsController(
-				this.menuContainer.querySelector(".menu-settings-btn"),
+				node,
 				{
 					events: {
 						onGettingSettingMenuItems: this.onGettingSettingMenuItems.bind(this),
@@ -229,7 +236,13 @@ export default class Menu
 
 	getDefaultPresetController(): PresetDefaultController
 	{
-		let shouldSendCloseEvent = true;
+		let closeEventWasProcessed = false;
+		const postponeHandler = (mode: String): Promise => {
+			const result = Backend.postponeSystemPreset(mode);
+			EventEmitter.emit(this, Options.eventName('onPresetIsPostponed'));
+
+			return result;
+		};
 
 		return this.cache.remember('defaultPresetController', () => {
 			const presetController = new PresetDefaultController(
@@ -242,7 +255,7 @@ export default class Menu
 								mode === 'personal',
 								AnalyticActions.CONFIRM,
 							);
-							shouldSendCloseEvent = false;
+							closeEventWasProcessed = true;
 
 							return Backend.setSystemPreset(mode, presetId);
 						},
@@ -252,32 +265,28 @@ export default class Menu
 								mode === 'personal',
 								AnalyticActions.LATER,
 							);
-							shouldSendCloseEvent = false;
+							closeEventWasProcessed = true;
 
-							const result = Backend.postponeSystemPreset(mode);
-							EventEmitter.emit(this, Options.eventName('onPresetIsPostponed'));
-
-							return result;
+							return postponeHandler(mode);
 						},
 						onShow: () => {
 							this.analytics.sendClose();
 						},
 						onClose: () => {
-							if (shouldSendCloseEvent)
+							if (closeEventWasProcessed !== true)
 							{
 								this.analytics.sendSetPreset(
 									presetController.getSelectedPreset(),
 									presetController.getMode() === 'personal',
 									AnalyticActions.CLOSE,
 								);
+
+								postponeHandler(presetController.getMode());
 							}
+							closeEventWasProcessed = false;
 						},
-/*
-						onShow: () => { this.isMenuMouseLeaveBlocked.push('presets-default'); },
-						onClose: () => { this.isMenuMouseLeaveBlocked.pop(); },
-*/
-					}
-				}
+					},
+				},
 			);
 
 			return presetController;
@@ -1035,11 +1044,17 @@ export default class Menu
 						menuEmployeesText.style.opacity = state.opacity / 100;
 					}
 
-					settingsIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
-					settingsIconBox.style.opacity = state.opacityRevert / 100;
+					if (settingsIconBox)
+					{
+						settingsIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
+						settingsIconBox.style.opacity = state.opacityRevert / 100;
+					}
 
-					settingsBtnText.style.transform = "translateX(" + state.translateText + "px)";
-					settingsBtnText.style.opacity = state.opacity / 100;
+					if (settingsBtnText)
+					{
+						settingsBtnText.style.transform = "translateX(" + state.translateText + "px)";
+						settingsBtnText.style.opacity = state.opacity / 100;
+					}
 
 					helpIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
 					helpIconBox.style.opacity = state.opacityRevert / 100;
@@ -1123,11 +1138,17 @@ export default class Menu
 						menuEmployeesText.style.opacity = state.opacity / 100;
 					}
 
-					settingsIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
-					settingsIconBox.style.opacity = state.opacityRevert / 100;
+					if (settingsIconBox)
+					{
+						settingsIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
+						settingsIconBox.style.opacity = state.opacityRevert / 100;
+					}
 
-					settingsBtnText.style.transform = "translateX(" + state.translateText + "px)";
-					settingsBtnText.style.opacity = state.opacity / 100;
+					if (settingsBtnText)
+					{
+						settingsBtnText.style.transform = "translateX(" + state.translateText + "px)";
+						settingsBtnText.style.opacity = state.opacity / 100;
+					}
 
 					helpIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
 					helpIconBox.style.opacity = state.opacityRevert / 100;

@@ -1,9 +1,11 @@
 <?php
 
 use Bitrix\Crm\FieldMultiTable;
+use Bitrix\Crm\UI\Toolbar\ToolbarGuide;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Security\Random;
 use Bitrix\Main\UI\Extension;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Toolbar\ButtonLocation;
@@ -144,7 +146,71 @@ class CrmToolbarComponent extends Bitrix\Crm\Component\Base
 			}
 		}
 
+		$this->addGuideToToolbar();
+
 		$this->includeComponentTemplate();
+	}
+
+	protected function addGuideToToolbar(): void
+	{
+		$guide = $this->arResult['guide'] ?? null;
+
+		if (!($guide instanceof ToolbarGuide))
+		{
+			return;
+		}
+
+		global $APPLICATION;
+		$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+		$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . '--has-toolbar-custom-html');
+
+		Toolbar::addRightCustomHtml($this->renderGuide($guide));
+	}
+
+	protected function renderGuide(ToolbarGuide $guide): string
+	{
+		$title = htmlspecialcharsbx($guide->getTitle());
+		Extension::load(['ui.manual']);
+
+		$manualCode = CUtil::JSEscape($guide->getManualCode());
+		$params = \Bitrix\Main\Web\Json::encode([
+			'manualCode' => $guide->getManualCode(),
+			'urlParams' => [
+				'utm_source' => 'portal',
+				'utm_medium' => 'referral',
+			],
+
+			// @todo is need analytics?
+			// 'analytics' => [
+			//'tool' => 'tasks',
+			//'category' => 'flows',
+			//'event' => 'flow_guide_view',
+			//'c_section' => 'tasks',
+			//'c_sub_section' => 'flows_grid',
+			//'c_element' => 'guide_button',
+			// ],
+		]);
+
+		$postfix = Random::getString(4);
+		$showManualFunctionName = 'crmToolbarShowManual_' . $manualCode . '_' . $postfix;
+
+		return <<<HTML
+			<div class="crm-toolbar__guide-btn" onclick="{$showManualFunctionName}()" data-id="crm-toolbar__guide-btn">
+				<span class="crm-toolbar__guide-btn_icon-avatar" style="--crm-toolbar__guide-logo-src: url({$guide->getNormalizedLogoPath()})">
+					<div class="crm-toolbar__guide-btn_icon">
+						<div class="ui-icon-set --play-circle" style="--ui-icon-set__icon-size: 18px; --ui-icon-set__icon-color: white;"></div>
+					</div>
+				</span>
+				<span class="crm-toolbar__guide-btn_text">{$title}</span>
+			</div>
+			<script>
+				function {$showManualFunctionName}()
+				{
+					const manual = new BX.UI.Manual.Manual($params);
+					manual.open();
+				};
+			</script>
+HTML;
 	}
 
 	protected function getInterfaceToolbarScript(): ?string

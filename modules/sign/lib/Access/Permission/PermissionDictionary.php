@@ -8,6 +8,9 @@
 
 namespace Bitrix\Sign\Access\Permission;
 
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Sign\Helper\IterationHelper;
+
 class PermissionDictionary extends \Bitrix\Main\Access\Permission\PermissionDictionary
 {
 	use PermissionName;
@@ -27,14 +30,30 @@ class PermissionDictionary extends \Bitrix\Main\Access\Permission\PermissionDict
 	public const SIGN_CRM_SMART_B2E_DOC_WRITE = 'CSBDW';
 	public const SIGN_CRM_SMART_B2E_DOC_ADD = 'CSBDA';
 
+	public static function isValid(string|int $permission): bool
+	{
+		return IterationHelper::any(self::getList(), fn($value, $id) => $permission === $id);
+	}
+
 	public static function getType($permissionId): string
 	{
 		if (!self::getName($permissionId))
 		{
 			return '';
 		}
-		
+
 		return static::TYPE_VARIABLES;
+	}
+
+	public static function getTitle($permissionId): string
+	{
+		$title = self::getPermissionTitleLocCode($permissionId);
+		if ($title)
+		{
+			return Loc::getMessage($title) ?? '';
+		}
+
+		return parent::getTitle($permissionId) ?? '';
 	}
 
 	public static function getCrmPermissionMap(): array
@@ -50,5 +69,27 @@ class PermissionDictionary extends \Bitrix\Main\Access\Permission\PermissionDict
 			self::SIGN_CRM_SMART_B2E_DOC_WRITE => ['checkUpdatePermissions', \CCrmOwnerType::SmartB2eDocument],
 			self::SIGN_CRM_SMART_B2E_DOC_ADD => ['checkAddPermissions', \CCrmOwnerType::SmartB2eDocument],
 		];
+	}
+
+	private static function getPermissionTitleLocCode($permissionId): ?string
+	{
+		return match ($permissionId)
+		{
+			self::SIGN_CRM_CONTACT_READ => 'SIGN_CRM_CONTACT_READ',
+			self::SIGN_CRM_CONTACT_DELETE => 'SIGN_CRM_CONTACT_DELETE',
+			self::SIGN_CRM_CONTACT_WRITE => 'SIGN_CRM_CONTACT_WRITE',
+			self::SIGN_CRM_CONTACT_ADD => 'SIGN_CRM_CONTACT_ADD',
+			self::SIGN_CRM_CONTACT_IMPORT => 'SIGN_CRM_CONTACT_IMPORT',
+			self::SIGN_CRM_CONTACT_EXPORT => 'SIGN_CRM_CONTACT_EXPORT',
+			self::SIGN_CRM_SMART_DOCUMENT_READ => 'SIGN_CRM_SMART_DOCUMENT_READ',
+			self::SIGN_CRM_SMART_DOCUMENT_DELETE => 'SIGN_CRM_SMART_DOCUMENT_DELETE',
+			self::SIGN_CRM_SMART_DOCUMENT_WRITE => 'SIGN_CRM_SMART_DOCUMENT_WRITE',
+			self::SIGN_CRM_SMART_DOCUMENT_ADD => 'SIGN_CRM_SMART_DOCUMENT_ADD',
+			self::SIGN_CRM_SMART_B2E_DOC_READ => 'SIGN_CRM_SMART_B2E_DOC_READ',
+			self::SIGN_CRM_SMART_B2E_DOC_DELETE => 'SIGN_CRM_SMART_B2E_DOC_DELETE',
+			self::SIGN_CRM_SMART_B2E_DOC_WRITE => 'SIGN_CRM_SMART_B2E_DOC_WRITE',
+			self::SIGN_CRM_SMART_B2E_DOC_ADD => 'SIGN_CRM_SMART_B2E_DOC_ADD',
+			default => null,
+		};
 	}
 }

@@ -7,6 +7,7 @@ use Bitrix\Main\Event;
 use Bitrix\Tasks\AbstractCommand;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotAddedException;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotFoundException;
+use Bitrix\Tasks\Flow\Control\Observer\ResponsibleList;
 use Bitrix\Tasks\InvalidCommandException;
 use Bitrix\Tasks\Flow\Control\Mapper\FlowCommandMapper;
 use Bitrix\Tasks\Flow\Control\Middleware\Implementation\DepartmentMiddleware;
@@ -155,6 +156,7 @@ class AddCommandHandler extends CommandHandler
 		parent::init();
 		$this->mapper = new FlowCommandMapper();
 
+		$this->addRequiredObserver(new ResponsibleList\AddObserver());
 		$this->addRequiredObserver(new ResponsibleQueue\AddObserver());
 		$this->addRequiredObserver(new Option\AddObserver());
 		$this->addRequiredObserver(new Member\AddObserver());

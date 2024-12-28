@@ -325,6 +325,13 @@ export class Submit extends EventEmitter
 				}
 			}
 
+			EventEmitter.subscribe(
+				EventEmitter.GLOBAL_TARGET,
+				'SidePanel.Slider:onClose',
+				() => {
+					BX.SidePanel.Instance.postMessageTop(window, 'BX.Bitrix24.EmailConfirmation:showPopup');
+				},
+			);
 		}, (response) => {
 
 			this.disableSubmitButton(false);

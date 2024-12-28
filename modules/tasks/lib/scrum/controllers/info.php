@@ -47,7 +47,7 @@ class Info extends Controller
 
 	public function getMarketPathAction()
 	{
-		return Router::getBasePath();
+		return Router::getBasePath() . 'collection/scrum_migration/';
 	}
 
 	public function saveAnalyticsLabelAction()

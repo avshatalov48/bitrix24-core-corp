@@ -294,7 +294,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 						return;
 					}
 
-					inAppUrl.open(url);
+					inAppUrl.open(url, { parentWidget: this.layout });
 				},
 			});
 		}

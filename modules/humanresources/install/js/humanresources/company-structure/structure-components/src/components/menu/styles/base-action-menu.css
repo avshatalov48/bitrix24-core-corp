@@ -1,0 +1,32 @@
+.hr-structure-components-action-menu-item-wrapper {
+	border-radius: 6px;
+	margin: 0 8px;
+	padding: 0 8px 0 6px;
+	transition: .1s;
+}
+
+.hr-structure-components-action-menu-container {
+	padding: 8px 0;
+	display: flex;
+	flex-flow: column;
+}
+
+.hr-structure-action-popup-menu-item-delimiter {
+	background-color: #f0f1f2;
+	display: block;
+	height: 1px;
+	line-height: 1px;
+	margin-left: 16px;
+	width: calc(100% - 32px);
+}
+
+.hr-structure-components-action-menu-item-wrapper:hover {
+	background-color: #F5F7F8;
+	cursor: pointer;
+}
+
+.hr-structure-components-action-menu-item-wrapper.--disabled {
+	pointer-events: none;
+	opacity: 0.4;
+	cursor: default;
+}

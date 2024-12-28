@@ -21,7 +21,6 @@ export class DetailInstance
 	#embeddedParams: DashboardEmbeddedParameters;
 	#embeddedLoader: ApacheSupersetEmbeddedLoader;
 	#embeddedDebugMode: boolean;
-	#pdfExportEnabled: boolean;
 	#canExport: boolean;
 	#canEdit: boolean;
 
@@ -40,7 +39,6 @@ export class DetailInstance
 		this.#canEdit = config.canEdit === 'Y';
 		this.#embeddedParams = config.dashboardEmbeddedParams;
 		this.#embeddedDebugMode = config.embeddedDebugMode;
-		this.#pdfExportEnabled = config.pdfExportEnabled;
 
 		this.#frameNode = this.#dashboardNode.querySelector('.dashboard-iframe');
 		this.#subscribeEvents();
@@ -167,10 +165,7 @@ export class DetailInstance
 	#initHeaderButtons()
 	{
 		this.#initMoreMenu();
-		if (this.#pdfExportEnabled)
-		{
-			this.#initDownloadButton();
-		}
+		this.#initDownloadButton();
 
 		this.#editBtn = this.#dashboardNode.querySelector('.dashboard-header-buttons-edit');
 		Event.unbindAll(this.#editBtn);

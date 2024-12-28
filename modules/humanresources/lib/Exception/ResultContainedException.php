@@ -25,6 +25,7 @@ abstract class ResultContainedException extends \Exception
 	public function addError(Error $error): static
 	{
 		$this->errors[] = $error;
+		$this->message .= $error->getMessage() . '. ';
 
 		return $this;
 	}

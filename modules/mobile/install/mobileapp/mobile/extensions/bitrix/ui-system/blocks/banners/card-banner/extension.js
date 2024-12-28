@@ -59,9 +59,7 @@ jn.define('ui-system/blocks/banners/card-banner', (require, exports, module) => 
 				type: 'description',
 				text: description,
 				typography: Text6,
-				style: {
-					marginBottom: Indent.M.toNumber(),
-				},
+				style: {},
 			});
 		}
 
@@ -108,7 +106,7 @@ jn.define('ui-system/blocks/banners/card-banner', (require, exports, module) => 
 				{
 					style: {
 						flexDirection: 'row',
-						paddingTop: Indent.XS.toNumber(),
+						paddingTop: Indent.XL.toNumber(),
 						paddingBottom: Indent.XS2.toNumber(),
 					},
 				},

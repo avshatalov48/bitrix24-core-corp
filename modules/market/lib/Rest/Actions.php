@@ -17,5 +17,7 @@ class Actions
 	public const METHOD_EDIT_REVIEW = 'edit_review';
 	public const METHOD_GET_REVIEWS = 'get_reviews';
 
+	public const METHOD_SITE_PREVIEW = 'site_preview';
+
 	public const METHOD_TOTAL_APPS = 'total_apps';
 }

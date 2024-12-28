@@ -14,6 +14,7 @@ use Bitrix\Tasks\Scrum\Form\ItemForm;
 use Bitrix\Tasks\Scrum\Service\EntityService;
 use Bitrix\Tasks\Scrum\Service\EpicService;
 use Bitrix\Tasks\Scrum\Service\ItemService;
+use Bitrix\Tasks\Scrum\Service\TaskService;
 
 class Task extends Base
 {
@@ -216,6 +217,14 @@ class Task extends Base
 			$this->errorCollection->add([new Error('Unable to update task')]);
 
 			return null;
+		}
+
+		if(isset($entity) && isset($newEntity))
+		{
+			if($entity->getEntityType() !== $newEntity->getEntityType())
+			{
+				TaskService::addTaskMovingToLog($taskId, $newEntity->getGroupId());
+			}
 		}
 
 		return true;

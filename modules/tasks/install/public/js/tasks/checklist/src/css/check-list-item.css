@@ -60,3 +60,8 @@
 .diskuf-extended-item label {
 	cursor: pointer;
 }
+
+.tasks-checklist-item-accomplice-link.tasks-checklist-item-collaber,
+.tasks-checklist-item-auditor-link.tasks-checklist-item-collaber {
+	color: #19CC45;
+}

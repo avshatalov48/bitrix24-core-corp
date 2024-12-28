@@ -18,7 +18,7 @@ abstract class Message implements \Bitrix\Sign\Contract\Chat\Message
 	protected DocumentService $documentService;
 	protected MemberService $memberService;
 
-	private ?string $lang = null;
+	protected ?string $lang = null;
 
 	protected function __construct(
 		private readonly int $fromUser,
@@ -64,6 +64,7 @@ abstract class Message implements \Bitrix\Sign\Contract\Chat\Message
 	public function setLang(?string $lang): self
 	{
 		$this->lang = $lang;
+
 		return $this;
 	}
 
@@ -85,6 +86,7 @@ abstract class Message implements \Bitrix\Sign\Contract\Chat\Message
 	protected function getLocalizedFallbackMessage(string $id, array $replace = null, ?string $lang = null): ?string
 	{
 		$lang = $lang ?? $this->lang;
+
 		return Loc::getMessage($id, $replace, $lang);
 	}
 }

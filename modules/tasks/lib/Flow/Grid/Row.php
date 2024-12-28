@@ -13,6 +13,7 @@ final class Row implements Arrayable
 		private bool $editable,
 		private array $actions,
 		private bool $active,
+		private bool $isPinned,
 		private array $counters = [],
 	)
 	{}
@@ -27,6 +28,7 @@ final class Row implements Arrayable
 			'actions' => $this->actions,
 			'active' => $this->active,
 			'counters' => $this->counters,
+			'isPinned' => $this->isPinned,
 		];
 	}
 }

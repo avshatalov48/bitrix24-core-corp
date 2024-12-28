@@ -637,6 +637,7 @@ jn.define('crm/timeline/scheduler/providers/sharing', (require, exports, module)
 				onAction: () => qrauth.open({
 					redirectUrl: this.smsConfig.contactCenterUrl,
 					layout: this.layout,
+					analyticsSection: 'crm',
 				}),
 			});
 		}

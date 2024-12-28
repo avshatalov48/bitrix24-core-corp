@@ -392,24 +392,18 @@ class Counter
 				break;
 
 			case CounterDictionary::COUNTER_FLOW_TOTAL:
-				if (self::isSonetEnable())
-				{
-					$value = $this->get(CounterDictionary::COUNTER_FLOW_TOTAL_COMMENTS, $entityId)
-						+ $this->get(CounterDictionary::COUNTER_FLOW_TOTAL_EXPIRED, $entityId)
-					;
-				}
+				$value = $this->get(CounterDictionary::COUNTER_FLOW_TOTAL_COMMENTS, $entityId)
+					+ $this->get(CounterDictionary::COUNTER_FLOW_TOTAL_EXPIRED, $entityId)
+				;
 				break;
 
 			case CounterDictionary::COUNTER_FLOW_TOTAL_COMMENTS:
 			case CounterDictionary::COUNTER_FLOW_TOTAL_EXPIRED:
-				if (self::isSonetEnable())
+				$counters = $this->getRawCounters(CounterDictionary::META_PROP_FLOW);
+				$types = CounterDictionary::MAP_FLOW_TOTAL[$name];
+				foreach ($types as $type)
 				{
-					$counters = $this->getRawCounters(CounterDictionary::META_PROP_FLOW);
-					$types = CounterDictionary::MAP_FLOW_TOTAL[$name];
-					foreach ($types as $type)
-					{
-						$value += (isset($counters[$type][$entityId]) && $counters[$type][$entityId]) ? $counters[$type][$entityId] : 0;
-					}
+					$value += (isset($counters[$type][$entityId]) && $counters[$type][$entityId]) ? $counters[$type][$entityId] : 0;
 				}
 				break;
 

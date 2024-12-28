@@ -1,0 +1,27 @@
+.hr-hcmlink-sync__line-container {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 9px;
+	color: var(--ui-color-palette-gray-30);
+}
+
+.hr-hcmlink-separator__container {
+	flex: 1;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 0 15px;
+}
+
+.hr-hcmlink-sync__line-left-container {
+	display: flex;
+	flex-grow: 4;
+	flex-basis: 250px;
+}
+
+.hr-hcmlink-sync__line-right-container {
+	display: flex;
+	flex-grow: 4;
+	flex-basis: 250px;
+}

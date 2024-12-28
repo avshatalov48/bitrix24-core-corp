@@ -8,6 +8,7 @@ use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\EventHandler;
+use Bitrix\Crm\Integration\Calendar;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Context;
@@ -27,6 +28,7 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\PingSelector;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
 use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
+use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Loader;
@@ -268,6 +270,11 @@ class ToDo extends Activity
 					->addActionParamInt('responsibleId', (int)$this->getAssociatedEntityModel()?->get('RESPONSIBLE_ID'))
 				)
 			;
+
+			if ($this->hasOverlapEventTag())
+			{
+				$items['deleteTag'] = $this->createDeleteTagMenuItem($this->getActivityId());
+			}
 		}
 
 		return $items;
@@ -619,7 +626,7 @@ class ToDo extends Activity
 		$descriptionType = (int)$this->getAssociatedEntityModel()?->get('DESCRIPTION_TYPE');
 		if ($this->getContext()->getType() === Context::MOBILE && $descriptionType === \CCrmContentType::BBCode)
 		{
-			$description = \Bitrix\Crm\Entity\CommentsHelper::normalizeComment($description);
+			$description = \Bitrix\Crm\Format\TextHelper::removeParagraphs($description);
 		}
 
 		$editableDescriptionBlock = (new EditableDescription())
@@ -794,6 +801,11 @@ class ToDo extends Activity
 
 		$this->appendClientTextBlocks($lineOfTextBlocks, \CCrmOwnerType::Contact, $contacts);
 		$this->appendClientTextBlocks($lineOfTextBlocks, \CCrmOwnerType::Company, $companies);
+
+		if ($lineOfTextBlocks->isEmpty())
+		{
+			return null;
+		}
 
 		$title = (
 			$lineOfTextBlocks->getContentBlocksCount() <= 1
@@ -1048,5 +1060,25 @@ class ToDo extends Activity
 		$action->setAnalytics($analytics);
 
 		return $action;
+	}
+
+	public function getTags(): ?array
+	{
+		$tags = [];
+
+		if ($this->hasOverlapEventTag())
+		{
+			$tags['overlapEvent'] = (new Tag(
+				Loc::getMessage('CRM_TIMELINE_ITEM_TODO_OVERLAP_EVENT'),
+				Tag::TYPE_PRIMARY
+			));
+		}
+
+		return $tags;
+	}
+
+	private function hasOverlapEventTag()
+	{
+		return $this->getAssociatedEntityModel()?->get('SETTINGS')['TAGS']['OVERLAP_EVENT'] ?? false;
 	}
 }

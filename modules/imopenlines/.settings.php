@@ -54,6 +54,13 @@ return [
 						'className' => \Bitrix\ImOpenlines\Integrations\UI\EntitySelector\ChatProvider::class,
 					],
 				],
+				[
+					'entityId' => 'imopenlines-recent-v2',
+					'provider' => [
+						'moduleId' => 'imopenlines',
+						'className' => \Bitrix\ImOpenLines\V2\Integration\UI\EntitySelector\RecentProvider::class,
+					],
+				],
 			],
 			'extensions' => ['imopenlines.entity-selector']
 		],

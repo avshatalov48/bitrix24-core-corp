@@ -23,6 +23,7 @@ use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Json;
+use Bitrix\Crm\Security\Role\Utils\RolePermissionLogContext;
 
 /**
  * Class ItemCategoryTable
@@ -231,6 +232,12 @@ class ItemCategoryTable extends DataManager
 
 		if ($entityTypeId)
 		{
+			RolePermissionLogContext::getInstance()->set([
+				'scenario' => 'remove category',
+				'entityTypeId' => $entityTypeId,
+				'categoryId' => $id,
+			]);
+
 			\CCrmRole::EraseEntityPermissons(
 				(new PermissionEntityTypeHelper($entityTypeId))->getPermissionEntityTypeForCategory($id)
 			);
@@ -238,6 +245,8 @@ class ItemCategoryTable extends DataManager
 			unset(static::$categoryToEntityTypeRelations[$id]);
 
 			(new ItemCategoryUserField($entityTypeId))->deleteByCategoryId($id);
+
+			RolePermissionLogContext::getInstance()->clear();
 		}
 
 		return $result;

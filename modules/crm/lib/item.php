@@ -1765,6 +1765,11 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 				$value = $this->prepareExternalDateTimeValue($value, $field);
 			}
 
+			if ($field && $field->isUserField() && $field->getType() === Field::TYPE_DOUBLE)
+			{
+				$value = $this->prepareExternalUserFieldDoubleValue($value, $field);
+			}
+
 			$this->set($commonFieldName, $value);
 		}
 		elseif ($commonFieldName === static::FIELD_NAME_PRODUCTS)
@@ -1852,6 +1857,36 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		}
 
 		return $value;
+	}
+
+	private function prepareExternalUserFieldDoubleValue(mixed $value, Field $field): mixed
+	{
+		$castSingleValue = static function ($singleValue) use ($field): mixed {
+			if (is_string($singleValue))
+			{
+				return \Bitrix\Main\UserField\Types\DoubleType::onBeforeSave($field->getUserField(), $singleValue);
+			}
+
+			return $singleValue;
+		};
+
+		if (!$field->isMultiple())
+		{
+			return $castSingleValue($value);
+		}
+
+		if (!is_array($value))
+		{
+			return $value;
+		}
+
+		$casted = [];
+		foreach ($value as $key => $single)
+		{
+			$casted[$key] = $castSingleValue($single);
+		}
+
+		return $casted;
 	}
 
 	/**

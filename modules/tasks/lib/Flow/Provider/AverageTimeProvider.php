@@ -17,6 +17,7 @@ class AverageTimeProvider
 
 	private TaskList $taskProvider;
 
+	private array $realStatus;
 	private int $flowId;
 	private int $status;
 
@@ -25,7 +26,7 @@ class AverageTimeProvider
 		$this->init();
 	}
 
-	public function getAverageTimeInStatus(int $flowId, int $status, int $tail = 50): int
+	public function getAverageTimeInStatus(int $flowId, int $status, array $realStatus, int $tail = 50): int
 	{
 		if ($flowId <= 0 || $tail <= 0)
 		{
@@ -39,6 +40,7 @@ class AverageTimeProvider
 
 		$this->flowId = $flowId;
 		$this->status = $status;
+		$this->realStatus = $realStatus;
 
 		$query = (new TaskQuery())
 			->skipAccessCheck()
@@ -69,7 +71,20 @@ class AverageTimeProvider
 				continue;
 			}
 
-			$duration = DatePresenter::get($now, $date)->getSecondTotal();
+			if ($this->status === Status::COMPLETED)
+			{
+				$closedDate = $task['CLOSED_DATE'] ?? null;
+				if ($closedDate === null)
+				{
+					continue;
+				}
+				$duration = DatePresenter::get($task[$this->getDateField()], $task['CLOSED_DATE'])->getRaw()->getSecondTotal();
+			}
+			else
+			{
+				$duration = DatePresenter::get($now, $task[$this->getDateField()])->getRaw()->getSecondTotal();
+			}
+
 			$sum += $duration;
 			++$count;
 		}
@@ -92,6 +107,7 @@ class AverageTimeProvider
 		if ($this->status === Status::COMPLETED)
 		{
 			$select[] = $this->getCompletedExpression();
+			$select[] = 'CLOSED_DATE';
 		}
 
 		return $select;
@@ -101,7 +117,7 @@ class AverageTimeProvider
 	{
 		$filter = [
 			'FLOW_ID' => $this->flowId,
-			'REAL_STATUS' => $this->status,
+			'REAL_STATUS' => $this->realStatus,
 		];
 
 		if ($this->status === Status::COMPLETED)
@@ -138,8 +154,8 @@ class AverageTimeProvider
 		return new ExpressionField(
 			'START_POINT',
 			'CASE
-							WHEN DATE_START IS NOT NULL THEN DATE_START
 							WHEN CREATED_DATE IS NOT NULL THEN CREATED_DATE
+							WHEN DATE_START IS NOT NULL THEN DATE_START
 							ELSE NOW()
 						END'
 		);

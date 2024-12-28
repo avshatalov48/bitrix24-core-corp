@@ -1,18 +1,19 @@
-import {EventEmitter, BaseEvent} from 'main.core.events';
-import {Cache, Type, Dom, Reflection, Runtime, Tag, Loc, Text} from 'main.core';
-import {Layout} from 'ui.sidepanel.layout';
-import {Factory} from 'ui.userfieldfactory';
-import {Button} from 'ui.buttons';
+import { EventEmitter, BaseEvent } from 'main.core.events';
+import { Cache, Type, Dom, Reflection, Runtime, Tag, Loc, Text } from 'main.core';
+import { Layout } from 'ui.sidepanel.layout';
+import { Factory } from 'ui.userfieldfactory';
+import { Button } from 'ui.buttons';
 
 import Backend from './backend/backend';
 import Search from './search/search';
 import ListItem from './list-item/list-item';
 
-import type {SelectorOptions, ControllerOptions, SelectorFilter, FieldsFactoryFilter} from './types/selector-options';
-import type {FieldsList} from './types/fields-list';
-import type {Field} from './types/field';
+import type { SelectorOptions, ControllerOptions, SelectorFilter, FieldsFactoryFilter } from './types/selector-options';
+import type { FieldsList } from './types/fields-list';
+import type { Field } from './types/field';
 
 import './css/style.css';
+import type { CustomBackendSettings } from './backend/backend';
 
 const DEFAULT_FIELD_MODULE_ID = 'crm';
 
@@ -27,14 +28,16 @@ export class FieldSelector extends EventEmitter
 			'INVOICE',
 		],
 		'-fields': [
-			{name: 'CONTACT_ORIGIN_VERSION'},
-			{name: 'CONTACT_LINK'},
+			{ name: 'CONTACT_ORIGIN_VERSION' },
+			{ name: 'CONTACT_LINK' },
 		],
 	};
 
 	static #defaultFieldsFactoryFilter = {
-		'-types': ['employee', 'money', 'double', 'boolean', 'file', 'datetime', 'date'],
+		'-types': ['employee', 'money', 'double', 'boolean', 'file', 'datetime'],
 	};
+
+	#permissionAddByCategory: Record<string, Boolean> = {};
 
 	constructor(options: SelectorOptions = {})
 	{
@@ -44,7 +47,17 @@ export class FieldSelector extends EventEmitter
 		this.#setOptions(options);
 	}
 
-	#setOptions(options: SelectorOptions)
+	setCustomBackendSettings(customBackendSettings: CustomBackendSettings): void
+	{
+		this.#setOptions({
+			...this.#getOptions(),
+			customBackendSettings,
+		});
+
+		this.#getBackend().setCustomSettings(this.#getOptions().customBackendSettings);
+	}
+
+	#setOptions(options: SelectorOptions): void
 	{
 		this.#cache.set(
 			'options',
@@ -58,13 +71,14 @@ export class FieldSelector extends EventEmitter
 
 	#getOptions(): SelectorOptions
 	{
-		return Runtime.clone(this.#cache.get('options', {filter: {}}));
+		return Runtime.clone(this.#cache.get('options', { filter: {} }));
 	}
 
 	#getBackend(): Backend
 	{
 		return this.#cache.remember('backend', () => {
 			return new Backend({
+				customSettings: this.#getOptions().customBackendSettings,
 				events: {
 					onError: this.#onBackendError.bind(this),
 				},
@@ -72,14 +86,14 @@ export class FieldSelector extends EventEmitter
 		});
 	}
 
-	#setFieldsList(fieldsList: FieldsList)
+	#setFieldsList(fieldsList: FieldsList): void
 	{
 		if (Type.isObject(fieldsList.SMART_B2E_DOC))
 		{
 			fieldsList.SMART_B2E_DOC.CAPTION = Loc.getMessage('SIGN_B2E_FIELDS_SELECTOR_SMART_B2E_DOC_CATEGORY_CAPTION');
 		}
 
-		this.#cache.set('fieldsList', {...fieldsList});
+		this.#cache.set('fieldsList', { ...fieldsList });
 	}
 
 	#applyCategoriesFilter(fieldsList: FieldsList, filter: SelectorFilter): FieldsList
@@ -162,7 +176,7 @@ export class FieldSelector extends EventEmitter
 				return allowed && !disallowed;
 			});
 
-			if (Type.isArrayFilled(filteredFields))
+			if (filter.allowEmptyFieldList ? Type.isArray(filteredFields) : Type.isArrayFilled(filteredFields))
 			{
 				acc[categoryId] = {
 					...category,
@@ -180,6 +194,7 @@ export class FieldSelector extends EventEmitter
 		if (Type.isStringFilled(query))
 		{
 			const preparedQuery = String(query).toLowerCase();
+
 			return fieldsEntries.reduce((acc, [categoryId, category]) => {
 				const filteredFields = category.FIELDS.filter((field) => {
 					return (
@@ -211,6 +226,7 @@ export class FieldSelector extends EventEmitter
 		if (Type.isPlainObject(filter))
 		{
 			const query = filtering ? this.#getSearch().getValue() : '';
+
 			return this.#applySearchFilter(
 				this.#applyFieldsFilter(
 					this.#applyCategoriesFilter(fieldsList, filter),
@@ -241,19 +257,25 @@ export class FieldSelector extends EventEmitter
 
 	#load(): Promise<any>
 	{
-		const {controllerOptions = {}} = this.#getOptions();
+		const { controllerOptions = {} } = this.#getOptions();
+
 		return this.#getBackend()
-			.getData({options: controllerOptions})
-			.then(({data}) => {
+			.getData({ options: controllerOptions })
+			.then(({ data }) => {
 				this.#setFieldsList(data.fields);
-				this.#setIsLeadEnabled(data.options.isLeadEnabled);
-				this.#setIsAllowedCreateField(data.options.permissions.userField.add);
+				this.#setIsLeadEnabled(data.options?.isLeadEnabled ?? false);
+				this.#setIsAllowedCreateField(data.options?.permissions?.userField?.add ?? false);
+				this.#permissionAddByCategory = data.options?.permissions?.userField?.addByCategory ?? {};
 			});
 	}
 
-	static loadFieldList(options: ControllerOptions): Promise<any>
+	static loadFieldList(
+		options: ControllerOptions,
+		customBackendSettings: CustomBackendSettings | null = null,
+	): Promise<any>
 	{
 		return new Backend({
+			customSettings: customBackendSettings,
 			events: {
 				onError: () => {},
 			},
@@ -416,6 +438,8 @@ export class FieldSelector extends EventEmitter
 				});
 			});
 		}
+
+		this.#setAddButtonEnabledByCategory(categoryId);
 	}
 
 	#getDisabledFields(): SelectorOptions['disabledFields'] | null
@@ -431,11 +455,9 @@ export class FieldSelector extends EventEmitter
 			return false;
 		}
 
-		return disabledFields.some(fieldRule =>
-			(Type.isString(fieldRule) && field.name === fieldRule)
-			|| (Type.isFunction(fieldRule) && fieldRule(field)),
-		);
-	};
+		return disabledFields.some((fieldRule) => (Type.isString(fieldRule) && field.name === fieldRule)
+			|| (Type.isFunction(fieldRule) && fieldRule(field)));
+	}
 
 	#onListItemChange(event: BaseEvent)
 	{
@@ -465,7 +487,7 @@ export class FieldSelector extends EventEmitter
 	#onBackendError(error)
 	{
 		console.error(error);
-		this.emit('onError', {error});
+		this.emit('onError', { error });
 	}
 
 	#getLayout(): HTMLDivElement
@@ -557,7 +579,7 @@ export class FieldSelector extends EventEmitter
 						const languages = new Set(Object.keys(this.#getOptions().languages));
 						const currentLanguage = Loc.getMessage('LANGUAGE_ID');
 						const currentValue = userField.data.editFormLabel[currentLanguage];
-						languages.forEach(lang => {
+						languages.forEach((lang) => {
 							userField.data.editFormLabel[lang] = currentValue;
 						});
 
@@ -752,12 +774,15 @@ export class FieldSelector extends EventEmitter
 							items: this.#getSidebarItems(),
 						},
 						toolbar: () => {
-							return [
-								this.#getSearch().getLayout(),
-								this.#getCreateFieldButton(),
-							];
+							const toolbarItems = [this.#getSearch().getLayout()];
+							if (this.#getOptions().alwaysHideCreateFieldButton !== true)
+							{
+								toolbarItems.push(this.#getCreateFieldButton());
+							}
+
+							return toolbarItems;
 						},
-						buttons: ({SaveButton, closeButton}) => {
+						buttons: ({ SaveButton, closeButton }) => {
 							return [
 								new SaveButton({
 									text: Loc.getMessage('SIGN_B2E_FIELDS_SELECTOR_APPLY_BUTTON_LABEL'),
@@ -787,7 +812,7 @@ export class FieldSelector extends EventEmitter
 	{
 		const selectedFields = this.#getSelectedFields();
 		const result = (() => {
-			const {resultModifier} = this.#getOptions();
+			const { resultModifier } = this.#getOptions();
 			if (Type.isFunction(resultModifier))
 			{
 				return resultModifier(selectedFields);
@@ -833,7 +858,7 @@ export class FieldSelector extends EventEmitter
 	#getSliderId(): string
 	{
 		return this.#cache.remember('sliderId', () => {
-			return `sign.b2e.fields.selector-${Text.getRandom()}`
+			return `sign.b2e.fields.selector-${Text.getRandom()}`;
 		});
 	}
 
@@ -857,7 +882,7 @@ export class FieldSelector extends EventEmitter
 
 								return this.#getRenderedSliderLayout();
 							})
-							.catch(({errors}) => {
+							.catch(({ errors }) => {
 								return Tag.render`
 									<div class="ui-alert ui-alert-danger">
 										<span class="ui-alert-message">${errors.map((item) => Text.encode(item.message)).join('\n')}</span>
@@ -881,5 +906,15 @@ export class FieldSelector extends EventEmitter
 	{
 		this.emit('onSliderCloseComplete');
 		this.#setSelectedFields([]);
+	}
+
+	#setAddButtonEnabledByCategory(categoryId: string): void
+	{
+		if (Object.hasOwn(this.#permissionAddByCategory, categoryId))
+		{
+			const isAllowed = this.#permissionAddByCategory[categoryId];
+			this.#setIsAllowedCreateField(isAllowed);
+			this.#getCreateFieldButton().setDisabled(!isAllowed);
+		}
 	}
 }

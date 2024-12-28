@@ -166,11 +166,17 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 		 */
 		postComponentAppStatus(value)
 		{
-			BX.postComponentEvent(
-				EventType.app.changeStatus,
-				[{ name: this.status, value }],
+			[
 				ComponentCode.imCopilotMessenger,
-			);
+				ComponentCode.imChannelMessenger,
+				ComponentCode.imCollabMessenger,
+			].forEach((componentCode) => {
+				BX.postComponentEvent(
+					EventType.app.changeStatus,
+					[{ name: this.status, value }],
+					componentCode,
+				);
+			});
 		}
 
 		checkPullEventNeedsIntercept(params, extra, command)

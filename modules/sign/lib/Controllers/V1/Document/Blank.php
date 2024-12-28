@@ -9,6 +9,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Request;
 use Bitrix\Main\SystemException;
+use Bitrix\Sign\Access\ActionDictionary;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Upload\BlankUploadController;
 use Bitrix\Sign\Type;
@@ -190,12 +191,18 @@ class Blank extends \Bitrix\Sign\Engine\Controller
 		int $id,
 	): array
 	{
-		$blank = Container::instance()->getBlankRepository()->getByIdAndValidatePermissions($id);
+		$container = Container::instance();
+		$blankRepository = $container->getBlankRepository();
+		$blank = $blankRepository->getByIdAndValidatePermissions($id);
 		if ($blank === null)
 		{
-			$this->addError(new Error("Blank with id `$id` doesnt exist", "DOESNT_EXIST"));
+			$blank = $blankRepository->getById($id);
+			if ($blank === null || !$this->isUserHasAccessToLinkedDocuments($blank))
+			{
+				$this->addError(new Error("Blank with id `$id` doesnt exist", "DOESNT_EXIST"));
 
-			return [];
+				return [];
+			}
 		}
 		$result = [
 			'id' => $blank->id,
@@ -206,21 +213,39 @@ class Blank extends \Bitrix\Sign\Engine\Controller
 			'previewUrl' => null,
 			'dateCreate' => $blank->dateCreate
 		];
-		$resource = Container::instance()->getBlankResourceRepository()->getFirstByBlankId($blank->id);
+		$resource = $container->getBlankResourceRepository()->getFirstByBlankId($blank->id);
 		if ($resource !== null)
 		{
-			$result['previewUrl'] = Container::instance()->getFileRepository()->getFileSrc($resource->fileId);
+			$result['previewUrl'] = $container->getFileRepository()->getFileSrc($resource->fileId);
 		}
 		if ($blank->createdById !== null)
 		{
-			$user = Container::instance()->getUserService()->getUserById($blank->createdById);
+			$user = $container->getUserService()->getUserById($blank->createdById);
 			if ($user !== null)
 			{
-				$result['userAvatarUrl'] = Container::instance()->getUserService()->getUserAvatar($user);
-				$result['userName'] = Container::instance()->getUserService()->getUserName($user);
+				$result['userAvatarUrl'] = $container->getUserService()->getUserAvatar($user);
+				$result['userName'] = $container->getUserService()->getUserName($user);
 			}
 		}
 
 		return $result;
+	}
+
+	private function isUserHasAccessToLinkedDocuments(Item\Blank $blank): bool
+	{
+		$accessController = $this->getAccessController();
+		$blankDocuments = $this->container->getDocumentRepository()->listByBlankId($blank->id);
+
+		$documentNotFinalizedAndHasAccessToIt = fn(Item\Document $document) =>
+			!Type\DocumentStatus::isFinalByDocument($document)
+			&& $accessController->checkByItem(
+				$blank->scenario === Type\BlankScenario::B2E
+					? ActionDictionary::ACTION_B2E_DOCUMENT_READ
+					: ActionDictionary::ACTION_DOCUMENT_READ,
+				$document,
+			)
+		;
+
+		return $blankDocuments->any($documentNotFinalizedAndHasAccessToIt);
 	}
 }

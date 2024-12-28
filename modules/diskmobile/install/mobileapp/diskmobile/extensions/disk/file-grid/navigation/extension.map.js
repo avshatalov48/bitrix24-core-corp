@@ -1,0 +1,1 @@
+{"version":3,"file":"extension.map.js","names":["jn","define","require","exports","module","FileGridFilter","FileGridMoreMenu","FileGridSorting"],"sources":["extension.js"],"mappings":"AAGAA,GAAGC,OAAO,6BAA6B,CAACC,EAASC,EAASC,KACzD,MAAMC,eAAEA,GAAmBH,EAAQ,wCACnC,MAAMI,iBAAEA,GAAqBJ,EAAQ,2CACrC,MAAMK,gBAAEA,GAAoBL,EAAQ,yCAEpCE,EAAOD,QAAU,CAChBE,iBACAC,mBACAC,kBACA"}

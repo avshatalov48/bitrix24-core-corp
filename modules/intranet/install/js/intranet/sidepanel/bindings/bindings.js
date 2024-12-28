@@ -1,3 +1,4 @@
+/* eslint-disable */
 (function() {
 
 	const iframeMode = window !== window.top;
@@ -72,6 +73,9 @@
 				condition: [
 					new RegExp("/company/personal/user/(\\d+)/tasks/task/view/(\\d+)/\\?commentAction=([a-zA-Z]+)&deadline=([0-9]+)", "i"),
 					new RegExp("/company/personal/user/(\\d+)/tasks/task/view/(\\d+)/\\?commentAction=([a-zA-Z]+)", "i"),
+
+					new RegExp("/extranet/contacts/personal/user/(\\d+)/tasks/task/view/(\\d+)/\\?commentAction=([a-zA-Z]+)&deadline=([0-9]+)", "i"),
+					new RegExp("/extranet/contacts/personal/user/(\\d+)/tasks/task/view/(\\d+)/\\?commentAction=([a-zA-Z]+)", "i"),
 				],
 				handler: function(event, link) {
 					if (BX.Tasks.CommentActionController)
@@ -349,7 +353,7 @@
 				],
 				options: {
 					cacheable: false,
-					width: 617,
+					width: 773,
 				}
 			},
 			{
@@ -422,7 +426,7 @@
 			},
 			{
 				condition: [
-					/\?(IM_DIALOG|IM_HISTORY|IM_LINES|IM_COPILOT)=([^&]+)(&IM_MESSAGE=([^&]+))?/i
+					/\?(IM_DIALOG|IM_HISTORY|IM_LINES|IM_COPILOT|IM_COLLAB)=([^&]+)(&IM_MESSAGE=([^&]+))?/i
 				],
 				handler: function(event, link)
 				{
@@ -447,6 +451,10 @@
 					{
 						BX.Messenger.Public.openCopilot(dialogId);
 					}
+					else if (type === 'IM_COLLAB')
+					{
+						BX.Messenger.Public.openCollab();
+					}
 					else
 					{
 						BX.Messenger.Public.openChat(dialogId, messageId);
@@ -458,7 +466,8 @@
 			{
 				condition: [
 					new RegExp(location.origin+'/online\/$'),
-					/^\/online\/$/
+					/^\/online\/$/,
+					/^\/extranet\/online\/$/,
 				],
 				handler: function(event, link)
 				{
@@ -772,6 +781,16 @@
 			},
 			{
 				condition: [
+					/^\/bitrix\/components\/bitrix\/biconnector.externalconnection\/slider.php\?sourceId=\d+/,
+				],
+				options: {
+					cacheable: false,
+					customLeftBoundary: 0,
+					width: 564,
+				},
+			},
+			{
+				condition: [
 					new RegExp("/report/analytics"),
 					new RegExp("/report/analytics/\\?analyticBoardKey=(\\w+)"),
 					new RegExp("/report/telephony"),
@@ -784,12 +803,23 @@
 				}
 			},
 			{
+				condition: [
+					new RegExp("/hr/structure"),
+				],
+				options: {
+					cacheable: false,
+					customLeftBoundary: 0,
+				}
+			},
+			{
 				condition: [ new RegExp("/bitrix/tools/disk/focus.php\\?.*(inSidePanel).*action=(openFileDetail)", "i") ]
 			},
 			{
 				condition: [
 					new RegExp(`(?<url>${siteDir}company/personal/user/(?<userId>[0-9]+)/)($|\\?)`, 'i'),
 					new RegExp(`(?<url>${siteDir}contacts/personal/user/(?<userId>[0-9]+)/)($|\\?)`, 'i'),
+					new RegExp(`(?<url>/company/personal/user/(?<userId>[0-9]+)/)($|\\?)`, 'i'),
+					new RegExp(`(?<url>/contacts/personal/user/(?<userId>[0-9]+)/)($|\\?)`, 'i'),
 				],
 				minimizeOptions: (link) => {
 					return {
@@ -818,7 +848,9 @@
 			{
 				condition: [
 					new RegExp(siteDir + "company/personal/user/[0-9]+/edit/($|\\?)", "i"),
-					new RegExp(siteDir + "contacts/personal/user/[0-9]+/edit/($|\\?)", "i")
+					new RegExp(siteDir + "contacts/personal/user/[0-9]+/edit/($|\\?)", "i"),
+					new RegExp("/company/personal/user/[0-9]+/edit/($|\\?)", "i"),
+					new RegExp("/contacts/personal/user/[0-9]+/edit/($|\\?)", "i"),
 				],
 				handler: function(event, link)
 				{
@@ -930,20 +962,97 @@
 			},
 			{
 				condition: [
-					new RegExp(siteDir + "company\\/personal\\/user\\/[0-9]+\\/calendar\\/\\?EVENT_ID=([^&]+)(?:&EVENT_DATE=([^&]+))?", "i")
+					new RegExp(siteDir + 'workgroups\\/group\\/([0-9]+)\\/calendar\\/slots'),
+					new RegExp(siteDir + 'extranet\\/workgroups\\/group\\/([0-9]+)\\/calendar\\/slots'),
+				],
+				handler: function(event, link)
+				{
+					const groupId = parseInt(link.matches[1], 10);
+					if (!groupId)
+					{
+						return;
+					}
+
+					event.preventDefault();
+
+					BX.Runtime.loadExtension('calendar.sharing.interface')
+						.then(({ GroupSharingController }) => {
+							if (!GroupSharingController)
+							{
+								return;
+							}
+
+							GroupSharingController
+								.getGroupSharing(groupId, event.target)
+								.then((groupSharing) => groupSharing.openDialog())
+								.catch((errors) => console.error(errors))
+							;
+						});
+				},
+			},
+			{
+				condition: [
+					new RegExp('\\/workgroups\\/group\\/([0-9]+)\\/calendar\\/\\?EVENT_ID=([^&]+)(?:&EVENT_DATE=([^&]+))?', 'i'),
 				],
 				handler: function(event, link)
 				{
 					if (BX.Calendar && BX.Calendar.SliderLoader)
 					{
-						var slider = new BX.Calendar.SliderLoader(link.matches[1], {
+						const slider = new BX.Calendar.SliderLoader(link.matches[2], {
+							entryDateFrom: BX.parseDate(link.matches[3]),
+							link: link.url,
+							type: 'group',
+							ownerId: link.matches[1],
+						});
+						slider.show();
+						event.preventDefault();
+					}
+				},
+			},
+			{
+				condition: [
+					new RegExp('\\/company\\/personal\\/user\\/[0-9]+\\/calendar\\/\\?EVENT_ID=([^&]+)(?:&EVENT_DATE=([^&]+))?', 'i'),
+					new RegExp('\\/contacts\\/personal\\/user\\/[0-9]+\\/calendar\\/\\?EVENT_ID=([^&]+)(?:&EVENT_DATE=([^&]+))?', 'i'),
+					new RegExp('\\/calendar\\/\\?EVENT_ID=([^&]+)(?:&EVENT_DATE=([^&]+))?', 'i'),
+				],
+				handler: function(event, link)
+				{
+					if (BX.Calendar && BX.Calendar.SliderLoader)
+					{
+						const slider = new BX.Calendar.SliderLoader(link.matches[1], {
 							entryDateFrom: BX.parseDate(link.matches[2]),
 							link: link.url,
 						});
 						slider.show();
 						event.preventDefault();
 					}
-				}
+				},
+			},
+			{
+				condition: [
+					new RegExp('\\/calendar\\/ics\\/\\?EVENT_ID=([^&]+)(?:&EVENT_DATE=([^&]+))?', 'i'),
+				],
+				handler: function(event, link)
+				{
+					const eventId = Number(link.matches[1]);
+					if (!eventId)
+					{
+						return;
+					}
+					event.preventDefault();
+					BX.Runtime.loadExtension('calendar.util').then(() => 
+						BX.Calendar.Util.downloadIcsFileByEventId(eventId)
+					);
+				},
+			},
+			{
+				condition: [
+					new RegExp('\\/workgroups\\/group\\/[0-9]+\\/calendar\\/', 'i'),
+				],
+				options: {
+					cacheable: false,
+					customLeftBoundary: 0,
+				},
 			},
 			{
 				condition: ['/configs/userfield_list.php'],
@@ -1195,6 +1304,41 @@
 				options: {
 					cacheable: false,
 					width: 900,
+					allowChangeHistory: false,
+				},
+				handler(event, link)
+				{
+					BX.SidePanel.Instance.open(link.url);
+					event.stopPropagation();
+					event.preventDefault();
+				},
+			},
+			{
+				condition: [
+					new RegExp(siteDir + "call/[0-9]+/($|\\?)", "i"),
+					new RegExp("/call/($|\\?)", "i"),
+				],
+				handler: function(event, link)
+				{
+					BX.SidePanel.Instance.open(
+						link.url,
+						{
+							cacheable: false,
+							allowChangeHistory: false,
+							//contentClassName: "bitrix24-profile-slider-content",
+							loader: 'default-loader',
+							width: 1100
+						}
+					);
+					event.stopPropagation();
+					event.preventDefault();
+				}
+			},
+			{
+				condition: ['/booking/detail/(\\d+)/'],
+				options: {
+					cacheable: false,
+					width: 450,
 					allowChangeHistory: false,
 				},
 				handler(event, link)

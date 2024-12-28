@@ -25,7 +25,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 	const { transparent } = require('utils/color');
 	const { openPhoneMenu } = require('communication/phone-menu');
 	const { isOnline } = require('device/connection');
-
 	/* endregion mobile import */
 
 	/* region immobile import */
@@ -33,13 +32,13 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 	const {
 		EventType,
-		// FeatureFlag,
 		ReactionType,
 		FileType,
 		ErrorType,
 		ErrorCode,
 		SubTitleIconType,
 		DialogType,
+		DialogWidgetType,
 		UserRole,
 		OwnMessageStatus,
 		ComponentCode,
@@ -47,6 +46,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		MessageStatus,
 		OpenDialogContextType,
 		MessageIdType,
+		AttachPickerId,
+		ViewName,
 	} = require('im/messenger/const');
 
 	const { defaultUserIcon, ReactionAssets } = require('im/messenger/assets/common');
@@ -57,7 +58,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const {
 		DialogHelper,
-		MessageHelper,
 		Url,
 	} = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
@@ -71,6 +71,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		CheckInMessageHandler,
 		BannerMessageHandler,
 		CallMessageHandler,
+		ChatAvatar,
 	} = require('im/messenger/lib/element');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { MessageRest, DialogRest	} = require('im/messenger/provider/rest');
@@ -79,6 +80,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		MessageService,
 		DiskService,
 		AnalyticsService,
+		SendingService,
 	} = require('im/messenger/provider/service');
 
 	const { UserProfile } = require('im/messenger/controller/user-profile');
@@ -88,6 +90,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		ChatSidebarController,
 		ChannelSidebarController,
 		CommentSidebarController,
+		CollabSidebarController,
 	} = require('im/messenger/controller/sidebar');
 
 	const {
@@ -120,6 +123,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 	const { CommentButton } = require('im/messenger/controller/dialog/lib/comment-button');
 	const { DialogEmitter } = require('im/messenger/controller/dialog/lib/emitter');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
+	const { checkIsOpenDialogSupported } = require('im/messenger/lib/open-dialog-check');
+	const { EntityManager } = require('im/messenger/controller/dialog/lib/entity-manager');
 
 	/* endregion lib import */
 
@@ -133,6 +138,11 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 	 */
 	class Dialog
 	{
+		/**
+		 * @type {SendingService}
+		 */
+		#sendingService = null;
+
 		constructor()
 		{
 			/**
@@ -196,7 +206,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			 * @private
 			 * @type {ChatService}
 			 */
-			this.chatService = new ChatService(this.locator);
+			this.chatService = new ChatService();
 			/**
 			 * @private
 			 * @type {DiskService}
@@ -335,9 +345,11 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 			/**
 			 * @private
-			 * @type {ChatSidebarController | ChannelSidebarController | CommentSidebarController | null}
+			 * @type {ChatSidebarController | ChannelSidebarController | CommentSidebarController | CollabSidebarController | null}
 			 */
 			this.sidebar = null;
+
+			this.resendQueuePromise = Promise.resolve();
 
 			this.bindMethods();
 
@@ -349,15 +361,22 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				.add('chat-service', this.chatService)
 				.add('disk-service', this.diskService)
 				.add('store', this.store)
-				.add('emitter', this.emitter)
 			;
-
-			this.subscribeInternalEvents();
 		}
 
 		get isOpenInContext()
 		{
 			return !Type.isNull(this.contextMessageId);
+		}
+
+		/**
+		 * @return {SendingService}
+		 */
+		get sendingService()
+		{
+			this.#sendingService = this.#sendingService ?? SendingService.getInstance();
+
+			return this.#sendingService;
 		}
 
 		bindMethods()
@@ -477,14 +496,14 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			/** @private */
 			this.deleteChannelCountersHandler = this.deleteChannelCountersHandler.bind(this);
 			/** @private */
-			this.beforeFirstPageRenderFromServerHandler = this.onBeforeFirstPageRenderFromServer.bind(this);
-			/** @private */
 			this.openSidebar = this.openSidebar.bind(this);
 
 			/** @private */
 			this.insertTextHandler = this.insertTextHandler.bind(this);
 			/** @private */
 			this.sendMessageExternalHandler = this.sendMessageExternalHandler.bind(this);
+			/** @private */
+			this.collabInfoUpdateHandler = this.collabInfoUpdateHandler.bind(this);
 		}
 
 		/** @protected */
@@ -555,6 +574,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.checkInMessageHandler?.unsubscribeEvents();
 			this.bannerMessageHandler?.unsubscribeEvents();
 			this.callMessageHandler?.unsubscribeEvents();
+			this.messageMenuComponent?.unsubscribeEvents();
 			this.view.removeAll();
 		}
 
@@ -573,6 +593,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				.on('dialoguesModel/update', this.dialogUpdateHandlerRouter)
 				.on('dialoguesModel/update', this.updateMessageCounterHandler)
 				.on('usersModel/set', this.dialogUpdateHandlerRouter)
+				.on('dialoguesModel/collabModel/setGuestCount', this.collabInfoUpdateHandler)
 				.on('applicationModel/setStatus', this.applicationStatusHandler)
 				.on('commentModel/setComments', this.updateCommentRouter)
 				.on('commentModel/setCounters', this.updateCommentRouter)
@@ -608,16 +629,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.pinManager?.unsubscribeStoreEvents();
 		}
 
-		subscribeInternalEvents()
-		{
-			this.emitter.on('beforeFirstPageRenderFromServer', this.beforeFirstPageRenderFromServerHandler);
-		}
-
-		unsubscribeInternalEvents()
-		{
-			this.emitter.off('beforeFirstPageRenderFromServer', this.beforeFirstPageRenderFromServerHandler);
-		}
-
 		/** @private */
 		subscribeExternalEvents()
 		{
@@ -625,6 +636,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			BX.addCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
 			BX.addCustomEvent(EventType.dialog.external.sendMessage, this.sendMessageExternalHandler);
 			BX.addCustomEvent(EventType.dialog.external.textarea.insertText, this.insertTextHandler);
+			BX.addCustomEvent(EventType.dialog.external.resend, this.resendHandler);
 		}
 
 		/** @private */
@@ -634,6 +646,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			BX.removeCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
 			BX.removeCustomEvent(EventType.dialog.external.sendMessage, this.sendMessageExternalHandler);
 			BX.removeCustomEvent(EventType.dialog.external.textarea.insertText, this.insertTextHandler);
+			BX.removeCustomEvent(EventType.dialog.external.resend, this.resendHandler);
 		}
 
 		/** @protected */
@@ -680,6 +693,12 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 			/**
 			 * @private
+			 * @type {EntityManager}
+			 */
+			this.entityManager = new EntityManager(this.dialogId, this.store);
+
+			/**
+			 * @private
 			 * @type {DraftManager}
 			 */
 			this.draftManager = new DraftManager({
@@ -687,16 +706,16 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				view: this.view,
 				dialogId: this.getDialogId(),
 				replyManager: this.replyManager,
-				initWithExternalForward: Boolean(this.forwardMessageId),
+				initWithExternalForward: this.forwardMessageIds?.length > 0,
 			});
 			this.commentButton = new CommentButton(this.view, this.getDialogId(), this.locator);
 			this.pullWatchManager = new PullWatchManager(this.dialogId);
 			this.initMentionManager();
 
 			this.replyManager.setDraftManager(this.draftManager);
-			if (this.forwardMessageId)
+			if (this.forwardMessageIds?.length > 0)
 			{
-				this.replyManager.startForwardingMessage(this.forwardMessageId);
+				this.replyManager.startForwardingMessages(this.forwardMessageIds);
 			}
 
 			this.locator
@@ -749,11 +768,21 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				messageId,
 				withMessageHighlight,
 				dialogTitleParams,
-				forwardMessageId,
+				forwardMessageIds,
 				chatType = DialogType.chat,
 				context = OpenDialogContextType.default,
 			} = options;
 
+			// early exit if the dialog data is in local storage
+			const isSupportedDialog = await checkIsOpenDialogSupported(dialogId);
+			if (isSupportedDialog === false)
+			{
+				Feature.showUnsupportedWidget();
+
+				return;
+			}
+
+			this.dialogCode = `im.dialog-${this.getDialogId()}-${Uuid.getV4()}`;
 			this.dialogId = dialogId;
 			this.locator.add('dialogId', this.dialogId);
 			serviceLocator.add(this.getDialogId(), this);
@@ -780,9 +809,9 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				return;
 			}
 
-			if (forwardMessageId)
+			if (forwardMessageIds)
 			{
-				this.forwardMessageId = forwardMessageId;
+				this.forwardMessageIds = forwardMessageIds;
 			}
 
 			this.pinManager = new PinManager({
@@ -821,16 +850,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			}
 
 			this.createWidget(titleParams, parentWidget);
-		}
-
-		/**
-		 * @param {DialoguesModelState} dialog
-		 */
-		onBeforeFirstPageRenderFromServer(dialog)
-		{
-			logger.log('Dialog.beforeFirstPageRenderFromServer', dialog);
-
-			this.view.setMessageIdToScrollAfterSet(dialog.lastReadId);
 		}
 
 		openLine(options)
@@ -878,6 +897,16 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		}
 
 		/**
+		 * @return {CollabItem|{}}
+		 */
+		getCollabInfo()
+		{
+			const collabInfo = this.store.getters['dialoguesModel/collabModel/getByDialogId'](this.dialogId);
+
+			return collabInfo || {};
+		}
+
+		/**
 		 * @param {String} [chatId=null]
 		 * @return {DialoguesModelState|{}}
 		 */
@@ -886,6 +915,26 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			const dialog = this.store.getters['dialoguesModel/getByChatId'](chatId || this.getDialog()?.chatId);
 
 			return dialog || {};
+		}
+
+		/**
+		 * @param dialogData
+		 * @returns {MessagesModelState | null}
+		 */
+		getParentMessage(dialogData = this.getDialog())
+		{
+			if (!this.isComment(dialogData))
+			{
+				return null;
+			}
+
+			const message = this.store.getters['messagesModel/getById'](dialogData.parentMessageId);
+			if (!message.id)
+			{
+				return null;
+			}
+
+			return message;
 		}
 
 		/**
@@ -996,7 +1045,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 		/**
 		 * @private
-		 * @return {{imageUrl?: string, defaultIconSvg?: string}}
+		 * @return {{imageUrl?: string, defaultIconSvg?: string, avatar?: object}}
 		 */
 		getCurrentUserAvatarForReactions()
 		{
@@ -1012,6 +1061,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			{
 				return {
 					imageUrl: currentUser.avatar,
+					avatar: ChatAvatar.createFromDialogId(currentUser.id).getReactionAvatarProps(),
 				};
 			}
 
@@ -1022,7 +1072,12 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 		getDialogType()
 		{
-			return 'messenger';
+			if (this.getDialog().type === DialogType.collab)
+			{
+				return DialogWidgetType.collab;
+			}
+
+			return DialogWidgetType.chat;
 		}
 
 		checkCanHaveAttachments()
@@ -1055,7 +1110,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 						currentUserAvatar: this.getCurrentUserAvatarForReactions(),
 					},
 					autoplayVideo: Feature.isAutoplayVideoEnabled,
-					code: 'im.dialog',
+					code: this.dialogCode,
 					dialogType: this.getDialogType(),
 					canHaveAttachments: this.checkCanHaveAttachments(),
 					pinPanel: this.pinManager?.getPinPanelParams(),
@@ -1094,7 +1149,19 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.loadChatWithMessages()
 				.then(() => this.handleLoadChatWithMessages())
 				.catch((error) => this.handleLoadChatWithMessagesError(error))
-				.finally(() => {
+				.finally(async () => {
+					// if at the time of open there was no chat data in the local storage
+					const isSupportedDialog = await checkIsOpenDialogSupported(this.dialogId);
+					if (isSupportedDialog === false)
+					{
+						this.view.once(EventType.view.close, () => {
+							Feature.showUnsupportedWidget();
+						});
+						this.view.back();
+
+						return;
+					}
+
 					this.handleMessageNotFoundError();
 				})
 			;
@@ -1425,6 +1492,38 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 			if (Type.isArrayFilled(result.messageList))
 			{
+				/** @type {Map<number, Array<MessagesModelState>>} */
+				const uploadingCollection = new Map();
+				const uploadingMessageList = this.store.getters['messagesModel/getUploadingMessages'](chatId);
+				for (const uploadingMessage of uploadingMessageList)
+				{
+					if (!uploadingCollection.has(uploadingMessage.previousId))
+					{
+						uploadingCollection.set(uploadingMessage.previousId, []);
+					}
+					uploadingCollection.get(uploadingMessage.previousId).push(uploadingMessage);
+				}
+
+				for (const [messageId, uploadingMessages] of uploadingCollection.entries())
+				{
+					const messageIndex = result.messageList
+						.findIndex((message) => message.id === messageId)
+					;
+					if (messageIndex === -1)
+					{
+						continue;
+					}
+
+					if (messageIndex === result.messageList.length - 1)
+					{
+						result.messageList.push(...uploadingMessages);
+					}
+					else
+					{
+						result.messageList.splice(messageIndex + 1, 0, ...uploadingMessages);
+					}
+				}
+
 				await this.store.dispatch('messagesModel/setFromLocalDatabase', {
 					messages: result.messageList,
 					clearCollection: true,
@@ -1479,10 +1578,12 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		createView(widget)
 		{
 			this.view = new DialogView({
+				dialogCode: this.dialogCode,
 				ui: widget,
 				dialogId: this.getDialogId(),
 				chatId: this.getChatId(),
 				lastReadId: this.getDialog().lastReadId,
+				viewName: ViewName.dialog,
 			});
 			if (this.contextMessageId)
 			{
@@ -1511,6 +1612,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.manageTextField(true);
 
 			this.locator.add('view', this.view);
+			this.locator.add('header-buttons', this.headerButtons);
 			this.locator.add('message-renderer', this.messageRenderer);
 		}
 
@@ -1640,12 +1742,11 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		/**
 		 * @private
 		 */
-		async closeHandler()
+		closeHandler()
 		{
 			const dialogId = this.getDialogId();
 			serviceLocator.delete(dialogId);
 			this.unsubscribeExternalEvents();
-			this.unsubscribeInternalEvents();
 			this.unsubscribeStoreEvents();
 			this.unsubscribeViewEvents();
 			this.audioMessagePlayer.stop();
@@ -1876,10 +1977,9 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				url: audioFile.localAudioUrl,
 			};
 
-			MessengerEmitter.emit(EventType.messenger.uploadFiles, {
-				dialogId: this.getDialogId(),
-				fileList: [file],
-			});
+			this.sendingService.sendFiles(this.getDialogId(), [file])
+				.catch((error) => logger.error(`${this.constructor.name}.sendAudio.sendFiles`, error))
+			;
 		}
 
 		/**
@@ -1979,6 +2079,12 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			}
 
 			const messageList = this.store.getters['messagesModel/getByChatId'](this.getChatId());
+			const parentMessage = this.getParentMessage();
+			if (parentMessage)
+			{
+				messageList.unshift(parentMessage);
+			}
+
 			const fileIdList = [];
 			messageList.forEach((message) => {
 				if (Type.isArrayFilled(message.files))
@@ -1988,7 +2094,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			});
 
 			const fileList = this.store.getters['filesModel/getByIdList'](fileIdList);
-			const imageList = fileList.filter((file) => file.type === FileType.image);
+			// file?.type here needed after 205400 bug fix for already broken messages with disk files
+			const imageList = fileList.filter((file) => file?.type === FileType.image);
 
 			const imageCollection = [];
 			imageList.forEach((image) => {
@@ -2100,7 +2207,16 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			}
 
 			const fileModel = this.store.getters['filesModel/getById'](fileId);
-			if (!fileModel || fileModel.type !== FileType.file)
+			if (!fileModel)
+			{
+				return;
+			}
+
+			const canOpenDocument = (
+				fileModel.type === FileType.file
+				|| fileModel.type === FileType.audio
+			);
+			if (!canOpenDocument)
 			{
 				return;
 			}
@@ -2178,6 +2294,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			openPhoneMenu({
 				number: phoneText,
 				canUseTelephony: MessengerParams.canUseTelephony(),
+				analyticsSection: 'chat',
 			});
 		}
 
@@ -2244,6 +2361,14 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			if (DialogType.comment === dialogModel.type)
 			{
 				this.sidebar = new CommentSidebarController(openSidebarParams);
+				this.sidebar.open(this.view.ui);
+
+				return;
+			}
+
+			if (DialogType.collab === dialogModel.type)
+			{
+				this.sidebar = new CollabSidebarController(openSidebarParams);
 				this.sidebar.open(this.view.ui);
 
 				return;
@@ -2361,6 +2486,11 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				return;
 			}
 
+			if (user.bot)
+			{
+				return;
+			}
+
 			if (!ChatPermission.isCanOpenAvatarMenu(this.getDialog()))
 			{
 				return;
@@ -2406,12 +2536,38 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 */
 		attachTapHandler()
 		{
-			this.view.showAttachPicker((fileList) => {
-				MessengerEmitter.emit(EventType.messenger.uploadFiles, {
-					dialogId: this.getDialogId(),
-					fileList,
-				});
+			let resolveImagePickerPromise = null;
+			const closeImagePickerPromise = new Promise((resolve) => {
+				resolveImagePickerPromise = resolve;
 			});
+
+			const selectedFilesHandler = (fileList) => {
+				this.sendingService.sendFiles(this.getDialogId(), fileList)
+					.catch((error) => logger.error(`${this.constructor.name}.attachTapHandler.sendFiles`, error))
+				;
+			};
+
+			const closeCallback = () => resolveImagePickerPromise();
+
+			const itemSelectedCallback = (id) => {
+				const callbacks = {
+					[AttachPickerId.task]: () => this.entityManager.createTask(),
+					[AttachPickerId.meeting]: () => this.entityManager.createMeeting(),
+				};
+
+				if (callbacks[id])
+				{
+					void closeImagePickerPromise
+						.then(() => callbacks[id]())
+						.catch((error) => logger.error(`${this.constructor.name}.attachTapHandler.closeImagePickerPromise.catch:`, error));
+				}
+			};
+
+			this.view.showAttachPicker(
+				selectedFilesHandler,
+				closeCallback,
+				itemSelectedCallback,
+			);
 		}
 
 		/**
@@ -2494,7 +2650,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 		prepareMessageToSend(text, promptCode = null)
 		{
-			let forwardingMessage = null;
+			const forwardingMessages = [];
 			const messageUuid = Uuid.getV4();
 
 			const message = {
@@ -2528,33 +2684,40 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 			if (this.replyManager.isForwardInProcess)
 			{
-				const forwardMessage = this.replyManager.getForwardMessage(); // need to forward message to the same chat
-				const forwardModel = this.store.getters['messagesModel/getById'](Number(forwardMessage.id));
+				const forwardMessageIds = this.replyManager.getForwardMessageIds(); // need to forward message to the same chat
+				for (const id of forwardMessageIds)
+				{
+					const forwardModel = this.store.getters['messagesModel/getById'](Number(id));
 
-				const forwardUuid = Uuid.getV4();
+					const forwardUuid = Uuid.getV4();
 
-				forwardingMessage = {
-					chatId: this.getChatId(),
-					authorId: MessengerParams.getUserId(),
-					text: forwardModel.text,
-					unread: false,
-					templateId: forwardUuid,
-					date: new Date(),
-					sending: true,
-					forward: {
-						id: this.buildForwardContextId(forwardModel.id),
-						userId: forwardModel?.forward?.userId ?? forwardModel.authorId,
-					},
-					files: forwardModel.files,
-					params: {
-						ATTACH: forwardModel?.params?.ATTACH,
-						replyId: forwardModel?.params?.replyId,
-					},
-				};
+					const prepareForwardMessage = {
+						chatId: this.getChatId(),
+						authorId: MessengerParams.getUserId(),
+						text: forwardModel.text,
+						unread: false,
+						templateId: forwardUuid,
+						date: new Date(),
+						sending: true,
+						forward: {
+							id: this.buildForwardContextId(forwardModel.id),
+							userId: forwardModel?.forward?.userId ?? forwardModel.authorId,
+						},
+						files: forwardModel.files,
+						params: {
+							ATTACH: forwardModel?.params?.ATTACH,
+							replyId: forwardModel?.params?.replyId,
+						},
+					};
 
-				requestParams.forwardIds = {
-					[forwardUuid]: forwardModel.id,
-				};
+					if (Type.isNil(requestParams.forwardIds))
+					{
+						requestParams.forwardIds = {};
+					}
+					requestParams.forwardIds[forwardUuid] = forwardModel.id;
+
+					forwardingMessages.push(prepareForwardMessage);
+				}
 
 				if (this.replyManager.isQuoteInBackground) // TODO future scenario
 				{
@@ -2567,7 +2730,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 			return {
 				message,
-				forwardingMessage,
+				forwardingMessages,
 				requestParams,
 			};
 		}
@@ -2579,15 +2742,22 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				await this.store.dispatch('messagesModel/add', sendMessageParams.message);
 			}
 
-			if (!Type.isNull(sendMessageParams.forwardingMessage))
+			if (Type.isArrayFilled(sendMessageParams.forwardingMessages))
 			{
-				await this.store.dispatch('messagesModel/add', sendMessageParams.forwardingMessage);
+				const addForwardMessagePromiseCollection = [];
+				for (const forwardingMessage of sendMessageParams.forwardingMessages)
+				{
+					addForwardMessagePromiseCollection.push(
+						this.store.dispatch('messagesModel/add', forwardingMessage),
+					);
+				}
+				await Promise.all(addForwardMessagePromiseCollection);
 			}
 		}
 
 		/**
 		 * @private
-		 * @param {{message: Object, forwardingMessage: Object | null, requestParams: Object}} sendMessageParams
+		 * @param {{message: Object, forwardingMessages: Array<Object|null>, requestParams: Object}} sendMessageParams
 		 * @return {Promise}
 		 */
 		async sendMessageToServer(sendMessageParams)
@@ -2635,7 +2805,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				id = sendMessageParams.message.templateId;
 
 				const code = ErrorCode[response?.[0]?.code] || 0;
-				this.store.dispatch('messagesModel/update', {
+				await this.store.dispatch('messagesModel/update', {
 					id: sendMessageParams.message.templateId,
 					fields: {
 						error: true,
@@ -2643,21 +2813,27 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 					},
 				});
 
-				if (!Type.isNull(sendMessageParams.forwardingMessage))
+				if (Type.isArrayFilled(sendMessageParams.forwardingMessages))
 				{
-					id = sendMessageParams.forwardingMessage.templateId;
-					this.store.dispatch('messagesModel/update', {
-						id: sendMessageParams.forwardingMessage.templateId,
-						fields: {
-							error: true,
-							errorReason: code,
-						},
-					});
+					const updateForwardMessagePromiseCollection = [];
+					for (const forwardingMessage of sendMessageParams.forwardingMessages)
+					{
+						updateForwardMessagePromiseCollection.push(
+							this.store.dispatch('messagesModel/update', {
+								id: forwardingMessage.templateId,
+								fields: {
+									error: true,
+									errorReason: code,
+								},
+							}),
+						);
+					}
+					await Promise.all(updateForwardMessagePromiseCollection);
 				}
 			}
 			finally
 			{
-				this.setRecentNewMessage(id);
+				await this.setRecentNewMessage(id);
 			}
 		}
 
@@ -2678,100 +2854,115 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 * @desc Resend all break messages from current chat ( if three days wait is expired )
 		 * @private
 		 */
-		resendMessages()
+		async resendMessages()
+		{
+			let resolveResend = Promise.resolve();
+			let rejectResend = Promise.reject();
+			const resendPromise = new Promise((resolve, reject) => {
+				resolveResend = resolve;
+				rejectResend = reject;
+			});
+
+			this.resendQueuePromise = this.resendQueuePromise
+				.then(() => {
+					const resendInternalPromise = this.#resendInternal();
+
+					resendInternalPromise
+						.then(() => {
+							logger.log(`${this.constructor.name}.resendInternal: complete`);
+
+							resolveResend();
+						})
+						.catch((error) => {
+							logger.log(`${this.constructor.name}.resendInternal error:`, error);
+
+							// eslint-disable-next-line promise/no-return-wrap
+							return Promise.resolve();
+						})
+					;
+				})
+			;
+
+			await resendPromise;
+		}
+
+		async #resendInternal()
 		{
 			const breakMessages = this.store.getters['messagesModel/getBreakMessages'](this.getChatId());
 			logger.info('Dialog.resendMessages', breakMessages);
-			const RESEND_TIME_HOLD = 200;
-			const sortedMessages = this.sortMessagesByType(breakMessages);
 
 			const isManualSend = (message) => this.isWaitSendExpired(message.date)
 				|| message.errorReason === 0
 				|| message.errorReason === ErrorCode.INTERNAL_SERVER_ERROR;
 
-			sortedMessages.forEach((messages, key) => {
-				if (Type.isArray(messages))
+			for (const message of breakMessages)
+			{
+				if (isManualSend(message))
 				{
-					if (!isManualSend(messages[0]))
-					{
-						setTimeout(() => {
-							this.resendGroupMessages(messages);
-						}, key * RESEND_TIME_HOLD);
-					}
+					continue;
 				}
-				else if (!isManualSend(messages))
-				{
-					setTimeout(() => {
-						const bottomMessage = this.view.getBottomMessage();
-						const isBottomMessage = bottomMessage.id === messages.id;
-						this.resendMessage(Number(!isBottomMessage), messages);
-					}, key * RESEND_TIME_HOLD);
-				}
-			});
+
+				const bottomMessage = this.view.getBottomMessage();
+				const isBottomMessage = bottomMessage.id === message.id;
+
+				await this.resendMessage(Number(!isBottomMessage), message);
+			}
 		}
 
-		sendAnalyticsOpenDialog()
+		/**
+		 * @param {number} index
+		 * @param {MessagesModelState|Message} message
+		 * @returns {Promise<void>}
+		 */
+		async resendMessage(index, message)
 		{
-			if (this.openingContext === OpenDialogContextType.chatCreation)
+			if (Type.isPlainObject(index))
+			{
+				// eslint-disable-next-line no-param-reassign
+				({ message } = index);
+			}
+
+			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
+			if (!('id' in modelMessage))
 			{
 				return;
 			}
 
-			AnalyticsService.getInstance().sendChatOpened({
-				dialogId: this.getDialogId(),
-				context: this.openingContext,
-			}).catch((error) => {
-				logger.error(`${this.constructor.name}.sendAnalyticsOpenDialog error`, error)
-			});
-		}
+			if (Type.isArrayFilled(modelMessage.files))
+			{
+				await this.#resendMessageWithFiles(modelMessage);
 
-		/**
-		 * @desc Sorted messages by type ( media or text )
-		 * @param {Array<MessagesModelState>} messages
-		 * @return {Array}
-		 * @private
-		 */
-		sortMessagesByType(messages)
-		{
-			const sortByTypeGroups = [];
-			messages.forEach((message, index) => {
-				if (message.files.length > 0)
-				{
-					const previousMess = messages[index - 1];
-					if (previousMess && previousMess.files.length > 0)
-					{
-						const previous = sortByTypeGroups[sortByTypeGroups.length - 1];
-						if (Type.isArray(previous))
-						{
-							previous.push(message);
-						}
-						else
-						{
-							sortByTypeGroups.push([message]);
-						}
-					}
-					else
-					{
-						sortByTypeGroups.push([message]);
-					}
-				}
-				else
-				{
-					sortByTypeGroups.push(message);
-				}
-			});
+				return;
+			}
 
-			return sortByTypeGroups;
+			await this.#resendTextMessage(index, modelMessage);
 		}
 
 		/**
 		 * @desc Resend break message
-		 * @param {number} index
-		 * @param {object} message
+		 * @param {number | {message: Message, index: null}} index
+		 * @param {MessagesModelState} message
 		 * @private
 		 */
-		async resendMessage(index, message)
+		async #resendTextMessage(index, message)
 		{
+			let messageIndex = 0;
+			if (Type.isObject(index)) // when the method is called from an event with MessengerEmitter
+			{
+				// eslint-disable-next-line no-param-reassign
+				({ message } = index);
+				const bottomMessage = this.view.getBottomMessage();
+				if (message.id !== bottomMessage.id)
+				{
+					messageIndex = 1;
+				}
+			}
+			else
+			{
+				messageIndex = index;
+			}
+
+			logger.log(`${this.constructor.name}.resendMessage`, messageIndex, message);
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
 			const messageToSend = {
 				dialogId: this.getDialogId(),
@@ -2787,33 +2978,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				await this.view.scrollToBottomSmoothly();
 			}
 
-			if (modelMessage.files.length > 0)
-			{
-				const fileId = modelMessage.files[0];
-				const file = this.store.getters['filesModel/getById'](fileId);
-
-				if (Type.isUndefined(file))
-				{
-					return;
-				}
-
-				const fileObj = {
-					id: file.id,
-					previewUrl: file.urlPreview,
-					url: file.localUrl,
-					type: file.type || FileType.file,
-					name: file.name,
-					...file.image,
-				};
-				this.store.dispatch('messagesModel/delete', { id: message.id })
-					.catch((err) => logger.error('Dialog.resendMessage.deleteMessage', err));
-
-				MessengerEmitter.emit(EventType.messenger.uploadFiles, {
-					dialogId: this.getDialogId(),
-					fileList: [fileObj],
-				});
-			}
-
 			await this.store.dispatch('messagesModel/update', {
 				id: message.id,
 				fields: {
@@ -2822,51 +2986,62 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				},
 			});
 
-			this.sendMessageToServer({
+			return this.sendMessageToServer({
 				requestParams: messageToSend,
 				message: modelMessage,
 			});
 		}
 
 		/**
-		 * @desc Resend broken messages group ( with file media )
-		 * @param {array} messages
-		 * @private
+		 * @param {MessagesModelState} message
 		 */
-		resendGroupMessages(messages)
+		async #resendMessageWithFiles(message)
 		{
-			const sendFiles = [];
-			messages.forEach((message) => {
-				const modelMessage = this.store.getters['messagesModel/getById'](message.id);
+			const filesModelList = this.store.getters['filesModel/getListByMessageId'](message.id);
 
-				const fileId = modelMessage.files[0];
-				const file = this.store.getters['filesModel/getById'](fileId);
+			if (!Type.isArrayFilled(filesModelList))
+			{
+				return Promise.resolve(true);
+			}
 
-				if (Type.isUndefined(file))
-				{
-					return;
-				}
+			const fileList = filesModelList.map((file) => {
+				const sizeParams = {
+					width: file.image?.width ?? 0,
+					height: file.image?.height ?? 0,
+					previewWidth: file.image?.width ?? 0,
+					previewHeight: file.image?.height ?? 0,
+				};
 
-				const fileObj = {
+				return {
 					id: file.id,
 					previewUrl: file.urlPreview,
 					url: file.localUrl,
 					type: file.type || FileType.file,
 					name: file.name,
-					...file.image,
+					...sizeParams,
 				};
-				sendFiles.push(fileObj);
-				this.store.dispatch('messagesModel/delete', { id: message.id })
-					.catch((err) => logger.error('Dialog.resendMessage.deleteMessage', err));
 			});
 
-			MessengerEmitter.emit(EventType.messenger.uploadFiles, {
+			return this.sendingService.resendMessageWithFiles({
 				dialogId: this.getDialogId(),
-				fileList: sendFiles,
+				temporaryMessageId: message.id,
+				fileList,
 			});
+		}
 
-			this.view.scrollToBottomSmoothly()
-				.catch((err) => logger.error(`${this.constructor.name}.resendGroupMessages.scrollToBottomSmoothly.catch`, err));
+		sendAnalyticsOpenDialog()
+		{
+			if (this.openingContext === OpenDialogContextType.chatCreation)
+			{
+				return;
+			}
+
+			AnalyticsService.getInstance().sendChatOpened({
+				dialogId: this.getDialogId(),
+				context: this.openingContext,
+			}).catch((error) => {
+				logger.error(`${this.constructor.name}.sendAnalyticsOpenDialog error`, error);
+			});
 		}
 
 		setReaction(reaction, message, like)
@@ -2928,20 +3103,17 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		/**
 		 * @private
 		 */
-		messageFileUploadCancelTapHandler(index, message)
+		messageFileUploadCancelTapHandler(index, message, mediaId)
 		{
-			logger.log('Dialog.messageFileUploadCancelTapHandler: ', index, message);
-
+			logger.log('Dialog.messageFileUploadCancelTapHandler: ', index, message, mediaId);
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
 			if (!modelMessage || !modelMessage.id || !modelMessage.files || !modelMessage.files[0])
 			{
 				return;
 			}
 
-			MessengerEmitter.emit(EventType.messenger.cancelFileUpload, {
-				messageId: modelMessage.id,
-				fileId: modelMessage.files[0],
-			});
+			this.sendingService.cancelFileUpload(modelMessage.id, modelMessage.files, mediaId)
+				.catch((error) => logger.error(`${this.constructor.name}.messageFileUploadCancelTapHandler.cancelFileUpload catch:`, error));
 		}
 
 		/**
@@ -3009,6 +3181,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 */
 		async quoteTapHandler(message)
 		{
+			logger.log(`${this.constructor.name}.quoteTapHandler:`, message);
 			const messageId = message.id;
 			const modelMessage = this.store.getters['messagesModel/getById'](messageId);
 			if (!modelMessage)
@@ -3348,6 +3521,23 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		}
 
 		/**
+		 * @param {object} mutation
+		 * @param {MutationPayload<CollabSetGuestCountData, CollabSetGuestCountActions>} mutation.payload
+		 * @param {CollabSetGuestCountData} mutation.payload.data
+		 */
+		collabInfoUpdateHandler(mutation)
+		{
+			const { dialogId } = mutation.payload.data;
+
+			if (this.dialogId !== dialogId)
+			{
+				return;
+			}
+
+			this.headerTitle.renderTitle();
+		}
+
+		/**
 		 * @desc The handler change status application model
 		 * @param {Object} mutation
 		 * @private
@@ -3677,20 +3867,23 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 		/**
 		 * @desc Method is calling view -> native method for update load text progress in message
-		 * @param {Object} mutation
+		 * @param {MutationPayload<MessagesUpdateData, MessagesUpdateActions>} payload
 		 * @return {Boolean}
 		 * @private
 		 */
-		updateProgressFileHandler(mutation)
+		updateProgressFileHandler({ payload = {} })
 		{
-			const messageId = mutation.payload.data.id;
+			const messageId = payload?.data?.id;
+			const fields = payload?.data?.fields;
+
 			const message = this.store.getters['messagesModel/getById'](messageId);
 			if (!message || message.chatId !== this.getChatId())
 			{
 				return false;
 			}
+			const isGallery = message.files.length > 1;
 
-			const file = this.store.getters['filesModel/getById'](message.files[0]); // TODO if there is more than one file in the message?
+			const file = this.store.getters['filesModel/getById'](fields.uploadFileId || message.files[0]);
 			if (!file)
 			{
 				return false;
@@ -3700,7 +3893,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				messageId,
 				currentBytes: file.uploadData.byteSent,
 				totalBytes: file.uploadData.byteTotal,
-				textProgress: message.loadText,
+				textProgress: isGallery ? '' : fields.loadText,
+				mediaId: fields.uploadFileId,
 			};
 
 			return this.view.updateUploadProgressByMessageId(data);
@@ -3932,9 +4126,9 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 * @param {string|number} messageId
 		 * @return {Promise}
 		 */
-		setRecentNewMessage(messageId)
+		async setRecentNewMessage(messageId)
 		{
-			if (this.isComment())
+			if (Type.isNumber(messageId) || this.isComment())
 			{
 				return Promise.resolve(true);
 			}
@@ -3949,12 +4143,20 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			}
 
 			const isMessageFile = Type.isArray(messageModel.files) && messageModel.files.length > 0;
-			let subTitleIcon = isMessageFile ? SubTitleIconType.wait : SubTitleIconType.reply;
+			const isUploadingMessage = this.store.getters['messagesModel/isUploadingMessage'](messageId);
+
+			let subTitleIcon = SubTitleIconType.reply;
+			if (isMessageFile && isUploadingMessage)
+			{
+				subTitleIcon = SubTitleIconType.wait;
+			}
+
 			if (messageModel.error)
 			{
 				const isManualSend = this.isWaitSendExpired(messageModel.date)
 					|| messageModel.errorReason === 0
-					|| messageModel.errorReason === ErrorCode.INTERNAL_SERVER_ERROR;
+					|| messageModel.errorReason === ErrorCode.INTERNAL_SERVER_ERROR
+				;
 
 				subTitleIcon = isManualSend ? SubTitleIconType.error : SubTitleIconType.wait;
 			}
@@ -3965,18 +4167,32 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				status = MessageStatus.delivered;
 			}
 
-			const recentItem = RecentConverter.fromPushToModel({
+			const date = new Date();
+
+			let recentItem = RecentConverter.fromPushToModel({
 				id: dialogId,
 				chat: recentModel ? recentModel.chat : this.getDialog(),
 				message: {
 					id: messageId,
 					senderId: messageModel.authorId,
 					text: isMessageFile ? `[${BX.message('IM_F_FILE')}]` : messageModel.text,
-					date: new Date(),
+					date,
 					subTitleIcon,
 					status,
 				},
+				lastActivityDate: date,
 			});
+
+			if (isUploadingMessage)
+			{
+				recentItem = {
+					...recentModel,
+					uploadingState: {
+						lastActivityDate: date,
+						message: recentItem.message,
+					},
+				};
+			}
 
 			return this.store.dispatch('recentModel/set', [recentItem]);
 		}
@@ -4022,17 +4238,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 */
 		sendAnalyticsShowBannerByStart()
 		{
-			const dialog = this.getDialog();
-			const dialogType = dialog?.type;
-			const analytics = new AnalyticsEvent()
-				.setTool(Analytics.Tool.im)
-				.setCategory(Analytics.Category.limitBanner)
-				.setEvent(Analytics.Event.view)
-				.setType(Analytics.Type.limitOfficeChatingHistory)
-				.setSection(Analytics.Section.chatStart)
-				.setP1(Analytics.P1[dialogType]);
-
-			analytics.send();
+			AnalyticsService.getInstance().sendAnalyticsShowBannerByStart({ dialog: this.getDialog() });
 		}
 	}
 

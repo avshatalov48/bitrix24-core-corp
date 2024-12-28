@@ -254,4 +254,18 @@ if (!$isAvailable)
 	$componentPage = 'disabled';
 }
 
+$router = Container::getInstance()->getRouter();
+if ($componentPage === 'kanban')
+{
+	$router->checkAndUpdateCurrentListView($router::LIST_VIEW_KANBAN, \CCrmOwnerType::Quote);
+}
+elseif ($componentPage === 'list')
+{
+	$router->checkAndUpdateCurrentListView($router::LIST_VIEW_LIST, \CCrmOwnerType::Quote);
+}
+elseif ($componentPage === 'deadlines')
+{
+	$router->checkAndUpdateCurrentListView($router::LIST_VIEW_DEADLINES, \CCrmOwnerType::Quote);
+}
+
 $this->IncludeComponentTemplate($componentPage);

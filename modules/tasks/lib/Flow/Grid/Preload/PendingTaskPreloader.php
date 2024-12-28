@@ -14,6 +14,10 @@ class PendingTaskPreloader extends TaskDirectorPreloader
 			'@STATUS' => Status::STATUS_MAP[Status::FLOW_PENDING]
 		];
 
-		$this->load($filter, ...$flowIds);
+		$order = [
+			'CREATED_DATE' => 'DESC',
+		];
+
+		$this->load($filter, $order, ...$flowIds);
 	}
 }

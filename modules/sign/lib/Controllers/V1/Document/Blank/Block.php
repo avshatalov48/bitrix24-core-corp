@@ -39,12 +39,12 @@ class Block extends \Bitrix\Sign\Engine\Controller
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'documentUid'
+        itemIdOrUidRequestKey: 'documentUid'
 	)]
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'documentUid'
+        itemIdOrUidRequestKey: 'documentUid'
 	)]
 	public function saveAction(string $documentUid, array $blocks): array
 	{
@@ -123,13 +123,13 @@ class Block extends \Bitrix\Sign\Engine\Controller
 				data: $data,
 				id: null,
 				style: $style,
-				role: $frontendBlockService->getRole($party)
+				role: $frontendBlockService->getRole($party),
 			));
 		}
 
 		$operation = new Operation\Block\RefillForBlank(
 			$document->blankId,
-			blockCollection: $blockCollection
+			blockCollection: $blockCollection,
 		);
 
 		$result = $operation->launch();
@@ -145,12 +145,12 @@ class Block extends \Bitrix\Sign\Engine\Controller
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'documentUid'
+        itemIdOrUidRequestKey: 'documentUid'
 	)]
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'documentUid'
+        itemIdOrUidRequestKey: 'documentUid'
 	)]
 	public function loadDataAction(string $documentUid, array $blocks): array
 	{
@@ -182,7 +182,7 @@ class Block extends \Bitrix\Sign\Engine\Controller
 			);
 
 			$result[] = [
-				'data' => $item->data
+				'data' => $item->data,
 			];
 		}
 
@@ -192,12 +192,12 @@ class Block extends \Bitrix\Sign\Engine\Controller
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'documentUid'
+        itemIdOrUidRequestKey: 'documentUid'
 	)]
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'documentUid'
+        itemIdOrUidRequestKey: 'documentUid'
 	)]
 	public function loadByDocumentAction(string $documentUid): array
 	{
@@ -216,6 +216,10 @@ class Block extends \Bitrix\Sign\Engine\Controller
 		}
 
 		$blocks = $loadResult->getData()['blocks'] ?? new Item\BlockCollection();
+		$blocks = $blocks->filter(
+			fn(Item\Block $block) => $this->filterBlock($document, $block)
+		);
+
 		$result = [];
 
 		$lastPartyMembersCount = $this->memberRepository->countByDocumentIdAndParty($document->id, $document->parties);
@@ -243,5 +247,39 @@ class Block extends \Bitrix\Sign\Engine\Controller
 		}
 
 		return $result;
+	}
+
+	private function filterBlock(
+		Item\Document $document,
+		Item\Block $block
+	): bool
+	{
+		if ($block->code === Type\BlockCode::B2E_HCMLINK_REFERENCE)
+		{
+			if (!$document->hcmLinkCompanyId)
+			{
+				return false;
+			}
+
+			$field = $block->data['field'] ?? null;
+			if (empty($field))
+			{
+				return false;
+			}
+
+			$hcmLinkCompanyId = Service\Container::instance()
+				->getHcmLinkFieldService()
+				->extractCompanyIdFromFieldName($block->data['field'])
+			;
+
+			if (!$hcmLinkCompanyId)
+			{
+				return false;
+			}
+
+			return $document->hcmLinkCompanyId === $hcmLinkCompanyId;
+		}
+
+		return true;
 	}
 }

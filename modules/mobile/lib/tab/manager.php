@@ -309,6 +309,11 @@ class Manager
 	 */
 	public function getPresetConfig()
 	{
+		if ($this->context->isCollaber)
+		{
+			return $this->config['defaultCollaberPreset'];
+		}
+
 		$preset = $this->getPresetName();
 		if (isset($this->config["presets"][$preset]) && is_array($this->config["presets"][$preset]))
 		{
@@ -416,14 +421,54 @@ class Manager
 				}, ARRAY_FILTER_USE_BOTH);
 
 				$result[$presetId] = [
-					"tabs" => $tabs,
-					"title" => Loc::getMessage(mb_strtoupper("TAB_PRESET_NAME_$presetId"))
+					'tabs' => $tabs,
+					'title' => Loc::getMessage(
+						$this->getLastVersionedMessageKey(mb_strtoupper("TAB_PRESET_NAME_$presetId")),
+					),
+					'tabsDescription' => $this->getTabsDescription($presetId, array_keys($tabs)),
 				];
 			}
 
 		}
 
 		return $result;
+	}
+
+	private function getTabsDescription(string $presetId, array $tabs): array
+	{
+		return array_filter(
+			array_combine(
+				$tabs,
+				array_map(fn($tabId) => Loc::getMessage(mb_strtoupper("{$presetId}_{$tabId}_DESCRIPTION")), $tabs),
+			)
+		);
+	}
+
+	private function getLastVersionedMessageKey(string $baseKey): string
+	{
+		$resultKey = $baseKey;
+
+		$version = 2;
+		$proceed = true;
+
+		while ($proceed)
+		{
+			$nextResultKey = "{$baseKey}_V{$version}";
+			$message = Loc::getMessage($nextResultKey);
+
+			if ($message !== null)
+			{
+				$resultKey = $nextResultKey;
+			}
+			else
+			{
+				$proceed = false;
+			}
+
+			++$version;
+		}
+
+		return $resultKey;
 	}
 
 	private function setDefaultUserPreset()

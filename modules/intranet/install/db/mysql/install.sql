@@ -175,3 +175,16 @@ create table if not exists b_intranet_custom_section_page (
 	PRIMARY KEY (`ID`),
 	INDEX ix_intranet_custom_section_page_module_id_settings (`MODULE_ID`, `SETTINGS`)
 );
+
+create table if not exists b_intranet_invitation_link
+(
+	ID int not null AUTO_INCREMENT,
+	ENTITY_TYPE varchar(15) not null,
+	ENTITY_ID int not null,
+	CODE varchar(64) not null,
+	CREATED_BY int(11) unsigned null,
+	CREATED_AT datetime not null,
+	EXPIRED_AT datetime null,
+	PRIMARY KEY(ID),
+	UNIQUE INDEX ux_b_intranet_invitation_link_entity_type_entity_id (ENTITY_TYPE, ENTITY_ID)
+)

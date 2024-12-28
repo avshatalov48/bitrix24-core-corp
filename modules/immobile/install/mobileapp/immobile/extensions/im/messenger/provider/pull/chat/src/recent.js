@@ -1,7 +1,6 @@
 /**
  * @module im/messenger/provider/pull/chat/recent
  */
-
 jn.define('im/messenger/provider/pull/chat/recent', (require, exports, module) => {
 	const { clone } = require('utils/object');
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
@@ -59,6 +58,39 @@ jn.define('im/messenger/provider/pull/chat/recent', (require, exports, module) =
 			});
 
 			this.store.dispatch('recentModel/set', [recentItem]);
+		}
+
+		/**
+		 * @param {UserShowInRecentParams} params
+		 * @param {PullExtraParams} extra
+		 * @param command
+		 */
+		async handleUserShowInRecent(params, extra, command)
+		{
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			logger.log('handleUserShowInRecent', params, extra, command);
+			const { items } = params;
+
+			const users = items.map((item) => {
+				return {
+					...item.user,
+					lastActivityDate: item.date, // draw collaber avatar without invited default avatar
+				};
+			});
+			await this.store.dispatch('usersModel/set', users);
+
+			const recentItems = items.map((item) => {
+				return {
+					id: item.user.id,
+					lastActivityDate: item.date,
+					invited: false,
+				};
+			});
+			await this.store.dispatch('recentModel/set', recentItems);
 		}
 	}
 

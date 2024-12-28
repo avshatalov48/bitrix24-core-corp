@@ -1,6 +1,6 @@
 import { MessengerMenu, MenuItem, MenuItemIcon } from 'im.v2.component.elements';
+import { Analytics } from 'im.v2.lib.analytics';
 import { EntityCreator } from 'im.v2.lib.entity-creator';
-import { Extension } from 'main.core';
 
 import type { PopupOptions } from 'main.popup';
 import type { ImModelChat } from 'im.v2.model';
@@ -57,28 +57,19 @@ export const CreateEntityMenu = {
 	},
 	methods:
 	{
-		onCreateAiTextClick()
-		{
-			this.getEntityCreator().createAiTextForChat(this.textareaValue);
-			this.showMenu = false;
-		},
-		onCreateAiImageClick()
-		{
-			//
-		},
 		onCreateTaskClick()
 		{
-			this.getEntityCreator().createTaskForChat();
+			Analytics.getInstance().chatEntities.onCreateTaskFromTextareaClick(this.dialogId);
+
+			void this.getEntityCreator().createTaskForChat();
 			this.showMenu = false;
 		},
 		onCreateMeetingClick()
 		{
-			this.getEntityCreator().createMeetingForChat();
+			Analytics.getInstance().chatEntities.onCreateEventFromTextareaClick(this.dialogId);
+
+			void this.getEntityCreator().createMeetingForChat();
 			this.showMenu = false;
-		},
-		onCreateSummaryClick()
-		{
-			//
 		},
 		getEntityCreator(): EntityCreator
 		{

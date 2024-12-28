@@ -5,6 +5,8 @@ jn.define('tasks/dashboard/filter', (require, exports, module) => {
 	const { BaseListFilter } = require('layout/ui/list/base-filter');
 	const { Type } = require('type');
 	const { FieldChangeRegistry } = require('tasks/statemanager/redux/slices/tasks/field-change-registry');
+	const { EntityReady } = require('entity-ready');
+	const { StorageCache } = require('storage-cache');
 	const store = require('statemanager/redux/store');
 	const { usersSelector } = require('statemanager/redux/slices/users');
 	const { selectGroupById } = require('tasks/statemanager/redux/slices/groups');
@@ -94,10 +96,13 @@ jn.define('tasks/dashboard/filter', (require, exports, module) => {
 		 * @param tabsGuid
 		 * @param presetId
 		 * @param role
+		 * @param isRootComponent
+		 * @param siteId
 		 */
-		constructor(currentUserId, ownerId, projectId, isTabsMode, tabsGuid, presetId, role)
+		constructor(currentUserId, ownerId, projectId, isTabsMode, tabsGuid, presetId, role, isRootComponent, siteId)
 		{
 			super(presetId ?? TasksDashboardFilter.presetType.default, '', false);
+
 			this.currentUserId = Number(currentUserId);
 			this.ownerId = Number(ownerId);
 			this.projectId = Number(projectId);
@@ -110,7 +115,47 @@ jn.define('tasks/dashboard/filter', (require, exports, module) => {
 
 			setTimeout(() => this.fillPresets(this.getFillPresetParams()), 1000);
 
+			if (isRootComponent && this.isMyList())
+			{
+				this.setInitialDownMenuTasksCounter(siteId);
+
+				EntityReady.wait('chat')
+					.then(() => setTimeout(() => this.setInitialDownMenuTasksCounter(siteId), 1000))
+					.catch(console.error)
+				;
+			}
 			this.clearCounters();
+		}
+
+		setInitialDownMenuTasksCounter(siteId)
+		{
+			const taskListCache = new StorageCache('tasksTaskList', 'filterCounters_0');
+			let counterValue = 0;
+
+			const cachedCounters = Application.sharedStorage().get('userCounters');
+			if (cachedCounters)
+			{
+				try
+				{
+					const counters = JSON.parse(cachedCounters)[siteId];
+					counterValue = (counters.tasks_total || 0);
+					taskListCache.set({ counterValue });
+				}
+				catch
+				{
+					// do nothing
+				}
+			}
+			else
+			{
+				const taskListCounter = taskListCache.get();
+				if (taskListCounter)
+				{
+					counterValue = (taskListCounter.counterValue || 0);
+				}
+			}
+
+			Application.setBadges({ tasks: counterValue });
 		}
 
 		/**

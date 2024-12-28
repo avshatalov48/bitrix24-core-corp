@@ -2346,10 +2346,10 @@ class CAllCrmInvoice
 		$personTypeId = intval($personTypeId);
 
 		$allowedProperties = self::_getAllowedPropertiesInfo();
-		$arFilter = array("ACTIVE" => "Y");
+		$arFilter = ['=ACTIVE' => 'Y'];
 		if ($personTypeId > 0)
 		{
-			$arFilter["PERSON_TYPE_ID"] = $personTypeId;
+			$arFilter['=PERSON_TYPE_ID'] = $personTypeId;
 		}
 
 		$dbRes = \Bitrix\Crm\Invoice\Property::getList([
@@ -2360,7 +2360,10 @@ class CAllCrmInvoice
 				"PROPS_GROUP_ID" => "ASC",
 				"SORT" => "ASC",
 				"NAME" => "ASC"
-			]
+			],
+			'cache' => [
+				'ttl' => 86400,
+			],
 		]);
 
 		$arResult = array();
@@ -2436,10 +2439,10 @@ class CAllCrmInvoice
 			}
 		}
 
-		$arFilter = array("ACTIVE" => "Y");
+		$arFilter = ['=ACTIVE' => 'Y'];
 		if ($personTypeId > 0)
 		{
-			$arFilter["PERSON_TYPE_ID"] = $personTypeId;
+			$arFilter['=PERSON_TYPE_ID'] = $personTypeId;
 		}
 
 		$dbRes = \Bitrix\Crm\Invoice\Property::getList([
@@ -2450,7 +2453,10 @@ class CAllCrmInvoice
 				"PROPS_GROUP_ID" => "ASC",
 				"SORT" => "ASC",
 				"NAME" => "ASC"
-			]
+			],
+			'cache' => [
+				'ttl' => 86400,
+			],
 		]);
 
 		$propertyGroupId = -1;
@@ -2520,12 +2526,15 @@ class CAllCrmInvoice
 		$propsIdList = array_unique($propsIdList);
 
 		$propsData = \Bitrix\Crm\Invoice\Property::getList(
-			array(
-				"filter" => array(
-					"ID" => $propsIdList,
-					"ACTIVE" => "Y"
-				)
-			)
+			[
+				'filter' => [
+					'=ID' => $propsIdList,
+					'=ACTIVE' => 'Y',
+				],
+				'cache' => [
+					'ttl' => 86400,
+				],
+			],
 		);
 		while ($property = $propsData->fetch())
 		{
@@ -3001,6 +3010,36 @@ class CAllCrmInvoice
 		global $DB;
 		$errMsg = array();
 		$bError = false;
+
+		$clearCountableFromCallListsOption = '~CRM_APPROVE_CCA_READ';
+		if ((string)COption::GetOptionString('crm', $clearCountableFromCallListsOption, 'N') === 'N' && Bitrix\Crm\Feature::enabled(\Bitrix\Crm\Feature\CopilotInCallGrading::class))
+		{
+			$agentExists = \CAgent::GetList([], ['=NAME' => 'Bitrix\Crm\Agent\Security\ApproveCustomPermsToExistRoleAgent::run();'])->Fetch();
+			try
+			{
+				$lostDefaultPermissions = Main\Web\Json::decode(Main\Config\Option::get('crm', 'default_permissions'));
+			}
+			catch (Main\ArgumentException)
+			{
+				$lostDefaultPermissions = [];
+			}
+			if (!$agentExists)
+			{
+				COption::SetOptionString('crm', $clearCountableFromCallListsOption, 'Y');
+				if (count($lostDefaultPermissions) === 1 && (current($lostDefaultPermissions)['permissionClass'] ?? '') === 'Bitrix\\Crm\\Security\\Role\\Manage\\Permissions\\CopilotCallAssessment\\Read')
+				{
+					\CAgent::AddAgent(
+						'Bitrix\Crm\Agent\Security\ApproveCustomPermsToExistRoleAgent::run();',
+						'crm',
+						'N',
+						1,
+						'',
+						'Y',
+						\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 10)
+					);
+				}
+			}
+		}
 
 		$reFillDynamicTypesAttrTable = '~CRM_REFILL_DYNAMIC_TYPES_ATTR_TABLE_V2';
 		if ((string)COption::GetOptionString('crm', $reFillDynamicTypesAttrTable, 'N') === 'N') {
@@ -3783,9 +3822,11 @@ class CAllCrmInvoice
 		}
 		if ($languageId == '')
 		{
+			/** @todo Use SiteTable::getDefaultLanguageId() */
 			$siteIterator = \Bitrix\Main\SiteTable::getList(array(
 				'select' => array('LID', 'LANGUAGE_ID'),
-				'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y')
+				'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y'),
+				'cache' => ['ttl' => 86400],
 			));
 			if ($site = $siteIterator->fetch())
 				$languageId = (string)$site['LANGUAGE_ID'];
@@ -3800,9 +3841,11 @@ class CAllCrmInvoice
 		$currentSiteID = SITE_ID;
 		if (defined("ADMIN_SECTION"))
 		{
+			/** @todo Use SiteTable::getDefaultSiteId() */
 			$siteIterator = Bitrix\Main\SiteTable::getList(array(
 				'select' => array('LID', 'LANGUAGE_ID'),
-				'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y')
+				'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y'),
+				'cache' => ['ttl' => 86400],
 			));
 			if ($defaultSite = $siteIterator->fetch())
 			{
@@ -5157,7 +5200,10 @@ class CAllCrmInvoice
 
 		$dbRes = \Bitrix\Crm\Invoice\Property::getList([
 			'select' => ['ID', 'TYPE'],
-			'filter' => ['ID' => $propertyIds],
+			'filter' => ['=ID' => $propertyIds],
+			'cache' => [
+				'ttl' => 86400,
+			],
 		]);
 		$propertyTypes = [];
 		while ($row = $dbRes->Fetch())

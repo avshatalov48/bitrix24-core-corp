@@ -23,7 +23,20 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		delete: 'delete',
 		view: 'view',
 		click: 'click',
+		clickEdit: 'click_edit',
+		submitEdit: 'submit_edit',
 		clickCallButton: 'click_call_button',
+		saveToDisk: 'save_to_disk',
+		downloadFile: 'download_file',
+		clickAddUser: 'click_add_user',
+		openCalendar: 'open_calendar',
+		openTasks: 'open_tasks',
+		openFiles: 'open_files',
+		clickCreateTask: 'click_create_task',
+		clickCreateEvent: 'click_create_event',
+		clickAttach: 'click_attach',
+		galleryLimitException: 'gallery_limit_exception',
+		cancelFileUpload: 'cancel_file_upload',
 	});
 
 	const Tool = Object.freeze({
@@ -35,6 +48,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		chatOperations: 'chat_operations',
 		messenger: 'messenger',
 		channel: 'channel',
+		collab: 'collab',
 		chat: 'chat',
 		copilot: 'copilot',
 		videoconf: 'videoconf',
@@ -75,16 +89,28 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		comment: 'comment',
 		custom: 'custom', // case for custom dialog type
 		limitOfficeChatingHistory: 'limit_office_chating_history',
+		collab: 'collab',
 
 		/* region call type */
 		privateCall: 'private',
 		groupCall: 'group',
+
+		/* region file type */
+		image: 'image',
+		video: 'video',
+		audio: 'audio',
+		file: 'file',
+
+		/* region media type */
+		media: 'media',
+		files: 'files',
 	});
 
 	const Section = Object.freeze({
 		copilotTab: 'copilot_tab',
 		chatTab: 'chat_tab',
 		channelTab: 'channel_tab',
+		collabTab: 'collab_tab',
 		notificationTab: 'notification_tab',
 		sidebar: 'sidebar',
 		activeChat: 'active_chat',
@@ -97,6 +123,10 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		chatWindow: 'chat_window',
 		chatSidebar: 'chat_sidebar',
 		comments: 'comments',
+		editor: 'editor',
+		chatTextarea: 'chat_textarea',
+		messageContextMenu: 'message_context_menu',
+		callMessage: 'call_message',
 	});
 
 	const SubSection = Object.freeze({
@@ -109,6 +139,8 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		main: 'main',
 		videocall: 'videocall',
 		audiocall: 'audiocall',
+		startMessage: 'start_message',
+		finishMessage: 'finish_message',
 	});
 
 	const P3 = Object.freeze({
@@ -118,7 +150,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 
 	const P1 = Object.freeze({
 		openChannel: 'chatType_channelOpen',
-		closedChannel: 'chatType_channelClosed',
+		channel: 'chatType_channel',
 		generalChannel: 'chatType_channelGeneral',
 		comment: 'chatType_comments',
 		user: 'chatType_private',
@@ -135,6 +167,16 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		copilot: 'chatType_copilot',
 	});
 
+	/**
+	 * keys are associated with UserType
+	 * @see UserType
+	 */
+	const P2 = Object.freeze({
+		user: 'user_intranet',
+		extranet: 'user_extranet',
+		collaber: 'user_collaber',
+	});
+
 	const Analytics = Object.freeze({
 		CopilotChatType,
 		Event,
@@ -144,8 +186,9 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		Section,
 		SubSection,
 		Element,
-		P3,
 		P1,
+		P2,
+		P3,
 	});
 
 	module.exports = { Analytics };

@@ -2,6 +2,7 @@
  * @module crm/timeline/item/base
  */
 jn.define('crm/timeline/item/base', (require, exports, module) => {
+	const { Random } = require('utils/random');
 	const AppTheme = require('apptheme');
 	const { MarketBanner } = require('crm/timeline/item/ui/market-banner');
 	const { TimelineItemHeader } = require('crm/timeline/item/ui/header');

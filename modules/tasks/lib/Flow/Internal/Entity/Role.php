@@ -9,4 +9,5 @@ enum Role: string
 	case TASK_CREATOR = 'TC';
 	case MANUAL_DISTRIBUTOR = 'MD';
 	case QUEUE_ASSIGNEE = 'QA';
+	case HIMSELF_ASSIGNED = 'HM';
 }

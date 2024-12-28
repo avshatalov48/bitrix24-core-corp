@@ -22,7 +22,9 @@ class SocialnetworkHandlers
 		{
 			return;
 		}
-		Driver::getInstance()->addUserStorage($fields['ID']);
+
+		$user = User::buildFromArray($fields);
+		Driver::getInstance()->addUserStorageByObject($user);
 	}
 
 	/**
@@ -149,7 +151,10 @@ class SocialnetworkHandlers
 		if ($storage->getRootObject()->countSizeOfVersions() > 0)
 		{
 			global $APPLICATION;
-			$APPLICATION->ThrowException(Loc::getMessage("DISK_SOCNET_HANDLERS_DECLINE_GROUP_DELETING_WITH_FILES"));
+			$APPLICATION->ThrowException(
+				Loc::getMessage("DISK_SOCNET_HANDLERS_DECLINE_GROUP_DELETING_WITH_FILES"),
+				'DISK_NOT_EMPTY'
+			);
 
 			return false;
 		}

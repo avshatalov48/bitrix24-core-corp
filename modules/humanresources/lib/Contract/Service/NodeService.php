@@ -46,8 +46,8 @@ interface NodeService
 	 * @return \Bitrix\HumanResources\Item\Node
 	 */
 	public function moveNode(Node $node, ?Node $targetNode): Node;
-	public function getNodesByUserId(int $userId, NodeActiveFilter $activeFilter = NodeActiveFilter::ALL): NodeCollection;
-	public function getNodesByUserIdAndUserRoleId(int $userId, int $roleId, NodeActiveFilter $activeFilter = NodeActiveFilter::ALL): NodeCollection;
+	public function getNodesByUserId(int $userId, NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE): NodeCollection;
+	public function getNodesByUserIdAndUserRoleId(int $userId, int $roleId, NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE): NodeCollection;
 	public function getNodeChildNodes(int $nodeId): NodeCollection;
 	public function getNodeChildNodesByAccessCode(string $accessCode): NodeCollection;
 

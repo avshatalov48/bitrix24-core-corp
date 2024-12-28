@@ -36,6 +36,7 @@ abstract class AbstractCommand implements Arrayable
 	use PrimaryTrait;
 
 	private bool $sendPush = true;
+	private array $pushParams = [];
 
 	/**
 	 * @throws InvalidArgumentException
@@ -80,6 +81,16 @@ abstract class AbstractCommand implements Arrayable
 			}
 
 			return $this->hasProperty($property);
+		}
+
+		$operation = lcfirst(substr($name, 0, 2));
+		$subOperation = lcfirst(substr($name, -6));
+
+		if ($operation === 'is' && $subOperation === 'filled')
+		{
+			$property = lcfirst(substr($name, 2, -6));
+
+			return $this->isFilledProperty($property);
 		}
 
 		return null;
@@ -284,6 +295,18 @@ abstract class AbstractCommand implements Arrayable
 	public function isNecessarySendPush(): bool
 	{
 		return $this->sendPush;
+	}
+
+	public function setPushParams(array $pushParams): self
+	{
+		$this->pushParams = $pushParams;
+
+		return $this;
+	}
+
+	public function getPushParams(): array
+	{
+		return $this->pushParams;
 	}
 
 	protected function getValuesByAttribute(string $attributeClass): array

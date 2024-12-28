@@ -19,9 +19,13 @@ $helper = new \Bitrix\Tasks\UI\Component\TemplateHelper('TasksWidgetMemberSelect
 			{
 				return array();
 			}
+			if (($user['COLLABER_NO_HAS_COMMON_GROUP'] ?? null))
+			{
+				$collaberNoHasCommonGroup = $user['COLLABER_NO_HAS_COMMON_GROUP'];
+			}
 
 			$user = User::extractPublicData($user);
-
+			$user['COLLABER_NO_HAS_COMMON_GROUP'] = !empty($collaberNoHasCommonGroup) ?? null;
 			$user['VALUE'] = $user['ID'];
 			$user['DISPLAY'] = User::formatName($user, false, $arParams['NAME_TEMPLATE']);
 
@@ -32,23 +36,15 @@ $helper = new \Bitrix\Tasks\UI\Component\TemplateHelper('TasksWidgetMemberSelect
 					''
 			;
 
-			$userType = 'employee';
-			if($user['IS_CRM_EMAIL_USER'])
+			$userType = match (true)
 			{
-				$userType = 'crmemail';
-			}
-			elseif($user['IS_EMAIL_USER'])
-			{
-				$userType = 'mail';
-			}
-			elseif($user['IS_EXTRANET_USER'])
-			{
-				$userType = 'extranet';
-			}
-			elseif($user['IS_NETWORK_USER'] ?? null)
-			{
-				$userType = 'network';
-			}
+				$user['IS_CRM_EMAIL_USER'] => 'crmemail',
+				$user['IS_EMAIL_USER'] => 'mail',
+				$user['IS_COLLABER_USER'] ?? false => 'collaber',
+				$user['IS_EXTRANET_USER'] => 'extranet',
+				$user['IS_NETWORK_USER'] ?? false => 'network',
+				default => 'employee',
+			};
 
 
 			$user['USER_TYPE'] = $userType;

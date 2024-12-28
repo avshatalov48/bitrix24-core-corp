@@ -446,7 +446,7 @@ abstract class SignBaseComponent extends \CBitrixComponent
 
 	private function checkPermission(): bool
 	{
-		$this->accessController = (new Sign\Access\AccessController(CurrentUser::get()->getId()));
+		$accessController = $this->getAccessController();
 		$accessDenied = false;
 
 		foreach ($this->getAction() as $rule => $actions)
@@ -454,13 +454,13 @@ abstract class SignBaseComponent extends \CBitrixComponent
 			foreach ($actions as $action)
 			{
 				if ($rule === Sign\Access\AccessController::RULE_OR
-					&& $this->accessController->check($action))
+					&& $accessController->check($action))
 				{
 					break 2;
 				}
 
 				if ($rule === Sign\Access\AccessController::RULE_AND
-					&& !$this->accessController->check($action))
+					&& !$accessController->check($action))
 				{
 					$accessDenied = true;
 					break 2;
@@ -494,5 +494,12 @@ abstract class SignBaseComponent extends \CBitrixComponent
 		{
 			ShowError($error->getMessage());
 		}
+	}
+
+	final protected function getAccessController(): Sign\Access\AccessController
+	{
+		$this->accessController ??= new Sign\Access\AccessController(CurrentUser::get()->getId());
+
+		return $this->accessController;
 	}
 }

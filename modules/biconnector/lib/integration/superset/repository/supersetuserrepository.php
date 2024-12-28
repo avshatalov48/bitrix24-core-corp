@@ -63,6 +63,12 @@ final class SupersetUserRepository
 
 	public function getAdmin(): ?User
 	{
+		static $result = null;
+		if ($result)
+		{
+			return $result;
+		}
+
 		$user = UserGroupTable::getList([
 			'select' => ['USER_ID'],
 			'filter' => [
@@ -79,7 +85,9 @@ final class SupersetUserRepository
 
 		if ($user)
 		{
-			return $this->getById((int)$user['USER_ID']);
+			$result = $this->getById((int)$user['USER_ID']);
+
+			return $result;
 		}
 
 		return null;

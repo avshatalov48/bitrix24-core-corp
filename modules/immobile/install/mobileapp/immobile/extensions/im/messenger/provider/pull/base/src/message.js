@@ -14,6 +14,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Counters } = require('im/messenger/lib/counters');
+	const { parser } = require('im/messenger/lib/parser');
 	const { RecentConverter } = require('im/messenger/lib/converter');
 	const { Notifier } = require('im/messenger/lib/notifier');
 	const { ShareDialogCache } = require('im/messenger/cache/share-dialog');
@@ -176,11 +177,10 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 						const dialogTitle = ChatTitle.createFromDialogId(dialogId).getTitle();
 						const userName = ChatTitle.createFromDialogId(userData.id).getTitle();
 						const avatar = ChatAvatar.createFromDialogId(dialogId).getAvatarUrl();
-
 						Notifier.notify({
 							dialogId: dialog.dialogId,
 							title: dialogTitle,
-							text: (userName ? `${userName}: ` : '') + recentItem.message.text,
+							text: this.createMessageChatNotifyText(recentItem.message.text, userName),
 							avatar,
 						});
 					}
@@ -235,10 +235,10 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 			this.logger.info(`${this.getClassName()}.handleMessageParamsUpdate:`, params);
 
-			this.store.dispatch('messagesModel/update', {
+			this.store.dispatch('messagesModel/updateParams', {
 				id: params.id,
 				chatId: params.chatId,
-				fields: { params: params.params },
+				params: params.params,
 			}).catch((err) => this.logger.error(`${this.getClassName()}.handleMessageParamsUpdate.messagesModel/update.catch:`, err));
 
 			if (params.params.CHAT_MESSAGE)
@@ -1208,6 +1208,21 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 		getRecentMessageManager(params, extra = {})
 		{
 			return new BaseRecentMessageManager(params, extra);
+		}
+
+		/**
+		 * @protected
+		 * @param {string} messageText
+		 * @param {?string} userName
+		 * @return {string}
+		 */
+		createMessageChatNotifyText(messageText, userName)
+		{
+			const simplifiedMessageText = parser.simplify({
+				text: messageText,
+			});
+
+			return (userName ? `${userName}: ` : '') + simplifiedMessageText;
 		}
 	}
 

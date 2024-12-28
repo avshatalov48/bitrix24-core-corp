@@ -32,8 +32,8 @@ class EmployeeSes extends Message\WithInitiator
 	public function getFallbackText(): string
 	{
 		$messageId = $this->getInitiatorUserId() === $this->getUserTo()
-			? 'SIGN_CALLBACK_CHAT_INVITE_EMPLOYEE_SES_MSGVER_2'
-			: 'SIGN_CALLBACK_CHAT_INVITE_EMPLOYEE_SES_WITH_INITIATOR'
+			? 'SIGN_CALLBACK_CHAT_INVITE_EMPLOYEE_SES_MSGVER_3'
+			: 'SIGN_CALLBACK_CHAT_INVITE_EMPLOYEE_SES_WITH_INITIATOR_MSGVER_1'
 		;
 
 		return $this->getLocalizedFallbackMessage(

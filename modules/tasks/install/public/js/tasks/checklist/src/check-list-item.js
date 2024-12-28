@@ -288,13 +288,13 @@ class CheckListItem extends CompositeTreeItem
 		}
 	}
 
-	static getMemberLinkLayout(type, name, url)
+	static getMemberLinkLayout(type, name, url, isCollaber)
 	{
 		const messageId = `TASKS_CHECKLIST_${type.toUpperCase()}_ICON_HINT`;
 		return `
 			<span class="tasks-checklist-item-auditor">
 				<a class="tasks-checklist-item-${type}-icon" title="${Loc.getMessage(messageId)}"></a>
-				<a href="${url}" class="tasks-checklist-item-${type}-link">${name}</a>
+				<a href="${url}" class="tasks-checklist-item-${type}-link ${isCollaber ? 'tasks-checklist-item-collaber' : ''}">${name}</a>
 			</span> 
 		`;
 	}
@@ -802,6 +802,8 @@ class CheckListItem extends CompositeTreeItem
 			return;
 		}
 
+		debugger;
+
 		const inputText = this.input.value;
 		const mentioned = +this.mentioned;
 		const start = this.inputCursorPosition.start || 0;
@@ -877,6 +879,7 @@ class CheckListItem extends CompositeTreeItem
 				email: (entityType === 'email'),
 				network: (entityType === 'network'),
 			},
+			isCollaber: (entityType === 'collaber'),
 		};
 	}
 
@@ -1070,10 +1073,10 @@ class CheckListItem extends CompositeTreeItem
 
 		title = (this.isCheckList() ? CheckListItem.getDefaultCheckListTitle(title) : title);
 
-		this.fields.getMembers().forEach(({ id, nameFormatted, type }) => {
+		this.fields.getMembers().forEach(({ id, nameFormatted, type, isCollaber }) => {
 			const regExp = new RegExp(escapeRegExp(nameFormatted), 'g');
 			const url = userPath.replace('#user_id#', id).replace('#USER_ID#', id);
-			title = title.replace(regExp, CheckListItem.getMemberLinkLayout(type, nameFormatted, url));
+			title = title.replace(regExp, CheckListItem.getMemberLinkLayout(type, nameFormatted, url, isCollaber));
 		});
 
 		title = title.replace(/(https?:\/\/[^\s]+)/g, url => CheckListItem.getLinkLayout(url));

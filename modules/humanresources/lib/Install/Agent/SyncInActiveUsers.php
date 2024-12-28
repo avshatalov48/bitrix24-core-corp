@@ -13,29 +13,45 @@ class SyncInActiveUsers
 	public static function run(int $lastUserId = 0): string
 	{
 		$userCollection = UserTable::query()
-			->setSelect(['ID'])
-			->where('ACTIVE', '=', 'N')
+			->setSelect(['ID', 'ACTIVE'])
 			->setOffset($lastUserId)
 			->setLimit(self::LIMIT)
+			->setOrder(['ID' => 'ASC'])
 			->fetchCollection()
 		;
 
-		$userIds = [];
+		$activeUsers = [];
+		$inactiveUsers = [];
 		foreach ($userCollection as $user)
 		{
-			$userIds[] = $user->getId();
+			if ($user->getActive())
+			{
+				$activeUsers[] = $user->getId();
+			}
+			else
+			{
+				$inactiveUsers[] = $user->getId();
+			}
 		}
 
-		if (empty($userIds))
+		if (empty($activeUsers) && empty($inactiveUsers))
 		{
 			return self::finish();
 		}
 
+		Container::getNodeMemberRepository()
+			->setActiveByEntityTypeAndEntityIds(
+				entityType: MemberEntityType::USER,
+				entityIds: $inactiveUsers,
+				active: false,
+			)
+		;
+
 		$result = Container::getNodeMemberRepository()
 			->setActiveByEntityTypeAndEntityIds(
 				entityType: MemberEntityType::USER,
-				entityIds: $userIds,
-				active: false,
+				entityIds: $activeUsers,
+				active: true,
 			)
 		;
 

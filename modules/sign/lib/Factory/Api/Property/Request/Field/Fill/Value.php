@@ -17,6 +17,13 @@ final class Value
 
 	public function createByValueItem(Item\Field\Value $value): ?Item\Api\Property\Request\Field\Fill\Value\BaseFieldValue
 	{
+		if ($value->hcmLinkFieldValueId)
+		{
+			return new Item\Field\HcmLink\HcmLinkDelayedValue(
+				fieldId: $value->hcmLinkFieldValueId->fieldId,
+				employeeId: $value->hcmLinkFieldValueId->employeeId,
+			);
+		}
 		if ($value->text !== null)
 		{
 			return new Item\Api\Property\Request\Field\Fill\Value\StringFieldValue($value->text);

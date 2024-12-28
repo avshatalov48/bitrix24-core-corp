@@ -2,14 +2,22 @@
 
 namespace Bitrix\AI\Payload;
 
+use Bitrix\AI\Container;
 use Bitrix\AI\Engine\IEngine;
+use Bitrix\AI\Payload\Tokens\HiddenToken;
+use Bitrix\AI\Facade\User;
+use Bitrix\AI\Payload\Tokens\TokenProcessor;
 use Bitrix\AI\Prompt\Role;
+use Bitrix\AI\ShareRole\Service\ShareService;
 
 abstract class Payload
 {
 	protected const DEFAULT_USAGE_COST = 1;
 
 	protected array $markers = [];
+	protected array $hiddenTokens = [];
+	protected array $processedReplacements = [];
+	protected TokenProcessor $tokenProcessor;
 	protected ?Role $role = null;
 	protected IEngine $engine;
 
@@ -56,6 +64,21 @@ abstract class Payload
 			$this->role = $role;
 		}
 
+		if (!is_null($this->role) && $this->role->getIndustryCode() === 'custom')
+		{
+			$shareService = self::getShareService();
+			if (!($shareService->hasAccessOnRoleByCode($this->role->getCode(), User::getCurrentUserId())))
+			{
+				$this->role = Role::getUniversalRole();
+				return $this;
+			}
+
+			$systemRole = Role::getLibrarySystemRole();
+			$markers = array_merge($this->getMarkers(), ['custom_role' => $role->getInstruction()]);
+			$this->setMarkers($markers);
+			$this->role->setInstruction($systemRole->getInstruction());
+		}
+
 		return $this;
 	}
 
@@ -96,6 +119,62 @@ abstract class Payload
 	}
 
 	/**
+	 * @param HiddenToken[] $tokens
+	 * @return $this
+	 */
+	final public function setHiddenTokens(array $tokens): static
+	{
+		$this->hiddenTokens = $tokens;
+		$this->tokenProcessor = new TokenProcessor(...$this->hiddenTokens);
+
+		return $this;
+	}
+
+	final public function getHiddenTokens(): array
+	{
+		return $this->hiddenTokens;
+	}
+
+	/**
+	 * Returns processed replacements. Should be used after QueueJob evaluation.
+	 * @return array
+	 */
+	final public function getProcessedReplacements(): array
+	{
+		return $this->processedReplacements;
+	}
+
+	final public function setProcessedReplacements(array $processedReplacements): void
+	{
+		$this->processedReplacements = $processedReplacements;
+	}
+
+	final public function getTokenProcessor(): TokenProcessor
+	{
+		if (!isset($this->tokenProcessor))
+		{
+			$this->tokenProcessor = new TokenProcessor();
+		}
+
+		return $this->tokenProcessor;
+	}
+
+	final public function hasHiddenTokens(): bool
+	{
+		return !empty($this->hiddenTokens);
+	}
+
+	final public function hideTokens(string $value): string
+	{
+		if ($this->hasHiddenTokens())
+		{
+			$value = $this->tokenProcessor->hideTokens($value);
+		}
+
+		return $value;
+	}
+
+	/**
 	 * Returns markers was sets.
 	 *
 	 * @return array
@@ -121,5 +200,10 @@ abstract class Payload
 	public function shouldUseCache():bool
 	{
 		return $this->useCache;
+	}
+
+	public static function getShareService(): ShareService
+	{
+		return Container::init()->getItem(ShareService::class);
 	}
 }

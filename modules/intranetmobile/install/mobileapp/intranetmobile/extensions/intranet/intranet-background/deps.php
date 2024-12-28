@@ -2,7 +2,6 @@
 
 return [
 	'extensions' => [
-		'utils/storage',
-		'rest/run-action-executor',
+		'intranet:user-mini-profile',
 	],
 ];

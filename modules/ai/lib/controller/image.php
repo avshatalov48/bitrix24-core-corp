@@ -70,16 +70,14 @@ class Image extends Controller
 			$prompt = $this->translatePrompt($prompt);
 		}
 
-		$isQueueable = $engine instanceof IQueue;
-
 		$payload = (new Payload\StyledPicture($prompt))->setMarkers($markers);
 
 		$engine->setPayload($payload)
 			->setAnalyticData($parameters['bx_analytic'] ?? [])
 			->setHistoryState($this->isTrue($parameters['bx_history'] ?? false))
 			->setHistoryGroupId($this->parseInt($parameters['bx_history_group_id'] ?? -1))
-			->onSuccess(function (Result $result, ?string $hash = null) use($isQueueable) {
-				$this->result = $isQueueable ? $result->getRawData() : $result->getPrettifiedData();
+			->onSuccess(function (Result $result, ?string $hash = null) {
+				$this->result = $result->getPrettifiedData();
 				$this->hash = $hash;
 			})
 			->onError(function (Error $error){
@@ -103,7 +101,7 @@ class Image extends Controller
 	public function getParamsAction(string $engineCode, array $parameters = []): array
 	{
 		$engine = Engine::getByCode($engineCode, $this->context, $this->category);
-		if ($engine === null || !$engine->getIEngine() instanceof Engine\Image)
+		if ($engine === null || $engine->getIEngine()->getCategory() !== $this->category)
 		{
 			$this->addError(new Error('Engine not found'));
 
@@ -202,7 +200,7 @@ class Image extends Controller
 	{
 		// translate request
 		$textTranslate = null;
-		$engineText = Engine::getByCategory(Engine::CATEGORIES['text'], $this->context);
+		$engineText = Engine::getByCode('YandexGPT', $this->context, Engine::CATEGORIES['text']);
 
 		if (!$engineText)
 		{
@@ -213,16 +211,16 @@ class Image extends Controller
 		$payload->setRole(Role::get(RoleManager::getUniversalRoleCode()));
 
 		$engineText->setPayload($payload)
-				   ->onSuccess(function(Result $result, ?string $hash = null) use(&$textTranslate) {
-					   $textTranslate = $result->getPrettifiedData();
-				   })
-				   ->onError(function(Error $error) {
-					   $this->addError($error);
-				   })
-				   ->completions()
+			->onSuccess(function(Result $result, ?string $hash = null) use(&$textTranslate) {
+				$textTranslate = $result->getPrettifiedData();
+			})
+			->onError(function(Error $error) {
+				$this->addError($error);
+			})
+			->completions()
 		;
 
-		return $textTranslate ?? '';
+		return $textTranslate ?? $prompt;
 	}
 
 	/**

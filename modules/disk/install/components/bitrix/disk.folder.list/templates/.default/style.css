@@ -1038,3 +1038,68 @@ div.disk-folder-list-search-progress {
 .bitrix24-dark-theme .disk__sn-spaces_subtoolbar-view-btn.disk-folder-list-view-item-active {
 	--ui-icon-set__icon-color: rgba(var(--ui-color-base-90-rgb), var(--ui-opacity-80));
 }
+
+.disk-collab-disk__wrapper {
+	--hexagon-bordersize: 2px;
+	--hexagon-borderradius: 4px;
+	--hexagon-height: 42px;
+	--hexagon-width: 42px;
+}
+
+.disk-collab-disk__wrapper.pagetitle-toolbar-field-view .pagetitle {
+	display: grid;
+	grid-template-columns: 40px 1fr;
+	grid-template-rows: 20px 10px;
+	grid-template-areas:
+        "icon title"
+        "icon subtitle";
+	gap: 5px 10px;
+	margin-right: 12px;
+}
+
+.disk-collab-icon__wrapper {
+	position: absolute;
+	display: flex;
+	left: 0;
+	top: 0;
+	font-size: 0;
+	align-items: center;
+	margin: auto;
+}
+
+.disk-collab-disk__wrapper .pagetitle-item {
+	grid-area: title;
+	font-size: var(--ui-font-size-3xl);
+	font-weight: var(--ui-font-weight-normal);
+}
+
+.disk-collab__subtitle {
+	grid-area: subtitle;
+	max-width: 200px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	opacity: .7;
+}
+
+.disk-collab-scope .ui-toolbar-title-inner {
+	padding-left: 50px;
+	position: relative;
+}
+
+.disk-collab-scope .ui-toolbar .ui-toolbar-title-item-box {
+	font-size: 22px;
+	height: 26px;
+	line-height: unset;
+}
+
+.disk-collab-scope .disk-collab__subtitle {
+	white-space: nowrap;
+	height: 16px;
+	line-height: 16px;
+}
+
+.bitrix24-light-theme .disk-collab__subtitle  {
+	color: #fff;
+}

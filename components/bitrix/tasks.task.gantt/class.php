@@ -15,6 +15,8 @@ use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Internals\Task\ProjectDependenceTable;
 use Bitrix\Tasks\Util\Type\DateTime;
+use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 
 Loc::loadMessages(__FILE__);
 
@@ -222,6 +224,14 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 
 		$this->arParams['DEFAULT_ROLEID'] = $this->filter->getDefaultRoleId();
 		parent::doPreAction();
+
+		$this->arResult['IS_COLLAB'] = isset($this->arResult['CONTEXT']) && $this->arResult['CONTEXT'] === Context::getCollab();
+		if ($this->arResult['IS_COLLAB'])
+		{
+			$group = Group::getGroupData((int) $this->arParams['GROUP_ID']);
+			$this->arResult["COLLAB_NAME"] = $group["NAME"] ?? '';
+			$this->arResult["COLLAB_IMAGE"] = $group["IMAGE"] ?? '';
+		}
 
 		return true;
 	}

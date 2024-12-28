@@ -32,12 +32,10 @@ BX.namespace('Tasks.Component');
 
 				this.analyticsData = {};
 
+				this.toggleFlowParams = this.option('toggleFlowParams');
+				this.flowParams = this.option('flowParams');
+
 				this.isFlowForm = (this.option('isFlowForm') === true);
-				this.isFeatureEnabled = (this.option('isFeatureEnabled') === true);
-				this.isFeatureTrialable = (this.option('isFeatureTrialable') === true);
-				this.flowId = (parseInt(this.option('flowId'), 10));
-				this.flowLimitCode = this.option('flowLimitCode');
-				this.flowSelectedItem = null;
 				this.isProjectLimitExceeded = (this.option('isProjectLimitExceeded') === true);
 				this.projectLimitCode = this.option('projectLimitCode');
 
@@ -45,14 +43,16 @@ BX.namespace('Tasks.Component');
 				this.relatedSubTaskDeadlinesEnabled = (this.option('relatedSubTaskDeadlinesEnabled') === true);
 				this.taskRecurringEnabled = (this.option('taskRecurringEnabled') === true);
 
+				this.isExtranetUser = (this.option('isExtranetUser') === true);
+				this.canEditTask = (this.option('canEditTask') === true);
+
 				this.fireTaskEvent();
 
 				if(this.option('doInit'))
 				{
 					this.bindEvents();
 
-					this.initParentTask();
-					this.initRelatedTask();
+					this.initFlowSelector();
 					this.initReminder();
 					this.initProjectDependence();
 					this.initProjectPlan();
@@ -71,6 +71,26 @@ BX.namespace('Tasks.Component');
 				this.aiCommandExecutor = null;
 
 				this.changingFlow = false;
+			},
+
+			initFlowSelector()
+			{
+				const flowSelectorNode = document.getElementById('tasks-flow-selector-container');
+				if (!flowSelectorNode)
+				{
+					return;
+				}
+
+				const selectorParams = {
+					taskId: this.getTaskId(),
+					canEditTask: this.canEditTask,
+					isExtranet: this.isExtranetUser,
+					flowParams: this.flowParams,
+					toggleFlowParams: this.toggleFlowParams,
+				};
+
+				this.flowSelector = new BX.Tasks.Flow.EntitySelector(selectorParams);
+				this.flowSelector.show(flowSelectorNode, 'edit');
 			},
 
 			getUser: function()
@@ -345,12 +365,6 @@ BX.namespace('Tasks.Component');
 					}, this));
 				}
 
-				const flowSelectorNode = document.getElementById('tasks-flow-selector');
-				if (flowSelectorNode)
-				{
-					BX.bind(flowSelectorNode, 'click', this.showFlowSelector.bind(this, flowSelectorNode));
-				}
-
 				// all block togglers
 				this.bindDelegateControl('toggler', 'click', this.passCtx(this.onToggleBlock));
 
@@ -563,46 +577,6 @@ BX.namespace('Tasks.Component');
 				}
 			},
 
-			initParentTask: function()
-			{
-				var ctrlName = 'parenttask';
-				var parent = new BX.Tasks.Component.Task.TaskItemSet({
-					id: ctrlName+'-'+this.id(),
-					max: 1,
-					selectorCode: ctrlName,
-					itemFx: 'horizontal',
-					itemFxHoverDelete: true,
-					parent: this
-				});
-				parent.bindEvent('change', BX.delegate(function(items){
-
-					this.control('parent-input').value = items.length > 0 ? parseInt(items[0]) : '';
-
-				}, this));
-				if(this.getTaskData().SE_PARENTTASK)
-				{
-					parent.load([this.getTaskData().SE_PARENTTASK]);
-				}
-
-				this.instances[ctrlName] = parent;
-			},
-
-			initRelatedTask: function()
-			{
-				this.instances['dependson'] = new BX.Tasks.Component.Task.TaskItemSet({
-					id: 'dependson-'+this.id(),
-					selectorCode: 'dependson',
-					itemFx: 'horizontal',
-					itemFxHoverDelete: true,
-					parent: this
-				});
-
-				if(typeof this.getTaskData().SE_RELATEDTASK != 'undefined')
-				{
-					this.instances['dependson'].load(this.getTaskData().SE_RELATEDTASK);
-				}
-			},
-
 			initReminder: function()
 			{
 				var reminder = BX.Tasks.Util.Dispatcher.get('reminder-'+this.id());
@@ -758,266 +732,6 @@ BX.namespace('Tasks.Component');
 					)
 					.catch(function(response) {}.bind(this))
 				;
-			},
-
-			showFlowSelector(node)
-			{
-				if (!this.isFeatureEnabled)
-				{
-					BX.UI.InfoHelper.show(this.flowLimitCode);
-
-					return;
-				}
-
-				if (!this.flowSelectorDialog)
-				{
-					this.flowSelectorDialog = new BX.UI.EntitySelector.Dialog({
-						targetNode: node,
-						width: 350,
-						height: 400,
-						multiple: false,
-						dropdownMode: true,
-						enableSearch: true,
-						cacheable: true,
-						preselectedItems: [['flow', this.flowId]],
-						entities: [
-							{
-								id: 'flow',
-								options: {
-									onlyActive: true,
-								},
-								dynamicLoad: true,
-								dynamicSearch: true,
-							},
-						],
-						events: {
-							'Item:onBeforeSelect': (baseEvent) => {
-								const dialog = baseEvent.getTarget();
-								this.flowSelectedItem = dialog.getSelectedItems()[0];
-							},
-							'Item:onBeforeDeselect': (baseEvent) => {
-								const dialog = baseEvent.getTarget();
-								this.flowSelectedItem = dialog.getSelectedItems()[0];
-							},
-							'Item:onSelect': this.changeFlow.bind(this),
-							'Item:onDeselect': BX.Runtime.debounce(this.unChangeFlow, 100, this),
-							'Search:onItemCreateAsync': (event) => {
-								return new Promise((resolve) => {
-									/** @type  {BX.UI.EntitySelector.Item} */
-									const { searchQuery } = event.getData();
-									/** @type  {BX.UI.EntitySelector.Dialog} */
-									const dialog = event.getTarget();
-
-									this.createFlow(searchQuery.getQuery())
-										.then((createdFlowData) => {
-											if (createdFlowData)
-											{
-												const item = dialog.addItem({
-													tabs: 'recents',
-													id: createdFlowData.id,
-													entityId: 'flow',
-													title: createdFlowData.name,
-													customData: {
-														groupId: createdFlowData.groupId,
-														templateId: createdFlowData.templateId,
-													},
-												});
-												item.select();
-
-												resolve();
-											}
-											else
-											{
-												resolve();
-											}
-										})
-									;
-								});
-							},
-						},
-						searchOptions: {
-							allowCreateItem: true,
-							footerOptions: {
-								label: BX.message('TASKS_TASK_FLOW_SELECTOR_CREATE_BUTTON'),
-							},
-						},
-					});
-				}
-
-				this.flowSelectorDialog.show();
-			},
-
-			changeFlow(baseEvent)
-			{
-				const dialog = baseEvent.getTarget();
-
-				this.changingFlow = true;
-
-				const selectedItem = baseEvent.getData().item;
-
-				const flowId = parseInt(selectedItem.id, 10);
-				const groupId = parseInt(selectedItem.customData.get('groupId'), 10);
-				const templateId = parseInt(selectedItem.customData.get('templateId'), 10);
-				const shouldShowConfirmChangeFlow = this.shouldShowConfirmChangeFlow(templateId);
-
-				window.onbeforeunload = () => {};
-
-				const reloadForm = () => {
-					const currentUri = new BX.Uri(decodeURI(location.href));
-
-					currentUri.setQueryParam('FLOW_ID', flowId);
-					currentUri.setQueryParam('GROUP_ID', groupId);
-					if (templateId)
-					{
-						currentUri.setQueryParam('TEMPLATE', templateId);
-					}
-					else
-					{
-						currentUri.removeQueryParam('TEMPLATE');
-					}
-
-					currentUri.removeQueryParam('EVENT_TYPE');
-					currentUri.removeQueryParam('EVENT_TASK_ID');
-					currentUri.removeQueryParam('EVENT_OPTIONS');
-					currentUri.removeQueryParam('NO_FLOW');
-
-					const immutable = this.option('immutable');
-					Object.entries(immutable).forEach(([key, value]) => {
-						currentUri.setQueryParam(key, value);
-					})
-
-					const demoSuffix = this.isFeatureTrialable ? 'Y' : 'N';
-
-					currentUri.setQueryParams({
-						ta_cat: 'task_operations',
-						ta_sec: 'flows',
-						ta_sub: 'flows_grid',
-						ta_el: 'flow_selector',
-						p1: `isDemo_${demoSuffix}`,
-					});
-
-					location.href = currentUri.getPath() + currentUri.getQuery();
-				};
-
-				const rollback = () => {
-					dialog.getItem(this.flowSelectedItem).select(true);
-				};
-
-				if (shouldShowConfirmChangeFlow)
-				{
-					this.showConfirmChangeFlow(reloadForm, rollback);
-				}
-				else
-				{
-					reloadForm();
-				}
-			},
-
-			unChangeFlow(baseEvent)
-			{
-				if (this.changingFlow)
-				{
-					return;
-				}
-
-				const dialog = baseEvent.getTarget();
-				const shouldShowConfirmChangeFlow = this.shouldShowConfirmChangeFlow();
-
-				window.onbeforeunload = () => {};
-
-				const reloadForm = () => {
-					const currentUri = new BX.Uri(decodeURI(location.href));
-
-					currentUri.removeQueryParam('FLOW_ID', 'GROUP_ID', 'TEMPLATE');
-
-					currentUri.removeQueryParam('EVENT_TYPE');
-					currentUri.removeQueryParam('EVENT_TASK_ID');
-					currentUri.removeQueryParam('EVENT_OPTIONS');
-
-					currentUri.setQueryParam('NO_FLOW', 1);
-
-					const immutable = this.option('immutable');
-					Object.entries(immutable).forEach(([key, value]) => {
-						currentUri.setQueryParam(key, value);
-					})
-
-					location.href = currentUri.getPath() + currentUri.getQuery();
-				};
-
-				const rollback = () => {
-					dialog.getItem(this.flowSelectedItem).select(true);
-				};
-
-				if (shouldShowConfirmChangeFlow)
-				{
-					this.showConfirmChangeFlow(reloadForm, rollback);
-				}
-				else
-				{
-					reloadForm();
-				}
-			},
-
-			showConfirmChangeFlow(doneCallback, cancelCallback)
-			{
-				BX.UI.Dialogs.MessageBox.show({
-					message: BX.message('TASKS_TASK_FLOW_CHANGE_MESSAGE'),
-					title: BX.message('TASKS_TASK_FLOW_CHANGE_TITLE'),
-					onOk: () => {
-						doneCallback();
-					},
-					okCaption: BX.message('TASKS_TASK_FLOW_CHANGE_OK_CAPTION'),
-					cancelCallback: (messageBox) => {
-						cancelCallback();
-						messageBox.close();
-					},
-					cancelCaption: BX.message('TASKS_TASK_FLOW_CHANGE_CANCEL_CAPTION'),
-					buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
-					popupOptions: {
-						events: {
-							onPopupClose: () => {
-								cancelCallback();
-							},
-						},
-					},
-				});
-			},
-
-			shouldShowConfirmChangeFlow(templateId = 0)
-			{
-				const description = this.getEditorText().trim();
-				const hasDescription = description.length > 0;
-
-				if (!hasDescription)
-				{
-					return false;
-				}
-
-				if (templateId > 0)
-				{
-					return true;
-				}
-
-				return description !== this.getTaskDescription();
-			},
-
-			createFlow(inputFlowName)
-			{
-				return new Promise((resolve, reject) => {
-					top.BX.Runtime.loadExtension('tasks.flow.edit-form')
-						.then((exports) => {
-							const editForm = exports.EditForm.createInstance({
-								flowName: inputFlowName,
-							});
-							editForm.subscribe('afterSave', (baseEvent) => {
-								resolve(baseEvent.getData());
-							});
-							editForm.subscribe('afterClose', (baseEvent) => {
-								resolve();
-							});
-						})
-					;
-				});
 			},
 
 			submit: function()

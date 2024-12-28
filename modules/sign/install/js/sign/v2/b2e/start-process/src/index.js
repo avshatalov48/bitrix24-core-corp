@@ -1,32 +1,49 @@
 import { Loc, Tag, Type } from 'main.core';
 import { MemoryCache } from 'main.core.cache';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
-import type { Template } from 'sign.v2.api';
+import type { B2eCompanyList, Template, TemplateField } from 'sign.v2.api';
 import { Api } from 'sign.v2.api';
+import { CompanySelector } from 'sign.v2.b2e.company-selector';
 import { type ItemOptions, SignDropdown } from 'sign.v2.b2e.sign-dropdown';
+
+type TemplateCompany = Template['company'];
+type LoadCompanyPromise = Promise<B2eCompanyList>;
 
 const dropdownTemplateEntityId = 'sign-b2e-start-process-type';
 const dropdownProcessTabId = 'sign-b2e-start-process-types';
 
-export class StartProcess
+export class StartProcess extends EventEmitter
 {
-	#cache: MemoryCache<any> = new MemoryCache();
+	events = {
+		onProcessTypeSelect: 'onProcessTypeSelect',
+	};
+
+	#resettableCache: MemoryCache<any> = new MemoryCache();
 	#api: Api = new Api();
 
 	#templatesList: Promise<Template[]> = this.#api.template.getList();
 
 	constructor()
 	{
+		super();
+		this.setEventNamespace('BX.V2.B2e.StartProcess');
+
 		void this.#getProcessTypeLayoutLoader().show();
-		void this.#templatesList.then((data: Template[]) => this.#onProcessTypesLoaded(data));
 	}
 
 	getLayout(): HTMLElement
 	{
-		return this.#cache.remember('layout', () => {
+		return this.#resettableCache.remember('layout', () => {
 			return Tag.render`
 				<div>
 					<h1 class="sign-b2e-settings__header">${Loc.getMessage('SIGN_START_PROCESS_HEAD')}</h1>
+					<div class="sign-b2e-settings__item">
+						<p class="sign-b2e-settings__item_title">
+							${Loc.getMessage('SIGN_START_PROCESS_COMPANY')}
+						</p>
+						${this.#getCompanySelector().getLayout()}
+					</div>
 					<div class="sign-b2e-settings__item">
 						<p class="sign-b2e-settings__item_title">
 							${Loc.getMessage('SIGN_START_PROCESS_TYPE')}
@@ -48,9 +65,14 @@ export class StartProcess
 		return this.#templatesList;
 	}
 
+	getFields(templateUid: string): Promise<{ fields: TemplateField[] }>
+	{
+		return this.#api.template.getFields(templateUid);
+	}
+
 	#getProcessTypeLayoutLoader(): Loader
 	{
-		return this.#cache.remember(
+		return this.#resettableCache.remember(
 			'processTypeLayoutLoader',
 			() => new Loader({ target: this.#getProcessTypeDropdown().getLayout() }),
 		);
@@ -58,35 +80,52 @@ export class StartProcess
 
 	#getProcessTypeDropdown(): SignDropdown
 	{
-		return this.#cache.remember(
+		return this.#resettableCache.remember(
 			'processTypeDropdown',
-			() => new SignDropdown({
-				tabs: [{ id: dropdownProcessTabId, title: ' ' }],
-				entities: [
-					{
-						id: dropdownTemplateEntityId,
-					},
-				],
-				items: [],
-			}),
+			() => {
+				const signDropdown = new SignDropdown({
+					tabs: [{ id: dropdownProcessTabId, title: ' ' }],
+					entities: [
+						{
+							id: dropdownTemplateEntityId,
+						},
+					],
+					items: [],
+					isEnableSearch: true,
+				});
+				signDropdown.subscribe(
+					signDropdown.events.onSelect,
+					(event) => this.emit(this.events.onProcessTypeSelect, event),
+				);
+
+				return signDropdown;
+			},
 		);
 	}
 
-	#onProcessTypesLoaded(templates: Template[]): void
+	#getCompanySelector(): CompanySelector
 	{
-		const dropdownItems = templates
-			.map((template) => this.#createProcessTypeDropdownItemByTemplate(template))
-		;
-		const processTypeDropdown = this.#getProcessTypeDropdown();
-		dropdownItems.forEach((item) => processTypeDropdown.addItem(item));
+		return this.#resettableCache.remember(
+			'companySelector',
+			() => {
+				const companySelector = new CompanySelector({
+					loadCompanyPromise: this.#getCompanySelectorLoadCompanyPromise(),
+					canCreateCompany: false,
+					canEditCompany: false,
+					isCompaniesDeselectable: false,
+				});
+				companySelector.subscribe(
+					companySelector.events.onCompaniesLoad,
+					() => this.#onCompaniesSelectorCompaniesLoad(),
+				);
+				companySelector.subscribe(
+					companySelector.events.onSelect,
+					(event) => this.#onCompanySelectorSelect(event),
+				);
 
-		void this.#getProcessTypeLayoutLoader().hide();
-
-		const firstDropdownItemId = dropdownItems.at(0)?.id;
-		if (!Type.isNil(firstDropdownItemId))
-		{
-			processTypeDropdown.selectItem(firstDropdownItemId);
-		}
+				return companySelector;
+			},
+		);
 	}
 
 	#createProcessTypeDropdownItemByTemplate(template: Template): ItemOptions
@@ -98,5 +137,75 @@ export class StartProcess
 			tabs: dropdownProcessTabId,
 			deselectable: false,
 		};
+	}
+
+	async #getCompanySelectorLoadCompanyPromise(): LoadCompanyPromise
+	{
+		const uniqueCompanies = await this.#getUniqueCompanies();
+
+		const companySelectorCompanies = uniqueCompanies.map(({ id, name, taxId }) => ({
+			id,
+			title: name,
+			rqInn: taxId,
+		}));
+
+		// todo: get actual showTaxId
+		return { companies: companySelectorCompanies, showTaxId: true };
+	}
+
+	async #getUniqueCompanies(): Promise<Array<TemplateCompany>>
+	{
+		const templates = await this.#templatesList;
+		const companies = templates.map((template) => template.company);
+		const uniqCompanyIds: Set<number> = new Set(companies.map(({ id }) => id));
+
+		return [...uniqCompanyIds].map(
+			(id) => companies.find((company) => company.id === id),
+		);
+	}
+
+	async #onCompaniesSelectorCompaniesLoad(): Promise<void>
+	{
+		const companySelector = this.#getCompanySelector();
+		const templates = await this.#templatesList;
+		const lastUsedTemplate = templates.find(({ isLastUsed }) => isLastUsed);
+
+		let selectedCompanyId = lastUsedTemplate?.company?.id;
+		if (Type.isUndefined(selectedCompanyId))
+		{
+			const companies = await this.#getUniqueCompanies();
+			selectedCompanyId = companies.at(0)?.id;
+		}
+
+		if (Type.isUndefined(selectedCompanyId))
+		{
+			return;
+		}
+
+		companySelector.selectCompany(selectedCompanyId);
+	}
+
+	async #onCompanySelectorSelect(event: BaseEvent<{ companyId: number }>): void
+	{
+		void this.#getProcessTypeLayoutLoader().show();
+
+		const companyId = event.getData().companyId;
+		const templates = await this.#templatesList;
+
+		const processTypeItems = templates
+			.filter(({ company }: Template) => company.id === companyId)
+			.map((template) => this.#createProcessTypeDropdownItemByTemplate(template))
+		;
+		const signDropdown = this.#getProcessTypeDropdown();
+		signDropdown.removeItems();
+		signDropdown.addItems(processTypeItems);
+		signDropdown.selectFirstItem();
+
+		void this.#getProcessTypeLayoutLoader().hide();
+	}
+
+	resetCache(): void
+	{
+		this.#resettableCache = new MemoryCache();
 	}
 }

@@ -104,6 +104,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 						: this.addExistedProductById(productId);
 				},
 				isOnecRestrictedByPlan,
+				analyticsSection: 'crm',
 			});
 
 			this.barcodeScanner = new BarcodeScanner({

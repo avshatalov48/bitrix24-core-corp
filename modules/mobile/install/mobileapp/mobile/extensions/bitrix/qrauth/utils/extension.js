@@ -14,7 +14,8 @@ jn.define('qrauth/utils', (require, exports, module) => {
 				{
 					return;
 				}
-				qrauth.open({
+
+				void qrauth.open({
 					urlData: data,
 					external: true,
 					title: Loc.getMessage('QR_EXTERNAL_AUTH'),

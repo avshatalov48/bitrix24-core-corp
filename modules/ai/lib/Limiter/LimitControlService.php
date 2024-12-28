@@ -187,7 +187,10 @@ class LimitControlService
 			);
 		}
 
-		$this->getCounterRepository()->updateLastRequest();
+		if ($cost > 0)
+		{
+			$this->getCounterRepository()->updateLastRequest();
+		}
 
 		$data = $result->getData();
 		if (empty($data[BaasTokenService::KEY_REQUEST_CONSUMPTION]))

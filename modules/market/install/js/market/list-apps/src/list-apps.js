@@ -5,6 +5,7 @@ import { mapState, mapActions } from 'ui.vue3.pinia';
 import { EventEmitter } from 'main.core.events';
 import { MarketLinks } from 'market.market-links';
 import { nextTick } from 'ui.vue3';
+import { Ears } from 'ui.ears'
 
 import "./list-apps.css";
 
@@ -173,7 +174,7 @@ export const ListApps = {
 				return;
 			}
 
-			(new BX.UI.Ears({
+			(new Ears({
 				container: this.$refs.marketCatalogCategories,
 				smallSize: true,
 				noScrollbar: true,

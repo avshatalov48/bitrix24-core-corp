@@ -2,7 +2,6 @@
  * @module im/messenger/provider/service/recent
  */
 jn.define('im/messenger/provider/service/recent', (require, exports, module) => {
-	const { uniqBy } = require('utils/array');
 	const { PageNavigation } = require('im/messenger/lib/page-navigation');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { RecentRest } = require('im/messenger/provider/rest');
@@ -16,10 +15,13 @@ jn.define('im/messenger/provider/service/recent', (require, exports, module) => 
 	 */
 	class RecentService
 	{
+		#lastMessageDate;
+
 		constructor()
 		{
 			/** @type {MessengerCoreStore} */
 			this.store = serviceLocator.get('core').getStore();
+			/** @type {RecentRepository} */
 			this.recentRepository = serviceLocator.get('core').getRepository().recent;
 			/**
 			 * @type {PageNavigation|{}}
@@ -30,6 +32,7 @@ jn.define('im/messenger/provider/service/recent', (require, exports, module) => 
 			 */
 			this.lastActivityDate = null;
 			this.lastActivityDateFromServer = null;
+			this.#lastMessageDate = null;
 
 			this.isLoadingPageFromDb = false;
 			this.hasMoreFromDb = true;
@@ -56,19 +59,12 @@ jn.define('im/messenger/provider/service/recent', (require, exports, module) => 
 		 */
 		async getFirstPageFromDb(filterDb)
 		{
-			const recentPinnedList = await this.recentRepository.getPinnedListByDialogTypeFilter(filterDb);
 			const recentList = await this.recentRepository.getListByDialogTypeFilter(filterDb);
 			this.setLastActivityDateByItems(recentList.items);
 			this.pageNavigation.hasNextPage = recentList.hasMore;
 			this.hasMoreFromDb = recentList.hasMore;
 
-			return {
-				items: uniqBy([...recentPinnedList.items, ...recentList.items], 'id'),
-				users: uniqBy([...recentPinnedList.users, ...recentList.users], 'id'),
-				messages: uniqBy([...recentPinnedList.messages, ...recentList.messages], 'id'),
-				files: uniqBy([...recentPinnedList.files, ...recentList.files], 'id'),
-				hasMore: recentList.hasMore,
-			};
+			return recentList;
 		}
 
 		/**
@@ -196,23 +192,26 @@ jn.define('im/messenger/provider/service/recent', (require, exports, module) => 
 		}
 
 		/**
-		 * @param {number} lastMessageId
-		 * @param {object} restOptions
 		 * @return {Promise<any>}
 		 */
-		getCollabPageFromService(lastMessageId, restOptions)
+		async getCollabPageFromService()
 		{
-			const options = { limit: 50, ...restOptions };
+			const options = {
+				limit: 50,
+			};
 
 			if (this.pageNavigation.currentPage > 1)
 			{
 				options.filter = {
-					lastMessageId,
+					lastMessageDate: this.#lastMessageDate,
 				};
 			}
 
-			// TODO: implement collab rest
-			return RecentRest.getChannelList(options);
+			const result = await RecentRest.getCollabList(options);
+
+			this.#lastMessageDate = this.#getLastMessageDate(result.data());
+
+			return result;
 		}
 
 		/**
@@ -267,6 +266,43 @@ jn.define('im/messenger/provider/service/recent', (require, exports, module) => 
 					Counters.update();
 				})
 				.catch((err) => Logger.error(`${this.constructor.name}.setRecentModelWithCounters.recentModel/set.catch:`, err));
+		}
+
+		#getLastMessageDate(restResult)
+		{
+			const messages = this.#filterPinnedItemsMessages(restResult);
+			if (messages.length === 0)
+			{
+				return '';
+			}
+
+			// comparing strings in atom format works correctly because the format is lexically sortable
+			let firstMessageDate = messages[0].date;
+			messages.forEach((message) => {
+				if (message.date < firstMessageDate)
+				{
+					firstMessageDate = message.date;
+				}
+			});
+
+			return firstMessageDate;
+		}
+
+		#filterPinnedItemsMessages(restResult)
+		{
+			const {
+				messages,
+				recentItems,
+			} = restResult;
+
+			return messages.filter((message) => {
+				const chatId = message.chat_id;
+				const recentItem = recentItems.find((item) => {
+					return item.chatId === chatId;
+				});
+
+				return recentItem.pinned === false;
+			});
 		}
 	}
 

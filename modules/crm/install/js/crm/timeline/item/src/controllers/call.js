@@ -1,4 +1,5 @@
 import { Engine } from 'ai.engine';
+import { Call as CallScoringResultDialog } from 'crm.ai.call';
 import { Router } from 'crm.router';
 import { ajax as Ajax, Event, Loc, Runtime, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
@@ -17,6 +18,10 @@ const COPILOT_BUTTON_DISABLE_DELAY = 5000;
 const COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITHOUT_BOOST_LIMIT = 2;
 const COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITH_BOOST_LIMIT = 5;
 const COPILOT_HELPDESK_CODE = 18_799_442;
+
+const FULL_SCENARIO = 'full';
+const FILL_FIELDS_SCENARIO = 'fill_fields';
+const CALL_SCORING_SCENARIO = 'call_scoring';
 
 declare type CoPilotAdditionalInfoData = {
 	sliderCode: ?string,
@@ -69,7 +74,7 @@ export class Call extends Base
 			this.#downloadRecord(actionData.url);
 		}
 
-		if (action === 'Call:LaunchCallRecordingTranscription' && actionData)
+		if (action === 'Call:LaunchCopilot' && actionData)
 		{
 			const isCopilotAgreementNeedShow = actionData.isCopilotAgreementNeedShow || false;
 			if (isCopilotAgreementNeedShow)
@@ -80,7 +85,7 @@ export class Call extends Base
 							moduleId: 'crm',
 							contextId: 'audio',
 							events: {
-								onAccept: () => this.#launchCallRecordingTranscription(item, actionData),
+								onAccept: () => this.#launchCopilot(item, actionData),
 							},
 						});
 
@@ -89,7 +94,7 @@ export class Call extends Base
 							.then((isAgreementAccepted) => {
 								if (isAgreementAccepted)
 								{
-									this.#launchCallRecordingTranscription(item, actionData);
+									this.#launchCopilot(item, actionData);
 								}
 							});
 					})
@@ -98,8 +103,13 @@ export class Call extends Base
 			}
 			else
 			{
-				this.#launchCallRecordingTranscription(item, actionData);
+				this.#launchCopilot(item, actionData);
 			}
+		}
+
+		if (action === 'Call:OpenCallScoringResult' && actionData)
+		{
+			this.#openCallScoringResult(actionData);
 		}
 	}
 
@@ -168,7 +178,7 @@ export class Call extends Base
 		location.href = url;
 	}
 
-	#launchCallRecordingTranscription(item: ConfigurableItem, actionData: Object): void
+	#launchCopilot(item: ConfigurableItem, actionData: Object): void
 	{
 		const isValidParams: boolean = Type.isNumber(actionData.activityId)
 			&& Type.isNumber(actionData.ownerId)
@@ -193,31 +203,36 @@ export class Call extends Base
 		aiCopilotBtnUI.setState(ButtonState.AI_WAITING);
 
 		Ajax
-			.runAction('crm.timeline.ai.launchRecordingTranscription', {
+			.runAction('crm.timeline.ai.launchCopilot', {
 				data: {
 					activityId: actionData.activityId,
 					ownerTypeId: actionData.ownerTypeId,
 					ownerId: actionData.ownerId,
+					scenario: this.#isValidScenario(actionData) ? actionData.scenario : null,
 				},
 			}).then((response) => {
 				if (response?.status === 'success')
 				{
 					const numberOfManualStarts = response?.data?.numberOfManualStarts;
+
+					if (numberOfManualStarts >= COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITH_BOOST_LIMIT)
+					{
+						this.#emitTimelineCopilotTourEvent(
+							aiCopilotBtnUI.getContainer(),
+							'BX.Crm.Timeline.Call:onShowTourWhenManualStartTooMuch',
+							'copilot-in-call-automatically',
+							500,
+						);
+
+						return;
+					}
+
 					if (numberOfManualStarts >= COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITHOUT_BOOST_LIMIT)
 					{
 						this.#emitTimelineCopilotTourEvent(
 							aiCopilotBtnUI.getContainer(),
 							'BX.Crm.Timeline.Call:onShowTourWhenNeedBuyBoost',
 							'copilot-in-call-buying-boost',
-							500,
-						);
-					}
-					else if (numberOfManualStarts >= COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITH_BOOST_LIMIT)
-					{
-						this.#emitTimelineCopilotTourEvent(
-							aiCopilotBtnUI.getContainer(),
-							'BX.Crm.Timeline.Call:onShowTourWhenManualStartTooMuch',
-							'copilot-in-call-automatically',
 							500,
 						);
 					}
@@ -249,6 +264,32 @@ export class Call extends Base
 
 				throw response;
 			});
+	}
+
+	#openCallScoringResult(actionData: Object): void
+	{
+		if (
+			!Type.isInteger(actionData.activityId)
+			|| !Type.isInteger(actionData.ownerTypeId)
+			|| !Type.isInteger(actionData.ownerId)
+		)
+		{
+			return;
+		}
+
+		const callScoring = new CallScoringResultDialog.CallQuality({
+			activityId: actionData.activityId,
+			ownerTypeId: actionData.ownerTypeId,
+			ownerId: actionData.ownerId,
+			activityCreated: actionData.activityCreated ?? null,
+			clientDetailUrl: actionData.clientDetailUrl ?? null,
+			clientFullName: actionData.clientFullName ?? null,
+			userPhotoUrl: actionData.userPhotoUrl ?? null,
+			jobId: actionData.jobId ?? null,
+			assessmentSettingsId: actionData.assessmentSettingsId ?? null,
+		});
+
+		callScoring.open();
 	}
 
 	#showAdditionalInfo(data: CoPilotAdditionalInfoData, item: ConfigurableItem, actionData: Object): void
@@ -319,11 +360,8 @@ export class Call extends Base
 
 		const payload: ?Object = Type.isPlainObject(item.getDataPayload())
 			? item.getDataPayload()
-			: {};
-		if (!payload.isWelcomeTourEnabled)
-		{
-			return;
-		}
+			: {}
+		;
 
 		setTimeout(() => {
 			const aiCopilotBtn: Button = item.getLayoutFooterButtonById('aiButton');
@@ -338,10 +376,10 @@ export class Call extends Base
 
 			if (aiCopilotBtn?.isInViewport())
 			{
-				this.#emitTimelineCopilotTourEvent(
+				this.#emitTimelineCopilotTourEvents(
 					aiCopilotUIBtn.getContainer(),
-					'BX.Crm.Timeline.Call:onShowCopilotTour',
-					'copilot-button-in-call',
+					1500,
+					payload,
 				);
 
 				return;
@@ -350,11 +388,12 @@ export class Call extends Base
 			const showCopilotTourOnScroll = () => {
 				if (aiCopilotBtn?.isInViewport())
 				{
-					this.#emitTimelineCopilotTourEvent(
+					this.#emitTimelineCopilotTourEvents(
 						aiCopilotUIBtn.getContainer(),
-						'BX.Crm.Timeline.Call:onShowCopilotTour',
-						'copilot-button-in-call',
+						1500,
+						payload,
 					);
+
 					this.#isCopilotWelcomeTourShown = true;
 
 					Event.unbind(window, 'scroll', showCopilotTourOnScroll);
@@ -393,12 +432,7 @@ export class Call extends Base
 					return;
 				}
 
-				this.#emitTimelineCopilotTourEvent(
-					aiCopilotUIBtn.getContainer(),
-					'BX.Crm.Timeline.Call:onShowCopilotTour',
-					'copilot-button-in-call',
-					500,
-				);
+				this.#emitTimelineCopilotTourEvents(aiCopilotUIBtn.getContainer(), 500);
 			});
 		}, 75);
 	}
@@ -492,6 +526,43 @@ export class Call extends Base
 		});
 	}
 
+	#emitTimelineCopilotTourEvents(target: HTMLElement, delay: number = 1500, payload: ?Object = null): void
+	{
+		const isWelcomeTourEnabled = payload?.isWelcomeTourEnabled ?? true;
+		const isWelcomeTourAutomaticallyEnabled = payload?.isWelcomeTourAutomaticallyEnabled ?? true;
+		const isWelcomeTourManuallyEnabled = payload?.isWelcomeTourManuallyEnabled ?? true;
+
+		if (isWelcomeTourEnabled)
+		{
+			this.#emitTimelineCopilotTourEvent(
+				target,
+				'BX.Crm.Timeline.Call:onShowCopilotTour',
+				'copilot-button-in-call',
+				delay,
+			);
+		}
+
+		if (isWelcomeTourAutomaticallyEnabled)
+		{
+			this.#emitTimelineCopilotTourEvent(
+				target,
+				'BX.Crm.Timeline.Call:onShowTourWhenCopilotAutomaticallyStart',
+				'copilot-button-in-call-automatically',
+				delay,
+			);
+		}
+
+		if (isWelcomeTourManuallyEnabled)
+		{
+			this.#emitTimelineCopilotTourEvent(
+				target,
+				'BX.Crm.Timeline.Call:onShowTourWhenCopilotManuallyStart',
+				'copilot-button-in-call-manually',
+				delay,
+			);
+		}
+	}
+
 	#emitTimelineCopilotTourEvent(target: Element, eventName: string, stepId: string, delay: Number = 1500): void
 	{
 		EventEmitter.emit(this, eventName, { target, stepId, delay });
@@ -509,6 +580,13 @@ export class Call extends Base
 		return Object.hasOwn(data, 'isAiMarketplaceAppsExist')
 			&& Type.isBoolean(data.isAiMarketplaceAppsExist)
 			&& data.isAiMarketplaceAppsExist
+		;
+	}
+
+	#isValidScenario(actionData: Object): boolean
+	{
+		return Type.isStringFilled(actionData.scenario)
+			&& [FULL_SCENARIO, FILL_FIELDS_SCENARIO, CALL_SCORING_SCENARIO].includes(actionData.scenario)
 		;
 	}
 

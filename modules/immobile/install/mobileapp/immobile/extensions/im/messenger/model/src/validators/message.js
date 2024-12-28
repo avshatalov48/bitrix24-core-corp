@@ -73,7 +73,7 @@ jn.define('im/messenger/model/validators/message', (require, exports, module) =>
 			result.text = fields.text.toString();
 		}
 
-		if (Type.isNumber(fields.loadText) || Type.isStringFilled(fields.loadText))
+		if (Type.isNumber(fields.loadText) || Type.isString(fields.loadText))
 		{
 			result.loadText = fields.loadText.toString();
 		}
@@ -218,6 +218,11 @@ jn.define('im/messenger/model/validators/message', (require, exports, module) =>
 		if (Type.isObject(fields.forward) && fields.forward.id)
 		{
 			result.forward = fields.forward;
+		}
+
+		if (Type.isString(fields.uploadFileId))
+		{
+			result.uploadFileId = fields.uploadFileId;
 		}
 
 		return result;

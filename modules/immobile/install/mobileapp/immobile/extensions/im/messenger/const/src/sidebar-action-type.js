@@ -10,18 +10,27 @@ jn.define('im/messenger/const/sidebar-action-type', (require, exports, module) =
 		deleteLink: 'deleteLink',
 		notes: 'notes',
 		leave: 'leave',
+		leaveFromChannel: 'leaveFromChannel',
+		leaveFromCollab: 'leaveFromCollab',
 		mention: 'mention',
 		send: 'send',
 		remove: 'remove',
-		deleteChat: 'deleteChat'
+		removeFromChannel: 'channelRemove',
+		removeFromCollab: 'removeFromCollab',
+		channelAddManager: 'channelAddManager',
+		commonAddManager: 'commonAddManager',
+		channelRemoveManager: 'channelRemoveManager',
+		commonRemoveManager: 'commonRemoveManager',
 	});
 
-	const SidebarContextMenuActionType = {
+	const SidebarHeaderContextMenuActionType = {
 		delete: 'delete',
-	}
+		edit: 'edit',
+		leave: 'leave',
+	};
 
 	module.exports = {
 		SidebarActionType,
-		SidebarContextMenuActionType,
+		SidebarHeaderContextMenuActionType,
 	};
 });

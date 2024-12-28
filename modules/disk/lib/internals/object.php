@@ -8,8 +8,8 @@ use Bitrix\Main\Entity\Result;
 use Bitrix\Main\Entity\UpdateResult;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main;
-use Bitrix\Main\IO;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\UI\Viewer\FilePreviewTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -263,6 +263,13 @@ class ObjectTable extends DataManager
 					'=this.ID' => 'ref.OBJECT_ID'
 				),
 				'join_type' => 'INNER',
+			),
+			'PREVIEW' => array(
+				'data_type' => FilePreviewTable::class,
+				'reference' => array(
+					'=this.FILE_ID' => 'ref.FILE_ID'
+				),
+				'join_type' => 'LEFT',
 			),
 			'PREVIEW_ID' => array(
 				'data_type' => 'integer',

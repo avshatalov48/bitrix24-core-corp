@@ -22,8 +22,7 @@ if (!function_exists('renderUsersAvatar'))
 		{
 			$visibleAmount--;
 			$invisibleAmount++;
-			$users = array_slice($users, 0, $visibleAmount);
-			$invisibleAmount = $invisibleAmount > $maxVisibleNumberAvatars ? $maxVisibleNumberAvatars : $invisibleAmount;
+			$invisibleAmount = min($invisibleAmount, $maxVisibleNumberAvatars);
 
 			$amount = <<<HTML
 				<div class="tasks-flow__list-members-icon_element --count $membersClass">
@@ -31,6 +30,8 @@ if (!function_exists('renderUsersAvatar'))
 					<span class="tasks-flow__warning-icon_element-number">$invisibleAmount</span>
 				</div>
 			HTML;
+
+			$users = array_slice($users, 0, $visibleAmount);
 		}
 
 		if (!$users)

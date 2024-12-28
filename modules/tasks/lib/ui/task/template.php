@@ -136,7 +136,19 @@ final class Template
 					{
 						$arParams["YEARLY_WEEK_DAY_NUM"] = 0;
 					}
-					$strRepeat = str_replace(array("#NUM#", "#DAY#", "#MONTH#"), array(GetMessage("TASKS_REPEAT_DAY_NUM_".$arParams["YEARLY_WEEK_DAY_NUM"]), GetMessage("TASKS_REPEAT_DAY_".$arParams["YEARLY_WEEK_DAY"]), GetMessage("TASKS_REPEAT_MONTH_".$arParams["YEARLY_MONTH_2"])), GetMessage("TASKS_AT_N_DAY_OF_MONTH".taskMessSuffix(intval($arParams["TASKS_REPEAT_DAY_NUM_"]))));
+					$strRepeat = str_replace(
+						[
+							'#NUM#',
+							'#DAY#',
+							'#MONTH#',
+						],
+						[
+							Loc::getMessage('TASKS_REPEAT_DAY_NUM_' . $arParams['YEARLY_WEEK_DAY_NUM']),
+							Loc::getMessage('TASKS_REPEAT_DAY_' . $arParams['YEARLY_WEEK_DAY']),
+							Loc::getMessage('TASKS_REPEAT_MONTH_' . $arParams['YEARLY_MONTH_2']),
+						],
+						Loc::getMessage('TASKS_AT_N_DAY_OF_MONTH')
+					);
 				}
 				break;
 		}

@@ -50,7 +50,7 @@ class CrmRouterComponent extends Bitrix\Crm\Component\Base
 		}
 	}
 
-	public function executeComponent()
+	public function executeComponent(): void
 	{
 		$this->init();
 
@@ -61,6 +61,11 @@ class CrmRouterComponent extends Bitrix\Crm\Component\Base
 		}
 
 		$parseResult = $this->getComponentData();
+		if (!$this->isAvailableByCurrentRoot($parseResult))
+		{
+			$parseResult = $this->getDefaultComponentData();
+		}
+
 		$componentName = $parseResult->getComponentName();
 		$componentParameters = $parseResult->getComponentParameters();
 
@@ -78,7 +83,9 @@ class CrmRouterComponent extends Bitrix\Crm\Component\Base
 		$this->arResult['isUseBitrix24Theme'] = $this->isUseBitrix24Theme($componentName);
 		$this->arResult['defaultBitrix24Theme'] = $this->getDefaultBitrix24Theme($componentName);
 		$this->arResult['roots'] = $this->getAllRoots();
+		$this->arResult['customSectionRoots'] = $this->getCustomSectionRoots();
 		$this->arResult['isUseToolbar'] = $this->isUseToolbar($componentName);
+		$this->arResult['isUseBackgroundContent'] = $this->isUseBackgroundContent($componentName);
 
 		$templateName = '';
 		$entityTypeId = $parseResult->getEntityTypeId();
@@ -104,7 +111,11 @@ class CrmRouterComponent extends Bitrix\Crm\Component\Base
 		$isAvailable = false;
 		$sliderCode = ToolsManager::CRM_SLIDER_CODE;
 
-		if ($this->isCheckOnlyCrmAvailability($componentName))
+		if ($this->isDontCheckAvailability($componentName))
+		{
+			$isAvailable = true;
+		}
+		elseif ($this->isCheckOnlyCrmAvailability($componentName))
 		{
 			$isAvailable = $toolsManager->checkCrmAvailability();
 		}
@@ -178,17 +189,40 @@ class CrmRouterComponent extends Bitrix\Crm\Component\Base
 
 	protected function isUsePadding(string $componentName): bool
 	{
-		return false;
+		static $excludedComponents = [
+			'bitrix:crm.config.perms.wrapper',
+			'bitrix:crm.automated_solution.permissions',
+			'bitrix:crm.copilot.call.assessment.details.wrapper',
+			'bitrix:crm.type.detail',
+		];
+
+		return !in_array($componentName, $excludedComponents);
 	}
 
 	protected function isUseToolbar(string $componentName): bool
 	{
-		return $componentName !== 'bitrix:crm.item.automation';
+		static $excludedComponents = [
+			'bitrix:crm.item.automation',
+			'bitrix:crm.config.perms.wrapper',
+			'bitrix:crm.automated_solution.permissions',
+		];
+
+		return !in_array($componentName, $excludedComponents);
+	}
+
+	protected function isUseBackgroundContent(string $componentName): bool
+	{
+		$excludedComponents = [
+			'bitrix:crm.copilot.call.assessment.details.wrapper'
+		];
+
+		return !in_array($componentName, $excludedComponents, true);
 	}
 
 	protected function isPlainView(string $componentName): bool
 	{
 		$detailComponentNames = array_values($this->router->getItemDetailComponentNamesMap());
+		$detailComponentNames[] = 'bitrix:crm.copilot.call.assessment.details.wrapper';
 
 		return in_array($componentName, $detailComponentNames, true);
 	}
@@ -213,6 +247,11 @@ class CrmRouterComponent extends Bitrix\Crm\Component\Base
 		return array_merge($customRoots, [$currentRoot, $defaultRoot]);
 	}
 
+	protected function getCustomSectionRoots(): array
+	{
+		return $this->router->getCustomRootsWithoutPages();
+	}
+
 	private function isExternal(array $componentParams): bool
 	{
 		return (
@@ -221,13 +260,55 @@ class CrmRouterComponent extends Bitrix\Crm\Component\Base
 		);
 	}
 
-	private function isCheckOnlyCrmAvailability(string $componentName): bool
+	private function isDontCheckAvailability(string $componentName): bool
 	{
 		$components = [
 			'bitrix:crm.config.perms.wrapper',
+			'bitrix:crm.automated_solution.permissions',
 			'bitrix:crm.router.default.root',
 		];
 
 		return in_array($componentName, $components, true);
+	}
+
+	private function isCheckOnlyCrmAvailability(string $componentName): bool
+	{
+		$components = [
+			'bitrix:crm.copilot.call.assessment.list',
+			'bitrix:crm.copilot.call.assessment.details.wrapper',
+		];
+
+		return in_array($componentName, $components, true);
+	}
+
+	private function getDefaultComponentData(): Router\ParseResult
+	{
+		return new Router\ParseResult('bitrix:crm.router.default.root', [], '');
+	}
+
+	private function isAvailableByCurrentRoot(Router\ParseResult $parseResult): bool
+	{
+		$component = $parseResult->getComponentName();
+
+		$requireOnlyCrmRoot = [
+			'bitrix:crm.copilot.call.assessment.list',
+			'bitrix:crm.copilot.call.assessment.details.wrapper',
+		];
+
+		if (in_array($component, $requireOnlyCrmRoot, true))
+		{
+			return $this->router->getRoot() === '/crm/';
+		}
+
+		$requireOnlyAutomationRoot = [
+			'bitrix:crm.automated_solution.permissions',
+		];
+
+		if (in_array($component, $requireOnlyAutomationRoot, true))
+		{
+			return $this->router->getRoot() === '/automation/';
+		}
+
+		return true;
 	}
 }

@@ -97,7 +97,6 @@ class InvitationRepository
 			if (!$result->isSuccess())
 			{
 				throw new UpdateFailedException($result->getErrorCollection());
-				;
 			}
 		}
 

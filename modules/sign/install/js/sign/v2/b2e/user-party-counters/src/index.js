@@ -56,6 +56,11 @@ export class UserPartyCounters
 		return Tag.render`<span class="sign-b2e-settings__user-party-counter-limit">/ ${Number(this.#userCountersLimit)}</span>`;
 	}
 
+	getCount(): number
+	{
+		return Number(this.#counterNode.textContent);
+	}
+
 	update(size: number): void
 	{
 		this.#counterNode.textContent = size;

@@ -42,6 +42,10 @@ export class InvitationWidget extends EventEmitter
 		}
 
 		BX.addCustomEvent('onPullEvent-main', this.#onReceiveCounterValue.bind(this));
+		if (this.getOptions().shouldShowStructureCounter)
+		{
+			EventEmitter.subscribeOnce('HR.company-structure:first-popup-showed', this.#onFirstWatchNewStructure.bind(this));
+		}
 	}
 
 	#onReceiveCounterValue(command, params): void
@@ -49,11 +53,16 @@ export class InvitationWidget extends EventEmitter
 		if (command === 'user_counter' && params[BX.message('SITE_ID')])
 		{
 			const counters = BX.clone(params[BX.message('SITE_ID')]);
-			const value = counters[this.getOptions().counterId];
+			let value = counters[this.getOptions().counterId];
 
 			if (!Type.isNumber(value))
 			{
 				return;
+			}
+
+			if (this.getOptions().shouldShowStructureCounter)
+			{
+				value++;
 			}
 
 			this.#getCounter().update(value);
@@ -82,7 +91,7 @@ export class InvitationWidget extends EventEmitter
 	{
 		return this.#cache.remember('counter', () => {
 			return new Counter({
-				value: Number(this.getOptions().invitationCounter),
+				value: this.#getCounterValue(),
 				color: Counter.Color.DANGER,
 			});
 		});
@@ -95,14 +104,57 @@ export class InvitationWidget extends EventEmitter
 				isAdmin: this.getOptions().isCurrentUserAdmin,
 				target: this.getOptions().button,
 				isExtranetAvailable: this.getOptions().isExtranetAvailable,
+				isCollabAvailable: this.getOptions().isCollabAvailable,
 				isInvitationAvailable: this.getOptions().isInvitationAvailable,
 				params: {
 					structureLink: this.getOptions().structureLink,
 					invitationLink: this.getOptions().invitationLink,
 					invitationCounter: this.getOptions().invitationCounter,
 					counterId: this.getOptions().counterId,
+					shouldShowStructureCounter: this.getOptions().shouldShowStructureCounter,
 				},
 			});
 		});
+	}
+
+	#getCounterValue(): number
+	{
+		let counterValue = Number(this.getOptions().invitationCounter);
+		if (this.getOptions().shouldShowStructureCounter ?? false)
+		{
+			counterValue++;
+		}
+
+		return counterValue;
+	}
+
+	#onFirstWatchNewStructure(): void
+	{
+		let value = this.#getCounter().value;
+
+		if (!Type.isNumber(value))
+		{
+			return;
+		}
+
+		if (!this.getOptions().shouldShowStructureCounter)
+		{
+			return;
+		}
+
+		value--;
+		this.getOptions().shouldShowStructureCounter = false;
+		this.#getCounter().update(value);
+		this.getOptions().invitationCounter = value;
+
+		if (value > 0)
+		{
+			this.#getCounter().renderTo(this.#getCounterWrapper());
+		}
+		else
+		{
+			this.#getCounter().destroy();
+			this.#cache.delete('counter');
+		}
 	}
 }

@@ -46,7 +46,17 @@ ob_start();
 		}
 
 		?><div class="feed-task-info-text-item">
-			<span class="feed-task-info-text-title"><?= Loc::getMessage('TASKS_SONET_LOG_ASSIGNEE') ?>:</span><span class="feed-task-info-text-cont"><a href="<?=$arResult["PATH_TO_USER"];?>" bx-tooltip-user-id="<?=(int) $arResult['USER']['ID']?>"><?=CUser::FormatName($arParams["NAME_TEMPLATE"], $arResult["USER"], true);?></a></span>
+			<span class="feed-task-info-text-title">
+				<?= Loc::getMessage('TASKS_SONET_LOG_ASSIGNEE') ?>:
+			</span>
+			<span class="feed-task-info-text-cont">
+				<a
+					class="<?= $arResult['USER']['IS_COLLABER'] ?? false ? 'feed-task-info-text-link-collaber' : '' ?>"
+					href="<?=$arResult["PATH_TO_USER"];?>"
+					bx-tooltip-user-id="<?=(int)$arResult['USER']['ID']?>">
+					<?=CUser::FormatName($arParams["NAME_TEMPLATE"], $arResult["USER"], true);?>
+				</a>
+			</span>
 		</div><?php
 
 		if (

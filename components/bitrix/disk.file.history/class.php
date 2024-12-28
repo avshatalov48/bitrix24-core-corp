@@ -173,7 +173,7 @@ class CDiskFileHistoryComponent extends DiskComponent implements SidePanelWrappa
 			);
 
 			$anchorCreateUser = "
-				<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url('" . Uri::urnEncode($createUser->getAvatarSrc()) . "');\"></span><a target='_blank' href=\"{$createdByLink}\" id=\"\">" . htmlspecialcharsbx(
+				<div class=\"bx-disk-user-link\">{$createUser->renderAvatar()}<a target='_blank' href=\"{$createdByLink}\" id=\"\">" . htmlspecialcharsbx(
 					$createUser->getFormattedName()) . "</a></div>
 			";
 

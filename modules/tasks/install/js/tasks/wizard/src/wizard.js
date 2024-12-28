@@ -1,5 +1,7 @@
-import { Dom, Event, Loc, Tag, Type } from 'main.core';
+import { Dom, Event, Loc, Tag, Text, Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 import { Button, ButtonState } from 'ui.buttons';
+import 'main.polyfill.intersectionobserver';
 import 'ui.icon-set.main';
 import './style.css';
 
@@ -13,6 +15,7 @@ type Step = {
 	node: ?HTMLElement,
 	fadeTop: ?HTMLElement,
 	fadeBottom: ?HTMLElement,
+	hintManager?: BX.UI.Hint.Manager,
 };
 
 type Params = {
@@ -67,6 +70,27 @@ export class Wizard
 	update(): void
 	{
 		this.#updateStepsAvailability();
+	}
+
+	initHints(): void
+	{
+		this.#steps.forEach((step: Step) => {
+			step.hintManager = top.BX.UI.Hint.createInstance({
+				id: `tasks-flow-edit-form-${step.id}-${Text.getRandom()}`,
+				className: 'skipInitByClassName',
+				popupParameters: {
+					targetContainer: step.node,
+				},
+			});
+			step.hintManager.init(step.node);
+		});
+	}
+
+	hideHints(): void
+	{
+		this.#steps.forEach((step: Step) => {
+			step.hintManager?.hide();
+		});
 	}
 
 	#getPreviousStep(): Step
@@ -233,7 +257,27 @@ export class Wizard
 
 		Event.bind(step.node, 'scroll', () => this.#updateFade(step.node, fadeTop, fadeBottom));
 
+		this.#subscribeToPopupInit(step.node);
+
 		return step.node;
+	}
+
+	#subscribeToPopupInit(stepContainer: HTMLElement): void
+	{
+		EventEmitter.subscribe('BX.Main.Popup:onInit', (event) => {
+			const data = event.getCompatData();
+
+			const bindElement = data[1];
+			const params = data[2];
+
+			if (
+				Type.isDomNode(bindElement)
+				&& stepContainer.contains(bindElement)
+			)
+			{
+				params.targetContainer = stepContainer;
+			}
+		});
 	}
 
 	#updateFade(container, fadeTop, fadeBottom): void

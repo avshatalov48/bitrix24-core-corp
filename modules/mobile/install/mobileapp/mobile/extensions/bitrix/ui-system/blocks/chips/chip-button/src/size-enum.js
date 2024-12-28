@@ -2,7 +2,7 @@
  * @module ui-system/blocks/chips/chip-button/src/size-enum
  */
 jn.define('ui-system/blocks/chips/chip-button/src/size-enum', (require, exports, module) => {
-	const { Indent } = require('tokens');
+	const { Indent, Corner } = require('tokens');
 	const { BaseEnum } = require('utils/enums/base');
 	const { Text4, Text5 } = require('ui-system/typography/text');
 
@@ -15,6 +15,7 @@ jn.define('ui-system/blocks/chips/chip-button/src/size-enum', (require, exports,
 	{
 		static NORMAL = new ChipButtonSize('NORMAL', {
 			text: Text4,
+			radius: Corner.M,
 			height: 32,
 			indent: {
 				left: {
@@ -31,6 +32,7 @@ jn.define('ui-system/blocks/chips/chip-button/src/size-enum', (require, exports,
 
 		static SMALL = new ChipButtonSize('SMALL', {
 			text: Text5,
+			radius: Corner.S,
 			height: 24,
 			indent: {
 				left: {
@@ -58,6 +60,11 @@ jn.define('ui-system/blocks/chips/chip-button/src/size-enum', (require, exports,
 		getHeight()
 		{
 			return this.getValue().height;
+		}
+
+		getRadius()
+		{
+			return this.getValue().radius;
 		}
 	}
 

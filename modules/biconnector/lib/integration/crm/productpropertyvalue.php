@@ -134,7 +134,10 @@ class ProductPropertyValue
 						'FIELD_TYPE' => 'string',
 					],
 				],
-				'UNION' => self::getMultipleUnion($helper, $crmCatalogIblockOfferId) . ' ' . self::getSingleUnion($helper, $crmCatalogIblockOfferId),
+				'UNIONS' => [
+					self::getMultipleUnion($helper, $crmCatalogIblockOfferId),
+					...self::getSingleUnion($helper, $crmCatalogIblockOfferId),
+				],
 			];
 		}
 		elseif ($crmCatalogIblockVersion === 2 && $crmCatalogIblockOfferVersion === 1)
@@ -174,7 +177,10 @@ class ProductPropertyValue
 						'FIELD_TYPE' => 'string',
 					],
 				],
-				'UNION' => self::getMultipleUnion($helper, $crmCatalogIblockId) . ' ' . self::getSingleUnion($helper, $crmCatalogIblockId),
+				'UNIONS' => [
+					self::getMultipleUnion($helper, $crmCatalogIblockId),
+					...self::getSingleUnion($helper, $crmCatalogIblockId),
+				],
 			];
 		}
 		elseif ($crmCatalogIblockVersion === 2 && $crmCatalogIblockOfferVersion === 2)
@@ -203,10 +209,11 @@ class ProductPropertyValue
 						'FIELD_TYPE' => 'string',
 					],
 				],
-				'UNION' =>
-					self::getSingleUnion($helper, $crmCatalogIblockId) . ' ' .
-					self::getMultipleUnion($helper, $crmCatalogIblockOfferId) . ' ' .
-					self::getSingleUnion($helper, $crmCatalogIblockOfferId)
+				'UNIONS' => [
+					...self::getSingleUnion($helper, $crmCatalogIblockId),
+					self::getMultipleUnion($helper, $crmCatalogIblockOfferId),
+					...self::getSingleUnion($helper, $crmCatalogIblockOfferId),
+				],
 			];
 		}
 
@@ -225,7 +232,7 @@ class ProductPropertyValue
 		unset($fieldInfo);
 	}
 
-	private static function getSingleUnion($helper, $iblockId): string
+	private static function getSingleUnion($helper, $iblockId): array
 	{
 		$propertyTableRecords = \Bitrix\Iblock\PropertyTable::getList([
 			'select' => ['ID'],
@@ -233,18 +240,51 @@ class ProductPropertyValue
 		])->fetchAll();
 
 		$singlePropertyIds = array_map(static fn($property) => (int)$property['ID'], $propertyTableRecords);
-		$union = '';
+		$union = [];
 		foreach ($singlePropertyIds as $singlePropertyId)
 		{
-			$union .= 'UNION ALL SELECT ' . $helper->getConcatFunction('IBLOCK_ELEMENT_ID', '\':\'', $singlePropertyId) . ' AS ID, IBLOCK_ELEMENT_ID AS PRODUCT_ID, \'' . $singlePropertyId . '\' as PROPERTY_ID, PROPERTY_' . $singlePropertyId . ' as VALUE from b_iblock_element_prop_s' . $iblockId . '
-			';
+			$union[] = [
+				'TABLE_NAME' => 'b_iblock_element_prop_s' . $iblockId,
+				'TABLE_ALIAS' => 'IEP',
+				'FIELDS' => [
+					'ID' => [
+						'FIELD_NAME' => $helper->getConcatFunction('IBLOCK_ELEMENT_ID', '\':\'', $singlePropertyId),
+					],
+					'PRODUCT_ID' => [
+						'FIELD_NAME' => 'IEP.IBLOCK_ELEMENT_ID',
+					],
+					'PROPERTY_ID' => [
+						'FIELD_NAME' => '\'' . $singlePropertyId . '\'',
+					],
+					'VALUE' => [
+						'FIELD_NAME' => 'PROPERTY_' . $singlePropertyId,
+					],
+				],
+			];
 		}
 
 		return $union;
 	}
 
-	private static function getMultipleUnion($helper, int $iblockId): string
+	private static function getMultipleUnion($helper, int $iblockId): array
 	{
-		return 'UNION ALL SELECT ' . $helper->getConcatFunction('IEP.IBLOCK_ELEMENT_ID', '\':\'', 'IEP.IBLOCK_PROPERTY_ID', '\':\'', 'IEP.ID') . ' AS ID, IEP.IBLOCK_ELEMENT_ID AS PRODUCT_ID, IEP.IBLOCK_PROPERTY_ID AS PROPERTY_ID, IEP.VALUE FROM b_iblock_element_prop_m' . $iblockId . ' AS IEP';
+		return [
+			'TABLE_NAME' => 'b_iblock_element_prop_m' . $iblockId,
+			'TABLE_ALIAS' => 'IEP',
+			'FIELDS' => [
+				'ID' => [
+					'FIELD_NAME' => $helper->getConcatFunction('IEP.IBLOCK_ELEMENT_ID', '\':\'', 'IEP.IBLOCK_PROPERTY_ID', '\':\'', 'IEP.ID'),
+				],
+				'PRODUCT_ID' => [
+					'FIELD_NAME' => 'IEP.IBLOCK_ELEMENT_ID',
+				],
+				'PROPERTY_ID' => [
+					'FIELD_NAME' => 'IEP.IBLOCK_PROPERTY_ID',
+				],
+				'VALUE' => [
+					'FIELD_NAME' => 'IEP.VALUE',
+				],
+			],
+		];
 	}
 }

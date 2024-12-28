@@ -7,7 +7,10 @@ jn.define('im/messenger/controller/reaction-viewer/user-list', (require, exports
 	const { LoaderItem } = require('im/messenger/lib/ui/base/loader');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { Loc } = require('loc');
-	const { ChatTitle } = require('im/messenger/lib/element');
+	const {
+		ChatTitle,
+		ChatAvatar,
+	} = require('im/messenger/lib/element');
 
 	/**
 	 * @class
@@ -53,6 +56,7 @@ jn.define('im/messenger/controller/reaction-viewer/user-list', (require, exports
 							id: item.id,
 							avatarUri: encodeURI(item.avatar),
 							avatarColor: item.color,
+							avatar: ChatAvatar.createFromDialogId(item.id).getListItemAvatarProps(),
 							title: item.name,
 							subtitle: this.getUserSubtitle(item),
 							style: this.getUserStyle(item.id),

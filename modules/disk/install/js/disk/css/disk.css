@@ -2329,6 +2329,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
     cursor: pointer;
 }
 .bx-disk-fileinfo-owner-avatar{
+	--ui-avatar-size: 34px;
 	line-height:34px;
 	display:inline-block;
 	width:34px;

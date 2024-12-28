@@ -2,66 +2,92 @@
  * @module layout/ui/fields/user/theme/air/src/entity-list
  */
 jn.define('layout/ui/fields/user/theme/air/src/entity-list', (require, exports, module) => {
-	const { ElementsStack } = require('elements-stack');
-	const { UserAvatar } = require('layout/ui/fields/user/theme/elements/user-icon');
-	const { Indent } = require('tokens');
+	const { AvatarStack } = require('ui-system/blocks/avatar-stack');
 	const { Entity, AVATAR_SIZE } = require('layout/ui/fields/user/theme/air/src/entity');
-	const { Counter } = require('layout/ui/fields/user/theme/air/src/counter');
 
 	const MAX_ELEMENTS = 5;
 
 	/**
-	 * @param {UserField} field
-	 * @return {any}
-	 * @constructor
+	 * @typedef {Object} AirUserEntityList
+	 * @property {field} UserField
+	 * @class AirUserEntityList
 	 */
-	const EntityList = ({ field }) => {
-		const entityList = field.getEntityList();
-		const children = entityList.slice(0, MAX_ELEMENTS).map((entity) => UserAvatar({
-			field,
-			entity,
-			size: AVATAR_SIZE + Indent.XS2.toNumber() * 2,
-		}));
-
-		const showCounter = entityList.length > MAX_ELEMENTS;
-		if (showCounter)
+	class AirUserEntityList extends LayoutComponent
+	{
+		render()
 		{
-			children.push(
-				Counter({
-					count: entityList.length - MAX_ELEMENTS,
-					size: AVATAR_SIZE + Indent.XS2.toNumber() * 2,
-					onClick: () => field.openUserList(),
-				}),
+			const entityList = this.getEntityList();
+			const field = this.getField();
+			const entities = this.getEntityIds();
+
+			return View(
+				{
+					style: {
+						flex: 1,
+						flexDirection: 'row',
+					},
+				},
+				entityList.length > 1
+					? AvatarStack({
+						testId: `${field.testId}_CONTENT`,
+						withRedux: true,
+						size: AVATAR_SIZE,
+						entities,
+						visibleEntityCount: MAX_ELEMENTS,
+						onClick: this.handleOnAvatarClick,
+					})
+					: Entity({
+						field,
+						entity: entityList[0],
+						showTitle: !field.isMultiple(),
+					}),
 			);
 		}
 
-		return View(
+		handleOnAvatarClick = ({ id }) => {
+			const field = this.getField();
+
+			if (field.canOpenUserList())
 			{
-				style: {
-					flex: 1,
-					flexDirection: 'row',
-				},
-			},
-			entityList.length > 1
-				? ElementsStack(
-					{
-						indent: Indent.XS2,
-						offset: Indent.S,
-						showRest: false,
-						maxElements: showCounter ? MAX_ELEMENTS + 1 : MAX_ELEMENTS,
-						testId: `${field.testId}_CONTENT`,
-					},
-					...children,
-				)
-				: Entity({
-					field,
-					entity: entityList[0],
-					showTitle: !field.isMultiple(),
-				}),
-		);
-	};
+				field.openUserList();
+			}
+			else
+			{
+				field.openEntity(id);
+			}
+		};
+
+		/**
+		 * @returns {UserField}
+		 */
+		getField()
+		{
+			const { field } = this.props;
+
+			return field;
+		}
+
+		/**
+		 * @returns {Array<number | string>}
+		 */
+		getEntityIds()
+		{
+			return this.getEntityList().map(({ id }) => id);
+		}
+
+		/**
+		 * @returns {Array<UserEntity>}
+		 */
+		getEntityList()
+		{
+			return this.getField().getEntityList();
+		}
+	}
 
 	module.exports = {
-		EntityList,
+		/**
+		 * @param {AirUserEntityList} props
+		 */
+		EntityList: (props) => new AirUserEntityList(props),
 	};
 });

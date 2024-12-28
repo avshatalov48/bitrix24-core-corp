@@ -1,4 +1,5 @@
 <?php
+
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -418,53 +419,10 @@ foreach($items as $item)
 			);
 		</script><?
 	}
-	elseif ($type === 'bizproc-starter-button' && isset($item['DATA']['availabilityLock']))
-	{
-		?>
-		<button
-			class="ui-btn ui-btn-md ui-btn-light-border ui-btn-themes crm-bizproc-starter-icon"
-			title="<?=GetMessage('CRM_TOOLBAR_BIZPROC_STARTER_LABEL')?>"
-			onclick="<?= ($item['DATA']['availabilityLock']) ?>"
-		></button>
-		<?php
-	}
-	elseif($type == 'bizproc-starter-button')
-	{
-	$hasTemplates = is_array($item['DATA']['templates']) && count($item['DATA']['templates']) > 0;
-	if ($hasTemplates):
-
-	CJSCore::Init('bp_starter');
-	$starterButtonId = "{$toolbarID}_bp_starter";
-	?>
-		<button class="ui-btn ui-btn-md ui-btn-light-border ui-btn-themes crm-bizproc-starter-icon"
-				id="<?=htmlspecialcharsbx($starterButtonId)?>" title="<?=GetMessage('CRM_TOOLBAR_BIZPROC_STARTER_LABEL')?>"></button>
-		<script>
-			BX.ready(
-				function()
-				{
-					var button = BX('<?=CUTil::JSEscape($starterButtonId)?>');
-					if (button)
-					{
-						var config = <?=\Bitrix\Main\Web\Json::encode($item['DATA'])?>;
-						if (config.templates && config.templates.length > 0)
-						{
-							var starter = new BX.Bizproc.Starter(config);
-							BX.bind(button, 'click', function(e)
-							{
-								starter.showTemplatesMenu(button);
-							});
-						}
-					}
-				}
-			);
-		</script>
-	<?
-	endif;
-	}
 	else
 	{
 		?><a target="_top" class="webform-small-button webform-small-button-blue crm-top-toolbar-add<?=$icon !== '' ? " {$icon}" : ''?>" href="<?=$link?>" title="<?=$title?>"<?=$onClick !== '' ? " onclick=\"{$onClick}; return false;\"" : ''?>><?=$text?></a><?
 	}
 }
-?></div><?
+?></div><?php
 $this->EndViewTarget();

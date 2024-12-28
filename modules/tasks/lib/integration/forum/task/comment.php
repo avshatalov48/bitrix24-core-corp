@@ -611,8 +611,6 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 			(new ResultManager(User::getId()))->createFromComment((int)$messageId);
 		}
 
-		self::sendAnalyticsAfterCommentAdd((int)$messageAuthorId, $isResult, $aux);
-
 		TaskTable::update($taskId, ['ACTIVITY_DATE' => DateTime::createFromTimestamp($messageEditDateTimeStamp)]);
 
 		try
@@ -632,6 +630,8 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 				['ACTIVITY_DATE' => DateTime::createFromTimestamp($messageEditDateTimeStamp)]
 			);
 		}
+
+		self::sendAnalyticsAfterCommentAdd((int)$messageAuthorId, (int)$arTask['GROUP_ID'], $isResult, $aux);
 
 		if (!$aux)
 		{
@@ -1358,9 +1358,12 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 
 			if (!isset($arData['replica']))
 			{
-				static::addLogItem(array(
+				$eventUserId = (int)($arData['USER_ID'] ?? 0);
+				$userId = $eventUserId > 0 ? $eventUserId : self::getOccurAsId($messageAuthorId);
+
+				self::addLogItem(array(
 					"TASK_ID" => (int)$taskID,
-					"USER_ID" => static::getOccurAsId($messageAuthorId),
+					"USER_ID" => $userId,
 					"CREATED_DATE" => null,
 					"FIELD" => "COMMENT_".$arData['ACTION'],
 					"TO_VALUE" => $arData['MESSAGE_ID']
@@ -1829,6 +1832,11 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 	// legacy webdav support. it will be removed in future, so no external integration helper for webdav used here
 	private static function addWebDavFileRights($taskId, $arFilesIds)
 	{
+		if (!is_array($arFilesIds))
+		{
+			return;
+		}
+
 		$arFilesIds = array_unique(array_filter($arFilesIds));
 
 		// Nothing to do?
@@ -1930,18 +1938,34 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		self::$fileAttachments = $query->exec()->fetchCollection()->getIdList();
 	}
 
-	private static function sendAnalyticsAfterCommentAdd(int $userId, bool $isResult, bool $aux): void
+	private static function sendAnalyticsAfterCommentAdd(int $userId, int $groupId = 0, bool $isResult = false, bool $aux = false): void
 	{
 		if ($aux)
 		{
 			return;
 		}
 
+		$parameters = [];
+		$section = Analytics::SECTION['tasks'];
+
 		$analytics = Analytics::getInstance($userId);
+
+		if ($groupId > 0)
+		{
+			$provider = SocialNetwork\Collab\Provider\CollabProvider::getInstance();
+			if ($provider?->isCollab($groupId))
+			{
+				$section = Analytics::SECTION['collab'];
+				$parameters = [
+					'p2' => $analytics->getUserTypeParameter(),
+					'p4' => $analytics->getCollabParameter($groupId),
+				];
+			}
+		}
 
 		$isResult
 			? $analytics->onStatusSummaryAdd()
-			: $analytics->onCommentAdd()
+			: $analytics->onCommentAdd($section, $parameters)
 		;
 	}
 }

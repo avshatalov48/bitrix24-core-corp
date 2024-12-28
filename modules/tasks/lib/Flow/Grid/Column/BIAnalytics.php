@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Flow\Grid\Column;
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Flow\Flow;
+use Bitrix\Tasks\Flow\Integration\BIConnector\FlowBIAnalytics;
 use Bitrix\Tasks\Flow\Provider\FlowProvider;
 
 final class BIAnalytics extends Column
@@ -13,9 +14,13 @@ final class BIAnalytics extends Column
 		$this->init();
 	}
 
-	public function prepareData(Flow $flow, array $params = []): int
+	public function prepareData(Flow $flow, array $params = []): array
 	{
-		return (new FlowProvider())->getEfficiency($flow);
+		return [
+			'flowId' => $flow->getId(),
+			'efficiency' => (new FlowProvider())->getEfficiency($flow),
+			'dashboards' => FlowBIAnalytics::getInstance()->getFlowDashboards($flow->getId()),
+		];
 	}
 
 	private function init(): void

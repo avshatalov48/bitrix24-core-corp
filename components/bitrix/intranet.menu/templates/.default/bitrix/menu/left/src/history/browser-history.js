@@ -27,6 +27,9 @@ export class BrowserHistory
 	{
 		let i = 0;
 		this.items.forEach((item) => {
+			if (i > 15) {
+				return true;
+			}
 			let icoName = '';
 			let title = '';
 			if (Type.isStringFilled(item.title))
@@ -69,9 +72,6 @@ export class BrowserHistory
 
 			this.wrapper.appendChild(li);
 			i++;
-			if (i > 11) {
-				return true;
-			}
 		});
 	}
 

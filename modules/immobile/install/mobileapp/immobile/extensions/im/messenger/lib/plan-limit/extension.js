@@ -2,12 +2,12 @@
  * @module im/messenger/lib/plan-limit
  */
 jn.define('im/messenger/lib/plan-limit', (require, exports, module) => {
+	const { Loc } = require('loc');
+	const { AnalyticsEvent } = require('analytics');
+
 	const { Logger } = require('im/messenger/lib/logger');
 	const { ErrorType, Analytics } = require('im/messenger/const');
-	const { AnalyticsEvent } = require('analytics');
-	const { Type } = require('type');
-	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { Loc } = require('loc');
+	const { AnalyticsService } = require('im/messenger/provider/service/analytics');
 
 	/**
 	 * @param {AnalyticsEvent} analytics
@@ -46,27 +46,7 @@ jn.define('im/messenger/lib/plan-limit', (require, exports, module) => {
 	 */
 	function sendAnalyticsOpenPlanLimitWidget(analyticsData)
 	{
-		const analytics = analyticsData
-			.setTool(Analytics.Tool.im)
-			.setCategory(Analytics.Category.limitBanner)
-			.setEvent(Analytics.Event.click)
-			.setType(Analytics.Type.limitOfficeChatingHistory);
-
-		if (Type.isNil(analyticsData.getP1()))
-		{
-			const store = serviceLocator.get('core').getStore();
-
-			const dialogId = store.getters['applicationModel/getCurrentOpenedDialogId']();
-			if (dialogId === 0)
-			{
-				return;
-			}
-
-			const dialog = store.getters['dialoguesModel/getById'](dialogId);
-			analytics.setP1(Analytics.P1[dialog?.type]);
-		}
-
-		analytics.send();
+		AnalyticsService.getInstance().sendAnalyticsOpenPlanLimitWidget(analyticsData);
 	}
 
 	module.exports = {

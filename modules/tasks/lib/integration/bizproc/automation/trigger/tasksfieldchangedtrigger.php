@@ -45,7 +45,7 @@ class TasksFieldChangedTrigger extends Base
 			return false;
 		}
 
-		if (!is_array($trigger['APPLY_RULES']['fields']))
+		if (!is_array($trigger['APPLY_RULES']['fields'] ?? null))
 		{
 			return false;
 		}

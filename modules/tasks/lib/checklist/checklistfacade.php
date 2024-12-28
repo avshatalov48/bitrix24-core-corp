@@ -1376,6 +1376,7 @@ abstract class CheckListFacade
 					'TYPE' => $processedItem['USER_TYPE'],
 					'NAME' => User::formatName($userFields),
 					'IMAGE' => Avatar::getSrc($processedItem['USER_PERSONAL_PHOTO']),
+					'IS_COLLABER' => $userId && \Bitrix\Tasks\Integration\Extranet\User::isCollaber($userId),
 				];
 
 				if (isset($items[$id]))

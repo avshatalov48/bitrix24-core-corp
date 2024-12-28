@@ -60,12 +60,16 @@ class AISetting extends Intranet\Settings\AbstractSettings
 			{
 				if (
 					$item->isList()
-					&& $item->getAdditional()
-					&& $item->getAdditional()['isProviderSelector']
+					&& ($item->getAdditional()['isProviderSelector'] ?? false) === true
+					&& ($item->getAdditional()['marketLink'] ?? true) !== false
 				)
 				{
-					$fields[$group->getCode()]['items'][$item->getCode()]['options']['market']
-						= self::getInternalItemsMarketOption();
+					$link = $item->getAdditional()['marketLink']['link'] ?? null;
+					$text = $item->getAdditional()['marketLink']['text'] ?? null;
+					$icon = $item->getAdditional()['marketLink']['icon'] ?? null;
+
+					$fields[$group->getCode()]['items'][$item->getCode()]['options']['market'] =
+						self::getInternalItemsMarketOption($link, $text, $icon);
 				}
 			}
 		}
@@ -77,14 +81,24 @@ class AISetting extends Intranet\Settings\AbstractSettings
 
 	/**
 	 * Just a pilot format for special links in options. It may be modified
+	 * @param string|null $link
+	 * @param string|null $text
+	 * @param string|null $icon
 	 * @return array
 	 */
-	protected static function getInternalItemsMarketOption(): array
+	protected static function getInternalItemsMarketOption(
+		?string $link = null,
+		?string $text = null,
+		?array $icon = null,
+	): array
 	{
-		$link = '/market/collection/ai_provider_partner_crm/';
-		$text = Loc::getMessage('AI_SETTINGS_INTERNAL_MARKET_LINK');
+		$defaults = self::getDefaultMarketLInk();
+
+		$link = $link ?: $defaults['link'];
+		$text = $text ?: $defaults['text'];
 		$icon = [
-			'code' => '--market-1',
+			'code' => $icon['code'] ?? $defaults['icon']['code'],
+			'set' => $icon['set'] ?? $defaults['icon']['set'],
 		];
 
 		return [
@@ -93,6 +107,18 @@ class AISetting extends Intranet\Settings\AbstractSettings
 			'isSlider' => true,
 			'text' => $text,
 			'icon' => $icon,
+		];
+	}
+
+	protected static function getDefaultMarketLInk(): array
+	{
+		return [
+			'link' => '/market/collection/ai_provider_partner_crm/',
+			'text' => Loc::getMessage('AI_SETTINGS_INTERNAL_MARKET_LINK'),
+			'icon' => [
+				'code' => '--market-1',
+				'set' => 'ui.icon-set.main',
+			],
 		];
 	}
 

@@ -93,7 +93,7 @@ class CIntranetNotify
 			"=LOG_DATE" => CDatabase::CurrentTimeFunction(),
 			"MODULE_ID" => "intranet",
 			"TITLE_TEMPLATE" => "#TITLE#",
-			"TITLE" => Loc::getMessage($bExtranetUser ? 'I_NEW_USER_EXTERNAL_TITLE' : 'I_NEW_USER_TITLE'),
+			"TITLE" => static::getNewUserPostTitle($USER_ID, $bExtranetUser),
 			"MESSAGE" => '',
 			"TEXT_MESSAGE" => '',
 			"CALLBACK_FUNC" => false,
@@ -289,8 +289,8 @@ class CIntranetNotify
 				$arResult = array(
 					'EVENT' => $arFields,
 					'EVENT_FORMATTED' => array(
-						'TITLE' => ($bExtranetUser ? GetMessage('I_NEW_USER_EXTERNAL_TITLE') : GetMessage('I_NEW_USER_TITLE')),
-						'TITLE_24' => ($bExtranetUser ? GetMessage('I_NEW_USER_EXTERNAL_TITLE') : GetMessage('I_NEW_USER_TITLE')),
+						'TITLE' => static::getNewUserPostTitle((int)$arUser['ID'], $bExtranetUser),
+						'TITLE_24' => static::getNewUserPostTitle((int)$arUser['ID'], $bExtranetUser),
 						"MESSAGE" => $html_message,
 						"SHORT_MESSAGE" => $html_message,
 						'IS_IMPORTANT' => true,
@@ -374,7 +374,7 @@ class CIntranetNotify
 					}
 				}
 
-				$arResult['ENTITY']['FORMATTED']["NAME"] = ($bExtranetUser ? GetMessage('I_NEW_USER_EXTERNAL_TITLE') : GetMessage('I_NEW_USER_TITLE'));
+				$arResult['ENTITY']['FORMATTED']["NAME"] = static::getNewUserPostTitle((int)$arUser["ID"], $bExtranetUser);
 				$arResult['ENTITY']['FORMATTED']["URL"] = $user_url;
 
 				if (
@@ -598,5 +598,22 @@ class CIntranetNotify
 		}
 
 		return false;
+	}
+
+	protected static function getNewUserPostTitle(int $userId, bool $isExtranet = false): string
+	{
+		if (!$isExtranet)
+		{
+			return Loc::getMessage('I_NEW_USER_TITLE');
+		}
+
+		$collaberService = \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService();
+
+		if ($collaberService->isCollaberById($userId))
+		{
+			return Loc::getMessage('I_NEW_USER_GUEST_TITLE');
+		}
+
+		return Loc::getMessage('I_NEW_USER_EXTERNAL_TITLE');
 	}
 }

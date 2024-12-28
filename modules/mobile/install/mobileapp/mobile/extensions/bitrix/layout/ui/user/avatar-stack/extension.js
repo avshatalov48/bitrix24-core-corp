@@ -8,6 +8,7 @@ jn.define('layout/ui/user/avatar-stack', (require, exports, module) => {
 	/**
 	 * @deprecated
 	 * @see ui-system/blocks/avatar-stack
+	 *
 	 * @class AvatarStack
 	 */
 	class AvatarStack extends LayoutComponent
@@ -20,10 +21,10 @@ jn.define('layout/ui/user/avatar-stack', (require, exports, module) => {
 				testId: 'AVATAR_STACK',
 				entities: avatars,
 				size,
+				offset: Indent.XL4,
 				withRedux: true,
 				showRest: false,
-				offset: Indent.XL4,
-				direction: AvatarStackDirection.RIGHT,
+				direction: AvatarStackDirection.LEFT,
 			});
 		}
 	}

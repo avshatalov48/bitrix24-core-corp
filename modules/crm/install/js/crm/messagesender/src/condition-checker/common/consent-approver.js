@@ -18,10 +18,10 @@ export class ConsentApprover
 
 	async checkAndApprove(): Promise<boolean>
 	{
-		if (this.#senderType !== Types.bitrix24)
-		{
-			return Promise.resolve(true);
-		}
+		// if (this.#senderType !== Types.bitrix24)
+		// {
+		// 	return Promise.resolve(true);
+		// }
 
 		return new Promise((resolve) => {
 			ajax.runAction('notifications.consent.Agreement.get')
@@ -36,7 +36,7 @@ export class ConsentApprover
 					this.#showConsentAgreementBox(data, resolve);
 				})
 				.catch(() => {
-					this.#showNotify(Loc.getMessage('CRM_MESSAGESENDER_B24_CONSENT_AGREEMENT_VALIDATION_ERROR'));
+					this.#showErrorNotify();
 
 					resolve(false);
 				})
@@ -66,11 +66,22 @@ export class ConsentApprover
 				color: BX.UI.Button.Color.SUCCESS,
 				text: Loc.getMessage('CRM_MESSAGESENDER_B24_CONSENT_ACCEPT'),
 				onclick: (button) => {
-					this.#approveConsent();
-					this.#showNotify(Loc.getMessage('CRM_MESSAGESENDER_B24_AGREEMENT_ACCEPT'));
-					this.#closeAgreementBox(button);
+					this
+						.#approveConsent()
+						.then((isApprovedConsent) => {
+							if (isApprovedConsent)
+							{
+								this.#showNotify(Loc.getMessage('CRM_MESSAGESENDER_B24_AGREEMENT_ACCEPT'));
+							}
 
-					resolve(true);
+							this.#closeAgreementBox(button);
+							resolve(true);
+						})
+						.catch(() => {
+							this.#showErrorNotify();
+							resolve(false);
+						})
+					;
 				},
 			}),
 			new BX.UI.Button({
@@ -86,14 +97,36 @@ export class ConsentApprover
 		];
 	}
 
-	#approveConsent(): void
+	#approveConsent(): Promise<boolean>
 	{
-		void ajax.runAction('notifications.consent.Agreement.approve');
+		return new Promise((resolve) => {
+			ajax
+				.runAction('notifications.consent.Agreement.approve')
+				.then((response) => {
+					if (response?.status === 'success' && response?.data)
+					{
+						resolve(true);
+
+						return;
+					}
+
+					resolve(false);
+				})
+				.catch(() => {
+					resolve(false);
+				})
+			;
+		});
 	}
 
 	#closeAgreementBox({ context }): void
 	{
 		context.close();
+	}
+
+	#showErrorNotify(): void
+	{
+		this.#showNotify(Loc.getMessage('CRM_MESSAGESENDER_B24_CONSENT_AGREEMENT_VALIDATION_ERROR'));
 	}
 
 	#showNotify(content: string): void

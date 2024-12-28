@@ -14,8 +14,12 @@ return [
 		'ui-system/form/inputs/string',
 		'ui-system/form/inputs/email',
 		'ui-system/form/inputs/phone',
+		'avatar-picker',
+		'ui-system/blocks/avatar',
 		'utils/phone',
 		'utils/email',
+		'ava-menu',
+		'native/phonenumber',
 	],
 ];
 

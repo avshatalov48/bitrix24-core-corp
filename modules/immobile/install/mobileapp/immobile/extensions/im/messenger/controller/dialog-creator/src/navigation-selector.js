@@ -4,15 +4,19 @@
 jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require, exports, module) => {
 	/* global ChatUtils */
 	const { Loc } = require('loc');
+
 	const { EventType, Analytics } = require('im/messenger/const');
 	const { RecipientSelector } = require('im/messenger/controller/dialog-creator/recipient-selector');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { NavigationSelectorView } = require('im/messenger/controller/dialog-creator/navigation-selector/view');
 	const { DialogDTO } = require('im/messenger/controller/dialog-creator/dialog-dto');
 	const { ChannelCreator } = require('im/messenger/controller/channel-creator');
+	const { CreateChannel, CreateGroupChat } = require('im/messenger/controller/chat-composer');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { Theme } = require('im/lib/theme');
 	const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
 	const { AnalyticsEvent } = require('analytics');
+	const { AnalyticsService } = require('im/messenger/provider/service');
 
 	class NavigationSelector
 	{
@@ -43,23 +47,62 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 					this.layout.close();
 				},
 				onCreateChannel: () => {
+					this.sendAnalyticsStartCreate(Analytics.Category.channel, Analytics.Type.channel);
+
+					if (Feature.isChatComposerSupported)
+					{
+						const createChannel = new CreateChannel();
+						createChannel.open({}, this.layout);
+
+						return;
+					}
+
 					void ChannelCreator.open({
 						userList: ChatUtils.objectClone(this.userList),
-						analytics: new AnalyticsEvent().setSection(Analytics.Section.chatTab),
 					}, this.layout);
 				},
-				onCreateCollab: () => {
-					console.warn('onCreateCollab tap');
-				},
 				onCreatePrivateChat: () => {
+					this.sendAnalyticsStartCreate(Analytics.Category.chat, Analytics.Type.chat);
+
+					if (Feature.isChatComposerSupported)
+					{
+						const createGroupChat = new CreateGroupChat();
+						createGroupChat.open({}, this.layout).catch((error) => {
+							console.error(error);
+						});
+
+						return;
+					}
+
 					RecipientSelector.open(
 						{
 							dialogDTO: (new DialogDTO()).setType('CHAT'),
 							userList: ChatUtils.objectClone(this.userList),
-							analytics: new AnalyticsEvent().setSection(Analytics.Section.chatTab),
 						},
 						this.layout,
 					);
+				},
+				onCreateCollab: async () => {
+					if (!Feature.isCollabSupported)
+					{
+						Feature.showUnsupportedWidget({}, this.layout);
+
+						return;
+					}
+
+					try
+					{
+						const { openCollabCreate } = await requireLazy('collab/create');
+
+						this.sendAnalyticsStartCreate(Analytics.Category.collab, Analytics.Type.collab);
+						await openCollabCreate({
+							// todo provide some analytics here
+						}, this.layout);
+					}
+					catch (error)
+					{
+						console.error(error);
+					}
 				},
 				onClickInviteButton: () => {
 					openIntranetInviteWidget({
@@ -136,6 +179,13 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 				}, 200);
 			});
 			layoutWidget.enableNavigationBarBorder(false);
+		}
+
+		sendAnalyticsStartCreate(category, type)
+		{
+			AnalyticsService.getInstance()
+				.sendStartCreation({ category, type })
+			;
 		}
 	}
 

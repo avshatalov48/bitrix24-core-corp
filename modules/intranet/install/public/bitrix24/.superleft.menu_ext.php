@@ -12,7 +12,7 @@ use Bitrix\Intranet\Site\Sections\AutomationSection;
 use \Bitrix\Landing\Rights;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ModuleManager;
+use Bitrix\Socialnetwork\Collab;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
 
@@ -191,6 +191,27 @@ else
 	];
 }
 
+if (Loader::includeModule('booking') && \Bitrix\Booking\BookingFeature::isOn())
+{
+	$counterId = (\Bitrix\Booking\BookingFeature::isFeatureEnabled() ? 'booking_total' : '');
+
+	$arMenu[] = [
+		GetMessage("MENU_BOOKING"),
+		"/booking/",
+		[],
+		[
+			"real_link" => getLeftMenuItemLink(
+				"top_menu_id_booking",
+				"/booking/"
+			),
+			"counter_id" => $counterId,
+			"menu_item_id" => "menu_booking",
+			"top_menu_id" => "top_menu_id_booking",
+		],
+		""
+	];
+}
+
 if (ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_shop'))
 {
 	$landingAvailable = Loader::includeModule('landing') && Rights::hasAdditionalRight(Rights::ADDITIONAL_RIGHTS['menu24']);
@@ -279,6 +300,24 @@ $arMenu[] = [
 ];
 
 if (
+	Loader::includeModule('socialnetwork')
+	&& Collab\CollabFeature::isOn()
+	&& Collab\CollabFeature::isFeatureEnabled()
+)
+{
+	$arMenu[] = [
+		Loc::getMessage('MENU_IM_MESSENGER_COLLAB'),
+		'/online/?IM_COLLAB=0',
+		[],
+		[
+			'menu_item_id' => 'menu_im_collab',
+			'can_be_first_item' => false
+		],
+		''
+	];
+}
+
+if (
 	Loader::includeModule('sign')
 	&& method_exists(\Bitrix\Sign\Config\Storage::class, 'isB2eAvailable')
 	&& \Bitrix\Sign\Config\Storage::instance()->isB2eAvailable()
@@ -286,33 +325,50 @@ if (
 {
 	$counterId = '';
 	$signContainer = \Bitrix\Sign\Service\Container::instance();
-	if (method_exists($signContainer, 'getB2eUserToSignDocumentCounterService'))
+    $isCurrentUserHaveAccess = true;
+	if (method_exists($signContainer, 'getAccessService'))
 	{
-		$counterService = $signContainer->getB2eUserToSignDocumentCounterService();
-		if (method_exists($counterService, 'getCounterId'))
-		{
-			$counterId = $counterService->getCounterId();
-		}
-	}
-	$menuSignB2eTitle = Loc::getMessage('MENU_SIGN_B2E');
-	if (\Bitrix\Main\Application::getInstance()->getLicense()->getRegion() === 'ru')
-	{
-		IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/.superleft.menu_ext.ru_region.php");
-		$menuSignB2eTitle = Loc::getMessage('MENU_SIGN_B2E_GOSKEY');
+		$isCurrentUserHaveAccess = $signContainer->getAccessService()->isCurrentUserHaveAccessToB2eSign();
 	}
 
-	$arMenu[] = [
-		$menuSignB2eTitle,
-		'/sign/b2e/',
-		[],
-		[
-			'counter_id' => $counterId,
-			'menu_item_id' => 'menu_sign_b2e',
-			'my_tools_section' => true,
-			'can_be_first_item' => true,
-		],
-		''
-	];
+	if ($isCurrentUserHaveAccess)
+	{
+		if (method_exists($signContainer, 'getB2eUserToSignDocumentCounterService'))
+		{
+			$counterService = $signContainer->getB2eUserToSignDocumentCounterService();
+			if (method_exists($counterService, 'getCounterId'))
+			{
+				$counterId = $counterService->getCounterId();
+			}
+		}
+
+		if (enum_exists(\Bitrix\Sign\Type\CounterType::class))
+		{
+			$counterId = \Bitrix\Sign\Type\CounterType::SIGN_B2E_MY_DOCUMENTS->value;
+		}
+
+		$menuSignB2eTitle = Loc::getMessage('MENU_SIGN_B2E');
+		if (\Bitrix\Main\Application::getInstance()->getLicense()->getRegion() === 'ru')
+		{
+			IncludeModuleLangFile(
+				$_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/intranet/public_bitrix24/.superleft.menu_ext.ru_region.php"
+			);
+			$menuSignB2eTitle = Loc::getMessage('MENU_SIGN_B2E_GOSKEY');
+		}
+
+		$arMenu[] = [
+			$menuSignB2eTitle,
+			'/sign/b2e/',
+			[],
+			[
+				'counter_id' => $counterId,
+				'menu_item_id' => 'menu_sign_b2e',
+				'my_tools_section' => true,
+				'can_be_first_item' => true,
+			],
+			''
+		];
+	}
 }
 
 if (Loader::includeModule('sign') && \Bitrix\Sign\Config\Storage::instance()->isAvailable())
@@ -446,7 +502,7 @@ $arMenu[] = [
 ];
 
 $arMenu[] = [
-	GetMessage('MENU_COMPANY_SECTION'),
+	GetMessage('MENU_EMPLOYEE'),
 	'/company/',
 	[
 		'/timeman/',
@@ -456,7 +512,7 @@ $arMenu[] = [
 	[
 		'real_link' => getLeftMenuItemLink(
 			'top_menu_id_company',
-			'/company/vis_structure.php'
+			'/company/'
 		),
 		'class' => 'menu-company',
 		'menu_item_id' => 'menu_company',

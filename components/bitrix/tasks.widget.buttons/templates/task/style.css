@@ -20,6 +20,7 @@
 .task-view-buttonset.disapprove .task-view-button.disapprove,
 .task-view-buttonset.edit .task-view-button.edit,
 .task-view-buttonset.timer-visible .task-timeman-link,
+.task-view-buttonset.take .task-view-button.take,
 .task-view-buttonset.more-button .task-more-button {
 	display: inline-block !important;
 }

@@ -729,14 +729,16 @@ class EntityAddress
 
 		if (defined("ADMIN_SECTION"))
 		{
+			/** @todo Use SiteTable::getDefaultLanguageId() */
 			$res = Main\SiteTable::getList(
 				[
-					'select' => ['LANGUAGE_ID'],
-					'filter' => ['=DEF' => 'Y', '=ACTIVE' => 'Y']
+					'select' => ['LID', 'LANGUAGE_ID'],
+					'filter' => ['=DEF' => 'Y', '=ACTIVE' => 'Y'],
+					'cache' => ['ttl' => 86400],
 				]
 			);
 			$row = $res->fetch();
-			if (is_array($row) && isset($row['LANGUAGE_ID']))
+			if (isset($row['LANGUAGE_ID']))
 			{
 				$languageId = (string)$row['LANGUAGE_ID'];
 			}
@@ -2364,10 +2366,12 @@ class EntityAddress
 
 		if ($addressZoneId === '')
 		{
+			/** @todo Use SiteTable::getDefaultLanguageId() */
 			$siteIterator = \Bitrix\Main\SiteTable::getList(
 				[
 					'select' => array('LID', 'LANGUAGE_ID'),
-					'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y')
+					'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y'),
+					'cache' => ['ttl' => 86400],
 				]
 			);
 			if ($site = $siteIterator->fetch())

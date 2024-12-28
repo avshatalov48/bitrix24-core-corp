@@ -24,6 +24,7 @@ jn.define('im/messenger/lib/element/dialog/message/date-separator', (require, ex
 			this.setMessage(date);
 			this.setShowReaction(false);
 			this.setCanBeQuoted(false);
+			this.setCanBeChecked(false);
 			this.setMessageAlign(MessageAlign.center);
 			this.setTextAlign(MessageTextAlign.center);
 			this.setFontColor('#FFFFFF');

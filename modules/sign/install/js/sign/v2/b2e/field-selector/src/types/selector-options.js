@@ -1,6 +1,7 @@
 import {BaseEvent} from 'main.core.events';
 import {type Field} from './field';
 import type {FieldsList} from './fields-list';
+import type { CustomBackendSettings } from '../backend/backend';
 
 export type SelectorFilter = {
 	'+categories'?: Array<string>,
@@ -8,6 +9,7 @@ export type SelectorFilter = {
 	'+fields'?: Array<string | {[key: string]: any} | (Field) => boolean>,
 	'-fields'?: Array<string | {[key: string]: any} | (Field) => boolean>,
 	'query'?: string,
+	allowEmptyFieldList?: boolean,
 };
 
 export type FieldsFactoryFilter = {
@@ -42,4 +44,6 @@ export type SelectorOptions = {
 	title?: string,
 	categoryCaptions?: {[category: string]: string},
 	languages?: {[key: string]: { NAME: string; IS_BETA: boolean; }},
+	customBackendSettings?: CustomBackendSettings,
+	alwaysHideCreateFieldButton?: boolean,
 };

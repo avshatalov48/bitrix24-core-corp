@@ -1,0 +1,57 @@
+.tasks-flow__stub-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.tasks-flow__stub-icon {
+	width: 147px;
+	height: 128px;
+	background-image: url("../images/empty-stub-logo.svg");
+}
+
+.tasks-flow__stub-subtitle-container {
+	position: relative;
+}
+
+.tasks-flow__stub-subtitle-text,
+.tasks-flow__stub-title {
+	text-align: center;
+}
+
+.tasks-flow__stub-title {
+	color: var(--ui-color-palette-black-solid);
+	font-size: var(--ui-font-size-3xl);
+	font-weight: var(--ui-font-weight-light);
+	line-height: var(--ui-font-line-height-2xs);
+	margin-top: 5px;
+	margin-bottom: 5px;
+}
+
+.tasks-flow__stub-subtitle-text {
+	margin-top: 10px;
+	padding-left: 15px;
+	padding-right: 15px;
+	line-height: var(--ui-font-line-height-sm);
+	color: var(--ui-color-palette-gray-90);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+}
+
+.tasks-flow__stub-link {
+	border-bottom: 1px dashed;
+	color: var(--ui-color-palette-gray-50);
+}
+
+.tasks-flow__stub-link:hover {
+	color: var(--ui-color-palette-gray-40);
+}
+
+.tasks-flow__stub-subtitle-arrow {
+	position: absolute;
+	width: 11px;
+	top: 45px;
+	left: 10px;
+	height: 40px;
+	background-image: url("../images/empty-stub-arrow.svg");
+}

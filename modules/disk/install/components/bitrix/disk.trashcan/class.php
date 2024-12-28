@@ -379,7 +379,7 @@ class CDiskTrashCanComponent extends DiskComponent
 				);
 
 				$columns['CREATE_USER'] = "
-					<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url('" . Uri::urnEncode($createUser->getAvatarSrc()) . "');\"></span><a target='_blank' href=\"{$createdByLink}\" id=\"\">" . htmlspecialcharsbx(
+					<div class=\"bx-disk-user-link\">{$createUser->renderAvatar()}<a target='_blank' href=\"{$createdByLink}\" id=\"\">" . htmlspecialcharsbx(
 						$createUser->getFormattedName()) . "</a></div>
 				";
 			}
@@ -393,7 +393,7 @@ class CDiskTrashCanComponent extends DiskComponent
 				);
 
 				$columns['UPDATE_USER'] = "
-					<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url('" . Uri::urnEncode($updateUser->getAvatarSrc()) . "');\"></span><a target='_blank' href=\"{$updatedByLink}\" id=\"\">" . htmlspecialcharsbx(
+					<div class=\"bx-disk-user-link\">{$updateUser->renderAvatar()}<a target='_blank' href=\"{$updatedByLink}\" id=\"\">" . htmlspecialcharsbx(
 						$updateUser->getFormattedName()) . "</a></div>
 				";
 			}
@@ -407,7 +407,7 @@ class CDiskTrashCanComponent extends DiskComponent
 				);
 
 				$columns['DELETE_USER'] = "
-					<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url('" . Uri::urnEncode($deleteUser->getAvatarSrc()) . "');\"></span><a target='_blank' href=\"{$deletedByLink}\" id=\"\">" . htmlspecialcharsbx(
+					<div class=\"bx-disk-user-link\">{$deleteUser->renderAvatar()}<a target='_blank' href=\"{$deletedByLink}\" id=\"\">" . htmlspecialcharsbx(
 						$deleteUser->getFormattedName()) . "</a></div>
 				";
 			}

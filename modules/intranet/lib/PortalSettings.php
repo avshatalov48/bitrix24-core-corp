@@ -32,11 +32,15 @@ class PortalSettings
 		$this->siteTitle = $this->getSettingsService()->titleSettings()->getTitle();
 		$this->siteLogo24 = $this->getSettingsService()->logo24Settings()->getLogo24();
 		$this->siteLogo = new Intranet\Portal\PortalLogo($this->getSettingsService());
-		$this->siteName = $this->getSettingsService()->nameSettings()->getName();
 	}
 
 	public function getName(): string
 	{
+		if (!isset($this->siteName))
+		{
+			$this->siteName = $this->getSettingsService()->nameSettings()->getName();
+		}
+
 		return $this->siteName;
 	}
 

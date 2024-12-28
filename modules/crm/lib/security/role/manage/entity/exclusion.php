@@ -6,14 +6,15 @@ use Bitrix\Crm\Security\Role\Manage\DTO\EntityDTO;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Read;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Write;
 use Bitrix\Crm\Security\Role\Manage\PermissionAttrPresets;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\Toggler;
 
 class Exclusion implements PermissionEntity
 {
 	private function permissions(): array
 	{
 		return [
-			new Read(PermissionAttrPresets::switchAll()),
-			new Write(PermissionAttrPresets::switchAll()),
+			new Read(PermissionAttrPresets::switchAll(), new Toggler()),
+			new Write(PermissionAttrPresets::switchAll(), new Toggler()),
 		];
 	}
 	/**

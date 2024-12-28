@@ -152,6 +152,13 @@ final class OldStructureUtils
 	 */
 	public static function getOldDepartmentById(int $id): ?array
 	{
+		if (!Loader::includeModule('iblock'))
+		{
+			throw (new UpdateFailedException())->addError(
+				new Main\Error('Module iblock is not installed'),
+			);
+		}
+
 		if ($id <= 0)
 		{
 			return null;
@@ -161,6 +168,7 @@ final class OldStructureUtils
 			arFilter: [
 				'ID' => $id,
 				'IBLOCK_ID' => self::getOldDepartmentIblockId(),
+				'CHECK_PERMISSIONS' => 'N',
 			],
 			arSelect: ['ID', 'NAME', 'UF_HEAD'],
 		);
@@ -193,6 +201,7 @@ final class OldStructureUtils
 			arFilter: [
 				'NAME' => $name,
 				'IBLOCK_ID' => self::getOldDepartmentIblockId(),
+				'CHECK_PERMISSIONS' => 'N',
 			],
 			arSelect: ['ID', 'NAME', 'SORT', 'IBLOCK_SECTION_ID', 'UF_HEAD'],
 		);
@@ -230,6 +239,7 @@ final class OldStructureUtils
 			arFilter: [
 				'ID' => $ids,
 				'IBLOCK_ID' => self::getOldDepartmentIblockId(),
+				'CHECK_PERMISSIONS' => 'N',
 			],
 			arSelect: ['ID', 'NAME', 'SORT', 'IBLOCK_SECTION_ID', 'UF_HEAD'],
 		);

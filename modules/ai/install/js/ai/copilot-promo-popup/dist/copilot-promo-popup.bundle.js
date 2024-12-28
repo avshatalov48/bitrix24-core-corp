@@ -17,6 +17,7 @@ this.BX = this.BX || {};
 	      en: '/bitrix/js/ai/copilot-promo-popup/videos/en/liveFeedEditor.webm',
 	      ru: '/bitrix/js/ai/copilot-promo-popup/videos/ru/liveFeedEditor.webm'
 	    },
+	    videoContainerMinHeight: 213,
 	    title: 'CoPilot',
 	    text: getTextWithReplaceAccent('COPILOT_PROMO_POPUP_LIVEFEED_EDITOR_TEXT')
 	  },
@@ -51,6 +52,7 @@ this.BX = this.BX || {};
 	    const promoVideoPopup = new ui_promoVideoPopup.PromoVideoPopup({
 	      targetOptions: options.targetOptions,
 	      videoSrc: preset.videoSrc[babelHelpers.classPrivateFieldLooseBase(CopilotPromoPopup, _getVideoLang)[_getVideoLang]()],
+	      videoContainerMinHeight: preset.videoContainerMinHeight,
 	      title: preset.title,
 	      text: preset.text,
 	      icon: ui_iconSet_api_core.Main.COPILOT_AI,

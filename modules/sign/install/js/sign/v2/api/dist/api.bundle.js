@@ -105,10 +105,26 @@ this.BX.Sign = this.BX.Sign || {};
 	      uid: templateUid
 	    });
 	  }
-	  send(templateUid) {
+	  send(templateUid, fields) {
 	    return post('sign.api_v1.b2e.document.template.send', {
+	      uid: templateUid,
+	      fields
+	    });
+	  }
+	  getFields(templateUid) {
+	    return post('sign.api_v1.b2e.document.template.getFields', {
 	      uid: templateUid
 	    });
+	  }
+	  exportBlank(templateId) {
+	    return post('sign.api_v1.b2e.document.template.export', {
+	      templateId
+	    }, true);
+	  }
+	  importBlank(serializedTemplate) {
+	    return post('sign.api_v1.b2e.document.template.import', {
+	      serializedTemplate
+	    }, true);
 	  }
 	}
 
@@ -136,11 +152,12 @@ this.BX.Sign = this.BX.Sign || {};
 	    });
 	    this.template = new TemplateApi();
 	  }
-	  register(blankId, scenarioType = null, asTemplate = false) {
+	  register(blankId, scenarioType = null, asTemplate = false, chatId = 0) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.register', {
 	      blankId,
 	      scenarioType,
-	      asTemplate
+	      asTemplate,
+	      chatId
 	    });
 	  }
 	  upload(uid) {
@@ -196,6 +213,12 @@ this.BX.Sign = this.BX.Sign || {};
 	      type
 	    });
 	  }
+	  changeSenderDocumentType(uid, initiatedByType) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.modifyInitiatedByType', {
+	      uid,
+	      initiatedByType
+	    });
+	  }
 	  changeExternalId(uid, id) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.modifyExternalId', {
 	      uid,
@@ -208,9 +231,20 @@ this.BX.Sign = this.BX.Sign || {};
 	      externalDate
 	    });
 	  }
+	  changeIntegrationId(uid, integrationId = null) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.modifyIntegrationId', {
+	      uid,
+	      integrationId
+	    });
+	  }
 	  loadDocument(uid) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.load', {
 	      uid
+	    });
+	  }
+	  loadDocumentById(id) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.loadById', {
+	      id
 	    });
 	  }
 	  configureDocument(uid) {
@@ -311,14 +345,46 @@ this.BX.Sign = this.BX.Sign || {};
 	      members
 	    });
 	  }
+	  syncB2eMembersWithDepartments(documentUid, currentParty) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.member.syncB2eMembersWithDepartments', {
+	      documentUid,
+	      currentParty
+	    });
+	  }
+	  getUniqUserCountForMembers(members) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.member.getUniqSignersCount', {
+	      members
+	    });
+	  }
+	  getUniqUserCountForDocument(documentUid) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.member.getUniqSignersCountForDocument', {
+	      documentUid
+	    });
+	  }
+	  getDepartmentsForDocument(documentUid, page, pageSize) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.member.getDepartmentsForDocument', {
+	      documentUid,
+	      page,
+	      pageSize
+	    });
+	  }
+	  getMembersForDocument(documentUid, page, pageSize) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.member.getMembersForDocument', {
+	      documentUid,
+	      page,
+	      pageSize
+	    });
+	  }
 	  updateChannelTypeToB2eMembers(membersUids, channelType) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.b2e.member.communication.updateMembersChannelType', {
 	      members: membersUids,
 	      channelType
 	    });
 	  }
-	  loadB2eCompanyList() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.integration.crm.b2ecompany.list');
+	  loadB2eCompanyList(forDocumentInitiatedByType = null) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.integration.crm.b2ecompany.list', {
+	      forDocumentInitiatedByType
+	    });
 	  }
 	  modifyB2eCompany(documentUid, companyUid) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.modifyCompany', {
@@ -388,6 +454,27 @@ this.BX.Sign = this.BX.Sign || {};
 	  getMember(uid) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.member.get', {
 	      uid
+	    });
+	  }
+	  changeTemplateVisibility(templateId, visibility) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.b2e.document.template.changeVisibility', {
+	      templateId,
+	      visibility
+	    });
+	  }
+	  deleteTemplate(templateId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.b2e.document.template.delete', {
+	      templateId
+	    });
+	  }
+	  checkCompanyHrIntegration(id) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.integration.humanresources.hcmLink.checkCompany', {
+	      id
+	    });
+	  }
+	  checkNotMappedMembersHrIntegration(documentUid) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.integration.humanresources.hcmLink.loadNotMappedMembers', {
+	      documentUid
 	    });
 	  }
 	}

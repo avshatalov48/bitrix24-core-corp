@@ -80,7 +80,14 @@ final class TodoPingSettingsProvider extends PingSettingsProvider
 
 	public function getCurrentOffsets(): array
 	{
-		$value = CUserOptions::GetOption('crm', $this->getOptionName(), '');
+		static $values = [];
+		if (!isset($values[$this->getOptionName()]))
+		{
+			$values[$this->getOptionName()] = CUserOptions::GetOption('crm', $this->getOptionName(), '');
+		}
+
+		$value = $values[$this->getOptionName()];
+
 		if (!isset($value['offsets']))
 		{
 			return self::DEFAULT_OFFSETS;

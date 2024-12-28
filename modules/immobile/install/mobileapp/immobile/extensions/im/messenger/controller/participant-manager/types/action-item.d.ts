@@ -1,5 +1,7 @@
 type ActionItem = {
-	actionName: string,
+	id: string,
+	title: string,
 	callback: () => void,
 	icon: object,
+	testId: string,
 }

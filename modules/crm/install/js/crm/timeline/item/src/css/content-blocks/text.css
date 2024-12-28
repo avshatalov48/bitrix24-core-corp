@@ -8,6 +8,10 @@
 	color: var(--ui-color-palette-green-80, #688800);
 }
 
+.crm-timeline__text-block.--color-purple {
+	color: var(--ui-color-copilot-primary, #8e52ec);
+}
+
 .crm-timeline__text-block.--color-primary {
 	color: var(--ui-color-primary, #2fc6f6);
 }

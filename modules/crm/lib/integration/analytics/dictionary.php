@@ -13,6 +13,7 @@ final class Dictionary
 	public const CATEGORY_CRM_OPERATIONS = 'crm_operations';
 	public const CATEGORY_AI_OPERATIONS = 'ai_operations';
 	public const CATEGORY_AUTOMATION_OPERATIONS = 'automation_operations';
+	public const CATEGORY_KANBAN_OPERATIONS = 'kanban_operations';
 
 	// region Event const
 	public const EVENT_ENTITY_ADD_OPEN = 'entity_add_open';
@@ -30,10 +31,16 @@ final class Dictionary
 	public const EVENT_SUMMARY = 'summary';
 	public const EVENT_EXTRACT_FIELDS = 'extract_fields';
 	public const EVENT_CALL_ACTIVITY_WITH_AUDIO_RECORDING = 'activity_call_with_audio_recording';
+	public const EVENT_CALL_SCORING = 'call_scoring';
+	public const EVENT_EXTRACT_SCORING_CRITERIA = 'extract_scoring_criteria';
 
 	public const EVENT_AUTOMATION_CREATE = 'automation_create';
 	public const EVENT_AUTOMATION_EDIT = 'automation_edit';
 	public const EVENT_AUTOMATION_DELETE = 'automation_delete';
+
+	public const EVENT_BLOCK_CLOSE = 'block_close';
+	public const EVENT_BLOCK_ENABLE = 'block_enable';
+	public const EVENT_BLOCK_LINK = 'block_link';
 	// endregion
 
 	// region Type const
@@ -41,6 +48,9 @@ final class Dictionary
 	public const TYPE_AUTO = 'auto';
 	public const TYPE_AUTOMATED_SOLUTION = 'automated_solution';
 	public const TYPE_DYNAMIC = 'dynamic';
+
+	public const TYPE_CONTACT_CENTER = 'contact_center';
+	public const TYPE_ITEM_INDUSTRY = 'item_industry';
 
 	// endregion
 
@@ -83,6 +93,8 @@ final class Dictionary
 
 	public const SUB_SECTION_DEAL = 'deal';
 	public const SUB_SECTION_LEAD = 'lead';
+
+	public const SUB_SECTION_GRID_ROW_MENU = 'grid_row_menu';
 	// endregion
 
 	// region Element const
@@ -106,6 +118,13 @@ final class Dictionary
 	public const ELEMENT_CANCEL_BUTTON = 'cancel_button';
 	public const ELEMENT_GRID_GROUP_ACTIONS_WON_STAGE = 'grid_group_actions_won_stage';
 	public const ELEMENT_GRID_GROUP_ACTIONS_LOSE_STAGE = 'grid_group_actions_lose_stage';
+	public const ELEMENT_CLOSE_BUTTON = 'close_button';
+	public const ELEMENT_HIDE_CONTACT_CENTER = 'hide_contact_center';
+	public const ELEMENT_ENABLE_CONTACT_CENTER = 'enable_contact_center';
+	public const ELEMENT_CONTACT_CENTER_MARKETPLACE = 'contact_center_marketplace';
+	public const ELEMENT_CONTACT_CENTER_IMPORTEXCEL = 'contact_center_importexcel';
+	public const ELEMENT_ITEM_CONTACT_CENTER = 'item_contact_center';
+	public const ELEMENT_ITEM_INDUSTRY_BUTTON = 'item_industry_button';
 	// endregion
 
 	// region Status const

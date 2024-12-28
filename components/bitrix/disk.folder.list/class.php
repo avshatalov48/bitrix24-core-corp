@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Disk\Configuration;
+use Bitrix\Disk\Integration\Collab\CollabService;
 use Bitrix\Disk\Integration\Socialnetwork\Context\Context;
 use Bitrix\Disk\Document\DocumentHandler;
 use Bitrix\Disk\Integration\Bitrix24Manager;
@@ -8,6 +9,7 @@ use Bitrix\Disk\Search\Reindex\BaseObjectIndex;
 use Bitrix\Disk\Search\Reindex\ExtendedIndex;
 use Bitrix\Disk\Search\Reindex\HeadIndex;
 use Bitrix\Disk\Storage;
+use Bitrix\Disk\Ui\Avatar;
 use Bitrix\Disk\Ui\FileAttributes;
 use Bitrix\Disk\ZipNginx;
 use Bitrix\Disk\Document\Contract;
@@ -244,9 +246,21 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		$filterOptions = new \Bitrix\Main\UI\Filter\Options($this->gridOptions->getGridId());
 		$folderListFilter = new Ui\FolderListFilter($this->storage->getId(), $this->isTrashMode());
 
+		$collabService = new CollabService();
+		$isCollab = $collabService->isCollabStorage($this->storage);
+		$avatar = null;
+		if ($isCollab)
+		{
+			$avatar = $proxyType->getEntityImageSrc(58, 58);
+			if ($avatar === Avatar::getDefaultGroup())
+			{
+				$avatar = null;
+			}
+		}
+
 		$this->arResult = array(
-		'CONTEXT' => $this->arParams['CONTEXT'] ?? Context::DEFAULT,
-		'GRID_INFORMATION' => $this->information,
+			'CONTEXT' => $this->arParams['CONTEXT'] ?? Context::DEFAULT,
+			'GRID_INFORMATION' => $this->information,
 			'ERRORS_IN_GRID_ACTIONS' => $errorsInGridActions->toArray(),
 			'FILTER' => $folderListFilter->getConfig(),
 			'IS_RUNNING_FILTER' => !empty($filterOptions->getSearchString()),
@@ -264,6 +278,8 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			),
 			'STORAGE' => array(
 				'ID' => $this->storage->getId(),
+				'IS_COLLAB' => $isCollab,
+				'AVATAR' => $avatar,
 				'NAME' => $proxyType->getEntityTitle(),
 				'BLOCK_ADD_BUTTONS' => $this->shouldBeBlockAddButtons($this->storage),
 				'LINK' => $proxyType->getBaseUrlFolderList(),
@@ -1057,8 +1073,8 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 					array('user_id' => $object->getCreatedBy())
 				);
 
-				$columns['CREATE_USER'] = "
-					<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url('" . Uri::urnEncode($createUser->getAvatarSrc()) . "');\"></span><a target='_blank' href=\"{$createdByLink}\" id=\"\">" . htmlspecialcharsbx(
+				$columns['CREATE_USER'] = '
+					<div class="bx-disk-user-link">' . $createUser->renderAvatar() . "</span><a target='_blank' href=\"{$createdByLink}\" id=\"\">" . htmlspecialcharsbx(
 						$createUser->getFormattedName()) . "</a></div>
 				";
 			}
@@ -1072,7 +1088,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				);
 
 				$columns['UPDATE_USER'] = "
-					<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url('" . Uri::urnEncode($updateUser->getAvatarSrc()) . "');\"></span><a target='_blank' href=\"{$updatedByLink}\" id=\"\">" . htmlspecialcharsbx(
+					<div class=\"bx-disk-user-link\">{$updateUser->renderAvatar()}<a target='_blank' href=\"{$updatedByLink}\" id=\"\">" . htmlspecialcharsbx(
 						$updateUser->getFormattedName()) . "</a></div>
 				";
 			}
@@ -1086,7 +1102,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				);
 
 				$columns['DELETE_USER'] = "
-					<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url('" . Uri::urnEncode($deleteUser->getAvatarSrc()) . "');\"></span><a target='_blank' href=\"{$deletedByLink}\" id=\"\">" . htmlspecialcharsbx(
+					<div class=\"bx-disk-user-link\">{$deleteUser->renderAvatar()}<a target='_blank' href=\"{$deletedByLink}\" id=\"\">" . htmlspecialcharsbx(
 						$deleteUser->getFormattedName()) . "</a></div>
 				";
 			}

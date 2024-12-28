@@ -134,17 +134,16 @@ use \Bitrix\Main\Localization\Loc;
 			}
 			?>
 		});
-		<?
-		if($arResult['CAN_INSTALL_APPLICATIONS'])
-		{
-			?>
-			BX.bind(
-				BX('imopenlines-bot-link'),
-				'click',
-				BX.OpenLinesConfigEdit.botButtonAction
-			);
-			<?
-		}
-		?>
+		<?php if($arResult['CAN_INSTALL_APPLICATIONS']): ?>
+				BX.bind(
+					BX('imopenlines-bot-link'),
+					'click',
+					<?php if(\Bitrix\Main\Loader::includeModule('market')): ?>
+						BX.OpenLinesConfigEdit.botmarketButtonAction
+					<?php else: ?>
+						BX.OpenLinesConfigEdit.botButtonAction
+					<?php endif; ?>
+				);
+		<?php endif; ?>
 	});
 </script>

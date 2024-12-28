@@ -43,6 +43,7 @@ class sign extends CModule
 			'OnRestServiceBuildDescription' => [
 				[\Bitrix\Sign\Rest\B2e\MySafe::class, 'onRestServiceBuildDescription'],
 				[\Bitrix\Sign\Rest\B2e\Provider::class, 'onRestServiceBuildDescription'],
+				[\Bitrix\Sign\Rest\B2e\HcmLink\SignedFile::class, 'onRestServiceBuildDescription'],
 			]
 		],
 	];
@@ -109,6 +110,12 @@ class sign extends CModule
 		global $APPLICATION;
 
 		$step = isset($_GET['step']) ? intval($_GET['step']) : 1;
+
+		if (Main\ModuleManager::isModuleInstalled('signmobile'))
+		{
+			$APPLICATION->throwException(Loc::getMessage('SIGN_MODULE_UNINSTALL_ERROR_SIGNMOBILE'));
+		}
+
 		if ($step < 2)
 		{
 			$APPLICATION->includeAdminFile(
@@ -309,6 +316,14 @@ class sign extends CModule
 			period: 'N',
 			interval: 900,
 			next_exec: \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 3600, 'FULL'),
+			existError: false,
+		);
+
+		\CAgent::AddAgent(
+			name: '\\Bitrix\\Sign\\Agent\\Permission\\ReinstallAccessPermissionsAgent::run();',
+			module: 'sign',
+			interval: 60,
+			next_exec: \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 960, 'FULL'),
 			existError: false,
 		);
 	}

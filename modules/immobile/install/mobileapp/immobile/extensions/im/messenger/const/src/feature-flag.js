@@ -3,6 +3,10 @@
  */
 jn.define('im/messenger/const/feature-flag', (require, exports, module) => {
 
+	/**
+	 * @deprecated
+	 * @see Feature
+	 */
 	const FeatureFlag = Object.freeze({
 		isDevelopmentEnvironment: (
 			Application.getApiVersion() >= 44

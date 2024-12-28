@@ -4,6 +4,7 @@
 jn.define('text-editor/components/text-input', (require, exports, module) => {
 	const { Type } = require('type');
 	const { parser } = require('text-editor/internal/parser');
+	const { Indent } = require('tokens');
 
 	const textInputPromise = Symbol('@@textInputPromise');
 	const textInputResolver = Symbol('@@textInputResolver');
@@ -226,6 +227,7 @@ jn.define('text-editor/components/text-input', (require, exports, module) => {
 					...this.state.style,
 					flex: 1,
 					height: this.state.forcedHeight,
+					paddingHorizontal: Indent.XL3.toNumber(),
 				},
 				onLayout: (rect) => {
 					this.setState({
@@ -233,9 +235,11 @@ jn.define('text-editor/components/text-input', (require, exports, module) => {
 					});
 				},
 				onFocus: () => {
+					console.log('focus');
 					this.emit('onFocus', []);
 				},
 				onBlur: () => {
+					console.log('blur');
 					this.emit('onBlur', []);
 				},
 				selectedStyles: (data) => {

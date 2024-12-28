@@ -1,11 +1,11 @@
 <?php
+
 namespace Bitrix\Tasks\Grid\Task\Row;
 
 use Bitrix\Main;
 use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 use Bitrix\Tasks\Util\User;
-use CComponentEngine;
 use CExtranet;
 use CTaskPlannerMaintance;
 
@@ -87,25 +87,28 @@ class Action
 			];
 		}
 
-		$subTaskPath = new Main\Web\Uri(
-			TaskPathMaker::getPath([
-				'user_id' => $userId,
-				'task_id' => 0,
-				'group_id' => $groupId,
-				'action' => 'edit',
-			])
-		);
-		$subTaskPath->addParams([
-			'PARENT_ID' => $taskId,
-			'viewType' => 'VIEW_MODE_LIST',
-			'ta_sec' => Analytics::SECTION['tasks'],
-			'ta_sub' => Analytics::SUB_SECTION['list'],
-			'ta_el' => Analytics::ELEMENT['context_menu'],
-		]);
-		$taskRowActions[] = [
-			'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_ADD_SUB_TASK'),
-			'href' => $subTaskPath->getUri(),
-		];
+		if ($actions['CREATE'])
+		{
+			$subTaskPath = new Main\Web\Uri(
+				TaskPathMaker::getPath([
+					'user_id' => $userId,
+					'task_id' => 0,
+					'group_id' => $groupId,
+					'action' => 'edit',
+				])
+			);
+			$subTaskPath->addParams([
+				'PARENT_ID' => $taskId,
+				'viewType' => 'VIEW_MODE_LIST',
+				'ta_sec' => Analytics::SECTION['tasks'],
+				'ta_sub' => Analytics::SUB_SECTION['list'],
+				'ta_el' => Analytics::ELEMENT['context_menu'],
+			]);
+			$taskRowActions[] = [
+				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_ADD_SUB_TASK'),
+				'href' => $subTaskPath->getUri(),
+			];
+		}
 
 		if ($actions['ADD_FAVORITE'])
 		{
@@ -142,7 +145,15 @@ class Action
 				'onclick' => 'BX.Tasks.GridActions.action("approve", '.$taskId.');',
 			];
 		}
-		if ($actions['START'])
+		if ($actions['TAKE'])
+		{
+			$allowTimeTracking = $this->rowData['ALLOW_TIME_TRACKING'] === 'Y';
+			$taskRowActions[] = [
+				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_TAKE'),
+				'onclick' => 'BX.Tasks.GridActions.action("take", '.$taskId.', { allowTimeTracking: ' . ($allowTimeTracking ? 'true' : 'false') . ' });',
+			];
+		}
+		else if ($actions['START'])
 		{
 			$taskRowActions[] = [
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_START'),
@@ -180,10 +191,13 @@ class Action
 			'ta_el' => Analytics::ELEMENT['context_menu'],
 		]);
 
-		$taskRowActions[] = [
-			'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_COPY'),
-			'href' => $copyTaskPath->getUri(),
-		];
+		if ($actions['CREATE'])
+		{
+			$taskRowActions[] = [
+				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_COPY'),
+				'href' => $copyTaskPath->getUri(),
+			];
+		}
 
 		$copyLink = tasksServerName() . TaskPathMaker::getPath([
 			'user_id' => $userId,

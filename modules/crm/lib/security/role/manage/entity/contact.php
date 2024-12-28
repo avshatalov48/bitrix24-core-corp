@@ -8,8 +8,10 @@ use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
 use CCrmOwnerType;
 
-class Contact implements PermissionEntity
+class Contact implements PermissionEntity, FilterableByCategory
 {
+	use Trait\FilterableByCategory;
+
 	private function permissions(): array
 	{
 		return PermissionAttrPresets::crmEntityPreset();
@@ -20,15 +22,22 @@ class Contact implements PermissionEntity
 	public function make(): array
 	{
 		$factory = Service\Container::getInstance()->getFactory(CCrmOwnerType::Contact);
+		if ($factory === null)
+		{
+			return [];
+		}
 
 		$hiddenContactCategories = [
 			Service\Factory\SmartDocument::CONTACT_CATEGORY_CODE,
 		];
 
 		$result = [];
-		foreach ($factory->getCategories() as $category)
-		{
 
+		$categories = $factory->getCategories();
+		$categories = $this->filterCategories($categories);
+
+		foreach ($categories as $category)
+		{
 			if (in_array($category->getCode(), $hiddenContactCategories))
 			{
 				continue;
@@ -42,7 +51,15 @@ class Contact implements PermissionEntity
 				$entityTitle = Container::getInstance()->getFactory(CCrmOwnerType::Contact)->getEntityDescription();
 			}
 
-			$result[] = new EntityDTO($entityName, $entityTitle, [], $this->permissions());
+			$result[] = new EntityDTO(
+				$entityName,
+				$entityTitle,
+				[],
+				$this->permissions(),
+				null,
+				'person',
+				'--ui-color-palette-green-50',
+			);
 		}
 
 		return $result;

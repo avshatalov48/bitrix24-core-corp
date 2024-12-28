@@ -202,8 +202,10 @@ class BizprocController extends EntityController
 		$data['WORKFLOW_TEMPLATE_NAME'] = $settings['WORKFLOW_TEMPLATE_NAME'] ?? null;
 		$data['WORKFLOW_STATUS_NAME'] = $settings['WORKFLOW_STATUS_NAME'] ?? null;
 		$data['AUTOMATION_DEBUG_TEXT'] = $settings['AUTOMATION_DEBUG_TEXT'] ?? null;
-		unset($data['SETTINGS']);
-		return parent::prepareHistoryDataModel($data, $options);
+		$data = parent::prepareHistoryDataModel($data, $options);
+		$data['SETTINGS'] = $settings;
+
+		return $data;
 	}
 	//endregion
 }

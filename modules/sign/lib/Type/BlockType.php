@@ -19,4 +19,9 @@ final class BlockType
 			self::IMAGE,
 		];
 	}
+
+	public static function isValid(string $type): bool
+	{
+		return in_array($type, self::getAll(), true);
+	}
 }

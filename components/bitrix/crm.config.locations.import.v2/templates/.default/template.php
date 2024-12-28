@@ -1,5 +1,8 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
+/** @var CBitrixSaleLocationImportComponent $component */
+/** @var array $arResult */
+
 global $APPLICATION;
 ?>
 
@@ -48,11 +51,11 @@ Loc::loadMessages(__FILE__);
 
 			<?=Loc::getMessage('SALE_SLI_STAT_TITLE')?>:
 			<ul class="bx-ui-loc-i-stat-list">
-				<?foreach($arResult['STATISTICS'] as $code => $stat):?>
-					<? if($stat['NAME'] <> ''): ?>
+				<?php foreach($arResult['STATISTICS'] as $code => $stat): ?>
+					<?php if(!empty($stat['NAME'])): ?>
 						<li><?= htmlspecialcharsbx($stat['NAME']) ?>: <?= intval($stat['CNT']) ?></li>
-					<? endif?>
-				<?endforeach?>
+					<?php endif; ?>
+				<?php endforeach; ?>
 				<script type="text/html" data-template-id="bx-ui-loc-i-stat-item">
 					<li>{{type}}: {{count}}</li>
 				</script>
@@ -112,10 +115,13 @@ Loc::loadMessages(__FILE__);
 		//////////////////////////////////////
 		// source selector
 
+		$allowRemote = $component::checkRegion();
 		ob_start();
 		?>
-			<label><input type="radio" name="SOURCE" value="remote" checked class="bx-ui-loc-i-option" /><?=Loc::getMessage('SALE_SLI_SOURCE_REMOTE')?></label><br />
-			<label><input type="radio" name="SOURCE" value="file" class="bx-ui-loc-i-option" /><?=Loc::getMessage('SALE_SLI_SOURCE_FILE')?></label></label>
+			<?php if ($allowRemote): ?>
+				<label><input type="radio" name="SOURCE" value="remote" checked class="bx-ui-loc-i-option" /><?=Loc::getMessage('SALE_SLI_SOURCE_REMOTE')?></label><br />
+			<?php endif; ?>
+			<label><input type="radio" name="SOURCE" value="file" <?= $allowRemote ? '' : 'checked' ?> class="bx-ui-loc-i-option" /><?=Loc::getMessage('SALE_SLI_SOURCE_FILE')?></label></label>
 		<?
 		$customHtml = ob_get_contents();
 		ob_end_clean();
@@ -469,7 +475,7 @@ Loc::loadMessages(__FILE__);
 					'standard_buttons' => false,
 					'custom_html' => $formCustomHtml
 				),
-				'DATA' => $arResult['LOC'],
+				'DATA' => $arResult['LOC'] ?? null,
 				'SHOW_SETTINGS' => 'N',
 				'SHOW_FORM_TAG' => 'N',
 				'CAN_EXPAND_TABS' => 'N'
@@ -488,6 +494,7 @@ Loc::loadMessages(__FILE__);
 			'url' => $arResult['URLS']['IMPORT_AJAX'],
 			'pageUrl' => $arResult['URLS']['IMPORT'],
 			'scope' => 'location-import',
+			'defaultState' => $allowRemote ? 'remote' : 'file',
 			'ajaxFlag' => 'AJAX_CALL',
 			'importId' => rand(99, 999),
 			'firstImport' => !!$arResult['FIRST_IMPORT'],

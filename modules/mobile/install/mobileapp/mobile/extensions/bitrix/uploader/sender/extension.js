@@ -105,6 +105,7 @@ jn.define('uploader/sender', (require, exports, module) => {
 			this.folderId = data.folderId;
 			this.filename = data.name;
 			this.type = data.type;
+			this.disableAutoCommit = data.disableAutoCommit;
 			this.config.getParameters.filename = data.name;
 			this.config.getParameters.folderId = data.folderId;
 			// this.config.url = `/bitrix/services/main/ajax.php?action=${this.methodName()}&filename=${data.name}&token=${this.token}`
@@ -119,7 +120,7 @@ jn.define('uploader/sender', (require, exports, module) => {
 			{
 				const body = '';
 				const headers = { 'X-Upload-Content-Type': this.type };
-				BX.ajax({
+				const commitConfig = {
 					method: 'POST',
 					dataType: 'json',
 					prepareData: false,
@@ -127,17 +128,38 @@ jn.define('uploader/sender', (require, exports, module) => {
 					data: body,
 					uploadBinary: true,
 					url: `/bitrix/services/main/ajax.php?action=disk.api.file.createByContent&filename=${
-						 this.filename
-						 }&folderId=${this.folderId
-						 }&contentId=${this.token
-						 }&generateUniqueName=Y`,
-				}).then((res) => {
-					this.emmiter.emit('committed', [res]);
-				}).catch((error) => {
-					// this.status = Statuses.FAILED;
-					// this.callListener(TaskEventConsts.FILE_CREATED_FAILED, {error: error});
-					// resolve();
-				});
+						this.filename
+					}&folderId=${this.folderId
+					}&contentId=${this.token
+					}&generateUniqueName=Y`,
+				};
+
+				const rollbackConfig = {
+					method: 'POST',
+					dataType: 'json',
+					prepareData: false,
+					data: body,
+					url: `/bitrix/services/main/ajax.php?action=disk.api.content.rollbackUpload&token=${this.token}`,
+				};
+
+				if (this.disableAutoCommit)
+				{
+					this.emmiter.emit('committed', [{
+						commitConfig,
+						rollbackConfig,
+						token: this.token,
+					}]);
+				}
+				else
+				{
+					BX.ajax(commitConfig).then((res) => {
+						this.emmiter.emit('committed', [res]);
+					}).catch((error) => {
+						// this.status = Statuses.FAILED;
+						// this.callListener(TaskEventConsts.FILE_CREATED_FAILED, {error: error});
+						// resolve();
+					});
+				}
 			}
 			else
 			{

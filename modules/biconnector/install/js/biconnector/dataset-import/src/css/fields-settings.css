@@ -1,0 +1,25 @@
+.fields-settings {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	overflow: visible;
+}
+
+.fields-settings__slider-button {
+	cursor: pointer;
+}
+
+.fields-settings__slider-button .ui-ctl-before {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.fields-settings__slider-icon {
+	--ui-icon-set__icon-color: var(--ui-color-palette-blue-50);
+	--ui-icon-set__icon-size: 25px;
+}
+
+.fields-settings__slider-chevron {
+	transform: rotate(-90deg);
+}

@@ -1,5 +1,6 @@
 <?
 
+use Bitrix\Calendar\Integration\Pull\PushCommand;
 use Bitrix\Calendar\Sync\Google;
 use Bitrix\Calendar\Sync\Office365;
 use Bitrix\Main\DI\ServiceLocator;
@@ -56,7 +57,7 @@ class CDavConnection extends CAllDavConnection
 			;
 			$connectionName = $connectionType . $id;
 			\Bitrix\Calendar\Util::addPullEvent(
-				'add_sync_connection',
+				PushCommand::AddSyncConnection,
 				$arFields['ENTITY_ID'],
 				[
 					'syncInfo' => [

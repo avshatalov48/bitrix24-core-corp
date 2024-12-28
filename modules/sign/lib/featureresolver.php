@@ -8,6 +8,8 @@ final class FeatureResolver
 	private const FEATURE_CODES = [
 		'createDocumentChat',
 		'sendByEmployee',
+		'mobileSendByEmployee',
+		'mobileMyDocumentsGrid',
 	];
 	private static self $instance;
 

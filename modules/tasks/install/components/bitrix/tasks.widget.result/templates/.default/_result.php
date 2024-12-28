@@ -33,6 +33,15 @@ Extension::load('ui.fonts.opensans');
 $author = $arResult['USERS'][$result->getCreatedBy()] ?: null;
 $currentUserId = CurrentUser::get()->getId();
 
+$userTypeNameClass = '';
+$userTypeAvatarClass = '';
+if ($author['IS_COLLABER_USER'] ?? false)
+{
+	$userTypeNameClass = 'tasks-widget-result__item-header--name-collaber';
+	$userTypeAvatarClass = 'tasks-widget-result__item-header--avatar-collaber';
+}
+
+
 $createdDate = CComponentUtil::GetDateTimeFormatted(
 	timestamp: $result->getCreatedAt()->getTimestamp() + CTimeZone::GetOffset($currentUserId),
 	offset: CTimeZone::GetOffset($currentUserId)
@@ -53,11 +62,11 @@ $createdDate = CComponentUtil::GetDateTimeFormatted(
 		</div>
 	<div class="tasks-widget-result__item--content">
 		<div class="tasks-widget-result__item-header">
-			<span class="ui-icon ui-icon-common-user user-img tasks-widget-result__item-header--avatar">
+			<span class="ui-icon ui-icon-common-user user-img tasks-widget-result__item-header--avatar <?= $userTypeAvatarClass ?>">
 				<i style="<?= ($author && !empty($author['AVATAR'])) ? 'background-image: url(\''. Uri::urnEncode($author['AVATAR']).'\');' : '';  ?>"></i>
 			</span>
 			<div class="tasks-widget-result__item-header--info">
-				<a href="/company/personal/user/<?= $result->getCreatedBy(); ?>/" class="tasks-widget-result__item-header--name ui-link" bx-tooltip-user-id="<?= $result->getCreatedBy(); ?>" bx-tooltip-params="[]"><?= $author ? \htmlspecialcharsbx(User::formatName($author)) : ''; ?></a>
+				<a href="/company/personal/user/<?= $result->getCreatedBy(); ?>/" class="tasks-widget-result__item-header--name ui-link <?= $userTypeNameClass ?>" bx-tooltip-user-id="<?= $result->getCreatedBy(); ?>" bx-tooltip-params="[]"><?= $author ? \htmlspecialcharsbx(User::formatName($author)) : ''; ?></a>
 				<div class="tasks-widget-result__item-header--time-block">
 					<i class="tasks-widget-result__item-header--time-img"></i>
 					<a class="tasks-widget-result__item-header--time ui-link ui-link-secondary" rel="nofollow">

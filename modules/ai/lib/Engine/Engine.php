@@ -156,6 +156,7 @@ abstract class Engine
 		{
 			throw new SystemException('Before using Payload you must set it.');
 		}
+
 		return $this->payload;
 	}
 
@@ -359,7 +360,7 @@ abstract class Engine
 		}
 		catch (\Exception $e)
 		{
-			$this->onResponseError($e->getMessage(),$e->getCode());
+			$this->onResponseError($e->getMessage(), $e->getCode());
 		}
 
 		return null;
@@ -465,6 +466,7 @@ abstract class Engine
 	{
 		$postParams = $this->getPostParams();// !important getPostParams() before merge
 		$postParams = array_merge($this->getParameters(), $postParams, $additionalParams);
+
 		return $postParams;
 	}
 
@@ -484,7 +486,7 @@ abstract class Engine
 		}
 
 		Analytics::engineGenerateResultEvent(
-			($cached) ? ' generate_reusage' :'generate',
+			($cached) ? 'generate_reusage' : 'generate',
 			$this,
 			$this->analyticData
 		);
@@ -503,7 +505,6 @@ abstract class Engine
 			call_user_func($this->onSuccessCallback, $result);
 		}
 	}
-
 
 	/**
 	 * On post response error.
@@ -529,7 +530,7 @@ abstract class Engine
 			}
 			else
 			{
-				$errorForUser = new Error(Loc::getMessage('AI_ENGINE_ERROR_OTHER'),'AI_ENGINE_ERROR_OTHER');
+				$errorForUser = new Error(Loc::getMessage('AI_ENGINE_ERROR_OTHER'), 'AI_ENGINE_ERROR_OTHER');
 			}
 			call_user_func($this->onErrorCallback, $errorForUser);
 		}
@@ -543,31 +544,6 @@ abstract class Engine
 	protected function getAuthorizationHeader(): string
 	{
 		return '';
-	}
-
-	/**
-	 * Temp methods to get queue domain by token in header.
-	 *
-	 * @param string $header
-	 * @return string|null
-	 */
-	protected function getLinkedQueueUrlByToken(string $header): ?string
-	{
-		$engineCode = strtolower(static::SHARD_PREFIX);
-		$shardZone = Bitrix24::getShardZone();
-
-		$tokensByZone = Config::getValue("{$engineCode}_{$shardZone}") ?: [];
-		$countServers = \count($tokensByZone) ?: 1;
-
-		$queueUrl = Config::getValue("{$engineCode}_queue")[$shardZone] ?? null;
-		if (empty($queueUrl))
-		{
-			return null;
-		}
-
-		$randomIndex = random_int(1, $countServers);
-
-		return sprintf($queueUrl, $randomIndex);
 	}
 
 	/**
@@ -593,14 +569,17 @@ abstract class Engine
 			return rtrim($url, '/');
 		}
 
-		$authorization = $this->getAuthorizationHeader();
-		$url = $this->getLinkedQueueUrlByToken($authorization);
-		if (!empty($url))
-		{
-			return rtrim($url, '/');
-		}
-
 		return self::URL_COMPLETIONS_QUEUE_DEFAULT;
+	}
+
+	/**
+	 * Returns completions url path for queue from static const.
+	 *
+	 * @return string
+	 */
+	protected function getCompletionsQueueUrlPath(): string
+	{
+		return self::URL_COMPLETIONS_QUEUE_PATH;
 	}
 
 	/**
@@ -616,16 +595,16 @@ abstract class Engine
 		}
 		$this->queueJob = QueueJob::createWithinFromEngine($this)->register();
 
-		$url = $this->getCompletionsQueueUrl() . self::URL_COMPLETIONS_QUEUE_PATH;
+		$url = $this->getCompletionsQueueUrl() . $this->getCompletionsQueueUrlPath();
 
 		$cacheManager = new EngineResultCache($this->queueJob->getCacheHash());
 
 		if ($this->isCache() && ($response = $cacheManager->getExists()))
 		{
 			$this->onResponseSuccess($response, $cacheManager, true);
+
 			return;
 		}
-
 
 		$http = new HttpClient;
 		$http->setHeader('Content-Type', 'application/json');
@@ -636,6 +615,7 @@ abstract class Engine
 			'url' => $this->getCompletionsUrl(),
 			'params' => $this->makeRequestParams(),
 			'authorization' => $this->getAuthorizationHeader(),
+			'additionalHeaders' => $this->getAdditionalHeaders() ?? null,
 		]));
 
 		if ($http->getStatus() === self::HTTP_STATUS_OK)
@@ -649,7 +629,7 @@ abstract class Engine
 				);
 			}
 		}
-		else if (is_callable($this->onErrorCallback))
+		elseif (is_callable($this->onErrorCallback))
 		{
 			$error = $http->getError();
 			call_user_func(
@@ -657,6 +637,16 @@ abstract class Engine
 				new Error(current($error), key($error)),
 			);
 		}
+	}
+
+	/**
+	 * Return additional headers for specific engines(like yandex)
+	 *
+	 * @return array|null
+	 */
+	protected function getAdditionalHeaders(): ?array
+	{
+		return null;
 	}
 
 	/**
@@ -753,6 +743,17 @@ abstract class Engine
 	}
 
 	/**
+	 * Check if Engine recommended to use for Quality
+	 *
+	 * @param Quality|null $quality
+	 * @return bool
+	 */
+	public function isPreferredForQuality(?Quality $quality = null): bool
+	{
+		return false;
+	}
+
+	/**
 	 * Return cache state
 	 *
 	 * @return bool
@@ -795,5 +796,16 @@ abstract class Engine
 	{
 		$quality = new Quality(['json_response_mode']);
 		$this->isModeResponseJson = $this->hasQuality($quality) && $enable;
+	}
+
+	protected function restoreReplacements(mixed $value): mixed
+	{
+		$processedReplacements = $this->getPayload()?->getProcessedReplacements();
+		if ($processedReplacements && \is_string($value))
+		{
+			$value = strtr($value, array_flip($processedReplacements));
+		}
+
+		return $value;
 	}
 }

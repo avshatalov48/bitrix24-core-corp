@@ -15,6 +15,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  CATEGORY_CRM_OPERATIONS: 'crm_operations',
 	  CATEGORY_AI_OPERATIONS: 'ai_operations',
 	  CATEGORY_AUTOMATION_OPERATIONS: 'automation_operations',
+	  CATEGORY_KANBAN_OPERATIONS: 'kanban_operations',
 	  // region Event const
 	  EVENT_ENTITY_ADD_OPEN: 'entity_add_open',
 	  EVENT_ENTITY_ADD: 'entity_add',
@@ -33,6 +34,9 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  EVENT_AUTOMATION_CREATE: 'automation_create',
 	  EVENT_AUTOMATION_EDIT: 'automation_edit',
 	  EVENT_AUTOMATION_DELETE: 'automation_delete',
+	  EVENT_BLOCK_CLOSE: 'block_close',
+	  EVENT_BLOCK_ENABLE: 'block_enable',
+	  EVENT_BLOCK_LINK: 'block_link',
 	  // endregion
 
 	  // region Type const
@@ -40,6 +44,8 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  TYPE_AUTO: 'auto',
 	  TYPE_AUTOMATED_SOLUTION: 'automated_solution',
 	  TYPE_DYNAMIC: 'dynamic',
+	  TYPE_CONTACT_CENTER: 'contact_center',
+	  TYPE_ITEM_INDUSTRY: 'item_industry',
 	  // endregion
 
 	  // region Section const
@@ -75,6 +81,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  SUB_SECTION_CALENDAR: 'calendar',
 	  SUB_SECTION_DEADLINES: 'deadlines',
 	  SUB_SECTION_DETAILS: 'details',
+	  SUB_SECTION_GRID_ROW_MENU: 'grid_row_menu',
 	  SUB_SECTION_KANBAN_DROPZONE: 'kanban_dropzone',
 	  SUB_SECTION_ACTION_BUTTON: 'action_button',
 	  SUB_SECTION_DEAL: 'deal',
@@ -112,6 +119,13 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  ELEMENT_WON_TOP_ACTIONS: 'won_top_actions',
 	  ELEMENT_DETAILS_PROGRESS_BAR: 'details_progress_bar',
 	  ELEMENT_SAVE_IS_REQUIRED_TO_PROCEED_POPUP: 'save_is_required_to_proceed_popup',
+	  ELEMENT_CLOSE_BUTTON: 'close_button',
+	  ELEMENT_HIDE_CONTACT_CENTER: 'hide_contact_center',
+	  ELEMENT_ENABLE_CONTACT_CENTER: 'enable_contact_center',
+	  ELEMENT_CONTACT_CENTER_MARKETPLACE: 'contact_center_marketplace',
+	  ELEMENT_CONTACT_CENTER_IMPORTEXCEL: 'contact_center_importexcel',
+	  ELEMENT_ITEM_CONTACT_CENTER: 'item_contact_center',
+	  ELEMENT_ITEM_INDUSTRY_BUTTON: 'item_industry_button',
 	  // endregion
 
 	  // region Status const
@@ -126,7 +140,8 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  STATUS_ERROR_LIMIT_DAILY: 'error_limit_daily',
 	  STATUS_ERROR_LIMIT_MONTHLY: 'error_limit_monthly',
 	  STATUS_ERROR_PROVIDER: 'error_provider',
-	  STATUS_ERROR_B24: 'error_b24'
+	  STATUS_ERROR_B24: 'error_b24',
+	  STATUS_ERROR_PERMISSIONS: 'error_permissions'
 	  // endregion
 	});
 
@@ -935,6 +950,183 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  }
 	}
 
+	var _entityType$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityType");
+	var _subSection$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subSection");
+	var _element$b = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("element");
+	var _type$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("type");
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.Block
+	 */
+	class CloseEvent$1 {
+	  constructor() {
+	    Object.defineProperty(this, _entityType$3, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _subSection$6, {
+	      writable: true,
+	      value: Dictionary.SUB_SECTION_KANBAN
+	    });
+	    Object.defineProperty(this, _element$b, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _type$1, {
+	      writable: true,
+	      value: Dictionary.TYPE_CONTACT_CENTER
+	    });
+	  }
+	  static createDefault(entityType) {
+	    const self = new CloseEvent$1();
+	    babelHelpers.classPrivateFieldLooseBase(self, _entityType$3)[_entityType$3] = entityType;
+	    return self;
+	  }
+	  setSubSection(subSection) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _subSection$6)[_subSection$6] = subSection;
+	    return this;
+	  }
+	  setElement(element) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _element$b)[_element$b] = element;
+	    return this;
+	  }
+	  setType(type) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _type$1)[_type$1] = type;
+	    return this;
+	  }
+	  buildData() {
+	    const type = getAnalyticsEntityType(babelHelpers.classPrivateFieldLooseBase(this, _entityType$3)[_entityType$3]);
+	    if (!type) {
+	      console.error('crm.integration.analytics: Unknown entity type');
+	      return null;
+	    }
+	    return filterOutNilValues({
+	      tool: Dictionary.TOOL_CRM,
+	      category: Dictionary.CATEGORY_KANBAN_OPERATIONS,
+	      event: Dictionary.EVENT_BLOCK_CLOSE,
+	      type: babelHelpers.classPrivateFieldLooseBase(this, _type$1)[_type$1],
+	      c_section: `${type}_section`,
+	      c_sub_section: babelHelpers.classPrivateFieldLooseBase(this, _subSection$6)[_subSection$6],
+	      c_element: babelHelpers.classPrivateFieldLooseBase(this, _element$b)[_element$b],
+	      p1: getCrmMode()
+	    });
+	  }
+	}
+
+	var _entityType$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityType");
+	var _subSection$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subSection");
+	var _element$c = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("element");
+	var _type$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("type");
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.Block
+	 */
+	class EnableEvent {
+	  constructor() {
+	    Object.defineProperty(this, _entityType$4, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _subSection$7, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _element$c, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _type$2, {
+	      writable: true,
+	      value: Dictionary.TYPE_CONTACT_CENTER
+	    });
+	  }
+	  static createDefault(entityType) {
+	    const self = new EnableEvent();
+	    babelHelpers.classPrivateFieldLooseBase(self, _entityType$4)[_entityType$4] = entityType;
+	    return self;
+	  }
+	  setSubSection(subSection) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _subSection$7)[_subSection$7] = subSection;
+	    return this;
+	  }
+	  setElement(element) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _element$c)[_element$c] = element;
+	    return this;
+	  }
+	  setType(type) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _type$2)[_type$2] = type;
+	    return this;
+	  }
+	  buildData() {
+	    const type = getAnalyticsEntityType(babelHelpers.classPrivateFieldLooseBase(this, _entityType$4)[_entityType$4]);
+	    if (!type) {
+	      console.error('crm.integration.analytics: Unknown entity type');
+	      return null;
+	    }
+	    return filterOutNilValues({
+	      tool: Dictionary.TOOL_CRM,
+	      category: Dictionary.CATEGORY_KANBAN_OPERATIONS,
+	      event: Dictionary.EVENT_BLOCK_ENABLE,
+	      type: babelHelpers.classPrivateFieldLooseBase(this, _type$2)[_type$2],
+	      c_section: `${type}_section`,
+	      c_sub_section: babelHelpers.classPrivateFieldLooseBase(this, _subSection$7)[_subSection$7],
+	      c_element: babelHelpers.classPrivateFieldLooseBase(this, _element$c)[_element$c],
+	      p1: getCrmMode()
+	    });
+	  }
+	}
+
+	var _entityType$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityType");
+	var _element$d = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("element");
+	var _type$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("type");
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.Block
+	 */
+	class LinkEvent {
+	  constructor() {
+	    Object.defineProperty(this, _entityType$5, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _element$d, {
+	      writable: true,
+	      value: Dictionary.ELEMENT_ITEM_CONTACT_CENTER
+	    });
+	    Object.defineProperty(this, _type$3, {
+	      writable: true,
+	      value: Dictionary.TYPE_CONTACT_CENTER
+	    });
+	  }
+	  static createDefault(entityType) {
+	    const self = new LinkEvent();
+	    babelHelpers.classPrivateFieldLooseBase(self, _entityType$5)[_entityType$5] = entityType;
+	    return self;
+	  }
+	  setElement(element) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _element$d)[_element$d] = element;
+	    return this;
+	  }
+	  setType(type) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _type$3)[_type$3] = type;
+	    return this;
+	  }
+	  buildData() {
+	    const type = getAnalyticsEntityType(babelHelpers.classPrivateFieldLooseBase(this, _entityType$5)[_entityType$5]);
+	    if (!type) {
+	      console.error('crm.integration.analytics: Unknown entity type');
+	      return null;
+	    }
+	    return filterOutNilValues({
+	      tool: Dictionary.TOOL_CRM,
+	      category: Dictionary.CATEGORY_KANBAN_OPERATIONS,
+	      event: Dictionary.EVENT_BLOCK_LINK,
+	      type: babelHelpers.classPrivateFieldLooseBase(this, _type$3)[_type$3],
+	      c_section: `${type}_section`,
+	      c_sub_section: Dictionary.SUB_SECTION_KANBAN,
+	      c_element: babelHelpers.classPrivateFieldLooseBase(this, _element$d)[_element$d],
+	      p1: getCrmMode()
+	    });
+	  }
+	}
+
 	const Builder = Object.freeze({
 	  Entity: {
 	    AddEvent: AddEvent,
@@ -956,6 +1148,11 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	      EditEvent: EditEvent$1,
 	      DeleteEvent: DeleteEvent$1
 	    }
+	  },
+	  Block: {
+	    CloseEvent: CloseEvent$1,
+	    EnableEvent: EnableEvent,
+	    LinkEvent: LinkEvent
 	  }
 	});
 

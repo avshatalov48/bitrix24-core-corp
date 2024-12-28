@@ -7,6 +7,7 @@ if (class_exists('call'))
 
 use Bitrix\Main\Localization\Loc;
 
+
 class call extends \CModule
 {
 	public $MODULE_ID = 'call';
@@ -41,7 +42,6 @@ class call extends \CModule
 
 	public function installDB()
 	{
-		/*
 		global $APPLICATION, $DB;
 
 		$connection = \Bitrix\Main\Application::getConnection();
@@ -58,9 +58,80 @@ class call extends \CModule
 			$APPLICATION->throwException(implode('', $errors));
 			return false;
 		}
-		*/
 
 		\Bitrix\Main\ModuleManager::registerModule($this->MODULE_ID);
+
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+
+		/** @see \Bitrix\Call\Integration\AI\CallAIService::onQueueTaskExecute */
+		$eventManager->registerEventHandler(
+			'ai',
+			'onQueueJobExecute',
+			'call',
+			'\Bitrix\Call\Integration\AI\CallAIService',
+			'onQueueTaskExecute'
+		);
+		/** @see \Bitrix\Call\Integration\AI\CallAIService::onQueueTaskFail */
+		$eventManager->registerEventHandler(
+			'ai',
+			'onQueueJobFail',
+			'call',
+			'\Bitrix\Call\Integration\AI\CallAIService',
+			'onQueueTaskFail'
+		);
+
+		/** @see \Bitrix\Call\Integration\AI\CallAISettings::onTuningLoad */
+		$eventManager->registerEventHandler(
+			'ai',
+			'onTuningLoad',
+			'call',
+			'\Bitrix\Call\Integration\AI\CallAISettings',
+			'onTuningLoad'
+		);
+
+		/** @see \Bitrix\Call\Integration\AI\EventService::onCallAiTaskStart */
+		$eventManager->registerEventHandler(
+			'call',
+			'onCallAiTask',
+			'call',
+			'\Bitrix\Call\Integration\AI\EventService',
+			'onCallAiTaskStart'
+		);
+		/** @see \Bitrix\Call\Integration\AI\EventService::onCallAiTaskComplete */
+		$eventManager->registerEventHandler(
+			'call',
+			'onCallAiOutcome',
+			'call',
+			'\Bitrix\Call\Integration\AI\EventService',
+			'onCallAiTaskComplete'
+		);
+		/** @see \Bitrix\Call\Integration\AI\EventService::onCallAiTaskFailed */
+		$eventManager->registerEventHandler(
+			'call',
+			'onCallAiFailed',
+			'call',
+			'\Bitrix\Call\Integration\AI\EventService',
+			'onCallAiTaskFailed'
+		);
+		/** @see \Bitrix\Call\Integration\AI\EventService::onCallFinished */
+		$eventManager->registerEventHandler(
+			'call',
+			'onCallFinished',
+			'call',
+			'\Bitrix\Call\Integration\AI\EventService',
+			'onCallFinished'
+		);
+
+		/** @see \Bitrix\Call\Integration\AI\CallAIService::finishTasks */
+		\CAgent::AddAgent(
+			'Bitrix\Call\Integration\AI\CallAIService::finishTasks();',
+			'call',
+			'N',
+			86400,
+			'',
+			'Y',
+			\ConvertTimeStamp(time()+\CTimeZone::GetOffset() + rand(4320, 86400), 'FULL')
+		);
 
 		return true;
 	}
@@ -112,12 +183,12 @@ class call extends \CModule
 	{
 		global $APPLICATION, $DB;
 
+		$connection = \Bitrix\Main\Application::getConnection();
 		$errors = [];
 		if (!$saveData)
 		{
 			$APPLICATION->resetException();
-			$connection = \Bitrix\Main\Application::getConnection();
-			//$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/call/install/db/' . $connection->getType() . '/uninstall.sql');
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/call/install/db/' . $connection->getType() . '/uninstall.sql');
 		}
 
 		if (!empty($errors))
@@ -125,6 +196,21 @@ class call extends \CModule
 			$APPLICATION->throwException(implode('', $errors));
 			return false;
 		}
+
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+		$res = $connection->query("SELECT * FROM b_module_to_module WHERE FROM_MODULE_ID='call' OR TO_MODULE_ID='call'");
+		while ($row = $res->fetch())
+		{
+			$eventManager->unRegisterEventHandler(
+				$row['FROM_MODULE_ID'],
+				$row['MESSAGE_ID'],
+				$row['TO_MODULE_ID'],
+				$row['TO_CLASS'],
+				$row['TO_METHOD']
+			);
+		}
+
+		\CAgent::RemoveModuleAgents('call');
 
 		\Bitrix\Main\ModuleManager::unRegisterModule($this->MODULE_ID);
 

@@ -2732,6 +2732,9 @@ this.BX = this.BX || {};
 	    this.currentTabName = '';
 	    this.moreTabsMenu = null;
 
+	    //customTabs
+	    this.customTabs = {};
+
 	    // callList
 	    this.callListId = _params.callListId || 0;
 	    this.callListStatusId = _params.callListStatusId || null;
@@ -2810,7 +2813,8 @@ this.BX = this.BX || {};
 	        tabs: {
 	          callList: null,
 	          webform: null,
-	          app: null
+	          app: null,
+	          custom: null
 	        },
 	        tabsBody: {
 	          callList: null,
@@ -2978,7 +2982,7 @@ this.BX = this.BX || {};
 	        events: {
 	          dblclick: this._onDblClickHandler
 	        },
-	        children: [this.elements.topLevelButtonsContainer = main_core.Dom.create("div"), main_core.Dom.create("div", {
+	        children: [this.elements.topLevelButtonsContainer = main_core.Dom.create("div"), this.elements.phoneCallWrapper = main_core.Dom.create("div", {
 	          props: {
 	            className: 'im-phone-call-wrapper' + (this.hasSideBar() ? '' : ' im-phone-call-wrapper-without-sidebar')
 	          },
@@ -3117,7 +3121,7 @@ this.BX = this.BX || {};
 	      if (this.isDesktop() && !this.desktop.isFeatureSupported('iframe')) {
 	        return this.callListId > 0;
 	      } else {
-	        return this.callListId > 0 || this.webformId > 0 || this.restApps.length > 0;
+	        return this.callListId > 0 || this.webformId > 0 || this.restApps.length > 0 || Object.keys(this.customTabs).length > 0;
 	      }
 	    }
 	  }, {
@@ -3226,6 +3230,40 @@ this.BX = this.BX || {};
 	      var _this7 = this;
 	      var tabs = [];
 	      var tabsBody = [];
+	      if (Object.keys(this.customTabs).length > 0) {
+	        Object.keys(this.customTabs).forEach(function (tabKey) {
+	          var customTabId = _this7.customTabs[tabKey].id;
+	          var tabTitle = _this7.customTabs[tabKey].title;
+	          var tabId = "custom".concat(customTabId);
+	          _this7.elements.tabs[tabId] = main_core.Dom.create("span", {
+	            props: {
+	              className: 'im-phone-sidebar-tab'
+	            },
+	            dataset: {
+	              tabId: tabId,
+	              tabBodyId: "custom".concat(customTabId)
+	            },
+	            text: main_core.Text.encode(tabTitle),
+	            events: {
+	              click: _this7._onTabHeaderClick.bind(_this7)
+	            }
+	          });
+	          tabs.push(_this7.elements.tabs[tabId]);
+	          if (!_this7.elements.tabsBody[tabId]) {
+	            _this7.elements.tabsBody[tabId] = main_core.Dom.create('div', {
+	              props: {
+	                className: "voximplant-phone-call-".concat(tabId, "-container")
+	              },
+	              children: [main_core.Dom.create('div', {
+	                props: {
+	                  className: "voximplant-phone-call-".concat(tabId, "-tab-content voximplant-phone-call-custom-container")
+	                }
+	              })]
+	            });
+	          }
+	          tabsBody.push(_this7.elements.tabsBody[tabId]);
+	        });
+	      }
 	      if (this.callListId > 0) {
 	        this.elements.tabs.callList = main_core.Dom.create("span", {
 	          props: {
@@ -3241,7 +3279,9 @@ this.BX = this.BX || {};
 	          }
 	        });
 	        tabs.push(this.elements.tabs.callList);
-	        this.elements.tabsBody.callList = main_core.Dom.create('div');
+	        if (!this.elements.tabsBody.callList) {
+	          this.elements.tabsBody.callList = main_core.Dom.create('div');
+	        }
 	        tabsBody.push(this.elements.tabsBody.callList);
 	      }
 	      if (this.webformId > 0 && this.isWebformSupported()) {
@@ -3259,16 +3299,20 @@ this.BX = this.BX || {};
 	          }
 	        });
 	        tabs.push(this.elements.tabs.webform);
-	        this.elements.tabsBody.webform = main_core.Dom.create('div', {
-	          props: {
-	            className: 'im-phone-call-form-container'
-	          }
-	        });
+	        if (!this.elements.tabsBody.webform) {
+	          this.elements.tabsBody.webform = main_core.Dom.create('div', {
+	            props: {
+	              className: 'im-phone-call-form-container'
+	            }
+	          });
+	        }
 	        tabsBody.push(this.elements.tabsBody.webform);
-	        this.formManager = new FormManager({
-	          node: this.elements.tabsBody.webform,
-	          onFormSend: this._onFormSend.bind(this)
-	        });
+	        if (!this.formManager) {
+	          this.formManager = new FormManager({
+	            node: this.elements.tabsBody.webform,
+	            onFormSend: this._onFormSend.bind(this)
+	          });
+	        }
 	      }
 	      if (this.restApps.length > 0 && this.isRestAppsSupported()) {
 	        this.restApps.forEach(function (restApp) {
@@ -3290,52 +3334,71 @@ this.BX = this.BX || {};
 	          });
 	          tabs.push(_this7.elements.tabs[tabId]);
 	        });
-	        this.elements.tabsBody.app = main_core.Dom.create('div', {
-	          props: {
-	            className: 'im-phone-call-app-container'
-	          }
-	        });
+	        if (!this.elements.tabsBody.app) {
+	          this.elements.tabsBody.app = main_core.Dom.create('div', {
+	            props: {
+	              className: 'im-phone-call-app-container'
+	            }
+	          });
+	        }
 	        tabsBody.push(this.elements.tabsBody.app);
 	      }
-	      this.elements.sidebarContainer = main_core.Dom.create("div", {
+	      this.elements.tabsTitleListContainer = main_core.Dom.create("div", {
 	        props: {
-	          className: 'im-phone-sidebar-wrap'
+	          className: 'im-phone-sidebar-tabs-container'
 	        },
-	        children: [main_core.Dom.create("div", {
+	        children: [this.elements.tabsContainer = main_core.Dom.create("div", {
 	          props: {
-	            className: 'im-phone-sidebar-tabs-container'
+	            className: 'im-phone-sidebar-tabs-left'
 	          },
-	          children: [this.elements.tabsContainer = main_core.Dom.create("div", {
+	          children: tabs
+	        }), main_core.Dom.create("div", {
+	          props: {
+	            className: 'im-phone-sidebar-tabs-right'
+	          },
+	          children: [this.elements.moreTabs = main_core.Dom.create("span", {
 	            props: {
-	              className: 'im-phone-sidebar-tabs-left'
+	              className: 'im-phone-sidebar-tab im-phone-sidebar-tab-more'
 	            },
-	            children: tabs
-	          }), main_core.Dom.create("div", {
-	            props: {
-	              className: 'im-phone-sidebar-tabs-right'
+	            style: {
+	              display: 'none'
 	            },
-	            children: [this.elements.moreTabs = main_core.Dom.create("span", {
-	              props: {
-	                className: 'im-phone-sidebar-tab im-phone-sidebar-tab-more'
-	              },
-	              style: {
-	                display: 'none'
-	              },
-	              dataset: {},
-	              text: main_core.Loc.getMessage('IM_PHONE_CALL_VIEW_MORE'),
-	              events: {
-	                click: this._onTabMoreClick.bind(this)
-	              }
-	            })]
+	            dataset: {},
+	            text: main_core.Loc.getMessage('IM_PHONE_CALL_VIEW_MORE'),
+	            events: {
+	              click: this._onTabMoreClick.bind(this)
+	            }
 	          })]
-	        }), this.elements.tabsBodyContainer = main_core.Dom.create("div", {
-	          props: {
-	            className: 'im-phone-sidebar-tabs-body-container'
-	          },
-	          children: tabsBody
 	        })]
 	      });
-	      if (this.callListId > 0) {
+	      this.elements.tabsBodyContainer = main_core.Dom.create("div", {
+	        props: {
+	          className: 'im-phone-sidebar-tabs-body-container'
+	        },
+	        children: tabsBody
+	      });
+	      if (this.elements.sidebarContainer) {
+	        this.elements.sidebarContainer.replaceChild(this.elements.tabsTitleListContainer, this.elements.sidebarContainer.firstChild);
+	        this.elements.sidebarContainer.replaceChild(this.elements.tabsBodyContainer, this.elements.sidebarContainer.lastChild);
+	        setTimeout(function () {
+	          return _this7.checkMoreButton();
+	        }, 0);
+	      } else {
+	        this.elements.sidebarContainer = main_core.Dom.create("div", {
+	          props: {
+	            className: 'im-phone-sidebar-wrap'
+	          },
+	          children: [this.elements.tabsTitleListContainer, this.elements.tabsBodyContainer]
+	        });
+	      }
+	      if (Object.keys(this.customTabs).length > 0) {
+	        var selectedCustomTab = Object.keys(this.customTabs)[0];
+	        this.setActiveTab({
+	          tabId: "custom".concat(this.customTabs[selectedCustomTab].id),
+	          tabBodyId: "custom".concat(this.customTabs[selectedCustomTab].id),
+	          hidden: this.customTabs[selectedCustomTab].visible
+	        });
+	      } else if (this.callListId > 0) {
 	        this.setActiveTab({
 	          tabId: 'callList',
 	          tabBodyId: 'callList'
@@ -3471,6 +3534,80 @@ this.BX = this.BX || {};
 	      });
 	    }
 	  }, {
+	    key: "addTab",
+	    value: function addTab(tabName) {
+	      var _this9 = this;
+	      var tabId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+	      if (!tabId) {
+	        tabId = Math.random().toString(36).substr(2, 9);
+	      }
+	      return new Promise(function (resolve) {
+	        var tab = {
+	          title: tabName,
+	          id: tabId,
+	          callId: _this9.callId,
+	          contentContainerId: "voximplant-phone-call-".concat(tabId, "-container"),
+	          visible: true,
+	          visibilityChangeCallback: null,
+	          getContentContainerId: function getContentContainerId() {
+	            return _this9.elements.tabsBody["custom".concat(tabId)];
+	          },
+	          setContent: function setContent(content) {
+	            _this9.elements.tabsBody["custom".concat(tabId)].replaceChild(content, _this9.elements.tabsBody["custom".concat(tabId)].firstChild);
+	          },
+	          setVisibilityChangeCallback: function setVisibilityChangeCallback(callback) {
+	            this.visibilityChangeCallback = callback;
+	          },
+	          setTitle: function setTitle(newTitle) {
+	            _this9.customTabs[tabId].title = newTitle;
+	            _this9.elements.tabs["custom".concat(tabId)].innerText = newTitle;
+	          },
+	          setVisibility: function setVisibility(newValue) {
+	            _this9.customTabs[tabId].visible = newValue;
+	            _this9.createSidebarLayout();
+	          },
+	          remove: function remove() {
+	            delete _this9.customTabs[tabId];
+	            if (!_this9.hasSideBar()) {
+	              _this9.elements.main.removeChild(_this9.elements.sidebarContainer);
+	              _this9.elements.sidebarContainer = null;
+	              _this9.resizeCallCard();
+	              return;
+	            }
+	            _this9.createSidebarLayout();
+	          }
+	        };
+	        _this9.customTabs[tabId] = tab;
+	        if (_this9.elements.sidebarContainer) {
+	          _this9.createSidebarLayout();
+	        } else {
+	          _this9.createSidebarLayout();
+	          _this9.elements.main.appendChild(_this9.elements.sidebarContainer);
+	          _this9.elements.phoneCallWrapper.classList.remove('im-phone-call-wrapper-without-sidebar');
+	          _this9.resizeCallCard();
+	        }
+	        resolve(tab);
+	      });
+	    }
+	  }, {
+	    key: "resizeCallCard",
+	    value: function resizeCallCard() {
+	      if (this.isDesktop()) {
+	        this.elements.main.style.position = 'fixed';
+	        this.elements.main.style.top = 0;
+	        this.elements.main.style.bottom = 0;
+	        this.elements.main.style.left = 0;
+	        this.elements.main.style.right = 0;
+	      } else {
+	        this.elements.main.style.width = this.getInitialWidth() + 'px';
+	        this.elements.main.style.height = this.getInitialHeight() + 'px';
+	      }
+	      if (this.isDesktop()) {
+	        this.resizeWindow(this.getInitialWidth(), this.getInitialHeight());
+	      }
+	      this.adjust();
+	    }
+	  }, {
 	    key: "setActiveTab",
 	    value: function setActiveTab(params) {
 	      var tabId = params.tabId;
@@ -3561,7 +3698,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onTabMoreClick",
 	    value: function _onTabMoreClick() {
-	      var _this9 = this;
+	      var _this10 = this;
 	      if (this.hiddenTabs.length === 0) {
 	        return;
 	      }
@@ -3575,8 +3712,8 @@ this.BX = this.BX || {};
 	          id: "selectTab_" + tabElement.dataset.tabId,
 	          text: tabElement.innerText,
 	          onclick: function onclick() {
-	            _this9.moreTabsMenu.close();
-	            _this9.setActiveTab({
+	            _this10.moreTabsMenu.close();
+	            _this10.setActiveTab({
 	              tabId: tabElement.dataset.tabId,
 	              tabBodyId: tabElement.dataset.tabBodyId,
 	              restAppId: tabElement.dataset.restAppId || '',
@@ -3595,10 +3732,10 @@ this.BX = this.BX || {};
 	        zIndex: baseZIndex + 100,
 	        events: {
 	          onPopupClose: function onPopupClose() {
-	            return _this9.moreTabsMenu.destroy();
+	            return _this10.moreTabsMenu.destroy();
 	          },
 	          onPopupDestroy: function onPopupDestroy() {
-	            return _this9.moreTabsMenu = null;
+	            return _this10.moreTabsMenu = null;
 	          }
 	        }
 	      });
@@ -3612,50 +3749,50 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "createTitle",
 	    value: function createTitle() {
-	      var _this10 = this;
+	      var _this11 = this;
 	      var callTitle = '';
 	      return new Promise(function (resolve) {
-	        BX.PhoneNumberParser.getInstance().parse(_this10.phoneNumber).then(function (parsedNumber) {
-	          if (_this10.phoneNumber == 'unknown') {
+	        BX.PhoneNumberParser.getInstance().parse(_this11.phoneNumber).then(function (parsedNumber) {
+	          if (_this11.phoneNumber == 'unknown') {
 	            resolve(main_core.Loc.getMessage('IM_PHONE_CALL_VIEW_NUMBER_UNKNOWN'));
 	            return;
 	          }
-	          if (_this10.phoneNumber == 'hidden') {
+	          if (_this11.phoneNumber == 'hidden') {
 	            callTitle = main_core.Loc.getMessage('IM_PHONE_HIDDEN_NUMBER');
 	          } else {
-	            callTitle = _this10.phoneNumber.toString();
+	            callTitle = _this11.phoneNumber.toString();
 	            if (parsedNumber.isValid()) {
 	              callTitle = parsedNumber.format();
 	              if (parsedNumber.isInternational() && callTitle.charAt(0) != '+') {
 	                callTitle = '+' + callTitle;
 	              }
 	            } else {
-	              callTitle = _this10.phoneNumber.toString();
+	              callTitle = _this11.phoneNumber.toString();
 	            }
 	          }
-	          if (_this10.isCallback()) {
+	          if (_this11.isCallback()) {
 	            callTitle = main_core.Loc.getMessage('IM_PHONE_CALLBACK_TO').replace('#PHONE#', callTitle);
-	          } else if (_this10.isPortalCall()) {
-	            switch (_this10.direction) {
+	          } else if (_this11.isPortalCall()) {
+	            switch (_this11.direction) {
 	              case Direction.incoming:
-	                if (_this10.portalCallUserId) {
-	                  callTitle = main_core.Loc.getMessage("IM_M_CALL_VOICE_FROM").replace('#USER#', _this10.portalCallData.users[_this10.portalCallUserId].name);
+	                if (_this11.portalCallUserId) {
+	                  callTitle = main_core.Loc.getMessage("IM_M_CALL_VOICE_FROM").replace('#USER#', _this11.portalCallData.users[_this11.portalCallUserId].name);
 	                }
 	                break;
 	              case Direction.outgoing:
-	                if (_this10.portalCallUserId) {
-	                  callTitle = main_core.Loc.getMessage("IM_M_CALL_VOICE_TO").replace('#USER#', _this10.portalCallData.users[_this10.portalCallUserId].name);
+	                if (_this11.portalCallUserId) {
+	                  callTitle = main_core.Loc.getMessage("IM_M_CALL_VOICE_TO").replace('#USER#', _this11.portalCallData.users[_this11.portalCallUserId].name);
 	                } else {
-	                  callTitle = main_core.Loc.getMessage("IM_M_CALL_VOICE_TO").replace('#USER#', _this10.portalCallQueueName) + ' (' + _this10.phoneNumber + ')';
+	                  callTitle = main_core.Loc.getMessage("IM_M_CALL_VOICE_TO").replace('#USER#', _this11.portalCallQueueName) + ' (' + _this11.phoneNumber + ')';
 	                }
 	                break;
 	            }
 	          } else {
-	            callTitle = main_core.Loc.getMessage(_this10.direction === Direction.incoming ? 'IM_PHONE_CALL_VOICE_FROM' : 'IM_PHONE_CALL_VOICE_TO').replace('#PHONE#', callTitle);
-	            if (_this10.direction === Direction.incoming && _this10.companyPhoneNumber) {
-	              callTitle = callTitle + ', ' + main_core.Loc.getMessage('IM_PHONE_CALL_TO_PHONE').replace('#PHONE#', _this10.companyPhoneNumber);
+	            callTitle = main_core.Loc.getMessage(_this11.direction === Direction.incoming ? 'IM_PHONE_CALL_VOICE_FROM' : 'IM_PHONE_CALL_VOICE_TO').replace('#PHONE#', callTitle);
+	            if (_this11.direction === Direction.incoming && _this11.companyPhoneNumber) {
+	              callTitle = callTitle + ', ' + main_core.Loc.getMessage('IM_PHONE_CALL_TO_PHONE').replace('#PHONE#', _this11.companyPhoneNumber);
 	            }
-	            if (_this10.isTransfer()) {
+	            if (_this11.isTransfer()) {
 	              callTitle = callTitle + ' ' + main_core.Loc.getMessage('IM_PHONE_CALL_TRANSFERED');
 	            }
 	          }
@@ -4034,7 +4171,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "loadCrmCard",
 	    value: function loadCrmCard(entityType, entityId) {
-	      var _this11 = this;
+	      var _this12 = this;
 	      BX.onCustomEvent(window, 'CallCard::EntityChanged', [{
 	        'CRM_ENTITY_TYPE': entityType,
 	        'CRM_ENTITY_ID': entityId,
@@ -4045,32 +4182,37 @@ this.BX = this.BX || {};
 	        'CRM_ENTITY_ID': entityId,
 	        'PHONE_NUMBER': this.phoneNumber
 	      });
+	      var enableCopilotReplacement = 'Y';
+	      if (this.isCallListMode()) {
+	        enableCopilotReplacement = 'N';
+	      }
 	      BX.ajax.runAction("voximplant.callview.getCrmCard", {
 	        data: {
 	          entityType: entityType,
-	          entityId: entityId
+	          entityId: entityId,
+	          isEnableCopilotReplacement: enableCopilotReplacement
 	        }
 	      }).then(function (response) {
-	        if (_this11.currentLayout == layouts.simple) {
-	          _this11.currentLayout = layouts.crm;
-	          _this11.crm = true;
-	          var newMainElement = _this11.createLayoutCrm();
-	          _this11.elements.main.parentNode.replaceChild(newMainElement, _this11.elements.main);
-	          _this11.elements.main = newMainElement;
-	          _this11.setUiState(_this11._uiState);
-	          _this11.setStatusText(_this11.statusText);
+	        if (_this12.currentLayout == layouts.simple) {
+	          _this12.currentLayout = layouts.crm;
+	          _this12.crm = true;
+	          var newMainElement = _this12.createLayoutCrm();
+	          _this12.elements.main.parentNode.replaceChild(newMainElement, _this12.elements.main);
+	          _this12.elements.main = newMainElement;
+	          _this12.setUiState(_this12._uiState);
+	          _this12.setStatusText(_this12.statusText);
 	        }
-	        if (_this11.elements.crmCard) {
-	          BX.html(_this11.elements.crmCard, response.data.html);
+	        if (_this12.elements.crmCard) {
+	          BX.html(_this12.elements.crmCard, response.data.html);
 	          setTimeout(function () {
-	            if (_this11.isDesktop()) {
-	              _this11.resizeWindow(_this11.getInitialWidth(), _this11.getInitialHeight());
+	            if (_this12.isDesktop()) {
+	              _this12.resizeWindow(_this12.getInitialWidth(), _this12.getInitialHeight());
 	            }
-	            _this11.adjust();
-	            _this11.bindCrmCardEvents();
+	            _this12.adjust();
+	            _this12.bindCrmCardEvents();
 	          }, 100);
 	        }
-	        _this11.renderCrmButtons();
+	        _this12.renderCrmButtons();
 	      })["catch"](function (response) {
 	        return console.error("Could not load crm card: ", response.errors[0]);
 	      });
@@ -4110,24 +4252,24 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "setPortalCallUserId",
 	    value: function setPortalCallUserId(userId) {
-	      var _this12 = this;
+	      var _this13 = this;
 	      this.portalCallUserId = userId;
 	      this.setOnSlave(desktopEvents.setPortalCallUserId, [userId]);
 	      if (this.portalCallData && this.portalCallData.users[this.portalCallUserId]) {
 	        this.renderAvatar();
 	        this.createTitle().then(function (title) {
-	          return _this12.setTitle(title);
+	          return _this13.setTitle(title);
 	        });
 	      }
 	    }
 	  }, {
 	    key: "setPortalCallQueueName",
 	    value: function setPortalCallQueueName(queueName) {
-	      var _this13 = this;
+	      var _this14 = this;
 	      this.portalCallQueueName = queueName;
 	      this.setOnSlave(desktopEvents.setPortalCallQueueName, [queueName]);
 	      this.createTitle().then(function (title) {
-	        return _this13.setTitle(title);
+	        return _this14.setTitle(title);
 	      });
 	    }
 	  }, {
@@ -4328,7 +4470,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderButtonsDefault",
 	    value: function renderButtonsDefault() {
-	      var _this14 = this;
+	      var _this15 = this;
 	      var buttonsFragment = document.createDocumentFragment();
 	      var topButtonsFragment = document.createDocumentFragment();
 	      var topLevelButtonsFragment = document.createDocumentFragment();
@@ -4355,87 +4497,87 @@ this.BX = this.BX || {};
 	        var buttonNode;
 	        switch (buttonName) {
 	          case 'hold':
-	            buttonNode = renderSimpleButton('', 'im-phone-call-btn-hold', _this14._onHoldButtonClickHandler);
-	            if (_this14.isHeld()) {
+	            buttonNode = renderSimpleButton('', 'im-phone-call-btn-hold', _this15._onHoldButtonClickHandler);
+	            if (_this15.isHeld()) {
 	              main_core.Dom.addClass(buttonNode, 'active');
 	            }
-	            if (_this14.buttonLayout == ButtonLayouts.spaced) {
+	            if (_this15.buttonLayout == ButtonLayouts.spaced) {
 	              subContainers.left.appendChild(buttonNode);
 	            } else {
 	              buttonsFragment.appendChild(buttonNode);
 	            }
 	            break;
 	          case 'mute':
-	            buttonNode = renderSimpleButton('', 'im-phone-call-btn-mute', _this14._onMuteButtonClickHandler);
-	            if (_this14.isMuted()) {
+	            buttonNode = renderSimpleButton('', 'im-phone-call-btn-mute', _this15._onMuteButtonClickHandler);
+	            if (_this15.isMuted()) {
 	              main_core.Dom.addClass(buttonNode, 'active');
 	            }
-	            if (_this14.buttonLayout == ButtonLayouts.spaced) {
+	            if (_this15.buttonLayout == ButtonLayouts.spaced) {
 	              subContainers.left.appendChild(buttonNode);
 	            } else {
 	              buttonsFragment.appendChild(buttonNode);
 	            }
 	            break;
 	          case 'transfer':
-	            buttonNode = renderSimpleButton('', 'im-phone-call-btn-transfer', _this14._onTransferButtonClickHandler);
-	            if (_this14.buttonLayout == ButtonLayouts.spaced) {
+	            buttonNode = renderSimpleButton('', 'im-phone-call-btn-transfer', _this15._onTransferButtonClickHandler);
+	            if (_this15.buttonLayout == ButtonLayouts.spaced) {
 	              subContainers.left.appendChild(buttonNode);
 	            } else {
 	              buttonsFragment.appendChild(buttonNode);
 	            }
 	            break;
 	          case 'transferComplete':
-	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_M_CALL_BTN_TRANSFER'), 'im-phone-call-btn im-phone-call-btn-blue im-phone-call-btn-arrow', _this14._onTransferCompleteButtonClickHandler);
+	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_M_CALL_BTN_TRANSFER'), 'im-phone-call-btn im-phone-call-btn-blue im-phone-call-btn-arrow', _this15._onTransferCompleteButtonClickHandler);
 	            buttonsFragment.appendChild(buttonNode);
 	            break;
 	          case 'transferCancel':
-	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_M_CALL_BTN_RETURN'), 'im-phone-call-btn im-phone-call-btn-red', _this14._onTransferCancelButtonClickHandler);
+	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_M_CALL_BTN_RETURN'), 'im-phone-call-btn im-phone-call-btn-red', _this15._onTransferCancelButtonClickHandler);
 	            buttonsFragment.appendChild(buttonNode);
 	            break;
 	          case 'dialpad':
-	            buttonNode = renderSimpleButton('', 'im-phone-call-btn-dialpad', _this14._onDialpadButtonClickHandler);
-	            if (_this14.buttonLayout == ButtonLayouts.spaced) {
+	            buttonNode = renderSimpleButton('', 'im-phone-call-btn-dialpad', _this15._onDialpadButtonClickHandler);
+	            if (_this15.buttonLayout == ButtonLayouts.spaced) {
 	              subContainers.left.appendChild(buttonNode);
 	            } else {
 	              buttonsFragment.appendChild(buttonNode);
 	            }
 	            break;
 	          case 'call':
-	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_PHONE_CALL'), 'im-phone-call-btn im-phone-call-btn-green', _this14._onMakeCallButtonClickHandler);
+	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_PHONE_CALL'), 'im-phone-call-btn im-phone-call-btn-green', _this15._onMakeCallButtonClickHandler);
 	            buttonsFragment.appendChild(buttonNode);
 	            break;
 	          case 'answer':
-	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_PHONE_BTN_ANSWER'), 'im-phone-call-btn im-phone-call-btn-green', _this14._onAnswerButtonClickHandler);
+	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_PHONE_BTN_ANSWER'), 'im-phone-call-btn im-phone-call-btn-green', _this15._onAnswerButtonClickHandler);
 	            buttonsFragment.appendChild(buttonNode);
 	            break;
 	          case 'skip':
-	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_PHONE_BTN_BUSY'), 'im-phone-call-btn im-phone-call-btn-red', _this14._onSkipButtonClickHandler);
+	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_PHONE_BTN_BUSY'), 'im-phone-call-btn im-phone-call-btn-red', _this15._onSkipButtonClickHandler);
 	            buttonsFragment.appendChild(buttonNode);
 	            break;
 	          case 'hangup':
-	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_M_CALL_BTN_HANGUP'), 'im-phone-call-btn im-phone-call-btn-red  im-phone-call-btn-tube', _this14._onHangupButtonClickHandler);
-	            if (_this14.buttonLayout == ButtonLayouts.spaced) {
+	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_M_CALL_BTN_HANGUP'), 'im-phone-call-btn im-phone-call-btn-red  im-phone-call-btn-tube', _this15._onHangupButtonClickHandler);
+	            if (_this15.buttonLayout == ButtonLayouts.spaced) {
 	              subContainers.right.appendChild(buttonNode);
 	            } else {
 	              buttonsFragment.appendChild(buttonNode);
 	            }
 	            break;
 	          case 'close':
-	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_M_CALL_BTN_CLOSE'), 'im-phone-call-btn im-phone-call-btn-red', _this14._onCloseButtonClickHandler);
-	            if (_this14.buttonLayout == ButtonLayouts.spaced) {
+	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_M_CALL_BTN_CLOSE'), 'im-phone-call-btn im-phone-call-btn-red', _this15._onCloseButtonClickHandler);
+	            if (_this15.buttonLayout == ButtonLayouts.spaced) {
 	              subContainers.right.appendChild(buttonNode);
 	            } else {
 	              buttonsFragment.appendChild(buttonNode);
 	            }
 	            break;
 	          case 'topClose':
-	            if (!_this14.isDesktop()) {
+	            if (!_this15.isDesktop()) {
 	              buttonNode = main_core.Dom.create("div", {
 	                props: {
 	                  className: 'im-phone-call-top-close-btn'
 	                },
 	                events: {
-	                  click: _this14._onCloseButtonClickHandler
+	                  click: _this15._onCloseButtonClickHandler
 	                }
 	              });
 	              topLevelButtonsFragment.appendChild(buttonNode);
@@ -4443,13 +4585,13 @@ this.BX = this.BX || {};
 	            break;
 	          case 'notifyAdmin':
 	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_M_CALL_BTN_NOTIFY_ADMIN'), 'im-phone-call-btn im-phone-call-btn-blue im-phone-call-btn-arrow', function () {
-	              _this14.backgroundWorker.isUsed ? _this14.backgroundWorker.emitEvent(backgroundWorkerEvents.notifyAdminButtonClick) : _this14.callbacks.notifyAdmin();
+	              _this15.backgroundWorker.isUsed ? _this15.backgroundWorker.emitEvent(backgroundWorkerEvents.notifyAdminButtonClick) : _this15.callbacks.notifyAdmin();
 	            });
 	            buttonsFragment.appendChild(buttonNode);
 	            break;
 	          case 'sipPhone':
-	            buttonNode = renderSimpleButton('', _this14.deviceCall ? 'im-phone-call-btn-phone active' : 'im-phone-call-btn-phone', _this14._onSwitchDeviceButtonClickHandler);
-	            if (_this14.buttonLayout == ButtonLayouts.spaced) {
+	            buttonNode = renderSimpleButton('', _this15.deviceCall ? 'im-phone-call-btn-phone active' : 'im-phone-call-btn-phone', _this15._onSwitchDeviceButtonClickHandler);
+	            if (_this15.buttonLayout == ButtonLayouts.spaced) {
 	              subContainers.left.appendChild(buttonNode);
 	            } else {
 	              buttonsFragment.appendChild(buttonNode);
@@ -4461,7 +4603,7 @@ this.BX = this.BX || {};
 	                className: 'im-phone-call-btn-signal'
 	              },
 	              events: {
-	                click: _this14._onQualityMeterClickHandler
+	                click: _this15._onQualityMeterClickHandler
 	              },
 	              children: [main_core.Dom.create("span", {
 	                props: {
@@ -4471,12 +4613,12 @@ this.BX = this.BX || {};
 	                  props: {
 	                    className: 'im-phone-call-btn-signal-background'
 	                  }
-	                }), _this14.elements.qualityMeter = main_core.Dom.create("span", {
+	                }), _this15.elements.qualityMeter = main_core.Dom.create("span", {
 	                  props: {
 	                    className: 'im-phone-call-btn-signal-active'
 	                  },
 	                  style: {
-	                    width: _this14.getQualityMeterWidth()
+	                    width: _this15.getQualityMeterWidth()
 	                  }
 	                })]
 	              })]
@@ -4487,22 +4629,22 @@ this.BX = this.BX || {};
 	            // todo
 	            break;
 	          case 'next':
-	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_M_CALL_BTN_NEXT'), 'im-phone-call-btn im-phone-call-btn-gray im-phone-call-btn-arrow', _this14._onNextButtonClickHandler);
+	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_M_CALL_BTN_NEXT'), 'im-phone-call-btn im-phone-call-btn-gray im-phone-call-btn-arrow', _this15._onNextButtonClickHandler);
 	            buttonsFragment.appendChild(buttonNode);
 	            break;
 	          case 'redial':
-	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_M_CALL_BTN_RECALL'), 'im-phone-call-btn im-phone-call-btn-green', _this14._onMakeCallButtonClickHandler);
+	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_M_CALL_BTN_RECALL'), 'im-phone-call-btn im-phone-call-btn-green', _this15._onMakeCallButtonClickHandler);
 	            buttonsFragment.appendChild(buttonNode);
 	            break;
 	          case 'fold':
-	            if (!_this14.isDesktop() && _this14.canBeFolded()) {
+	            if (!_this15.isDesktop() && _this15.canBeFolded()) {
 	              buttonNode = main_core.Dom.create("div", {
 	                props: {
 	                  className: 'im-phone-btn-arrow'
 	                },
 	                text: main_core.Loc.getMessage('IM_PHONE_CALL_VIEW_FOLD'),
 	                events: {
-	                  click: _this14._onFoldButtonClickHandler
+	                  click: _this15._onFoldButtonClickHandler
 	                }
 	              });
 	              topButtonsFragment.appendChild(buttonNode);
@@ -4512,7 +4654,7 @@ this.BX = this.BX || {};
 	            throw "Unknown button " + buttonName;
 	        }
 	        if (buttonNode) {
-	          _this14.elements.buttons[buttonName] = buttonNode;
+	          _this15.elements.buttons[buttonName] = buttonNode;
 	        }
 	      });
 	      if (this.elements.buttonsContainer) {
@@ -4531,18 +4673,18 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderButtonsFolded",
 	    value: function renderButtonsFolded() {
-	      var _this15 = this;
+	      var _this16 = this;
 	      var buttonsFragment = document.createDocumentFragment();
 	      var buttonNode;
 	      this.elements.buttons = {};
 	      this.buttons.forEach(function (buttonName) {
 	        switch (buttonName) {
 	          case 'hangup':
-	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_M_CALL_BTN_HANGUP'), 'im-phone-call-panel-mini-cancel', _this15._onHangupButtonClickHandler);
+	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_M_CALL_BTN_HANGUP'), 'im-phone-call-panel-mini-cancel', _this16._onHangupButtonClickHandler);
 	            buttonsFragment.appendChild(buttonNode);
 	            break;
 	          case 'close':
-	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_M_CALL_BTN_CLOSE'), 'im-phone-call-panel-mini-cancel', _this15._onCloseButtonClickHandler);
+	            buttonNode = renderSimpleButton(main_core.Loc.getMessage('IM_M_CALL_BTN_CLOSE'), 'im-phone-call-panel-mini-cancel', _this16._onCloseButtonClickHandler);
 	            buttonsFragment.appendChild(buttonNode);
 	            break;
 	        }
@@ -4555,7 +4697,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderCrmButtons",
 	    value: function renderCrmButtons() {
-	      var _this16 = this;
+	      var _this17 = this;
 	      var buttonsFragment = document.createDocumentFragment();
 	      this.elements.crmButtons = {};
 	      if (!this.elements.crmButtonsContainer) {
@@ -4579,16 +4721,16 @@ this.BX = this.BX || {};
 	            case 'addComment':
 	              buttonNode = main_core.Dom.create("div", {
 	                props: {
-	                  className: 'im-phone-call-crm-button im-phone-call-crm-button-comment' + (_this16.commentShown ? ' im-phone-call-crm-button-active' : '')
+	                  className: 'im-phone-call-crm-button im-phone-call-crm-button-comment' + (_this17.commentShown ? ' im-phone-call-crm-button-active' : '')
 	                },
-	                children: [_this16.elements.crmButtons.addCommentLabel = main_core.Dom.create("div", {
+	                children: [_this17.elements.crmButtons.addCommentLabel = main_core.Dom.create("div", {
 	                  props: {
 	                    className: 'im-phone-call-crm-button-item'
 	                  },
-	                  text: _this16.commentShown ? main_core.Loc.getMessage('IM_PHONE_CALL_VIEW_SAVE') : main_core.Loc.getMessage('IM_PHONE_ACTION_CRM_COMMENT')
+	                  text: _this17.commentShown ? main_core.Loc.getMessage('IM_PHONE_CALL_VIEW_SAVE') : main_core.Loc.getMessage('IM_PHONE_ACTION_CRM_COMMENT')
 	                })],
 	                events: {
-	                  click: _this16._onAddCommentButtonClick.bind(_this16)
+	                  click: _this17._onAddCommentButtonClick.bind(_this17)
 	                }
 	              });
 	              break;
@@ -4604,7 +4746,7 @@ this.BX = this.BX || {};
 	                  text: main_core.Loc.getMessage('IM_PHONE_ACTION_CRM_DEAL')
 	                })],
 	                events: {
-	                  click: _this16._onAddDealButtonClick.bind(_this16)
+	                  click: _this17._onAddDealButtonClick.bind(_this17)
 	                }
 	              });
 	              break;
@@ -4620,7 +4762,7 @@ this.BX = this.BX || {};
 	                  text: main_core.Loc.getMessage('IM_PHONE_ACTION_CRM_INVOICE')
 	                })],
 	                events: {
-	                  click: _this16._onAddInvoiceButtonClick.bind(_this16)
+	                  click: _this17._onAddInvoiceButtonClick.bind(_this17)
 	                }
 	              });
 	              break;
@@ -4636,7 +4778,7 @@ this.BX = this.BX || {};
 	                  text: main_core.Loc.getMessage('IM_CRM_BTN_NEW_LEAD')
 	                })],
 	                events: {
-	                  click: _this16._onAddLeadButtonClick.bind(_this16)
+	                  click: _this17._onAddLeadButtonClick.bind(_this17)
 	                }
 	              });
 	              break;
@@ -4652,14 +4794,14 @@ this.BX = this.BX || {};
 	                  text: main_core.Loc.getMessage('IM_CRM_BTN_NEW_CONTACT')
 	                })],
 	                events: {
-	                  click: _this16._onAddContactButtonClick.bind(_this16)
+	                  click: _this17._onAddContactButtonClick.bind(_this17)
 	                }
 	              });
 	              break;
 	          }
 	          if (buttonNode) {
 	            buttonsFragment.appendChild(buttonNode);
-	            _this16.elements.crmButtons[buttonName] = buttonNode;
+	            _this17.elements.crmButtons[buttonName] = buttonNode;
 	          }
 	        });
 	        main_core.Dom.clean(this.elements.crmButtonsContainer);
@@ -4702,7 +4844,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "loadRestApp",
 	    value: function loadRestApp(params) {
-	      var _this17 = this;
+	      var _this18 = this;
 	      var restAppId = params.id;
 	      var node = params.node;
 	      if (this.restAppLayoutLoaded) {
@@ -4719,14 +4861,14 @@ this.BX = this.BX || {};
 	          'placementOptions': this.getPlacementOptions()
 	        }
 	      }).then(function (response) {
-	        if (!_this17.popup && !_this17.isDesktop()) {
+	        if (!_this18.popup && !_this18.isDesktop()) {
 	          return;
 	        }
 	        main_core.Runtime.html(node, response.data.html);
-	        _this17.restAppLayoutLoaded = true;
-	        _this17.restAppLayoutLoading = false;
-	        _this17.restAppInterface = BX.rest.AppLayout.initializePlacement('CALL_CARD');
-	        _this17.initializeAppInterface(_this17.restAppInterface);
+	        _this18.restAppLayoutLoaded = true;
+	        _this18.restAppLayoutLoading = false;
+	        _this18.restAppInterface = BX.rest.AppLayout.initializePlacement('CALL_CARD');
+	        _this18.initializeAppInterface(_this18.restAppInterface);
 	      });
 	    }
 	  }, {
@@ -4744,19 +4886,19 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "initializeAppInterface",
 	    value: function initializeAppInterface(appInterface) {
-	      var _this18 = this;
+	      var _this19 = this;
 	      appInterface.prototype.events.push('CallCard::EntityChanged');
 	      appInterface.prototype.events.push('CallCard::BeforeClose');
 	      appInterface.prototype.events.push('CallCard::CallStateChanged');
 	      appInterface.prototype.getStatus = function (params, cb) {
-	        cb(_this18.getPlacementOptions());
+	        cb(_this19.getPlacementOptions());
 	      };
 	      appInterface.prototype.disableAutoClose = function (params, cb) {
-	        _this18.disableAutoClose();
+	        _this19.disableAutoClose();
 	        cb([]);
 	      };
 	      appInterface.prototype.enableAutoClose = function (params, cb) {
-	        _this18.enableAutoClose();
+	        _this19.enableAutoClose();
 	        cb([]);
 	      };
 	    }
@@ -4848,13 +4990,13 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onTransferButtonClick",
 	    value: function _onTransferButtonClick() {
-	      var _this19 = this;
+	      var _this20 = this;
 	      this.selectTransferTarget(function (result) {
-	        _this19.backgroundWorker.emitEvent(backgroundWorkerEvents.transferButtonClick, result);
-	        if (_this19.isDesktop() && _this19.slave) {
+	        _this20.backgroundWorker.emitEvent(backgroundWorkerEvents.transferButtonClick, result);
+	        if (_this20.isDesktop() && _this20.slave) {
 	          im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onStartTransfer, [result]);
 	        } else {
-	          _this19.callbacks.transfer(result);
+	          _this20.callbacks.transfer(result);
 	        }
 	      });
 	    }
@@ -4881,22 +5023,22 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onDialpadButtonClick",
 	    value: function _onDialpadButtonClick() {
-	      var _this20 = this;
+	      var _this21 = this;
 	      this.keypad = new Keypad({
 	        bindElement: this.elements.buttons.dialpad,
 	        hideDial: true,
 	        onButtonClick: function onButtonClick(e) {
 	          var key = e.key;
-	          if (_this20.isDesktop() && _this20.slave) {
+	          if (_this21.isDesktop() && _this21.slave) {
 	            im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onDialpadButtonClicked, [key]);
 	          } else {
-	            _this20.callbacks.dialpadButtonClicked(key);
+	            _this21.callbacks.dialpadButtonClicked(key);
 	          }
-	          _this20.backgroundWorker.emitEvent(backgroundWorkerEvents.dialpadButtonClick, key);
+	          _this21.backgroundWorker.emitEvent(backgroundWorkerEvents.dialpadButtonClick, key);
 	        },
 	        onClose: function onClose() {
-	          _this20.keypad.destroy();
-	          _this20.keypad = null;
+	          _this21.keypad.destroy();
+	          _this21.keypad = null;
 	        }
 	      });
 	      this.keypad.show();
@@ -4924,7 +5066,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onMakeCallButtonClick",
 	    value: function _onMakeCallButtonClick() {
-	      var _this21 = this;
+	      var _this22 = this;
 	      this.backgroundWorker.emitEvent(backgroundWorkerEvents.makeCallButtonClick);
 	      var event = {};
 	      if (this.callListId > 0) {
@@ -4934,25 +5076,25 @@ this.BX = this.BX || {};
 	          this.keypad = new Keypad({
 	            bindElement: this.elements.buttons.call ? this.elements.buttons.call : null,
 	            onClose: function onClose() {
-	              _this21.keypad.destroy();
-	              _this21.keypad = null;
+	              _this22.keypad.destroy();
+	              _this22.keypad = null;
 	            },
 	            onDial: function onDial(e) {
-	              _this21.keypad.close();
-	              _this21.phoneNumber = e.phoneNumber;
-	              _this21.createTitle().then(function (title) {
-	                return _this21.setTitle(title);
+	              _this22.keypad.close();
+	              _this22.phoneNumber = e.phoneNumber;
+	              _this22.createTitle().then(function (title) {
+	                return _this22.setTitle(title);
 	              });
 	              event = {
 	                phoneNumber: e.phoneNumber,
-	                crmEntityType: _this21.crmEntityType,
-	                crmEntityId: _this21.crmEntityId,
-	                callListId: _this21.callListId
+	                crmEntityType: _this22.crmEntityType,
+	                crmEntityId: _this22.crmEntityId,
+	                callListId: _this22.callListId
 	              };
-	              if (_this21.isDesktop() && _this21.slave) {
+	              if (_this22.isDesktop() && _this22.slave) {
 	                im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onCallListMakeCall, [event]);
 	              } else {
-	                _this21.callbacks.callListMakeCall(event);
+	                _this22.callbacks.callListMakeCall(event);
 	              }
 	            }
 	          });
@@ -4974,21 +5116,21 @@ this.BX = this.BX || {};
 	            bindElement: this.elements.buttons.call ? this.elements.buttons.call : null,
 	            phoneNumbers: this.currentEntity.phones,
 	            onSelect: function onSelect(e) {
-	              _this21.closeNumberSelectMenu();
-	              _this21.phoneNumber = e.phoneNumber;
-	              _this21.createTitle().then(function (title) {
-	                return _this21.setTitle(title);
+	              _this22.closeNumberSelectMenu();
+	              _this22.phoneNumber = e.phoneNumber;
+	              _this22.createTitle().then(function (title) {
+	                return _this22.setTitle(title);
 	              });
 	              event = {
 	                phoneNumber: e.phoneNumber,
-	                crmEntityType: _this21.crmEntityType,
-	                crmEntityId: _this21.crmEntityId,
-	                callListId: _this21.callListId
+	                crmEntityType: _this22.crmEntityType,
+	                crmEntityId: _this22.crmEntityId,
+	                callListId: _this22.callListId
 	              };
-	              if (_this21.isDesktop() && _this21.slave) {
+	              if (_this22.isDesktop() && _this22.slave) {
 	                im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onCallListMakeCall, [event]);
 	              } else {
-	                _this21.callbacks.callListMakeCall(event);
+	                _this22.callbacks.callListMakeCall(event);
 	              }
 	            }
 	          });
@@ -5183,16 +5325,16 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onQualityMeterClick",
 	    value: function _onQualityMeterClick() {
-	      var _this22 = this;
+	      var _this23 = this;
 	      this.showQualityPopup({
 	        onSelect: function onSelect(qualityGrade) {
-	          _this22.backgroundWorker.emitEvent(backgroundWorkerEvents.qualityMeterClick, qualityGrade);
-	          _this22.qualityGrade = qualityGrade;
-	          _this22.closeQualityPopup();
-	          if (_this22.isDesktop() && _this22.slave) {
+	          _this23.backgroundWorker.emitEvent(backgroundWorkerEvents.qualityMeterClick, qualityGrade);
+	          _this23.qualityGrade = qualityGrade;
+	          _this23.closeQualityPopup();
+	          if (_this23.isDesktop() && _this23.slave) {
 	            im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onQualityGraded, [qualityGrade]);
 	          } else {
-	            _this22.callbacks.qualityGraded(qualityGrade);
+	            _this23.callbacks.qualityGraded(qualityGrade);
 	          }
 	        }
 	      });
@@ -5216,7 +5358,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onCallListSelectedItem",
 	    value: function onCallListSelectedItem(entity) {
-	      var _this23 = this;
+	      var _this24 = this;
 	      this.currentEntity = entity;
 	      this.crmEntityType = entity.type;
 	      this.crmEntityId = entity.id;
@@ -5237,7 +5379,7 @@ this.BX = this.BX || {};
 	        this.phoneNumber = 'unknown';
 	      }
 	      this.createTitle().then(function (title) {
-	        return _this23.setTitle(title);
+	        return _this24.setTitle(title);
 	      });
 	      this.loadCrmCard(entity.type, entity.id);
 	      if (this.currentTabName === 'webform') {
@@ -5325,7 +5467,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showQualityPopup",
 	    value: function showQualityPopup(params) {
-	      var _this24 = this;
+	      var _this25 = this;
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
@@ -5376,13 +5518,13 @@ this.BX = this.BX || {};
 	            children: [elements['1'] = createStar(1, this.qualityGrade == '1', params.onSelect), elements['2'] = createStar(2, this.qualityGrade == '2', params.onSelect), elements['3'] = createStar(3, this.qualityGrade == '3', params.onSelect), elements['4'] = createStar(4, this.qualityGrade == '4', params.onSelect), elements['5'] = createStar(5, this.qualityGrade == '5', params.onSelect)],
 	            events: {
 	              mouseover: function mouseover() {
-	                if (elements[_this24.qualityGrade]) {
-	                  main_core.Dom.removeClass(elements[_this24.qualityGrade], 'im-phone-popup-rating-stars-item-active');
+	                if (elements[_this25.qualityGrade]) {
+	                  main_core.Dom.removeClass(elements[_this25.qualityGrade], 'im-phone-popup-rating-stars-item-active');
 	                }
 	              },
 	              mouseout: function mouseout() {
-	                if (elements[_this24.qualityGrade]) {
-	                  main_core.Dom.addClass(elements[_this24.qualityGrade], 'im-phone-popup-rating-stars-item-active');
+	                if (elements[_this25.qualityGrade]) {
+	                  main_core.Dom.addClass(elements[_this25.qualityGrade], 'im-phone-popup-rating-stars-item-active');
 	                }
 	              }
 	            }
@@ -5390,7 +5532,7 @@ this.BX = this.BX || {};
 	        }),
 	        events: {
 	          onPopupClose: function onPopupClose() {
-	            return _this24.qualityPopup = null;
+	            return _this25.qualityPopup = null;
 	          }
 	        }
 	      });
@@ -5414,7 +5556,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showNumberSelectMenu",
 	    value: function showNumberSelectMenu(params) {
-	      var _this25 = this;
+	      var _this26 = this;
 	      var menuItems = [];
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
@@ -5449,10 +5591,10 @@ this.BX = this.BX || {};
 	        },
 	        events: {
 	          onPopupClose: function onPopupClose() {
-	            return _this25.numberSelectMenu.destroy();
+	            return _this26.numberSelectMenu.destroy();
 	          },
 	          onPopupDestroy: function onPopupDestroy() {
-	            return _this25.numberSelectMenu = null;
+	            return _this26.numberSelectMenu = null;
 	          }
 	        }
 	      });
@@ -5490,7 +5632,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "foldCall",
 	    value: function foldCall() {
-	      var _this26 = this;
+	      var _this27 = this;
 	      if (this.isDesktop() || !this.popup) {
 	        return;
 	      }
@@ -5499,40 +5641,40 @@ this.BX = this.BX || {};
 	      main_core.Dom.addClass(popupNode, 'im-phone-call-view-folding');
 	      main_core.Dom.addClass(overlayNode, 'popup-window-overlay-im-phone-call-view-folding');
 	      setTimeout(function () {
-	        _this26.folded = true;
-	        _this26.popup.close();
-	        _this26.unfoldedElements = _this26.elements;
+	        _this27.folded = true;
+	        _this27.popup.close();
+	        _this27.unfoldedElements = _this27.elements;
 	        main_core.Dom.removeClass(popupNode, 'im-phone-call-view-folding');
 	        main_core.Dom.removeClass(overlayNode, 'popup-window-overlay-im-phone-call-view-folding');
-	        _this26.reinit();
-	        _this26.enableDocumentScroll();
+	        _this27.reinit();
+	        _this27.enableDocumentScroll();
 	      }, 300);
 	    }
 	  }, {
 	    key: "foldCallView",
 	    value: function foldCallView() {
-	      var _this27 = this;
+	      var _this28 = this;
 	      var popupNode = this.popup.getPopupContainer();
 	      var overlayNode = this.popup.overlay.element;
 	      main_core.Dom.addClass(popupNode, 'im-phone-call-view-folding');
 	      main_core.Dom.addClass(overlayNode, 'popup-window-overlay-im-phone-call-view-folding');
 	      setTimeout(function () {
-	        _this27.close();
-	        _this27.foldedCallView.fold({
-	          callListId: _this27.callListId,
-	          webformId: _this27.webformId,
-	          webformSecCode: _this27.webformSecCode,
-	          currentItemIndex: _this27.callListView.currentItemIndex,
-	          currentItemStatusId: _this27.callListView.currentStatusId,
-	          statusList: _this27.callListView.statuses,
-	          entityType: _this27.callListView.entityType
+	        _this28.close();
+	        _this28.foldedCallView.fold({
+	          callListId: _this28.callListId,
+	          webformId: _this28.webformId,
+	          webformSecCode: _this28.webformSecCode,
+	          currentItemIndex: _this28.callListView.currentItemIndex,
+	          currentItemStatusId: _this28.callListView.currentStatusId,
+	          statusList: _this28.callListView.statuses,
+	          entityType: _this28.callListView.entityType
 	        }, true);
 	      }, 300);
 	    }
 	  }, {
 	    key: "bindSlaveDesktopEvents",
 	    value: function bindSlaveDesktopEvents() {
-	      var _this28 = this;
+	      var _this29 = this;
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setTitle, this.setTitle.bind(this));
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setStatus, this.setStatusText.bind(this));
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.setUiState, this.setUiState.bind(this));
@@ -5558,11 +5700,11 @@ this.BX = this.BX || {};
 	        im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onBeforeUnload, []);
 	      });
 	      BX.bind(window, "resize", main_core.Runtime.debounce(function () {
-	        if (_this28.skipOnResize) {
-	          _this28.skipOnResize = false;
+	        if (_this29.skipOnResize) {
+	          _this29.skipOnResize = false;
 	          return;
 	        }
-	        _this28.saveInitialSize(window.innerWidth, window.innerHeight);
+	        _this29.saveInitialSize(window.innerWidth, window.innerHeight);
 	      }, 100));
 	      BX.addCustomEvent("SidePanel.Slider:onOpen", function (event) {
 	        if (!event.getSlider().isSelfContained()) {
@@ -5582,69 +5724,69 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "bindMasterDesktopEvents",
 	    value: function bindMasterDesktopEvents() {
-	      var _this29 = this;
+	      var _this30 = this;
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onHold, function () {
-	        return _this29.callbacks.hold();
+	        return _this30.callbacks.hold();
 	      });
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onUnHold, function () {
-	        return _this29.callbacks.unhold();
+	        return _this30.callbacks.unhold();
 	      });
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onMute, function () {
-	        return _this29.callbacks.mute();
+	        return _this30.callbacks.mute();
 	      });
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onUnMute, function () {
-	        return _this29.callbacks.unmute();
+	        return _this30.callbacks.unmute();
 	      });
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onMakeCall, function (phoneNumber) {
-	        return _this29.callbacks.makeCall(phoneNumber);
+	        return _this30.callbacks.makeCall(phoneNumber);
 	      });
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onCallListMakeCall, function (e) {
-	        return _this29.callbacks.callListMakeCall(e);
+	        return _this30.callbacks.callListMakeCall(e);
 	      });
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onAnswer, function () {
-	        return _this29.callbacks.answer();
+	        return _this30.callbacks.answer();
 	      });
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onSkip, function () {
-	        return _this29.callbacks.skip();
+	        return _this30.callbacks.skip();
 	      });
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onHangup, function () {
-	        return _this29.callbacks.hangup();
+	        return _this30.callbacks.hangup();
 	      });
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onClose, function () {
-	        return _this29.close();
+	        return _this30.close();
 	      });
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onStartTransfer, function (e) {
-	        return _this29.callbacks.transfer(e);
+	        return _this30.callbacks.transfer(e);
 	      });
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onCompleteTransfer, function () {
-	        return _this29.callbacks.completeTransfer();
+	        return _this30.callbacks.completeTransfer();
 	      });
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onCancelTransfer, function () {
-	        return _this29.callbacks.cancelTransfer();
+	        return _this30.callbacks.cancelTransfer();
 	      });
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onSwitchDevice, function (e) {
-	        return _this29.callbacks.switchDevice(e);
+	        return _this30.callbacks.switchDevice(e);
 	      });
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onBeforeUnload, function () {
-	        _this29.desktop.window = null;
-	        _this29.callbacks.hangup();
-	        _this29.callbacks.close();
+	        _this30.desktop.window = null;
+	        _this30.callbacks.hangup();
+	        _this30.callbacks.close();
 	      }); //slave window unload
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onQualityGraded, function (grade) {
-	        return _this29.callbacks.qualityGraded(grade);
+	        return _this30.callbacks.qualityGraded(grade);
 	      });
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onDialpadButtonClicked, function (grade) {
-	        return _this29.callbacks.dialpadButtonClicked(grade);
+	        return _this30.callbacks.dialpadButtonClicked(grade);
 	      });
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onCommentShown, function (commentShown) {
-	        return _this29.commentShown = commentShown;
+	        return _this30.commentShown = commentShown;
 	      });
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onSaveComment, function (comment) {
-	        _this29.comment = comment;
-	        _this29.saveComment();
+	        _this30.comment = comment;
+	        _this30.saveComment();
 	      });
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onSetAutoClose, function (autoClose) {
-	        return _this29.autoClose = autoClose;
+	        return _this30.autoClose = autoClose;
 	      });
 	    }
 	  }, {
@@ -5735,13 +5877,13 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "close",
 	    value: function close() {
-	      var _this30 = this;
+	      var _this31 = this;
 	      BX.onCustomEvent(window, 'CallCard::BeforeClose', []);
 	      if (this.isFolded() && this.elements.main) {
 	        main_core.Dom.addClass(this.elements.main, 'im-phone-call-panel-mini-closing');
 	        setTimeout(function () {
-	          main_core.Dom.remove(_this30.elements.main);
-	          _this30.elements = _this30.getInitialElements();
+	          main_core.Dom.remove(_this31.elements.main);
+	          _this31.elements = _this31.getInitialElements();
 	        }, 300);
 	      }
 	      if (this.popup) {
@@ -5786,13 +5928,13 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "autoClose",
 	    value: function autoClose() {
-	      var _this31 = this;
+	      var _this32 = this;
 	      if (this.allowAutoClose && !this.commentShown) {
 	        this.close();
 	      } else {
 	        BX.onCustomEvent(window, 'CallCard::BeforeClose', []);
 	        this.autoCloseTimer = setTimeout(function () {
-	          return _this31.autoCloseAfterTimeout();
+	          return _this32.autoCloseAfterTimeout();
 	        }, this.autoCloseTimeout);
 	      }
 	    }
@@ -5811,11 +5953,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "updateAutoCloseTimer",
 	    value: function updateAutoCloseTimer() {
-	      var _this32 = this;
+	      var _this33 = this;
 	      if (this.autoCloseTimer) {
 	        clearTimeout(this.autoCloseTimer);
 	        this.autoCloseTimer = setTimeout(function () {
-	          return _this32.autoCloseAfterTimeout();
+	          return _this33.autoCloseAfterTimeout();
 	        }, this.autoCloseTimeout);
 	      }
 	    }
@@ -5843,7 +5985,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "dispose",
 	    value: function dispose() {
-	      var _this33 = this;
+	      var _this34 = this;
 	      window.removeEventListener('beforeunload', this._onBeforeUnloadHandler);
 	      BX.removeCustomEvent("onPullEvent-crm", this._onPullEventCrmHandler);
 	      this.unloadRestApps();
@@ -5851,7 +5993,7 @@ this.BX = this.BX || {};
 	      if (this.isFolded() && this.elements.main) {
 	        main_core.Dom.addClass(this.elements.main, 'im-phone-call-panel-mini-closing');
 	        setTimeout(function () {
-	          return main_core.Dom.remove(_this33.elements.main);
+	          return main_core.Dom.remove(_this34.elements.main);
 	        }, 300);
 	      }
 	      if (this.backgroundWorker) {
@@ -5939,10 +6081,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "selectTransferTarget",
 	    value: function selectTransferTarget(resultCallback) {
-	      var _this34 = this;
+	      var _this35 = this;
 	      resultCallback = main_core.Type.isFunction(resultCallback) ? resultCallback : BX.DoNothing;
 	      main_core.Runtime.loadExtension('ui.entity-selector').then(function (exports) {
-	        var config = _this34.backgroundWorker.isUsed() ? _this34.getDialogConfigForBackgroundApp(resultCallback) : _this34.getDefaultDialogConfig(resultCallback);
+	        var config = _this35.backgroundWorker.isUsed() ? _this35.getDialogConfigForBackgroundApp(resultCallback) : _this35.getDefaultDialogConfig(resultCallback);
 	        var Dialog = exports.Dialog;
 	        var transferDialog = new Dialog(config);
 	        transferDialog.show();
@@ -5951,7 +6093,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getDialogConfigForBackgroundApp",
 	    value: function getDialogConfigForBackgroundApp(resultCallback) {
-	      var _this35 = this;
+	      var _this36 = this;
 	      return {
 	        targetNode: this.elements.buttons.transfer,
 	        multiple: false,
@@ -5974,14 +6116,14 @@ this.BX = this.BX || {};
 	            if (item.getEntityId() === 'user') {
 	              var customData = item.getCustomData();
 	              if (customData.get('personalPhone') || customData.get('personalMobile') || customData.get('workPhone')) {
-	                _this35.showTransferToUserMenu({
+	                _this36.showTransferToUserMenu({
 	                  userId: item.getId(),
 	                  customData: Object.fromEntries(customData),
-	                  darkMode: _this35.darkMode,
+	                  darkMode: _this36.darkMode,
 	                  onSelect: function onSelect(result) {
 	                    event.target.hide();
 	                    resultCallback({
-	                      phoneNumber: _this35.phoneNumber,
+	                      phoneNumber: _this36.phoneNumber,
 	                      target: result.target
 	                    });
 	                  }
@@ -5989,7 +6131,7 @@ this.BX = this.BX || {};
 	              } else {
 	                event.target.hide();
 	                resultCallback({
-	                  phoneNumber: _this35.phoneNumber,
+	                  phoneNumber: _this36.phoneNumber,
 	                  target: item.getId()
 	                });
 	              }
@@ -6001,7 +6143,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getDefaultDialogConfig",
 	    value: function getDefaultDialogConfig(resultCallback) {
-	      var _this36 = this;
+	      var _this37 = this;
 	      return {
 	        targetNode: this.elements.buttons.transfer,
 	        multiple: false,
@@ -6026,10 +6168,10 @@ this.BX = this.BX || {};
 	            if (item.getEntityId() === 'user') {
 	              var customData = item.getCustomData();
 	              if (customData.get('personalPhone') || customData.get('personalMobile') || customData.get('workPhone')) {
-	                _this36.showTransferToUserMenu({
+	                _this37.showTransferToUserMenu({
 	                  userId: item.getId(),
 	                  customData: Object.fromEntries(customData),
-	                  darkMode: _this36.darkMode,
+	                  darkMode: _this37.darkMode,
 	                  onSelect: function onSelect(result) {
 	                    event.target.hide();
 	                    resultCallback(result);

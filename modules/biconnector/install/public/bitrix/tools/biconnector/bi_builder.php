@@ -101,6 +101,8 @@ elseif (
 	$limitManager->setIsSuperset();
 }
 
+$tableName = isset($_GET['table']) ? (string)$_GET['table'] : null;
+
 if (!$manager->checkAccessKey($biKey))
 {
 	echo Json::encode(['error' => 'WRONG_KEY']);
@@ -125,214 +127,87 @@ elseif (!$limitManager->checkLimit())
 {
 	echo Json::encode(['error' => 'LIMIT_EXCEEDED']);
 }
-elseif (!$service->getTableFields($_GET['table']))
+elseif (empty($tableName) || !$service->getTableFields($tableName))
 {
 	echo Json::encode(['error' => 'NO_TABLE']);
 }
 elseif (isset($_GET['desc']))
 {
-	$tableFields = $service->getTableFields($_GET['table']);
+	$tableFields = $service->getTableFields($tableName);
 	echo Json::encode(array_values($tableFields), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 }
-elseif ($tableFields = $service->getTableFields($_GET['table']))
+elseif (isset($_GET['explain']))
 {
 	$limit = (int)($_GET['limit'] ?? 0);
-	$result = $service->getData($_GET['table'], $input);
+	if ($limit > 0)
+	{
+		$input['limit'] = $limit;
+	}
+	$result = $service->getData($tableName, $input);
 	if (isset($result['error']))
 	{
 		echo Json::encode($result);
 	}
+	elseif (!empty($result['sql']))
+	{
+		echo $result['sql'] . "\n";
+
+		$connection = $manager->getDatabaseConnection();
+		try
+		{
+			$res = $connection->query('explain ' . $result['sql']);
+			if (is_object($res))
+			{
+				\Bitrix\BIConnector\PrettyPrinter::printQueryResult($res);
+			}
+		}
+		catch (\Bitrix\Main\DB\SqlQueryException $e)
+		{
+			echo $e->getMessage();
+		}
+	}
 	else
 	{
-		$connection = $manager->getDatabaseConnection();
-		$connection->lock('biconnector_data', -1);
+		echo 'Not SQL dataset';
+	}
+}
+elseif ($service->getTableFields($tableName))
+{
+	$limit = (int)($_GET['limit'] ?? 0);
+	if ($limit > 0)
+	{
+		$input['limit'] = $limit;
+	}
+	$result = $service->getData($tableName, $input);
 
-		$logId = $manager->startQuery(
-			$_GET['table'],
-			implode(', ', array_map(static fn($item) => $item['ID'], $result['schema'])),
-			Json::encode($result['where'], JSON_UNESCAPED_UNICODE),
-			Json::encode($input, JSON_UNESCAPED_UNICODE),
+	if (isset($result['error']))
+	{
+		echo Bitrix\Main\Web\Json::encode($result);
+	}
+	else
+	{
+		$resultQuery = $service->printQuery(
+			$tableName,
+			$input,
 			$_SERVER['REQUEST_METHOD'],
 			$_SERVER['REQUEST_URI'],
+			$limit,
+			$limitManager
 		);
 
-		$queryResult = $connection->biQuery($result['sql']);
-		if ($queryResult)
+		if (!$resultQuery->isSuccess())
 		{
-			$extraCount = count($result['shadowFields']);
-			$selectFields = array_merge(array_values($result['schema']), array_values($result['shadowFields']));
-
-			$primary = [];
-			foreach ($selectFields as $i => $fieldInfo)
+			foreach ($resultQuery->getErrorCollection() as $error)
 			{
-				if (isset($fieldInfo['IS_PRIMARY']) && $fieldInfo['IS_PRIMARY'] === 'Y')
+				$outputError = ['error' => $error->getMessage()];
+				if (!empty($error->getCustomData()['description']))
 				{
-					$primary[] = $i;
+					$outputError['errstr'] = $error->getCustomData()['description'];
 				}
+
+				echo Json::encode($outputError);
 			}
-
-			$groupFields = [];
-			foreach ($selectFields as $i => $fieldInfo)
-			{
-				if (isset($fieldInfo['GROUP_CONCAT']))
-				{
-					foreach ($selectFields as $j => $keyInfo)
-					{
-						if ($keyInfo['ID'] == $fieldInfo['GROUP_KEY'])
-						{
-							$groupFields[$i] = [
-								'unique_id' => $j,
-								'state' => new Bitrix\BIConnector\Aggregate\ConcatState($fieldInfo['GROUP_CONCAT']),
-							];
-							break;
-						}
-					}
-				}
-				elseif (isset($fieldInfo['GROUP_COUNT']))
-				{
-					foreach ($selectFields as $j => $keyInfo)
-					{
-						if ($keyInfo['ID'] == $fieldInfo['GROUP_KEY'])
-						{
-							$groupFields[$i] = [
-								'unique_id' => $j,
-								'state' => new Bitrix\BIConnector\Aggregate\CountState($fieldInfo['GROUP_COUNT'] === 'DISTINCT'),
-							];
-							break;
-						}
-					}
-				}
-			}
-
-			$fields = [];
-			foreach ($result['schema'] as $fieldInfo)
-			{
-				$fields[] = $fieldInfo['ID'];
-			}
-
-			$out = "[\n" . Json::encode($fields, JSON_UNESCAPED_UNICODE) . "\n";
-			echo $out;
-			$count = 0;
-			$size = strlen($out);
-
-			$prevPrimaryKey = '';
-			$outputRow = false;
-			while ($row = $queryResult->fetch())
-			{
-				if ($limit && $count === $limit)
-				{
-					continue; //Avoid "Commands out of sync" error.
-				}
-
-				foreach ($result['onAfterFetch'] as $i => $callback)
-				{
-					$row[$i] = $callback($row[$i], $service::$dateFormats);
-				}
-
-				$primaryKey = '';
-				foreach ($primary as $primaryIndex)
-				{
-					if ($primaryKey)
-					{
-						$primaryKey .= '-';
-					}
-					$primaryKey .= $row[$primaryIndex];
-				}
-
-				if ($primary && $groupFields)
-				{
-					if (!$outputRow)
-					{
-						$outputRow = $row;
-						foreach ($groupFields as $i => $groupInfo)
-						{
-							$groupId = $row[$groupInfo['unique_id']];
-							$outputRow[$i] = clone $groupInfo['state'];
-							$outputRow[$i]->updateState($groupId, $row[$i]);
-						}
-					}
-					elseif ($primaryKey === $prevPrimaryKey)
-					{
-						foreach ($groupFields as $i => $groupInfo)
-						{
-							$groupId = $row[$groupInfo['unique_id']];
-							$outputRow[$i]->updateState($groupId, $row[$i]);
-						}
-					}
-					else
-					{
-						foreach ($groupFields as $i => $groupInfo)
-						{
-							$outputRow[$i] = $outputRow[$i]->output();
-						}
-						if ($extraCount)
-						{
-							array_splice($outputRow, -$extraCount);
-						}
-
-						$out = ',' . Json::encode($outputRow, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_IGNORE) . "\n";
-						echo $out;
-						$count++;
-						$size += strlen($out);
-
-						$outputRow = $row;
-						foreach ($groupFields as $i => $groupInfo)
-						{
-							$groupId = $row[$groupInfo['unique_id']];
-							$outputRow[$i] = clone $groupInfo['state'];
-							$outputRow[$i]->updateState($groupId, $row[$i]);
-						}
-					}
-					$prevPrimaryKey = $primaryKey;
-				}
-				else
-				{
-					if ($extraCount)
-					{
-						array_splice($row, -$extraCount);
-					}
-
-					$out = ',' . Json::encode($row, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_IGNORE) . "\n";
-					echo $out;
-					$count++;
-					$size += strlen($out);
-				}
-			}
-
-			if ($outputRow && !($limit && $count === $limit))
-			{
-				foreach ($groupFields as $i => $groupInfo)
-				{
-					$outputRow[$i] = $outputRow[$i]->output();
-				}
-
-				if ($extraCount)
-				{
-					array_splice($outputRow, -$extraCount);
-				}
-
-				$out = ',' . Json::encode($outputRow, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_IGNORE) . "\n";
-				echo $out;
-				$count++;
-				$size += strlen($out);
-			}
-
-			$out = ']';
-			echo $out;
-			$size += strlen($out);
-
-			$isOverLimit = $limitManager->fixLimit($count);
-
-			$manager->endQuery($logId, $count, $size, $isOverLimit);
 		}
-		else
-		{
-			echo Json::encode([
-				'error' => 'SQL_ERROR',
-				'errstr' => $connection->getErrorMessage(),
-			]);
-		}
-		$connection->unlock('biconnector_data');
 	}
 }
 else

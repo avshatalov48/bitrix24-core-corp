@@ -21,6 +21,7 @@ jn.define('tasks/statemanager/redux/slices/tasks-stages', (require, exports, mod
 		updateTaskDeadlineFulfilled,
 		updateTaskPending,
 		updateTaskFulfilled,
+		updateTaskRejected,
 	} = require('tasks/statemanager/redux/slices/tasks-stages/extra-reducers');
 	const { updateDeadline, update } = require('tasks/statemanager/redux/slices/tasks/thunk');
 
@@ -83,7 +84,8 @@ jn.define('tasks/statemanager/redux/slices/tasks-stages', (require, exports, mod
 				.addCase(updateDeadline.pending, updateDeadlinePending)
 				.addCase(updateDeadline.fulfilled, updateTaskDeadlineFulfilled)
 				.addCase(update.pending, updateTaskPending)
-				.addCase(update.fulfilled, updateTaskFulfilled);
+				.addCase(update.fulfilled, updateTaskFulfilled)
+				.addCase(update.rejected, updateTaskRejected);
 		},
 	});
 

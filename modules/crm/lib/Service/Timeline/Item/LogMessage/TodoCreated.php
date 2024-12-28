@@ -59,7 +59,7 @@ class TodoCreated extends LogMessage
 		$descriptionType = (int)$this->getHistoryItemModel()?->get('ASSOCIATED_ENTITY')['DESCRIPTION_TYPE'] ?? null;
 		if ($this->getContext()->getType() === Context::MOBILE && $descriptionType === \CCrmContentType::BBCode)
 		{
-			$description = \Bitrix\Crm\Entity\CommentsHelper::normalizeComment($description);
+			$description = \Bitrix\Crm\Format\TextHelper::removeParagraphs($description);
 		}
 
 		$result = [];

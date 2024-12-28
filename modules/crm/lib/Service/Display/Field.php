@@ -727,11 +727,16 @@ abstract class Field
 	{
 		if ($this->isMobileContext())
 		{
-			return str_replace(
-				'<br>',
-				'',
-				html_entity_decode($fieldValue, ENT_QUOTES, SITE_CHARSET)
-			);
+			if (is_string($fieldValue) || is_numeric($fieldValue))
+			{
+				return str_replace(
+					'<br>',
+					'',
+					html_entity_decode($fieldValue, ENT_QUOTES, SITE_CHARSET)
+				);
+			}
+
+			return '';
 		}
 
 		if (!$this->isMultiple() && $fieldValue !== '')

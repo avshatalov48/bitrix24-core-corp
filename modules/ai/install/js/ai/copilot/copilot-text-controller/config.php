@@ -26,7 +26,6 @@ return [
 	],
 	'skip_core' => false,
 	'settings' => [
-		'isPromptLibraryEnable' => Option::get('ai', 'ai_prompt_library_enable') === 'Y',
 		'settingsPageLink' => $isCP ? \Bitrix\Intranet\PortalSettings::getInstance()->getSettingsUrl() . '?page=ai' : '/settings/configs/?page=ai',
 	]
 ];

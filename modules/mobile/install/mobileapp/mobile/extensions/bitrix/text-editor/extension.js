@@ -416,6 +416,7 @@ jn.define('text-editor', (require, exports, module) => {
 		 *     autoFocus?: boolean,
 		 *     allowFiles?: boolean,
 		 *     allowBBCode?: boolean,
+		 *     allowInsertToText?: boolean,
 		 * }}
 		 * @return {
 		 * 		Promise<{
@@ -808,7 +809,7 @@ jn.define('text-editor', (require, exports, module) => {
 			const menu = new ContextMenu({
 				title: Loc.getMessage('MOBILEAPP_TEXT_EDITOR_FILE_MENU_TITLE'),
 				actions: [
-					{
+					this.isInsertToTextAllowed() && {
 						id: 'insert-to-text',
 						title: Loc.getMessage('MOBILEAPP_TEXT_EDITOR_FILE_INSERT_TO_TEXT'),
 						onClickCallback: () => {
@@ -837,14 +838,14 @@ jn.define('text-editor', (require, exports, module) => {
 							file.onDeleteAttachmentItem();
 						},
 					},
-				],
+				].filter(Boolean),
 				onClose: () => {
 					this.getTextInput().focus();
 				},
 				testId: `${this.state.testId}_FILE_CONTEXT_MENU`,
 			});
 
-			menu.show();
+			menu.show(this.parentWidget || PageManager);
 		}
 
 		onFilesChange(value)
@@ -1022,7 +1023,6 @@ jn.define('text-editor', (require, exports, module) => {
 					resizableByKeyboard: true,
 					style: {
 						paddingTop: Indent.XL.toNumber(),
-						paddingHorizontal: Indent.XL3.toNumber(),
 						...this.state.view.style,
 					},
 					onLongClick: this.onLongClickInReadOnlyMode,
@@ -1045,6 +1045,7 @@ jn.define('text-editor', (require, exports, module) => {
 								BBCodeText({
 									value: this.state.preparedValue,
 									style: {
+										marginHorizontal: Indent.XL3.toNumber(),
 										paddingTop: 20,
 										...this.state.textInput.style,
 										flex: 0,
@@ -1077,6 +1078,11 @@ jn.define('text-editor', (require, exports, module) => {
 		isBBCodeAllowed()
 		{
 			return this.props.allowBBCode !== false;
+		}
+
+		isInsertToTextAllowed()
+		{
+			return this.props.allowInsertToText !== false;
 		}
 	}
 

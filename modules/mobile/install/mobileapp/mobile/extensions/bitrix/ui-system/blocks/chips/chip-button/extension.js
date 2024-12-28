@@ -5,6 +5,7 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 	const { Indent, Component, Color } = require('tokens');
 	const { Ellipsize } = require('utils/enums/style');
 	const { mergeImmutable } = require('utils/object');
+	const { PureComponent } = require('layout/pure-component');
 	const { IconView, Icon, iconTypes } = require('ui-system/blocks/icon');
 	const { ChipButtonDesign } = require('ui-system/blocks/chips/chip-button/src/design-enum');
 	const { ChipButtonMode } = require('ui-system/blocks/chips/chip-button/src/mode-enum');
@@ -17,20 +18,21 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 
 	/**
 	 * @typedef {Object} ChipButtonProps
-	 * @property {boolean} [text]
+	 * @property {string} [text]
 	 * @property {Icon} [icon]
+	 * @property {boolean} [dropdown]
 	 * @property {boolean} [compact]
 	 * @property {ChipButtonMode} [mode=ChipButtonMode.SOLID]
 	 * @property {ChipButtonDesign} [design=ChipButtonDesign.PRIMARY]
 	 * @property {Ellipsize} [ellipsize]
 	 * @property {BadgeStatus | BadgeCounter} [badge]
+	 * @property {Avatar | AvatarStack} [avatar]
 	 * @property {Function} [forwardRef]
 	 * @property {Color} [backgroundColor]
 	 *
 	 * @class ChipButton
-	 * @return ChipButton
 	 */
-	class ChipButton extends LayoutComponent
+	class ChipButton extends PureComponent
 	{
 		/**
 		 * @param {ChipButtonProps} props
@@ -39,44 +41,37 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 		{
 			super(props);
 
-			this.style = {};
-			this.size = {};
-
-			this.#initStyle(props);
+			this.initStyle(props);
 		}
 
 		componentWillReceiveProps(props)
 		{
-			this.#initStyle(props);
+			this.initStyle(props);
 		}
 
-		#initStyle(props)
+		initStyle(props)
 		{
-			const { design, mode, compact, disabled } = props;
+			const { compact } = props;
 
-			const finalDesign = disabled
-				? design.getDisabled()
-				: ChipButtonDesign.resolve(design, ChipButtonDesign.PRIMARY);
-
-			this.style = finalDesign.getStyle(mode);
+			this.design = this.getDesign(props);
 			this.size = compact ? ChipButtonSize.SMALL : ChipButtonSize.NORMAL;
 		}
 
 		#renderText()
 		{
-			const { text } = this.props;
+			const text = this.getText();
 
 			if (!text)
 			{
 				return null;
 			}
 
-			const { color } = this.style;
-			const Typography = this.size.getTypography();
+			const Typography = this.getTypography();
 
 			return Typography({
 				text,
-				color,
+				testId: this.getTestId('value'),
+				color: this.getColor(),
 				ellipsize: this.#getEllipsize(),
 				numberOfLines: 1,
 				style: {
@@ -85,41 +80,66 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 			});
 		}
 
-		#renderIcon()
+		#renderLeftContent()
 		{
-			const { icon, text } = this.props;
+			const { icon, avatar } = this.props;
 
-			if (!icon)
+			if (!icon && !avatar)
 			{
 				return null;
 			}
 
-			const { color } = this.style;
+			const hasText = Boolean(this.getText());
 
-			const iconStyle = {
-				marginRight: text ? Indent.XS2.toNumber() : 0,
+			const style = {
+				marginRight: hasText ? Indent.XS2.toNumber() : 0,
 			};
 
-			return IconView({
-				color,
-				icon,
-				style: iconStyle,
-			});
+			return avatar
+				? this.#renderAvatar({ style, testId: 'avatar' })
+				: this.#renderIcon({ icon, style, testId: 'left-icon' });
+		}
+
+		#renderAvatar({ style, testId })
+		{
+			const { avatar } = this.props;
+
+			if (avatar?.props?.size > 20)
+			{
+				console.warn('ChipButton: The size of the avatar should not exceed 20px according to the design system.');
+			}
+
+			return View(
+				{
+					style,
+					testId: this.getTestId(testId),
+				},
+				avatar,
+			);
 		}
 
 		#renderDropdown()
 		{
 			const { dropdown } = this.props;
+
 			if (!dropdown)
 			{
 				return null;
 			}
 
-			const { color } = this.style;
+			return this.#renderIcon({
+				icon: Icon.CHEVRON_DOWN_SIZE_S,
+				testId: 'dropdown',
+			});
+		}
 
+		#renderIcon({ style, icon, testId })
+		{
 			return IconView({
-				color,
-				icon: Icon.CHEVRON_DOWN,
+				color: this.getIconColor(),
+				icon,
+				style,
+				testId: this.getTestId(testId),
 			});
 		}
 
@@ -172,24 +192,29 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 					onClick: this.#handleOnClick,
 					style: this.getBodyStyle(),
 				},
-				this.#renderIcon(),
+				this.#renderLeftContent(),
 				this.#renderText(),
 				this.#renderBadge(),
 				this.#renderDropdown(),
 			);
 		}
 
+		getTypography()
+		{
+			return this.size.getTypography();
+		}
+
 		getBodyStyle()
 		{
 			const { backgroundColor = null } = this.props;
-			const { color, ...chipStyle } = this.style;
+			const { color, ...chipStyle } = this.design;
 
 			const style = {
 				flexShrink: 1,
 				flexDirection: 'row',
 				alignItems: 'center',
 				height: this.size.getHeight(),
-				borderRadius: Component.elementAccentCorner.toNumber(),
+				borderRadius: this.#getBorderRadius(),
 				paddingLeft: this.#getInternalPadding(Direction.LEFT),
 				paddingRight: this.#getInternalPadding(Direction.RIGHT),
 				paddingHorizontal: Indent.L.toNumber(),
@@ -241,16 +266,73 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 			return Ellipsize.resolve(ellipsize, Ellipsize.END).toString();
 		}
 
+		#getBorderRadius()
+		{
+			const borderRadius = this.isRounded()
+				? Component.elementAccentCorner
+				: this.size.getRadius();
+
+			return borderRadius.toNumber();
+		}
+
+		getDesign(props)
+		{
+			const { design, disabled, mode } = props;
+
+			if (design === null)
+			{
+				return {};
+			}
+
+			const finalDesign = disabled
+				? design.getDisabled()
+				: ChipButtonDesign.resolve(design, ChipButtonDesign.PRIMARY);
+
+			return finalDesign.getStyle(mode);
+		}
+
+		getColor()
+		{
+			return this.design?.color;
+		}
+
+		getIconColor()
+		{
+			return this.getColor();
+		}
+
+		getText()
+		{
+			const { text } = this.props;
+
+			return text;
+		}
+
+		getTestId(suffix)
+		{
+			const { testId } = this.props;
+
+			return [testId, suffix].join('-').trim();
+		}
+
 		isOnlyIcon()
 		{
 			const { icon, dropdown, text } = this.props;
 
 			return (icon || dropdown) && !text;
 		}
+
+		isRounded()
+		{
+			const { rounded = true } = this.props;
+
+			return Boolean(rounded);
+		}
 	}
 
 	ChipButton.defaultProps = {
 		compact: false,
+		rounded: true,
 	};
 
 	ChipButton.propTypes = {
@@ -258,14 +340,16 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 		text: PropTypes.string,
 		compact: PropTypes.bool,
 		badge: PropTypes.object,
+		avatar: PropTypes.object,
+		rounded: PropTypes.bool,
 		dropdown: PropTypes.bool,
 		forwardRef: PropTypes.func,
 		icon: PropTypes.instanceOf(Icon),
 		design: PropTypes.instanceOf(ChipButtonDesign),
 		mode: PropTypes.instanceOf(ChipButtonMode),
 		ellipsize: PropTypes.instanceOf(Ellipsize),
+		color: PropTypes.instanceOf(Color),
 		backgroundColor: PropTypes.instanceOf(Color),
-
 	};
 
 	module.exports = {
@@ -273,8 +357,10 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 		 * @param {ChipButtonProps} props
 		 */
 		ChipButton: (props) => new ChipButton(props),
+		ChipButtonClass: ChipButton,
 		ChipButtonDesign,
 		ChipButtonMode,
+		ChipButtonSize,
 		Ellipsize,
 		iconTypes,
 	};

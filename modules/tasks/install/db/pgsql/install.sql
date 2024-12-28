@@ -727,6 +727,7 @@ CREATE TABLE b_tasks_task_tag (
   PRIMARY KEY (ID)
 );
 CREATE UNIQUE INDEX ux_b_tasks_task_tag_tag_id_task_id ON b_tasks_task_tag (tag_id, task_id);
+CREATE INDEX ix_b_tasks_task_tag_task_id ON b_tasks_task_tag (task_id);
 
 CREATE TABLE b_tasks_viewed_group (
   GROUP_ID int NOT NULL,
@@ -741,6 +742,8 @@ CREATE TABLE b_tasks_scenario (
   TASK_ID int8 NOT NULL,
   SCENARIO varchar(8) NOT NULL DEFAULT 'default'
 );
+
+CREATE INDEX task_scenario_index on b_tasks_scenario (task_id, scenario);
 
 CREATE TABLE b_tasks_template_scenario (
   TEMPLATE_ID int8 NOT NULL,
@@ -873,3 +876,29 @@ create table if not exists b_tasks_flow_auto_created_robot
 );
 
 create unique index ix_flow_robot on b_tasks_flow_auto_created_robot (FLOW_ID, ROBOT);
+
+create table if not exists b_tasks_flow_user_option
+(
+    ID int not null generated always as identity,
+    FLOW_ID int not null,
+    USER_ID int not null,
+    NAME varchar(255) not null,
+    VALUE varchar(255) not null,
+    primary key (ID),
+    constraint ix_b_task_flow_user_option_name_value unique (FLOW_ID, USER_ID, NAME)
+);
+
+create table if not exists b_tasks_flow_copilot_advice
+(
+	FLOW_ID int not null,
+	ADVICE text,
+	UPDATED_DATE timestamp(0) default null,
+	primary key (FLOW_ID)
+);
+
+create table if not exists b_tasks_flow_copilot_collected_data
+(
+	FLOW_ID int not null,
+	DATA text,
+	primary key (FLOW_ID)
+);

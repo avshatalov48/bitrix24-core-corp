@@ -64,6 +64,7 @@ jn.define('crm/receive-payment/steps/contact/warning-layout', (require, exports,
 					description: Loc.getMessage('MOBILE_RECEIVE_PAYMENT_NO_SMS_PROVIDERS_TEXT'),
 					layout: PageManager,
 					redirectUrl: '/saleshub/',
+					analyticsSection: 'crm',
 				}),
 				this.state.showPhoneWarning && new WarningBlock({
 					title: Loc.getMessage('MOBILE_RECEIVE_PAYMENT_NO_CONTACT_PHONE_TITLE'),

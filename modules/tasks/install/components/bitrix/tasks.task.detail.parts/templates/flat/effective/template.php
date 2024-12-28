@@ -16,7 +16,7 @@ $rowTemplate = <<<HTML
 <tr>
 	<td class="task-time-date-column"><span class="task-time-date">{{date}}</span></td>
 	<td class="task-time-author-column">
-		<a class="task-log-author" href="{{pathToUserProfile}}" target="_top">{{userName}}</a>
+		<a class="task-log-author {{userTypeClass}}" href="{{pathToUserProfile}}" target="_top">{{userName}}</a>
 		<span class="task-log-author-text">{{userName}}</span>
 	</td>
 </tr>
@@ -39,6 +39,8 @@ HTML;
 		$users = [];
 		foreach ($arResult['TEMPLATE_DATA']['DATA']['EFFECTIVE']['ITEMS'] as $row)
 		{
+			$userType = \Bitrix\Tasks\Integration\Intranet\User::getType($row['USER_ID']);
+			$userTypeClasses[$row['USER_ID']] = "task-log-author-$userType";
 			$users[] = $row['USER_ID'];
 		}
 
@@ -53,7 +55,8 @@ HTML;
 					"{{userId}}",
 					"{{userType}}",
 					"{{userName}}",
-					"{{pathToUserProfile}}"
+					"{{pathToUserProfile}}",
+					"{{userTypeClass}}",
 				),
 				array(
 					"id" => $row["ID"],
@@ -61,7 +64,11 @@ HTML;
 					"userId" => $row['USER_ID'],
 					"userType" => $row['USER_TYPE'],
 					"userName" => htmlspecialcharsbx($userNames[$row["USER_ID"]]),
-					'pathToUserProfile' => CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER_PROFILE"], array("user_id" => $row["USER_ID"]))
+					'pathToUserProfile' => CComponentEngine::MakePathFromTemplate(
+						$arParams["PATH_TO_USER_PROFILE"],
+						array("user_id" => $row["USER_ID"])
+					),
+					$userTypeClasses[$row["USER_ID"]] ?? '',
 				),
 				$rowTemplate
 			);

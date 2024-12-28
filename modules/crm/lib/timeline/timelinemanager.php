@@ -297,31 +297,32 @@ class TimelineManager
 					->loadForItems($additionalData, RestAppLayoutBlocksTable::ACTIVITY_ITEM_TYPE)
 				;
 
-				while($fields = $dbResult->Fetch())
+				while ($fields = $dbResult->Fetch())
 				{
 					$assocEntityID = (int)$fields['ID'];
-					if(!isset($entityInfos[$assocEntityID]))
+					if (!isset($entityInfos[$assocEntityID]))
 					{
 						continue;
 					}
 
-					$itemIDs = isset($entityInfos[$assocEntityID]['ITEM_IDS'])
-						? $entityInfos[$assocEntityID]['ITEM_IDS'] : array();
-
+					$itemIDs = $entityInfos[$assocEntityID]['ITEM_IDS'] ?? [];
 					$note = $additionalData[$assocEntityID]['NOTE'] ?? null;
 					$restAppLayoutBlocks = $additionalData[$assocEntityID]['REST_APP_LAYOUT_BLOCKS'] ?? [];
-
 					$fields = ActivityController::prepareEntityDataModel(
 						$assocEntityID,
 						$fields,
 						array('ENABLE_COMMUNICATIONS' => false)
 					);
 
-					foreach($itemIDs as $itemID)
+					foreach ($itemIDs as $itemID)
 					{
 						$items[$itemID]['ASSOCIATED_ENTITY'] = $fields;
 						$items[$itemID]['REST_APP_LAYOUT_BLOCKS'] = $restAppLayoutBlocks;
-						if ($note)
+
+						if (
+							$note
+							&& (int)($items[$itemID]['TYPE_ID'] ?? 0) === TimelineType::ACTIVITY
+						)
 						{
 							$items[$itemID]['NOTE'] = $note;
 						}

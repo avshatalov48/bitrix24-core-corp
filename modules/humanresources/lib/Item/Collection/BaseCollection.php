@@ -81,6 +81,11 @@ abstract class BaseCollection implements ItemCollection
 		return true;
 	}
 
+	public function map(callable $closure): array
+	{
+		return array_map($closure, $this->itemMap);
+	}
+
 	/**
 	 * @param int $id
 	 *
@@ -102,6 +107,22 @@ abstract class BaseCollection implements ItemCollection
 	public function getItemMap(): array
 	{
 		return $this->itemMap;
+	}
+
+	/**
+	 * @return array<V>
+	 */
+	public function getValues()
+	{
+		return array_values($this->itemMap);
+	}
+
+	/**
+	 * @return array<V>
+	 */
+	public function getKeys()
+	{
+		return array_keys($this->itemMap);
 	}
 
 	/**
@@ -177,5 +198,59 @@ abstract class BaseCollection implements ItemCollection
 		self::$reflectionMap[static::class] = '\\Bitrix\\HumanResources\\' . $matches[1];
 
 		return self::$reflectionMap[static::class];
+	}
+
+	/**
+	 * @return ?V
+	 */
+	public function getFirst()
+	{
+		return array_values($this->itemMap)[0] ?? null;
+	}
+
+	/**
+	 * @param string $name
+	 * @param array $arguments
+	 *
+	 * @return Item|null
+	 */
+	public function __call(string $name, array $arguments)
+	{
+		if (str_starts_with($name, 'getFirstBy'))
+		{
+			$property = lcfirst(substr($name, 10));
+			$itemClass = $this->getItemClass();
+
+			if (property_exists($itemClass, $property))
+			{
+				return $this->getFirstByProperty($property, $arguments[0]);
+			}
+		}
+
+		throw new \BadMethodCallException("Unknown method '{$name}'");
+	}
+
+	/**
+	 * @param string $property
+	 * @param $value
+	 *
+	 * @return Item|null
+	 */
+	private function getFirstByProperty(string $property, $value): ?Item
+	{
+		if (!$value)
+		{
+			return null;
+		}
+
+		foreach ($this as $item)
+		{
+			if ($item->$property === $value)
+			{
+				return $item;
+			}
+		}
+
+		return null;
 	}
 }

@@ -219,6 +219,26 @@ class UserTable extends \Bitrix\Main\UserTable
 				}
 			]
 		));
+
+		if (Loader::includeModule('extranet'))
+		{
+			$entity->addField(
+				(new \Bitrix\Main\ORM\Fields\Relations\Reference(
+					'EXTRANET',
+					\Bitrix\Extranet\Model\ExtranetUserTable::class,
+					\Bitrix\Main\ORM\Query\Join::on('this.ID', 'ref.USER_ID'))
+				)->configureJoinType(\Bitrix\Main\ORM\Query\Join::TYPE_LEFT)
+			);
+
+			// remove this after b_extranet_user migration
+			$entity->addField(
+				(new \Bitrix\Main\ORM\Fields\Relations\Reference(
+					'EXTRANET_GROUP',
+					\Bitrix\Main\UserGroupTable::class,
+					\Bitrix\Main\ORM\Query\Join::on('this.ID', 'ref.USER_ID')->where('ref.GROUP_ID', \CExtranet::getExtranetUserGroupId())
+				))->configureJoinType(\Bitrix\Main\ORM\Query\Join::TYPE_LEFT),
+			);
+		}
 	}
 
 	public static function createInvitedQuery(): Query

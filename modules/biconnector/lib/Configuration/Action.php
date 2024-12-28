@@ -24,6 +24,7 @@ use Bitrix\Rest\Configuration\Structure;
 use Bitrix\BIConnector\Services\GoogleDataStudio;
 use Bitrix\BIConnector\KeyTable;
 use Bitrix\BIConnector\KeyManager;
+use Bitrix\BIConnector\Superset\Dashboard\UrlParameter;
 use CFile;
 
 Loc::loadMessages(__FILE__);
@@ -462,16 +463,22 @@ class Action
 		if ($manifestCode === \Bitrix\BiConnector\Configuration\Manifest::MANIFEST_CODE_SUPERSET)
 		{
 			$appId = (int)$event->getParameter('APP_ID');
-			$dashboardId = (int)SupersetDashboardTable::getRow(['filter' => ['=APP.ID' => $appId]])['ID'];
+			$dashboard = SupersetDashboardTable::getList([
+					'filter' => ['=APP.ID' => $appId],
+					'limit' => 1,
+				])
+				->fetchObject()
+			;
 
-			if ($dashboardId > 0)
+			if ($dashboard)
 			{
+				$urlService = new UrlParameter\Service($dashboard);
 				$result['CREATE_DOM_LIST'][] = [
 					'TAG' => 'a',
 					'DATA' => [
 						'attrs' => [
 							'class' => 'ui-btn ui-btn-lg ui-btn-success ui-btn-round',
-							'href' => "/bi/dashboard/detail/{$dashboardId}/",
+							'href' => $urlService->getEmbeddedUrl(),
 							'target' => '_blank',
 						],
 						'text' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_DASHBOARD_IMPORT_FINISH_BUTTON'),

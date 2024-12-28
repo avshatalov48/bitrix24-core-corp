@@ -14,7 +14,7 @@ class Scheme extends Controller
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'documentUid'
+		itemIdOrUidRequestKey: 'documentUid'
 	)]
 	public function loadAction(string $documentUid): array
 	{

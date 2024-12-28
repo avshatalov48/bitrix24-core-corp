@@ -43,8 +43,10 @@ jn.define('selector/widget', (require, exports, module) => {
 			sectionTitles,
 			animation,
 			leftButtons,
+			integrateSelectorToParentLayout,
 		})
 		{
+			this.integrateSelectorToParentLayout = integrateSelectorToParentLayout ?? false;
 			this.returnKey = returnKey || DEFAULT_RETURN_KEY;
 			this.queryText = '';
 			this.isItemCreating = false;
@@ -66,6 +68,8 @@ jn.define('selector/widget', (require, exports, module) => {
 			);
 			this.events = events || {};
 
+			this.hiddenWidget = null;
+
 			this.entityIds = Array.isArray(entityIds) ? entityIds : [entityIds];
 			this.initSelectedIds = this.prepareInitSelectedIds(initSelectedIds);
 			this.undeselectableIds = this.prepareInitSelectedIds(undeselectableIds);
@@ -73,11 +77,14 @@ jn.define('selector/widget', (require, exports, module) => {
 
 			this.sectionTitles = sectionTitles || {};
 			this.shouldRenderHiddenItemsInList = shouldRenderHiddenItemsInList ?? true;
-			this.animation = animation;
+			this.animation = animation || 'none';
 
 			this.leftButtons = Type.isArrayFilled(leftButtons) ? leftButtons : [];
 
 			this.setupProvider(provider);
+
+			this.shouldSetInitiallySelectedItems = Array.isArray(this.initSelectedIds)
+				? this.initSelectedIds.length > 0 : false;
 		}
 
 		getWidget()
@@ -119,10 +126,14 @@ jn.define('selector/widget', (require, exports, module) => {
 				{
 					[entityId, id] = data;
 				}
-				else
+				else if (this.entityIds.length === 1)
 				{
 					entityId = this.entityIds[0];
 					id = data;
+				}
+				else
+				{
+					throw new Error('EntitySelectorWidget: elements of initSelectedIds should contain entity id, if multiple entities are used in selector');
 				}
 
 				return [entityId, id.toString()];
@@ -150,8 +161,8 @@ jn.define('selector/widget', (require, exports, module) => {
 				this.provider.setEntityWeight(this.searchOptions.entityWeight);
 			}
 
-			this.provider.setPreselectedItems(this.initSelectedIds);
-			this.provider.setCanUseRecent(this.canUseRecent);
+			this.provider.setPreselectedItems?.(this.initSelectedIds);
+			this.provider.setCanUseRecent?.(this.canUseRecent);
 
 			this.provider.setListener({
 				onFetchResult: this.onProviderFetchResult.bind(this),
@@ -206,66 +217,75 @@ jn.define('selector/widget', (require, exports, module) => {
 					return;
 				}
 
+				const openWidgetHandler = (widget) => {
+					this.widget = widget;
+
+					this.widget.setReturnKey(this.returnKey);
+
+					if (Array.isArray(this.scopes))
+					{
+						this.widget.setScopes(this.scopes);
+					}
+
+					const placeholder = this.getSearchPlaceholder();
+					if (placeholder)
+					{
+						this.widget.setPlaceholder(placeholder);
+					}
+
+					if (this.leftButtons)
+					{
+						this.widget.setLeftButtons(this.leftButtons);
+					}
+
+					if (!isAirStyleSupported)
+					{
+						this.widget.setRightButtons([
+							{
+								name: (
+									this.closeOnSelect
+										? BX.message('PROVIDER_WIDGET_CLOSE')
+										: BX.message('PROVIDER_WIDGET_SELECT')
+								),
+								type: 'text',
+								color: Color.accentMainLinks.toHex(),
+								callback: () => this.close(),
+							},
+						]);
+					}
+
+
+
+					this.widget.allowMultipleSelection(this.allowMultipleSelection);
+					this.provider.loadRecent?.();
+
+					this.widget.on('send', () => this.close());
+					this.widget.on('onViewShown', this.onViewShown);
+
+					this.widget.setListener((eventName, data) => {
+						const callbackName = `${eventName}Listener`;
+						if (typeof this[callbackName] === 'function')
+						{
+							this[callbackName].apply(this, [data]);
+						}
+					});
+
+					this.handleOnEventsCallback('onWidgetCreated');
+
+					resolve(this.widget);
+				};
+
+				if (this.integrateSelectorToParentLayout)
+				{
+					openWidgetHandler(parentWidget);
+
+					return;
+				}
+
 				const widgetManager = (parentWidget || PageManager);
 				widgetManager
 					.openWidget('selector', mergeImmutable(widgetParams, airWidgetParams))
-					.then((widget) => {
-						this.widget = widget;
-
-						this.widget.setReturnKey(this.returnKey);
-
-						if (Array.isArray(this.scopes))
-						{
-							this.widget.setScopes(this.scopes);
-						}
-
-						const placeholder = this.getSearchPlaceholder();
-						if (placeholder)
-						{
-							this.widget.setPlaceholder(placeholder);
-						}
-
-						if (this.leftButtons)
-						{
-							this.widget.setLeftButtons(this.leftButtons);
-						}
-
-						if (!isAirStyleSupported)
-						{
-							this.widget.setRightButtons([
-								{
-									name: (
-										this.closeOnSelect
-											? BX.message('PROVIDER_WIDGET_CLOSE')
-											: BX.message('PROVIDER_WIDGET_SELECT')
-									),
-									type: 'text',
-									color: Color.accentMainLinks.toHex(),
-									callback: () => this.close(),
-								},
-							]);
-						}
-
-						if (Application.getApiVersion() > 55)
-						{
-							this.widget.setPickerAnimation?.(this.animation);
-						}
-
-						this.widget.allowMultipleSelection(this.allowMultipleSelection);
-						this.provider.loadRecent();
-
-						this.widget.on('send', () => this.close());
-
-						this.widget.setListener((eventName, data) => {
-							const callbackName = `${eventName}Listener`;
-							if (typeof this[callbackName] === 'function')
-							{
-								this[callbackName].apply(this, [data]);
-							}
-						});
-
-						resolve(this.widget);
-					})
+					.then(openWidgetHandler)
 					.catch(reject);
 			});
 		}
@@ -300,8 +320,15 @@ jn.define('selector/widget', (require, exports, module) => {
 				}
 				else
 				{
-					this.provider.loadRecent();
+					this.provider.loadRecent?.();
 				}
+
+				return;
+			}
+
+			if (typeof this.searchOptions.onSearch === 'function')
+			{
+				this.searchOptions.onSearch({ text, scope });
 			}
 			else
 			{
@@ -320,13 +347,13 @@ jn.define('selector/widget', (require, exports, module) => {
 		{
 			this.handleOnEventsCallback('onItemSelected', { text, item, scope });
 
-			if (
-				item.disabled
-				&& this.selectOptions.nonSelectableErrorText.length > 0
-				&& Feature.isToastSupported()
-			)
+			if (item.disabled)
 			{
-				showToast({ message: this.selectOptions.nonSelectableErrorText });
+				const nonSelectableErrorText = this.selectOptions.getNonSelectableErrorText?.(item) || '';
+				if (nonSelectableErrorText.length > 0)
+				{
+					showToast({ message: nonSelectableErrorText }, this.widget);
+				}
 
 				return;
 			}
@@ -365,9 +392,9 @@ jn.define('selector/widget', (require, exports, module) => {
 						items.forEach((item) => {
 							if (item.id)
 							{
-								if (!this.provider.isInRecentCache(item))
+								if (!this.provider.isInRecentCache?.(item))
 								{
-									this.provider.addToRecentCache(item);
+									this.provider.addToRecentCache?.(item);
 								}
 
 								const preparedItem = this.provider.prepareItemForDrawing(item);
@@ -411,7 +438,7 @@ jn.define('selector/widget', (require, exports, module) => {
 					(errors) => {
 						this.setIsItemCreating(false);
 					},
-				);
+				).catch(console.error);
 		}
 
 		getEntityType(item)
@@ -488,7 +515,7 @@ jn.define('selector/widget', (require, exports, module) => {
 
 		// region provider event handlers
 
-		onProviderRecentResult(items, cache = false)
+		onProviderRecentResult(items = [], cache = false)
 		{
 			if (this.queryText !== '')
 			{
@@ -590,9 +617,19 @@ jn.define('selector/widget', (require, exports, module) => {
 		 */
 		hasItemsInCurrentItems(itemsToCheck)
 		{
+			const isConvertibleToNumber = (value) => !Number.isNaN(Number(value));
+
 			return itemsToCheck.every((itemToCheck) => {
 				return this.currentItems.some((item) => {
-					return item.id === itemToCheck.id;
+					if (
+						(isConvertibleToNumber(item.id) && Number(item.id) <= 0)
+						|| (isConvertibleToNumber(itemToCheck.id) && Number(itemToCheck.id) <= 0)
+					)
+					{
+						return false;
+					}
+
+					return item.id && itemToCheck.id && String(item.id || '') === String(itemToCheck.id || '');
 				});
 			});
 		}
@@ -602,7 +639,7 @@ jn.define('selector/widget', (require, exports, module) => {
 			return this.queryText === '';
 		}
 
-		setItems(items)
+		setItems(items, animation = this.animation)
 		{
 			if (!this.widget)
 			{
@@ -665,12 +702,7 @@ jn.define('selector/widget', (require, exports, module) => {
 			{
 				this.currentItems = items;
 
-				this.widget.setItems(this.currentItems);
-
-				if (Application.getApiVersion() > 55)
-				{
-					this.widget.animatePicker?.();
-				}
+				this.widget.setItems(this.currentItems, this.currentSections, { animate: animation });
 			}
 
 			if (isAirStyleSupported)
@@ -741,12 +773,16 @@ jn.define('selector/widget', (require, exports, module) => {
 				return;
 			}
 
-			if (
+			const isForbiddenTryToUnselectLast = (
 				this.selectOptions.canUnselectLast === false
 				&& this.currentSelectedItems.length === 1
 				&& items.length === 0
-			)
+			);
+
+			if (isForbiddenTryToUnselectLast)
 			{
+				this.widget.setSelected(this.currentSelectedItems);
+
 				return;
 			}
 
@@ -759,7 +795,13 @@ jn.define('selector/widget', (require, exports, module) => {
 			if (!isEqual(this.currentSelectedItems, items))
 			{
 				this.currentSelectedItems = items;
-				this.widget.setSelected(this.currentSelectedItems);
+
+				if (this.shouldSetInitiallySelectedItems)
+				{
+					this.widget.setSelected(this.currentSelectedItems);
+
+					this.shouldSetInitiallySelectedItems = false;
+				}
 			}
 		}
 
@@ -807,6 +849,7 @@ jn.define('selector/widget', (require, exports, module) => {
 		{
 			if (this.widget !== null)
 			{
+				this.hiddenWidget = this.widget;
 				this.widget = null;
 				this.handleOnEventsCallback('onViewHidden');
 			}
@@ -844,6 +887,14 @@ jn.define('selector/widget', (require, exports, module) => {
 
 			this.handleOnEventsCallback('onClose', this.getEntityItems());
 		}
+
+		onViewShown = () => {
+			if (this.hiddenWidget)
+			{
+				this.widget = this.hiddenWidget;
+			}
+			this.handleOnEventsCallback('onViewShown', this.getEntityItems());
+		};
 
 		onWidgetClosed()
 		{

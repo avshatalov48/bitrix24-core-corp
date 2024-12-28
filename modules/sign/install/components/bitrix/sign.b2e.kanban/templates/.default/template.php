@@ -17,7 +17,14 @@ Loc::loadLanguageFile(__DIR__ . '/template.php');
 \Bitrix\Main\UI\Extension::load([
 	'crm.entity-editor',
 	'sign.v2.ui.tokens',
+	'sign.onboarding',
 ]);
+
+$showWelcomeTour = $arResult['SHOW_WELCOME_TOUR'] ?? false;
+$showByEmployeeTour = $arResult['SHOW_BY_EMPLOYEE_TOUR'] ?? false;
+$showBtnCreateTour = $arResult['SHOW_TOUR_BTN_CREATE'] ?? false;
+$portalRegion = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
+$tourId = $arResult['TOUR_ID'] ?? null;
 
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
@@ -41,8 +48,6 @@ if ($arResult['SHOW_TARIFF_SLIDER'] ?? false):
 <script>
 	BX.ready(function()
 	{
-		top.BX.UI.InfoHelper.show('limit_office_e_signature');
-
 		const el = document.getElementsByClassName('sign-b2e-js-tarriff-slider-trigger');
 		if (el && el[0])
 		{
@@ -56,3 +61,36 @@ if ($arResult['SHOW_TARIFF_SLIDER'] ?? false):
 <?php
 endif;
 ?>
+
+<?php if ($showWelcomeTour): ?>
+	<script>
+		BX.ready(() => {
+			new BX.Sign.Onboarding().startB2eWelcomeOnboarding({
+				region: '<?= CUtil::JSescape($portalRegion) ?>',
+				tourId: '<?= CUtil::JSescape($tourId) ?>',
+			});
+		});
+	</script>
+<?php endif; ?>
+
+<?php if ($showByEmployeeTour): ?>
+	<script>
+		BX.ready(() => {
+			(new BX.Sign.Onboarding()).startB2eByEmployeeOnboarding({
+				region: '<?= CUtil::JSescape($portalRegion) ?>',
+				tourId: '<?= CUtil::JSescape($tourId) ?>',
+			});
+		});
+	</script>
+<?php endif; ?>
+
+<?php if ($showBtnCreateTour): ?>
+	<script>
+		BX.ready(() => {
+			(new BX.Sign.Onboarding()).startB2eFallbackOnboarding({
+				region: '<?= CUtil::JSescape($portalRegion) ?>',
+				tourId: '<?= CUtil::JSescape($tourId) ?>',
+			});
+		});
+	</script>
+<?php endif; ?>

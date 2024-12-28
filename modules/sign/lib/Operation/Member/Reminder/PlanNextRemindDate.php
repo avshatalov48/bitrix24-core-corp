@@ -12,6 +12,7 @@ use Bitrix\Sign\Service\Sign\Document\ProviderCodeService;
 use Bitrix\Sign\Service\Sign\MemberService;
 use Bitrix\Sign\Service\UserService;
 use Bitrix\Sign\Type\DateTime;
+use Bitrix\Sign\Type\Document\InitiatedByType;
 use Bitrix\Sign\Type\DocumentStatus;
 use Bitrix\Sign\Type\Member\Notification\ReminderType;
 use Bitrix\Sign\Type\Member\Role;
@@ -94,7 +95,7 @@ final class PlanNextRemindDate implements Contract\Operation
 		}
 		elseif (
 			$member->role === Role::ASSIGNEE
-			&& !$this->needToSendRemindersToAssignee($member)
+			&& !$this->needToSendRemindersToAssignee($member, $document)
 		)
 		{
 			$member->reminder->completed = true;
@@ -305,8 +306,18 @@ final class PlanNextRemindDate implements Contract\Operation
 		return $memberUserId === null ? 0 : $this->userService->getUserTimezoneOffsetRelativeToServer($memberUserId, true);
 	}
 
-	private function needToSendRemindersToAssignee(Item\Member $member): bool
+	private function needToSendRemindersToAssignee(Item\Member $member, Item\Document $document): bool
 	{
+		if (MemberStatus::isFinishForSigning($member->status))
+		{
+			return false;
+		}
+
+		if ($document->initiatedByType === InitiatedByType::EMPLOYEE)
+		{
+			return true;
+		}
+
 		$isWaitSignersExist = $this->memberRepository->existsByDocumentIdWithRoleAndStatus(
 			$member->documentId,
 			Role::SIGNER,

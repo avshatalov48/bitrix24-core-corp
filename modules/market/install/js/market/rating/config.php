@@ -10,10 +10,9 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'ui.vue3',
-		'market.install-store',
+		'ui.ears',
 		'main.popup',
 		'ui.design-tokens',
-		'ui.vue3.pinia',
 	],
 	'skip_core' => true,
 ];

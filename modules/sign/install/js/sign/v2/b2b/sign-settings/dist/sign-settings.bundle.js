@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
@@ -13,12 +14,14 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      value: void 0
 	    });
 	    const {
-	      config
+	      config,
+	      chatId = 0
 	    } = signOptions;
 	    const {
 	      blankSelectorConfig,
 	      documentSendConfig
 	    } = config;
+	    blankSelectorConfig.chatId = chatId;
 	    this.documentSetup = new sign_v2_documentSetup.DocumentSetup(blankSelectorConfig);
 	    this.documentSend = new sign_v2_b2b_documentSend.DocumentSend(documentSendConfig);
 	    babelHelpers.classPrivateFieldLooseBase(this, _requisites)[_requisites] = new sign_v2_b2b_requisites.Requisites();

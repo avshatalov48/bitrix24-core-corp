@@ -2,6 +2,7 @@
  * @module im/messenger/lib/element/dialog/message/copilot
  */
 jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, module) => {
+	const { Type } = require('type');
 	const { Loc } = require('loc');
 
 	const { MessageType } = require('im/messenger/const');
@@ -22,6 +23,7 @@ jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, 
 				.setCopilotButtons()
 				.setFootNote()
 				.setCanBeQuoted(false)
+				.setCanBeChecked(false)
 			;
 		}
 
@@ -39,8 +41,24 @@ jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, 
 			this.avatarUrl = copilotAvatar || user.avatar;
 
 			this.setUsername(copilotRoleData, user.name);
+			this.setAvatarDetail({ ...user, avatar: this.avatarUrl, name: this.username });
 
 			return this;
+		}
+
+		/**
+		 * @param {UsersModelState|null} user
+		 * @void
+		 */
+		setAvatarDetail(user)
+		{
+			super.setAvatarDetail(user);
+
+			// TODO: switch to ChatAvatar for CoPilot
+			if (Type.isObject(this.avatar) && this.avatar.uri)
+			{
+				this.avatar.uri = this.avatarUrl;
+			}
 		}
 
 		/**

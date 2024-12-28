@@ -1,4 +1,7 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
+<?
+use Bitrix\Intranet\Integration\Socialnetwork\Url\GroupUrl;
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
 global $USER;
 CJSCore::Init(array('finder'));
@@ -63,6 +66,7 @@ $className =
 		'CATEGORIES_ALL': <?=CUtil::PhpToJSObject($arResult['CATEGORIES_ALL'])?>,
 		'USER_URL':  '<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/', SITE_ID).'user/#user_id#/')?>',
 		'GROUP_URL':  '<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('socialnetwork', 'workgroups_page', SITE_DIR.'workgroups/', SITE_ID).'group/#group_id#/')?>',
+		'COLLAB_URL':  '<?= CUtil::JSEscape(GroupUrl::getCollabTemplate()) ?>',
 		'WAITER_TEXT':  '<?=GetMessageJS('CT_BST_WAITER_TEXT')?>',
 		'CURRENT_TS':  <?=time()?>,
 		'GLOBAL_SEARCH_CATEGORIES': <?=CUtil::PhpToJSObject($arResult["GLOBAL_SEARCH_CATEGORIES"])?>,

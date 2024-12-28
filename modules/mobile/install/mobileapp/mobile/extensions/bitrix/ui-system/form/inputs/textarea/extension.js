@@ -4,7 +4,7 @@
 jn.define('ui-system/form/inputs/textarea', (require, exports, module) => {
 	const { Indent } = require('tokens');
 	const { CharacterCounter } = require('ui-system/form/inputs/textarea/src/character-counter');
-	const { InputClass, InputSize, InputMode, InputDesign, InputVisualDecorator } = require(
+	const { InputClass, InputSize, InputMode, InputDesign, InputVisualDecorator, Icon } = require(
 		'ui-system/form/inputs/input',
 	);
 
@@ -26,24 +26,32 @@ jn.define('ui-system/form/inputs/textarea', (require, exports, module) => {
 
 		getFieldStyle()
 		{
-			const { paddingVertical } = this.getSize().getInput();
-
 			return {
+				...super.getFieldStyle(),
 				height: '100%',
-				textAlign: this.getAlign(true),
-				paddingTop: 12,
-				paddingBottom: paddingVertical.toNumber(),
+			};
+		}
+
+		getWrapperContentStyle()
+		{
+			return {
+				...super.getWrapperContentStyle(),
+				alignItems: 'flex-start',
 			};
 		}
 
 		getInputStyle()
 		{
-			const paddingBottom = Indent.XS.toNumber() + Indent.XL2.toNumber();
-			const characterCountHeight = this.isShowCharacterCount() ? paddingBottom : 0;
+			const minPaddingBottom = Indent.XL.toNumber();
+			const paddingBottom = this.isShowCharacterCount()
+				? minPaddingBottom + Indent.XL2.toNumber()
+				: minPaddingBottom;
 
 			return {
 				...super.getInputStyle(),
-				paddingBottom: characterCountHeight,
+				paddingTop: Indent.L.toNumber(),
+				alignItems: 'flex-start',
+				paddingBottom,
 			};
 		}
 
@@ -72,7 +80,7 @@ jn.define('ui-system/form/inputs/textarea', (require, exports, module) => {
 
 	TextAreaInput.defaultProps = {
 		...InputClass.defaultProps,
-		height: 94,
+		height: 96,
 		showCharacterCount: true,
 		enableLineBreak: true,
 
@@ -98,5 +106,6 @@ jn.define('ui-system/form/inputs/textarea', (require, exports, module) => {
 		InputSize,
 		InputMode,
 		InputDesign,
+		Icon,
 	};
 });

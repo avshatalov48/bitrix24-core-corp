@@ -8,12 +8,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Crm;
 use Bitrix\Crm\Integration\Sender\Rc;
 use Bitrix\Crm\PhaseSemantics;
-use Bitrix\Crm\Security\Role\RolePermission;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Error;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Security\Role\Utils\RolePermissionLogContext;
 
 Loader::includeModule('crm');
 
@@ -118,9 +118,7 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 		}
 		else
 		{
-			$categoriesCollection = Crm\Service\Container::getInstance()->getUserPermissions()->filterAvailableForReadingCategories(
-				$this->factory->getCategories()
-			);
+			$categoriesCollection = $this->factory->getCategories();
 			foreach ($categoriesCollection as $category)
 			{
 				/** @var Crm\Category\Entity\Category $category */
@@ -419,6 +417,13 @@ HTML;
 		{
 			$categoryParams['sort'] = $data['sort'];
 		}
+
+		RolePermissionLogContext::getInstance()->set([
+			'component' => 'crm.sales.tunnels',
+			'scenario' => 'add category',
+			'entityTypeId' => $this->factory->getEntityTypeId(),
+		]);
+
 		$newCategory = $this->factory->createCategory($categoryParams);
 		$result = $newCategory->save();
 
@@ -518,12 +523,21 @@ HTML;
 			: BX_CRM_PERM_NONE
 		;
 
+		RolePermissionLogContext::getInstance()->set([
+			'component' => 'crm.sales.tunnels',
+			'scenario' => 'set access to sales tunnels',
+			'entityTypeId' => $entityTypeId,
+			'categoryId' => $categoryId,
+			'permissionLevel' => $newPermissions,
+		]);
+
 		$result = Crm\Category\CategoryPermissionsManager::getInstance()->setPermissions(new \Bitrix\Crm\CategoryIdentifier($entityTypeId, $categoryId), $newPermissions);
 
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($result->getErrors());
 		}
+		RolePermissionLogContext::getInstance()->clear();
 	}
 
 	/**
@@ -538,10 +552,19 @@ HTML;
 			return;
 		}
 
+		RolePermissionLogContext::getInstance()->set([
+			'component' => 'crm.sales.tunnels',
+			'scenario' => 'copy access between funnels',
+			'entityTypeId' => $this->factory->getEntityTypeId(),
+			'from' => (int)$data['donorId'],
+			'to' => (int)$data['id'],
+		]);
+
 		$result = Crm\Category\CategoryPermissionsManager::getInstance()->copyPermissions(
 			new \Bitrix\Crm\CategoryIdentifier($this->factory->getEntityTypeId(), (int)$data['donorId']),
 			new \Bitrix\Crm\CategoryIdentifier($this->factory->getEntityTypeId(), (int)$data['id']),
 		);
+		RolePermissionLogContext::getInstance()->clear();
 
 		if (!$result->isSuccess())
 		{

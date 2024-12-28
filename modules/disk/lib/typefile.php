@@ -105,6 +105,7 @@ final class TypeFile
 				return self::SCRIPT;
 
 			case 'mp3':
+			case 'ogg':
 			case 'wav':
 				return self::AUDIO;
 
@@ -361,6 +362,7 @@ final class TypeFile
 			// AUDIO
 			'mp3' => 'audio/mpeg',
 			'wav' => 'audio/wav',
+			'ogg' => 'audio/ogg',
 
 			// SCRIPT
 			'php' => 'text/php',

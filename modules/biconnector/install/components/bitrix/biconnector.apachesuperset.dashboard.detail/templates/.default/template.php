@@ -129,9 +129,7 @@ if (!$limitManager->checkLimitWarning())
 		</div>
 		<div class="dashboard-header-buttons">
 			<button id="edit-btn" class="ui-btn ui-btn-primary ui-btn-round dashboard-header-buttons-edit"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT') ?></button>
-			<?php if ($arResult['PDF_EXPORT_ENABLED']): ?>
 			<button id="download-btn" class="ui-btn ui-btn-primary ui-btn-round dashboard-header-buttons-download"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_DOWNLOAD') ?></button>
-			<?php endif; ?>
 			<div id="more-btn" class="ui-icon ui-icon-service-light-other icon-more dashboard-header-buttons-more"><i></i></div>
 		</div>
 	</div>
@@ -163,7 +161,6 @@ if (!$limitManager->checkLimitWarning())
 					'paramsCompatible' => $arResult['PARAMS_COMPATIBLE'],
 				],
 				'embeddedDebugMode' => $arResult['EMBEDDED_DEBUG_MODE'],
-				'pdfExportEnabled' => $arResult['PDF_EXPORT_ENABLED'],
 			]) ?>
 		);
 

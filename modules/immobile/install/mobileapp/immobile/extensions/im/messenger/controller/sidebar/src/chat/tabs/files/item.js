@@ -3,16 +3,22 @@
  */
 jn.define('im/messenger/controller/sidebar/chat/tabs/files/item', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { Feature: MobileFeature } = require('feature');
+	const { resolveFileIcon } = require('assets/icons');
 	const { Moment } = require('utils/date');
 	const { getExtension } = require('utils/file');
 	const { dayMonth, shortTime } = require('utils/date/formats');
-	const { Icon } = require('ui-system/blocks/icon');
+	const { Icon, IconView } = require('ui-system/blocks/icon');
 	const { EasyIcon } = require('layout/ui/file/icon');
 
 	const { Theme } = require('im/lib/theme');
+	const { ChatAvatar } = require('im/messenger/lib/element');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { Avatar } = require('im/messenger/lib/ui/base/avatar');
-	const { formatFileSize } = require('im/messenger/lib/helper');
+	const { Avatar: MessengerAvatarLegacy } = require('im/messenger/lib/ui/base/avatar');
+	const {
+		formatFileSize,
+		getFileIconTypeByExtension,
+	} = require('im/messenger/lib/helper');
 	const { FileContextMenu } = require('im/messenger/controller/sidebar/chat/tabs/files/context-menu');
 
 	/**
@@ -61,16 +67,14 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/item', (require, expo
 						this.onOpenFileMenu(fileId, dialogId, messageId, this.itemRef);
 					},
 				},
-				this.renderAvatar(),
+				this.renderIcon(),
 				this.renderDescription(),
 				this.renderEllipsisButton(),
 			);
 		}
 
-		renderAvatar()
+		renderIcon()
 		{
-			const { name } = this.file;
-
 			return View(
 				{
 					style: {
@@ -85,8 +89,28 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/item', (require, expo
 						height: '100%',
 					},
 				},
-				EasyIcon(getExtension(name), 24),
+				this.createIcon(),
 			);
+		}
+
+		createIcon()
+		{
+			const { name } = this.file;
+			const extension = getExtension(name);
+
+			if (!MobileFeature.isAirStyleSupported())
+			{
+				return EasyIcon(extension, 24);
+			}
+
+			const fileIconType = getFileIconTypeByExtension(extension);
+			const fileIcon = resolveFileIcon(extension, fileIconType);
+
+			return IconView({
+				size: 28,
+				color: null,
+				icon: fileIcon,
+			});
 		}
 
 		renderDescription()
@@ -172,7 +196,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/item', (require, expo
 		renderSubTitle()
 		{
 			const { dateCreate } = this.props;
-			const { avatar, name, color } = this.author;
+			const { id, avatar, name, color } = this.author;
 
 			const date = new Moment(dateCreate).format(dayMonth);
 			const time = new Moment(dateCreate).format(shortTime);
@@ -181,6 +205,21 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/item', (require, expo
 				'#DATE#': date,
 				'#TIME#': time,
 			});
+
+			let avatarView = null;
+			if (MobileFeature.isNativeAvatarSupported())
+			{
+				avatarView = Avatar(ChatAvatar.createFromDialogId(id).getSidebarTabItemDescriptionAvatarProps());
+			}
+			else
+			{
+				avatarView = new MessengerAvatarLegacy({
+					text: name,
+					uri: avatar,
+					color,
+					size: 'S',
+				});
+			}
 
 			return View(
 				{
@@ -193,12 +232,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/item', (require, expo
 						marginTop: 4,
 					},
 				},
-				new Avatar({
-					text: name,
-					uri: avatar,
-					color,
-					size: 'S',
-				}),
+				avatarView,
 				Text({
 					style: {
 						color: Theme.colors.base4,

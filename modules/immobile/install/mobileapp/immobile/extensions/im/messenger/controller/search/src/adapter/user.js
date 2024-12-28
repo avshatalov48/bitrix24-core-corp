@@ -120,6 +120,7 @@ jn.define('im/messenger/controller/search/adapter/user', (require, exports, modu
 					subtitle: chatTitle.getDescription() || item.subtitle,
 					avatarUri: chatAvatar.getAvatarUrl(),
 					avatarColor: item.color,
+					avatar: chatAvatar.getListItemAvatarProps(),
 				},
 				type: 'chats',
 				selected: false,

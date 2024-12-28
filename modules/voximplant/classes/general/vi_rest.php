@@ -535,6 +535,7 @@ class CVoxImplantRestService extends IRestService
 
 		return null;
 	}
+
 	public static function checkStatisticFilter($arFilter)
 	{
 		if (!is_array($arFilter))
@@ -596,6 +597,7 @@ class CVoxImplantRestService extends IRestService
 				}
 				else
 				{
+					$checkField = true;
 					switch ($field)
 					{
 						case 'CALL_START_DATE':
@@ -606,15 +608,25 @@ class CVoxImplantRestService extends IRestService
 							break;
 						case 'CRM_BINDINGS.ENTITY_TYPE':
 						case 'CRM_BINDINGS.ENTITY_ID':
+							$checkField = false;
 							if ($operation == '')
 							{
 								$operation = '=';
 							}
 							break;
 					}
-					if ($operation == '' && StatisticTable::getEntity()->hasField($field))
+
+					if (StatisticTable::getEntity()->hasField($field))
 					{
-						$operation = '=';
+						if ($operation == '')
+						{
+							$operation = '=';
+						}
+					}
+					elseif ($checkField)
+					{
+						unset($arFilter[$key]);
+						continue;
 					}
 
 					$newKey = $operation . $field;
@@ -864,12 +876,23 @@ class CVoxImplantRestService extends IRestService
 		return 1;
 	}
 
-	public static function getNode(): string
+	public static function getNode(): array
 	{
 		$ViHttp = new CVoxImplantHttp();
 		$accountNode = $ViHttp->GetAccountNode();
 
-		return $accountNode->node;
+		if ($accountNode === false)
+		{
+			return [
+				'error' => true,
+				'code' => $ViHttp->GetError()->code,
+				'message' => $ViHttp->GetError()->msg
+			];
+		}
+
+		return [
+			'node' => $accountNode->node
+		];
 	}
 
 

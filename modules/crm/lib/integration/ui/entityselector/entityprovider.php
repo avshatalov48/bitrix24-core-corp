@@ -213,7 +213,7 @@ abstract class EntityProvider extends BaseProvider
 		$itemOptions = [
 			'id' => $entityId,
 			'entityId' => $this->getItemEntityId(),
-			'title' => (string)$entityInfo['title'],
+			'title' => $this->getEntityTitle($entityInfo),
 			'subtitle' => $entityInfo['desc'],
 			'link' => $entityInfo['url'],
 			'linkTitle' => Loc::getMessage('CRM_COMMON_DETAIL'),
@@ -230,7 +230,7 @@ abstract class EntityProvider extends BaseProvider
 		if ($this->showEntityTypeNameInHeader)
 		{
 			$itemOptions['supertitle'] = (string)$entityInfo['typeNameTitle'];
-			$itemOptions['title'] = (string)$entityInfo['title'];
+			$itemOptions['title'] = $this->getEntityTitle($entityInfo);
 			$itemOptions['subtitle'] = null;
 		}
 
@@ -309,7 +309,7 @@ abstract class EntityProvider extends BaseProvider
 		}
 	}
 
-	private function getTabsNames(): array
+	protected function getTabsNames(): array
 	{
 		return [$this->getEntityTypeName()];
 	}
@@ -338,5 +338,10 @@ abstract class EntityProvider extends BaseProvider
 		]);
 
 		$dialog->addTab($tab);
+	}
+
+	protected function getEntityTitle(array $entityInfo): string
+	{
+		return (string)($entityInfo['title'] ?? '');
 	}
 }

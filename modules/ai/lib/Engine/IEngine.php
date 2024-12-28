@@ -259,6 +259,14 @@ interface IEngine
 	public function hasQuality(Quality $quality): bool;
 
 	/**
+	 * Check if Engine recommended to use for Quality
+	 *
+	 * @param Quality|null $quality
+	 * @return bool
+	 */
+	public function isPreferredForQuality(?Quality $quality = null): bool;
+
+	/**
 	 * Return true, if Engine cache is allow.
 	 *
 	 * @return bool

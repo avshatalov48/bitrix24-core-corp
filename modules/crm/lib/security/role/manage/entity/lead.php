@@ -29,7 +29,15 @@ class Lead implements PermissionEntity
 		$name = Container::getInstance()->getFactory(CCrmOwnerType::Lead)->getEntityDescription();
 
 		return [
-			new EntityDTO('LEAD', $name, $fields, $this->permissions())
+			new EntityDTO(
+				'LEAD',
+				$name,
+				$fields,
+				$this->permissions(),
+				null,
+				'customer-card',
+				'--ui-color-accent-turquoise',
+			)
 		];
 	}
 

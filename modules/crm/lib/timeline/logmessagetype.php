@@ -30,4 +30,8 @@ final class LogMessageType
 	public const CALL_MOVED = 23;
 	public const OPEN_LINE_MOVED = 24;
 	public const EMAIL_INCOMING_MOVED = 25;
+	public const AI_CALL_START_SCORING = 26;
+	public const AI_CALL_SCORING_EMPTY = 27;
+
+	public const BOOKING_CREATED = 28;
 }

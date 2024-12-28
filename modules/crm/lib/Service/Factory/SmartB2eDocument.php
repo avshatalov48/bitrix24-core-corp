@@ -9,6 +9,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Crm\Service\Operation;
+use Bitrix\Crm\Service\Sign\B2e\TypeService;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\AddResult;
 use Bitrix\Main\ORM\Fields;
@@ -67,7 +68,7 @@ class SmartB2eDocument extends Dynamic
 				->setTitle(Loc::getMessage('CRM_TYPE_SMART_B2E_DOC_TYPE_TITLE'))
 				->setCode('BX_SMART_B2E_DOC')
 				->setCreatedBy(0)
-				->setIsCategoriesEnabled(false)
+				->setIsCategoriesEnabled(true)
 				->setIsStagesEnabled(true)
 				->setIsBeginCloseDatesEnabled(true)
 				->setIsClientEnabled(true)
@@ -95,11 +96,66 @@ class SmartB2eDocument extends Dynamic
 			);
 		}
 
+		if (!self::updateDefaultCategory())
+		{
+			AddMessage2Log(
+				'Error while trying to update SmartB2eDocument default category',
+				'crm',
+			);
+		}
+
+		if (!self::addFromEmployeeCategory())
+		{
+			AddMessage2Log(
+				'Error while trying to update SmartB2eDocument from employee category',
+				'crm',
+			);
+		}
+
 		\Bitrix\Crm\Service\Container::getInstance()
 			->getDynamicTypesMap()
 			->invalidateTypesCollectionCache()
 		;
 	}
+
+	private static function updateDefaultCategory(): bool
+	{
+		//TODO fast solution. will be removed in future
+		$typeService = Container::getInstance()->getSignB2eTypeService();
+
+		$updateDefaultCategoryResult = $typeService->updateDefaultCategory(
+			Loc::getMessage('CRM_TYPE_SMART_B2E_DOC_TO_EMPLOYEE_CATEGORY_NAME') ?? '',
+			TypeService::SIGN_B2E_ITEM_CATEGORY_CODE,
+		);
+
+		return $updateDefaultCategoryResult->isSuccess();
+	}
+
+	private static function addFromEmployeeCategory(): bool
+	{
+		$typeService = Container::getInstance()->getSignB2eTypeService();
+
+		$addCategoryResult = $typeService->addCategory(
+			Loc::getMessage('CRM_TYPE_SMART_B2E_DOC_FROM_EMPLOYEE_CATEGORY_NAME') ?? '',
+			TypeService::SIGN_B2E_EMPLOYEE_ITEM_CATEGORY_CODE,
+		);
+		if (!$addCategoryResult->isSuccess())
+		{
+			return false;
+		}
+
+		$categoryId = $addCategoryResult->getId();
+
+		if (!is_int($categoryId))
+		{
+			return false;
+		}
+
+		$addCategoryDefaultPermissionsResult = $typeService->addCategoryDefaultPermissions($categoryId);
+
+		return $addCategoryDefaultPermissionsResult->isSuccess();
+	}
+
 
 	public function getEditorAdapter(): EditorAdapter
 	{

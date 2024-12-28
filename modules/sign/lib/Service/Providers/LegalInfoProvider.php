@@ -8,7 +8,9 @@ use Bitrix\Sign\Type\FieldType;
 
 class LegalInfoProvider extends InfoProvider
 {
-	protected const USER_FIELD_ENTITY_ID = LegalInfo::USER_FIELD_ENTITY_ID;
+	private array $legalFieldsByType;
+
+	public const USER_FIELD_ENTITY_ID = LegalInfo::USER_FIELD_ENTITY_ID;
 	public const LEGAL_USER_FIELD_DEFAULT = [
 		'UF_LEGAL_ADDRESS',
 		'UF_LEGAL_INN',
@@ -41,5 +43,24 @@ class LegalInfoProvider extends InfoProvider
 			'UF_LEGAL_POSITION' => FieldType::POSITION,
 			default => parent::getType($field),
 		};
+	}
+
+	public function getFirstFieldNameByType(string $fieldType): ?string
+	{
+		return $this->getLegalInfoFieldByType($fieldType)?->name;
+	}
+
+	public function getLegalInfoFieldByType(string $type): ?LegalInfoField
+	{
+		if (!isset($this->legalFieldsByType))
+		{
+			$this->legalFieldsByType = [];
+			foreach ($this->getFieldsItems() as $field)
+			{
+				$this->legalFieldsByType[$field->type] = $field;
+			}
+		}
+
+		return $this->legalFieldsByType[$type] ?? null;
 	}
 }

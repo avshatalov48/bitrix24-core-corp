@@ -5,6 +5,7 @@ namespace Bitrix\HumanResources\Contract\Repository;
 use Bitrix\HumanResources\Exception\WrongStructureItemException;
 use Bitrix\HumanResources\Item\Collection\NodeMemberCollection;
 use Bitrix\HumanResources\Item\Collection\UserCollection;
+use Bitrix\HumanResources\Item\Node;
 use Bitrix\Humanresources\Item\User;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
@@ -26,4 +27,11 @@ interface UserRepository
 	 * @throws SystemException
 	 */
 	public function getUserCollectionByMemberCollection(NodeMemberCollection $nodeMemberCollection): UserCollection;
+
+	public function getByIds(array $userIds);
+
+	public function findByNodeAndSearchQuery(
+		Node $node,
+		string $searchQuery
+	): UserCollection;
 }

@@ -76,12 +76,34 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 					</div>
 				</div>
 				<?$template = trim(ob_get_flush());?>
+
+				<?ob_start();?>
+					<div class="task-detail-sidebar-info-user-wrap js-id-mem-sel-is-i js-id-mem-sel-is-i-{{VALUE}} {{ITEM_SET_INVISIBLE}}" data-item-value="{{VALUE}}">
+						<div class="task-detail-sidebar-info-user task-detail-sidebar-info-user-{{USER_TYPE}}">
+							<span class="js-id-item-set-is-i-avatar task-detail-sidebar-info-user-photo" style="{{AVATAR_CSS}}"></span>
+							<div class="task-detail-sidebar-info-user-title">
+								<span class="task-detail-sidebar-info-user-name">{{DISPLAY}}</span>
+								<div class="task-detail-sidebar-info-user-pos">{{WORK_POSITION}}</div>
+								<?if(!$readOnly):?>
+									<span class="js-id-mem-sel-is-i-delete tasks-btn-delete task-detail-sidebar-info-user-del" title="<?=Loc::getMessage('TASKS_COMMON_DELETE')?>"></span>
+								<?endif?>
+							</div>
+						</div>
+					</div>
+				<?$templateNoCommonGroup = trim(ob_get_flush());?>
 			</script>
 
 			<?
-			foreach($arParams['DATA'] as $item)
+			foreach ($arParams['DATA'] as $item)
 			{
-				print($helper->fillTemplate($template, $item));
+				if ($item['COLLABER_NO_HAS_COMMON_GROUP'])
+				{
+					print($helper->fillTemplate($templateNoCommonGroup, $item));
+				}
+				else
+				{
+					print($helper->fillTemplate($template, $item));
+				}
 			}
 			?>
 

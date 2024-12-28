@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Integration\BizProc\Document;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm;
 
 if(!Loader::includeModule('bizproc'))
 {
@@ -35,5 +36,45 @@ class Dynamic extends Item
 			'ID' => (int)$entityId,
 			'DOCUMENT_TYPE' => ['crm', static::class, $typePrefix . '_' . $entityTypeId],
 		];
+	}
+
+	public static function getDocumentCategories($documentType)
+	{
+		$entityTypeId = \CCrmOwnerType::ResolveID($documentType);
+		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		$categories = null;
+
+		if ($factory && $factory?->isCategoriesSupported() && $factory?->isCategoriesEnabled())
+		{
+			$categories = [];
+			foreach ($factory->getCategories() as $category)
+			{
+				$categoryId = $category->getId();
+				$categories[$categoryId] = [
+					'id' => $categoryId,
+					'name' => $category->getName(),
+				];
+			}
+		}
+
+		return $categories;
+	}
+
+	public static function getDocumentCategoryId(string $documentId): ?int
+	{
+		$documentInfo = self::GetDocumentInfo($documentId);
+		$entityTypeId = \CCrmOwnerType::ResolveID($documentInfo['TYPE']);
+		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+
+		if ($factory && $factory?->isCategoriesSupported() && $factory?->isCategoriesEnabled())
+		{
+			$entity = $factory->getItem($documentInfo['ID'], ['CATEGORY_ID']);
+			if ($entity)
+			{
+				return $entity->getCategoryId();
+			}
+		}
+
+		return null;
 	}
 }

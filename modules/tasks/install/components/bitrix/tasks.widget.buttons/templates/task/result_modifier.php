@@ -1,5 +1,7 @@
 <?
 
+use Bitrix\Tasks\Flow\Distribution\FlowDistributionType;
+use Bitrix\Tasks\Flow\FlowRegistry;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\UI;
@@ -30,6 +32,8 @@ if ((int)$data['STATUS'] === Status::SUPPOSEDLY_COMPLETED)
 }
 
 $taskId = (int)$arParams["TASK"]["ID"];
+$userId = (int)($arParams['USER_ID'] ?? 0);
+$groupId = (int)($arParams['GROUP_ID'] ?? 0);
 
 $data["TIME_ESTIMATE"] = (int)$data["TIME_ESTIMATE"];
 $data["TIME_ELAPSED"] = (int)$data["TIME_ELAPSED"];
@@ -68,7 +72,12 @@ $createSubTaskUrl = (new \Bitrix\Main\Web\Uri($arResult['CREATE_SUBTASK_URL']))-
 $arResult['CREATE_SUBTASK_URL'] = $createSubTaskUrl->getUri();
 
 $classes = array();
-if($can["DAYPLAN.TIMER.TOGGLE"])
+
+if ($data['ACTION']['TAKE'])
+{
+	$classes[] = 'take';
+}
+elseif($can["DAYPLAN.TIMER.TOGGLE"])
 {
 	$classes[] = 'timer-visible';
 	$classes[] = 'timer-'.($data["TIMER_IS_RUNNING_FOR_CURRENT_USER"] ? 'pause' : 'start');
@@ -139,15 +148,15 @@ if (Bitrix\Main\Loader::includeModule('rest'))
 				'ID' => "activity_rest_{$placementHandler['APP_ID']}_{$placementHandler['ID']}",
 				'NAME' => ($placementHandler['TITLE'] !== '' ? $placementHandler['TITLE'] : $placementHandler['APP_NAME']),
 				'ONCLICK'=> 'BX.rest.AppLayout.openApplication(
-					"'.$placementHandler['APP_ID'].'",
-					{
-						TASK_ID: '.$data['ID'].'
-					},
-					{
-						PLACEMENT: "'.$restReplacement.'",
-						PLACEMENT_ID:  "'.$placementHandler['ID'].'"
-					}
-				);',
+                    "'.$placementHandler['APP_ID'].'",
+                    {
+                        TASK_ID: '.$data['ID'].'
+                    },
+                    {
+                        PLACEMENT: "'.$restReplacement.'",
+                        PLACEMENT_ID: "'.$placementHandler['ID'].'"
+                    }
+                );',
 			];
 		}
 	}
@@ -168,7 +177,7 @@ if (\Bitrix\Main\ModuleManager::isModuleInstalled('rest'))
 		array(
 			'PLACEMENT'         => "TASK_LIST_CONTEXT_MENU",
 			"PLACEMENT_OPTIONS" => array(),
-			//			'INTERFACE_EVENT' => 'onCrmLeadListInterfaceInit',
+			//            'INTERFACE_EVENT' => 'onCrmLeadListInterfaceInit',
 			'MENU_EVENT_MODULE' => 'tasks',
 			'MENU_EVENT'        => 'onTasksBuildContextMenu',
 		),
@@ -189,27 +198,42 @@ if (\Bitrix\Main\ModuleManager::isModuleInstalled('rest'))
 
 $taskDelegatingExceeded = !Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASK_DELEGATING);
 
+$isCollab = (bool)($arParams['IS_COLLAB'] ?? false);
 $arResult['JS_DATA'] = [
 	'can'                => $can,
 	'taskId'             => $taskId,
 	'publicMode'         => $arParams["PUBLIC_MODE"],
-	'data'               => [
+	'data'             => [
 		'TIME_ESTIMATE' => ($taskData['TIME_ESTIMATE'] ?? null),
 		'TIME_ELAPSED' => ($taskData['TIME_ELAPSED'] ?? null),
 		'TIMER_IS_RUNNING_FOR_CURRENT_USER' => ($taskData['TIMER_IS_RUNNING_FOR_CURRENT_USER'] ?? null),
+		'ALLOW_TIME_TRACKING' => ($data['ALLOW_TIME_TRACKING'] ?? null),
 	],
 	'copyUrl'            => $arResult['COPY_URL'],
-	'createSubtaskUrl'   => $arResult['CREATE_SUBTASK_URL'],
+	'createSubtaskUrl' => $arResult['CREATE_SUBTASK_URL'],
 	'listUrl'            => $arParams["PATH_TO_TASKS"],
-	'goToListOnDelete'   => $arParams["REDIRECT_TO_LIST_ON_DELETE"],
+	'goToListOnDelete' => $arParams["REDIRECT_TO_LIST_ON_DELETE"],
 	'additional_actions' => $actions,
 	'additional_tabs'    => $additionalTabs,
 	'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
 	'groupId' => $arParams['TASK']['GROUP_ID'],
 	'parentId' => (int) $arParams['TASK']['PARENT_ID'],
 	'isScrumTask' => (bool) $arParams['IS_SCRUM_TASK'],
+	'isCollab' => $isCollab,
 	'showAhaStartFlowTask' => (bool) $arParams['SHOW_AHA_START_FLOW_TASK'],
 	'currentUserId' => Util\User::getId(),
 	'taskDelegatingExceeded' => $taskDelegatingExceeded,
 	'taskDelegatingFeatureId' => Bitrix24\FeatureDictionary::TASK_DELEGATING,
+	'flowId' => (int)($data['FLOW_ID'] ?? 0),
+	'isExtranetUser' => (bool) Bitrix\Tasks\Integration\Extranet\User::isExtranet(),
 ];
+
+if ($isCollab)
+{
+	$analytics = \Bitrix\Tasks\Helper\Analytics::getInstance($userId);
+
+	$arResult['JS_DATA']['collabAnalytics'] = [
+		'p2' => $analytics->getUserTypeParameter(),
+		'p4' => $analytics->getCollabParameter($groupId),
+	];
+}

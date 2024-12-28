@@ -26,6 +26,11 @@ class ActionDictionary
 	public const ACTION_B2E_DOCUMENT_READ = 'ACTION_B2E_DOCUMENT_READ';
 	public const ACTION_B2E_DOCUMENT_DELETE = 'ACTION_B2E_DOCUMENT_DELETE';
 
+	public const ACTION_B2E_TEMPLATE_ADD = 'ACTION_B2E_TEMPLATE_ADD';
+	public const ACTION_B2E_TEMPLATE_EDIT = 'ACTION_B2E_TEMPLATE_EDIT';
+	public const ACTION_B2E_TEMPLATE_READ = 'ACTION_B2E_TEMPLATE_READ';
+	public const ACTION_B2E_TEMPLATE_DELETE = 'ACTION_B2E_TEMPLATE_DELETE';
+
 	public const ACTION_B2E_MY_SAFE_DOCUMENTS = 'ACTION_B2E_MY_SAFE_DOCUMENTS';
 	public const ACTION_B2E_MY_SAFE = 'ACTION_B2E_MY_SAFE';
 
@@ -33,6 +38,7 @@ class ActionDictionary
 	public const ACTION_B2E_PROFILE_FIELDS_EDIT = 'ACTION_B2E_PROFILE_FIELDS_EDIT';
 	public const ACTION_B2E_PROFILE_FIELDS_ADD = 'ACTION_B2E_PROFILE_FIELDS_ADD';
 	public const ACTION_B2E_PROFILE_FIELDS_DELETE = 'ACTION_B2E_PROFILE_FIELDS_DELETE';
+	public const ACTION_B2E_MEMBER_DYNAMIC_FIELDS_DELETE = 'ACTION_B2E_MEMBER_DYNAMIC_FIELDS_DELETE';
 
 	public const ACTION_B2E_USE_TEMPLATE = 'ACTION_USE_B2E_TEMPLATE';
 
@@ -73,7 +79,7 @@ class ActionDictionary
 		
 		return array_flip($constants);
 	}
-	
+
 	public static function getActionPermissionMap(): array
 	{
 		return [
@@ -99,14 +105,24 @@ class ActionDictionary
 			self::ACTION_B2E_DOCUMENT_READ => PermissionDictionary::SIGN_CRM_SMART_B2E_DOC_READ,
 			self::ACTION_B2E_DOCUMENT_DELETE => PermissionDictionary::SIGN_CRM_SMART_B2E_DOC_DELETE,
 
+			self::ACTION_B2E_TEMPLATE_ADD => SignPermissionDictionary::SIGN_B2E_TEMPLATE_CREATE,
+			self::ACTION_B2E_TEMPLATE_EDIT => SignPermissionDictionary::SIGN_B2E_TEMPLATE_WRITE,
+			self::ACTION_B2E_TEMPLATE_READ => SignPermissionDictionary::SIGN_B2E_TEMPLATE_READ,
+			self::ACTION_B2E_TEMPLATE_DELETE => SignPermissionDictionary::SIGN_B2E_TEMPLATE_DELETE,
+
 			self::ACTION_B2E_USE_TEMPLATE => SignPermissionDictionary::SIGN_B2E_TEMPLATES,
 
 			self::ACTION_B2E_PROFILE_FIELDS_READ => SignPermissionDictionary::SIGN_B2E_PROFILE_FIELDS_READ,
 			self::ACTION_B2E_PROFILE_FIELDS_ADD => SignPermissionDictionary::SIGN_B2E_PROFILE_FIELDS_ADD,
 			self::ACTION_B2E_PROFILE_FIELDS_EDIT => SignPermissionDictionary::SIGN_B2E_PROFILE_FIELDS_EDIT,
 			self::ACTION_B2E_PROFILE_FIELDS_DELETE => SignPermissionDictionary::SIGN_B2E_PROFILE_FIELDS_DELETE,
-
+			self::ACTION_B2E_MEMBER_DYNAMIC_FIELDS_DELETE => SignPermissionDictionary::SIGN_B2E_MEMBER_DYNAMIC_FIELDS_DELETE,
 		];
+	}
+
+	public static function getPermissionIdByAction(string $action): string|int|null
+	{
+		return self::getActionPermissionMap()[$action] ?? null;
 	}
 
 	public static function getRepeatActionB2b2B2e(): array
@@ -121,6 +137,18 @@ class ActionDictionary
 			self::ACTION_DOCUMENT_DELETE => self::ACTION_B2E_DOCUMENT_DELETE,
 
 			self::ACTION_USE_TEMPLATE => self::ACTION_B2E_USE_TEMPLATE,
+		];
+	}
+
+	public static function getB2eSectionAccessActions(): array
+	{
+		return [
+			self::ACTION_B2E_DOCUMENT_READ,
+			self::ACTION_B2E_TEMPLATE_READ,
+			self::ACTION_B2E_MY_SAFE_DOCUMENTS,
+			self::ACTION_B2E_PROFILE_FIELDS_DELETE,
+			self::ACTION_B2E_MEMBER_DYNAMIC_FIELDS_DELETE,
+			self::ACTION_ACCESS_RIGHTS,
 		];
 	}
 }

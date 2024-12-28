@@ -1,10 +1,9 @@
-<?
-$MESS["IM_M_CODE_BLOCK"] = "Code block";
+<?php
 $MESS["IM_CHAT_CALL"] = "Phone call";
 $MESS["IM_CHAT_GENERAL"] = "General chat";
-$MESS["IM_CHAT_GROUP_NEW"] = "Private chat";
+$MESS["IM_CHAT_GROUP_NEW_MSGVER_1"] = "Group chat";
 $MESS["IM_CHAT_LINES"] = "Open channel";
-$MESS["IM_CHAT_OPEN_NEW"] = "Public chat";
+$MESS["IM_CHAT_OPEN_NEW_MSGVER_1"] = "Public chat";
 $MESS["IM_CL_BOT"] = "Chat bot";
 $MESS["IM_CL_USER"] = "User";
 $MESS["IM_CL_USER_B24"] = "Employee";
@@ -14,6 +13,7 @@ $MESS["IM_F_ATTACH"] = "Attachment";
 $MESS["IM_F_FILE"] = "File";
 $MESS["IM_F_RATING"] = "Rating";
 $MESS["IM_M_BIRTHDAY_MESSAGE_SHORT"] = "Birthday today!";
+$MESS["IM_M_CODE_BLOCK"] = "Code block";
 $MESS["IM_M_DELETED"] = "This message has been deleted.";
 $MESS["IM_M_ICON"] = "icon";
 $MESS["IM_M_QUOTE_BLOCK"] = "Quote";
@@ -30,4 +30,3 @@ $MESS["IM_STATUS_OFFLINE"] = "Offline";
 $MESS["IM_STATUS_ONLINE"] = "Online";
 $MESS["IM_STATUS_VACATION"] = "On leave";
 $MESS["IM_STATUS_VACATION_TITLE"] = "On leave until #DATE#";
-?>

@@ -3,11 +3,18 @@
  */
 jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 	const { Type } = require('type');
+	const { inRange } = require('utils/number');
 	const { Color, Indent } = require('tokens');
 	const { isEmpty } = require('utils/object');
 	const { Text } = require('ui-system/typography/text');
+	const { PureComponent } = require('layout/pure-component');
 	const { ElementsStack, ElementsStackDirection } = require('elements-stack');
 	const { Avatar, AvatarClass, AvatarShape, AvatarEntityType } = require('ui-system/blocks/avatar');
+
+	const OUTLINE_INDENT = {
+		MIN: 2,
+		MAX: 4,
+	};
 
 	/**
 	 * 	@typedef EntityParams
@@ -20,17 +27,17 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 	 * 	@property {string} testId
 	 * 	@property {Array<number | EntityParams>} entities
 	 * 	@property {number} [visibleEntityCount=5]
-	 * 	@property {Array} [entityTypeIds=[]]
 	 * 	@property {boolean} [useLetterImage=true]
-	 * 	@property {boolean} [withRedux=false]
+	 * 	@property {boolean} [withRedux=true]
 	 * 	@property {Color} [backgroundColor=Color.bgSecondary]
 	 * 	@property {Object} [style={}]
 	 * 	@property {Function} [onClick]
+	 * 	@property {Function} [restView]
 	 * 	@property {ElementsStackDirection} [direction]
 	 *
 	 * @class AvatarStack
 	 */
-	class AvatarStack extends LayoutComponent
+	class AvatarStack extends PureComponent
 	{
 		render()
 		{
@@ -43,6 +50,7 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 					clickable: false,
 					radius: null,
 					indent: null,
+					externalIndent: this.getOutline(),
 					restView: this.renderRestElement,
 					...this.getElementsStackParams(),
 				},
@@ -51,18 +59,27 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 		}
 
 		renderRestElement = (restCount) => {
+			const { restView } = this.props;
+
+			if (restView)
+			{
+				return restView(restCount);
+			}
+
 			const size = this.getSize();
 			const baseStyle = {
 				alignItems: 'center',
 				justifyContent: 'center',
 				borderRadius: AvatarClass.resolveBorderRadius(this.isCircle(), size),
 			};
+			const restText = restCount > 99 ? '99+' : `+${restCount}`;
+			const fontSize = size >= 22 || restText.length < 3 ? (size / 2) : (size / 2) - 1;
 
 			return View(
 				{
 					style: {
-						width: size + this.getAvatarOffset(),
-						height: size + this.getAvatarOffset(),
+						width: size + this.getOutline(),
+						height: size + this.getOutline(),
 						backgroundColor: this.getBackgroundColor(),
 						...baseStyle,
 					},
@@ -77,10 +94,10 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 						},
 					},
 					Text({
-						text: `+${restCount}`,
+						text: restText,
 						color: Color.base4,
 						style: {
-							fontSize: size / 2,
+							fontSize,
 						},
 					}),
 				),
@@ -96,9 +113,7 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 
 		prepareEntityParam(params)
 		{
-			let entityParams = {
-				accent: params.accent,
-			};
+			let entityParams = {};
 
 			if (Type.isNumber(Number(params)))
 			{
@@ -112,15 +127,23 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 				};
 			}
 
+			if (Type.isBoolean(params.accent))
+			{
+				entityParams.accent = params.accent;
+			}
+
 			return entityParams;
 		}
 
 		renderAvatar(params)
 		{
+			const { elementType } = this.props;
+
 			return Avatar({
+				elementType,
 				onClick: this.handleOnClick,
 				testId: this.getTestId(),
-				offset: this.getAvatarOffset(),
+				outline: this.getOutline(),
 				...params,
 				...this.getAvatarProps(),
 			});
@@ -135,6 +158,16 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 				useLetterImage,
 				size: this.getSize(),
 				shape: this.getShape(),
+				style: this.getAvatarStyle(),
+			};
+		}
+
+		getAvatarStyle()
+		{
+			const { backgroundColor } = this.props;
+
+			return {
+				backgroundColor: Color.resolve(backgroundColor, Color.bgSecondary).toHex(),
 			};
 		}
 
@@ -157,11 +190,6 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 			const { size } = this.props;
 
 			return size;
-		}
-
-		getAvatarOffset()
-		{
-			return 4;
 		}
 
 		getBackgroundColor()
@@ -196,14 +224,31 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 		{
 			const { offset } = this.props;
 
-			if (Indent.has(offset))
+			return offset || 5;
+		}
+
+		getOutline()
+		{
+			const { outline } = this.props;
+
+			if (Indent.has(outline))
 			{
-				return Indent.resolve(offset, Indent.XS).toNumber();
+				return Indent.resolve(outline, Indent.XS).toNumber();
 			}
 
-			const offsetDependingSize = (this.getSize() * 0.3) - this.getAvatarOffset();
+			if (this.getSize() <= 24)
+			{
+				return OUTLINE_INDENT.MIN;
+			}
 
-			return offsetDependingSize >= this.getAvatarOffset() ? offsetDependingSize : this.getAvatarOffset();
+			const outlineDependingSize = this.getSize() * 0.04;
+
+			if (inRange(outlineDependingSize, OUTLINE_INDENT.MIN, OUTLINE_INDENT.MAX))
+			{
+				return outlineDependingSize;
+			}
+
+			return OUTLINE_INDENT.MAX;
 		}
 
 		isCircle()
@@ -225,13 +270,14 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 		size: 32,
 		visibleEntityCount: 5,
 		entities: [],
-		withRedux: false,
+		withRedux: true,
 		style: {},
-		indent: null,
+		restView: null,
 		useLetterImage: true,
 	};
 
 	AvatarStack.propTypes = {
+		size: PropTypes.number,
 		testId: PropTypes.string.isRequired,
 		visibleEntityCount: PropTypes.number,
 		shape: PropTypes.instanceOf(AvatarShape),
@@ -247,7 +293,9 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 		).isRequired,
 		style: PropTypes.object,
 		offset: PropTypes.instanceOf(Indent),
+		outline: PropTypes.instanceOf(Indent),
 		direction: PropTypes.instanceOf(ElementsStackDirection),
+		restView: PropTypes.func,
 	};
 
 	module.exports = {

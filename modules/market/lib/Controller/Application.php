@@ -106,9 +106,9 @@ class Application extends Controller
 		return $result;
 	}
 
-	public function addReviewAction(string $appCode, string $reviewText, int $currentRating): AjaxJson
+	public function addReviewAction(string $appCode, string $reviewText, int $currentRating, string $isSite): AjaxJson
 	{
-		if (empty(Installed::getByCode($appCode))) {
+		if ($isSite != 'Y' && empty(Installed::getByCode($appCode))) {
 			return AjaxJson::createError();
 		}
 
@@ -126,9 +126,9 @@ class Application extends Controller
 		]);
 	}
 
-	public function editReviewAction(int $reviewId, string $appCode, string $reviewText, int $currentRating): AjaxJson
+	public function editReviewAction(int $reviewId, string $appCode, string $reviewText, int $currentRating, string $isSite): AjaxJson
 	{
-		if (empty(Installed::getByCode($appCode))) {
+		if ($isSite != 'Y' && empty(Installed::getByCode($appCode))) {
 			return AjaxJson::createError();
 		}
 

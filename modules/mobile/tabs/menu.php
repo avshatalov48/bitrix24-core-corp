@@ -11,14 +11,14 @@ class Menu implements Tabable
 
 	public function isAvailable()
 	{
-		return true;
+		return !$this->context->isCollaber;
 	}
 
 	public function getData()
 	{
 		return [
 			"sort" => 1000,
-			"imageName" => "menu_2",
+			'imageName' => 'menu_2',
 			"badgeCode" => "more",
 			"component" => [
 				"settings" => ["useSearch" => true, "useLargeTitleMode" => true],
@@ -74,7 +74,7 @@ class Menu implements Tabable
 
 	public function getShortTitle()
 	{
-		return Loc::getMessage("TAB_NAME_MORE_SHORT");
+		return Loc::getMessage("TAB_NAME_MORE_SHORT_MSGVER_1");
 	}
 
 	public function getId()

@@ -1,1 +1,1 @@
-{"version":3,"file":"extension.map.js","names":["jn","define","require","exports","module","Analytics"],"sources":["extension.js"],"mappings":"AAGAA,GAAGC,OAAO,cAAc,CAACC,EAASC,EAASC,KAC1C,MAAMC,UAAEA,GAAcH,EAAQ,wBAE9BE,EAAOD,QAAU,CAChBE,YACA"}
+{"version":3,"file":"extension.map.js","names":["jn","define","require","exports","module","Analytics","DialogType"],"sources":["extension.js"],"mappings":"AAGAA,GAAGC,OAAO,cAAc,CAACC,EAASC,EAASC,KAC1C,MAAMC,UAAEA,GAAcH,EAAQ,wBAC9B,MAAMI,WAAEA,GAAeJ,EAAQ,0BAE/BE,EAAOD,QAAU,CAChBE,YACAC,aACA","ignoreList":[]}

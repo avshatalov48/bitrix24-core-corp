@@ -2,8 +2,11 @@
 namespace Bitrix\Disk\Internals;
 
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Entity;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Collection;
 
 /**
@@ -186,6 +189,29 @@ final class ObjectPathTable extends DataManager
 		))->fetchAll();
 
 		return $objectPaths;
+	}
+
+	/**
+	 * Checks if object has children.
+	 * @param int $objectId Object id.
+	 * @return bool
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public static function hasChildren(int $objectId): bool
+	{
+		$objectId = (int)$objectId;
+		$objectPaths = self::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'PARENT_ID' => $objectId,
+				'DEPTH_LEVEL' => 1,
+			],
+			'limit' => 1,
+		])->fetch();
+
+		return !empty($objectPaths);
 	}
 
 	/**

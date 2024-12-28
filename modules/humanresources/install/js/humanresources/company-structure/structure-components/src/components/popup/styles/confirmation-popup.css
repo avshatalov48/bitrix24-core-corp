@@ -1,0 +1,68 @@
+.hr-confirmation-popup__title-bar {
+	position: relative;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	margin: 0 14px;
+}
+
+.hr-confirmation-popup__title-bar-close-button {
+	position: absolute;
+	right: 0;
+	cursor: pointer;
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-50);
+}
+
+.hr-confirmation-popup__title-bar-close-button:hover {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-90);
+}
+
+.hr-confirmation-popup__content-container {
+	padding: 4px 14px 9px;
+}
+
+.hr-confirmation-popup__content-container.--without-title-bar{
+	padding-top: 20px;
+}
+
+.hr-confirmation-popup__title-bar-text {
+	color: var(--ui-color-palette-gray-90);
+	font-weight: var(--ui-font-weight-bold);
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-3xs);
+}
+
+.hr-confirmation-popup__content-text {
+	padding-bottom: 10px;
+	color: var(--ui-color-palette-gray-90);
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-3xs);
+}
+
+.hr-confirmation-popup__buttons-container {
+	position: relative;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 10px;
+	padding: 13px 0 14px;
+}
+
+.hr-confirmation-popup__buttons-container::before {
+	content: '';
+	position: absolute;
+	width: 100%;
+	height: 1px;
+	background-color: var(--ui-color-palette-gray-90);
+	top: 0;
+	opacity: 0.08;
+}
+
+.hr_structure_confirmation_popup .popup-window-content {
+	border-radius: 12px;
+}
+
+.hr-structure-components-base-popup {
+	transition: all;
+}

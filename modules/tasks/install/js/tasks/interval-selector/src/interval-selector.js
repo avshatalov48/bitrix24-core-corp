@@ -1,8 +1,9 @@
 import { Event, Loc, Tag } from 'main.core';
 import { MenuManager } from 'main.popup';
+import { EventEmitter } from 'main.core.events';
 import './style.css';
 
-type Interval = 'minutes' | 'hours' | 'days' | 'months';
+export type Interval = 'minutes' | 'hours' | 'days' | 'months';
 
 type Params = {
 	intervals: Interval[],
@@ -13,7 +14,7 @@ type Params = {
 const DEFAULT_INTERVAL = 'days';
 const DEFAULT_INTERVALS = ['hours', 'days', 'months'];
 
-export class IntervalSelector
+export class IntervalSelector extends EventEmitter
 {
 	#params: Params;
 	#layout: {
@@ -25,6 +26,9 @@ export class IntervalSelector
 
 	constructor(params: Params = {})
 	{
+		super(params);
+		this.setEventNamespace('BX.Tasks.IntervalSelector');
+
 		this.#params = params;
 		this.#layout = {};
 
@@ -114,6 +118,8 @@ export class IntervalSelector
 				text: this.#getIntervalPhrase(interval),
 				onclick: (e, item) => {
 					this.setInterval(item.id);
+					this.emit('intervalChanged', {'interval': item.id});
+
 					menu.close();
 				},
 			})),

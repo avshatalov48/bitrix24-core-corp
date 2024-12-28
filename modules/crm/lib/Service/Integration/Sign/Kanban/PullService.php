@@ -10,6 +10,9 @@ use CCrmOwnerType;
 
 final class PullService
 {
+	private const UPDATE_EVENT = 'UPDATE';
+	private const DELETE_EVENT = 'DELETE';
+
 	private readonly ?Factory $b2eEntityFactory;
 
 	public function __construct()
@@ -19,12 +22,17 @@ final class PullService
 
 	public function sendB2ePullUpdateEventByEntityId(int $entityId): bool
 	{
-		if ($entityId < 1)
-		{
-			return false;
-		}
+		return $this->sendB2ePullEvent($entityId, self::UPDATE_EVENT);
+	}
 
-		$item = $this->b2eEntityFactory?->getItem($entityId);
+	public function sendB2ePullDeleteEventByEntityId(int $entityId): bool
+	{
+		return $this->sendB2ePullEvent($entityId, self::DELETE_EVENT);
+	}
+
+	private function sendB2ePullEvent(int $entityId, string $event): bool
+	{
+		$item = $this->getItem($entityId);
 
 		if ($item === null)
 		{
@@ -42,7 +50,21 @@ final class PullService
 
 		$params = $this->getParams($entityName, $item->getCategoryId());
 
-		return PullManager::getInstance()->sendItemUpdatedEvent($pullItem, $params);
+		return match ($event)
+		{
+			self::DELETE_EVENT => PullManager::getInstance()->sendItemDeletedEvent($pullItem, $params),
+			default => PullManager::getInstance()->sendItemUpdatedEvent($pullItem, $params),
+		};
+	}
+
+	private function getItem(int $entityId): ?\Bitrix\Crm\Item
+	{
+		if ($entityId < 1)
+		{
+			return null;
+		}
+
+		return $this->b2eEntityFactory?->getItem($entityId);
 	}
 
 	private function getParams(string $entityName, ?int $categoryId = null): array

@@ -2,38 +2,33 @@
  * @module crm/timeline/item/ui/user-avatar
  */
 jn.define('crm/timeline/item/ui/user-avatar', (require, exports, module) => {
-	const { InAppLink } = require('in-app-url/components/link');
+	const { Indent } = require('tokens');
+	const { useCallback } = require('utils/function');
+	const { inAppUrl } = require('in-app-url');
+	const { Avatar } = require('ui-system/blocks/avatar');
 
-	const DEFAULT_AVATAR = '/bitrix/mobileapp/crmmobile/extensions/crm/timeline/item/ui/user-avatar/default-avatar.png';
-
-	function TimelineItemUserAvatar({ title, imageUrl, detailUrl, testId })
+	function TimelineItemUserAvatar({ id, userId, title, imageUrl, detailUrl, testId })
 	{
-		imageUrl = imageUrl || DEFAULT_AVATAR;
-		imageUrl = imageUrl.startsWith('/') ? currentDomain + imageUrl : imageUrl;
-		testId = testId || 'TimelineItemUserAvatar';
+		const userTestId = testId || 'TimelineItemUserAvatar';
 
-		return InAppLink({
-			testId,
-			url: detailUrl,
-			context: {
-				backdrop: true,
+		return Avatar({
+			id: id || userId,
+			size: 20,
+			name: title,
+			uri: imageUrl,
+			testId: userTestId,
+			style: {
+				margin: Indent.L.toNumber(),
 			},
-			containerStyle: {
-				paddingVertical: 10,
-				paddingHorizontal: 11,
-				justifyContent: 'center',
-				alignItems: 'center',
-			},
-			renderContent: () => Image(
-				{
-					style: {
-						width: 20,
-						height: 20,
-						borderRadius: 20,
+			withRedux: true,
+			onClick: useCallback(() => {
+				inAppUrl.open(
+					detailUrl,
+					{
+						backdrop: true,
 					},
-					uri: encodeURI(imageUrl),
-				},
-			),
+				);
+			}, [id]),
 		});
 	}
 

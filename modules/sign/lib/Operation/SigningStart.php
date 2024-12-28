@@ -57,10 +57,8 @@ class SigningStart implements Contract\Operation
 		{
 			return $result->addErrors($signingStartResponse->getErrors());
 		}
-		$document->status = Type\DocumentStatus::SIGNING;
 
-		$result = $this->documentRepository->update($document);
-
+		$result = (new ChangeDocumentStatus($document, Type\DocumentStatus::SIGNING))->launch();
 		if ($result->isSuccess())
 		{
 			$this->sendEvents($document);

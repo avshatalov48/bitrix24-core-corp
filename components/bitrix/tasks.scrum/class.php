@@ -220,7 +220,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		}
 		$params['GROUP_ID'] = (is_numeric($params['GROUP_ID']) ? (int) $params['GROUP_ID'] : 0);
 
-		$params['CONTEXT'] = ($params['CONTEXT'] ?? 'group');
+		$params['CONTEXT'] = (empty($params['CONTEXT'] ?? null) ? 'group' : $params['CONTEXT']);
 
 		$params['SET_TITLE'] = (isset($params['SET_TITLE']) && $params['SET_TITLE'] == 'Y');
 
@@ -1203,7 +1203,6 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 					$taskId = $item->getSourceId();
 					$subTaskIds = $taskService->getSubTaskIds($groupId, $taskId);
-
 					$idsToMove = array_merge([$taskId], $subTaskIds);
 					$itemIds = $itemService->getItemIdsBySourceIds($idsToMove);
 
@@ -1218,6 +1217,14 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 					if (!$sourceEntity->isEmpty() && $sourceEntity->isActiveSprint())
 					{
 						$kanbanService->removeTasksFromKanban($sourceEntity->getId(), $idsToMove);
+					}
+
+					if($sourceEntity->getEntityType() !== $targetEntity->getEntityType())
+					{
+						foreach ($idsToMove as $taskId)
+						{
+							$taskService->addTaskMovingToLog($taskId, $groupId);
+						}
 					}
 				}
 			}

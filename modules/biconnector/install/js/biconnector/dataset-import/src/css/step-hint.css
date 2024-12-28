@@ -1,0 +1,7 @@
+.ui-alert.ui-alert-primary.dataset-import-step__hint {
+	--ui-alert-color: var(--ui-color-base-default);
+}
+
+.dataset-import-step__hint a {
+	cursor: pointer;
+}

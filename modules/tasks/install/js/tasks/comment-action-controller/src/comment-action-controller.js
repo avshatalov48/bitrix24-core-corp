@@ -1,5 +1,5 @@
-import {ajax, Loc, Reflection, Runtime} from 'main.core';
-import {rest} from 'rest.client';
+import { ajax, Loc, Reflection, Runtime, Type } from 'main.core';
+import { rest } from 'rest.client';
 import { Dialog, Item } from 'ui.entity-selector';
 
 class CommentActionController
@@ -16,6 +16,7 @@ class CommentActionController
 			taskDisapprove: 'taskDisapprove',
 			taskComplete: 'taskComplete',
 			taskChangeResponsible: 'taskChangeResponsible',
+			showFlowAttendees: 'showFlowAttendees',
 		};
 	}
 
@@ -133,37 +134,61 @@ class CommentActionController
 
 	static processLink(link: Object)
 	{
-		const [url, userId, taskId, action, deadline] = link.matches;
+		const [url, userId, taskId, action] = link.matches;
+
+		const urlParams = new URLSearchParams(link.url);
+		const [deadline, flowId, excludeMembers] = [
+			urlParams.get('deadline'),
+			urlParams.get('flowId'),
+			JSON.parse(urlParams.get('excludeMembers') ?? '[]'),
+		];
 
 		if (!CommentActionController.isActionValid(action))
 		{
 			return;
 		}
 
-		if (action === CommentActionController.possibleActions.deadlineChange)
+		switch (action)
 		{
-			CommentActionController.init().then(() => {
-				CommentActionController.showDeadlinePicker(link.anchor, taskId, deadline);
-			});
-			return;
+			case CommentActionController.possibleActions.deadlineChange:
+				CommentActionController.init().then(() => {
+					CommentActionController.showDeadlinePicker(link.anchor, taskId, deadline);
+				});
+
+				return;
+
+			case CommentActionController.possibleActions.taskChangeResponsible:
+				CommentActionController.showResponsibleSelector(link.anchor, taskId, flowId);
+
+				return;
+
+			case CommentActionController.possibleActions.showFlowAttendees:
+				CommentActionController.showFlowAttendees(link.anchor, flowId, excludeMembers);
+
+				return;
+
+			default:
+				CommentActionController.checkCanRun(action, taskId).then(
+					(response) => {
+						if (response)
+						{
+							CommentActionController.runAjaxAction(action, taskId);
+						}
+					},
+					(response) => console.error(response),
+				);
 		}
+	}
 
-		if (action === CommentActionController.possibleActions.taskChangeResponsible)
-		{
-			CommentActionController.showResponsibleSelector(link.anchor, taskId);
+	static async showFlowAttendees(target: HTMLElement, flowId: number, excludeMembers: number[] = []): void
+	{
+		const { TeamPopup } = await Runtime.loadExtension('tasks.flow.team-popup');
 
-			return;
-		}
-
-		CommentActionController.checkCanRun(action, taskId).then(
-			(response) => {
-				if (response)
-				{
-					CommentActionController.runAjaxAction(action, taskId);
-				}
-			},
-			response => console.error(response)
-		);
+		TeamPopup.showInstance({
+			flowId,
+			bindElement: target,
+			excludeMembers,
+		});
 	}
 
 	static showDeadlinePicker(target: HTMLElement, taskId: Integer, deadline: any)
@@ -202,14 +227,30 @@ class CommentActionController
 		});
 	}
 
-	static showResponsibleSelector(target: HTMLElement, taskId: number)
+	static showResponsibleSelector(target: HTMLElement, taskId: number, flowId: ?number = null)
 	{
-		const dialog = new Dialog({
-			targetNode: target,
-			enableSearch: true,
-			multiple: false,
-			cacheable: false,
-			entities: [
+		const entities = [
+			{
+				id: 'department',
+			},
+		];
+
+		const isFlowCorrect = flowId !== null;
+		if (isFlowCorrect)
+		{
+			entities.unshift(
+				{
+					id: 'flow-user',
+					options: {
+						flowId,
+					},
+					dynamicLoad: true,
+				},
+			);
+		}
+		else
+		{
+			entities.unshift(
 				{
 					id: 'user',
 					options: {
@@ -219,7 +260,16 @@ class CommentActionController
 						inviteGuestLink: false,
 					},
 				},
-			],
+			);
+		}
+
+		const dialog = new Dialog({
+			targetNode: target,
+			enableSearch: true,
+			multiple: false,
+			cacheable: false,
+			dropdownMode: isFlowCorrect,
+			entities,
 			clearSearchOnSelect: true,
 			events: {
 				'Item:onSelect': (event) => {

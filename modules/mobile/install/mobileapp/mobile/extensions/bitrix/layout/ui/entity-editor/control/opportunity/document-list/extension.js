@@ -271,6 +271,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 								title: this.getDocumentName(document),
 								redirectUrl: `/crm/deal/details/${this.props.entityId}/`,
 								hintText: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_SHIPMENT_DETAIL_HINT_MSGVER_1'),
+								analyticsSection: this.props.analytics?.analyticsSection || '',
 							});
 						},
 					},
@@ -949,6 +950,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 						menu.close(() => {
 							qrauth.open({
 								redirectUrl: `/crm/deal/details/${this.props.entityId}/`,
+								analyticsSection: this.props.analytics?.analyticsSection || '',
 							});
 						});
 					},

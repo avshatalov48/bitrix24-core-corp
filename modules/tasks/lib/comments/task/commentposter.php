@@ -2,12 +2,17 @@
 namespace Bitrix\Tasks\Comments\Task;
 
 use Bitrix\Main;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Context;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\StringHelper;
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Access;
 use Bitrix\Tasks\Comments\Internals\Comment;
+use Bitrix\Tasks\Comments\Task\Trait\ExpiredCommentTrait;
+use Bitrix\Tasks\Comments\Task\Trait\ExpiredSoonCommentTrait;
 use Bitrix\Tasks\Flow\Comment\CommentEvent;
 use Bitrix\Tasks\Flow\Internal\Entity\FlowEntity;
 use Bitrix\Tasks\Flow\Provider\Exception\FlowNotFoundException;
@@ -17,6 +22,7 @@ use Bitrix\Tasks\Integration\Disk;
 use Bitrix\Tasks\Integration\Forum;
 use Bitrix\Tasks\Integration\Mail;
 use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Integration\SocialNetwork\Collab\Provider\CollabProvider;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\TaskObject;
@@ -24,6 +30,7 @@ use Bitrix\Tasks\Util\Collection;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\UserField;
+use CComponentEngine;
 
 Loc::loadMessages(__FILE__);
 
@@ -34,6 +41,9 @@ Loc::loadMessages(__FILE__);
  */
 class CommentPoster
 {
+	use ExpiredCommentTrait;
+	use ExpiredSoonCommentTrait;
+
 	private static $instances = [];
 	private static $taskNames = [];
 	private static $userNames = [];
@@ -345,6 +355,7 @@ class CommentPoster
 		$responsibleId = (int)$taskData['RESPONSIBLE_ID'];
 		$accomplices = (array)$taskData['ACCOMPLICES'];
 		$auditors = (array)$taskData['AUDITORS'];
+		$flowId = (int)$taskData['FLOW_ID'];
 
 		if (in_array($this->authorId, $accomplices, true))
 		{
@@ -362,6 +373,7 @@ class CommentPoster
 			&& $creatorId === $responsibleId
 			&& empty($accomplices)
 			&& empty($auditors)
+			&& $flowId <= 0
 		)
 		{
 			return $addComments;
@@ -391,7 +403,10 @@ class CommentPoster
 			$messageKey = $this->getLastVersionedMessageKey($messageKey);
 			$addComment->addPart('control', Loc::getMessage($messageKey), [[$messageKey, []]]);
 		}
-		if (!$taskData['DEADLINE'])
+
+		$task = TaskRegistry::getInstance()->getObject($this->taskId);
+
+		if (!$taskData['DEADLINE'] && !$task?->isScrum())
 		{
 			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_DEADLINE';
 			$messageKey = $this->getLastVersionedMessageKey($messageKey);
@@ -516,17 +531,27 @@ class CommentPoster
 					break;
 			}
 
-			$values = $this->getFieldValues($field, $values);
-			if ($values['NEW'] === false)
+			$mappedValues = $this->getFieldValues($field, $values);
+			if ($mappedValues['NEW'] === false)
 			{
 				continue;
+			}
+
+			if ($field === 'GROUP_ID')
+			{
+				$provider = CollabProvider::getInstance();
+				$toCollabId = (int)($values['TO_VALUE'] ?? 0);
+				if ($toCollabId > 0 && $provider?->isCollab($toCollabId))
+				{
+					$field = 'COLLAB_ID';
+				}
 			}
 
 			$fieldKey = "COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_{$this->mapKey($field)}";
 			$fieldKey = $this->getLastVersionedMessageKey($fieldKey);
 			$fieldReplaces = [
-				'#OLD_VALUE#' => $values['OLD'],
-				'#NEW_VALUE#' => $values['NEW'],
+				'#OLD_VALUE#' => $mappedValues['OLD'],
+				'#NEW_VALUE#' => $mappedValues['NEW'],
 			];
 			$changeComment->appendPartData('changes', [$fieldKey, array_merge($fieldReplaces, $liveParams)]);
 
@@ -547,8 +572,11 @@ class CommentPoster
 		$responsibleChanged = array_key_exists('RESPONSIBLE_ID', $changes);
 
 		if (
-			($deadlineChanged && !$newFields['DEADLINE'])
-			|| ($responsibleChanged && !$deadlineChanged && !$oldFields['DEADLINE'])
+			(
+				($deadlineChanged && !$newFields['DEADLINE'])
+				|| ($responsibleChanged && !$deadlineChanged && !$oldFields['DEADLINE'])
+			)
+			&& !$task->isScrum()
 		)
 		{
 			$partName = 'deadline';
@@ -878,31 +906,9 @@ class CommentPoster
 		}
 
 		$members = $this->getMembersForExpiredMessages($taskData);
-		if (empty($members))
-		{
-			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_NO_MEMBERS';
-			$messageKey = $this->getLastVersionedMessageKey($messageKey);
-			$replace = [];
-		}
-		else
-		{
-			$userToLinkFunction = function (int $userId) {
-				return $this->parseUserToLinked($userId);
-			};
-			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON';
-			$messageKey = $this->getLastVersionedMessageKey($messageKey);
-			$replace = ['#MEMBERS#' => implode(', ', array_map($userToLinkFunction, $members))];
-		}
+		$liveParameters = $this->prepareTaskExpiredSoonCommentLiveParams($taskData);
 
-		$liveParams = $this->prepareTaskExpiredSoonCommentLiveParams($taskData);
-		$expiredSoonComments[] = new Comment(
-			Loc::getMessage($messageKey, $replace),
-			$this->authorId,
-			Comment::TYPE_EXPIRED_SOON,
-			[[$messageKey, array_merge($replace, $liveParams)]]
-		);
-
-		return $expiredSoonComments;
+		return $this->getExpiredSoonCommentsForMembers($members, $liveParameters);
 	}
 
 	private function prepareTaskExpiredSoonCommentLiveParams(array $taskData): array
@@ -924,33 +930,9 @@ class CommentPoster
 		}
 
 		$members = $this->getMembersForExpiredMessages($taskData);
-		if (empty($members))
-		{
-			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_EXPIRED_NO_MEMBERS';
-			$messageKey = $this->getLastVersionedMessageKey($messageKey);
-			$replace = [];
-		}
-		else
-		{
-			$userToLinkFunction = function (int $userId) {
-				return $this->parseUserToLinked($userId);
-			};
-			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_EXPIRED';
-			$messageKey = $this->getLastVersionedMessageKey($messageKey);
-			$replace = [
-				'#MEMBERS#' => implode(', ', array_map($userToLinkFunction, $members)),
-			];
-		}
+		$liveParameters = $this->prepareTaskExpiredCommentLiveParams($taskData);
 
-		$liveParams = $this->prepareTaskExpiredCommentLiveParams($taskData);
-		$expiredComments[] = new Comment(
-			Loc::getMessage($messageKey, $replace),
-			$this->authorId,
-			Comment::TYPE_EXPIRED,
-			[[$messageKey, array_merge($replace, $liveParams)]]
-		);
-
-		return $expiredComments;
+		return $this->getExpiredCommentsForMembers($members, $liveParameters);
 	}
 
 	private function prepareTaskExpiredCommentLiveParams(array $taskData): array
@@ -1042,7 +1024,7 @@ class CommentPoster
 	private function getMembersForStatusPingedMessages(array $taskData): array
 	{
 		$responsibleId = (int)$taskData['RESPONSIBLE_ID'];
-		$accomplices = $taskData['ACCOMPLICES'];
+		$accomplices = $taskData['ACCOMPLICES'] ?? [];
 		$accomplices = (is_array($accomplices) ? $accomplices : $accomplices->export());
 		$accomplices = array_map('intval', $accomplices);
 
@@ -1219,6 +1201,8 @@ class CommentPoster
 			'TASK_DISAPPROVE',
 			'TASK_COMPLETE',
 			'TASK_CHANGE_RESPONSIBLE',
+			'TASK_START',
+			'SHOW_FLOW_ATTENDEES',
 		];
 		foreach ($replaces as $key)
 		{
@@ -1257,23 +1241,26 @@ class CommentPoster
 					$deadline = FormatDate($format, MakeTimeStamp(DateTime::createFromTimestamp($timestamp)));
 					$message = str_replace([$timestamp, $start, $end], [$deadline, '', ''], $message);
 					break;
-
 				case 'DEADLINE_CHANGE':
 				case 'TASK_APPROVE':
 				case 'TASK_DISAPPROVE':
 				case 'TASK_COMPLETE':
 				case 'TASK_CHANGE_RESPONSIBLE':
+				case 'TASK_START':
+				case 'SHOW_FLOW_ATTENDEES':
 					$actionMap = [
 						'DEADLINE_CHANGE' => Access\ActionDictionary::ACTION_TASK_DEADLINE,
 						'TASK_APPROVE' => Access\ActionDictionary::ACTION_TASK_APPROVE,
 						'TASK_DISAPPROVE' => Access\ActionDictionary::ACTION_TASK_DISAPPROVE,
 						'TASK_COMPLETE' => Access\ActionDictionary::ACTION_TASK_COMPLETE,
 						'TASK_CHANGE_RESPONSIBLE' => Access\ActionDictionary::ACTION_TASK_CHANGE_RESPONSIBLE,
+						'TASK_START' => Access\ActionDictionary::ACTION_TASK_START,
+						'SHOW_FLOW_ATTENDEES' => Access\ActionDictionary::ACTION_TASK_READ,
 					];
 					$replace = '';
 					if (isset($taskId) && Access\TaskAccessController::can($userId, $actionMap[$key], $taskId))
 					{
-						$actionUrl = static::getCommentActionUrl($userId, $taskId, $key);
+						$actionUrl = static::getCommentActionUrl($userId, $taskId, $key, $message);
 						$replace = ["[URL={$actionUrl}]", "[/URL]"];
 					}
 					$message = str_replace([$start, $end], $replace, $message);
@@ -1286,11 +1273,19 @@ class CommentPoster
 		}
 
 		preg_match_all('/(?<=\[GROUP_ID=)\d+(?=])/', $message, $groupIds);
+
+		$provider = SocialNetwork\GroupProvider::getInstance();
+
+		$provider?->loadGroupTypes(...$groupIds[0]);
+
 		foreach ($groupIds[0] as $groupId)
 		{
+			$type =  (string)$provider?->getGroupType($groupId)?->value;
+			$url = SocialNetwork\Collab\Url\UrlManager::getUrlByType($groupId, $type);
+
 			$message = str_replace(
 				["[GROUP_ID={$groupId}]", "[/GROUP_ID]"],
-				($groupId > 0 ? ["[URL=/workgroups/group/{$groupId}/]", "[/URL]"] : ['', '']),
+				($groupId > 0 ? ["[URL={$url}]", "[/URL]"] : ['', '']),
 				$message
 			);
 		}
@@ -1298,24 +1293,69 @@ class CommentPoster
 		return $message;
 	}
 
-	private static function getCommentActionUrl(int $userId, int $taskId, string $action): string
+	private static function getCommentActionUrl(
+		int $userId,
+		int $taskId,
+		string $action,
+		?string $message = null
+	): string
 	{
-		$url = new Uri("/company/personal/user/{$userId}/tasks/task/view/{$taskId}/");
+		$taskViewPath = CComponentEngine::makePathFromTemplate(
+			Option::get('tasks', 'paths_task_user_entry', null, SITE_ID),
+			['user_id' => $userId, 'task_id' => $taskId]
+		);
+
+		$url = new Uri($taskViewPath);
 		$url->addParams([
 			'commentAction' => lcfirst(StringHelper::snake2camel($action)),
 		]);
 
-		if (
-			$action === 'DEADLINE_CHANGE'
-			&& ($deadline = (TaskRegistry::getInstance())->get($taskId)['DEADLINE'])
-		)
+		switch ($action)
 		{
-			$url->addParams([
-				'deadline' => $deadline->getTimestamp(),
-			]);
+			case 'DEADLINE_CHANGE':
+				if ($deadline = (TaskRegistry::getInstance())->get($taskId)['DEADLINE'])
+				{
+					$url->addParams([
+						'deadline' => $deadline->getTimestamp(),
+					]);
+				}
+				break;
+
+			case 'TASK_CHANGE_RESPONSIBLE':
+				if ($flowId = (TaskRegistry::getInstance())->get($taskId)['FLOW_ID'])
+				{
+					$url->addParams([
+						'flowId' => $flowId,
+					]);
+				}
+				break;
+
+			case 'SHOW_FLOW_ATTENDEES':
+				if ($flowId = (TaskRegistry::getInstance())->get($taskId)['FLOW_ID'])
+				{
+					$alreadyDisplayedUsers = self::parseUserIdsFromMessage($message);
+					$url->addParams([
+						'flowId' => $flowId,
+						'excludeMembers' => Json::encode($alreadyDisplayedUsers),
+					]);
+				}
+				break;
 		}
 
 		return $url->getUri();
+	}
+
+	/**
+	 * @return int[]
+	 */
+	private static function parseUserIdsFromMessage(?string $message = ''): array
+	{
+		preg_match_all('/\[USER=(\d+)]/', $message, $matches);
+		$userIds = $matches[1] ?? [];
+
+		return array_unique(
+			array_map(static fn($userId) => (int)$userId, $userIds)
+		);
 	}
 
 	/**
@@ -1370,6 +1410,11 @@ class CommentPoster
 				'AUX_LIVE_PARAMS' => ($hasLiveData ? [ 'JSON' => Main\Web\Json::encode($auxData) ] : []),
 			]);
 		}
+	}
+
+	private function getUsersCodes(array $userIds): array
+	{
+		return array_map(fn (int $userId): string => $this->parseUserToLinked($userId), $userIds);
 	}
 
 	/**
@@ -1576,12 +1621,19 @@ class CommentPoster
 	private function addFlowResponsibleComment(Comment $comment): void
 	{
 		$task = TaskRegistry::getInstance()->get($this->taskId, true);
+		$flowId = $task['FLOW_ID'];
 
 		try
 		{
-			$flow = (new FlowProvider())->getFlow($task['FLOW_ID']);
+			$flow = (new FlowProvider())->getFlow($flowId);
 		}
 		catch (FlowNotFoundException)
+		{
+			return;
+		}
+
+		$responsibleCountList = ServiceLocator::getInstance()->get('tasks.flow.member.facade')->getTeamCount([$flowId]);
+		if ($responsibleCountList[$flowId] <= 0)
 		{
 			return;
 		}

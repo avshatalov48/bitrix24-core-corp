@@ -51,7 +51,7 @@
 
 .ai__history-image_item-wrapper {
 	overflow: hidden;
-	padding-bottom: 36px;
+	padding-bottom: 24px;
 	transition: 0.5s ease-out height, 0.5s ease-out opacity;
 	opacity: 0;
 	box-sizing: border-box;
@@ -63,8 +63,8 @@
 	align-items: center;
 	justify-content: center;
 	position: relative;
-	width: calc(50% - 1px);
-	padding-bottom: calc(50% - 1px);
+	width: 100%;
+	padding-bottom: 100%;
 	height: 0;
 	background-color: var(--ui-color-base-02);
 }
@@ -89,6 +89,7 @@
 
 .ai__picker_history-image-group-item.--empty .ai__picker_history-image-group-item-loader {
 	display: block;
+	transform: scale(1.8);
 	--ai__picker-image-loader-font-color: var(--ui-color-base-02);
 }
 

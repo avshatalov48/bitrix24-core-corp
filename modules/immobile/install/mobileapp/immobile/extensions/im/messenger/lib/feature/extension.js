@@ -2,6 +2,8 @@
  * @module im/messenger/lib/feature
  */
 jn.define('im/messenger/lib/feature', (require, exports, module) => {
+	const { Feature: MobileFeature } = require('feature');
+
 	const { MessengerParams } = require('im/messenger/lib/params');
 
 	const dynamicProperties = {
@@ -65,9 +67,9 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			return dynamicProperties.localStorageReadOnlyModeEnable;
 		}
 
-		static get isCopilotAvailable()
+		static get isCopilotEnabled()
 		{
-			return MessengerParams.isCopilotAvailable();
+			return MessengerParams.getImFeatures().copilotActive;
 		}
 
 		static get isAutoplayVideoEnabled()
@@ -150,6 +152,11 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			return Application.getApiVersion() >= 55;
 		}
 
+		static get isNavigationContextSupportsGetStack()
+		{
+			return Application.getApiVersion() >= 56;
+		}
+
 		static get isChatDialogWidgetSupportsBots()
 		{
 			return (
@@ -174,6 +181,41 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			return Application.getApiVersion() >= 56;
 		}
 
+		static get isChatComposerSupported()
+		{
+			return Application.getApiVersion() >= 56;
+		}
+
+		static get isSidebarFilesEnabled()
+		{
+			return MessengerParams.getImFeatures().sidebarFiles;
+		}
+
+		static get isSidebarLinksEnabled()
+		{
+			return MessengerParams.getImFeatures().sidebarLinks;
+		}
+
+		static get isCollabSupported()
+		{
+			return Application.getApiVersion() >= 56;
+		}
+
+		static get isCollabAvailable()
+		{
+			return MessengerParams.getImFeatures().collabAvailable;
+		}
+
+		static get isCollabCreationAvailable()
+		{
+			return MessengerParams.getImFeatures().collabCreationAvailable;
+		}
+
+		static get isMultiSelectAvailable()
+		{
+			return Application.getApiVersion() >= 56;
+		}
+
 		static get isDevelopmentEnvironment()
 		{
 			return (
@@ -181,6 +223,28 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 				&& Application.isBeta()
 				&& MessengerParams.get('IS_DEVELOPMENT_ENVIRONMENT', false)
 			);
+		}
+
+		static showUnsupportedWidget(options = {}, parentWidget = PageManager)
+		{
+			const defaultOptions = {
+				isOldBuild: false,
+			};
+
+			MobileFeature.showDefaultUnsupportedWidget({
+				...defaultOptions,
+				...options,
+			}, parentWidget);
+		}
+
+		static get isImagePickerCustomFieldsSupported()
+		{
+			return Application.getApiVersion() >= 56;
+		}
+
+		static get isIconBoxWithLidAvailable()
+		{
+			return Application.getApiVersion() >= 56;
 		}
 	}
 

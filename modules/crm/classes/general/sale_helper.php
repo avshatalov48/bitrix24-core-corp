@@ -4,6 +4,7 @@ use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Db\SqlQueryException;
+use Bitrix\Main\GroupTable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectPropertyException;
@@ -373,15 +374,23 @@ class CCrmSaleHelper
 
 	public static function getShopGroupIdByType($type): ?int
 	{
-		$groupId = null;
-		$queryObject = CGroup::getList("ID", "ASC", array("STRING_ID" => "CRM_SHOP_".mb_strtoupper($type), "STRING_ID_EXACT_MATCH" => "Y"));
-		if ($group = $queryObject->fetch())
+		$group = GroupTable::getRow([
+			'select' => [
+				'ID'
+			],
+			'filter' => [
+				'=STRING_ID' => 'CRM_SHOP_' . mb_strtoupper($type),
+			],
+			'cache' => [
+				'ttl' => 86400,
+			],
+		]);
+		if (!$group)
 		{
-			$groupId = (int)$group["ID"];
+			return null;
 		}
-		unset($group);
 
-		return $groupId;
+		return (int)$group['ID'];
 	}
 
 	/**

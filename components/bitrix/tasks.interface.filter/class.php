@@ -11,6 +11,8 @@ use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Scrum\Service\SprintService;
 use Bitrix\Tasks\TourGuide\PresetsMoved;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\FilterLimit;
+use Bitrix\Tasks\Ui\Filter\Task;
+use Bitrix\Tasks\Internals\Routes\RouteDictionary;
 
 Loader::includeModule('socialnetwork');
 
@@ -219,8 +221,15 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 
 		$group = Bitrix\Socialnetwork\Item\Workgroup::getById($this->arParams['GROUP_ID']);
 		$this->arResult['IS_SCRUM_PROJECT'] = ($group && $group->isScrumProject());
+		$this->arResult['IS_COLLAB'] = ($group && $group->isCollab());
 		$this->arResult['SPRINT'] = $this->getSprint();
 		$this->arResult['IS_TEMPLATES_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['templates']);
+
+		$this->arResult['viewMode'] = $this->getUserTasksViewMode();
+		$this->arResult['viewList'] = $this->getTasksViewList();
+		$this->arResult['pathToUserTasks'] = CComponentEngine::MakePathFromTemplate(
+			RouteDictionary::PATH_TO_USER_TASKS_LIST,
+		);;
 	}
 
 	protected function canCreateGroupTasks($groupId)
@@ -456,4 +465,73 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 	{
 		$this->arParams['VIEW_STATE_FOR_ANALYTICS'] = \Bitrix\Tasks\Helper\Analytics::getInstance($this->arParams['USER_ID'], $this->arParams['GROUP_ID'] ?? 0)->getViewStateName();
 	}
+
+	private function getTasksViewList(): array
+	{
+		$listState = Task::getListStateInstance();
+		if (!$listState)
+		{
+			return [];
+		}
+
+		$viewState = $listState->getState();
+
+		$currentViewMode = $this->arResult['viewMode'];
+
+		$viewList = [];
+
+		foreach ($viewState['VIEWS'] as $viewKey => $view)
+		{
+
+
+			if ($viewKey === 'VIEW_MODE_KANBAN')
+			{
+				continue;
+			}
+
+			$viewList[] = [
+				'id' => $view['ID'],
+				'key' => $this->convertToKebabCase($viewKey),
+				'title' => $view['SHORT_TITLE'],
+				'selected' => $this->getTasksViewMode($viewKey) === $currentViewMode,
+				'urlParam' => 'F_STATE',
+				'urlValue' => 'sV' . CTaskListState::encodeState($view['ID']),
+			];
+		}
+
+		return $viewList;
+	}
+
+	private function convertToKebabCase(string $string): string
+	{
+		$string = preg_replace('/[\s.]+/', '_', $string);
+
+		$string = preg_replace('/[^0-9a-zA-Z_\-]/', '-', $string);
+
+		$string = mb_strtolower(preg_replace('/[A-Z]+/', '-\0', $string));
+		$string = trim($string, '-_');
+
+		return preg_replace('/[_\-][_\-]+/', '-', $string);
+	}
+
+	private function getTasksViewMode(string $code): string
+	{
+		return match ($code)
+		{
+			'VIEW_MODE_GANTT' => 'gantt',
+			'VIEW_MODE_PLAN' => 'plan',
+			'VIEW_MODE_KANBAN' => 'kanban',
+			'VIEW_MODE_TIMELINE' => 'timeline',
+			'VIEW_MODE_CALENDAR' => 'calendar',
+			default => 'list',
+		};
+	}
+
+	private function getUserTasksViewMode(): string
+	{
+		$viewCode = Task::listStateInit()?->getState()['VIEW_SELECTED']['CODENAME'];
+
+		return $this->getTasksViewMode($viewCode);
+	}
+
 }

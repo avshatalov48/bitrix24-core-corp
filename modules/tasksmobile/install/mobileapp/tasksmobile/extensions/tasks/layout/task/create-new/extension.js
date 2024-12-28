@@ -25,6 +25,8 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	const { DatePlanField } = require('tasks/layout/fields/date-plan/theme/air-compact');
 	const { CrmElementField } = require('layout/ui/fields/crm-element/theme/air-compact');
 	const { TimeTrackingField } = require('tasks/layout/fields/time-tracking/theme/air-compact');
+	const { UserFieldsField } = require('tasks/layout/fields/user-fields/theme/air-compact');
+	const { isFieldValid } = require('tasks/layout/fields/user-fields/validator');
 
 	const store = require('statemanager/redux/store');
 	const { batchActions } = require('statemanager/redux/batched-actions');
@@ -62,7 +64,6 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	const { dayMonth } = require('utils/date/formats');
 	const { Haptics } = require('haptics');
 	const { Loc } = require('tasks/loc');
-	const { Notify } = require('notify');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { showToast, showErrorToast, Position } = require('toast');
 	const { ParentTask } = require('tasks/layout/task/parent-task');
@@ -72,6 +73,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 		isFieldRestricted,
 	} = require('tasks/fields/restriction');
 	const { tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
+	const { AnalyticsEvent } = require('analytics');
 
 	const isAndroid = Application.getPlatform() !== 'ios';
 	const PARENT_TASK_HEIGHT = 30;
@@ -107,6 +109,11 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			};
 
 			Object.entries(map).forEach(([fieldId, property]) => {
+				if (fieldId === Fields.PROJECT && preparedTaskData[property]?.isCollab === true)
+				{
+					return;
+				}
+
 				if (isFieldRestricted(fieldId))
 				{
 					delete preparedTaskData[property];
@@ -200,6 +207,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			this.onChangeTags = this.onChangeTags.bind(this);
 			this.onChangeCrmElements = this.onChangeCrmElements.bind(this);
 			this.onChangeTimeTrackingSettings = this.onChangeTimeTrackingSettings.bind(this);
+			this.onChangeUserFields = this.onChangeUserFields.bind(this);
 			this.notifyDeadlineDisabledByFlow = this.notifyDeadlineDisabledByFlow.bind(this);
 			this.notifyProjectDisabledByFlow = this.notifyProjectDisabledByFlow.bind(this);
 
@@ -212,6 +220,8 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				this.#preloadCurrentUserData(),
 				this.#preloadSourceTask(),
 				this.#preloadFlowData(),
+				this.#preloadDefaultCollab(),
+				this.#preloadUserFields(),
 				getDiskFolderId().then(({ diskFolderId }) => {
 					this.diskFolderId = diskFolderId;
 				}),
@@ -223,6 +233,48 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				.then(() => this.doFinalInitAction())
 				.catch(console.error)
 			;
+		}
+
+		#preloadUserFields()
+		{
+			return new Promise((resolve) => {
+				(new RunActionExecutor('tasksmobile.UserField.getUserFields'))
+					.setHandler((response) => {
+						this.userFields = (response?.status === 'success' ? response.data : []);
+						this.userFieldNames = this.userFields.map(({ fieldName }) => fieldName);
+						resolve();
+					})
+					.call(false)
+				;
+			});
+		}
+
+		#isCollaberOrExtranet = () => {
+			return env.isCollaber || env.extranet;
+		};
+
+		#preloadDefaultCollab()
+		{
+			if (!this.#isCollaberOrExtranet())
+			{
+				return Promise.resolve();
+			}
+
+			return new Promise((resolve) => {
+				(new RunActionExecutor('tasksmobile.Collab.getDefaultCollab'))
+					.setHandler((response) => {
+						const { status, data } = response;
+
+						if (status === 'success' && data)
+						{
+							dispatch(groupsUpserted([data]));
+							this.defaultCollab = data;
+						}
+						resolve();
+					})
+					.call(false)
+				;
+			});
 		}
 
 		#preloadFlowData()
@@ -405,7 +457,10 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				description: (initialTaskData?.description || this.sourceTaskData?.description || ''),
 				deadline: initialTaskData?.deadline,
 				group: this.convertGroupToEntitySelectorFormat(
-					this.task?.group || initialTaskData?.group || this.sourceTaskData?.group,
+					this.task?.group
+					|| initialTaskData?.group
+					|| this.sourceTaskData?.group
+					|| this.defaultCollab,
 				),
 				priority: (initialTaskData?.priority || this.sourceTaskData?.priority || 1),
 				parentId: (initialTaskData?.parentId || 0),
@@ -437,6 +492,11 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				group: this.convertGroupToEntitySelectorFormat(initialTaskData?.group),
 				responsible: (initialTaskData?.responsible || this.currentUserData),
 			};
+
+			this.userFields.forEach((field) => {
+				this.task[field.fieldName] = { ...field };
+				this.initialTaskData[field.fieldName] = { ...field };
+			});
 
 			this.checklistController = new ChecklistController({
 				taskId: undefined,
@@ -645,6 +705,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 						this.refreshBottomPanel();
 						this.handlePreventBottomSheetDismiss();
 					},
+					onSubmitEditing: () => {},
 				}),
 			);
 		}
@@ -674,6 +735,17 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				},
 			});
 		}
+
+		#getAnalyticsForUserField = () => {
+			const { analyticsLabel } = this.props;
+			const analytics = new AnalyticsEvent();
+			if (analyticsLabel)
+			{
+				analytics.setSection(new AnalyticsEvent(analyticsLabel).getSection());
+			}
+
+			return analytics;
+		};
 
 		renderCompactFields()
 		{
@@ -735,6 +807,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 							colorScheme: hasFlow ? ColorScheme.DEFAULT : null,
 							config: makeProjectFieldConfig({
 								items: [this.task.group].filter(Boolean),
+								canUnselectLast: !this.#isCollaberOrExtranet(),
 							}),
 							restrictionPolicy: getFieldRestrictionPolicy(Fields.PROJECT),
 							showRestrictionCallback: getFieldShowRestrictionCallback(Fields.PROJECT, this.layoutWidget),
@@ -744,7 +817,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 						},
 						compact: ProjectField,
 					},
-					{
+					!this.#isCollaberOrExtranet() && {
 						factory: TaskFlowField,
 						props: {
 							id: Fields.FLOW,
@@ -831,6 +904,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 							showRestrictionCallback: getFieldShowRestrictionCallback(Fields.ACCOMPLICES, this.layoutWidget),
 							onSelectorHidden: this.focusTitle,
 							onChange: this.onChangeAccomplices,
+							analytics: this.#getAnalyticsForUserField(),
 						},
 						compact: UserFieldCompact,
 					},
@@ -850,6 +924,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 							showRestrictionCallback: getFieldShowRestrictionCallback(Fields.AUDITORS, this.layoutWidget),
 							onSelectorHidden: this.focusTitle,
 							onChange: this.onChangeAuditors,
+							analytics: this.#getAnalyticsForUserField(),
 						},
 						compact: UserFieldCompact,
 					},
@@ -879,6 +954,18 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 							onChange: this.onChangeTags,
 						},
 						compact: TagField,
+					},
+					this.userFieldNames.length > 0 && {
+						factory: UserFieldsField,
+						props: {
+							id: Fields.USER_FIELDS,
+							taskId: 0,
+							areUserFieldsLoaded: true,
+							userFields: this.userFieldNames.map((fieldName) => this.task[fieldName]),
+							onChange: this.onChangeUserFields,
+							onEditWidgetClose: this.focusTitle,
+						},
+						compact: UserFieldsField,
 					},
 					{
 						factory: CrmElementField,
@@ -938,7 +1025,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 						},
 						compact: DatePlanField,
 					},
-				],
+				].filter(Boolean),
 			});
 		}
 
@@ -1277,6 +1364,24 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			this.task.timeEstimate = timeEstimate;
 		}
 
+		/**
+		 * @param {Map} userFields
+		 */
+		onChangeUserFields(userFields)
+		{
+			if (userFields.size === 0)
+			{
+				return;
+			}
+
+			userFields.forEach((value, fieldName) => {
+				this.task[fieldName].value = value;
+			});
+
+			this.handlePreventBottomSheetDismiss();
+			this.setState({ forceUpdate: Math.random() });
+		}
+
 		handlePreventBottomSheetDismiss()
 		{
 			this.layoutWidget.preventBottomSheetDismiss(this.#formHasChanges());
@@ -1307,7 +1412,36 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				|| this.task.endDatePlan !== this.initialTaskData.endDatePlan
 				|| this.task.allowTimeTracking !== this.initialTaskData.allowTimeTracking
 				|| this.task.timeEstimate !== this.initialTaskData.timeEstimate
+				|| this.#hasUserFieldsChanged()
 			);
+		}
+
+		#hasUserFieldsChanged()
+		{
+			for (const fieldName of this.userFieldNames)
+			{
+				const { value: initialValue, isMultiple } = this.initialTaskData[fieldName];
+				const { value: currentValue } = this.task[fieldName];
+
+				if (isMultiple)
+				{
+					if (
+						!Array.isArray(initialValue)
+						|| !Array.isArray(currentValue)
+						|| initialValue.length !== currentValue.length
+						|| !initialValue.every((value, index) => value === currentValue[index])
+					)
+					{
+						return true;
+					}
+				}
+				else if (initialValue !== currentValue)
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		showConfirmOnFormClosing()
@@ -1381,7 +1515,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 					})
 					.catch(console.error)
 				;
-				this.showCreationNotification(this.guid, analyticsLabelParams);
+				this.showCreationNotification(this.guid, analyticsLabelParams[0]);
 				this.init();
 				this.setState({ isFakeReload: !this.state.isFakeReload });
 				this.handlePreventBottomSheetDismiss();
@@ -1393,10 +1527,24 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			};
 
 			executeIfOnline(
-				saveTask,
+				() => {
+					if (this.isUserFieldsFieldValid())
+					{
+						saveTask();
+					}
+					else
+					{
+						this.extraFieldsFormRef?.getField(Fields.USER_FIELDS)?.openUserFieldsEdit(true);
+					}
+				},
 				null,
 				{ position: Position.TOP },
 			);
+		}
+
+		isUserFieldsFieldValid()
+		{
+			return this.userFieldNames.map((fieldName) => this.task[fieldName]).every((field) => isFieldValid(field));
 		}
 
 		getStageId()
@@ -1444,9 +1592,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				guid: this.guid,
 				name: this.task.title,
 				description: this.task.description,
-				deadline: this.state.flowId
-					? null
-					: (this.task.deadline ? this.task.deadline.getTime() / 1000 : null),
+				deadline: this.state.flowId ? null : (this.task.deadline ? this.task.deadline.getTime() / 1000 : null),
 				groupId: this.task.group?.id || 0,
 				flowId: this.state.flowId || 0,
 				parentId: this.task.parentId,
@@ -1474,6 +1620,10 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 				imChatId: this.task.imChatId,
 				imMessageId: this.task.imMessageId,
+
+				...Object.fromEntries(
+					this.userFieldNames.map((fieldName) => [fieldName, this.task[fieldName]]),
+				),
 			};
 		}
 
@@ -1503,6 +1653,17 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				END_DATE_PLAN: this.task.endDatePlan ? this.convertDateFromUnixToISOString(this.task.endDatePlan) : '',
 				ALLOW_TIME_TRACKING: (this.task.allowTimeTracking ? 'Y' : 'N'),
 				TIME_ESTIMATE: this.task.timeEstimate,
+				USER_FIELDS: {
+					...Object.fromEntries(
+						this.userFieldNames.map((fieldName) => ([
+							fieldName,
+							{
+								value: this.task[fieldName].value,
+								type: this.task[fieldName].type,
+							},
+						])),
+					),
+				},
 			};
 
 			if (this.isPlannerView() || this.isKanbanView())
@@ -1520,42 +1681,25 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 		showCreationNotification(taskId, analyticsLabel = {})
 		{
-			let analyticsLabelParams = Array.isArray(analyticsLabel) ? analyticsLabel : [analyticsLabel];
-
-			analyticsLabelParams = analyticsLabelParams.map((labelParam) => ({
-				...labelParam,
-				event: 'task_view',
-				c_element: 'view_button',
-			}));
-
-			if (Feature.isToastPositionSupported())
-			{
-				showToast(
-					{
-						message: Loc.getMessage('TASKSMOBILE_TASK_CREATE_NOTIFICATION_TITLE'),
-						buttonText: Loc.getMessage('TASKSMOBILE_TASK_CREATE_NOTIFICATION_BUTTON'),
-						svg: {
-							content: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M20.361 6.35445C20.5953 6.58876 20.5953 6.96866 20.361 7.20298L9.79422 17.7697C9.6817 17.8822 9.52908 17.9454 9.36995 17.9454C9.21082 17.9454 9.05821 17.8822 8.94569 17.7697L4.14839 12.9723C3.91408 12.738 3.91408 12.3581 4.1484 12.1238C4.38271 11.8895 4.76261 11.8895 4.99692 12.1238L9.36996 16.4969L19.5124 6.35445C19.7468 6.12013 20.1267 6.12013 20.361 6.35445Z" fill="#333333"/></svg>',
-						},
-						position: this.props.closeAfterSave ? Position.BOTTOM : Position.TOP,
-						onButtonTap: () => this.onNotificationClick(
-							taskId,
-							analyticsLabelParams,
-						),
+			showToast(
+				{
+					message: Loc.getMessage('TASKSMOBILE_TASK_CREATE_NOTIFICATION_TITLE'),
+					buttonText: Loc.getMessage('TASKSMOBILE_TASK_CREATE_NOTIFICATION_BUTTON'),
+					svg: {
+						content: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M20.361 6.35445C20.5953 6.58876 20.5953 6.96866 20.361 7.20298L9.79422 17.7697C9.6817 17.8822 9.52908 17.9454 9.36995 17.9454C9.21082 17.9454 9.05821 17.8822 8.94569 17.7697L4.14839 12.9723C3.91408 12.738 3.91408 12.3581 4.1484 12.1238C4.38271 11.8895 4.76261 11.8895 4.99692 12.1238L9.36996 16.4969L19.5124 6.35445C19.7468 6.12013 20.1267 6.12013 20.361 6.35445Z" fill="#333333"/></svg>',
 					},
-					this.props.parentWidget || PageManager,
-				);
-			}
-			else
-			{
-				// eslint-disable-next-line no-undef
-				InAppNotifier.setHandler(() => this.onNotificationClick(taskId, analyticsLabelParams));
-				Notify.showMessage(
-					`"${this.task.title}"`,
-					Loc.getMessage('TASKSMOBILE_TASK_CREATE_NOTIFICATION_TITLE'),
-					{ time: 5 },
-				);
-			}
+					position: this.props.closeAfterSave ? Position.BOTTOM : Position.TOP,
+					onButtonTap: () => {
+						const analyticsLabelParams = {
+							...analyticsLabel,
+							event: 'task_view',
+							c_element: 'view_button',
+						};
+						this.onNotificationClick(taskId, analyticsLabelParams);
+					},
+				},
+				(this.props.parentWidget || PageManager),
+			);
 		}
 
 		onNotificationClick(taskId, analyticsLabel)

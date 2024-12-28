@@ -79,8 +79,8 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 		{
 			return {
 				type: 'more',
-				id: 'task-dashboard-more',
-				testId: 'task-dashboard-more',
+				id: 'button_more',
+				testId: 'button_more',
 				dot: this.hasCountersValue(),
 				callback: this.openMoreMenu,
 				accent: this.isCounterSelected(),

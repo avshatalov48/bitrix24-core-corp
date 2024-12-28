@@ -19,55 +19,52 @@ class DashboardRowAssembler extends RowAssembler
 	protected function prepareFieldAssemblers(): array
 	{
 		return [
-			new Field\NameFieldAssembler([
+			new Field\Dashboard\NameFieldAssembler([
 				'TITLE',
 			]),
-			new Field\StatusFieldAssembler(
+			new Field\Dashboard\StatusFieldAssembler(
 				[
 					'STATUS',
 				],
 				$this->settings,
 			),
-			new Field\CreatedByFieldAssembler(
+			new Field\Dashboard\CreatedByFieldAssembler(
 				[
 					'CREATED_BY_ID',
 				],
 				$this->settings,
 			),
-			new Field\OwnerFieldAssembler(
+			new Field\Dashboard\OwnerFieldAssembler(
 				[
 					'OWNER_ID',
 				],
 				$this->settings,
 			),
-			new Field\ActionFieldAssembler([
-				'EDIT_URL',
-			]),
-			new Field\TagFieldAssembler(
+			new Field\Dashboard\TagFieldAssembler(
 				[
 					'TAGS',
 				],
 				$this->settings,
 			),
-			new Field\ScopeFieldAssembler([
+			new Field\Dashboard\ScopeFieldAssembler([
 				'SCOPE',
 			]),
-			new Field\UrlParamsFieldAssembler([
+			new Field\Dashboard\UrlParamsFieldAssembler([
 				'URL_PARAMS',
 			]),
-			new Field\BasedOnFieldAssembler([
+			new Field\Dashboard\BasedOnFieldAssembler([
 				'SOURCE_ID',
 			]),
-			new Field\FilterPeriodFieldAssembler([
+			new Field\Dashboard\FilterPeriodFieldAssembler([
 				'FILTER_PERIOD',
 			]),
-			new Field\IdFieldAssembler([
+			new Field\Dashboard\IdFieldAssembler([
 				'ID',
 			]),
-			new Field\DateFieldAssembler([
+			new Field\Base\DateFieldAssembler([
 				'DATE_CREATE',
 			]),
-			new Field\DateFieldAssembler([
+			new Field\Base\DateFieldAssembler([
 				'DATE_MODIFY',
 			]),
 		];

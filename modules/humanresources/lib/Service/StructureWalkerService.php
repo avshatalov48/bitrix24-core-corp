@@ -2,6 +2,7 @@
 
 namespace Bitrix\HumanResources\Service;
 
+use Bitrix\HumanResources\Enum\NodeActiveFilter;
 use Bitrix\HumanResources\Exception\CreationFailedException;
 use Bitrix\HumanResources\Exception\DeleteFailedException;
 use Bitrix\HumanResources\Item\Node;
@@ -144,7 +145,7 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 	 */
 	public function removeNode(Node $node): void
 	{
-		if ($node->parentId === null)
+		if (!$node->parentId)
 		{
 			throw (new DeleteFailedException('You can\'t remove root node'));
 		}
@@ -182,7 +183,10 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 	 */
 	private function moveChildNodes(Node $node): array
 	{
-		$children = $this->nodeRepository->getChildOf($node);
+		$children = $this->nodeRepository->getChildOf(
+			node: $node,
+			activeFilter: NodeActiveFilter::ALL,
+		);
 		$childIds = [];
 
 		$parent = $this->nodeRepository->getById($node->parentId);
@@ -191,6 +195,14 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 		{
 			$childIds[] = $child->id;
 			$this->moveNode(Direction::CHILD, $child, $parent);
+
+			if ($child->parentId === $parent->id)
+			{
+				continue;
+			}
+
+			$child->parentId = $parent->id;
+			$this->nodeRepository->update($child);
 		}
 
 		return $childIds;
@@ -217,6 +229,16 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 			{
 				$member->nodeId = $node->parentId;
 				$member->role = $roleEmployee->id;
+
+				if ($this->nodeMemberRepository->findByEntityTypeAndEntityIdAndNodeId(
+					entityType: $member->entityType,
+					entityId: $member->entityId,
+					nodeId: $member->nodeId,
+				))
+				{
+					continue;
+				}
+
 				try
 				{
 					$this->nodeMemberRepository->create($member);

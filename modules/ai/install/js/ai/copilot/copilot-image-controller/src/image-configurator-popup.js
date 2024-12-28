@@ -1,5 +1,6 @@
-import { Tag, Loc, Event } from 'main.core';
+import { Tag, Loc, Event, Dom } from 'main.core';
 import { Popup } from 'main.popup';
+import { Loader } from 'main.loader';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Icon, Actions } from 'ui.icon-set.api.core';
 import { Button } from 'ui.buttons';
@@ -30,6 +31,7 @@ type ImageConfiguration = {
 export const ImageConfiguratorPopupEvents = Object.freeze({
 	completions: 'completions',
 	back: 'back',
+	selectEngine: 'selectEngine',
 });
 
 export class ImageConfiguratorPopup extends EventEmitter
@@ -41,6 +43,8 @@ export class ImageConfiguratorPopup extends EventEmitter
 	#imageConfigurator: ImageConfigurator;
 	#withoutBackBtn: boolean;
 	#submitButton: Button;
+	#loader: Loader;
+	#loaderOverlay: HTMLElement;
 
 	constructor(options: ImageConfiguratorPopupOptions)
 	{
@@ -54,6 +58,15 @@ export class ImageConfiguratorPopup extends EventEmitter
 			formats: options.imageConfiguratorOptions.formats,
 			styles: options.imageConfiguratorOptions.styles,
 			engines: options.imageConfiguratorOptions.engines,
+		});
+
+		this.#imageConfigurator.subscribe('change-parameter', (event) => {
+			const data = event.getData();
+
+			if (data.parameter === 'engine')
+			{
+				this.emit(ImageConfiguratorPopupEvents.selectEngine, data.value);
+			}
 		});
 
 		this.#initSubmitButton();
@@ -115,6 +128,16 @@ export class ImageConfiguratorPopup extends EventEmitter
 		return this.#imageConfigurator.getParams();
 	}
 
+	setFormats(formats): void
+	{
+		this.#imageConfigurator.setFormats(formats);
+	}
+
+	setSelectedEngine(engineCode: string): void
+	{
+		this.#imageConfigurator.setSelectedEngine(engineCode);
+	}
+
 	disableSubmitButton(): void
 	{
 		this.#submitButton.setDisabled(true);
@@ -123,6 +146,32 @@ export class ImageConfiguratorPopup extends EventEmitter
 	enableSubmitButton(): void
 	{
 		this.#submitButton.setDisabled(false);
+	}
+
+	showLoader(): void
+	{
+		this.#loaderOverlay = Tag.render`
+			<div class="ai__copilot-image-configurator-popup-loader-overlay"></div>
+		`;
+
+		Dom.append(this.#loaderOverlay, this.#popup?.getPopupContainer());
+
+		this.#loader = new Loader({
+			size: 110,
+			color: getComputedStyle(document.body).getPropertyValue('--ui-color-copilot-primary'),
+			target: this.#loaderOverlay,
+		});
+
+		this.#loader.show(this.#loaderOverlay);
+	}
+
+	hideLoader(): void
+	{
+		this.#loader.destroy();
+		Dom.remove(this.#loaderOverlay);
+
+		this.#loader = null;
+		this.#loaderOverlay = null;
 	}
 
 	#createPopup(): Popup

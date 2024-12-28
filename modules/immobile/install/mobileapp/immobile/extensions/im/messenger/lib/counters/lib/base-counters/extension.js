@@ -12,8 +12,17 @@ jn.define('im/messenger/lib/counters/lib/base-counters', (require, exports, modu
 	{
 		constructor(options = {})
 		{
+			/**
+			 * @type {MessengerCoreStore}
+			 */
 			this.store = serviceLocator.get('core').getStore();
+			/**
+			 * @type {MessengerInitService}
+			 */
 			this.messagerInitService = serviceLocator.get('messenger-init-service');
+			/**
+			 * @type {Logger}
+			 */
 			this.logger = options.logger || Logger;
 
 			this.updateTimeout = null;

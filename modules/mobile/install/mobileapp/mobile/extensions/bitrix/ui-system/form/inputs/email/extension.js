@@ -7,7 +7,10 @@ jn.define('ui-system/form/inputs/email', (require, exports, module) => {
 	const { EmailFieldClass } = require('layout/ui/fields/email');
 	const { PropTypes } = require('utils/validation');
 	const { getDomainImageUri, getEmailServiceName, defaultImageName, isValidEmail } = require('utils/email');
-	const { Input, InputClass, InputSize, InputMode, InputDesign, Icon } = require('ui-system/form/inputs/input');
+	const { StringInput, StringInputClass, InputSize, InputMode, InputDesign, Icon } = require(
+		'ui-system/form/inputs/string',
+	);
+	const { InputClass } = require('ui-system/form/inputs/input');
 	const { InputDomainIconPlace } = require('ui-system/form/inputs/email/src/domain-icon-place-enum');
 
 	/**
@@ -33,7 +36,9 @@ jn.define('ui-system/form/inputs/email', (require, exports, module) => {
 
 		initState(props)
 		{
-			const state = {};
+			const state = {
+				value: props.value,
+			};
 
 			const shouldRenderDomain = Boolean(this.getDomainIconPlace());
 			if (shouldRenderDomain)
@@ -46,15 +51,23 @@ jn.define('ui-system/form/inputs/email', (require, exports, module) => {
 
 		render()
 		{
-			return Input({
+			return StringInput({
 				...this.props,
 				...this.getDomainIcon(),
+				value: this.getValue(),
 				autoCapitalize: 'none',
 				keyboardType: 'email-address',
 				onChange: this.handleOnChangeText,
 				onValid: this.handleOnValidation,
 				errorText: this.getValidationErrorMessage(),
 			});
+		}
+
+		getValue()
+		{
+			const { value } = this.state;
+
+			return value;
 		}
 
 		getValidationErrorMessage()
@@ -99,13 +112,17 @@ jn.define('ui-system/form/inputs/email', (require, exports, module) => {
 		handleOnChangeText = (value) => {
 			const emailService = this.getEmailServiceName(value);
 			const { emailService: prevEmailService } = this.state;
+			const { onChange } = this.props;
 
-			if (emailService !== prevEmailService)
+			if (emailService === prevEmailService)
 			{
-				const { onChange } = this.props;
-
+				onChange?.(value);
+			}
+			else
+			{
 				this.setState(
 					{
+						value,
 						emailService,
 					},
 					() => {
@@ -130,15 +147,20 @@ jn.define('ui-system/form/inputs/email', (require, exports, module) => {
 			return InputDomainIconPlace.resolve(domainIconPlace, InputDomainIconPlace.LEFT).getValue();
 		}
 
+		/**
+		 * @returns {Boolean}
+		 */
 		handleOnValidation = (value) => {
 			const { validation } = this.props;
 
-			if (validation)
+			if (!validation)
 			{
-				return isValidEmail(value);
+				return true;
 			}
 
-			return true;
+			const { onValid } = this.props;
+
+			return onValid ? onValid?.(value) : isValidEmail(value);
 		};
 
 		getEmailServiceName(email)
@@ -156,12 +178,12 @@ jn.define('ui-system/form/inputs/email', (require, exports, module) => {
 	}
 
 	EmailInputClass.defaultProps = {
-		...InputClass.defaultProps,
+		...StringInputClass.defaultProps,
 		validation: false,
 	};
 
 	EmailInputClass.propTypes = {
-		...InputClass.propTypes,
+		...StringInputClass.propTypes,
 		validation: PropTypes.bool,
 		domainIconPlace: PropTypes.instanceOf(InputDomainIconPlace),
 		onChange: PropTypes.func,

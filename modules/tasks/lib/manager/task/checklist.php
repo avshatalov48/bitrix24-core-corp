@@ -295,9 +295,14 @@ class CheckList extends \Bitrix\Tasks\Manager
 		return $result;
 	}
 
-	public static function mergeData($primary = array(), $secondary = array())
+	public static function mergeData($primary = [], $secondary = [], bool $withAdditional = true): array
 	{
-		return $primary;
+		if (!$withAdditional)
+		{
+			return (array)$secondary;
+		}
+
+		return (array)$secondary + (array)$primary;
 	}
 
 	public static function parseSet(&$data)

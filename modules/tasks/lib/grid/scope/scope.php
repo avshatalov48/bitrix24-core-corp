@@ -11,4 +11,5 @@ abstract class Scope extends Base
 	 * @see Context::SPACES
 	 */
 	public const SPACES = 'spaces';
+	public const COLLAB = 'collab';
 }

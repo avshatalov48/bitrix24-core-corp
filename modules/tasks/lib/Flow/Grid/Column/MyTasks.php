@@ -74,6 +74,8 @@ final class MyTasks extends Column
 		$this->editable = false;
 		$this->resizeable = false;
 		$this->width = 140;
+		$this->align = 'right';
+		$this->class = 'tasks-flow__grid-column-center';
 
 		$this->preloader = new TasksCountPreloader();
 	}

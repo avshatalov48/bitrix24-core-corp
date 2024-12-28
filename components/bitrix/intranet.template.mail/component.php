@@ -7,8 +7,67 @@ if (!CModule::IncludeModule("intranet"))
 	return;
 }
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
+if (!function_exists('getComponentMailFooterLink'))
+{
+	function getComponentMailFooterLink(): array
+	{
+		$region = Application::getInstance()->getLicense()->getRegion();
+		if (in_array($region, ['ru', 'by', 'kz']))
+		{
+			$result['COLLAB'] = 'https://www.bitrix24.' . $region . '/features/company.php';
+			$result['IM'] = 'https://www.bitrix24.' . $region . '/features/chat/';
+			$result['TASKS'] = 'https://www.bitrix24.' . $region . '/features/tasks.php';
+			$result['CRM'] = 'https://www.bitrix24.' . $region . '/features/crm/';
+			$result['WF'] = 'https://www.bitrix24.' . $region . '/features/copilot';
+			$result['LAST_PHRASE'] = 'INTRANET_INVITATION_COLLAB_LINK_COPILOT_NAME';
+		}
+		else
+		{
+			$result['COLLAB'] = 'https://www.bitrix24.com/tools/communications/';
+			$result['IM'] = 'https://www.bitrix24.com/tools/communications/online-workspace.php';
+			$result['TASKS'] = 'https://www.bitrix24.com/tools/tasks_and_projects/';
+			$result['CRM'] = 'https://www.bitrix24.com/tools/crm/';
+			$result['WF'] = 'https://www.bitrix24.com/tools/hr_automation/';
+			$result['LAST_PHRASE'] = 'INTRANET_INVITATION_COLLAB_LINK_WF_NAME';
+		}
 
+		return $result;
+	}
+}
+if (!function_exists('getMailCompanyLogo'))
+{
+	function getMailCompanyLogo(string $color = 'white'): string
+	{
+		$result = [
+			'white' => '/images/logo-en.png',
+			'black' => '/images/logo-dark-en.png',
+		];
+
+		if (LANGUAGE_ID === 'ru')
+		{
+			$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
+
+			if ($region === 'by')
+			{
+				$result = [
+					'white' => '/images/logo-by.png',
+					'black' => '/images/logo-dark-by.png',
+				];
+			}
+			else
+			{
+				$result = [
+					'white' => '/images/logo-ru.png',
+					'black' => '/images/logo-dark-ru.png',
+				];
+			}
+		}
+
+		return $result[$color];
+	}
+}
 if (
 	$arParams["TEMPLATE_TYPE"] == "USER_INVITATION"
 	|| $arParams["TEMPLATE_TYPE"] == "EXTRANET_INVITATION"
@@ -57,7 +116,20 @@ if ($arParams["TEMPLATE_TYPE"] == "EXTRANET_INVITATION")
 
 if ($arParams["TEMPLATE_TYPE"] == "COLLAB_INVITATION")
 {
-	$arParams["LINK"] = "https://".$arParams["SERVER_NAME"]."/extranet/confirm/?checkword=".$arParams["CHECKWORD"]."&user_id=".$arParams["USER_ID"].'&collab_id='.$arParams["COLLAB_ID"];
+	$protocol = \Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? 'https' : 'http';
+	$baseUrl = "$protocol://".$arParams["SERVER_NAME"];
+	/** @var $this CBitrixComponent */
+	$arResult["LOGO"] = $this->getPath().'/templates/.default'.getMailCompanyLogo();
+	if ($arParams['FIELDS']['ACTIVE_USER'] ?? false)
+	{
+		$arParams["LINK"] = $baseUrl;
+	}
+	else
+	{
+		$arParams["LINK"] = $baseUrl."/extranet/confirm/?checkword=".$arParams["CHECKWORD"]."&user_id=".$arParams["USER_ID"].'&collab_name='.urlencode($arParams['FIELDS']['COLLAB_NAME']);
+	}
+
+	$arResult["FOOTER_LINK"] = getComponentMailFooterLink();
 }
 
 if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_NOTIFY" || $arParams["TEMPLATE_TYPE"] == "IM_NEW_MESSAGE")
@@ -138,7 +210,11 @@ if (Loader::includeModule("bitrix24"))
 	$this->arResult["HOST_NAME"] = defined('BX24_HOST_NAME') ? BX24_HOST_NAME : SITE_SERVER_NAME;
 }
 
-if (
+if($arParams["TEMPLATE_TYPE"] == "COLLAB_INVITATION")
+{
+	$this->IncludeComponentTemplate("collab");
+}
+elseif (
 	$arParams["TEMPLATE_TYPE"] == "BITRIX24_USER_JOIN"
 	|| $arParams["TEMPLATE_TYPE"] == "BITRIX24_USER_JOIN_REQUEST"
 	|| $arParams["TEMPLATE_TYPE"] == "BITRIX24_USER_JOIN_REQUEST_CONFIRM"

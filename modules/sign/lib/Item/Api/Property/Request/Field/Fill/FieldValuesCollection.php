@@ -38,4 +38,14 @@ class FieldValuesCollection implements Contract\ItemCollection, Contract\Item
 		}
 		return $array;
 	}
+
+	public function getFirst(): ?Value\BaseFieldValue
+	{
+		foreach ($this->items as $item)
+		{
+			return $item;
+		}
+
+		return null;
+	}
 }

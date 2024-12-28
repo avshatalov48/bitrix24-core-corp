@@ -58,6 +58,7 @@ class CloneBlankForDocument implements Contract\Operation
 			$blank->title = $this->document->title;
 		}
 
+		$oldBlankId = $blank->id;
 		$blank->forTemplate = $blank->forTemplate || $this->document->isTemplated();
 		//TODO: add all resources later
 		$result = $this->blankRepository->clone($blank);
@@ -85,20 +86,7 @@ class CloneBlankForDocument implements Contract\Operation
 			}
 		}
 
-		// Getting blocks and load fields
-		$blockCollection = $this->blockRepository->getCollectionByBlankId($this->document->blankId);
-		if ($blockCollection->isEmpty())
-		{
-			return $result;
-		}
-
-		foreach ($blockCollection as $block)
-		{
-			$block->id = null;
-			$block->blankId = $blank->id;
-		}
-
-		$result = $this->blockRepository->addCollection($blockCollection);
+		$result = $this->copyBlocks($blank, $oldBlankId);
 		if (!$result->isSuccess())
 		{
 			return $result;
@@ -107,5 +95,22 @@ class CloneBlankForDocument implements Contract\Operation
 		$this->document->blankId = $blank->id;
 
 		return $this->documentRepository->update($this->document);
+	}
+
+	private function copyBlocks(Item\Blank $newBlank, int $oldBlankId): Main\Result
+	{
+		$blockCollection = $this->blockRepository->getCollectionByBlankId($oldBlankId);
+		if ($blockCollection->isEmpty())
+		{
+			return new Main\Result();
+		}
+
+		foreach ($blockCollection as $block)
+		{
+			$block->id = null;
+			$block->blankId = $newBlank->id;
+		}
+
+		return $this->blockRepository->addCollection($blockCollection);
 	}
 }

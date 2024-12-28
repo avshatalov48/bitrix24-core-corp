@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 (function (exports,main_core_events,ui_counterpanel,main_core) {
@@ -12,7 +13,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _filter)[_filter] = BX.Main.filterManager.getById(options.filterId);
 	  }
-	  toggleField(name, value) {
+	  toggleField(name, value, resetAllFields) {
 	    const field = babelHelpers.classPrivateFieldLooseBase(this, _filter)[_filter].getFieldByName(name);
 	    if (!main_core.Type.isPlainObject(field) || field === null) {
 	      return false;
@@ -25,6 +26,12 @@ this.BX.Sign = this.BX.Sign || {};
 	    // const fieldValue = field.ITEMS.find((item) => item.VALUE === value);
 	    if (filteredValues.length === 0) {
 	      return false;
+	    }
+	    if (this.isFieldValueAlreadyApplied(name, filteredValues, resetAllFields)) {
+	      return false;
+	    }
+	    if (resetAllFields) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _filter)[_filter].getApi().setFields({});
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _filter)[_filter].getApi().extendFilter({
 	      [name]: {
@@ -40,15 +47,50 @@ this.BX.Sign = this.BX.Sign || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _filter)[_filter].getApi().setFields({});
 	    babelHelpers.classPrivateFieldLooseBase(this, _filter)[_filter].getApi().apply();
 	  }
+	  isFieldValueAlreadyApplied(name, setValues, withoutOtherFilters) {
+	    const filterRows = this.getFilterRows();
+	    const currentValuesObject = filterRows[name];
+	    if (!main_core.Type.isObject(currentValuesObject)) {
+	      return false;
+	    }
+	    if (withoutOtherFilters && this.isSomeOtherFilterPresent(name)) {
+	      return false;
+	    }
+	    const currentValuesArray = Object.values(currentValuesObject);
+	    for (const setValue of setValues) {
+	      if (!currentValuesArray.includes(setValue)) {
+	        return false;
+	      }
+	    }
+	    if (withoutOtherFilters) {
+	      for (const currentValue of currentValuesArray) {
+	        if (!setValues.includes(currentValue)) {
+	          return false;
+	        }
+	      }
+	    }
+	    return true;
+	  }
+	  isSomeOtherFilterPresent(name) {
+	    for (const [key, value] of Object.entries(this.getFilterRows())) {
+	      const isPresent = main_core.Type.isStringFilled(value) || main_core.Type.isArrayFilled(value);
+	      if (key !== name && isPresent) {
+	        return true;
+	      }
+	    }
+	    return false;
+	  }
 	}
 
 	var _filter$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("filter");
+	var _resetAllFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetAllFields");
 	var _onActivateItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onActivateItem");
 	var _onDeactivateItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onDeactivateItem");
 	var _processItemSelection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processItemSelection");
 	var _getFieldData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFieldData");
 	var _isAllDeactivated = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAllDeactivated");
 	var _onFilterApply = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFilterApply");
+	var _onCounterUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCounterUpdate");
 	class DocumentCounter extends ui_counterpanel.CounterPanel {
 	  constructor(options) {
 	    super({
@@ -56,6 +98,9 @@ this.BX.Sign = this.BX.Sign || {};
 	      items: DocumentCounter.getCounterItems(options.items),
 	      multiselect: false,
 	      title: options.title
+	    });
+	    Object.defineProperty(this, _onCounterUpdate, {
+	      value: _onCounterUpdate2
 	    });
 	    Object.defineProperty(this, _onFilterApply, {
 	      value: _onFilterApply2
@@ -79,13 +124,18 @@ this.BX.Sign = this.BX.Sign || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _resetAllFields, {
+	      writable: true,
+	      value: void 0
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _filter$1)[_filter$1] = new Filter({
 	      filterId: options.filterId
 	    });
-	    this.active = false;
 	    main_core_events.EventEmitter.subscribe('BX.UI.CounterPanel.Item:activate', babelHelpers.classPrivateFieldLooseBase(this, _onActivateItem)[_onActivateItem].bind(this));
 	    main_core_events.EventEmitter.subscribe('BX.UI.CounterPanel.Item:deactivate', babelHelpers.classPrivateFieldLooseBase(this, _onDeactivateItem)[_onDeactivateItem].bind(this));
 	    main_core_events.EventEmitter.subscribe('BX.Main.Filter:apply', babelHelpers.classPrivateFieldLooseBase(this, _onFilterApply)[_onFilterApply].bind(this));
+	    main_core_events.EventEmitter.subscribe('BX.Sign.DocumentCounter.Item:updateCounter', babelHelpers.classPrivateFieldLooseBase(this, _onCounterUpdate)[_onCounterUpdate].bind(this));
+	    babelHelpers.classPrivateFieldLooseBase(this, _resetAllFields)[_resetAllFields] = Boolean(options == null ? void 0 : options.resetAllFields);
 	  }
 	  static getCounterItems(items) {
 	    return items.map(item => {
@@ -95,7 +145,8 @@ this.BX.Sign = this.BX.Sign || {};
 	        value: Number.parseInt(item.value, 10),
 	        isRestricted: item.isRestricted,
 	        color: item.color === 'THEME' ? 'GRAY' : item.color,
-	        hideValue: item.hideValue || false
+	        hideValue: item.hideValue || false,
+	        isActive: (item == null ? void 0 : item.isActive) === true
 	      };
 	    });
 	  }
@@ -115,7 +166,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  }
 	}
 	function _processItemSelection2(name, value) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _filter$1)[_filter$1].toggleField(name, value);
+	  babelHelpers.classPrivateFieldLooseBase(this, _filter$1)[_filter$1].toggleField(name, value, babelHelpers.classPrivateFieldLooseBase(this, _resetAllFields)[_resetAllFields]);
 	  return true;
 	}
 	function _getFieldData2(item) {
@@ -150,6 +201,20 @@ this.BX.Sign = this.BX.Sign || {};
 	      item.activate(false);
 	    }
 	  });
+	}
+	function _onCounterUpdate2(event) {
+	  const {
+	    id,
+	    count
+	  } = event.getData();
+	  for (const item of this.getItems()) {
+	    if (item.id === id) {
+	      item.updateValue(count);
+	      const color = count > 0 ? 'DANGER' : 'GRAY';
+	      item.updateColor(color);
+	      break;
+	    }
+	  }
 	}
 
 	exports.DocumentCounter = DocumentCounter;

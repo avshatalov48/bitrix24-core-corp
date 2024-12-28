@@ -1,63 +1,71 @@
 <?php
 
+use Bitrix\Crm\Copilot\CallAssessment\EntitySelector\CallScriptProvider;
+use Bitrix\Crm\Integration\UI\EntitySelector\ActivityProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\CopilotLanguageProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\DynamicMultipleProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\MessageTemplateProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\PlaceholderProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\TimelinePingProvider;
-use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\SiteGroupsProvider;
 
 $uiEntitySelectorConfig = [
 	'value' => [
 		'entities' => [
 			[
+				'entityId' => 'activity',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => ActivityProvider::class,
+				],
+			],
+			[
 				'entityId' => 'company',
 				'provider' => [
 					'moduleId' => 'crm',
-					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\CompanyProvider'
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\CompanyProvider',
 				],
 			],
 			[
 				'entityId' => 'contact',
 				'provider' => [
 					'moduleId' => 'crm',
-					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\ContactProvider'
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\ContactProvider',
 				],
 			],
 			[
 				'entityId' => 'deal',
 				'provider' => [
 					'moduleId' => 'crm',
-					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\DealProvider'
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\DealProvider',
 				],
 			],
 			[
 				'entityId' => 'lead',
 				'provider' => [
 					'moduleId' => 'crm',
-					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\LeadProvider'
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\LeadProvider',
 				],
 			],
 			[
 				'entityId' => 'quote',
 				'provider' => [
 					'moduleId' => 'crm',
-					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\QuoteProvider'
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\QuoteProvider',
 				],
 			],
 			[
 				'entityId' => 'order',
 				'provider' => [
 					'moduleId' => 'crm',
-					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\OrderProvider'
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\OrderProvider',
 				],
 			],
 			[
 				'entityId' => 'dynamic',
 				'provider' => [
 					'moduleId' => 'crm',
-					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\DynamicProvider'
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\DynamicProvider',
 				],
 			],
 			[
@@ -78,14 +86,14 @@ $uiEntitySelectorConfig = [
 				'entityId' => 'smart_invoice',
 				'provider' => [
 					'moduleId' => 'crm',
-					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\SmartInvoice'
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\SmartInvoice',
 				],
 			],
 			[
 				'entityId' => 'smart_document',
 				'provider' => [
 					'moduleId' => 'crm',
-					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\SmartDocument'
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\SmartDocument',
 				],
 			],
 			[
@@ -124,10 +132,10 @@ $uiEntitySelectorConfig = [
 				],
 			],
 			[
-				'entityId' => 'site_groups',
+				'entityId' => 'copilot_call_script',
 				'provider' => [
 					'moduleId' => 'crm',
-					'className' => SiteGroupsProvider::class,
+					'className' => CallScriptProvider::class,
 				],
 			],
 		],
@@ -135,17 +143,6 @@ $uiEntitySelectorConfig = [
 	],
 	'readonly' => true,
 ];
-
-if (\Bitrix\Main\ModuleManager::isModuleInstalled('socialnetwork'))
-{
-	$uiEntitySelectorConfig['value']['entities'][] = [
-		'entityId' => 'projectmembers',
-		'provider' => [
-			'moduleId' => 'crm',
-			'className' => \Bitrix\Crm\Integration\Socialnetwork\Providers\ProjectMembersProvider::class,
-		],
-	];
-}
 
 
 return array(
@@ -172,7 +169,7 @@ return array(
 	),
 	'ui.selector' => [
 		'value' => [
-			'crm.selector'
+			'crm.selector',
 		],
 		'readonly' => true,
 	],
@@ -233,9 +230,9 @@ return array(
 				'constructorParams' => static function () : array {
 					return [
 						\Bitrix\Main\Engine\CurrentUser::get(),
-						\Bitrix\Main\Context::getCurrent()->getCulture()
+						\Bitrix\Main\Context::getCurrent()->getCulture(),
 					];
-				}
+				},
 			],
 			'crm.service.converter.ormObject' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Converter\\OrmObject',
@@ -466,13 +463,16 @@ return array(
 					}
 
 					return [null];
-				}
+				},
 			],
 			'crm.service.ads.conversion.configurator' => [
-				'className' => '\\Bitrix\\Crm\\Ads\\Pixel\\Configuration\\Configurator'
+				'className' => '\\Bitrix\\Crm\\Ads\\Pixel\\Configuration\\Configurator',
 			],
 			'crm.service.integration.sign.kanban.pull' => [
-				'className' => \Bitrix\Crm\Service\Integration\Sign\Kanban\PullService::class
+				'className' => \Bitrix\Crm\Service\Integration\Sign\Kanban\PullService::class,
+			],
+			'crm.service.integration.sign.b2e.type' => [
+				'className' => \Bitrix\Crm\Service\Integration\Sign\B2e\TypeService::class,
 			],
 			'crm.entity.paymentDocumentsRepository' => [
 				'className' => '\\Bitrix\\Crm\\Entity\\PaymentDocumentsRepository',
@@ -562,6 +562,9 @@ return array(
 			'crm.service.communication.rankingFactory' => [
 				'className' => \Bitrix\Crm\Service\Communication\Search\Ranking\RankingFactory::class,
 			],
+			'crm.service.integration.im' => [
+				'className' => \Bitrix\Crm\Integration\Im\ImService::class,
+			],
 		],
 		'readonly' => true,
 	],
@@ -583,7 +586,26 @@ return array(
 					\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->getEntityTypeIdByProvider($provider);
 
 				return \Bitrix\Crm\Integration\Intranet\BindingMenu\CodeBuilder::getMenuCode($entityTypeId);
-			}
+			},
+		],
+	],
+	'loggers' => [
+		'value' => [
+			'Default' => static fn() => (new \Bitrix\Crm\Service\Logger\DbLogger('Default', 168))->setLevel(\Psr\Log\LogLevel::ERROR),
+			'Integration.AI' => static function () {
+				if (\Bitrix\Main\Loader::includeModule('bitrix24') || \Bitrix\Main\Config\Option::get('crm', 'USE_ADDM2LOG_FOR_AI', false))
+				{
+					$logger = new \Bitrix\Crm\Service\Logger\Message2LogLogger('crm.integration.AI', 9);
+					$logger->setLevel(\Bitrix\Main\Config\Option::get('crm', 'log_integration_ai_level', \Psr\Log\LogLevel::CRITICAL));
+
+					return $logger;
+				}
+				return new \Psr\Log\NullLogger();
+			},
+			'Permissions' => static fn() => (new \Bitrix\Crm\Service\Logger\DbLogger(
+				'Permissions',
+				(int)\Bitrix\Main\Config\Option::get('crm', 'permissions_logger_ttl', 24*30))
+			)->setLevel(\Bitrix\Main\Config\Option::get('crm', 'permissions_logger_level', \Psr\Log\LogLevel::INFO)),
 		],
 	],
 );

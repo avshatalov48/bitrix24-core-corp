@@ -38,3 +38,5 @@ $MESS['FLOW_FIELD_GROUP_ID_NAME'] = "ID и название проекта";
 $MESS['FLOW_FIELD_GROUP_ID_NAME_FULL'] = "Идентификатор и название проекта, в котором находится поток";
 $MESS['FLOW_FIELD_TASKS_IDS'] = "ID задач в потоке";
 $MESS['FLOW_FIELD_TASKS_IDS_FULL'] = "Идентификаторы всех задач, добавленных в поток";
+$MESS['FLOW_FIELD_EXPIRED_TASKS_IDS'] = 'ID просроченных задач в потоке';
+$MESS['FLOW_FIELD_EXPIRED_TASKS_IDS_FULL'] = 'Идентификаторы просроченных задач, добавленных в поток';

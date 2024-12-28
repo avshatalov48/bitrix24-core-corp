@@ -8,6 +8,8 @@
 
 namespace Bitrix\Intranet;
 
+use Bitrix\Extranet\Service\ServiceContainer;
+use Bitrix\Intranet\Enum\UserRole;
 use Bitrix\Intranet\HR\Employee;
 use Bitrix\Intranet\Counters\Counter;
 use Bitrix\Main\ArgumentException;
@@ -18,6 +20,7 @@ use Bitrix\Main\UI\EntitySelector\EntityUsageTable;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UserAccessTable;
+use Bitrix\Socialnetwork\Collab\CollabFeature;
 use Bitrix\Socialnetwork\UserToGroupTable;
 
 class User
@@ -62,6 +65,28 @@ class User
 
 		return array_key_exists('EXTERNAL_AUTH_ID', $fields)
 			&& $fields['EXTERNAL_AUTH_ID'] === 'email';
+	}
+
+	public function isShop(): bool
+	{
+		$fields = $this->getFields();
+
+		return array_key_exists('EXTERNAL_AUTH_ID', $fields)
+			&& in_array($fields['EXTERNAL_AUTH_ID'], ['shop', 'sale', 'saleanonymous']);
+	}
+
+	public function isExternal(): bool
+	{
+		$fields = $this->getFields();
+
+		return array_key_exists('EXTERNAL_AUTH_ID', $fields)
+			&& in_array($fields['EXTERNAL_AUTH_ID'], UserTable::getExternalUserTypes());
+	}
+
+	public function isExtranet(): bool
+	{
+		return Loader::includeModule('extranet')
+			&& in_array(\CExtranet::GetExtranetUserGroupID(), $this->getGroups());
 	}
 
 	private function hasDepartment(): bool
@@ -394,9 +419,61 @@ class User
 		return (new Counter(Invitation::getWaitConfirmationCounterId()))->getValue($this);
 	}
 
-	public function getGender(): string
+	public function getGender(): ?string
 	{
-		return $this->getFields()['PERSONAL_GENDER'] ?? '';
+		return $this->getFields()['PERSONAL_GENDER'] ?? null;
+	}
+
+	public function getUserRole(): UserRole
+	{
+		if (
+			Loader::includeModule('bitrix24')
+			&& \Bitrix\Bitrix24\Integrator::isIntegrator($this->userId)
+		)
+		{
+			return UserRole::INTEGRATOR;
+		}
+
+		if ($this->isAdmin())
+		{
+			return UserRole::ADMIN;
+		}
+
+		if ($this->isIntranet())
+		{
+			return UserRole::INTRANET;
+		}
+
+		if (
+			Loader::includeModule('socialnetwork')
+			&& CollabFeature::isOn()
+			&& ServiceContainer::getInstance()->getCollaberService()->isCollaberById($this->userId)
+		)
+		{
+			return UserRole::COLLABER;
+		}
+
+		if ($this->isExtranet())
+		{
+			return UserRole::EXTRANET;
+		}
+
+		if ($this->isEmail())
+		{
+			return UserRole::EMAIL;
+		}
+
+		if ($this->isShop())
+		{
+			return UserRole::SHOP;
+		}
+
+		if ($this->isExternal())
+		{
+			return UserRole::EXTERNAL;
+		}
+
+		return UserRole::VISITOR;
 	}
 
 	private function getGroups(): array

@@ -32,6 +32,7 @@ jn.define('im/messenger/db/table/user', (require, exports, module) => {
 				{ name: 'gender', type: FieldType.text },
 				{ name: 'avatar', type: FieldType.text },
 				{ name: 'color', type: FieldType.text },
+				{ name: 'type', type: FieldType.text },
 				{ name: 'departments', type: FieldType.json, defaultValue: FieldDefaultValue.emptyArray },
 				{ name: 'workPosition', type: FieldType.text },
 				{ name: 'phones', type: FieldType.json },

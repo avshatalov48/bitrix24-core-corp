@@ -527,6 +527,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 					title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_GTC_NO_PROVIDER_TITLE'),
 					description: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_GTC_NO_PROVIDER_TEXT'),
 					redirectUrl: this.config.contactCenterUrl,
+					analyticsSection: 'crm',
 					layout,
 				}),
 			);

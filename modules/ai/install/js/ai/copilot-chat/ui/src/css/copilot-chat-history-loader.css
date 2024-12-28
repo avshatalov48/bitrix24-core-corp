@@ -1,0 +1,17 @@
+.ai__copilot-chat-history-loader {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.ai__copilot-chat-history-loader_animation-container {
+	position: relative;
+	width: 60px;
+	height: 60px;
+}
+
+.ai__copilot-chat_history-loader_text {
+	margin-top: 12px;
+	font-size: var(--ui-font-size-2xl);
+	color: rgba(var(--ui-color-base-02-rgb), 1);
+}

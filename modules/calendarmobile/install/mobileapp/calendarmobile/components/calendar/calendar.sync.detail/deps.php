@@ -5,9 +5,9 @@ return [
 		'apptheme',
 		'loc',
 		'rest',
-		'calendar:sync-page',
-		'calendar:layout/ui/loader',
-		'calendar:ajax',
 		'tokens',
+		'layout/ui/loading-screen',
+		'calendar:sync-page',
+		'calendar:ajax',
 	],
 ];

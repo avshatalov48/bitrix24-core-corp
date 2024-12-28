@@ -49,7 +49,10 @@ if ($arResult['SETTED_UP'] !== false): ?>
 					{
 						if (typeof B24 == "object" && typeof B24.updateCounters == "function")
 						{
-							B24.updateCounters({mail_unseen: json.unseen});
+							if (json.hasSuccessSync)
+							{
+								B24.updateCounters({mail_unseen: json.unseen});
+							}
 						}
 					}
 					else if (BX("menu_extmail_counter"))

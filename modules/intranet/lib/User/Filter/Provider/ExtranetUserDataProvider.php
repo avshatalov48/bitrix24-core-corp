@@ -6,6 +6,7 @@ use Bitrix\Intranet\User\Filter\ExtranetUserSettings;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Filter\EntityDataProvider;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Socialnetwork\UserToGroupTable;
 
 class ExtranetUserDataProvider extends EntityDataProvider
@@ -24,7 +25,18 @@ class ExtranetUserDataProvider extends EntityDataProvider
 
 	public function prepareFields(): array
 	{
-		return [];
+		return $this->getSettings()->isFilterAvailable(ExtranetUserSettings::COLLABER_FIELD)
+			? [
+				'COLLABER' => $this->createField(
+					'COLLABER',
+					[
+						'name' => Loc::getMessage('INTRANET_USER_FILTER_COLLABER') ?? '',
+						'type' => 'checkbox',
+						'partial' => true,
+					]
+				),
+			]
+			: [];
 	}
 
 	public function prepareFieldData($fieldID): array
@@ -34,11 +46,20 @@ class ExtranetUserDataProvider extends EntityDataProvider
 
 	public function prepareFilterValue(array $rawFilterValue): array
 	{
+		if (!Loader::includeModule('extranet'))
+		{
+			return $rawFilterValue;
+		}
+
 		$result = $rawFilterValue;
+		if (\CExtranet::getExtranetUserGroupId())
+		{
+			$this->checkExtranetField($result);
+		}
+		$this->checkCollaberField($result);
 
 		if (
-			Loader::includeModule('extranet')
-			&& !$this->getSettings()->isCurrentUserExtranetAdmin()
+			!$this->getSettings()->isCurrentUserExtranetAdmin()
 			&& (
 				(
 					isset($result['=UF_DEPARTMENT'])
@@ -119,6 +140,63 @@ class ExtranetUserDataProvider extends EntityDataProvider
 		}
 
 		return $result;
+	}
+
+	private function checkCollaberField(array &$filterValue): void
+	{
+		if (
+			!empty($filterValue[ExtranetUserSettings::COLLABER_FIELD])
+			&& $this->getSettings()->isFilterAvailable(ExtranetUserSettings::COLLABER_FIELD)
+			&& $filterValue[ExtranetUserSettings::COLLABER_FIELD] === 'Y'
+		)
+		{
+			$filterValue[] = ['=EXTRANET.ROLE' => 'collaber'];
+		}
+		elseif (
+			!$this->getSettings()->isFilterAvailable(ExtranetUserSettings::COLLABER_FIELD)
+			|| (
+				!empty($filterValue[ExtranetUserSettings::COLLABER_FIELD])
+				&& $filterValue[ExtranetUserSettings::COLLABER_FIELD] === 'N'
+			)
+		)
+		{
+			$filterValue[] = ['!=EXTRANET.ROLE' => 'collaber'];
+		}
+	}
+
+	private function checkExtranetField(array &$filterValue): void
+	{
+		if (
+			!empty($filterValue[ExtranetUserSettings::EXTRANET_FIELD])
+			&& $this->getSettings()->isFilterAvailable(ExtranetUserSettings::EXTRANET_FIELD)
+			&& $filterValue[ExtranetUserSettings::EXTRANET_FIELD] === 'Y'
+		)
+		{
+			$filterValue['UF_DEPARTMENT'] = false;
+			$filterValue['!=EXTRANET.ROLE'] = 'collaber';
+			$filterValue['!INTRANET_USER_EXTRANET_GROUP_GROUP_ID'] = false;
+		}
+		elseif (
+			!$this->getSettings()->isFilterAvailable(ExtranetUserSettings::EXTRANET_FIELD)
+			|| (
+				!empty($filterValue[ExtranetUserSettings::EXTRANET_FIELD])
+				&& $filterValue[ExtranetUserSettings::EXTRANET_FIELD] === 'N'
+			)
+		)
+		{
+			$filterValue[] =  [
+				'LOGIC' => 'OR',
+				[
+					'!UF_DEPARTMENT' => false,
+				],
+				[
+					'INTRANET_USER_EXTRANET_GROUP_GROUP_ID' => false,
+				],
+				[
+					'=EXTRANET.ROLE' => 'collaber'
+				],
+			];
+		}
 	}
 
 	public function getWorkgroupUsersSubQuery(array $workgroupIdList): string

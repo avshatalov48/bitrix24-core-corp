@@ -55,7 +55,27 @@ class ApacheSupersetDashboardTagListComponent extends CBitrixComponent
 
 		$ormParams = $this->grid->getOrmParams();
 		$filter = $ormParams['filter'] ?? [];
-		$totalCount = SupersetTagTable::getCount($filter);
+
+		$filteredByCount = false;
+		foreach ($filter as $key => $value)
+		{
+			if (str_contains($key, 'DASHBOARD_COUNT'))
+			{
+				$filteredByCount = true;
+
+				break;
+			}
+		}
+
+		if ($filteredByCount)
+		{
+			$totalCount = count($this->getGridRows(['filter' => $filter]));
+		}
+		else
+		{
+			$totalCount = SupersetTagTable::getCount($filter);
+		}
+
 		$grid->initPagination($totalCount);
 
 		$filter = $this->grid->getFilter();

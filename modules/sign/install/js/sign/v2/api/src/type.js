@@ -13,6 +13,7 @@ export type LoadedDocumentData = {
 	title: string;
 	uid: string;
 	version: number;
+	providerCode: ProviderCodeType;
 };
 export type Communication = {
 	ID: number;
@@ -73,3 +74,33 @@ export const MemberStatus: Readonly<Record<string, MemberStatusType>> = Object.f
 	stoppableReady: 'stoppable_ready',
 	processing: 'processing',
 });
+
+export type Company = {
+	id: ?number,
+	title: ?string,
+	rqInn: ?number,
+	registerUrl: ?string,
+	providers: ?Array<Provider>,
+};
+
+export type Provider = {
+	code: ProviderCodeType,
+	uid: ?string,
+	timestamp: ?number,
+	virtual: boolean,
+	autoRegister: boolean,
+	name: ?string;
+	description: ?string,
+	iconUrl: ?string,
+	expires: ?number,
+	externalProviderId: ?string,
+};
+
+export type ProviderCodeType = 'goskey' | 'ses-com' | 'ses-ru' | 'external';
+
+export type B2eCompanyList = { companies: Array<Company>, showTaxId: boolean };
+
+export type CountMember = {
+	entityType: string;
+	entityId: number;
+};

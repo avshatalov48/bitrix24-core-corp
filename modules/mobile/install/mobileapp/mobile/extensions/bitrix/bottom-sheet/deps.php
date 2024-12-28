@@ -6,5 +6,6 @@ return [
 		'apptheme',
 		'utils/color',
 		'utils/object',
+		'utils/page-manager'
 	],
 ];

@@ -36,6 +36,8 @@ class Util
 {
 	const CP_BITRIX_PATH = 'https://bitrix24.team';
 
+	private static array $userStatus = [];
+
 	public static function getDepartmentEmployees($params)
 	{
 		if (!is_array($params["DEPARTMENTS"]))
@@ -691,8 +693,13 @@ class Util
 
 	public static function getUserStatus($userId)
 	{
+		if (!empty(self::$userStatus[$userId]))
+		{
+			return self::$userStatus[$userId];
+		}
+
 		$status = '';
-		$currentUser = CurrentUser::get();
+		$currentUser = Intranet\CurrentUser::get();
 		$isCurrentUser = $currentUser->getId() == $userId;
 
 		if ($isCurrentUser)
@@ -739,6 +746,12 @@ class Util
 				{
 					$status = 'employee';
 				}
+				elseif (
+					Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById((int)$userId)
+				)
+				{
+					$status = 'collaber';
+				}
 				else
 				{
 					$status = 'extranet';
@@ -772,12 +785,25 @@ class Util
 							&& in_array($extranetGroupId, $groups)
 						)
 						{
-							$status = 'extranet';
+							if (
+								Extranet\Service\ServiceContainer::getInstance()
+									->getCollaberService()
+									->isCollaberById((int)$userId)
+							)
+							{
+								$status = 'collaber';
+							}
+							else
+							{
+								$status = 'extranet';
+							}
 						}
 					}
 				}
 			}
 		}
+
+		self::$userStatus[$userId] = $status;
 
 		return $status;
 	}

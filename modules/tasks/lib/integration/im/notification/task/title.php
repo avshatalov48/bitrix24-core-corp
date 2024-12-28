@@ -3,6 +3,7 @@
 namespace Bitrix\Tasks\Integration\IM\Notification\Task;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Integration\SocialNetwork\Collab\CollabRegistry;
 use Bitrix\Tasks\Internals\Registry\GroupRegistry;
 use Bitrix\Tasks\Internals\TaskObject;
 
@@ -38,8 +39,10 @@ class Title
 			$group = GroupRegistry::getInstance()->get($this->task->getGroupId());
 			if (isset($group['NAME']))
 			{
+				$isCollab = CollabRegistry::getInstance()->get($this->task->getGroupId()) !== null;
+				$messageText = $isCollab ? 'TASKS_NOTIFICATIONS_IN_COLLAB' : 'TASKS_NOTIFICATIONS_IN_GROUP';
 				$decodedName = \Bitrix\Main\Text\Emoji::decode($group['NAME']);
-				$text = Loc::getMessage('TASKS_NOTIFICATIONS_IN_GROUP', null, $lang) . ' ' . $decodedName;
+				$text = Loc::getMessage($messageText, null, $lang) . ' ' . $decodedName;
 				$name .= ' (' . $text . ')';
 			}
 		}

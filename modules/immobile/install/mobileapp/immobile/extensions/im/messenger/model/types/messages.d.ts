@@ -7,6 +7,7 @@ declare type MessagesModelCollection = {
 	collection: Record<number | string, MessagesModelState>,
 	chatCollection: Record<number, Set<number>>,
 	temporaryMessages: Record<string, MessagesModelState>,
+	uploadingMessageCollection: Set<string>,
 }
 
 export type MessagesMessengerModel = MessengerModel<MessagesModelCollection>;
@@ -161,6 +162,7 @@ export type MessagesModelActions =
 	| 'messagesModel/setPinned'
 	| 'messagesModel/updateWithId'
 	| 'messagesModel/update'
+	| 'messagesModel/updateParams'
 	| 'messagesModel/delete'
 	| 'messagesModel/readMessages'
 	| 'messagesModel/setViewedByOthers'
@@ -287,6 +289,18 @@ export type MessagesClearCollectionActions = 'setChatCollection'
 export interface MessagesClearCollectionData extends PayloadData
 {
 	chatId: number;
+}
+
+export type MessagesAddToUploadingCollectionActions = 'add'
+export interface MessagesAddToUploadingCollectionData extends PayloadData
+{
+	id: string;
+}
+
+export type MessagesDeleteFromUploadingCollectionActions = 'delete' | 'updateWithId' | 'update'
+export interface MessagesDeleteFromUploadingCollectionData extends PayloadData
+{
+	id: string;
 }
 
 /* endregion mutation types */

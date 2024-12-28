@@ -1,6 +1,14 @@
-<?
-require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
+<?php
 
-\Bitrix\Intranet\Integration\Crm::getInstance()->redirectToFirstAvailableEntity();
+require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');
 
-require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');
+/** @var CMain $APPLICATION */
+$APPLICATION->includeComponent(
+	'bitrix:crm.router',
+	'',
+	[
+		'root' => '/crm/',
+	]
+);
+
+require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php');

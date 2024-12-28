@@ -14,6 +14,7 @@ jn.define('ui-system/layout/card/src/card-design-enum', (require, exports, modul
 	{
 		static PRIMARY = new CardDesign('PRIMARY', {
 			backgroundColor: Color.bgContentPrimary,
+			accentColor: Color.accentMainPrimary,
 		});
 
 		static SECONDARY = new CardDesign('SECONDARY', {
@@ -22,27 +23,18 @@ jn.define('ui-system/layout/card/src/card-design-enum', (require, exports, modul
 
 		static ACCENT = new CardDesign('ACCENT', {
 			backgroundColor: Color.accentSoftBlue2,
+			accentColor: Color.accentMainPrimary,
 		});
 
 		static WARNING = new CardDesign('WARNING', {
 			backgroundColor: Color.accentSoftOrange2,
+			accentColor: Color.accentMainWarning,
 		});
 
 		static ALERT = new CardDesign('ALERT', {
 			backgroundColor: Color.accentSoftRed2,
+			accentColor: Color.accentMainAlert,
 		});
-
-		/**
-		 * @return {{backgroundColor: Color}}
-		 */
-		getStyle()
-		{
-			const { backgroundColor } = this.getValue();
-
-			return {
-				backgroundColor: backgroundColor.toHex(),
-			};
-		}
 	}
 
 	module.exports = { CardDesign };

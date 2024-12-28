@@ -385,14 +385,14 @@ if (!function_exists('__SLMGetLogRecord'))
 				}
 
 				if (
-					!array_key_exists("HAS_COMMENTS", $arEvent["FIELDS_FORMATTED"])
+					!isset($arEvent["FIELDS_FORMATTED"]["HAS_COMMENTS"])
 					|| $arEvent["FIELDS_FORMATTED"]["HAS_COMMENTS"] != "N"
 				)
 				{
 					$arEvent["FIELDS_FORMATTED"]["HAS_COMMENTS"] = (
 						$arCommentEvent
 						&& (
-							!array_key_exists("ENABLE_COMMENTS", $arEvent)
+							!isset($arEvent["ENABLE_COMMENTS"])
 							|| $arEvent["ENABLE_COMMENTS"] != "N"
 						)
 							? "Y"
@@ -419,7 +419,7 @@ if (!function_exists('__SLMGetLogRecord'))
 			}
 		}
 
-		if (!array_key_exists("COMMENTS_PARAMS", $arEvent["FIELDS_FORMATTED"]))
+		if (!isset($arEvent["FIELDS_FORMATTED"]["COMMENTS_PARAMS"]))
 		{
 			$arEvent["FIELDS_FORMATTED"]["COMMENTS_PARAMS"] = \Bitrix\Socialnetwork\ComponentHelper::getLFCommentsParams([
 				"ID" => $arEvent["FIELDS_FORMATTED"]["EVENT"]["ID"],
@@ -477,10 +477,7 @@ if (!function_exists('__SLMGetLogRecord'))
 
 		if ($arParams["DATE_TIME_FORMAT"] == '') // list
 		{
-			if (
-				array_key_exists("EVENT_FORMATTED", $arEvent["FIELDS_FORMATTED"])
-				&& isset($arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"]["LOG_DATE_FORMAT"])
-			)
+			if (isset($arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"]["LOG_DATE_FORMAT"]))
 			{
 				$bToday = (ConvertTimeStamp(MakeTimeStamp($arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"]["LOG_DATE_FORMAT"]), "SHORT") == ConvertTimeStamp());
 				if ($bToday)
@@ -574,11 +571,11 @@ if (!function_exists('__SLMGetLogRecord'))
 			&& is_object($GLOBALS["USER"])
 			&& (
 				(
-					array_key_exists("DESTINATION", $arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"])
+					isset($arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"]["DESTINATION"])
 					&& is_array($arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"]["DESTINATION"])
 				)
 				|| (
-					array_key_exists("DESTINATION_CODE", $arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"])
+					isset($arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"]["DESTINATION_CODE"])
 					&& is_array($arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"]["DESTINATION_CODE"])
 				)
 			)
@@ -589,7 +586,7 @@ if (!function_exists('__SLMGetLogRecord'))
 			$arGroupID = CSocNetLogTools::GetAvailableGroups(($bExtranetUser ? "Y" : "N"));
 
 			if (
-				array_key_exists("DESTINATION", $arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"])
+				isset($arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"]["DESTINATION"])
 				&& is_array($arEvent["FIELDS_FORMATTED"]["EVENT_FORMATTED"]["DESTINATION"])
 			)
 			{
@@ -633,7 +630,7 @@ if (!function_exists('__SLMGetLogRecord'))
 		)
 			$arEvent["FIELDS_FORMATTED"]["RATING"] = CRatings::GetRatingVoteResult($arEvent["FIELDS_FORMATTED"]["EVENT"]["RATING_TYPE_ID"], $arEvent["FIELDS_FORMATTED"]["EVENT"]["RATING_ENTITY_ID"]);
 
-		if (array_key_exists("FAVORITES_USER_ID", $arEvent) && intval($arEvent["FAVORITES_USER_ID"]) > 0)
+		if (isset($arEvent["FAVORITES_USER_ID"]) && intval($arEvent["FAVORITES_USER_ID"]) > 0)
 			$arEvent["FIELDS_FORMATTED"]["FAVORITES"] = "Y";
 		else
 			$arEvent["FIELDS_FORMATTED"]["FAVORITES"] = "N";

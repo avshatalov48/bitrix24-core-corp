@@ -42,13 +42,13 @@ final class DepartmentEditRule extends AbstractRule
 
 		if (
 			$permissionValue !== PermissionVariablesDictionary::VARIABLE_SELF_DEPARTMENTS
-			&& $permissionValue !== PermissionVariablesDictionary::VARIABLE_SELF_DEPARTMENTS_SUBDEPARTMENTS
+			&& $permissionValue !== PermissionVariablesDictionary::VARIABLE_SELF_DEPARTMENTS_SUB_DEPARTMENTS
 		)
 		{
 			return false;
 		}
 
-		$checkSubdepartments = $permissionValue === PermissionVariablesDictionary::VARIABLE_SELF_DEPARTMENTS_SUBDEPARTMENTS;
+		$checkSubdepartments = $permissionValue === PermissionVariablesDictionary::VARIABLE_SELF_DEPARTMENTS_SUB_DEPARTMENTS;
 		/**
 		 * if a department's parent changes,
 		 * then necessary to check access to the node, the current parent and the target

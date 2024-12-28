@@ -7,7 +7,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 	const { Icon } = require('assets/icons');
 	const { Haptics } = require('haptics');
 	const { BaseField } = require('layout/ui/fields/base');
-	const { isEqual } = require('utils/object');
+	const { isEqual, clone } = require('utils/object');
 	const { isNil } = require('utils/type');
 	const { EntitySelectorFactory, EntitySelectorFactoryType } = require('selector/widget/factory');
 	const { PropTypes } = require('utils/validation');
@@ -20,6 +20,9 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 	const MAX_VISIBLE_ENTITY = 3;
 
 	/**
+	 * @typedef {Object} EntitySelectorFieldProps
+	 * @property {boolean} [withRedux=false]
+	 *
 	 * @class EntitySelectorField
 	 */
 	class EntitySelectorField extends BaseField
@@ -93,7 +96,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 				entityList: this.getItemsFromProps(config),
 				canUnselectLast: BX.prop.getBoolean(config, 'canUnselectLast', true),
 				canUseRecent: BX.prop.getBoolean(config, 'canUseRecent', true),
-				nonSelectableErrorText: BX.prop.getString(config, 'nonSelectableErrorText', ''),
+				getNonSelectableErrorText: BX.prop.getFunction(config, 'getNonSelectableErrorText'),
 				entityIds,
 				isComplex,
 			};
@@ -135,25 +138,16 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 
 		prepareEntityList(entityList)
 		{
-			const list = Utils.objectClone(entityList)
-				.filter((entity) => BX.type.isPlainObject(entity) && !isNil(entity.id));
+			const list = clone(entityList).filter((entity) => BX.type.isPlainObject(entity) && !isNil(entity.id));
 
 			if (this.getConfig().castType === CastType.STRING)
 			{
-				return list.map((entity) => {
-					entity.id = String(entity.id);
-
-					return entity;
-				});
+				return list.map((entity) => ({ ...entity, id: String(entity.id) }));
 			}
 
 			return (
 				list
-					.map((entity) => {
-						entity.id = Number(entity.id);
-
-						return entity;
-					})
+					.map((entity) => ({ ...entity, id: Number(entity.id) }))
 					.filter((entity) => !Number.isNaN(entity.id))
 			);
 		}
@@ -178,7 +172,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 
 			if (Array.isArray(values))
 			{
-				values = Utils.objectClone(values).filter((value) => !isNil(value));
+				values = clone(values).filter((value) => !isNil(value));
 
 				if (this.getConfig().castType === CastType.STRING)
 				{
@@ -376,18 +370,14 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 		getValueWhileReady()
 		{
 			return new Promise((resolve) => {
-				let values = null;
-
 				if (this.isComplexSelector())
 				{
-					values = this.getSelectedIds();
+					resolve(this.getSelectedIds());
 				}
 				else
 				{
-					values = super.getValue();
+					resolve(super.getValue());
 				}
-
-				resolve(values);
 			});
 		}
 
@@ -409,7 +399,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 				canUseRecent,
 				selectorTitle,
 				useLettersForEmptyAvatar,
-				nonSelectableErrorText,
+				getNonSelectableErrorText,
 				analytics,
 			} = this.getConfig();
 
@@ -441,7 +431,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 						},
 						selectOptions: {
 							canUnselectLast,
-							nonSelectableErrorText,
+							getNonSelectableErrorText,
 						},
 						entityIds: this.getEntityTypeIds(),
 						initSelectedIds: this.getSelectedIds(),
@@ -458,7 +448,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 										this.updateSelectorState(this.currentEntities);
 										this.currentEntities = null;
 									}
-								});
+								}).catch(console.error);
 							},
 							onViewHiddenStrict: this.onSelectorHidden,
 						},
@@ -569,34 +559,49 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 		setStateEntityList(entities)
 		{
 			const entityList = this.prepareEntityList(entities);
+			const { entityList: stateEntityList } = this.state;
 
-			if (!isEqual(this.state.entityList, entityList))
+			if (isEqual(stateEntityList, entityList))
 			{
-				const setState = () => {
-					if (this.shouldUseState())
-					{
-						this.setState(
-							{ entityList },
-							() => this.handleChange(this.getValueFromEntityList(entities), entityList),
-						);
-					}
-					else
-					{
-						this.handleChange(this.getValueFromEntityList(entities), entityList);
-					}
-				};
+				return;
+			}
 
-				if (this.hasDifferentIds(this.state.entityList, entityList))
+			const setState = () => {
+				const entityListValue = this.getValueFromEntityList(entities);
+
+				if (this.shouldUseState())
 				{
-					Haptics.impactLight();
-					this.onBeforeHandleChange().then(() => setState()).catch(console.error);
+					this.setState(
+						{ entityList },
+						() => this.handleChange(entityListValue, entityList),
+					);
 				}
 				else
 				{
-					setState();
+					this.handleChange(entityListValue, entityList);
 				}
+
+				if (this.withRedux())
+				{
+					this.setReduxState(entityList);
+				}
+			};
+
+			if (this.hasDifferentIds(stateEntityList, entityList))
+			{
+				Haptics.impactLight();
+				this.onBeforeHandleChange()
+					.then(() => setState())
+					.catch(console.error);
+			}
+			else
+			{
+				setState();
 			}
 		}
+
+		setReduxState(entityList)
+		{}
 
 		hasDifferentIds(source, target)
 		{
@@ -737,21 +742,6 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 			};
 		}
 
-		getLeftTitleChildStyles(styles)
-		{
-			return {
-				...styles,
-				wrapper: {
-					...styles.wrapper,
-					paddingTop: 10,
-				},
-				readOnlyWrapper: {
-					...styles.readOnlyWrapper,
-					paddingTop: 10,
-				},
-			};
-		}
-
 		getSvgImages()
 		{
 			return {
@@ -853,10 +843,43 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 		{
 			return entity.title;
 		}
+
+		withRedux()
+		{
+			const { withRedux } = this.props;
+
+			return Boolean(withRedux);
+		}
 	}
+
+	EntitySelectorField.defaultProps = {
+		...BaseField.defaultProps,
+		showHiddenEntities: true,
+		showChevronDown: false,
+		withRedux: false,
+		config: {
+			...BaseField.defaultProps.config,
+			selectorTitle: '',
+			// selectorType: '',
+			castType: CastType.INT,
+			provider: {
+				context: '',
+			},
+			enableCreation: false,
+			closeAfterCreation: true,
+			reloadEntityListFromProps: false,
+			entityList: [],
+			items: [],
+			canUnselectLast: true,
+			canUseRecent: true,
+			// entityIds: null,
+			isComplex: false,
+		},
+	};
 
 	EntitySelectorField.propTypes = {
 		...BaseField.propTypes,
+		withRedux: PropTypes.bool,
 		showChevronDown: PropTypes.bool,
 		showHiddenEntities: PropTypes.bool,
 		config: PropTypes.shape({
@@ -885,37 +908,12 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 			items: PropTypes.array, // same as entityList but for universal using of fields
 			canUnselectLast: PropTypes.bool,
 			canUseRecent: PropTypes.bool,
-			nonSelectableErrorText: PropTypes.string,
+			getNonSelectableErrorText: PropTypes.func,
 			entityIds: PropTypes.array,
 			isComplex: PropTypes.bool,
 			// string or Icon from assets/icons
 			defaultLeftIcon: PropTypes.any,
 		}),
-	};
-
-	EntitySelectorField.defaultProps = {
-		...BaseField.defaultProps,
-		showHiddenEntities: true,
-		showChevronDown: false,
-		config: {
-			...BaseField.defaultProps.config,
-			selectorTitle: '',
-			// selectorType: '',
-			castType: CastType.INT,
-			provider: {
-				context: '',
-			},
-			enableCreation: false,
-			closeAfterCreation: true,
-			reloadEntityListFromProps: false,
-			entityList: [],
-			items: [],
-			canUnselectLast: true,
-			canUseRecent: true,
-			nonSelectableErrorText: '',
-			// entityIds: null,
-			isComplex: false,
-		},
 	};
 
 	module.exports = {

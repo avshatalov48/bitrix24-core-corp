@@ -78,6 +78,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 
 	const { SubTasksField } = require('tasks/layout/fields/subtask/theme/air');
 	const { SubTasksField: SubTasksFieldCompact } = require('tasks/layout/fields/subtask/theme/air-compact');
+
 	const { RelatedTasksField } = require('tasks/layout/fields/related-task/theme/air');
 	const { RelatedTasksField: RelatedTasksFieldCompact } = require('tasks/layout/fields/related-task/theme/air-compact');
 	const { TasksStageSelector } = require('tasks/layout/fields/stage-selector');
@@ -87,6 +88,10 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 
 	const { TaskResultField } = require('tasks/layout/fields/result/theme/air');
 	const { TaskResultField: TaskResultFieldCompact } = require('tasks/layout/fields/result/theme/air-compact');
+	const { AnalyticsEvent } = require('analytics');
+
+	const { UserFieldsField } = require('tasks/layout/fields/user-fields/theme/air');
+	const { UserFieldsField: UserFieldsFieldCompact } = require('tasks/layout/fields/user-fields/theme/air-compact');
 
 	const deadlineFormatter = (ts) => Formatter.format(Moment.createFromTimestamp(ts));
 
@@ -199,6 +204,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						useState: false,
 						onContentClick: onFieldContentClick,
 						config: {
+							enableCreation: !(env.isCollaber || env.extranet),
 							provider: {
 								context: 'TASKS_MEMBER_SELECTOR_EDIT_originator',
 							},
@@ -213,6 +219,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 							},
 						},
 						onChange: onChangeUserField,
+						analytics: getAnalyticsForUserField(analyticsLabel),
 					},
 				},
 				{
@@ -230,6 +237,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						useState: false,
 						onContentClick: onFieldContentClick,
 						config: {
+							enableCreation: !(env.isCollaber || env.extranet),
 							provider: {
 								context: 'TASKS_MEMBER_SELECTOR_EDIT_responsible',
 								options: {
@@ -250,11 +258,21 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 							items: [responsible].filter(Boolean),
 							canUnselectLast: false,
 							useLettersForEmptyAvatar: true,
-							nonSelectableErrorText: (
-								actions.updateResponsible
-									? Loc.getMessage('M_TASKS_DENIED_SELECT_USER_AS_RESPONSIBLE')
-									: Loc.getMessage('M_TASKS_DENIED_DELEGATE_USER_AS_RESPONSIBLE')
-							),
+							getNonSelectableErrorText: useCallback((item) => {
+								const isCollaber = item.params.entityType === 'collaber';
+								const isCollab = selectGroupById(store.getState(), task.groupId)?.isCollab;
+
+								if (isCollaber && !isCollab)
+								{
+									return Loc.getMessage('M_TASKS_DENIED_SELECT_COLLABER_WITHOUT_COLLAB');
+								}
+
+								return (
+									actions.updateResponsible
+										? Loc.getMessage('M_TASKS_DENIED_SELECT_USER_AS_RESPONSIBLE')
+										: Loc.getMessage('M_TASKS_DENIED_DELEGATE_USER_AS_RESPONSIBLE')
+								);
+							}),
 							selectorTitle: (
 								actions.updateResponsible
 									? Loc.getMessage('M_TASK_DETAILS_FIELD_RESPONSIBLE_TITLE')
@@ -262,6 +280,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 							),
 						},
 						onChange: onChangeUserField,
+						analytics: getAnalyticsForUserField(analyticsLabel),
 					},
 				},
 				{
@@ -301,7 +320,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						},
 						notifyAboutReadOnlyStatus: onFieldContentClick,
 						readOnly: view === ViewMode.DEADLINE
-							? !canMoveStage && !actions[TaskFieldActionAccess[Field.UPDATE_DEADLINE]]
+							? !(canMoveStage && actions[TaskFieldActionAccess[Field.UPDATE_DEADLINE]])
 							: !canMoveStage,
 						value: task.stageId,
 						view,
@@ -419,13 +438,18 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 					props: {
 						id: Field.PROJECT,
 						value: task.groupId,
-						title: Loc.getMessage('M_TASK_FORM_FIELD_PROJECT_TITLE'),
+						title: (
+							project?.isCollab
+								? Loc.getMessage('M_TASK_FORM_FIELD_PROJECT_COLLAB_TITLE')
+								: Loc.getMessage('M_TASK_FORM_FIELD_PROJECT_TITLE')
+						),
 						showTitle: true,
 						readOnly: !actions[TaskFieldActionAccess[Field.PROJECT]],
 						useState: false,
 						onContentClick: onFieldContentClick,
 						config: makeProjectFieldConfig({
 							items: [project].filter(Boolean),
+							canUnselectLast: !env.isCollaber,
 						}),
 						restrictionPolicy: getFieldRestrictionPolicy(Field.PROJECT),
 						showRestrictionCallback: getFieldShowRestrictionCallback(Field.PROJECT, parentWidget),
@@ -440,7 +464,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						value: task.flowId,
 						title: Loc.getMessage('M_TASKS_FLOW'),
 						showTitle: true,
-						readOnly: true,
+						readOnly: !actions[TaskFieldActionAccess[Field.FLOW]] || env.isCollaber,
 						useState: false,
 						onContentClick: onFieldContentClick,
 						config: {
@@ -470,6 +494,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						restrictionPolicy: getFieldRestrictionPolicy(Field.ACCOMPLICES),
 						showRestrictionCallback: getFieldShowRestrictionCallback(Field.ACCOMPLICES, parentWidget),
 						onChange: onChangeUserField,
+						analytics: getAnalyticsForUserField(analyticsLabel),
 					},
 					compact: UserFieldCompact,
 				},
@@ -491,6 +516,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						restrictionPolicy: getFieldRestrictionPolicy(Field.AUDITORS),
 						showRestrictionCallback: getFieldShowRestrictionCallback(Field.AUDITORS, parentWidget),
 						onChange: onChangeUserField,
+						analytics: getAnalyticsForUserField(analyticsLabel),
 					},
 					compact: UserFieldCompact,
 				},
@@ -544,6 +570,19 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						}),
 					},
 					compact: TagFieldCompact,
+				},
+				task.userFieldNames.length > 0 && {
+					factory: UserFieldsField,
+					props: {
+						id: Field.USER_FIELDS,
+						taskId: task.id,
+						areUserFieldsLoaded: task.areUserFieldsLoaded,
+						userFields: task.userFields.filter(Boolean),
+						readOnly: !actions[TaskFieldActionAccess[Field.USER_FIELDS]],
+						required: false,
+						onContentClick: onFieldContentClick,
+					},
+					compact: UserFieldsFieldCompact,
 				},
 				{
 					factory: CrmElementField,
@@ -628,8 +667,18 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 					},
 					compact: DatePlanFieldCompact,
 				},
-			],
+			].filter(Boolean),
 		});
+	};
+
+	const getAnalyticsForUserField = (analyticsLabel) => {
+		const analytics = new AnalyticsEvent();
+		if (analyticsLabel)
+		{
+			analytics.setSection(new AnalyticsEvent(analyticsLabel).getSection());
+		}
+
+		return analytics;
 	};
 
 	const FormStyle = {
@@ -675,6 +724,8 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 			id: group.id,
 			title: group.name,
 			imageUrl: group.image,
+			isCollab: group.isCollab,
+			dialogId: group.additionalData.DIALOG_ID,
 		} : undefined;
 	};
 
@@ -731,7 +782,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 
 		const stageData = selectTaskStageByTaskIdOrGuid(
 			state,
-			taskId,
+			task.id,
 			task.guid,
 			ownProps.view,
 			ownProps.kanbanOwnerId,
@@ -773,6 +824,9 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 				startDatePlan: task.startDatePlan,
 				endDatePlan: task.endDatePlan,
 				stageId: stageData?.stageId,
+				areUserFieldsLoaded: task.areUserFieldsLoaded,
+				userFieldNames: task.userFieldNames,
+				userFields: task.areUserFieldsLoaded ? task.userFieldNames.map((name) => task[name]) : [],
 			},
 			actions,
 			shouldShowCompactButtons,

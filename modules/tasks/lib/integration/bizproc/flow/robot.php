@@ -17,6 +17,7 @@ abstract class Robot
 		return match ($recipient->getType()) {
 			RoleDictionary::ROLE_RESPONSIBLE => '{=Document:RESPONSIBLE_ID}',
 			Recipient::FLOW_OWNER => '{=Document:OWNER}',
+			Recipient::TASK_FLOW_OWNER => '{=Document:FLOW_OWNER}',
 			default => '',
 		};
 	}

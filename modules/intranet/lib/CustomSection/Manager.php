@@ -67,10 +67,8 @@ class Manager
 		return new Uri($link);
 	}
 
-	protected function getSectionRootUrl(CustomSection $customSection): ?Uri
+	public function getSectionRootUrl(string $customSectionCode): ?Uri
 	{
-		$customSectionCode = $customSection->getCode();
-
 		if (!$this->isCodeValid($customSectionCode))
 		{
 			return null;
@@ -339,7 +337,7 @@ class Manager
 		return [
 			htmlspecialcharsbx($customSection->getTitle()),
 			$this->getUrlForPage($customSection->getCode(), $page->getCode()),
-			[ $this->getSectionRootUrl($customSection) ],
+			[ $this->getSectionRootUrl($customSection->getCode()) ],
 			[
 				'menu_item_id' => $this->getCustomSectionMenuId($customSection->getCode()),
 				'is_custom_section' => true,

@@ -51,6 +51,14 @@
 	color: var(--ui-color-base-90, #525c69);
 }
 
+.crm-timeline__card_link.--color-green {
+	color: var(--ui-color-palette-green-80, #688800);
+}
+
+.crm-timeline__card_link.--color-purple {
+	color: var(--ui-color-copilot-primary, #8e52ec);
+}
+
 .crm-timeline__card_link.--bold {
 	font-weight: var(--ui-font-weight-medium);
 }
@@ -91,4 +99,12 @@
 
 .crm-timeline__card_link.--decoration-dashed {
 	border-bottom: var(--ui-border-width-thin) dashed;
+}
+
+.crm-timeline__card_link.--limit {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	white-space: break-spaces;
+	word-break: break-word;
 }

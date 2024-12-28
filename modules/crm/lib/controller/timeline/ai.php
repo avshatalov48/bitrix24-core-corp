@@ -4,16 +4,26 @@ namespace Bitrix\Crm\Controller\Timeline;
 
 use Bitrix\Crm\Badge\Badge;
 use Bitrix\Crm\Category\EditorHelper;
+use Bitrix\Crm\Controller\Copilot\CallQualityAssessment;
 use Bitrix\Crm\Controller\ErrorCode;
+use Bitrix\Crm\Copilot\AiQualityAssessment\Controller\AiQualityAssessmentController;
+use Bitrix\Crm\Copilot\AiQualityAssessment\PullManager;
+use Bitrix\Crm\Copilot\AiQualityAssessment\ViewModeEnum;
+use Bitrix\Crm\Copilot\CallAssessment\CallAssessmentItemChecker;
+use Bitrix\Crm\Copilot\CallAssessment\ItemFactory;
+use Bitrix\Crm\Copilot\CallAssessment\PromptsChecker;
 use Bitrix\Crm\Entity\FieldDataProvider;
 use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\AI\CopilotLauncher;
 use Bitrix\Crm\Integration\AI\Dto\FillItemFieldsFromCallTranscriptionPayload;
 use Bitrix\Crm\Integration\AI\Dto\MultipleFieldFillPayload;
+use Bitrix\Crm\Integration\AI\Dto\ScoreCallPayload;
 use Bitrix\Crm\Integration\AI\Dto\SingleFieldFillPayload;
 use Bitrix\Crm\Integration\AI\ErrorCode as AIErrorCode;
 use Bitrix\Crm\Integration\AI\Feedback;
 use Bitrix\Crm\Integration\AI\JobRepository;
 use Bitrix\Crm\Integration\AI\Operation\FillItemFieldsFromCallTranscription;
+use Bitrix\Crm\Integration\AI\Operation\Scenario;
 use Bitrix\Crm\Integration\AI\Result;
 use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\ItemIdentifier;
@@ -30,6 +40,7 @@ use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\UserField\Dispatcher;
+use CCrmActivityDirection;
 use CCrmOwnerType;
 use CUserOptions;
 
@@ -72,9 +83,20 @@ class AI extends Activity
 		return $filters;
 	}
 
+	// region CoPilot scenarios
 	/** @noinspection PhpUnused */
-	public function launchRecordingTranscriptionAction(int $activityId, int $ownerTypeId, int $ownerId): ?array
+	public function launchCopilotAction(int $activityId, int $ownerTypeId, int $ownerId, ?string $scenario = null): ?array
 	{
+		if (empty($scenario))
+		{
+			$scenario = Scenario::FULL_SCENARIO;
+		}
+
+		if (!Scenario::isSupportedScenario($scenario))
+		{
+			return null;
+		}
+
 		$activity = $this->loadActivity($activityId, $ownerTypeId, $ownerId);
 		if (!$activity)
 		{
@@ -91,10 +113,44 @@ class AI extends Activity
 			&& in_array($ownerTypeId, AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
 		)
 		{
-			$result = AIManager::launchFillItemFromCallRecordingScenario($activityId); // async start transcription
-			if (!$result->isSuccess())
+			$scenario = Scenario::filterScenarioByGlobalSettings($scenario);
+			if ($scenario === null)
 			{
-				$this->addErrors($result->getErrors());
+				$this->addError(AIErrorCode::getAIDisabledError(['sliderCode' => AIManager::AI_DISABLED_SLIDER_CODE]));
+
+				return null;
+			}
+
+			if ($scenario === Scenario::CALL_SCORING_SCENARIO)
+			{
+				$checkerResult = CallAssessmentItemChecker::getInstance()
+					->setItem(ItemFactory::getByActivityId($activityId))
+					->run()
+				;
+				if (!$checkerResult->isSuccess())
+				{
+					$this->addError($checkerResult->getError());
+
+					return null;
+				}
+			}
+
+			$result = (new CopilotLauncher(
+				$activityId,
+				Container::getInstance()->getContext()->getUserId(),
+				$scenario,
+			))->run(); // async start transcription
+			if (!$result?->isSuccess())
+			{
+				$errors = $result?->getErrors();
+				if ($errors)
+				{
+					$this->addErrors($result?->getErrors());
+				}
+				else
+				{
+					$this->addError(AIErrorCode::getAIEngineNotFoundError());
+				}
 
 				return null;
 			}
@@ -108,6 +164,7 @@ class AI extends Activity
 
 		return null;
 	}
+	// endregion
 
 	/** @noinspection PhpUnused */
 	public function getCopilotSummaryAction(int $activityId, int $ownerTypeId, int $ownerId): ?array
@@ -260,6 +317,118 @@ class AI extends Activity
 			'aiJobResult' => $summary,
 			'callRecord' => $callRecord,
 		];
+	}
+
+	public function getCopilotCallQualityAction(int $activityId, int $ownerTypeId, int $ownerId, ?int $jobId = null, ?int $assessmentSettingsId = null): ?array
+	{
+		$activity = $this->loadActivity($activityId, $ownerTypeId, $ownerId);
+		if (!$activity)
+		{
+			return null;
+		}
+
+		$userId = (int)$this->getCurrentUser()?->getId();
+
+		if ($userId)
+		{
+			$pullManager = new PullManager();
+			$pullManager->subscribe($userId, $activityId);
+		}
+
+		$data = [
+			'callRecord' => [],
+			'callDirection' => $activity['DIRECTION'] ?? CCrmActivityDirection::Undefined,
+		];
+
+		$callRecord = $this->getCallRecord($activityId, $ownerTypeId, $ownerId);
+		if ($callRecord === null)
+		{
+			$data['viewMode'] = ViewModeEnum::error->value;
+
+			return $data;
+		}
+
+		$data['callRecord'] = $callRecord;
+
+		$callQuality = $this->getCopilotCallQualityData($activityId, $jobId);
+		if ($callQuality === null)
+		{
+			if ($assessmentSettingsId)
+			{
+				$callQualityAssessmentController = new CallQualityAssessment();
+				$callQuality = $callQualityAssessmentController->getAction($activityId, $assessmentSettingsId, new ItemIdentifier($ownerTypeId, $ownerId));
+
+				return array_merge($data, $callQuality);
+			}
+
+			$data['viewMode'] = ViewModeEnum::emptyScriptList->value;
+
+			return $data;
+		}
+
+		$data['callQuality'] = $callQuality;
+
+		$this->prepareDataWithCallScoring($data, $activityId, $jobId);
+
+		return $data;
+	}
+
+	private function getCopilotCallQualityData(int $activityId, ?int $jobId): ?array
+	{
+		$aiQualityAssessmentController = AiQualityAssessmentController::getInstance();
+		$callQuality = $aiQualityAssessmentController->getByActivityIdAndJobId($activityId, $jobId);
+
+		if ($callQuality === null)
+		{
+			return null;
+		}
+
+		$callQuality['PREV_ASSESSMENT_AVG'] = $aiQualityAssessmentController
+			->getPrevAvgAssessmentValue($callQuality['RATED_USER_ID'] ?? 0)
+		;
+		$callQuality['USE_IN_RATING'] = ($callQuality['USE_IN_RATING'] ?? 'N') === 'Y';
+		$callQuality['IS_PROMPT_CHANGED'] = PromptsChecker::isChanged(
+			$callQuality['PROMPT'],
+			$callQuality['ACTUAL_PROMPT'],
+		);
+
+		$callQuality['RECOMMENDATIONS'] = '';
+		$callQuality['SUMMARY'] = '';
+
+		return $callQuality;
+	}
+
+	private function prepareDataWithCallScoring(array &$data, int $activityId, ?int $jobId): void
+	{
+		$callScoringResult = JobRepository::getInstance()->getCallScoringResult($activityId, $jobId);
+
+		if ($callScoringResult === null || !$callScoringResult->isSuccess())
+		{
+			$data['viewMode'] = ViewModeEnum::error->value;
+
+			return;
+		}
+
+		if ($callScoringResult->isPending())
+		{
+			$data['viewMode'] = ViewModeEnum::pending->value;
+
+			return;
+		}
+
+		/** @var ScoreCallPayload $payload */
+		$payload = $callScoringResult->getPayload();
+		$data['callQuality']['RECOMMENDATIONS'] = $payload?->recommendations;
+		$data['callQuality']['SUMMARY'] = $payload?->overallSummary;
+
+		if (empty($data['callQuality']['RECOMMENDATIONS']))
+		{
+			$data['viewMode'] = ViewModeEnum::error->value;
+		}
+		else
+		{
+			$data['viewMode'] = ViewModeEnum::usedCurrentVersionOfScript->value;
+		}
 	}
 
 	public function getCopilotTranscriptAndCallRecordAction(int $activityId, int $ownerTypeId, int $ownerId): ?array
@@ -694,7 +863,7 @@ class AI extends Activity
 
 	private function removeEntityBadgeByOwner(ItemIdentifier $identifier): void
 	{
-		$currentUserId = (int)$this->getCurrentUser()->getId();
+		$currentUserId = (int)$this->getCurrentUser()?->getId();
 
 		$assignedById = Container::getInstance()
 			->getFactory($identifier->getEntityTypeId())?->getItem($identifier->getEntityId())?->getAssignedById();

@@ -17,12 +17,12 @@ class Pages extends \Bitrix\Sign\Engine\Controller
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_B2E_DOCUMENT_READ,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid'
 	)]
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_B2E_DOCUMENT_READ,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid'
 	)]
 	public function listAction(string $uid): array
 	{

@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,crm_router,ui_dialogs_messagebox,main_core_events,main_core,crm_dataStructures) {
@@ -12,11 +13,15 @@ this.BX.Crm = this.BX.Crm || {};
 	var _getButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getButtons");
 	var _approveConsent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("approveConsent");
 	var _closeAgreementBox = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeAgreementBox");
+	var _showErrorNotify = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showErrorNotify");
 	var _showNotify = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showNotify");
 	class ConsentApprover {
 	  constructor(senderType = null) {
 	    Object.defineProperty(this, _showNotify, {
 	      value: _showNotify2
+	    });
+	    Object.defineProperty(this, _showErrorNotify, {
+	      value: _showErrorNotify2
 	    });
 	    Object.defineProperty(this, _closeAgreementBox, {
 	      value: _closeAgreementBox2
@@ -37,9 +42,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _senderType)[_senderType] = senderType;
 	  }
 	  async checkAndApprove() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _senderType)[_senderType] !== Types.bitrix24) {
-	      return Promise.resolve(true);
-	    }
+	    // if (this.#senderType !== Types.bitrix24)
+	    // {
+	    // 	return Promise.resolve(true);
+	    // }
+
 	    return new Promise(resolve => {
 	      main_core.ajax.runAction('notifications.consent.Agreement.get').then(({
 	        data
@@ -50,7 +57,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	        babelHelpers.classPrivateFieldLooseBase(this, _showConsentAgreementBox)[_showConsentAgreementBox](data, resolve);
 	      }).catch(() => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _showNotify)[_showNotify](main_core.Loc.getMessage('CRM_MESSAGESENDER_B24_CONSENT_AGREEMENT_VALIDATION_ERROR'));
+	        babelHelpers.classPrivateFieldLooseBase(this, _showErrorNotify)[_showErrorNotify]();
 	        resolve(false);
 	      });
 	    });
@@ -77,10 +84,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    color: BX.UI.Button.Color.SUCCESS,
 	    text: main_core.Loc.getMessage('CRM_MESSAGESENDER_B24_CONSENT_ACCEPT'),
 	    onclick: button => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _approveConsent)[_approveConsent]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _showNotify)[_showNotify](main_core.Loc.getMessage('CRM_MESSAGESENDER_B24_AGREEMENT_ACCEPT'));
-	      babelHelpers.classPrivateFieldLooseBase(this, _closeAgreementBox)[_closeAgreementBox](button);
-	      resolve(true);
+	      babelHelpers.classPrivateFieldLooseBase(this, _approveConsent)[_approveConsent]().then(isApprovedConsent => {
+	        if (isApprovedConsent) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _showNotify)[_showNotify](main_core.Loc.getMessage('CRM_MESSAGESENDER_B24_AGREEMENT_ACCEPT'));
+	        }
+	        babelHelpers.classPrivateFieldLooseBase(this, _closeAgreementBox)[_closeAgreementBox](button);
+	        resolve(true);
+	      }).catch(() => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _showErrorNotify)[_showErrorNotify]();
+	        resolve(false);
+	      });
 	    }
 	  }), new BX.UI.Button({
 	    className: 'ui-btn-round',
@@ -93,12 +106,25 @@ this.BX.Crm = this.BX.Crm || {};
 	  })];
 	}
 	function _approveConsent2() {
-	  void main_core.ajax.runAction('notifications.consent.Agreement.approve');
+	  return new Promise(resolve => {
+	    main_core.ajax.runAction('notifications.consent.Agreement.approve').then(response => {
+	      if ((response == null ? void 0 : response.status) === 'success' && response != null && response.data) {
+	        resolve(true);
+	        return;
+	      }
+	      resolve(false);
+	    }).catch(() => {
+	      resolve(false);
+	    });
+	  });
 	}
 	function _closeAgreementBox2({
 	  context
 	}) {
 	  context.close();
+	}
+	function _showErrorNotify2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _showNotify)[_showNotify](main_core.Loc.getMessage('CRM_MESSAGESENDER_B24_CONSENT_AGREEMENT_VALIDATION_ERROR'));
 	}
 	function _showNotify2(content) {
 	  BX.UI.Notification.Center.notify({
@@ -901,7 +927,7 @@ this.BX.Crm = this.BX.Crm || {};
 	 * @emits BX.Crm.MessageSender.ReceiverRepository:OnItemDeleted
 	 *
 	 * Currently, this class is supposed to work only in the context of entity details tab.
-	 * In the future, it can be extended to work on any page.
+	 * In the future, it can be extended to work on any page. (see todos)
 	 */
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
 	var _onDetailsTabChangeEventHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onDetailsTabChangeEventHandler");
@@ -914,9 +940,6 @@ this.BX.Crm = this.BX.Crm || {};
 	var _startObservingItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startObservingItem");
 	class ReceiverRepository {
 	  static get Instance() {
-	    if (window.top !== window && main_core.Reflection.getClass('top.BX.Crm.MessageSender.ReceiverRepository')) {
-	      return window.top.BX.Crm.MessageSender.ReceiverRepository;
-	    }
 	    if (!babelHelpers.classPrivateFieldLooseBase(ReceiverRepository, _instance)[_instance]) {
 	      babelHelpers.classPrivateFieldLooseBase(ReceiverRepository, _instance)[_instance] = new ReceiverRepository();
 	    }
@@ -963,13 +986,14 @@ this.BX.Crm = this.BX.Crm || {};
 	   * @internal
 	   */
 	  static onDetailsLoad(entityTypeId, entityId, receiversJSONString) {
-	    let item;
+	    let item = null;
 	    try {
 	      item = new crm_dataStructures.ItemIdentifier(entityTypeId, entityId);
-	    } catch (e) {
+	    } catch {
 	      return;
 	    }
 	    const instance = ReceiverRepository.Instance;
+	    // todo notify instances of this class on other tabs/sliders
 	    babelHelpers.classPrivateFieldLooseBase(instance, _startObservingItem)[_startObservingItem](item);
 	    const receiversJSON = JSON.parse(receiversJSONString);
 	    if (main_core.Type.isArrayFilled(receiversJSON)) {
@@ -981,6 +1005,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      }
 	      if (main_core.Type.isArrayFilled(receivers)) {
+	        // todo add receivers to instances of this class on other tabs/sliders
 	        babelHelpers.classPrivateFieldLooseBase(instance, _addReceivers)[_addReceivers](item, receivers);
 	      }
 	    }
@@ -988,7 +1013,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  getReceivers(entityTypeId, entityId) {
 	    try {
 	      return this.getReceiversByIdentifier(new crm_dataStructures.ItemIdentifier(entityTypeId, entityId));
-	    } catch (e) {
+	    } catch {
 	      return [];
 	    }
 	  }
@@ -1013,6 +1038,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  };
 	  babelHelpers.classPrivateFieldLooseBase(this, _onDetailsTabChangeEventHandler)[_onDetailsTabChangeEventHandler] = babelHelpers.classPrivateFieldLooseBase(this, _onDetailsTabChangeEventHandler)[_onDetailsTabChangeEventHandler].bind(this);
 	  for (const eventName of OBSERVED_EVENTS) {
+	    // todo use BX.Crm.EntityEvent.subscribe instead, we will get data from all tabs/sliders
 	    main_core_events.EventEmitter.subscribe(eventName, babelHelpers.classPrivateFieldLooseBase(this, _onDetailsTabChangeEventHandler)[_onDetailsTabChangeEventHandler]);
 	  }
 	  if ((_BX$SidePanel = BX.SidePanel) != null && (_BX$SidePanel$Instanc = _BX$SidePanel.Instance) != null && _BX$SidePanel$Instanc.isOpen()) {

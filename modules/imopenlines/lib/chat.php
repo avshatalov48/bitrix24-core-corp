@@ -3,6 +3,8 @@ namespace Bitrix\ImOpenLines;
 
 use Bitrix\Im\V2\Message;
 use Bitrix\Im\V2\Message\ReadService;
+use Bitrix\Im\V2\Rest\RestAdapter;
+use Bitrix\ImOpenLines\V2\Status\StatusGroup;
 use Bitrix\Main;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
@@ -1399,7 +1401,7 @@ class Chat
 	 * @param $status
 	 * @return bool
 	 */
-	public function updateSessionStatus($status)
+	public function updateSessionStatus($status, ?int $sessionId = null)
 	{
 		$result = false;
 
@@ -1420,13 +1422,38 @@ class Chat
 				$users[] = $relation['USER_ID'];
 			}
 
+			$chat = \Bitrix\Im\V2\Chat::getInstance((int)$this->chat['ID']);
+			$lastMessageId = $chat->getLastMessageId();
+			$lastMessage = null;
+
+			if (isset($lastMessageId))
+			{
+				$lastMessage = $chat->getMessage($lastMessageId)?->toRestFormat(['MESSAGE_SHORT_INFO' => true]);
+			}
+
+			if (isset($sessionId))
+			{
+				$session = \Bitrix\ImOpenLines\V2\Session\Session::getInstance($sessionId)
+					?->toRestFormat(['OVERWRITE_STATUS' => $status]);
+			}
+			else
+			{
+				$session = \Bitrix\ImOpenLines\V2\Session\Session::getInstanceByChatId($this->chat['ID'])
+					?->toRestFormat(['OVERWRITE_STATUS' => $status]);
+			}
+
+			$params = [
+				'chatId' => $this->chat['ID'],
+				'status' => (int)$status,
+				'chat' => $chat->toPullFormat(),
+				'message' => $lastMessage ?? [],
+				'session' => $session ?? [],
+			];
+
 			Pull\Event::add($users, [
 				'module_id' => 'imopenlines',
 				'command' => 'updateSessionStatus',
-				'params' => [
-					'chatId' => $this->chat['ID'],
-					'status' => (int)$status
-				],
+				'params' => $params,
 			]);
 
 			$result = true;
@@ -1694,6 +1721,13 @@ class Chat
 							'CHECK_DATE_CLOSE' => $dateClose
 						);
 						$session->update($sessionUpdate);
+
+						$this->updateFieldData([
+							self::FIELD_SESSION => [
+								'ID' => $session->getData('ID'),
+								'LINE_ID' => $session->getData('LINE_ID'),
+							]
+						]);
 					}
 					else
 					{

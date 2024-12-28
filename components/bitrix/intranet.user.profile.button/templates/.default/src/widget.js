@@ -1,5 +1,6 @@
 import {Uri, Type, Tag, Cache, Loc, Browser, Text, Dom, ajax, Event} from 'main.core';
 import {EventEmitter} from 'main.core.events';
+import { AvatarRoundGuest } from 'ui.avatar';
 import {PopupComponentsMaker} from 'ui.popupcomponentsmaker';
 import {StressLevel} from './stress-level';
 import ThemePicker from './theme-picker';
@@ -30,7 +31,7 @@ export default class Widget extends EventEmitter
 	#networkProfileUrl;
 
 	constructor(container, {
-		profile: {ID, FULL_NAME, PHOTO, MASK, STATUS, URL, WORK_POSITION},
+		profile: {ID, FULL_NAME, PHOTO, MASK, STATUS, STATUS_CODE, URL, WORK_POSITION},
 		component: {componentName, signedParameters},
 		features,
 		desktopDownloadLinks,
@@ -41,7 +42,7 @@ export default class Widget extends EventEmitter
 		this.setEventNamespace(Options.eventNameSpace);
 		this.#setEventHandlers();
 		this.#container = container;
-		this.#profile = {ID, FULL_NAME, PHOTO, MASK, STATUS, URL, WORK_POSITION};
+		this.#profile = {ID, FULL_NAME, PHOTO, MASK, STATUS, STATUS_CODE, URL, WORK_POSITION};
 		this.#features = features;
 		if (!Type.isStringFilled(this.#features.browser))
 		{
@@ -91,8 +92,6 @@ export default class Widget extends EventEmitter
 			? null
 			: {
 				html: this.#getSignDocument(),
-				marginBottom: 24,
-				minHeight: '99px',
 			}
 		;
 		let content = [
@@ -240,12 +239,29 @@ export default class Widget extends EventEmitter
 				this.hide();
 				return BX.SidePanel.Instance.open(this.#profile.URL);
 			};
-			const avatarNode = Tag.render`
-				<span class="system-auth-form__profile-avatar--image"
-					${this.#profile.PHOTO ? `
-						style="background-size: cover; background-image: url('${encodeURI(this.#profile.PHOTO)}')"` : ''}>
-				</span>
+
+			let avatar;
+			let avatarNode;
+
+			if (this.#profile.STATUS_CODE === 'collaber')
+			{
+				avatar = new AvatarRoundGuest({
+					size: 36,
+					userpicPath: encodeURI(this.#profile.PHOTO),
+					baseColor: '#19cc45',
+				});
+				avatarNode = avatar.getContainer();
+			}
+			else
+			{
+				avatarNode = Tag.render`
+					<span class="system-auth-form__profile-avatar--image"
+						${this.#profile.PHOTO ? `
+							style="background-size: cover; background-image: url('${encodeURI(this.#profile.PHOTO)}')"` : ''}>
+					</span>
 				`;
+			}
+
 			const nameNode = Tag.render`
 				<div class="system-auth-form__profile-name">${this.#profile.FULL_NAME}</div>
 			`;
@@ -256,10 +272,7 @@ export default class Widget extends EventEmitter
 					if (this.#profile.ID > 0 && userId && this.#profile.ID.toString() === userId.toString())
 					{
 						this.#profile.PHOTO = url;
-						avatarNode.style = Type.isStringFilled(url)
-							? `background-size: cover; background-image: url('${encodeURI(this.#profile.PHOTO)}')`
-							: ''
-						;
+						avatar.setUserPic(url);
 					}
 				})
 			;
@@ -273,7 +286,11 @@ export default class Widget extends EventEmitter
 				})
 			;
 			let workPosition = (Type.isStringFilled(this.#profile.WORK_POSITION) ? Text.encode(this.#profile.WORK_POSITION) : '');
-			if (this.#profile.STATUS && Loc.hasMessage('INTRANET_USER_PROFILE_' + this.#profile.STATUS))
+			if (
+				this.#profile.STATUS
+				&& (this.#profile.STATUS !== 'collaber' || workPosition === '')
+				&& Loc.hasMessage('INTRANET_USER_PROFILE_' + this.#profile.STATUS)
+			)
 			{
 				workPosition = Loc.getMessage('INTRANET_USER_PROFILE_' + this.#profile.STATUS)
 			}
@@ -460,19 +477,21 @@ export default class Widget extends EventEmitter
 
 	#getSignDocument(): Promise<HTMLElement> | null
 	{
-		if (this.#features['signDocument'] !== 'Y')
+		if (this.#features['signDocument']['available'] !== 'Y')
 		{
 			return null;
 		}
 
+		const isLocked = this.#features['signDocument']['locked'] === 'Y';
+
 		return this.#cache.remember('getSignDocument', (): Promise<HTMLElement> => {
 			EventEmitter.subscribe(
 				SignDocument,
-				SignDocument.events.onDocumentCreateSidePanelOpen,
+				SignDocument.events.onDocumentCreateBtnClick,
 				() => this.hide(),
 			);
 
-			return SignDocument.getPromise();
+			return SignDocument.getPromise(isLocked);
 		});
 	}
 
@@ -502,6 +521,7 @@ export default class Widget extends EventEmitter
 						(new QrAuthorization({
 							title: Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_TITLE2'),
 							content: Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_BODY2'),
+							intent: 'profile'
 						})).show();
 					}
 					const onclickHelp = (event: MouseEvent) => {

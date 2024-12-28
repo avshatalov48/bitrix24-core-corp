@@ -35,6 +35,13 @@ class Result extends Main\Result
 		return array_shift($errors);
 	}
 
+	public function addErrorsFromResult(Main\Result $result): self
+	{
+		$this->addErrors($result->getErrors());
+
+		return $this;
+	}
+
 	final public static function createWithErrors(Error ...$errors): self
 	{
 		$result = new self();
@@ -49,5 +56,17 @@ class Result extends Main\Result
 		$result->addError(new Error($message, $code));
 
 		return $result;
+	}
+
+	final public static function createByMainResult(Main\Result $result): self
+	{
+		return static::createWithErrors(...$result->getErrors())
+			->setData($result->getData())
+		;
+	}
+
+	final public static function createByErrorMessage(string $message): self
+	{
+		return static::createByErrorData($message);
 	}
 }

@@ -26,6 +26,8 @@ final class ErrorCode
 	public const NOT_SUITABLE_TARGET = 'NOT_SUITABLE_TARGET';
 	public const PAYLOAD_NOT_FOUND = 'PAYLOAD_NOT_FOUND';
 	public const OPERATION_TYPE_NOT_SUPPORTED = 'OPERATION_TYPE_NOT_SUPPORTED';
+	public const OPERATION_IS_PENDING = 'OPERATION_IS_PENDING';
+	public const PAYLOAD_IS_EMPTY_ERROR_CODE = 'PAYLOAD_IS_EMPTY';
 
 	public static function getAINotAvailableError(): Error
 	{
@@ -137,6 +139,14 @@ final class ErrorCode
 		return new Error(
 			Loc::getMessage('CRM_INTEGRATION_AI_ERROR_JOB_ALREADY_EXISTS'),
 			self::OPERATION_IS_COMPLETE
+		);
+	}
+
+	public static function getInvalidPayloadError(): Error
+	{
+		return new Error(
+			'Payload cant be completely empty',
+			self::PAYLOAD_IS_EMPTY_ERROR_CODE
 		);
 	}
 

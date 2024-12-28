@@ -13,9 +13,10 @@ use Bitrix\Crm;
 use Bitrix\Crm\Component\ControlPanel\ControlPanelMenuMapper;
 use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
+use Bitrix\Crm\Feature;
+use Bitrix\Crm\Feature\CopilotInCallGrading;
 use Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper;
 use Bitrix\Crm\Restriction\RestrictionManager;
-use Bitrix\Crm\Security\Role\Utils\RoleManagerUtils;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\ActivitySettings;
 use Bitrix\Crm\Settings\CompanySettings;
@@ -48,7 +49,10 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
-if (!CCrmPerms::IsAccessEnabled())
+if (
+	!CCrmPerms::IsAccessEnabled()
+	&& !Container::getInstance()->getUserPermissions()->canReadCopilotCallAssessmentSettings()
+)
 {
 	if ($isShowOutput)
 	{
@@ -60,6 +64,7 @@ if (!CCrmPerms::IsAccessEnabled())
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $userPerms = Container::getInstance()->getUserPermissions();
+$router = Container::getInstance()->getRouter();
 
 /** @global CMain $APPLICATION */
 global $APPLICATION;
@@ -632,8 +637,6 @@ if (InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
 
 if ($isAdmin || Container::getInstance()->getUserPermissions()->canReadType($invoiceEntityTypeId))
 {
-	$router = Container::getInstance()->getRouter();
-
 	$actions = [];
 	if (Crm\Security\EntityAuthorization::checkCreatePermission($invoiceEntityTypeId))
 	{
@@ -867,25 +870,11 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_PERMISSIONS'),
 	];
 
-	if (Crm\Feature::enabled(Crm\Feature\PermissionsLayoutV2::class))
-	{
-		$permsV2URL = '/crm/configs/perms/v2/';
-		$stdItems['CRM_PERMISSIONS'] = [
-			'ID' => 'CRM_PERMISSIONS',
-			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CRM_PERMISSIONS'),
-			'URL' => $permsV2URL, // CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PERMISSIONS']),
-			'ON_CLICK' => 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($permsV2URL) . '"); return false;'
-		];
-	}
-	else
-	{
-		$stdItems['CRM_PERMISSIONS'] = [
-			'ID' => 'CRM_PERMISSIONS',
-			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CRM_PERMISSIONS'),
-			'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PERMISSIONS']),
-		];
-	}
-
+	$stdItems['CRM_PERMISSIONS'] = [
+		'ID' => 'CRM_PERMISSIONS',
+		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CRM_PERMISSIONS'),
+		'URL' => (string)$router->getPermissionsUrl(),
+	];
 }
 
 if (Loader::includeModule('catalog'))
@@ -1221,6 +1210,22 @@ if (Crm\Terminal\AvailabilityManager::getInstance()->isAvailable())
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_TERMINAL'),
 		'URL' => '/crm/terminal/',
 		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('TERMINAL'), // 'menu_terminal',
+	];
+}
+
+if (
+	Container::getInstance()->getUserPermissions()->canReadCopilotCallAssessmentSettings()
+	&& !Crm\Copilot\CallAssessment\FillPreliminaryCallAssessments::isWaiting()
+	&& Crm\Integration\AI\AIManager::isAiCallProcessingEnabled()
+	&& Feature::enabled(CopilotInCallGrading::class)
+)
+{
+	$stdItems['CALL_ASSESSMENT'] = [
+		'ID' => 'CALL_ASSESSMENT',
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CALL_ASSESSMENT'),
+		'URL' => '/crm/copilot-call-assessment/',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('CALL_ASSESSMENT'),
+		'IS_NEW' => true,
 	];
 }
 

@@ -95,7 +95,7 @@ class Sprint extends Base
 			return null;
 		}
 
-		return $sprint->toArray();
+		return $sprint->toRest();
 	}
 
 	/**
@@ -212,7 +212,7 @@ class Sprint extends Base
 			return null;
 		}
 
-		return $sprint->toArray();
+		return $sprint->toRest();
 	}
 
 	/**
@@ -374,7 +374,7 @@ class Sprint extends Base
 
 		$sprint = $sprintService->getSprintById($sprint->getId());
 
-		return $sprint->toArray();
+		return $sprint->toRest();
 	}
 
 	/**
@@ -537,7 +537,7 @@ class Sprint extends Base
 			return null;
 		}
 
-		return $sprint->toArray();
+		return $sprint->toRest();
 	}
 
 	/**
@@ -604,7 +604,7 @@ class Sprint extends Base
 			return null;
 		}
 
-		return $sprint->toArray();
+		return $sprint->toRest();
 	}
 
 	/**
@@ -649,7 +649,7 @@ class Sprint extends Base
 
 			$sprint->fillFromDatabase($data);
 
-			$sprints[] = $sprint->toArray();
+			$sprints[] = $sprint->toRest();
 		}
 
 		if ($nav)

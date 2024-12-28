@@ -1,35 +1,29 @@
-import { Menu } from 'main.popup';
-import { Dom, bind, unbind } from 'main.core';
+import { bind, Dom, unbind } from 'main.core';
 import { BitrixVueComponentProps } from 'ui.vue3';
 
-const defaultPlaybackRateValues = [0.5, 0.7, 1.0, 1.2, 1.5, 1.7, 2.0];
+const defaultPlaybackRateValues = [0.5, 0.7, 1, 1.2, 1.5, 1.7, 2];
 
 // @vue/component
 export const AudioPlayerProps: BitrixVueComponentProps = {
 	props: {
 		playbackRateValues: {
 			type: Array,
-			required: false,
 			default: () => defaultPlaybackRateValues,
 		},
 		isShowPlaybackRateMenu: {
 			type: Boolean,
-			required: false,
 			default: true,
 		},
 		recordName: {
 			type: String,
-			required: false,
 			default: '',
 		},
 		mini: {
 			type: Boolean,
-			required: false,
 			default: false,
 		},
 		// eslint-disable-next-line vue/require-prop-types
 		context: {
-			required: false,
 			default: window,
 		},
 	},
@@ -289,7 +283,7 @@ export const AudioPlayerProps: BitrixVueComponentProps = {
 				return;
 			}
 
-			this.progress = percent;
+			this.progress = Number.isNaN(percent) ? 0 : percent;
 			this.progressInPixel = pixel > 0 ? pixel : Math.round(this.$refs.track.offsetWidth / 100 * percent);
 		},
 

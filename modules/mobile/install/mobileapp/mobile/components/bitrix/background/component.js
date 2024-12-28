@@ -18,4 +18,7 @@
 
 	const { OpenHelpdeskNotification } = require('background/notifications/open-helpdesk');
 	OpenHelpdeskNotification.bindOpenHelpdeskEvent();
+
+	const { OpenPromotionNotification } = require('background/notifications/promotion');
+	OpenPromotionNotification.bindPromotionEvent();
 })();

@@ -15,6 +15,7 @@ jn.define('calendar/model/location', (require, exports, module) => {
 			this.name = BX.prop.getString(props, 'NAME', '');
 			this.color = BX.prop.getString(props, 'COLOR', '');
 			this.capacity = BX.prop.getNumber(props, 'CAPACITY', 0);
+			this.categoryId = BX.prop.getNumber(props, 'CATEGORY_ID', 0);
 		}
 
 		getId()
@@ -35,6 +36,11 @@ jn.define('calendar/model/location', (require, exports, module) => {
 		getCapacity()
 		{
 			return this.capacity;
+		}
+
+		getCategoryId()
+		{
+			return this.categoryId;
 		}
 	}
 

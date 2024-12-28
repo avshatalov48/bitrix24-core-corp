@@ -10,7 +10,6 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 	const { RecentRenderer } = require('im/messenger/controller/recent/lib/renderer');
 	const { ItemAction } = require('im/messenger/controller/recent/lib/item-action');
 	const { RecentConverter } = require('im/messenger/lib/converter');
-	const { ShareDialogCache } = require('im/messenger/cache/share-dialog');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { RecentService } = require('im/messenger/provider/service');
 	const { Worker } = require('im/messenger/lib/helper');
@@ -120,25 +119,62 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 
 		bindMethods()
 		{
+			this.recentAddHandler = this.recentAddHandler.bind(this);
+			this.recentUpdateHandler = this.recentUpdateHandler.bind(this);
+			this.recentDeleteHandler = this.recentDeleteHandler.bind(this);
+			this.dialogUpdateHandler = this.dialogUpdateHandler.bind(this);
+
 			this.loadPage = this.loadPage.bind(this);
 			this.stopRefreshing = this.stopRefreshing.bind(this);
+
 			this.renderInstant = this.renderInstant.bind(this);
+			this.stopRefreshing = this.stopRefreshing.bind(this);
+			this.refreshHandler = this.refreshHandler.bind(this);
+
 			this.subscribeInitMessengerEvent = this.subscribeInitMessengerEvent.bind(this);
-			this.updatePageFromServer = this.updatePageFromServer.bind(this);
+			this.loadNextPageHandler = this.loadNextPageHandler.bind(this);
+			this.initMessengerHandler = this.initMessengerHandler.bind(this);
 		}
 
 		subscribeStoreEvents()
-		{}
+		{
+			this.storeManager
+				.on('recentModel/add', this.recentAddHandler)
+				.on('recentModel/update', this.recentUpdateHandler)
+				.on('recentModel/delete', this.recentDeleteHandler)
+				.on('dialoguesModel/add', this.dialogUpdateHandler)
+				.on('dialoguesModel/update', this.dialogUpdateHandler)
+			;
+		}
 
 		subscribeMessengerEvents()
-		{}
+		{
+			BX.addCustomEvent(EventType.messenger.afterRefreshSuccess, this.stopRefreshing);
+			BX.addCustomEvent(EventType.messenger.renderRecent, this.renderInstant);
+		}
 
 		subscribeViewEvents()
-		{}
+		{
+			this.view
+				.on(EventType.recent.refresh, this.refreshHandler)
+				.on(EventType.recent.loadNextPage, this.loadNextPageHandler.bind(this))
+				.on(EventType.recent.itemAction, this.onItemAction.bind(this))
+			;
+		}
+
+		refreshHandler()
+		{
+			MessengerEmitter.emit(EventType.messenger.refresh, true);
+		}
 
 		subscribeInitMessengerEvent()
 		{
-			this.messagerInitService.onInit(this.updatePageFromServer);
+			this.messagerInitService.onInit(this.initMessengerHandler);
+		}
+
+		initMessengerHandler(data)
+		{
+			void this.updatePageFromServer(data);
 		}
 
 		subscribeInitCounters()
@@ -149,6 +185,14 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 		initItemAction()
 		{
 			this.itemAction = new ItemAction();
+		}
+
+		onItemAction(event)
+		{
+			const action = event.action.identifier;
+			const itemId = event.item.params.id;
+
+			this.itemAction.do(action, itemId);
 		}
 
 		async drawCacheItems()
@@ -197,14 +241,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			await this.store.dispatch('dialoguesModel/setCollectionFromLocalDatabase', dialogues);
 			if (recentList?.users.length > 0)
 			{
-				const collection = recentList.users.reduce((acc, user) => {
-					// eslint-disable-next-line no-param-reassign
-					acc[user.id] = user;
-
-					return acc;
-				}, {});
-
-				await this.store.dispatch('usersModel/setState', { collection });
+				await this.store.dispatch('usersModel/setFromLocalDatabase', recentList?.users);
 			}
 
 			if (recentList?.messages.length > 0)
@@ -256,12 +293,16 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			return this.loadPageFromServerHandler.bind(this);
 		}
 
+		loadNextPageHandler()
+		{
+			this.loadNextPage();
+		}
+
 		loadNextPage()
 		{
-			this.loadPage()
-				.catch((error) => {
-					this.logger.error(`${this.constructor.name}.loadNextPage.loadPage catch:`, error);
-				});
+			this.loadPage().catch((error) => {
+				this.logger.error(`${this.constructor.name}.loadNextPage.loadPage catch:`, error);
+			});
 		}
 
 		async loadPage()
@@ -312,6 +353,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 		 * immobileTabChatLoadResult.recentList
 		 * | immobileTabCopilotLoadResult.recentList
 		 * | immobileTabChannelLoadResult.recentList
+		 * | immobileTabCollabLoadResult.recentList
 		 * } data.recentList
 		 */
 		updatePageFromServer(data)
@@ -377,8 +419,49 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			});
 		}
 
-		departmentColleaguesGetHandler()
-		{}
+		recentAddHandler(mutation)
+		{
+			const recentList = [];
+			const recentItemList = clone(mutation.payload.data.recentItemList);
+
+			recentItemList.forEach((item) => recentList.push(item.fields));
+
+			this.addItems(recentList);
+		}
+
+		recentUpdateHandler(mutation)
+		{
+			const recentList = [];
+
+			mutation.payload.data.recentItemList.forEach((item) => {
+				recentList.push(clone(this.store.getters['recentModel/getCollection']()[item.index]));
+			});
+
+			this.updateItems(recentList);
+		}
+
+		recentDeleteHandler(mutation)
+		{
+			this.renderer.removeFromQueue(mutation.payload.data.id);
+
+			this.view.removeItem({ id: mutation.payload.data.id });
+			if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
+			{
+				this.view.hideLoader();
+			}
+
+			this.checkEmpty();
+		}
+
+		dialogUpdateHandler(mutation)
+		{
+			const dialogId = mutation.payload.data.dialogId;
+			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
+			if (recentItem)
+			{
+				this.updateItems([recentItem]);
+			}
+		}
 
 		/**
 		 * @param {Array<object>} items
@@ -424,43 +507,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 		 */
 		async saveRecentData(recentItems)
 		{
-			const modelData = this.prepareDataForModels(recentItems);
-
-			const usersPromise = await this.store.dispatch('usersModel/set', modelData.users);
-			const dialoguesPromise = await this.store.dispatch('dialoguesModel/set', modelData.dialogues);
-			const recentPromise = await this.store.dispatch('recentModel/set', modelData.recent);
-
-			if (this.recentService.pageNavigation.currentPage === 1)
-			{
-				const recentIndex = [];
-				modelData.recent.forEach((item) => recentIndex.push(item.id.toString()));
-
-				const idListForDeleteFromCache = [];
-				this.store.getters['recentModel/getCollection']()
-					.forEach((item) => {
-						if (!recentIndex.includes(item.id.toString()))
-						{
-							idListForDeleteFromCache.push(item.id);
-						}
-					});
-
-				idListForDeleteFromCache.forEach((id) => {
-					this.store.dispatch('recentModel/deleteFromModel', { id });
-				});
-
-				await this.saveShareDialogCache(modelData.recent);
-			}
-
-			return Promise.all([usersPromise, dialoguesPromise, recentPromise]);
-		}
-
-		/**
-		 * @param {Array} recentItems
-		 * @return {Promise}
-		 */
-		saveShareDialogCache(recentItems)
-		{
-			return ShareDialogCache.saveRecentItemList(recentItems);
+			return Promise.resolve();
 		}
 
 		/**
@@ -545,7 +592,10 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 		 */
 		getDbFilter()
 		{
-			return { exceptDialogTypes: [DialogType.copilot], limit: this.recentService.getRecentListRequestLimit() };
+			return {
+				exceptDialogTypes: [DialogType.copilot],
+				limit: this.recentService.getRecentListRequestLimit(),
+			};
 		}
 
 		/**

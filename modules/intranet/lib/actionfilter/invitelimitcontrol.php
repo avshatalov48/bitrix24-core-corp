@@ -12,7 +12,11 @@ class InviteLimitControl extends Main\Engine\ActionFilter\Base
 	{
 		if (Main\Loader::includeModule("bitrix24"))
 		{
-			if (!\CBitrix24::isEmailConfirmed())
+			if (
+				\Bitrix\Bitrix24\Service\PortalSettings::getInstance()
+					->getEmailConfirmationRequirements()
+					->isRequiredByType(Bitrix24\Portal\Settings\EmailConfirmationRequirements\Type::INVITE_USERS)
+			)
 			{
 				$this->addError(new Main\Error(
 					Main\Localization\Loc::getMessage('INTRANET_INVITE_LIMIT_CONTROL_CREATORS_EMAIL_IS_NOT_CONFIRMED'),

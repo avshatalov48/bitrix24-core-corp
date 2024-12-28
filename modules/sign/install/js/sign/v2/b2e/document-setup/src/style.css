@@ -72,6 +72,10 @@
 	overflow: visible;
 }
 
+.sign-b2e-document-setup__sender-type-selector {
+	height: 110px !important;
+}
+
 .sign-b2e-document-setup__date-selector {
 	margin-top: 15px;
 }
@@ -121,4 +125,10 @@
 	border-style: solid;
 	border-color: var(--ui-color-palette-gray-90) transparent transparent;
 	margin-top: 5px;
+}
+
+.sign-b2e-settings__item .ui-link {
+	margin-top: 7px;
+	display: inline-block;
+	line-height: 18px;
 }

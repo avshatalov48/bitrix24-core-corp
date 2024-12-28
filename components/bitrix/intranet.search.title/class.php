@@ -10,6 +10,8 @@ use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Crm\Settings\QuoteSettings;
 use Bitrix\Crm\Settings\EntityViewSettings;
+use Bitrix\Intranet\Integration\Socialnetwork\Chat\GroupChat;
+use Bitrix\Intranet\Integration\Socialnetwork\Url\GroupUrl;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Config\Option;
@@ -267,7 +269,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 		{
 			$cacheTtl = 3153600;
 			$cacheId = 'search_title_sonetgroups_'.md5(serialize($groupFilter).$extranetSiteId.$groupPageURLTemplate);
-			$cacheDir = '/intranet/search/sonetgroups/';
+			$cacheDir = '/intranet/search/sonetgroups_v2/';
 
 			$obCache = new CPHPCache;
 			if($obCache->InitCache($cacheTtl, $cacheId, $cacheDir))
@@ -292,7 +294,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 				$groupFilter,
 				false,
 				false,
-				array("ID", "NAME", "IMAGE_ID", "DESCRIPTION")
+				array("ID", "NAME", "IMAGE_ID", "DESCRIPTION", 'TYPE')
 			);
 
 			$groupList = $groupIdList = array();
@@ -332,6 +334,8 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 				}
 			}
 
+			$chatIds = GroupChat::getChatIds($groupIdList);
+
 			foreach($groupList as $group)
 			{
 				$image = CFile::ResizeImageGet(
@@ -365,10 +369,16 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 					}
 				}
 
+				$chatId = $chatIds[(int)$group['ID']] ?? 0;
+
 				$result[] = array(
 					'ID' => $group['ID'],
 					'NAME' => htmlspecialcharsbx($group['NAME']),
-					'URL' => str_replace('#group_id#', $group['ID'], $groupPageURLTemplate),
+					'URL' => GroupUrl::get(
+						(int)$group['ID'],
+						(string)$group['TYPE'],
+						$chatId,
+					),
 					'MODULE_ID' => '',
 					'PARAM1' => '',
 					'ITEM_ID' => 'G'.$group['ID'],
@@ -376,7 +386,9 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 					'TYPE' => 'sonetgroups',
 					'IS_EXTRANET' => $isExtranet,
 					'SITE' => $site,
-					'IS_MEMBER' => in_array($group['ID'], $memberGroupIdList)
+					'IS_MEMBER' => in_array($group['ID'], $memberGroupIdList),
+					'GROUP_TYPE' => $group['TYPE'],
+					'GROUP_CHAT_ID' => $chatId,
 				);
 			}
 
@@ -416,7 +428,9 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 				'desc' => empty($arEntity['DESCRIPTION'])? '': (TruncateText($arEntity['DESCRIPTION'], 100)),
 				'isExtranet' => ($arEntity['IS_EXTRANET'] ? "Y" : "N"),
 				'site' => $arEntity['SITE'],
-				'isMember' => (isset($arEntity['IS_MEMBER']) && $arEntity['IS_MEMBER'] ? "Y" : "N")
+				'isMember' => (isset($arEntity['IS_MEMBER']) && $arEntity['IS_MEMBER'] ? "Y" : "N"),
+				'groupType' => $arEntity['GROUP_TYPE'],
+				'dialogId' => GroupUrl::getDialogId((int)$arEntity['GROUP_CHAT_ID']),
 			);
 			$result['checksum'] = md5(serialize($result));
 			$result['timestamp'] = $timestamp;
@@ -830,17 +844,21 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 				? (SITE_ID === \CExtranet::getExtranetSiteID())
 				: false
 		);
+		$isCollaber = $this->arResult['IS_EXTRANET_SITE']
+			&& \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById($USER->GetID());
 
-		$globalSearchCategories = array(
-			"stream" => array(
+		if (!$isCollaber)
+		{
+			$globalSearchCategories['stream'] = [
 				"url" => ($this->arResult["IS_EXTRANET_SITE"] ? SITE_DIR : SITE_DIR."stream/")."?".(\Bitrix\Main\Composite\Helper::isOn() ? "ncc=1&" : "")."apply_filter=Y&FIND=",
 				"text" => GetMessage("CT_BST_GLOBAL_SEARCH_NEWS")
-			),
-			"tasks" => array(
-				"url" => ($this->arResult["IS_EXTRANET_SITE"] ? SITE_DIR."contacts/" : SITE_DIR."company/")."personal/user/".$USER->GetID()."/tasks/?apply_filter=Y&with_preset=Y&FIND=",
-				"text" => GetMessage("CT_BST_GLOBAL_SEARCH_TASKS")
-			)
-		);
+			];
+		}
+
+		$globalSearchCategories['tasks'] = [
+			"url" => ($this->arResult["IS_EXTRANET_SITE"] ? SITE_DIR."contacts/" : SITE_DIR."company/")."personal/user/".$USER->GetID()."/tasks/?apply_filter=Y&with_preset=Y&FIND=",
+			"text" => GetMessage("CT_BST_GLOBAL_SEARCH_TASKS")
+		];
 
 		if (!$this->arResult["IS_EXTRANET_SITE"])
 		{
@@ -980,12 +998,16 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 
 		$globalSearchCategories = array_merge($globalSearchCategories, $globalCrmSearchCategories);
 
-		if (Loader::includeModule("lists") && CLists::isFeatureEnabled())
+		if (
+			!$isCollaber
+			&& Loader::includeModule("lists")
+			&& CLists::isFeatureEnabled()
+		)
 		{
-			$globalSearchCategories["processes"] = array(
+			$globalSearchCategories["processes"] = [
 				"url" => ($this->arResult["IS_EXTRANET_SITE"] ? SITE_DIR."contacts/" : SITE_DIR."company/")."personal/processes/?apply_filter=Y&with_preset=Y&FIND=",
 				"text" => GetMessage("CT_BST_GLOBAL_SEARCH_PROCESS")
-			);
+			];
 		}
 
 		if (ModuleManager::isModuleInstalled("disk"))

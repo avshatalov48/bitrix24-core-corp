@@ -16,7 +16,7 @@ class Order implements PermissionEntity
 			PermissionAttrPresets::crmEntityKanbanHideSum(),
 		);
 	}
-	
+
 	/**
 	 * @return EntityDTO[]
 	 */
@@ -25,7 +25,15 @@ class Order implements PermissionEntity
 		$name = Container::getInstance()->getFactory(CCrmOwnerType::Order)->getEntityDescription();
 
 		return [
-			new EntityDTO('ORDER', $name, [], $this->permissions()),
+			new EntityDTO(
+				'ORDER',
+				$name,
+				[],
+				$this->permissions(),
+				null,
+				'crm-payment',
+				'--ui-color-accent-brown'
+			),
 		];
 	}
 }

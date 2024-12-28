@@ -18,6 +18,7 @@ class ProviderManager
 
 	private static array|null $allProviders = null;
 	private static array|null $allProvidersEntities = null;
+	private static array|null $relatedFilterProviders = null;
 
 	/**
 	 * @return Base[] - List of providers.
@@ -70,7 +71,16 @@ class ProviderManager
 			CalendarSharing::getId() => CalendarSharing::className(),
 			Tasks\Comment::getId() => Tasks\Comment::class,
 			Tasks\Task::getId() => Tasks\Task::class,
+			Booking::getId() => Booking::class,
 		];
+
+		$isAvailable = (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024', 0);
+		if ($isAvailable)
+		{
+			$providersList[Bizproc\Workflow::getId()] = Bizproc\Workflow::class;
+			$providersList[Bizproc\Comment::getId()] = Bizproc\Comment::class;
+			$providersList[Bizproc\Task::getId()] = Bizproc\Task::class;
+		}
 
 		if (Settings\Crm::isWhatsAppScenarioEnabled())
 		{
@@ -345,6 +355,30 @@ class ProviderManager
 	{
 		return [
 			ToDo::getId() => \Bitrix\Crm\Activity\Entity\ToDo::class,
+			\Bitrix\Crm\Activity\Provider\Bizproc\Task::getId() => \Bitrix\Crm\Activity\Entity\Task::class,
 		];
+	}
+
+	private static function prepareRelatedFilterProviders(): array
+	{
+		return [
+			ToDo::getId(),
+			Call::getId(),
+		];
+	}
+
+	public static function getRelatedFilterProviders(): array
+	{
+		if (self::$relatedFilterProviders === null)
+		{
+			self::$relatedFilterProviders = self::prepareRelatedFilterProviders();
+		}
+
+		return self::$relatedFilterProviders;
+	}
+
+	public static function isRelatedFilterProvider(string $providerId): bool
+	{
+		return in_array($providerId, self::getRelatedFilterProviders());
 	}
 }

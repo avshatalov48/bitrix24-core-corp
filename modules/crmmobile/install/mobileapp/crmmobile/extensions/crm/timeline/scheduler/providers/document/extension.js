@@ -96,6 +96,7 @@ jn.define('crm/timeline/scheduler/providers/document', (require, exports, module
 							title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_DESKTOP_VERSION'),
 							redirectUrl: `/crm/documents/templates/?entityTypeId=${providerClassName}`,
 							layout: parentWidget === PageManager ? null : parentWidget,
+							analyticsSection: 'crm',
 						});
 					},
 					onWidgetClosed: (templates) => {

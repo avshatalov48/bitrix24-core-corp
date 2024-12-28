@@ -3306,8 +3306,12 @@ this.BX = this.BX || {};
 	          data: {
 	            checkWord: this.getInputNode().value
 	          }
-	        }).then(function () {
-	          top.window.location.reload();
+	        }).then(function (response) {
+	          if (response.data.redirectUrl) {
+	            top.window.location.href = response.data.redirectUrl;
+	          } else {
+	            top.window.location.reload();
+	          }
 	        })["catch"](function (reject) {
 	          reject.errors.forEach(function (error) {
 	            _this2.getConfirmButton().setWaiting(false);
@@ -3338,7 +3342,7 @@ this.BX = this.BX || {};
 	    key: "getInputNode",
 	    value: function getInputNode() {
 	      if (!babelHelpers.classPrivateFieldGet(this, _inputNode)) {
-	        babelHelpers.classPrivateFieldSet(this, _inputNode, main_core.Tag.render(_templateObject3$7 || (_templateObject3$7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input \n\t\t\t\t\tdata-bx-role=\"delete-portal-checkword\"\n\t\t\t\t\tonchange=\"event.stopPropagation()\"\n\t\t\t\t\tname=\"deletePortalCheckWord\" \n\t\t\t\t\ttype=\"text\" \n\t\t\t\t\tclass=\"ui-ctl-element\" \n\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_DELETE_PORTAL_CHECKWORD_PLACEHOLDER', {
+	        babelHelpers.classPrivateFieldSet(this, _inputNode, main_core.Tag.render(_templateObject3$7 || (_templateObject3$7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input\n\t\t\t\t\tdata-bx-role=\"delete-portal-checkword\"\n\t\t\t\t\tonchange=\"event.stopPropagation()\"\n\t\t\t\t\tname=\"deletePortalCheckWord\"\n\t\t\t\t\ttype=\"text\"\n\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_DELETE_PORTAL_CHECKWORD_PLACEHOLDER', {
 	          '#CHECKWORD#': babelHelpers.classPrivateFieldGet(this, _checkWord)
 	        })));
 	      }
@@ -6304,6 +6308,7 @@ this.BX = this.BX || {};
 	var _navigator = /*#__PURE__*/new WeakMap();
 	var _permission$1 = /*#__PURE__*/new WeakMap();
 	var _pagesPermission = /*#__PURE__*/new WeakMap();
+	var _extraSettings = /*#__PURE__*/new WeakMap();
 	var _getPageManager = /*#__PURE__*/new WeakSet();
 	var _onEventFetchPage = /*#__PURE__*/new WeakSet();
 	var _onSliderCloseHandler = /*#__PURE__*/new WeakSet();
@@ -6374,6 +6379,12 @@ this.BX = this.BX || {};
 	    _classPrivateFieldInitSpec$r(babelHelpers.assertThisInitialized(_this), _pagesPermission, {
 	      writable: true,
 	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$r(babelHelpers.assertThisInitialized(_this), _extraSettings, {
+	      writable: true,
+	      value: {
+	        reloadAfterClose: false
+	      }
 	    });
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _analytic, new Analytic({
 	      isAdmin: true,
@@ -6551,7 +6562,7 @@ this.BX = this.BX || {};
 	    }));
 	    return babelHelpers.classPrivateFieldGet(this, _cancelMessageBox).show();
 	  }
-	  if (babelHelpers.classPrivateFieldGet(this, _basePage).includes('/configs/') || this.reloadAfterClose) {
+	  if (babelHelpers.classPrivateFieldGet(this, _basePage).includes('/configs/') || babelHelpers.classPrivateFieldGet(this, _extraSettings).reloadAfterClose === true) {
 	    _classPrivateMethodGet$g(this, _reload, _reload2).call(this, '/index.php');
 	  }
 	}
@@ -6586,11 +6597,11 @@ this.BX = this.BX || {};
 	  }).then(_classPrivateMethodGet$g(this, _successSaveHandler, _successSaveHandler2).bind(this), _classPrivateMethodGet$g(this, _failSaveHandler, _failSaveHandler2).bind(this));
 	}
 	function _successSaveHandler2(response) {
+	  babelHelpers.classPrivateFieldGet(this, _extraSettings).reloadAfterClose = true;
 	  this.isChanged = false;
 	  _classPrivateMethodGet$g(this, _hideWaitIcon, _hideWaitIcon2).call(this);
 	  BX.UI.ButtonPanel.hide();
-	  // EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onSuccessSave', {});
-	  this.reloadAfterClose = true;
+	  main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onSuccessSave', babelHelpers.classPrivateFieldGet(this, _extraSettings));
 	}
 	function _failSaveHandler2(response) {
 	  var errorCollection = _classPrivateMethodGet$g(this, _prepareErrorCollection, _prepareErrorCollection2).call(this, response.errors);

@@ -26,16 +26,83 @@ BX.namespace('Tasks.Component');
 			{
 				this.bindDelegateControl('deselect', 'click', this.onDeSelect.bind(this));
 				this.bindDelegateControl('control', 'click', this.onOpenForm.bind(this));
+
+				BX.PULL.subscribe({
+					type: BX.PullClient.SubscriptionType.Server,
+					moduleId: 'tasks',
+					command: 'task_update',
+					callback: this.onTaskUpdated.bind(this),
+				});
+			},
+
+			onTaskUpdated(params, extra, command)
+			{
+				const isEventByCurrentTask = parseInt(params?.TASK_ID, 10) === this.option('entityId');
+				const isEventContainsGroup = !BX.Type.isUndefined(params.AFTER.GROUP_ID);
+
+				if (!isEventByCurrentTask || !isEventContainsGroup)
+				{
+					return;
+				}
+
+				const currentItemId = Number(this.currentItemId ?? 0);
+				const isGroupChange = currentItemId !== params.AFTER.GROUP_ID;
+				if (!isGroupChange)
+				{
+					return;
+				}
+
+				const groupId = params.AFTER?.GROUP_ID;
+				if (groupId === 0)
+				{
+					this.onDeSelect();
+
+					return;
+				}
+
+				this.reloadGroup();
+			},
+
+			reloadGroup()
+			{
+				BX.ajax.runComponentAction('bitrix:tasks.widget.member.selector', 'getTaskGroup', {
+					mode: 'class',
+					data: {
+						taskId: this.option('entityId'),
+					},
+				})
+					.then((response) => {
+						const group = response.data;
+						if (group === null)
+						{
+							return;
+						}
+
+						const item = new BX.UI.EntitySelector.Item({
+							id: group.ID,
+							title: group?.NAME,
+							entityType: group?.TYPE ?? 'project',
+							entityId: 'project',
+							customData: {
+								dialogId: group?.DIALOG_ID,
+							},
+						});
+
+						this.renderItem(item.getId(), item.getTitle(), item);
+					});
 			},
 
 			onDeSelect: function()
 			{
-				this.setItem(0);
+				this.renderItem(0);
+				this.saveId(0);
+				this.getProjectDialog().deselectAll();
 			},
 
-			setItem: function(id, text)
+			renderItem: function(id, text, item)
 			{
 				id = parseInt(id);
+				this.currentItemId = id;
 
 				if(id)
 				{
@@ -43,7 +110,7 @@ BX.namespace('Tasks.Component');
 					BX.addClass(this.control('control'), 'invisible');
 
 					this.control('item-link').innerHTML = BX.util.htmlspecialchars(text);
-					this.control('item-link').setAttribute('href', this.getProjectLink(id));
+					this.control('item-link').setAttribute('href', this.getProjectLink(id, item));
 
 					this.option('groupId', id);
 				}
@@ -53,7 +120,7 @@ BX.namespace('Tasks.Component');
 					BX.removeClass(this.control('control'), 'invisible');
 				}
 
-				this.saveId(id);
+				this.rerenderTitle(item);
 			},
 
 			onOpenForm: function()
@@ -72,8 +139,19 @@ BX.namespace('Tasks.Component');
 				this.getProjectDialog().show();
 			},
 
-			getProjectLink: function(groupId)
+			getProjectLink: function(groupId, item)
 			{
+				if (item?.entityType === 'collab')
+				{
+					const dialogId = item?.getCustomData().get('dialogId');
+					if (!dialogId)
+					{
+						return '';
+					}
+
+					return this.option('path').collab?.replace('#DIALOG_ID#', dialogId);
+				}
+
 				return this.option('path').SG.toString().replace('{{ID}}', groupId);
 			},
 
@@ -123,7 +201,8 @@ BX.namespace('Tasks.Component');
 
 			onSelectorItemSelected: function(data)
 			{
-				this.setItem(data.id, BX.util.htmlspecialcharsback(data.nameFormatted));
+				this.renderItem(data.id, BX.util.htmlspecialcharsback(data.nameFormatted), data.item);
+				this.saveId(data.id);
 			},
 
 			getProjectDialog: function()
@@ -141,16 +220,18 @@ BX.namespace('Tasks.Component');
 								options: {
 									lockProjectLink: this.option('isProjectLimitExceeded'),
 									lockProjectLinkFeatureId: this.option('projectFeatureId'),
+									shouldSelectDialogId: true,
 								},
 							},
 						],
 						events: {
 							'Item:onSelect': function(event) {
-								var item = event.getData().item;
-								var data = {
+								const item = event.getData().item;
+								const data = {
 									id: item.getId(),
-									nameFormatted: item.getTitle()
-								}
+									nameFormatted: item.getTitle(),
+									item,
+								};
 								this.onSelectorItemSelected(data);
 								BX.addClass(this.control('control'), 'invisible');
 
@@ -164,8 +245,32 @@ BX.namespace('Tasks.Component');
 					});
 				}
 				return this.dialog;
-			}
-		}
+			},
+
+			rerenderTitle(item)
+			{
+				const taskId = this.option('entityId');
+
+				const titleNode = document.querySelector(`#task-${taskId}-group-title`);
+				const valueNode = document.querySelector(`#task-${taskId}-group-value`);
+
+				if (!titleNode || !valueNode)
+				{
+					return;
+				}
+
+				if (item?.entityType === 'collab')
+				{
+					titleNode.textContent = this.option('loc')?.type?.collab;
+					BX.Dom.addClass(valueNode, '--collab');
+
+					return;
+				}
+
+				titleNode.textContent = this.option('loc')?.type?.group;
+				BX.Dom.removeClass(valueNode, '--collab');
+			},
+		},
 	});
 
 }).call(this);

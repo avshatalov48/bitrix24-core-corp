@@ -69,6 +69,18 @@ class Controller
 		return $this;
 	}
 
+	public function onTaskAddedToFlowWithHimselfDistribution(TaskObject $task, FlowEntity $flow): self
+	{
+		(new Notification\UseCase\Flow\TaskAddedToFlowWithHimselfDistribution(
+			$task,
+			$this->buffer,
+			$this->userRepository,
+			new ProviderCollection(...$this->getDefaultNotificationProviders()),
+		))->execute($flow);
+
+		return $this;
+	}
+
 	public function onRegularTaskReplicated(TaskObject $task, array $params = []): self
 	{
 		(new Notification\UseCase\Regularity\RegularTaskReplicated(

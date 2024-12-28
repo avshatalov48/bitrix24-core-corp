@@ -8,8 +8,10 @@ use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
 use CCrmOwnerType;
 
-class Company implements PermissionEntity
+class Company implements PermissionEntity, FilterableByCategory
 {
+	use Trait\FilterableByCategory;
+
 	private function permissions(): array
 	{
 		return PermissionAttrPresets::crmEntityPreset();
@@ -23,10 +25,16 @@ class Company implements PermissionEntity
 		$result = [];
 
 		$factory = Service\Container::getInstance()->getFactory(CCrmOwnerType::Company);
-
-		foreach ($factory->getCategories() as $category)
+		if ($factory === null)
 		{
+			return [];
+		}
 
+		$categories = $factory->getCategories();
+		$categories = $this->filterCategories($categories);
+
+		foreach ($categories as $category)
+		{
 			$entityName = htmlspecialcharsbx(Service\UserPermissions::getPermissionEntityType($factory->getEntityTypeId(), $category->getId()));
 			$entityTitle = htmlspecialcharsbx($category->getSingleNameIfPossible());
 
@@ -35,10 +43,17 @@ class Company implements PermissionEntity
 				$entityTitle = Container::getInstance()->getFactory(CCrmOwnerType::Company)->getEntityDescription();
 			}
 
-			$result[] = new EntityDTO($entityName, $entityTitle, [], $this->permissions());
+			$result[] = new EntityDTO(
+				$entityName,
+				$entityTitle,
+				[],
+				$this->permissions(),
+				null,
+				'city',
+				'--ui-color-palette-orange-50',
+			);
 		}
 
 		return $result;
 	}
-
 }

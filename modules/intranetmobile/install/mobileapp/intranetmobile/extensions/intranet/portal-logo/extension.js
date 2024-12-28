@@ -5,23 +5,19 @@ jn.define('intranet/portal-logo', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Color, Indent } = require('tokens');
 	const { withCurrentDomain } = require('utils/url');
+	const { Text } = require('ui-system/typography/text');
 
 	/**
 	 * @class PortalLogo
 	 */
 	class PortalLogo extends LayoutComponent
 	{
-		static getPortalLogo()
-		{
-			return BX.rest.callMethod('intranet.portal.getLogo');
-		}
-
 		getLogo()
 		{
 			return Image(
 				{
 					resizeMode: 'contain',
-					uri: this.props.logo,
+					uri: currentDomain + this.props.portalLogo.logo.src,
 					style: {
 						height: this.props.width ?? 50,
 						width: this.props.width ?? 200,
@@ -34,7 +30,7 @@ jn.define('intranet/portal-logo', (require, exports, module) => {
 		{
 			const color = AppTheme.id === 'light' ? 'black' : 'white';
 
-			const imageUri = this.props.defaultLogo[color];
+			const imageUri = this.props.portalLogo.defaultLogo[color];
 
 			return Image({
 				svg: {
@@ -50,6 +46,9 @@ jn.define('intranet/portal-logo', (require, exports, module) => {
 
 		getPortalTitle()
 		{
+			const { title, logo24 } = this.props.portalLogo;
+			const fontSize = title ? this.getTitleFontSize(title.length) : 24;
+
 			return View(
 				{
 					style: {
@@ -59,19 +58,19 @@ jn.define('intranet/portal-logo', (require, exports, module) => {
 				},
 				Text({
 					style: {
-						fontSize: this.props.title ? this.getTitleFontSize(this.props.title.length) : 24,
-						fontWeight: 'bold',
-						color: Color.base0.toHex(),
+						fontSize,
 					},
-					text: this.props.title,
+					accent: true,
+					color: Color.base0,
+					text: title,
 				}),
 				Text({
 					style: {
-						fontWeight: 'bold',
-						fontSize: this.props.title ? this.getTitleFontSize(this.props.title.length) : 24,
-						color: Color.accentMainPrimary.toHex(),
+						fontSize,
 					},
-					text: this.props.logo24,
+					accent: true,
+					color: Color.accentMainPrimary,
+					text: logo24,
 				}),
 			);
 		}
@@ -92,15 +91,15 @@ jn.define('intranet/portal-logo', (require, exports, module) => {
 		{
 			let logoView = null;
 
-			if (this.props.logo)
+			if (this.props.portalLogo.logo)
 			{
 				logoView = this.getLogo();
 			}
-			else if (this.props.title)
+			else if (this.props.portalLogo.title)
 			{
 				logoView = this.getPortalTitle();
 			}
-			else if (this.props.defaultLogo)
+			else
 			{
 				logoView = this.getDefaultLogo();
 			}

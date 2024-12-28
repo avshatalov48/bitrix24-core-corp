@@ -97,7 +97,7 @@ class ApiService
 		{
 			$result->addError($errorHandler->handleParsedError((array)$error));
 		}
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
 		{
 			return $result;
 		}

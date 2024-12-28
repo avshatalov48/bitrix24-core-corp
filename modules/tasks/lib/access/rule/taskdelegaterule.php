@@ -15,10 +15,12 @@ use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Tasks\Access\Rule\Traits\AssignTrait;
 use Bitrix\Tasks\Access\Rule\Traits\SubordinateTrait;
+use Bitrix\Tasks\Access\Rule\Traits\FlowTrait;
+use Bitrix\Tasks\Flow\Access\FlowModel;
 
 class TaskDelegateRule extends \Bitrix\Main\Access\Rule\AbstractRule
 {
-	use AssignTrait, SubordinateTrait;
+	use AssignTrait, SubordinateTrait, FlowTrait;
 
 	/* @var AccessibleItem $oldTask */
 	private $oldTask;
@@ -96,6 +98,11 @@ class TaskDelegateRule extends \Bitrix\Main\Access\Rule\AbstractRule
 				$this->user->getUserId()
 			)
 		)
+		{
+			return true;
+		}
+
+		if ($this->canUserUpdateTaskAssigneeInFlow($this->oldTask, $this->user->getUserId()))
 		{
 			return true;
 		}

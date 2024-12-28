@@ -8,11 +8,11 @@ use Bitrix\Market\AppFavoritesTable;
 use Bitrix\Market\Application\Action;
 use Bitrix\Market\Application\Installed;
 use Bitrix\Market\Application\License;
+use Bitrix\Market\Application\MarketDetail;
 use Bitrix\Market\Application\Rights;
 use Bitrix\Market\Application\Versions;
+use Bitrix\Market\Detail\DetailType;
 use Bitrix\Market\Menu;
-use Bitrix\Market\Rest\Actions;
-use Bitrix\Market\Rest\Transport;
 use Bitrix\Market\Subscription\Status;
 use Bitrix\Rest\AppTable;
 use Bitrix\Rest\Engine\Access;
@@ -28,8 +28,8 @@ Loader::includeModule('market');
 
 class RestMarketDetail extends CBitrixComponent
 {
-	private $appItem;
-	private $version = 0;
+	private array $appItem;
+	private int $version = 0;
 
 	private bool $appInstalled = false;
 
@@ -41,7 +41,15 @@ class RestMarketDetail extends CBitrixComponent
 	public function executeComponent()
 	{
 		if ($this->prepareInfo()) {
-			$this->arResult['APP'] = $this->getApp();
+			$marketDetail = new MarketDetail($this->arParams['APP_CODE'], DetailType::App);
+			$marketDetail->setVersion($this->version);
+			$marketDetail->setCheckHash($this->arResult['CHECK_HASH']);
+			$marketDetail->setInstallHash($this->arResult['INSTALL_HASH']);
+
+			$this->arResult['APP'] = $marketDetail->getInfo();
+			$this->arResult['ADDITIONAL_CONTENT'] = $marketDetail->getAdditionalContent();
+			$this->arResult['ADDITIONAL_MARKET_ACTION'] = $marketDetail->getAdditionalMarketAction();
+
 			$this->prepareResult();
 		}
 
@@ -107,54 +115,6 @@ class RestMarketDetail extends CBitrixComponent
 		}
 
 		return true;
-	}
-
-	private function getApp(): array
-	{
-		global $USER;
-
-		$result = [];
-
-		$queryFields = [
-			'code' => $this->arParams['APP_CODE'],
-			'isInstalled' => $this->isAppInstalled() ? 'Y' : 'N',
-		];
-
-		if($this->version > 0) {
-			$queryFields['ver'] = $this->version;
-		}
-
-		if($this->arResult['CHECK_HASH'] !== false) {
-			$queryFields['check_hash'] = $this->arResult['CHECK_HASH'];
-			$queryFields['install_hash'] = $this->arResult['INSTALL_HASH'];
-		}
-
-		$batch = [
-			Actions::METHOD_MARKET_APP => [
-				Actions::METHOD_MARKET_APP,
-				$queryFields,
-			],
-			Actions::METHOD_GET_REVIEWS => [
-				Actions::METHOD_GET_REVIEWS,
-				[
-					'filter_app' => $this->arParams['APP_CODE'],
-					'filter_user' => $USER->GetID(),
-				],
-			],
-		];
-
-		$response = Transport::instance()->batch($batch);
-		if (isset($response[Actions::METHOD_MARKET_APP]['ITEMS']) && is_array($response[Actions::METHOD_MARKET_APP]['ITEMS'])) {
-			$result = $response[Actions::METHOD_MARKET_APP]['ITEMS'];
-			$this->arResult['ADDITIONAL_CONTENT'] = $response[Actions::METHOD_MARKET_APP]['ADDITIONAL_CONTENT'] ?? '';
-			$this->arResult['ADDITIONAL_MARKET_ACTION'] = $response[Actions::METHOD_MARKET_APP]['ADDITIONAL_MARKET_ACTION'] ?? '';
-
-			if (is_array($response[Actions::METHOD_GET_REVIEWS])) {
-				$result['REVIEWS'] = $response[Actions::METHOD_GET_REVIEWS];
-			}
-		}
-
-		return $result;
 	}
 
 	private function prepareResult()

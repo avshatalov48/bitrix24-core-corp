@@ -136,24 +136,26 @@ class VoximplantReportPeriodCompareGridComponent extends \CBitrixComponent
 		switch ($this->filter['INCOMING'] ?? 0)
 		{
 			case CallType::INCOMING:
-				$currentValueName = $previousValueName = Loc::getMessage('TELEPHONY_REPORT_PERIOD_COMPARE_INCOMING');
+				$currentValueName = Loc::getMessage('TELEPHONY_REPORT_PERIOD_COMPARE_CURRENT_PERIOD_INCOMING_V2');
+				$previousValueName = Loc::getMessage('TELEPHONY_REPORT_PERIOD_COMPARE_PREVIOUS_PERIOD_INCOMING_V2');
 				break;
 			case CallType::OUTGOING:
-				$currentValueName = $previousValueName = Loc::getMessage('TELEPHONY_REPORT_PERIOD_COMPARE_OUTGOING');
+				$currentValueName = Loc::getMessage('TELEPHONY_REPORT_PERIOD_COMPARE_CURRENT_PERIOD_OUTGOING_V2');
+				$previousValueName = Loc::getMessage('TELEPHONY_REPORT_PERIOD_COMPARE_PREVIOUS_PERIOD_OUTGOING_V2');
 				break;
 			case CallType::MISSED:
-				$currentValueName = $previousValueName = Loc::getMessage('TELEPHONY_REPORT_PERIOD_COMPARE_MISSED');
+				$currentValueName = Loc::getMessage('TELEPHONY_REPORT_PERIOD_COMPARE_CURRENT_PERIOD_MISSED_V2');
+				$previousValueName = Loc::getMessage('TELEPHONY_REPORT_PERIOD_COMPARE_PREVIOUS_PERIOD_MISSED_V2');
 				break;
 			case CallType::CALLBACK:
-				$currentValueName = $previousValueName = Loc::getMessage('TELEPHONY_REPORT_PERIOD_COMPARE_CALLBACK');
+				$currentValueName = Loc::getMessage('TELEPHONY_REPORT_PERIOD_COMPARE_CURRENT_PERIOD_CALLBACK_V2');
+				$previousValueName = Loc::getMessage('TELEPHONY_REPORT_PERIOD_COMPARE_PREVIOUS_PERIOD_CALLBACK_V2');
 				break;
 			default:
-				$currentValueName = $previousValueName = Loc::getMessage('TELEPHONY_REPORT_PERIOD_COMPARE_COUNT');
+				$currentValueName = Loc::getMessage('TELEPHONY_REPORT_PERIOD_COMPARE_CURRENT_PERIOD_COUNT_V2');
+				$previousValueName = Loc::getMessage('TELEPHONY_REPORT_PERIOD_COMPARE_PREVIOUS_PERIOD_COUNT_V2');
 				break;
 		}
-
-		$currentValueName .= ' ' . Loc::getMessage('TELEPHONY_REPORT_PERIOD_COMPARE_CURRENT_PERIOD');
-		$previousValueName .= ' ' . Loc::getMessage('TELEPHONY_REPORT_PERIOD_COMPARE_PREVIOUS_PERIOD');
 
 		$columns = [
 			[

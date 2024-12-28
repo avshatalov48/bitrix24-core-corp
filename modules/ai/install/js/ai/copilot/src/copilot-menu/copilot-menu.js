@@ -575,6 +575,11 @@ export class CopilotMenu extends EventEmitter
 
 	#getRoleMenuItemHtml(): HTMLElement
 	{
+		if (this.#roleInfoContainer)
+		{
+			return this.#roleInfoContainer;
+		}
+
 		const { name, avatar } = this.#roleInfo.role;
 		const subtitle = this.#roleInfo.subtitle;
 

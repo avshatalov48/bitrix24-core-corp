@@ -167,8 +167,8 @@ class UserOption
 
 			return $addResult;
 		}
-
-		$addResult->addError(1, 'This option for task and user is already exist.');
+		// we no longer display this error
+		// $addResult->addError(1, 'This option for task and user is already exist.');
 
 		return $addResult;
 	}

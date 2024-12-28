@@ -9,6 +9,7 @@ return [
 		'layout/pure-component',
 		'layout/ui/fields/email',
 		'ui-system/form/inputs/input',
+		'ui-system/form/inputs/string',
 		'ui-system/typography/text-input',
 	],
 	'bundle' => [

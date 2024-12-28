@@ -69,6 +69,7 @@ jn.define('sign/opener', (require, exports, module) => {
 				role,
 				isGoskey = false,
 				isExternal = false,
+				initiatedByType,
 			} = props;
 
 			if (goWithoutConfirmation)
@@ -94,6 +95,7 @@ jn.define('sign/opener', (require, exports, module) => {
 							url,
 							isGoskey,
 							isExternal,
+							initiatedByType,
 						},
 					},
 				);
@@ -113,6 +115,7 @@ jn.define('sign/opener', (require, exports, module) => {
 					role,
 					isGoskey,
 					isExternal,
+					initiatedByType,
 				});
 			}
 		}
@@ -124,6 +127,7 @@ jn.define('sign/opener', (require, exports, module) => {
 				memberId = 0,
 				role,
 				forcedBannerOpening = false,
+				initiatedByType,
 			} = props;
 
 			if (
@@ -143,6 +147,7 @@ jn.define('sign/opener', (require, exports, module) => {
 					title,
 					memberId,
 					role,
+					initiatedByType,
 				});
 			}
 		}

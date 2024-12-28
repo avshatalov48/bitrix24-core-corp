@@ -1,0 +1,139 @@
+.hr-hcmlink-company-manager-container {
+	display: flex;
+	flex-direction: column;
+	font-family: var(--ui-font-family-system);
+
+	margin-top: 28px;
+	margin-left: 20px;
+	margin-right: 20px;
+	padding-bottom: 20px;
+}
+
+.hr-hcmlink-company-manager-header__title {
+	color: var(--ui-color-palette-black-base);
+	font-weight: var(--ui-font-weight-medium);
+	font-size: var(--ui-font-size-5xl);
+	line-height: 33.41px;
+}
+
+.hr-hcmlink-company-manager-header__hint {
+	margin-top: 6px;
+	color: var(--ui-color-palette-gray-90);
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 22px;
+}
+
+.hr-hcmlink-company-manager-list-container.--connect {
+	margin-top: 30px;
+}
+
+.hr-hcmlink-company-manager-list-container {
+	margin-top: 20px;
+}
+
+.hr-hcmlink-company-manager-list {
+	margin-top: 20px;
+	display: flex;
+	flex-direction: row;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.hr-hcmlink-company-manager-list__title {
+	color: var(--ui-color-palette-gray-90);
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-2xl);
+}
+
+.hr-hcmlink-company-manager-list__item {
+	position: relative;
+	width: 213px;
+	height: 122px;
+	border-radius: 12px;
+	background-color: #FFDC00;
+	color: #151515;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-semi-bold);
+	box-shadow: 0 1px 2px 0 #00000013;
+	cursor: pointer;
+	display: flex;
+	flex-direction: row-reverse;
+}
+
+.hr-hcmlink-company-manager-list__item-content {
+	display: flex;
+	flex-flow: column;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+	height: 100%;
+}
+
+.hr-hcmlink-company-manager-list__item:hover {
+	box-shadow: rgba(0, 0, 0, 0.15) 0 4px 10px;
+	transition: all 0.15s linear;
+	transform: translate(0, -1px);
+}
+
+.hr-hcmlink-company-manager-list__item.--connect {
+	background-repeat: no-repeat;
+	background-size: auto;
+	background-image: url("./images/connect-onec-logo.svg");
+	background-position-x: right;
+	background-position-y: top;
+}
+
+.hr-hcmlink-company-manager-list__item-title {
+	display: flex;
+	flex-flow: column;
+	align-items: center;
+	gap: 8px;
+}
+
+.hr-hcmlink-company-manager-list__item-title::before {
+	content: '';
+	display: block;
+	min-width: 53px;
+	min-height: 42px;
+	width: 53px;
+	height: 42px;
+	background-size: auto;
+	background-image: url("./images/onec-circle-logo.svg");
+	background-repeat: no-repeat;
+}
+
+.hr-hcmlink-company-manager-list__item-title-text {
+	width: 200px;
+	overflow: hidden;
+	text-align: center;
+	text-wrap: nowrap;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.--connect .hr-hcmlink-company-manager-list__item-title::before {
+	background-image: url("./images/connect-company.svg");
+}
+
+.hr-hcmlink-company-manager-list__item.--connect {
+	background-color: var(--ui-color-palette-white-base);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.hr-hcmlink-company-manager-list__item-counter {
+	position: absolute !important;
+	margin-right: 8px;
+	margin-top: 8px;
+}
+
+.hr-hcmlink-company-manager-list__item-counter .ui-counter-inner {
+	--ui-counter-current-bg-color: var(--ui-color-palette-red-50);
+}
+
+.hr-hcmlink-company-manager-list__item-counter .ui-counter-inner {
+	padding-right: 8px;
+	padding-left: 8px;
+	height: 16px;
+	font-size: var(--ui-font-size-sm);
+}

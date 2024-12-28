@@ -51,6 +51,12 @@ class SigningStop implements Contract\Operation
 			return $result->addErrors($signingStopResponse->getErrors());
 		}
 
-		return (new ChangeDocumentStatus($document, Type\DocumentStatus::STOPPED))->launch();
+		$changeStatusResult = (new ChangeDocumentStatus($document, Type\DocumentStatus::STOPPED))->launch();
+		if (!$changeStatusResult->isSuccess())
+		{
+			return $changeStatusResult;
+		}
+
+		return $result;
 	}
 }

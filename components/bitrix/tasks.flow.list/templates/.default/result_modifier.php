@@ -116,6 +116,14 @@ foreach ($arResult['rows'] as $key => $row)
 				}
 				$actions[$actionKey]['className'] = "menu-popup-no-icon tasks-flow-action-activate";
 				break;
+			case \Bitrix\Tasks\Flow\Grid\Action\Pin::ID:
+				if ($canDoAction)
+				{
+					$actions[$actionKey]['onclick'] = "BX.Tasks.Flow.Grid.pinFlow({$data['flowId']})";
+				}
+
+				$actions[$actionKey]['className'] = "menu-popup-no-icon tasks-flow-action-pin";
+				break;
 			case \Bitrix\Tasks\Flow\Grid\Action\Remove::ID:
 				$actions[$actionKey]['onclick'] = "BX.Tasks.Flow.Grid.removeFlow({$data['flowId']})";
 				$actions[$actionKey]['className'] = "menu-popup-no-icon tasks-flow-action-remove";

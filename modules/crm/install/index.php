@@ -655,6 +655,8 @@ class crm extends CModule
 			false,
 		);
 
+		(new \Bitrix\Crm\Copilot\CallAssessment\FillPreliminaryCallAssessments())->execute();
+
 		\Bitrix\Crm\EntityRequisite::installDefaultPresets();
 
 		// Adjust default address zone
@@ -1645,6 +1647,54 @@ class crm extends CModule
 			'\Bitrix\Crm\Integration\BiConnector\EventHandler',
 			'onBIConnectorDataSources'
 		);
+
+		$eventManager->registerEventHandler(
+			'bizproc',
+			'onAfterWorkflowKill',
+			'crm',
+			'\Bitrix\Crm\Integration\BizProc\EventHandler',
+			'onAfterWorkflowKill'
+		);
+
+		$eventManager->registerEventHandler(
+			'rest',
+			'OnUserFieldPlacementPrepareParams',
+			'crm',
+			'\Bitrix\Crm\Integration\Rest\EventHandler',
+			'onUserFieldPlacementPrepareParams'
+		);
+
+		$eventManager->registerEventHandler(
+			'booking',
+			'onGetProvider',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onGetProviderEventHandler'
+		);
+
+		$eventManager->registerEventHandler(
+			'booking',
+			'onBookingAdd',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onBookingAdd'
+		);
+
+		$eventManager->registerEventHandler(
+			'booking',
+			'onBookingUpdate',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onBookingUpdate'
+		);
+
+		$eventManager->registerEventHandler(
+			'booking',
+			'onBookingDelete',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onBookingDelete'
+		);
 	}
 
 	private function installAgents()
@@ -2439,6 +2489,46 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Requisite\EntityLink',
 			'clearMyCompanyCache'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'bizproc',
+			'onAfterWorkflowKill',
+			'crm',
+			'\Bitrix\Crm\Integration\BizProc\EventHandler',
+			'onAfterWorkflowKill'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'booking',
+			'onGetProvider',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onGetProviderEventHandler'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'booking',
+			'onBookingAdd',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onBookingAdd'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'booking',
+			'onBookingUpdate',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onBookingUpdate'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'booking',
+			'onBookingDelete',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onBookingDelete'
 		);
 	}
 

@@ -11,4 +11,6 @@ export type DocumentData = {
 	title: string;
 	blocks: Array<{ party: number; }>;
 	externalId: string | null;
+	integrationId: number | null,
+	templateUid: string | null;
 };

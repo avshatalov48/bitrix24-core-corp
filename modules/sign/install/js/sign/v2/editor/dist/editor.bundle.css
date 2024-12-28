@@ -52,7 +52,7 @@
 
 .sign-editor__document-container {
 	display: inline-block;
-	width: calc(100% - 300px);
+	width: calc(100% - 320px);
 	box-sizing: border-box;
 	padding: 40px;
 }
@@ -81,6 +81,8 @@
 }
 
 .sign-editor__sections {
+	margin-top: 20px;
+	margin-right: 20px;
 	display: inline-block;
 	background: var(--color-5-1);
 	box-sizing: border-box;
@@ -90,6 +92,7 @@
 	position: sticky;
 	top: 0;
 	vertical-align: top;
+	border-radius: 12px;
 }
 
 .sign-editor__section {
@@ -121,6 +124,13 @@
 
 .sign-editor__section_block [data-hint] {
 	height: auto;
+	position: absolute;
+	bottom: -3px;
+}
+
+.sign-editor__section_block-subject {
+	margin-right: 12px;
+	position: relative;
 }
 
 .sign-editor__section_title,
@@ -149,6 +159,10 @@
 
 .sign-document__block-wrapper.--invalid .sign-document__block-content_member-nodata {
 	background-color: var(--ui-color-palette-red-solid);
+}
+
+.sign-document__block-content_member-nodata.--hcmlinkreference {
+	background-color: var(--ui-color-palette-orange-40);
 }
 
 .sign-document__block-wrapper[data-active="1"] {

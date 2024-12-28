@@ -1,11 +1,14 @@
 <?php
+
 namespace Bitrix\Sign\Engine\ActionFilter;
 
 use Bitrix\Main;
 use Bitrix\Sign\Access\AccessController;
 use Bitrix\Sign\Access\ActionDictionary;
-use Bitrix\Sign\Item\Access\SimpleAccessibleItemWithOwner;
-use Bitrix\Sign\Repository\BlankRepository;
+use Bitrix\Sign\Attribute\Access\LogicAnd;
+use Bitrix\Sign\Attribute\Access\LogicOr;
+use Bitrix\Sign\Attribute\ActionAccess;
+use Bitrix\Sign\Repository\Document\TemplateRepository;
 use Bitrix\Sign\Repository\DocumentRepository;
 use Bitrix\Sign\Service\Container;
 use BItrix\Sign\Type\Access\AccessibleItemType;
@@ -14,6 +17,7 @@ final class AccessCheck extends Main\Engine\ActionFilter\Base
 {
 	public const PREFILTER_KEY = 'ACCESS_CHECK';
 	private const ERROR_INVALID_AUTHENTICATION = 'invalid_authentication';
+
 	/**
 	 * @var string[]
 	 */
@@ -24,9 +28,12 @@ final class AccessCheck extends Main\Engine\ActionFilter\Base
 	protected array $b2e2b2cMap;
 
 	private AccessController $accessController;
-	private DocumentRepository $documentRepository;
+	private readonly DocumentRepository $documentRepository;
 	/** @var array<string, RuleWithPayload>  */
 	private array $rules = [];
+	/** @var list<LogicRule>  */
+	private array $logicRules = [];
+	private readonly TemplateRepository $templateRepository;
 
 	public function __construct()
 	{
@@ -37,15 +44,45 @@ final class AccessCheck extends Main\Engine\ActionFilter\Base
 		$this->b2e2b2cMap = array_flip($this->b2c2b2eMap);
 
 		$this->documentRepository = Container::instance()->getDocumentRepository();
+		$this->templateRepository = Container::instance()->getDocumentTemplateRepository();
 	}
 
-	public function addRule(
+	public function addRuleFromAttribute(ActionAccess|LogicOr|LogicAnd $attribute): self
+	{
+		if ($attribute instanceof ActionAccess)
+		{
+			return $this->addRule($attribute->permission, $attribute->itemType, $attribute->itemIdOrUidRequestKey);
+		}
+
+		return $this->addLogicRuleFromAttribute($attribute);
+	}
+
+	private function addRule(
 		string $accessPermission,
 		?string $itemType = null,
-		?string $itemIdRequestKey = null,
+		?string $itemIdOrUidRequestKey = null,
 	): self
 	{
-		$this->rules[$accessPermission] = new RuleWithPayload($accessPermission, $itemType, $itemIdRequestKey);
+		$this->rules[$accessPermission] = $this->createRuleWithPayload($accessPermission, $itemType, $itemIdOrUidRequestKey);
+
+		return $this;
+	}
+
+	private function addLogicRuleFromAttribute(LogicAnd|LogicOr $logicAttribute): self
+	{
+		$rules = array_map(
+			fn(ActionAccess $condition) => $this->createRuleWithPayload(
+				$condition->permission,
+				$condition->itemType,
+				$condition->itemIdOrUidRequestKey
+			),
+			$logicAttribute->conditions,
+		);
+
+		$this->logicRules[] = new LogicRule(
+			$logicAttribute instanceof LogicOr ? AccessController::RULE_OR : AccessController::RULE_AND,
+			...$rules,
+		);
 
 		return $this;
 	}
@@ -54,13 +91,23 @@ final class AccessCheck extends Main\Engine\ActionFilter\Base
 	{
 		foreach ($this->rules as $rule)
 		{
-			if ($this->checkRule($rule))
+			if ($this->hasInvalidItemIdentifier($rule))
+			{
+				return $this->getAuthErrorResult();
+			}
+			if ($this->checkRuleWithPayload($rule))
 			{
 				continue;
 			}
+			if (!$this->checkMirrorRule($rule))
+			{
+				return $this->getAuthErrorResult();
+			}
+		}
 
-			$mirrorRule = $this->getMirrorRule($rule->accessPermission);
-			if (!$mirrorRule || !$this->checkRule($mirrorRule))
+		foreach ($this->logicRules as $logicRule)
+		{
+			if (!$this->checkLogicRule($logicRule))
 			{
 				return $this->getAuthErrorResult();
 			}
@@ -73,13 +120,40 @@ final class AccessCheck extends Main\Engine\ActionFilter\Base
 	{
 		Main\Context::getCurrent()->getResponse()->setStatus(401);
 		$this->addError(new Main\Error(
-				Main\Localization\Loc::getMessage("MAIN_ENGINE_FILTER_AUTHENTICATION_ERROR"),
-				self::ERROR_INVALID_AUTHENTICATION)
+			Main\Localization\Loc::getMessage("MAIN_ENGINE_FILTER_AUTHENTICATION_ERROR"),
+			self::ERROR_INVALID_AUTHENTICATION),
 		);
+
 		return new Main\EventResult(Main\EventResult::ERROR, null, null, $this);
 	}
 
-	private function checkRule(RuleWithPayload $rule): bool
+	private function checkLogicRule(LogicRule $rule): bool
+	{
+		if ($rule->logicOperator === AccessController::RULE_OR)
+		{
+			foreach ($rule->rules as $ruleWithPayload)
+			{
+				if ($this->checkRuleWithPayload($ruleWithPayload))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		foreach ($rule->rules as $ruleWithPayload)
+		{
+			if (!$this->checkRuleWithPayload($ruleWithPayload))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private function checkRuleWithPayload(RuleWithPayload $rule): bool
 	{
 		if (!isset($rule->passes))
 		{
@@ -99,30 +173,74 @@ final class AccessCheck extends Main\Engine\ActionFilter\Base
 		return $this->b2c2b2eMap[$accessPermission] ?? $this->b2e2b2cMap[$accessPermission] ?? null;
 	}
 
-	private function createAccessibleItem(RuleWithPayload $rule): ?SimpleAccessibleItemWithOwner
+	private function createAccessibleItem(RuleWithPayload $rule): ?Main\Access\AccessibleItem
 	{
-		if (empty($rule->itemType) || empty($rule->itemIdRequestKey))
+		if (empty($rule->itemType) || empty($rule->itemIdOrUidRequestKey))
 		{
 			return null;
 		}
 
-		$id = $this->getAction()->getController()->getRequest()->getJsonList()->get($rule->itemIdRequestKey);
-		if (empty($id))
+		$idOrUid = $this->getRequestJson()->get($rule->itemIdOrUidRequestKey);
+		if ($idOrUid === null)
 		{
 			return null;
 		}
 
+		$item = null;
 		if ($rule->itemType === AccessibleItemType::DOCUMENT)
 		{
-			$document = $this->documentRepository->getByUid($id);
-			if (!$document)
+			if (is_numeric($idOrUid))
 			{
-				return null;
+				$item = $this->documentRepository->getById((int)$idOrUid);
 			}
-
-			return new SimpleAccessibleItemWithOwner($document->id, $document->createdById, $document->entityId);
+			elseif (is_string($idOrUid))
+			{
+				$item = $this->documentRepository->getByUid($idOrUid);
+			}
 		}
 
-		return null;
+		if ($rule->itemType === AccessibleItemType::TEMPLATE)
+		{
+			if (is_numeric($idOrUid))
+			{
+				$item = $this->templateRepository->getById((int)$idOrUid);
+			}
+			elseif (is_string($idOrUid))
+			{
+				$item = $this->templateRepository->getByUid($idOrUid);
+			}
+		}
+		if ($item === null)
+		{
+			return null;
+		}
+
+		return Container::instance()->getAccessibleItemFactory()->createFromItem($item);
+	}
+
+	private function checkMirrorRule(RuleWithPayload $rule): bool
+	{
+		$mirrorRule = $this->getMirrorRule($rule->accessPermission);
+
+		return $mirrorRule && $this->checkRuleWithPayload($mirrorRule);
+	}
+
+	private function createRuleWithPayload(string $accessPermission, ?string $itemType, ?string $itemIdOrUidRequestKey): RuleWithPayload
+	{
+		return new RuleWithPayload($accessPermission, $itemType, $itemIdOrUidRequestKey);
+	}
+
+	private function hasInvalidItemIdentifier(RuleWithPayload $rule): bool
+	{
+		return $rule->itemType !== null &&
+			(
+				$rule->itemIdOrUidRequestKey === null
+				|| $this->getRequestJson()->get($rule->itemIdOrUidRequestKey) === null
+			);
+	}
+
+	private function getRequestJson(): Main\Type\ParameterDictionary
+	{
+		return $this->getAction()->getController()->getRequest()->getJsonList();
 	}
 }

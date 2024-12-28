@@ -1,7 +1,13 @@
 <?php
 
 return [
-	'selector/widget/entity',
-	'intranet:invite-opener-new',
-	'loc',
+	'extensions' => [
+		'loc',
+		'utils/object',
+		'selector/widget/entity',
+		'ui-system/blocks/avatar',
+		'layout/ui/user/user-name',
+
+		'intranet:invite-opener-new',
+	]
 ];

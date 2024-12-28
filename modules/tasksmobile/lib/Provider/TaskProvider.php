@@ -20,6 +20,7 @@ use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
+use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\CheckList\CheckListFacade;
@@ -56,6 +57,8 @@ use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\TasksMobile\Dto\DiskFileDto;
 use Bitrix\TasksMobile\Dto\TaskDto;
 use Bitrix\TasksMobile\Dto\TaskRequestFilter;
+use Bitrix\TasksMobile\UserField\Provider\TaskUserFieldProvider;
+use Bitrix\TasksMobile\UserField\Type;
 use Bitrix\UI\FileUploader\Uploader;
 use CTaskAssertException;
 use CTaskDependence;
@@ -244,6 +247,7 @@ final class TaskProvider
 		];
 		$filter = $this->addProjectToFilter($filter, $projectId);
 		$filter = $this->addFlowToFilter($filter, $this->searchParams->flowId);
+		$filter = $this->addCreatorToFilter($filter, $this->searchParams->creatorId);
 		$filter = $this->addMemberToFilter($filter, $this->searchParams->ownerId, $projectId, $workMode);
 		$filter = $this->addSearchStringToFilter($filter);
 		$filter = $this->addCounterToFilter($filter, $projectId);
@@ -266,6 +270,16 @@ final class TaskProvider
 		if ($flowId)
 		{
 			$filter['FLOW'] = $flowId;
+		}
+
+		return $filter;
+	}
+
+	private function addCreatorToFilter(array $filter, ?int $creatorId): array
+	{
+		if ($creatorId)
+		{
+			$filter['CREATED_BY'] = $creatorId;
 		}
 
 		return $filter;
@@ -518,6 +532,7 @@ final class TaskProvider
 	public function getTask(int $taskId): TaskDto
 	{
 		$task = $this->getTaskData($taskId);
+		$task = $this->fillUserFieldsData([$task], true)[0];
 
 		return $this->prepareItems([$task])[0];
 	}
@@ -525,6 +540,7 @@ final class TaskProvider
 	public function getFullTask(int $taskId, string $workMode, ?int $kanbanOwnerId): array
 	{
 		$task = $this->getTaskData($taskId, true);
+		$task = $this->fillUserFieldsData([$task], true)[0];
 
 		$projectId = !empty($task['GROUP_ID']) ? (int)$task['GROUP_ID'] : 0;
 		$relatedTaskIds = $this->getRelatedTaskIds($taskId);
@@ -699,14 +715,13 @@ final class TaskProvider
 		$tasks = $this->fillCrmData($tasks);
 		$tasks = $this->fillDiskFilesData($tasks);
 		$tasks = $this->fillFormattedDescription($tasks);
+		$tasks = $this->fillUserFieldsData($tasks);
 		$tasks = $this->fillActionData($tasks);
 
 		if ($shouldFillDodData)
 		{
 			$tasks = $this->fillDodData($tasks);
 		}
-
-		//		$tasks = $this->fillViewsCount($tasks);
 
 		if ($isFullData)
 		{
@@ -1039,6 +1054,25 @@ final class TaskProvider
 		return $tasks;
 	}
 
+	private function fillUserFieldsData(array $tasks, bool $setIsLoaded = false): array
+	{
+		if (empty($tasks))
+		{
+			return [];
+		}
+
+		$taskUserFieldProvider = new TaskUserFieldProvider();
+
+		foreach ($tasks as $id => $task)
+		{
+			$tasks[$id]['USER_FIELDS'] = $taskUserFieldProvider->getUserFields($task);
+			$tasks[$id]['USER_FIELD_NAMES'] = array_column($tasks[$id]['USER_FIELDS'], 'FIELD_NAME');
+			$tasks[$id]['ARE_USER_FIELDS_LOADED'] = $setIsLoaded;
+		}
+
+		return $tasks;
+	}
+
 	private function fillActionData(array $tasks): array
 	{
 		if (empty($tasks))
@@ -1070,6 +1104,7 @@ final class TaskProvider
 				ActionDictionary::ACTION_TASK_APPROVE => 'CAN_APPROVE',
 				ActionDictionary::ACTION_TASK_DISAPPROVE => 'CAN_DISAPPROVE',
 				ActionDictionary::ACTION_TASK_DEFER => 'CAN_DEFER',
+				ActionDictionary::ACTION_TASK_TAKE => 'CAN_TAKE',
 			];
 			$taskModel = TaskModel::createFromId($id);
 			$accessController = new TaskAccessController($this->userId);
@@ -1492,72 +1527,77 @@ final class TaskProvider
 	{
 		$prepared = array_map(
 			static fn(array $task) => (
-			TaskDto::make([
-				'id' => $task['ID'],
-				'name' => $task['TITLE'],
-				'description' => htmlspecialchars_decode($task['DESCRIPTION'], ENT_QUOTES),
-				'parsedDescription' => $task['PARSED_DESCRIPTION'],
-				'groupId' => $task['GROUP_ID'],
-				'flowId' => $task['FLOW_ID'] ?? 0,
-				'timeElapsed' => $task['TIME_SPENT_IN_LOGS'] + $task['TIMER_RUN_TIME'],
-				'timeEstimate' => $task['TIME_ESTIMATE'],
-				'commentsCount' => $task['COMMENTS_COUNT'],
-				'serviceCommentsCount' => $task['SERVICE_COMMENTS_COUNT'],
-				'newCommentsCount' => $task['NEW_COMMENTS_COUNT'],
-				'viewsCount' => $task['VIEWS_COUNT'] ?? 0,
-				'resultsCount' => $task['RESULTS_COUNT'],
-				'parentId' => $task['PARENT_ID'] ?? 0,
+				TaskDto::make([
+					'id' => $task['ID'],
+					'name' => $task['TITLE'],
+					'description' => htmlspecialchars_decode($task['DESCRIPTION'], ENT_QUOTES),
+					'parsedDescription' => $task['PARSED_DESCRIPTION'],
+					'groupId' => $task['GROUP_ID'],
+					'flowId' => $task['FLOW_ID'] ?? 0,
+					'timeElapsed' => $task['TIME_SPENT_IN_LOGS'] + $task['TIMER_RUN_TIME'],
+					'timeEstimate' => $task['TIME_ESTIMATE'],
+					'commentsCount' => $task['COMMENTS_COUNT'],
+					'serviceCommentsCount' => $task['SERVICE_COMMENTS_COUNT'],
+					'newCommentsCount' => $task['NEW_COMMENTS_COUNT'],
+					'viewsCount' => $task['VIEWS_COUNT'] ?? 0,
+					'resultsCount' => $task['RESULTS_COUNT'],
+					'parentId' => $task['PARENT_ID'] ?? 0,
 
-				'status' => $task['STATUS'],
-				'subStatus' => $task['SUB_STATUS'],
-				'priority' => $task['PRIORITY'],
-				'mark' => $task['MARK'] ?? null,
+					'status' => $task['STATUS'],
+					'subStatus' => $task['SUB_STATUS'],
+					'priority' => $task['PRIORITY'],
+					'mark' => $task['MARK'] ?? null,
 
-				'creator' => $task['CREATED_BY'],
-				'responsible' => $task['RESPONSIBLE_ID'],
-				'accomplices' => is_array($task['ACCOMPLICES'])
-					? array_map('intval', $task['ACCOMPLICES'])
-					: [],
-				'auditors' => is_array($task['AUDITORS'])
-					? array_map('intval', $task['AUDITORS'])
-					: [],
+					'creator' => $task['CREATED_BY'],
+					'responsible' => $task['RESPONSIBLE_ID'],
+					'accomplices' => is_array($task['ACCOMPLICES'])
+						? array_map('intval', $task['ACCOMPLICES'])
+						: [],
+					'auditors' => is_array($task['AUDITORS'])
+						? array_map('intval', $task['AUDITORS'])
+						: [],
 
-				// 'relatedTasks' => $task['RELATED_TASKS'] ?? [],
-				// 'subTasks' => $task['SUB_TASKS'] ?? [],
+					// 'relatedTasks' => $task['RELATED_TASKS'] ?? [],
+					// 'subTasks' => $task['SUB_TASKS'] ?? [],
 
-				'crm' => $task['CRM'] ?? [],
-				'dodTypes' => $task['DOD']['TYPES'] ?? [],
-				'activeDodTypeId' => $task['DOD']['ACTIVE_TYPE_ID'] ?? [],
-				'tags' => $task['TAGS'] ?? [],
-				'files' => $task['FILES'] ?? [],
+					'crm' => $task['CRM'] ?? [],
+					'tags' => $task['TAGS'] ?? [],
+					'files' => $task['FILES'] ?? [],
 
-				'isDodNecessary' => $task['DOD']['IS_NECESSARY'],
-				'isMuted' => ($task['IS_MUTED'] === 'Y'),
-				'isPinned' => ($task['IS_PINNED'] === 'Y'),
-				'isInFavorites' => ($task['FAVORITE'] === 'Y'),
-				'isResultRequired' => ($task['TASK_REQUIRE_RESULT'] === 'Y'),
-				'isResultExists' => ($task['TASK_HAS_RESULT'] === 'Y'),
-				'isOpenResultExists' => ($task['TASK_HAS_OPEN_RESULT'] === 'Y'),
-				'isMatchWorkTime' => ($task['MATCH_WORK_TIME'] === 'Y'),
-				'allowChangeDeadline' => ($task['ALLOW_CHANGE_DEADLINE'] === 'Y'),
-				'allowTimeTracking' => ($task['ALLOW_TIME_TRACKING'] === 'Y'),
-				'allowTaskControl' => ($task['TASK_CONTROL'] === 'Y'),
-				'isTimerRunningForCurrentUser' => ($task['TIMER_IS_RUNNING_FOR_CURRENT_USER'] === 'Y'),
+					'isMuted' => ($task['IS_MUTED'] === 'Y'),
+					'isPinned' => ($task['IS_PINNED'] === 'Y'),
+					'isInFavorites' => ($task['FAVORITE'] === 'Y'),
+					'isResultRequired' => ($task['TASK_REQUIRE_RESULT'] === 'Y'),
+					'isResultExists' => ($task['TASK_HAS_RESULT'] === 'Y'),
+					'isOpenResultExists' => ($task['TASK_HAS_OPEN_RESULT'] === 'Y'),
+					'isMatchWorkTime' => ($task['MATCH_WORK_TIME'] === 'Y'),
+					'allowChangeDeadline' => ($task['ALLOW_CHANGE_DEADLINE'] === 'Y'),
+					'allowTimeTracking' => ($task['ALLOW_TIME_TRACKING'] === 'Y'),
+					'allowTaskControl' => ($task['TASK_CONTROL'] === 'Y'),
+					'isTimerRunningForCurrentUser' => ($task['TIMER_IS_RUNNING_FOR_CURRENT_USER'] === 'Y'),
 
-				'deadline' => strtotime($task['DEADLINE']) ?: null,
-				'activityDate' => strtotime($task['ACTIVITY_DATE']) ?: null,
-				'startDatePlan' => strtotime($task['START_DATE_PLAN']) ?: null,
-				'endDatePlan' => strtotime($task['END_DATE_PLAN']) ?: null,
-				'startDate' => strtotime($task['DATE_START']) ?: null,
-				'endDate' => strtotime($task['CLOSED_DATE']) ?: null,
+					'deadline' => strtotime($task['DEADLINE']) ?: null,
+					'activityDate' => strtotime($task['ACTIVITY_DATE']) ?: null,
+					'startDatePlan' => strtotime($task['START_DATE_PLAN']) ?: null,
+					'endDatePlan' => strtotime($task['END_DATE_PLAN']) ?: null,
+					'startDate' => strtotime($task['DATE_START']) ?: null,
+					'endDate' => strtotime($task['CLOSED_DATE']) ?: null,
 
-				'checklist' => $task['CHECKLIST'] ?? null,
-				'checklistDetails' => $task['CHECKLIST_DETAILS'] ?? null,
-				'counter' => $task['COUNTER'] ?? null,
+					'checklist' => $task['CHECKLIST'] ?? null,
+					'checklistDetails' => $task['CHECKLIST_DETAILS'] ?? null,
+					'counter' => $task['COUNTER'] ?? null,
 
-				'actions' => $task['ACTION'] ?? [],
-				'actionsOld' => $task['ACTION_OLD'] ?? [],
-			])
+					'actions' => $task['ACTION'] ?? [],
+					'actionsOld' => $task['ACTION_OLD'] ?? [],
+
+					'isDodNecessary' => $task['DOD']['IS_NECESSARY'],
+					'dodTypes' => $task['DOD']['TYPES'] ?? [],
+					'activeDodTypeId' => $task['DOD']['ACTIVE_TYPE_ID'] ?? [],
+
+					'areUserFieldsLoaded' => $task['ARE_USER_FIELDS_LOADED'] ?? false,
+					'userFields' => $task['USER_FIELDS'] ?? [],
+					'userFieldNames' => $task['USER_FIELD_NAMES'] ?? [],
+				])
 			),
 			$tasks,
 		);
@@ -1652,6 +1692,7 @@ final class TaskProvider
 				'CHECKLIST',
 				'IM_CHAT_ID',
 				'IM_MESSAGE_ID',
+				'USER_FIELDS',
 			]),
 		);
 	}
@@ -1781,6 +1822,51 @@ final class TaskProvider
 		return $fields;
 	}
 
+	private function processUserFields(array $fields): array
+	{
+		if (!is_array($fields['USER_FIELDS'] ?? null))
+		{
+			return $fields;
+		}
+
+		foreach ($fields['USER_FIELDS'] as $name => $data)
+		{
+			if (!str_starts_with($name, 'UF_AUTO_'))
+			{
+				continue;
+			}
+
+			$value = $data['value'];
+
+			if (Type::tryFrom($data['type']) === Type::DateTime)
+			{
+				$isMultiple = is_array($value);
+				$value = ($isMultiple ? $value : [$value]);
+
+				foreach ($value as $key => $val)
+				{
+					if ($val === '')
+					{
+						continue;
+					}
+
+					$timestamp = (int)$val;
+					$timestamp += \CTimeZone::GetOffset() - DateTime::createFromTimestamp($timestamp)->getSecondGmt();
+
+					$value[$key] = ConvertTimeStamp($timestamp, 'FULL');
+				}
+
+				$value = ($isMultiple ? $value : $value[0]);
+			}
+
+			$fields[$name] = $value;
+		}
+
+		unset($fields['USER_FIELDS']);
+
+		return $fields;
+	}
+
 	private function processScenario(array $fields): array
 	{
 		$fields['SCENARIO_NAME'] = [ScenarioTable::SCENARIO_MOBILE];
@@ -1858,6 +1944,7 @@ final class TaskProvider
 		$fields = $this->formatDateFieldsForInput($fields);
 		$fields = $this->processUploadedFiles($fields);
 		$fields = $this->processCrmElements($fields);
+		$fields = $this->processUserFields($fields);
 		$fields = $this->processScenario($fields);
 		$fields = $this->processMembers($fields);
 
@@ -1963,6 +2050,7 @@ final class TaskProvider
 		$fields = $this->processUploadedFiles($fields, $taskId);
 		$fields = $this->processFiles($fields, $taskId);
 		$fields = $this->processCrmElements($fields);
+		$fields = $this->processUserFields($fields);
 
 		if (!empty($fields))
 		{
@@ -2106,6 +2194,20 @@ final class TaskProvider
 	 * @throws CTaskAssertException
 	 * @throws TasksException
 	 */
+	public function take(int $taskId): bool
+	{
+		$task = new \CTaskItem($taskId, $this->userId);
+		$task->takeExecution();
+
+		return true;
+	}
+
+	/**
+	 * @param int $taskId
+	 * @return bool
+	 * @throws CTaskAssertException
+	 * @throws TasksException
+	 */
 	public function pause(int $taskId): bool
 	{
 		$task = new \CTaskItem($taskId, $this->userId);
@@ -2126,10 +2228,14 @@ final class TaskProvider
 	public function complete(int $taskId): bool
 	{
 		$creator = TaskObject::wakeUpObject(['ID' => $taskId])->fillCreator();
-		$isCreator = $creator->getId() === $this->userId;
+		if (!$creator)
+		{
+			return false;
+		}
 
 		if (
-			$isCreator
+			$creator->getId() === $this->userId
+			|| UserModel::createFromId($this->userId)->isAdmin()
 			|| !ResultManager::requireResult($taskId)
 			|| (
 				($lastResult = ResultManager::getLastResult($taskId))

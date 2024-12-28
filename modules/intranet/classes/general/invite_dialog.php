@@ -37,6 +37,7 @@ class CIntranetInviteDialog
 	public const EMAIL_EXIST_ERROR = 'INTRANET_INVITE_DIALOG_EMAIL_EXIST_ERROR';
 	public const PHONE_EXIST_ERROR = 'INTRANET_INVITE_DIALOG_PHONE_EXIST_ERROR';
 
+	private static array $userGroupsCache = [];
 
 	public static function ShowInviteDialogLink($params = array())
 	{
@@ -1008,6 +1009,8 @@ class CIntranetInviteDialog
 			);
 
 			self::InviteUser($userData, $messageText, array('checkB24' => false));
+
+			return $arUser["ID"];
 		}
 		else
 		{
@@ -1055,8 +1058,6 @@ class CIntranetInviteDialog
 
 	public static function getUserGroups($SITE_ID, $bExtranetUser = false)
 	{
-		$arGroups = array();
-
 		if (
 			$bExtranetUser
 			&& Loader::includeModule("extranet")
@@ -1065,25 +1066,26 @@ class CIntranetInviteDialog
 			$extranetGroupID = CExtranet::GetExtranetUserGroupID();
 			if ((int)$extranetGroupID > 0)
 			{
-				$arGroups[] = $extranetGroupID;
+				return [$extranetGroupID];
 			}
 		}
 		else
 		{
-			$rsGroups = CGroup::GetList(
-				'',
-				'',
-				array(
-					"STRING_ID" => "EMPLOYEES_".$SITE_ID
-				)
-			);
-			while($arGroup = $rsGroups->Fetch())
+			if (isset(static::$userGroupsCache["EMPLOYEES_".$SITE_ID]))
 			{
-				$arGroups[] = $arGroup["ID"];
+				return static::$userGroupsCache["EMPLOYEES_".$SITE_ID];
 			}
+			static::$userGroupsCache["EMPLOYEES_".$SITE_ID] = \Bitrix\Main\GroupTable::query()
+				->where('STRING_ID', "EMPLOYEES_".$SITE_ID)
+				->setSelect(['ID'])
+				->fetchCollection()
+				->getIdList()
+				;
+
+			return static::$userGroupsCache["EMPLOYEES_".$SITE_ID];
 		}
 
-		return $arGroups;
+		return [];
 	}
 
 	public static function getAdminGroups($SITE_ID)
@@ -1534,7 +1536,7 @@ class CIntranetInviteDialog
 		return \CUser::GeneratePasswordByPolicy($arGroupID);
 	}
 
-	public static function TransferEmailUser($userId, $arParams = array())
+	public static function TransferEmailUser($userId, $arParams = array(), bool $sendNotification = true)
 	{
 		global $APPLICATION;
 
@@ -1588,15 +1590,21 @@ class CIntranetInviteDialog
 			$arParams["GROUP_ID"] = self::getUserGroups($arParams["SITE_ID"], $bExtranetUser);
 		}
 
-		self::$bSendPassword = true;
-		$strPassword = self::GeneratePassword($arParams["SITE_ID"], $bExtranetUser);
-
 		$arFields = array(
 			"EXTERNAL_AUTH_ID" => '',
 			"GROUP_ID" => $arParams['GROUP_ID'],
-			"PASSWORD" => $strPassword,
 			"EMAIL" => $arUser["EMAIL"]
 		);
+
+		if (ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			self::$bSendPassword = false;
+		}
+		else
+		{
+			self::$bSendPassword = true;
+			$arFields['PASSWORD'] = self::GeneratePassword($arParams["SITE_ID"], $bExtranetUser);
+		}
 
 		if (isset($arParams["UF_DEPARTMENT"]))
 		{
@@ -1668,7 +1676,10 @@ class CIntranetInviteDialog
 				ExecuteModuleEventEx($arEvent, [ $arFields ]);
 			}
 
-			self::sentTransferNotification($arUser, $arFields, $arParams);
+			if ($sendNotification)
+			{
+				self::sentTransferNotification($arUser, $arFields, $arParams);
+			}
 
 			return $userId;
 		}

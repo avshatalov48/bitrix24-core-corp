@@ -1,0 +1,12 @@
+.dataset-file-upload {
+	width: 100%;
+}
+
+.dataset-file-upload .ui-uploader-stack-widget.--large {
+	--ui-uploader-stack-widget-width: 100%;
+	--ui-uploader-stack-widget-height: 142px;
+}
+
+.dataset-file-upload .ui-uploader-stack-widget {
+	width: 100%;
+}

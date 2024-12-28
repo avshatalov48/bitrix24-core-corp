@@ -1,0 +1,25 @@
+.ui-alert.ui-alert-primary.format-selector__hint {
+	--ui-alert-color: var(--ui-color-base-default);
+	margin: 0;
+}
+
+.format-selector__hint a {
+	cursor: pointer;
+}
+
+.format-selector .ui-form {
+	padding: 20px 0 0 0;
+}
+
+.format-selector .ui-form-label {
+	margin: 0;
+	padding-bottom: 6px;
+}
+
+.format-selector__custom-value-input--hidden {
+	display: none;
+}
+
+.format-selector__type-subtitle {
+	color: var(--ui-color-text-subtle);
+}

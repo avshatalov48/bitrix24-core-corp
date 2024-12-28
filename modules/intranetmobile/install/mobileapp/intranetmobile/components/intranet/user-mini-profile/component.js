@@ -10,10 +10,9 @@ jn.define('intranet/user-mini-profile', (require, exports, module) => {
 	const { PortalLogo } = require('intranet/portal-logo');
 	const { UserMiniProfileForm } = require('intranet/user-mini-profile-form');
 	const { H3 } = require('ui-system/typography/heading');
-	const { StatusBlock } = require('ui-system/blocks/status-block');
 	const { PureComponent } = require('layout/pure-component');
-	const { isEmpty } = require('utils/object');
 	const { BoxFooter } = require('ui-system/layout/dialog-footer');
+	const { Haptics } = require('haptics');
 
 	class UserMiniProfile extends PureComponent
 	{
@@ -26,93 +25,31 @@ jn.define('intranet/user-mini-profile', (require, exports, module) => {
 			this.state = {
 				logoLoaded: false,
 				profileLoaded: false,
-				primaryFieldSelected: false,
 			};
 		}
 
-		fetchPortalLogo()
+		componentWillUnmount()
 		{
-			PortalLogo.getPortalLogo()
-				.then((result) => {
-					if (!result?.answer?.result)
-					{
-						return;
-					}
-
-					const portalLogo = {
-						title: result.answer.result.title ?? '',
-						logo24: result.answer.result.logo24 ?? '',
-						logo: result.answer.result.logo ? currentDomain + (result.answer.result.logo.src ?? '') : '',
-						defaultLogo: result.answer.result.defaultLogo ?? [],
-					};
-
-					this.setState({
-						logoLoaded: true,
-						portalLogo,
-					});
-				})
-				.catch(console.error);
+			BX.postComponentEvent('userMiniProfileClosed', null);
 		}
 
-		fetchUserCurrent()
-		{
-			BX.rest.callMethod('user.current')
-				.then((result) => {
-					if (!result?.answer?.result)
-					{
-						return;
-					}
-
-					const { ID, NAME, LAST_NAME, PERSONAL_MOBILE, EMAIL, PERSONAL_PHOTO } = result.answer.result;
-
-					this.setState({
-						profileLoaded: true,
-						profile: {
-							profileData: { ID, NAME, LAST_NAME, PERSONAL_MOBILE, EMAIL },
-							photo: PERSONAL_PHOTO,
-						},
-					});
-				})
-				.catch(console.error);
-		}
-
-		getProfileForm()
-		{
-			const { profile } = this.state;
-
-			if (isEmpty(profile))
-			{
-				return null;
-			}
-
+		getProfileForm = () => {
 			return new UserMiniProfileForm({
-				...profile,
 				ref: this.bindProfileFormRef,
 				scrollToInput: this.scrollToInput,
+				profileData: this.props.profileData,
 			});
-		}
+		};
 
 		bindProfileFormRef = (ref) => {
 			this.formRef = ref;
 		};
 
-		getPortalLogoView()
-		{
-			const { portalLogo } = this.state;
-
-			if (isEmpty(portalLogo))
-			{
-				return null;
-			}
-
-			return new PortalLogo(portalLogo);
-		}
-
-		componentDidMount()
-		{
-			this.fetchPortalLogo();
-			this.fetchUserCurrent();
-		}
+		getPortalLogoView = () => {
+			return new PortalLogo({
+				portalLogo: this.props.portalLogoData,
+			});
+		};
 
 		getTitle()
 		{
@@ -140,11 +77,24 @@ jn.define('intranet/user-mini-profile', (require, exports, module) => {
 				onClick: this.onSubmit,
 				testId: 'USER_MINI_PROFILE_BUTTON_SUBMIT',
 				stretched: true,
+				loading: this.state.isLoading,
 			});
 		}
 
 		onSubmit = () => {
-			this.formRef?.submit();
+			this.setState({
+				isLoading: true,
+			});
+			this.formRef?.submitForm()
+				.then(() => {
+					Haptics.notifySuccess();
+					layout.close();
+				})
+				.catch(() => {
+					this.setState({
+						isLoading: false,
+					});
+				});
 		};
 
 		renderButtons() {
@@ -172,15 +122,7 @@ jn.define('intranet/user-mini-profile', (require, exports, module) => {
 
 		render()
 		{
-			const { profileLoaded, logoLoaded } = this.state;
 			const imageUri = `${currentDomain}/bitrix/mobileapp/intranetmobile/components/intranet/user-mini-profile/images/confetti-background.svg`;
-
-			if (!profileLoaded || !logoLoaded)
-			{
-				return StatusBlock({
-					testId: 'USER_MINI_PROFILE_LOADING',
-				});
-			}
 
 			return Box(
 				{
@@ -207,7 +149,6 @@ jn.define('intranet/user-mini-profile', (require, exports, module) => {
 				}),
 				Area(
 					{},
-
 					View(
 						{
 							style: {
@@ -231,5 +172,15 @@ jn.define('intranet/user-mini-profile', (require, exports, module) => {
 (() => {
 	const { UserMiniProfile } = jn.require('intranet/user-mini-profile');
 
-	layout.showComponent(new UserMiniProfile());
+	BX.onViewLoaded(() => {
+		const profileData = BX.componentParameters.get('profileDataParams', null);
+		const portalLogoData = BX.componentParameters.get('portalLogoParams', null);
+
+		layout.showComponent(
+			new UserMiniProfile({
+				profileData,
+				portalLogoData,
+			}),
+		);
+	});
 })();

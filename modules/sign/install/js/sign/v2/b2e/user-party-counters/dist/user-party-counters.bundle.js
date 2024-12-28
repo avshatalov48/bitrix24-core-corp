@@ -68,6 +68,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  getLayout() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container];
 	  }
+	  getCount() {
+	    return Number(babelHelpers.classPrivateFieldLooseBase(this, _counterNode)[_counterNode].textContent);
+	  }
 	  update(size) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _counterNode)[_counterNode].textContent = size;
 	    if (!main_core.Type.isNumber(babelHelpers.classPrivateFieldLooseBase(this, _userCountersLimit)[_userCountersLimit])) {

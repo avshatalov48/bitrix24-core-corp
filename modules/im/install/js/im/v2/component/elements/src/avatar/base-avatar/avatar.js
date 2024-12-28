@@ -86,7 +86,7 @@ export const Avatar = {
 		},
 		isSpecialType(): boolean
 		{
-			const commonTypes = [ChatType.user, ChatType.chat, ChatType.open];
+			const commonTypes = [ChatType.user, ChatType.chat, ChatType.open, ChatType.lines];
 
 			return !commonTypes.includes(this.dialog.type);
 		},

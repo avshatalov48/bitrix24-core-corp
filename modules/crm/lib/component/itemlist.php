@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Component;
 
 use Bitrix\Crm\Automation;
 use Bitrix\Crm\Category\Entity\Category;
+use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
 use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Filter\Filter;
@@ -331,6 +332,13 @@ abstract class ItemList extends Base
 			}
 		}
 
+		$permissionItem = PermissionItem::createByEntity($this->entityTypeId, $this->getCategoryId());
+		if ($permissionItem->canShow())
+		{
+			$settingsItems[] = $permissionItem->delimiter();
+			$settingsItems[] = $permissionItem->toArray();
+		}
+
 		if (count($settingsItems) > 0)
 		{
 			$settingsButton = new Buttons\SettingsButton([
@@ -379,6 +387,7 @@ abstract class ItemList extends Base
 	protected function getToolbarSettingsItems(): array
 	{
 		$settingsItems = [];
+
 		$userPermissions = $this->userPermissions;
 		if ($userPermissions->canUpdateType((int)$this->entityTypeId))
 		{

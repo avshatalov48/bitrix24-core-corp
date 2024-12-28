@@ -62,11 +62,23 @@ return [
 			'intranet.repository.invitation' => [
 				'className' => \Bitrix\Intranet\Repository\InvitationRepository::class,
 			],
+			'intranet.repository.invitation.link' => [
+				'className' => \Bitrix\Intranet\Repository\InvitationLinkRepository::class,
+			],
+			'intranet.service.invitation.token' => [
+				'className' => \Bitrix\Intranet\Service\InviteTokenService::class,
+			],
 			'intranet.repository.user' => [
 				'className' => \Bitrix\Intranet\Repository\UserRepository::class,
 			],
+			'intranet.service.user' => [
+				'className' => \Bitrix\Intranet\Service\UserService::class,
+			],
 			'intranet.service.invitation' => [
 				'className' => \Bitrix\Intranet\Service\InviteService::class
+			],
+			'intranet.service.invite.status' => [
+				'className' => \Bitrix\Intranet\Service\InviteStatusService::class
 			],
 			'intranet.service.registration' => [
 				'className' => \Bitrix\Intranet\Service\RegistrationService::class,

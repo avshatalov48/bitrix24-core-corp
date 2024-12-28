@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, exports, module) => {
 	const { Type } = require('type');
-
+	const { Feature } = require('im/messenger/lib/feature');
 	const { Logger } = require('im/messenger/lib/logger');
 
 	class VisibilityManager
@@ -41,12 +41,14 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 		}
 
 		/**
+		 * @param {?number|string} dialogId
+		 * @param {?string} dialogCode
 		 * @return {Promise<boolean>}
 		 */
-		checkIsDialogVisible(dialogId)
+		checkIsDialogVisible({ dialogId, dialogCode })
 		{
 			return new Promise((resolve) => {
-				if (!Type.isStringFilled(dialogId))
+				if (!Type.isStringFilled(dialogId) && !Type.isStringFilled(dialogCode))
 				{
 					resolve(false);
 
@@ -61,18 +63,23 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 				}
 
 				VisibilityManager.getNavigationContext()
-					.then((context) => {
+					.then(async (context) => {
 						const isCurrentTabVisible = context.navigationIsVisible;
-						const hasItemsInStack = Type.isArrayFilled(context.itemsInStack);
-						if (!isCurrentTabVisible || !hasItemsInStack)
+						if (dialogId && !isCurrentTabVisible)
 						{
 							resolve(false);
 
 							return;
 						}
 
-						const topItem = context.itemsInStack[context.itemsInStack.length - 1];
-						const isDialogWidgetOnTop = topItem.name && topItem.name === 'chat.dialog';
+						const topItem = await this.getTopItemInContext(context, dialogCode);
+						if (!topItem)
+						{
+							resolve(false);
+
+							return;
+						}
+						const isDialogWidgetOnTop = topItem.name === 'chat.dialog';
 						if (!isDialogWidgetOnTop)
 						{
 							resolve(false);
@@ -88,7 +95,7 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 							return;
 						}
 
-						if (widgetSettings.dialogId === dialogId)
+						if (topItem.code === dialogCode || widgetSettings.dialogId === dialogId)
 						{
 							resolve(true);
 
@@ -104,6 +111,43 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 					})
 				;
 			});
+		}
+
+		/**
+		 * @param {object} context
+		 * @param {?Array<object>} context.children
+		 * @param {?Array<object>} context.itemsInStack
+		 * @param {?string} dialogCode
+		 * @return {object|null}
+		 * @private
+		 */
+		async getTopItemInContext(context, dialogCode)
+		{
+			if (!Feature.isNavigationContextSupportsGetStack)
+			{
+				const hasItems = Type.isArrayFilled(context.itemsInStack);
+				if (!hasItems)
+				{
+					return null;
+				}
+
+				return context.itemsInStack[context.itemsInStack.length - 1];
+			}
+
+			const hasItems = dialogCode ? Type.isArrayFilled(context.children) : Type.isArrayFilled(context.itemsInStack);
+			if (!hasItems)
+			{
+				return null;
+			}
+
+			const stack = dialogCode
+				? await context.children[context.children.length - 1].getStack()
+				: await context.itemsInStack[context.itemsInStack.length - 1].getStack()
+			;
+
+			const stackKeys = Object.keys(stack);
+
+			return stack[stackKeys[stackKeys.length - 1]];
 		}
 	}
 

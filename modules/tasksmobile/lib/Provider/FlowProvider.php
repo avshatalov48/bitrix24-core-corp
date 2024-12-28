@@ -3,6 +3,7 @@
 namespace Bitrix\TasksMobile\Provider;
 
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\Type\Collection;
@@ -17,8 +18,9 @@ use Bitrix\Tasks\Flow\Grid\Preload\AverageCompletedTimePreloader;
 use Bitrix\Tasks\Flow\Grid\Preload\AveragePendingTimePreloader;
 use Bitrix\Tasks\Flow\Grid\Preload\CompletedTaskPreloader;
 use Bitrix\Tasks\Flow\Grid\Preload\PendingTaskPreloader;
+use Bitrix\Tasks\Flow\Integration\HumanResources\AccessCodeConverter;
 use Bitrix\Tasks\Flow\Option\OptionService;
-use Bitrix\Tasks\Flow\Provider\MembersProvider;
+use Bitrix\Tasks\Flow\Path\FlowPathMaker;
 use Bitrix\Tasks\Flow\Provider\Query\FlowQuery;
 use Bitrix\Tasks\Flow\Time\DatePresenter;
 use Bitrix\Tasks\Internals\Counter;
@@ -28,6 +30,7 @@ use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasksmobile\Dto\FlowDto;
 use Bitrix\TasksMobile\Dto\FlowRequestFilter;
 use Bitrix\Tasks\Flow\Search;
+use Bitrix\TasksMobile\FlowAiAdvice\Provider\FlowAiAdviceProvider;
 use CPullWatch;
 
 final class FlowProvider
@@ -154,22 +157,41 @@ final class FlowProvider
 		return \CUserOptions::setOption('show_flows_feature_info', 'enabled', false);
 	}
 
+	private function getIdsFromUsersArray(array $users): array
+	{
+		$ids = [];
+
+		foreach ($users as $user)
+		{
+			$ids[] = $user->id;
+		}
+
+		return $ids;
+	}
+
 	private function getFlowsInternal(FlowQuery $query): array
 	{
 		// ToDo check flow read permissions and allowance to create tasks in the flow
 
-		$userId = $this->userId;
 		$flowCollection = $this->getMainFlowProvider()->getList($query);
-
 		$flowCollectionTasksCount = $this->getMainFlowProvider()->getFlowTasksCount(
-			$userId,
+			$this->userId,
 			[Status::PENDING, Status::IN_PROGRESS, Status::SUPPOSEDLY_COMPLETED, Status::DEFERRED],
-			...$flowCollection->getIdList()
+			...$flowCollection->getIdList(),
 		);
+
+		$flowAiAdviceProvider = new FlowAiAdviceProvider();
+		if ($flowAiAdviceProvider->isFlowAiAdviceAvailable())
+		{
+			$flowTaskProvider = new \Bitrix\Tasks\Flow\Provider\TaskProvider();
+			$tasksTotal = $flowTaskProvider->getTotalTasks($flowCollection->getIdList());
+
+			$flowsAiAdvices = $flowAiAdviceProvider->getFlowsAiAdvices($flowCollection->getIdList(), $tasksTotal);
+		}
 
 		$this->preloadFlowData($flowCollection);
 
-		$membersProvider = new MembersProvider();
+		$memberFacade = ServiceLocator::getInstance()->get('tasks.flow.member.facade');
 
 		$items = [];
 		$userIds = [];
@@ -184,9 +206,9 @@ final class FlowProvider
 
 			$ownerId = $flow->getOwnerId();
 			$creatorId = $flow->getCreatorId();
-			$pendingUserIds = array_keys($this->getPendingTaskPreloader()->get($flowId));
-			$atWorkUserIds = array_keys($this->getAtWorkTaskPreloader()->get($flowId));
-			$completedUserIds = array_keys($this->getCompletedTaskPreloader()->get($flowId));
+			$pendingUserIds = $this->getIdsFromUsersArray($this->getPendingTaskPreloader()->get($flowId));
+			$atWorkUserIds = $this->getIdsFromUsersArray($this->getAtWorkTaskPreloader()->get($flowId));
+			$completedUserIds = $this->getIdsFromUsersArray($this->getCompletedTaskPreloader()->get($flowId));
 			$averagePendingTime = $this->getAveragePendingTimePreloader()->get($flowId)->getFormatted();
 			$averageAtWorkTime = $this->getAverageAtWorkTimePreloader()->get($flowId)->getFormatted();
 			$averageCompletedTime = $this->getAverageCompletedTimePreloader()->get($flowId)->getFormatted();
@@ -204,16 +226,16 @@ final class FlowProvider
 			$groupId = $flow->getGroupId();
 			$groupIds[] = $groupId;
 
-			$flowTasksCount = $flowCollectionTasksCount[$flowId] ?? 0;
+			$taskCreators = $memberFacade->getTaskCreatorAccessCodes($flowId);
 
-			$taskCreators = $membersProvider->getTaskCreators($flow->getId());
-			$taskAssignees = $membersProvider->getAssignees($flow->getId());
+			$taskAssigneeAccessCodes = $memberFacade->getTeamAccessCodes($flowId);
+			$taskAssignees = (new AccessCodeConverter(...$taskAssigneeAccessCodes))->getUserIds();
 
 			$enableFlowUrl = null;
 			$flowActive = $flow->isActive();
 			if (!$flowActive)
 			{
-				$pathMakerInstance = new \Bitrix\Tasks\Flow\Path\FlowPathMaker(ownerId: $this->userId);
+				$pathMakerInstance = new FlowPathMaker(ownerId: $this->userId);
 				$enableFlowUrl = $pathMakerInstance->addQueryParam('demo_flow', $flowId)->makeEntitiesListPath();
 			}
 
@@ -234,23 +256,23 @@ final class FlowProvider
 				pending: $pendingUserIds,
 				atWork: $atWorkUserIds,
 				completed: $completedUserIds,
-				myTasksTotal: $flowTasksCount,
-				myTasksCounter: $this->getFlowCounters($flow, $userId),
+				tasksTotal: $tasksTotal[$flowId] ?? null,
+				myTasksTotal: $flowCollectionTasksCount[$flowId] ?? 0,
+				myTasksCounter: $this->getFlowCounters($flow, $this->userId),
 				averagePendingTime: $averagePendingTime,
 				averageAtWorkTime: $averageAtWorkTime,
 				averageCompletedTime: $averageCompletedTime,
 				plannedCompletionTimeText: $plannedCompletionTimeText,
 				enableFlowUrl: $enableFlowUrl,
 				activity: $flowData['activity']?->getTimestamp() ?? 0, // ToDo no getters $flow->getActivity(),
-				description: $flowData['description'] ?? null, // $flow->getDescription(),
-				responsibleQueue: $flowData['responsibleQueue'] ?? null, // $flow->getResponsibleQueue(),
-				manualDistributorId: $flowData['manualDistributorId'] ?? null, // $flow->getManualDistributorId(),
-				responsibleCanChangeDeadline: $flowData['responsibleCanChangeDeadline'] ?? null, // $flow->isResponsibleCanChangeDeadline(),
-				matchWorkTime: $flowData['matchWorkTime'] ?? null, // $flow->isMatchWorkTime(),
-				notifyAtHalfTime: $flowData['notifyAtHalfTime'] ?? null, // $flow->isNotifyAtHalfTime(),
-				notifyOnQueueOverflow: $flowData['notifyOnQueueOverflow'] ?? null, // $flow->isNotifyOnQueueOverflow(),
-				notifyOnTasksInProgressOverflow: $flowData['notifyOnTasksInProgressOverflow'] ?? null, // $flow->isNotifyOnTasksInProgressOverflow(),
-				notifyWhenEfficiencyDecreases: $flowData['notifyWhenEfficiencyDecreases'] ?? null, // $flow->isNotifyWhenEfficiencyDecreases(),
+				description: $flowData['description'] ?? null,
+				responsibleCanChangeDeadline: $flowData['responsibleCanChangeDeadline'] ?? null,
+				matchWorkTime: $flowData['matchWorkTime'] ?? null,
+				notifyAtHalfTime: $flowData['notifyAtHalfTime'] ?? null,
+				notifyOnQueueOverflow: $flowData['notifyOnQueueOverflow'] ?? null,
+				notifyOnTasksInProgressOverflow: $flowData['notifyOnTasksInProgressOverflow'] ?? null,
+				notifyWhenEfficiencyDecreases: $flowData['notifyWhenEfficiencyDecreases'] ?? null,
+				aiAdvice: $flowsAiAdvices[$flowId] ?? null,
 			);
 		}
 

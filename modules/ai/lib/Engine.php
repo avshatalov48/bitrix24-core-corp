@@ -32,6 +32,7 @@ class Engine
 		'text' => 'text',
 		'image' => 'image',
 		'audio' => 'audio',
+		'call' => 'call',
 	];
 
 	private const CONFIG_PREFIX = 'engine_';
@@ -55,7 +56,7 @@ class Engine
 
 	/** @var callable $errorCallback */
 	private $errorCallback;
-	private bool $completionsStart = false;
+	private bool $needRollbackConsumption = false;
 	protected LimitControlService $limitControlService;
 
 	private function __construct(
@@ -644,7 +645,7 @@ class Engine
 	 */
 	public function internalErrorCallback(Error $error): void
 	{
-		if ($this->completionsStart)
+		if ($this->needRollbackConsumption)
 		{
 			$this->getLimitControlService()->rollbackConsumption(
 				new Limiter\Usage($this->engine->getContext()),
@@ -726,7 +727,7 @@ class Engine
 	 */
 	public function completions(bool $queue = false): void
 	{
-		if (Config::getValue('force_queue') === 'Y')
+		if (Config::getValue('force_queue') === 'Y' && $this->isNotTranslatePicturePrompt())
 		{
 			$queue = true;
 		}
@@ -780,7 +781,6 @@ class Engine
 				return;
 			}
 
-			$this->completionsStart = true;
 			$consumptionId = $limitControlService->commitRequest($reservedRequest);
 
 			$this->engine->setConsumptionId($consumptionId);
@@ -809,6 +809,17 @@ class Engine
 		]);
 
 		$event->send();
+	}
+
+	private function isNotTranslatePicturePrompt(): bool
+	{
+		$payload = $this->engine->getPayload();
+		if (!$payload instanceof Payload\Prompt)
+		{
+			return true;
+		}
+
+		return ($payload->getPromptCode() !== 'translate_picture_request');
 	}
 
 	public function throwErrorLimit(ReserveRequest $reservedRequest): void

@@ -9,6 +9,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		EventType,
 		BotCode,
 		Analytics,
+		DialogWidgetType,
 		OpenDialogContextType,
 	} = require('im/messenger/const');
 	const { MessageService } = require('im/messenger/provider/service');
@@ -38,7 +39,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 
 		getDialogType()
 		{
-			return 'copilot';
+			return DialogWidgetType.copilot;
 		}
 
 		checkCanHaveAttachments()

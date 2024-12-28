@@ -43,6 +43,7 @@ class User extends Base
 	public function toArray(): array
 	{
 		return [
+			'id' => $this->getId(),
 			'title' => $this->getTitle(),
 			'detailUrl' => $this->getDetailUrl(),
 			'imageUrl' => $this->getImageUrl(),

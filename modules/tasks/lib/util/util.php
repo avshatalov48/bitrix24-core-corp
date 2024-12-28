@@ -127,9 +127,21 @@ class Util
 	 *
 	 * @param bool $brackets
 	 * @return string
+	 *
+	 * @use \Bitrix\Main\UuidGenerator::generateV4()
 	 */
 	public static function generateUUID($brackets = true)
 	{
+		if (class_exists('\Bitrix\Main\UuidGenerator'))
+		{
+			if ($brackets)
+			{
+				return '{' . \Bitrix\Main\UuidGenerator::generateV4() . '}';
+			}
+
+			return \Bitrix\Main\UuidGenerator::generateV4();
+		}
+
 		$uuid = '';
 
 		if ($brackets)

@@ -8,7 +8,7 @@ import './css/history-image.css';
 
 export class HistoryImage extends HistoryBase
 {
-	static imagesInItem = 4;
+	static imagesInItem = 1;
 
 	render(): HTMLElement
 	{

@@ -6,7 +6,7 @@ jn.define('layout/ui/fields/entity-selector/theme/air', (require, exports, modul
 	const { withTheme } = require('layout/ui/fields/theme');
 	const { FieldWrapper } = require('layout/ui/fields/theme/air/elements/field-wrapper');
 	const { Content } = require('layout/ui/fields/entity-selector/theme/air/src/content');
-	const { Entity } = require('layout/ui/fields/entity-selector/theme/air/src/entity');
+	const { AirThemeEntity } = require('layout/ui/fields/entity-selector/theme/air/src/entity');
 
 	/**
 	 * @param  {EntitySelectorField} field - instance of the EntitySelectorFieldClass.
@@ -14,7 +14,7 @@ jn.define('layout/ui/fields/entity-selector/theme/air', (require, exports, modul
 	 */
 	const AirTheme = ({ field }) => FieldWrapper(
 		{ field },
-		Content(Entity)({ field }),
+		Content((props) => new AirThemeEntity(props))({ field }),
 	);
 
 	/** @type {function(object): object} */
@@ -23,6 +23,8 @@ jn.define('layout/ui/fields/entity-selector/theme/air', (require, exports, modul
 	module.exports = {
 		Content,
 		AirTheme,
+		FieldWrapper,
+		AirThemeEntity,
 		EntitySelectorField,
 	};
 });

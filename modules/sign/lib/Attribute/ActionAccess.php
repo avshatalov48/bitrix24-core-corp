@@ -9,8 +9,9 @@ class ActionAccess
 {
 	public function __construct(
 		public string $permission,
+		/** @var null|\Bitrix\Sign\Type\Access\AccessibleItemType::* $itemType */
 		public ?string $itemType = null,
-		public ?string $itemIdRequestKey = null,
+		public ?string $itemIdOrUidRequestKey = null,
 	)
 	{}
 }

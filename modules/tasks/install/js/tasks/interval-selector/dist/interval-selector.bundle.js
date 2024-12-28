@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core,main_popup) {
+(function (exports,main_core,main_popup,main_core_events) {
 	'use strict';
 
 	let _ = t => t,
@@ -14,8 +14,9 @@ this.BX = this.BX || {};
 	var _showIntervalMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showIntervalMenu");
 	var _getIntervalPhrase = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getIntervalPhrase");
 	var _getIntervalDuration = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getIntervalDuration");
-	class IntervalSelector {
+	class IntervalSelector extends main_core_events.EventEmitter {
 	  constructor(params = {}) {
+	    super(params);
 	    Object.defineProperty(this, _getIntervalDuration, {
 	      value: _getIntervalDuration2
 	    });
@@ -41,6 +42,7 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    this.setEventNamespace('BX.Tasks.IntervalSelector');
 	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = params;
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout] = {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _intervals)[_intervals] = params.intervals || DEFAULT_INTERVALS;
@@ -107,6 +109,9 @@ this.BX = this.BX || {};
 	      text: babelHelpers.classPrivateFieldLooseBase(this, _getIntervalPhrase)[_getIntervalPhrase](interval),
 	      onclick: (e, item) => {
 	        this.setInterval(item.id);
+	        this.emit('intervalChanged', {
+	          'interval': item.id
+	        });
 	        menu.close();
 	      }
 	    })),
@@ -145,5 +150,5 @@ this.BX = this.BX || {};
 
 	exports.IntervalSelector = IntervalSelector;
 
-}((this.BX.Tasks = this.BX.Tasks || {}),BX,BX.Main));
+}((this.BX.Tasks = this.BX.Tasks || {}),BX,BX.Main,BX.Event));
 //# sourceMappingURL=interval-selector.bundle.js.map

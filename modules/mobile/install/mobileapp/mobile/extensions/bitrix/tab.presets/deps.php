@@ -9,6 +9,7 @@ return [
 		'alert',
 		'loc',
 		'ui-system/blocks/icon',
+		'tourist',
 	],
 
 	'bundle' => [

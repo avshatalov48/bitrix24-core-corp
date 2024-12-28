@@ -200,6 +200,7 @@ $APPLICATION->IncludeComponent("bitrix:socialnetwork_user", ".default", array(
 		"user_blog_draft" => "user/#user_id#/blog/draft/",
 		"user_blog_post" => "user/#user_id#/blog/#post_id#/",
 		"user_tasks" => "user/#user_id#/tasks/",
+		"user_calendar"	=>	"user/#user_id#/calendar/",
 		"user_tasks_task" => "user/#user_id#/tasks/task/#action#/#task_id#/",
 		"user_tasks_view" => "user/#user_id#/tasks/view/#action#/#view_id#/",
 /* modified by wladart */

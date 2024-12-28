@@ -1566,11 +1566,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        result.avatar = encodeURI("".concat(this.controller.getHost(), "/bitrix/mobileapp/immobile/components/im/messenger/images/avatar_general_x3.png"));
 	      }
 	      result.name = dialog.name;
-	      var chatTypeTitle = this.getLocalize('MOBILE_HEADER_MENU_CHAT_TYPE_CHAT_NEW');
+	      var chatTypeTitle = this.getLocalize('MOBILE_HEADER_MENU_CHAT_TYPE_CHAT_NEW_MSGVER_1');
 	      if (this.chatShowUserCounter && this.getLocalize().MOBILE_HEADER_MENU_CHAT_USER_COUNT) {
 	        chatTypeTitle = this.getLocalize('MOBILE_HEADER_MENU_CHAT_USER_COUNT').replace('#COUNT#', dialog.userCounter);
 	      } else if (this.getLocalize()["MOBILE_HEADER_MENU_CHAT_TYPE_".concat(dialog.type.toUpperCase(), "_NEW")]) {
 	        chatTypeTitle = this.getLocalize("MOBILE_HEADER_MENU_CHAT_TYPE_".concat(dialog.type.toUpperCase(), "_NEW"));
+	      } else if (this.getLocalize()["MOBILE_HEADER_MENU_CHAT_TYPE_".concat(dialog.type.toUpperCase(), "_NEW_MSGVER_1")]) {
+	        chatTypeTitle = this.getLocalize("MOBILE_HEADER_MENU_CHAT_TYPE_".concat(dialog.type.toUpperCase(), "_NEW_MSGVER_1"));
 	      }
 	      result.desc = chatTypeTitle;
 	      if (dialog.entityType === 'SUPPORT24_QUESTION') {

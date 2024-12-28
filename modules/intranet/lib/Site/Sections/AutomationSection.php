@@ -179,14 +179,7 @@ class AutomationSection
 		$currentUser = CurrentUser::get();
 		$userPermissions = Container::getInstance()->getUserPermissions($currentUser->getId());
 
-		if (self::isAutomatedSolutionListEnabled())
-		{
-			$menuSubItems = self::getAutomatedSolutionsMenuSubItems($router, $userPermissions);
-		}
-		else
-		{
-			$menuSubItems = self::getSmartProcessesMenuSubItems($router, $userPermissions);
-		}
+		$menuSubItems = self::getAutomatedSolutionsMenuSubItems($router, $userPermissions);
 
 		if (empty($menuSubItems))
 		{
@@ -202,7 +195,7 @@ class AutomationSection
 				'menu_item_id' => self::MENU_ITEMS_ID['smart_process'],
 				'top_menu_id' => 'top_menu_id_crm_dynamic',
 				'sub_menu' => $menuSubItems,
-				'is_new' => self::isAutomatedSolutionListEnabled(),
+				'is_new' => true,
 			],
 		];
 	}
@@ -278,6 +271,12 @@ class AutomationSection
 
 		$menuItems = [];
 
+		$canEditAutomatedSolutions =
+			method_exists($userPermissions, 'canEditAutomatedSolutions')
+			? $userPermissions->canEditAutomatedSolutions()
+			: $userPermissions->canWriteConfig()
+		;
+
 		foreach ($automatedSolutionManager->getExistingAutomatedSolutions() as $automatedSolution)
 		{
 			$automatedSolutionSubItems = [];
@@ -296,7 +295,7 @@ class AutomationSection
 			// user can read at least one type in the solution
 			if (!empty($automatedSolutionSubItems))
 			{
-				if ($userPermissions->canWriteConfig())
+				if ($canEditAutomatedSolutions)
 				{
 					$automatedSolutionSubItems[] = [
 						'IS_DELIMITER' => true,
@@ -318,7 +317,7 @@ class AutomationSection
 			}
 		}
 
-		if ($userPermissions->canWriteConfig())
+		if ($canEditAutomatedSolutions)
 		{
 			if (!empty($menuItems))
 			{
@@ -335,14 +334,6 @@ class AutomationSection
 		}
 
 		return $menuItems;
-	}
-
-	private static function isAutomatedSolutionListEnabled(): bool
-	{
-		return (
-			method_exists(Crm\Settings\Crm::class, 'isAutomatedSolutionListEnabled')
-			&& Crm\Settings\Crm::isAutomatedSolutionListEnabled()
-		);
 	}
 
 	public static function getRpa(): array

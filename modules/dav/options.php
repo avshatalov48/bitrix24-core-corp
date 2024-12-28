@@ -45,7 +45,7 @@ $aTabs = array(
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
 if(
-	($REQUEST_METHOD ?? null) === "POST" &&
+	($_SERVER['REQUEST_METHOD'] ?? null) === "POST" &&
 	(!empty($Update) || !empty($Apply) || !empty($RestoreDefaults))
 	&& check_bitrix_sessid()
 )
@@ -66,8 +66,21 @@ if(
 		{
 			$name = $arOption[0] ?? null;
 			$val = $_REQUEST[$name] ?? null;
+
 			if($arOption[3][0]=="checkbox" && $val!="Y")
 				$val="N";
+
+			if ($arOption[3][0] == "password")
+			{
+				if (isset($_REQUEST[$name . '_delete']) && $_REQUEST[$name . '_delete'] == "Y")
+				{
+					$val = '';
+				}
+				elseif ($val == '')
+				{
+					continue;
+				}
+			}
 
 			if (in_array($name, array("agent_calendar", "agent_calendar_caldav", "agent_contacts", "agent_tasks", "agent_mail")))
 				$oldVal = COption::GetOptionString("dav", $name, "N");
@@ -172,7 +185,8 @@ function ___dav_print_opt($arOption)
 				<?if ($arOption[0] == "exchange_mailbox") {echo GetMessage("DAV_EXCHANGE_MAILBOX_NAME");}?>
 				<input type="text" size="<?echo ($type[1] ?? null)?>" maxlength="255" value="<?echo htmlspecialcharsbx($val)?>" name="<?echo htmlspecialcharsbx($arOption[0])?>">
 			<?elseif($type[0]=="password"):?>
-				<input type="password" size="<?echo ($type[1] ?? null)?>" maxlength="255" value="<?echo htmlspecialcharsbx($val)?>" name="<?echo htmlspecialcharsbx($arOption[0])?>">
+				<input type="password" size="<?echo ($type[1] ?? null)?>" maxlength="255" value="" name="<?echo htmlspecialcharsbx($arOption[0])?>" autocomplete="new-password" placeholder="<?php if ($val != '') echo GetMessage('DAV_PASS_SET') ?>">
+				<?php if ($val != ''):?><label><input type="checkbox" name="<?echo htmlspecialcharsbx($arOption[0]) . '_delete'?>" value="Y" title="<?= GetMessage('DAV_PASS_DELETE_TITLE') ?>"> <?= GetMessage('DAV_PASS_DELETE') ?></label><?php endif?>
 			<?elseif($type[0]=="textarea"):?>
 				<textarea rows="<?echo ($type[1] ?? null)?>" cols="<?echo ($type[2] ?? null)?>" name="<?echo htmlspecialcharsbx($arOption[0])?>"><?echo htmlspecialcharsbx($val)?></textarea>
 			<?elseif($type[0]=="selectbox"):?>

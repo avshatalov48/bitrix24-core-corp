@@ -186,7 +186,7 @@ jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports
 				return false;
 			}
 
-			return this.visibilityManager.checkIsDialogVisible(this.dialogId);
+			return this.visibilityManager.checkIsDialogVisible({ dialogCode: this.view.dialogCode });
 		}
 
 		checkMessageOnScreen(messageId)

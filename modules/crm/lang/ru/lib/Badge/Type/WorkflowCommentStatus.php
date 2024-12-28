@@ -1,0 +1,4 @@
+<?php
+
+$MESS['CRM_BADGE_WORKFLOW_COMMENT_STATUS'] = 'Комментарии в процессе';
+$MESS['CRM_BADGE_WORKFLOW_COMMENT_STATUS_COMMENTS_ADDED'] = 'Добавлены';

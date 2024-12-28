@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Helper;
 
 use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Tasks\Integration\Intranet\User;
 use Bitrix\Tasks\Ui\Filter;
 
 class Analytics extends Common
@@ -48,6 +49,7 @@ class Analytics extends Common
 		'user' => 'user',
 		'comment' => 'comment',
 		'flows' => 'flows',
+		'collab' => 'collab',
 	];
 
 	public const SUB_SECTION = [
@@ -251,7 +253,7 @@ class Analytics extends Common
 	 * @return void
 	 * @throws ArgumentException
 	 */
-	public function onCommentAdd(): void
+	public function onCommentAdd(string $section = self::SECTION['tasks'], array $params = []): void
 	{
 		$analyticsEvent = new AnalyticsEvent(
 			self::EVENT['comment_add'],
@@ -261,11 +263,12 @@ class Analytics extends Common
 
 		$this->sendAnalytics(
 			$analyticsEvent,
-			self::SECTION['tasks'],
+			$section,
 			self::ELEMENT['send_button'],
 			self::SUB_SECTION['task_card'],
 			true,
-			self::COMMENT_TYPE
+			self::COMMENT_TYPE,
+			$params
 		);
 	}
 
@@ -366,6 +369,31 @@ class Analytics extends Common
 		{
 			AddEventToStatFile('tasks', $action, $tag, $label, $actionType, $userId);
 		}
+	}
+
+	public function getUserTypeParameter(): string
+	{
+		if ($this->userId <= 0)
+		{
+			return '';
+		}
+
+		if (User::isIntranet($this->userId))
+		{
+			return 'user_intranet';
+		}
+
+		if (User::isCollaber($this->userId))
+		{
+			return 'user_collaber';
+		}
+
+		return 'user_extranet';
+	}
+
+	public function getCollabParameter(int $collabId): string
+	{
+		return 'collabId_' . $collabId;
 	}
 
 	/**

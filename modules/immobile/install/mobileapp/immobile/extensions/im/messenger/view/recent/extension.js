@@ -2,15 +2,26 @@
  * @module im/messenger/view/recent
  */
 jn.define('im/messenger/view/recent', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { AnalyticsEvent } = require('analytics');
+	const AppTheme = require('apptheme');
 	const { Runtime } = require('runtime');
+	const { Loc } = require('loc');
+
+	const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
+
+	const {
+		EventType,
+		FeatureFlag,
+		ComponentCode,
+		ActionByUserType,
+	} = require('im/messenger/const');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { MessengerParams } = require('im/messenger/lib/params');
+	const { UserPermission } = require('im/messenger/lib/permission-manager');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('recent--view');
 
 	const { View } = require('im/messenger/view/base');
-	const { EventType, FeatureFlag, ComponentCode } = require('im/messenger/const');
-	const { MessengerParams } = require('im/messenger/lib/params');
-	const AppTheme = require('apptheme');
-	const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
-	const { AnalyticsEvent } = require('analytics');
 
 	class RecentView extends View
 	{
@@ -34,10 +45,18 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				...options.style,
 			};
 
+			this.bindMethods();
 			this.subscribeEvents();
 			this.initTopMenu();
 			this.initSections();
-			this.initChatCreateButton();
+			this.renderChatCreateButton();
+		}
+
+		bindMethods()
+		{
+			this.itemWillDisplayHandler = this.itemWillDisplayHandler.bind(this);
+			this.showSearchBarButtonTapHandler = this.showSearchBarButtonTapHandler.bind(this);
+			this.createChatButtonTapHandler = this.createChatButtonTapHandler.bind(this);
 		}
 
 		get isLoaderShown()
@@ -51,7 +70,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 			if (FeatureFlag.list.itemWillDisplaySupported)
 			{
-				this.ui.on(EventType.recent.itemWillDisplay, this.onItemWillDisplay.bind(this));
+				this.ui.on(EventType.recent.itemWillDisplay, this.itemWillDisplayHandler);
 			}
 			else
 			{
@@ -78,12 +97,19 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 			if (FeatureFlag.isDevelopmentEnvironment)
 			{
-				topMenuButtons.push({
-					id: 'developer-menu',
-					title: 'Developer menu',
-					sectionCode: 'general',
-					iconName: 'start',
-				});
+				topMenuButtons.push(
+					{
+						id: 'developer-menu',
+						title: 'Developer menu',
+						sectionCode: 'general',
+						iconName: 'start',
+					},
+					{
+						id: 'developer-reload',
+						title: 'reload();',
+						sectionCode: 'general',
+					},
+				);
 			}
 
 			const topMenuButtonHandler = (event, item) => {
@@ -94,13 +120,17 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 					return;
 				}
 
-				if (
-					FeatureFlag.isDevelopmentEnvironment
-					&& event === 'onItemSelected'
-					&& item.id === 'developer-menu'
-				)
+				if (FeatureFlag.isDevelopmentEnvironment && event === 'onItemSelected')
 				{
-					showMessengerDeveloperMenu();
+					if (item.id === 'developer-menu')
+					{
+						showMessengerDeveloperMenu();
+					}
+
+					if (item.id === 'developer-reload')
+					{
+						reload();
+					}
 				}
 			};
 
@@ -120,7 +150,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			{
 				buttons.unshift({
 					type: 'search',
-					callback: this.showSearchBar.bind(this),
+					callback: this.showSearchBarButtonTapHandler,
 				});
 			}
 
@@ -151,9 +181,58 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			]);
 		}
 
-		initChatCreateButton()
+		renderChatCreateButton()
 		{
+			if (!this.checkShouldRenderChatCreateButton())
+			{
+				return;
+			}
+
 			this.setFloatingButton(this.getChatCreateButtonOption());
+		}
+
+		renderChatCreateButtonForWelcomeScreen()
+		{
+			if (!this.checkShouldRenderChatCreateButton())
+			{
+				return;
+			}
+
+			this.setFloatingButton(this.getChatCreateButtonForWelcomeScreenOption());
+		}
+
+		checkShouldRenderChatCreateButton()
+		{
+			if (
+				this.isCollabComponent()
+				&& (
+					!Feature.isCollabCreationAvailable
+					|| !UserPermission.canPerformActionByUserType(ActionByUserType.createCollab)
+				)
+			)
+			{
+				return false;
+			}
+
+			if (
+				this.isChannelComponent()
+				&& !UserPermission.canPerformActionByUserType(ActionByUserType.createChannel)
+			)
+			{
+				return false;
+			}
+
+			const userCanNotCreateChats = (
+				!UserPermission.canPerformActionByUserType(ActionByUserType.createChat)
+				&& !UserPermission.canPerformActionByUserType(ActionByUserType.createChannel)
+				&& !UserPermission.canPerformActionByUserType(ActionByUserType.createCollab)
+			);
+			if (this.isMessengerComponent() && userCanNotCreateChats)
+			{
+				return false;
+			}
+
+			return true;
 		}
 
 		isCopilotComponent()
@@ -170,6 +249,13 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			return componentCode === ComponentCode.imChannelMessenger;
 		}
 
+		isCollabComponent()
+		{
+			const componentCode = MessengerParams.getComponentCode();
+
+			return componentCode === ComponentCode.imCollabMessenger;
+		}
+
 		isMessengerComponent()
 		{
 			const componentCode = MessengerParams.getComponentCode();
@@ -181,15 +267,24 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		{
 			return {
 				type: 'plus',
-				callback: this.sendCreateChatEvent.bind(this),
+				callback: this.createChatButtonTapHandler,
 				icon: this.style.icon,
 				animation: 'hide_on_scroll',
 				color: this.style.chatCreateButtonColor,
 				showLoader: false,
+				accentByDefault: false,
 			};
 		}
 
-		onItemWillDisplay(item)
+		getChatCreateButtonForWelcomeScreenOption()
+		{
+			const button = this.getChatCreateButtonOption();
+			button.accentByDefault = true;
+
+			return button;
+		}
+
+		itemWillDisplayHandler(item)
 		{
 			if (item.id === this.loadNextPageItemId)
 			{
@@ -220,13 +315,15 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			this.ui.setSections(sectionList);
 		}
 
-		showSearchBar()
+		showSearchBarButtonTapHandler()
 		{
 			this.ui.showSearchBar();
 		}
 
 		setItems(items)
 		{
+			logger.log(`${this.constructor.name}.setItems`, items);
+
 			this.ui.setItems(items);
 			items.forEach((item) => {
 				this.itemCollection[item.id] = item;
@@ -235,6 +332,8 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 		addItems(items)
 		{
+			logger.log(`${this.constructor.name}.addItems`, items);
+
 			this.ui.addItems(items, true);
 			items.forEach((item) => {
 				this.itemCollection[item.id] = item;
@@ -243,20 +342,38 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 		updateItems(items)
 		{
+			logger.log(`${this.constructor.name}.updateItems`, items);
+
 			this.ui.updateItems(items);
 			items.forEach((item) => {
+				if (!this.itemCollection[item.element.id])
+				{
+					logger.error(`${this.constructor.name}.updateItems: updating item not found`, item.element.id);
+
+					return;
+				}
 				this.itemCollection[item.element.id] = item.element;
 			});
 		}
 
 		updateItem(filter, fields)
 		{
+			logger.log(`${this.constructor.name}.updateItem`, filter, fields);
+
 			this.ui.updateItem(filter, fields);
+			if (!this.itemCollection[fields.id])
+			{
+				logger.error(`${this.constructor.name}.updateItem: updating item not found`, fields.id);
+
+				return;
+			}
 			this.itemCollection[fields.id] = fields;
 		}
 
 		removeItem(itemFilter)
 		{
+			logger.log(`${this.constructor.name}.removeItem`, itemFilter);
+
 			this.ui.removeItem(itemFilter);
 			if (itemFilter.id)
 			{
@@ -326,7 +443,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 					upperText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_TEXT_1'),
 					lowerText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_TEXT_CREATE'),
 					iconName: 'ws_employees',
-					listener: this.sendCreateChatEvent.bind(this),
+					listener: this.createChatButtonTapHandler,
 				};
 			}
 
@@ -353,26 +470,28 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				};
 			}
 
+			if (this.isCollabComponent())
+			{
+				options = {
+					upperText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_COLLAB_UPPER_TEXT'),
+					lowerText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_COLLAB_LOWER_TEXT'),
+					iconName: 'ws_collabs',
+				};
+			}
+
 			this.ui.welcomeScreen.show(options);
+			this.renderChatCreateButtonForWelcomeScreen();
 		}
 
 		hideWelcomeScreen()
 		{
 			this.ui.welcomeScreen.hide();
+			this.renderChatCreateButton();
 		}
 
-		sendCreateChatEvent()
+		createChatButtonTapHandler()
 		{
 			this.emitCustomEvent(EventType.recent.createChat);
-
-			// if (this.style.showLoader) disable, because available copilot role control
-			// {
-			// 	const chatCreateButton = this.getChatCreateButtonOption();
-			// 	chatCreateButton.icon = Application.getPlatform() === 'ios' ? null : this.style.icon;
-			// 	chatCreateButton.showLoader = this.style.showLoader;
-			//
-			// 	this.setFloatingButton(chatCreateButton);
-			// }
 		}
 	}
 

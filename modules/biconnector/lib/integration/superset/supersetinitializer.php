@@ -15,6 +15,7 @@ use Bitrix\BIConnector\Superset\Logger\SupersetInitializerLogger;
 use Bitrix\BIConnector\Superset\MarketDashboardManager;
 use Bitrix\BIConnector\Superset\SystemDashboardManager;
 use Bitrix\BIConnector\Superset\UI\DashboardManager;
+use Bitrix\BIConnector\ExternalSource\DatasetManager;
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
@@ -407,6 +408,18 @@ final class SupersetInitializer
 	public static function deleteInstance(): Result
 	{
 		$result = new Result();
+		if (
+			!\Bitrix\Main\Loader::includeModule('bitrix24')
+			&& !ConfigContainer::getConfigContainer()->isPortalIdVerified()
+		)
+		{
+			self::fixDeleteTimestamp();
+			SupersetInitializer::clearSupersetData();
+			SupersetInitializer::setSupersetStatus(SupersetInitializer::SUPERSET_STATUS_DELETED);
+
+			return $result;
+		}
+
 		$response = Integrator::getInstance()->deleteSuperset();
 		if (!$response->hasErrors())
 		{
@@ -471,6 +484,15 @@ final class SupersetInitializer
 			{
 				AppTable::uninstall($app->getCode());
 				AppTable::update($app->getId(), ['ACTIVE' => 'N', 'INSTALLED' => 'N']);
+			}
+		}
+
+		foreach (DatasetManager::getList() as $dataset)
+		{
+			$deleteDatasetResult = DatasetManager::delete($dataset->getId());
+			if (!$deleteDatasetResult->isSuccess())
+			{
+				Logger::logErrors($deleteDatasetResult->getErrors(), ['clearSupersetData, deleting dataset ' . $dataset->getId()]);
 			}
 		}
 

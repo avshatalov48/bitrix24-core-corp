@@ -1,0 +1,77 @@
+.ai__roles-dialog_roles-library {
+	--ui-icon-set__icon-color: #8E52EC;
+	box-sizing: border-box;
+	min-height: 51px;
+	width: 100%;
+	display: flex;
+	padding: 8px 16px 0 8px;
+	color: #8E52EC;
+	background-color: var(--ui-color-background-primary);
+	cursor: pointer;
+	transition: color 0.2s linear;
+	border-radius: inherit;
+}
+
+.ai__roles-dialog_roles-library-wrapper {
+	background-color: var(--ui-color-background-primary);
+	display: flex;
+	--ui-icon-set__icon-size: 35px;
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.ai__roles-dialog_roles-library:hover {
+	--ui-icon-set__icon-color: #682AC6;
+	color: #682AC6;
+	transition-duration: 0s;
+}
+
+.ai__roles-dialog_roles-library:focus,
+.ai__roles-dialog_roles-library:active {
+	--ui-icon-set__icon-color: var(--ui-color-copilot-primary, #8E52EC);
+	color: var(--ui-color-copilot-dark, #682AC6);
+}
+
+.ai__roles-dialog_roles-library-inner {
+	width: 100%;
+	padding-bottom: 8px;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	border-bottom: var(--ui-border-width-thin) solid rgba(var(--ui-color-base-90-rgb), 0.05);
+}
+
+.ai__roles-dialog_roles-library-wrapper:last-child .ai__roles-dialog_roles-library-inner,
+.ai__roles-dialog_roles-library.--selected .ai__roles-dialog_roles-library-inner {
+	border-bottom-color: transparent;
+}
+
+.ai__roles-dialog_roles-library.--selected {
+	--ui-icon-set__icon-color: var(--ui-color-on-primary);
+	background-color: var(--ui-color-copilot-primary, #8E52EC);
+	color: var(--ui-color-on-primary);
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.ai__roles-dialog_roles-library-title-wrapper {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+}
+
+.ai__roles-dialog_roles-library-title {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-3xs);
+}
+
+.ai__roles-dialog_roles-library-label-new {
+	margin-left: 7px;
+}
+
+.ai__roles-dialog_roles-library-wrapper .ui-icon-set.--chevron-right,
+.ai__roles-dialog_roles-library-wrapper:hover .ui-icon-set.--chevron-right {
+	color: #B095DC;
+	background-color: #B095DC;
+}

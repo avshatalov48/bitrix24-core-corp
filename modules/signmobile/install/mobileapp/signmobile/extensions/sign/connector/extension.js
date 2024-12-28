@@ -4,6 +4,68 @@
 jn.define('sign/connector', (require, exports, module) => {
 
 	/**
+	 * @function getTemplateListPromise
+	 * @returns {Promise}
+	 */
+	function getTemplateListPromise()
+	{
+		return BX.ajax.runAction('sign.api_v1.b2e.document.template.list', {
+			json: true,
+		});
+	}
+
+	/**
+	 * @function getFieldsPromise
+	 * @returns {Promise}
+	 */
+	function getFieldsPromise(uid)
+	{
+		return BX.ajax.runAction('signmobile.api.template.getFields', {
+			json: {
+				uid
+			},
+		});
+	}
+
+	/**
+	 * @function isSendDocumentByEmployeeEnabled
+	 * @returns {Promise}
+	 */
+	function isSendDocumentByEmployeeEnabled()
+	{
+		return BX.ajax.runAction('signmobile.api.document.isE2bAvailable', {
+			json: true,
+		});
+	}
+
+	/**
+	 * @function sendTemplate
+	 * @returns {Promise}
+	 */
+	function sendTemplate(uid, fields)
+	{
+		return BX.ajax.runAction('sign.api_v1.b2e.document.template.send', {
+			json: {
+				uid,
+				fields,
+			},
+		});
+	}
+
+	/**
+	 * @function getMember
+	 * @returns {Promise}
+	 */
+	function getMember(uid)
+	{
+		return BX.ajax.runAction('sign.api_v1.document.member.get', {
+			json: {
+				uid,
+			},
+		});
+	}
+
+	/**
 	 * @function getSigningLinkPromise
 	 * @returns {Promise}
 	 */
@@ -86,6 +148,11 @@ jn.define('sign/connector', (require, exports, module) => {
 	}
 
 	module.exports = {
+		getTemplateListPromise,
+		getFieldsPromise,
+		isSendDocumentByEmployeeEnabled,
+		sendTemplate,
+		getMember,
 		getSigningLinkPromise,
 		signingAccept,
 		confirmationAccept,

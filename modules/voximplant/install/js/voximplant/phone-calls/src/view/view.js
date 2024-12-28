@@ -341,6 +341,9 @@ export class PhoneCallView
 		this.currentTabName = '';
 		this.moreTabsMenu = null;
 
+		//customTabs
+		this.customTabs = {};
+
 		// callList
 		this.callListId = params.callListId || 0;
 		this.callListStatusId = params.callListStatusId || null;
@@ -423,7 +426,8 @@ export class PhoneCallView
 			tabs: {
 				callList: null,
 				webform: null,
-				app: null
+				app: null,
+				custom: null,
 			},
 			tabsBody: {
 				callList: null,
@@ -613,7 +617,7 @@ export class PhoneCallView
 			},
 			children: [
 				this.elements.topLevelButtonsContainer = Dom.create("div"),
-				Dom.create("div", {
+				this.elements.phoneCallWrapper = Dom.create("div", {
 					props: {className: 'im-phone-call-wrapper' + (this.hasSideBar() ? '' : ' im-phone-call-wrapper-without-sidebar')},
 					children: [
 						Dom.create("div", {
@@ -736,7 +740,7 @@ export class PhoneCallView
 		}
 		else
 		{
-			return (this.callListId > 0 || this.webformId > 0 || this.restApps.length > 0);
+			return (this.callListId > 0 || this.webformId > 0 || this.restApps.length > 0 || Object.keys(this.customTabs).length > 0);
 		}
 	};
 
@@ -882,6 +886,41 @@ export class PhoneCallView
 	{
 		let tabs = [];
 		let tabsBody = [];
+		
+		if (Object.keys(this.customTabs).length > 0)
+		{
+			Object.keys(this.customTabs).forEach(tabKey => {
+				const customTabId = this.customTabs[tabKey].id;
+				const tabTitle = this.customTabs[tabKey].title;
+				const tabId = `custom${customTabId}`;
+
+				this.elements.tabs[tabId] = Dom.create("span", {
+					props: {className: 'im-phone-sidebar-tab'},
+					dataset: {tabId: tabId, tabBodyId: `custom${customTabId}`},
+					text: Text.encode(tabTitle),
+					events: {click: this._onTabHeaderClick.bind(this)}
+				});
+				tabs.push(this.elements.tabs[tabId]);
+
+
+				if (!this.elements.tabsBody[tabId])
+				{
+					this.elements.tabsBody[tabId] = Dom.create('div', {
+						props: {
+							className: `voximplant-phone-call-${tabId}-container`
+						},
+						children: [
+							Dom.create('div', {
+								props: {
+									className: `voximplant-phone-call-${tabId}-tab-content voximplant-phone-call-custom-container`
+								},
+							}),
+						]
+					});
+				}
+				tabsBody.push(this.elements.tabsBody[tabId]);
+			})
+		}
 
 		if (this.callListId > 0)
 		{
@@ -892,7 +931,11 @@ export class PhoneCallView
 				events: {click: this._onTabHeaderClick.bind(this)}
 			});
 			tabs.push(this.elements.tabs.callList);
-			this.elements.tabsBody.callList = Dom.create('div');
+
+			if (!this.elements.tabsBody.callList)
+			{
+				this.elements.tabsBody.callList = Dom.create('div');
+			}
 			tabsBody.push(this.elements.tabsBody.callList);
 		}
 
@@ -905,13 +948,20 @@ export class PhoneCallView
 				events: {click: this._onTabHeaderClick.bind(this)}
 			});
 			tabs.push(this.elements.tabs.webform);
-			this.elements.tabsBody.webform = Dom.create('div', {props: {className: 'im-phone-call-form-container'}});
+
+			if (!this.elements.tabsBody.webform)
+			{
+				this.elements.tabsBody.webform = Dom.create('div', {props: {className: 'im-phone-call-form-container'}});
+			}
 			tabsBody.push(this.elements.tabsBody.webform);
 
-			this.formManager = new FormManager({
-				node: this.elements.tabsBody.webform,
-				onFormSend: this._onFormSend.bind(this)
-			})
+			if (!this.formManager)
+			{
+				this.formManager = new FormManager({
+					node: this.elements.tabsBody.webform,
+					onFormSend: this._onFormSend.bind(this)
+				})
+			}
 		}
 
 		if (this.restApps.length > 0 && this.isRestAppsSupported())
@@ -929,39 +979,70 @@ export class PhoneCallView
 				tabs.push(this.elements.tabs[tabId]);
 
 			});
-			this.elements.tabsBody.app = Dom.create('div', {props: {className: 'im-phone-call-app-container'}});
+			if (!this.elements.tabsBody.app)
+			{
+				this.elements.tabsBody.app = Dom.create('div', {props: {className: 'im-phone-call-app-container'}});
+			}
 			tabsBody.push(this.elements.tabsBody.app);
 		}
 
-		this.elements.sidebarContainer = Dom.create("div", {
-			props: {className: 'im-phone-sidebar-wrap'}, children: [
+		this.elements.tabsTitleListContainer = Dom.create("div", {
+			props: {className: 'im-phone-sidebar-tabs-container'}, children: [
+				this.elements.tabsContainer = Dom.create("div", {
+					props: {className: 'im-phone-sidebar-tabs-left'},
+					children: tabs
+				}),
 				Dom.create("div", {
-					props: {className: 'im-phone-sidebar-tabs-container'}, children: [
-						this.elements.tabsContainer = Dom.create("div", {
-							props: {className: 'im-phone-sidebar-tabs-left'},
-							children: tabs
-						}),
-						Dom.create("div", {
-							props: {className: 'im-phone-sidebar-tabs-right'}, children: [
-								this.elements.moreTabs = Dom.create("span", {
-									props: {className: 'im-phone-sidebar-tab im-phone-sidebar-tab-more'},
-									style: {display: 'none'},
-									dataset: {},
-									text: Loc.getMessage('IM_PHONE_CALL_VIEW_MORE'),
-									events: {click: this._onTabMoreClick.bind(this)}
-								})
-							]
+					props: {className: 'im-phone-sidebar-tabs-right'}, children: [
+						this.elements.moreTabs = Dom.create("span", {
+							props: {className: 'im-phone-sidebar-tab im-phone-sidebar-tab-more'},
+							style: {display: 'none'},
+							dataset: {},
+							text: Loc.getMessage('IM_PHONE_CALL_VIEW_MORE'),
+							events: {click: this._onTabMoreClick.bind(this)}
 						})
 					]
-				}),
-				this.elements.tabsBodyContainer = Dom.create("div", {
-					props: {className: 'im-phone-sidebar-tabs-body-container'},
-					children: tabsBody
 				})
 			]
 		});
 
-		if (this.callListId > 0)
+		this.elements.tabsBodyContainer = Dom.create("div", {
+			props: {className: 'im-phone-sidebar-tabs-body-container'},
+			children: tabsBody
+		})
+
+		if (this.elements.sidebarContainer)
+		{
+			this.elements.sidebarContainer.replaceChild(
+				this.elements.tabsTitleListContainer,
+				this.elements.sidebarContainer.firstChild
+			);
+			this.elements.sidebarContainer.replaceChild(
+				this.elements.tabsBodyContainer,
+				this.elements.sidebarContainer.lastChild
+			);
+			setTimeout(() => this.checkMoreButton(), 0);
+		}
+		else
+		{
+			this.elements.sidebarContainer = Dom.create("div", {
+				props: {className: 'im-phone-sidebar-wrap'}, children: [
+					this.elements.tabsTitleListContainer,
+					this.elements.tabsBodyContainer,
+				]
+			});
+		}
+
+		if (Object.keys(this.customTabs).length > 0)
+		{
+			const selectedCustomTab = Object.keys(this.customTabs)[0];
+			this.setActiveTab({
+				tabId: `custom${this.customTabs[selectedCustomTab].id}`,
+				tabBodyId: `custom${this.customTabs[selectedCustomTab].id}`,
+				hidden: this.customTabs[selectedCustomTab].visible,
+			});
+		}
+		else if (this.callListId > 0)
 		{
 			this.setActiveTab({tabId: 'callList', tabBodyId: 'callList'});
 		}
@@ -1059,6 +1140,98 @@ export class PhoneCallView
 			]
 		});
 	};
+
+	addTab(tabName, tabId = '')
+	{
+		if (!tabId)
+		{
+			tabId = Math.random().toString(36).substr(2, 9);
+		}
+
+		return new Promise((resolve) => {
+			const tab = {
+				title: tabName,
+				id: tabId,
+				callId: this.callId,
+				contentContainerId: `voximplant-phone-call-${tabId}-container`,
+				visible: true,
+				visibilityChangeCallback: null,
+
+				getContentContainerId: () => {
+					return this.elements.tabsBody[`custom${tabId}`];
+				},
+				setContent: (content: Dom) => {
+					this.elements.tabsBody[`custom${tabId}`].replaceChild(
+						content,
+						this.elements.tabsBody[`custom${tabId}`].firstChild
+					);
+				},
+				setVisibilityChangeCallback(callback) {
+					this.visibilityChangeCallback = callback;
+				},
+				setTitle: (newTitle: string) => {
+					this.customTabs[tabId].title = newTitle;
+					this.elements.tabs[`custom${tabId}`].innerText = newTitle;
+				},
+				setVisibility: (newValue: boolean) => {
+					this.customTabs[tabId].visible = newValue;
+					this.createSidebarLayout();
+				},
+				remove: () => {
+					delete this.customTabs[tabId];
+
+					if (!this.hasSideBar())
+					{
+						this.elements.main.removeChild(this.elements.sidebarContainer);
+						this.elements.sidebarContainer = null;
+						this.resizeCallCard()
+
+						return;
+					}
+
+					this.createSidebarLayout();
+				}
+			};
+			this.customTabs[tabId] = tab;
+
+			if (this.elements.sidebarContainer)
+			{
+				this.createSidebarLayout();
+			}
+			else
+			{
+				this.createSidebarLayout();
+				this.elements.main.appendChild(this.elements.sidebarContainer);
+				this.elements.phoneCallWrapper.classList.remove('im-phone-call-wrapper-without-sidebar')
+				this.resizeCallCard()
+			}
+
+			resolve(tab);
+		});
+	}
+
+	resizeCallCard()
+	{
+		if (this.isDesktop())
+		{
+			this.elements.main.style.position = 'fixed';
+			this.elements.main.style.top = 0;
+			this.elements.main.style.bottom = 0;
+			this.elements.main.style.left = 0;
+			this.elements.main.style.right = 0;
+		}
+		else
+		{
+			this.elements.main.style.width = this.getInitialWidth() + 'px';
+			this.elements.main.style.height = this.getInitialHeight() + 'px';
+		}
+
+		if (this.isDesktop())
+		{
+			this.resizeWindow(this.getInitialWidth(), this.getInitialHeight());
+		}
+		this.adjust();
+	}
 
 	setActiveTab(params)
 	{
@@ -1760,10 +1933,18 @@ export class PhoneCallView
 			'PHONE_NUMBER': this.phoneNumber
 		});
 
+		let enableCopilotReplacement = 'Y';
+
+		if (this.isCallListMode())
+		{
+			enableCopilotReplacement = 'N';
+		}
+
 		BX.ajax.runAction("voximplant.callview.getCrmCard", {
 			data: {
 				entityType: entityType,
-				entityId: entityId
+				entityId: entityId,
+				isEnableCopilotReplacement: enableCopilotReplacement,
 			}
 		}).then((response) =>
 		{

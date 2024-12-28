@@ -8,4 +8,5 @@ type ProductSelectorProps = {
 	onSelect: () => void,
 	isCatalogHidden: boolean,
 	isOnecRestrictedByPlan: boolean,
+	analyticsSection: string,
 }

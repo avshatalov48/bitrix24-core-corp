@@ -100,7 +100,7 @@ class FbInstagramDirect extends InstagramBase
 			{
 				$message['extra']['comment_id'] = $lastMessageId;
 
-				//Chat::deleteLastMessage($message['chat']['id'], $this->idConnector);
+				Chat::deleteLastMessage($message['chat']['id'], $this->idConnector);
 			}
 		}
 

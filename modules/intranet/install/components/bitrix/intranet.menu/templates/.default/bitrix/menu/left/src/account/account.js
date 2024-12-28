@@ -39,13 +39,13 @@ export class Account
 	getSumCounters(): number
 	{
 		let sum = 0;
-		for (let counterId of Object.keys(this.allCounters))
+		for (const counterId of Object.keys(this.allCounters))
 		{
 			if (counterId === 'tasks_effective' || counterId === 'invited_users')
 			{
 				continue;
 			}
-			let val = this.allCounters[counterId] ? parseInt(this.allCounters[counterId]) : 0;
+			const val = this.allCounters[counterId] ? parseInt(this.allCounters[counterId], 10) : 0;
 			sum += val;
 		}
 
@@ -138,13 +138,14 @@ export class Account
 	{
 		const block = document.getElementsByClassName('intranet__desktop-menu_user')[0];
 		const counters = this.getSumCounters();
+		const countersView = counters > 99 ? '99+' : counters;
 		this.removeElements('intranet__desktop-menu_user-block');
 
 		let userData = Tag.render`<div class="intranet__desktop-menu_user-block ${ counters > 0 ? 'intranet__desktop-menu_item_counters' : ''}">
 				<span class="intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-desktop">
 					<i></i>
 					<div class="intranet__desktop-menu_user-counter ui-counter ui-counter-md ui-counter-danger">
-						<div class="ui-counter-inner" data-role="counter">${counters}</div>
+						<div class="ui-counter-inner" data-role="counter">${countersView}</div>
 					</div>
 				</span>
 				<span class="intranet__desktop-menu_user-inner">
@@ -217,17 +218,18 @@ export class Account
 				counters = this.getSumCounters();
 				currentUserClass = '--selected';
 			}
+			const countersView = counters > 99 ? '99+' : counters;
 
 			let item = Tag.render`<li class="intranet__desktop-menu_popup-item intranet__desktop-menu_popup-item-account ${ counters > 0 ? 'intranet__desktop-menu_item_counters' : ''} ${currentUserClass}">
 					<span class="intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-${index}">
 						<i></i>
 						<div class="intranet__desktop-menu_user-counter ui-counter ui-counter-md ui-counter-danger">
-							<div class="ui-counter-inner">${counters}</div>
+							<div class="ui-counter-inner">${countersView}</div>
 						</div>	
 					</span>
 					<span class="intranet__desktop-menu_popup-user">
 						<span class="intranet__desktop-menu_popup-name">${account.portal}</span>
-						<span class="intranet__desktop-menu_popup-post">${account.work_position}</span>
+						<span class="intranet__desktop-menu_popup-post">${account.login}</span>
 					</span>
 					<span class="intranet__desktop-menu_popup-btn ui-icon-set --more" id="ui-icon-set-${index}"></span>
 				</li>`;
@@ -247,7 +249,8 @@ export class Account
 	addContextMenu(account: DesktopAccount, index: number): void
 	{
 		let button = document.getElementById("ui-icon-set-" + index);
-		if (this.contextPopup[index]) {
+		if (this.contextPopup[index])
+		{
 			this.contextPopup[index].destroy();
 		}
 		this.contextPopup[index] = new Menu({
@@ -260,7 +263,10 @@ export class Account
 						onclick: function(event, item) {
 							const { host } = account;
 							BXDesktopSystem?.AccountDisconnect(host);
-							this.contextPopup[index].close();
+							if (this.contextPopup[index])
+							{
+								this.contextPopup[index].close();
+							}
 							this.popup.close();
 							window.location.reload();
 						}
@@ -272,7 +278,10 @@ export class Account
 							const { host, login, protocol } = account;
 							const userLang = navigator.language;
 							BXDesktopSystem?.AccountConnect(host, login, protocol, userLang);
-							this.contextPopup[index].close();
+							if (this.contextPopup[index])
+							{
+								this.contextPopup[index].close();
+							}
 							this.popup.close();
 						}
 					},
@@ -281,7 +290,10 @@ export class Account
 					onclick: function(event, item) {
 						const { host, login } = account;
 						BXDesktopSystem?.AccountDelete(host, login);
-						this.contextPopup[index].close();
+						if (this.contextPopup[index])
+						{
+							this.contextPopup[index].close();
+						}
 						this.popup.close();
 						window.location.reload();
 					}
@@ -291,7 +303,10 @@ export class Account
 
 		Event.bind(button, 'click', (event) => {
 			let index: number = parseInt(event.target.id.replace('ui-icon-set-', ''));
-			this.contextPopup[index].show();
+			if (this.contextPopup[index])
+			{
+				this.contextPopup[index].show();
+			}
 		});
 	}
 

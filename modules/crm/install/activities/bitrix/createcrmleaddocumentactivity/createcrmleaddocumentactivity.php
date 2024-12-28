@@ -20,7 +20,7 @@ class CBPCreateCrmLeadDocumentActivity extends CBPCreateDocumentActivity
 		$this->arProperties["ErrorMessage"] = null;
 
 		$this->setPropertiesTypes([
-			'CompanyId' => ['Type' => 'int'],
+			'LeadId' => ['Type' => 'int'],
 			'ErrorMessage' => ['Type' => 'string'],
 		]);
 	}
@@ -32,7 +32,7 @@ class CBPCreateCrmLeadDocumentActivity extends CBPCreateDocumentActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$documentType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Lead);
+		$documentType = $this->getCreatedDocumentType();
 		$documentService = $this->workflow->GetService('DocumentService');
 
 		$fields = $this->Fields;
@@ -56,7 +56,21 @@ class CBPCreateCrmLeadDocumentActivity extends CBPCreateDocumentActivity
 			$this->ErrorMessage = $e->getMessage();
 		}
 
+		if (
+			$this->LeadId
+			&& (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024')
+			&& method_exists($this, 'fixResult')
+		)
+		{
+			$this->fixResult($this->makeResultFromId($this->LeadId));
+		}
+
 		return CBPActivityExecutionStatus::Closed;
+	}
+
+	protected function getCreatedDocumentType(): array
+	{
+		return \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Lead);
 	}
 
 	protected function reInitialize()

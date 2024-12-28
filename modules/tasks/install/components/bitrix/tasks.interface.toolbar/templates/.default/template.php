@@ -8,11 +8,13 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Update\Stepper;
 use Bitrix\Tasks\Access;
+use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
 use Bitrix\Tasks\Integration\Bizproc\Automation\Factory;
 use Bitrix\Tasks\UI\ScopeDictionary;
 use Bitrix\Tasks\Update\SortConverter;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
+use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass? $bodyClass.' ' : '').'pagetitle-toolbar-field-view tasks-pagetitle-view');
@@ -26,11 +28,12 @@ Extension::load([
 
 $showViewMode = (isset($arParams['SHOW_VIEW_MODE']) && $arParams['SHOW_VIEW_MODE'] === 'Y');
 $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
-
+$isExtranetUser = (bool)Bitrix\Tasks\Integration\Extranet\User::isExtranet();
 if ($isBitrix24Template)
 {
 	$this->SetViewTarget("below_pagetitle");
 }
+
 ?>
 
 <div class="task-interface-toolbar">
@@ -90,7 +93,7 @@ if ($isBitrix24Template)
 		);
 	}
 	?>
-
+<?php if (!$isExtranetUser):?>
 	<div class="task-interface-toolbar--item --without-bg --align-right">
 		<div class="task-interface-toolbar--item--scope">
 			<?php
@@ -110,17 +113,25 @@ if ($isBitrix24Template)
 
 				$showLimitSlider = !Factory::canUseAutomation();
 				$openLimitSliderAction = Limit::getLimitLockClick(FeatureDictionary::TASK_ROBOTS);
+				if (!Factory::isAutomationEnabled())
+				{
+					$showLimitSlider = true;
+					$robotsSliderId = RestrictionUrl::TASK_LIMIT_CRM_RULES_OFF_SLIDER_URL;
+					$openLimitSliderAction = "top.BX.UI.InfoHelper.show('{$robotsSliderId}', {isLimit: true, limitAnalyticsLabels: {module: 'tasks'}})";
+				}
 
 				$openRobotSliderAction = "BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id='+{$projectId}, {cacheable: false, customLeftBoundary: 0, loader: 'bizproc:automation-loader'});";
 
 				$lockClass = ($showLimitSlider ? 'ui-btn-icon-lock' : '');
+				$uiClass = 'ui-btn ui-btn-xs ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round';
 				$onClick = ($showLimitSlider ? $openLimitSliderAction : $openRobotSliderAction);
 
-				?><button class="ui-btn ui-btn-xs ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round <?=$lockClass?> task-interface-btn-toolbar --robots --small"
+				?><button class="<?=$uiClass?> <?=$lockClass?> task-interface-btn-toolbar --robots --small"
 					<?=($showViewMode ? '' : "data-project-id='{$groupId}'")?> onclick="<?=$onClick?>">
 					<?=GetMessage('TASKS_SWITCHER_ITEM_ROBOTS')?>
 				</button><?php
 			}
+
 			if (Loader::includeModule('intranet'))
 			{
 				$APPLICATION->includeComponent(
@@ -140,7 +151,7 @@ if ($isBitrix24Template)
 			?>
 		</div>
 	</div>
-
+<?php endif;?>
 <?php
 if (!$isBitrix24Template):?>
 	</div>

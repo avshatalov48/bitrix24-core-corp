@@ -104,20 +104,33 @@ class User
 		];
 	}
 
-	public static function get($userId)
+	public static function get($userId): array
 	{
 		if (!\Bitrix\Main\Loader::includeModule('im'))
 		{
 			return [];
 		}
 
-		$userData = \Bitrix\Main\UserTable::getById($userId)->fetch();
+		$params = ['select' => [
+			'ID',
+			'XML_ID',
+			'EMAIL',
+			'NAME',
+			'LAST_NAME',
+			'PERSONAL_PHOTO',
+			'PERSONAL_MOBILE',
+			'PERSONAL_WWW',
+			'PERSONAL_GENDER',
+			'WORK_POSITION',
+		]];
+
+		$userData = \Bitrix\Main\UserTable::getByPrimary($userId, $params)->fetch();
 
 		$avatar = '';
-		if ($userData['PERSONAL_PHOTO'])
+		if (!empty($userData['PERSONAL_PHOTO']))
 		{
 			$resizedImage = \CFile::ResizeImageGet(
-				$userData["PERSONAL_PHOTO"],
+				$userData['PERSONAL_PHOTO'],
 				array('width' => 100, 'height' => 100),
 				BX_RESIZE_IMAGE_EXACT,
 				false,
@@ -130,7 +143,7 @@ class User
 			}
 		}
 
-		if ($userData['NAME'] || $userData['LAST_NAME'])
+		if (!empty($userData['NAME']) || !empty($userData['LAST_NAME']))
 		{
 			$name = \Bitrix\Im\User::formatFullNameFromDatabase($userData);
 			$firstName = \Bitrix\Im\User::formatNameFromDatabase($userData);

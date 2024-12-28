@@ -784,11 +784,6 @@ if ($isBizProcInstalled)
 		}
 		$arResult['HEADERS'][] = array('id' => 'BIZPROC_'.$arBP['ID'], 'name' => $arBP['NAME'], 'sort' => false, 'editable' => false);
 	}
-
-	if ($arBPData)
-	{
-		CJSCore::Init('bp_starter');
-	}
 }
 
 $observersDataProvider = new \Bitrix\Crm\Component\EntityList\UserDataProvider\Observers(CCrmOwnerType::Company);
@@ -2235,7 +2230,7 @@ if (isset($arResult['COMPANY_ID']) && !empty($arResult['COMPANY_ID']))
 
 		$arResult['COMPANY'][$iCompanyId]['BIZPROC_LIST'] = [];
 
-		if ($isBizProcInstalled)
+		if ($isBizProcInstalled && !class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
 		{
 			foreach ($arBPData as $arBP)
 			{
@@ -2366,7 +2361,7 @@ if (!$isInExportMode)
 			}
 			if(COption::GetOptionString('crm', '~CRM_REBUILD_COMPANY_ATTR', 'N') === 'Y')
 			{
-				$arResult['PATH_TO_PRM_LIST'] = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_perm_list'));
+				$arResult['PATH_TO_PRM_LIST'] = (string)Crm\Service\Container::getInstance()->getRouter()->getPermissionsUrl();
 				$arResult['NEED_FOR_REBUILD_COMPANY_ATTRS'] = true;
 			}
 			if(COption::GetOptionString('crm', '~CRM_TRANSFER_REQUISITES_TO_COMPANY', 'N') === 'Y')

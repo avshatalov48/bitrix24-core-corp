@@ -1,8 +1,9 @@
 /**
- * @module selector/widget/entity/nested-department-selector-entity
+ * @module selector/widget/entity/tree-selectors/nested-department-selector-entity
  */
-jn.define('selector/widget/entity/nested-department-selector-entity', (require, exports, module) => {
-	const { NestedDepartmentProvider } = require('selector/providers/nested-department-provider');
+jn.define('selector/widget/entity/tree-selectors/nested-department-selector-entity', (require, exports, module) => {
+	const { NestedDepartmentProvider } = require('selector/providers/tree-providers/nested-department-provider');
+	const { BaseSelectorEntity } = require('selector/widget/entity');
 	const { Loc } = require('loc');
 
 	/**

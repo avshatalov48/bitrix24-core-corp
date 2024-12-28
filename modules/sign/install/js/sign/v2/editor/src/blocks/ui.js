@@ -22,7 +22,7 @@ export default class UI
 	static setRect(element: HTMLElement, rect: {[key: string]: number})
 	{
 		Object.keys(rect).map(key => {
-			rect[key] = parseInt(rect[key]) + 'px';
+			rect[key] = `${Math.round(rect[key])}px`;
 		});
 		Dom.style(element, rect);
 	}

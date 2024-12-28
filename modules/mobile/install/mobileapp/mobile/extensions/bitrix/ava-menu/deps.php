@@ -2,15 +2,19 @@
 
 return [
 	'extensions' => [
-		'qrauth/utils',
-		'require-lazy',
-		'analytics',
-		'ava-menu/aha-moment',
+		'loc',
 		'tokens',
+		'analytics',
+		'require-lazy',
+		'qrauth/utils',
 
-		'stafftrack:entry'
+		'stafftrack:entry',
+		'sign:entry',
+		'calendar:entry',
 	],
 	'bundle' => [
 		'./src/check-in',
+		'./src/sign',
+		'./src/calendar',
 	],
 ];

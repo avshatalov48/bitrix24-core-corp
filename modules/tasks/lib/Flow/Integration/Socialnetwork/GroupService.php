@@ -7,6 +7,7 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Socialnetwork\Component\WorkgroupForm;
 use Bitrix\Socialnetwork\Helper\Workgroup;
+use Bitrix\Socialnetwork\Item\Workgroup\Type;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Tasks\InvalidCommandException;
 use Bitrix\Tasks\Flow\Integration\Socialnetwork\Exception\AutoCreationException;
@@ -19,7 +20,7 @@ use CSocNetUserToGroup;
 
 class GroupService
 {
-	protected GroupCommand $command;
+	protected AddGroupCommand|UpdateGroupCommand $command;
 	protected KanbanService $kanbanService;
 
 	public function __construct()
@@ -66,7 +67,7 @@ class GroupService
 	 * @throws InvalidCommandException
 	 * @throws LoaderException
 	 */
-	public function add(GroupCommand $command): int
+	public function add(AddGroupCommand $command): int
 	{
 		if (!Loader::includeModule('socialnetwork'))
 		{
@@ -87,6 +88,29 @@ class GroupService
 	}
 
 	/**
+	 * @throws InvalidCommandException
+	 * @throws LoaderException
+	 */
+	public function update(UpdateGroupCommand $command): int
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			throw new LoaderException('Socialnetwork is not loaded');
+		}
+
+		$this->command = $command;
+
+		$command->validateUpdate();
+
+		CSocNetUserToGroup::addUniqueUsersToGroup(
+			$this->command->id,
+			$command->members,
+		);
+
+		return $this->command->id;
+	}
+
+	/**
 	 * @throws AutoCreationException
 	 * @throws LoaderException
 	 */
@@ -98,6 +122,7 @@ class GroupService
 			'SUBJECT_ID' => static::getDefaultSubjectId(),
 			'INITIATE_PERMS' => UserToGroupTable::ROLE_USER,
 			'AVATAR_TYPE' => static::getDefaultAvatar(),
+			'TYPE' => Type::Group,
 		]);
 
 		if ($groupId === false)

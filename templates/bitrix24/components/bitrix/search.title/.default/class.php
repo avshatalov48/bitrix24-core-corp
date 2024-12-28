@@ -5,6 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Intranet\Integration\Socialnetwork\Chat\GroupChat;
+use Bitrix\Intranet\Integration\Socialnetwork\Url\GroupUrl;
 use Bitrix\Main\Text\Emoji;
 
 final class CB24SearchTitle
@@ -260,7 +262,7 @@ final class CB24SearchTitle
 		{
 			$cacheTtl = 3153600;
 			$cacheId = 'search_title_sonetgroups_'.md5(serialize($groupFilter).$extranetSiteId.$groupPageURLTemplate);
-			$cacheDir = '/intranet/search/sonetgroups/';
+			$cacheDir = '/intranet/search/sonetgroups_v2/';
 
 			$obCache = new CPHPCache;
 			if($obCache->InitCache($cacheTtl, $cacheId, $cacheDir))
@@ -285,7 +287,7 @@ final class CB24SearchTitle
 				$groupFilter,
 				false,
 				false,
-				array("ID", "NAME", "IMAGE_ID", "DESCRIPTION")
+				array("ID", "NAME", "IMAGE_ID", "DESCRIPTION", 'TYPE')
 			);
 
 			$groupList = $groupIdList = array();
@@ -326,6 +328,8 @@ final class CB24SearchTitle
 				}
 			}
 
+			$chatIds = GroupChat::getChatIds($groupIdList);
+
 			foreach($groupList as $group)
 			{
 				$image = CFile::ResizeImageGet(
@@ -359,10 +363,16 @@ final class CB24SearchTitle
 					}
 				}
 
+				$chatId = $chatIds[(int)$group['ID']] ?? 0;
+
 				$result[] = array(
 					'ID' => $group['ID'],
 					'NAME' => htmlspecialcharsbx($group['NAME']),
-					'URL' => str_replace('#group_id#', $group['ID'], $groupPageURLTemplate),
+					'URL' => GroupUrl::get(
+						(int)$group['ID'],
+						(string)$group['TYPE'],
+						$chatId
+					),
 					'MODULE_ID' => '',
 					'PARAM1' => '',
 					'ITEM_ID' => 'G'.$group['ID'],
@@ -370,7 +380,9 @@ final class CB24SearchTitle
 					'TYPE' => 'sonetgroups',
 					'IS_EXTRANET' => $isExtranet,
 					'SITE' => $site,
-					'IS_MEMBER' => in_array($group['ID'], $memberGroupIdList)
+					'IS_MEMBER' => in_array($group['ID'], $memberGroupIdList),
+					'GROUP_TYPE' => $group['TYPE'],
+					'GROUP_CHAT_ID' => $chatId,
 				);
 			}
 
@@ -410,7 +422,9 @@ final class CB24SearchTitle
 				'desc' => empty($arEntity['DESCRIPTION'])? '': (TruncateText($arEntity['DESCRIPTION'], 100)),
 				'isExtranet' => ($arEntity['IS_EXTRANET'] ? "Y" : "N"),
 				'site' => $arEntity['SITE'],
-				'isMember' => (isset($arEntity['IS_MEMBER']) && $arEntity['IS_MEMBER'] ? "Y" : "N")
+				'isMember' => (isset($arEntity['IS_MEMBER']) && $arEntity['IS_MEMBER'] ? "Y" : "N"),
+				'groupType' => $arEntity['GROUP_TYPE'],
+				'dialogId' => GroupUrl::getDialogId((int)$arEntity['GROUP_CHAT_ID'])
 			);
 			$result['checksum'] = md5(serialize($result));
 			$result['timestamp'] = $timestamp;

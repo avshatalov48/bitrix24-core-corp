@@ -25,6 +25,7 @@ jn.define('sign/dialog/banners/requestreview', (require, exports, module) => {
 				memberId,
 				url,
 				role,
+				initiatedByType,
 			} = props;
 
 			this.role = role;
@@ -32,6 +33,7 @@ jn.define('sign/dialog/banners/requestreview', (require, exports, module) => {
 			this.memberId = memberId;
 			this.url = url;
 			this.layoutWidget = layoutWidget;
+			this.initiatedByType = initiatedByType;
 		}
 
 		componentDidMount()
@@ -84,6 +86,7 @@ jn.define('sign/dialog/banners/requestreview', (require, exports, module) => {
 									title: this.documentTitle,
 									memberId: this.memberId,
 									url: this.url,
+									initiatedByType: this.initiatedByType,
 								});
 							});
 						},

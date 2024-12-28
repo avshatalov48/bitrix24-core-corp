@@ -24,6 +24,8 @@ class CompanyPreset extends FilterPreset
 	{
 		return [
 			'EXTRANET' => 'N',
+			'COLLABER' => 'N',
+			'VISITOR' => 'N',
 			'FIRED' => 'N',
 		];
 	}

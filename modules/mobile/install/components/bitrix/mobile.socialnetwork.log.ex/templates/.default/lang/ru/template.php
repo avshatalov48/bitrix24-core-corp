@@ -1,15 +1,15 @@
 <?php
 $MESS["MOBILE_LOG_NEXT_POST_MORE"] = "Загрузка ...";
-$MESS["MOBILE_LOG_DESTINATION_HIDDEN_1"] = "и еще #COUNT# скрытая группа";
-$MESS["MOBILE_LOG_DESTINATION_HIDDEN_2"] = "и еще #COUNT# скрытых группы";
-$MESS["MOBILE_LOG_DESTINATION_HIDDEN_3"] = "и еще #COUNT# скрытых группы";
-$MESS["MOBILE_LOG_DESTINATION_HIDDEN_4"] = "и еще #COUNT# скрытых группы";
-$MESS["MOBILE_LOG_DESTINATION_HIDDEN_5"] = "и еще #COUNT# скрытых групп";
-$MESS["MOBILE_LOG_DESTINATION_HIDDEN_6"] = "и еще #COUNT# скрытых групп";
-$MESS["MOBILE_LOG_DESTINATION_HIDDEN_7"] = "и еще #COUNT# скрытых групп";
-$MESS["MOBILE_LOG_DESTINATION_HIDDEN_8"] = "и еще #COUNT# скрытых групп";
-$MESS["MOBILE_LOG_DESTINATION_HIDDEN_9"] = "и еще #COUNT# скрытых групп";
-$MESS["MOBILE_LOG_DESTINATION_HIDDEN_0"] = "и еще #COUNT# скрытых групп";
+$MESS["MOBILE_LOG_DESTINATION_HIDDEN_1"] = "и ещё #COUNT# скрытая группа";
+$MESS["MOBILE_LOG_DESTINATION_HIDDEN_2"] = "и ещё #COUNT# скрытых группы";
+$MESS["MOBILE_LOG_DESTINATION_HIDDEN_3"] = "и ещё #COUNT# скрытых группы";
+$MESS["MOBILE_LOG_DESTINATION_HIDDEN_4"] = "и ещё #COUNT# скрытых группы";
+$MESS["MOBILE_LOG_DESTINATION_HIDDEN_5"] = "и ещё #COUNT# скрытых групп";
+$MESS["MOBILE_LOG_DESTINATION_HIDDEN_6"] = "и ещё #COUNT# скрытых групп";
+$MESS["MOBILE_LOG_DESTINATION_HIDDEN_7"] = "и ещё #COUNT# скрытых групп";
+$MESS["MOBILE_LOG_DESTINATION_HIDDEN_8"] = "и ещё #COUNT# скрытых групп";
+$MESS["MOBILE_LOG_DESTINATION_HIDDEN_9"] = "и ещё #COUNT# скрытых групп";
+$MESS["MOBILE_LOG_DESTINATION_HIDDEN_0"] = "и ещё #COUNT# скрытых групп";
 $MESS["MOBILE_LOG_MESSAGE_EMPTY"] = "Нет записей";
 $MESS["MOBILE_LOG_EMPTY_COMMENT_ADD_TITLE"] = "Написать комментарий ...";
 $MESS["MOBILE_LOG_EMPTY_COMMENT_ADD_BUTTON_SEND"] = "Отправить";

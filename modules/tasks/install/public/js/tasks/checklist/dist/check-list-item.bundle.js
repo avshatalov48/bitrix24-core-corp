@@ -429,11 +429,13 @@ this.BX = this.BX || {};
 	      Object.keys(members).forEach(function (id) {
 	        var _members$id = members[id],
 	          NAME = _members$id.NAME,
-	          TYPE = _members$id.TYPE;
+	          TYPE = _members$id.TYPE,
+	          IS_COLLABER = _members$id.IS_COLLABER;
 	        _this2.members.set(id, {
 	          id: id,
 	          nameFormatted: main_core.Text.encode(NAME),
-	          type: types[TYPE]
+	          type: types[TYPE],
+	          isCollaber: IS_COLLABER
 	        });
 	      });
 	    }
@@ -674,9 +676,9 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "getMemberLinkLayout",
-	    value: function getMemberLinkLayout(type, name, url) {
+	    value: function getMemberLinkLayout(type, name, url, isCollaber) {
 	      var messageId = "TASKS_CHECKLIST_".concat(type.toUpperCase(), "_ICON_HINT");
-	      return "\n\t\t\t<span class=\"tasks-checklist-item-auditor\">\n\t\t\t\t<a class=\"tasks-checklist-item-".concat(type, "-icon\" title=\"").concat(main_core.Loc.getMessage(messageId), "\"></a>\n\t\t\t\t<a href=\"").concat(url, "\" class=\"tasks-checklist-item-").concat(type, "-link\">").concat(name, "</a>\n\t\t\t</span> \n\t\t");
+	      return "\n\t\t\t<span class=\"tasks-checklist-item-auditor\">\n\t\t\t\t<a class=\"tasks-checklist-item-".concat(type, "-icon\" title=\"").concat(main_core.Loc.getMessage(messageId), "\"></a>\n\t\t\t\t<a href=\"").concat(url, "\" class=\"tasks-checklist-item-").concat(type, "-link ").concat(isCollaber ? 'tasks-checklist-item-collaber' : '', "\">").concat(name, "</a>\n\t\t\t</span> \n\t\t");
 	    }
 	  }, {
 	    key: "getLinkLayout",
@@ -1111,6 +1113,7 @@ this.BX = this.BX || {};
 	        });
 	        return;
 	      }
+	      debugger;
 	      var inputText = this.input.value;
 	      var mentioned = +this.mentioned;
 	      var start = this.inputCursorPosition.start || 0;
@@ -1182,7 +1185,8 @@ this.BX = this.BX || {};
 	          extranet: entityType === 'extranet',
 	          email: entityType === 'email',
 	          network: entityType === 'network'
-	        }
+	        },
+	        isCollaber: entityType === 'collaber'
 	      };
 	    }
 	  }, {
@@ -1319,10 +1323,11 @@ this.BX = this.BX || {};
 	      this.fields.getMembers().forEach(function (_ref) {
 	        var id = _ref.id,
 	          nameFormatted = _ref.nameFormatted,
-	          type = _ref.type;
+	          type = _ref.type,
+	          isCollaber = _ref.isCollaber;
 	        var regExp = new RegExp(escapeRegExp(nameFormatted), 'g');
 	        var url = userPath.replace('#user_id#', id).replace('#USER_ID#', id);
-	        title = title.replace(regExp, CheckListItem.getMemberLinkLayout(type, nameFormatted, url));
+	        title = title.replace(regExp, CheckListItem.getMemberLinkLayout(type, nameFormatted, url, isCollaber));
 	      });
 	      title = title.replace(/(https?:\/\/[^\s]+)/g, function (url) {
 	        return CheckListItem.getLinkLayout(url);

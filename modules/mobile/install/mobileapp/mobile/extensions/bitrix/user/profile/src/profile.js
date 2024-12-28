@@ -2,6 +2,10 @@
  * @module user/profile/src/profile
  */
 jn.define('user/profile/src/profile', (require, exports, module) => {
+	const { Haptics } = require('haptics');
+	const { Alert, ButtonType } = require('alert');
+	const { Loc } = require('loc');
+
 	class Profile
 	{
 		constructor(userId = 0, form, items = [], sections = [])
@@ -36,25 +40,53 @@ jn.define('user/profile/src/profile', (require, exports, module) => {
 		{
 			return new Promise((resolve, reject) => {
 				BX.rest.callBatch({
-					formData: ['mobile.user.get', { filter: { id: this.userId }, image_resize: 'small' }],
+					formData: ['mobile.user.get', { filter: { ID: this.userId }, image_resize: 'small' }],
 					formStructure: ['mobile.form.profile'],
 					canUseTelephony: ['mobile.user.canUseTelephony'],
-				}, (response) => {
-					if (response.formStructure.error() || response.formData.error())
+				}, async (response) => {
+					if (response.formStructure.error()
+						|| response.formData.error())
 					{
 						reject(response);
+
+						return;
 					}
-					else
+
+					if (response.formData.answer.result.length === 0)
 					{
-						this.formFields = response.formStructure.answer.result.fields;
-						this.formSections = response.formStructure.answer.result.sections;
-						this.fieldsValues = response.formData.answer.result[0];
-						this.canUseTelephony = response.canUseTelephony.answer.result;
+						await this.showNoPermissionsAlert();
+						this.form.close();
 						resolve();
+
+						return;
 					}
+
+					this.formFields = response.formStructure.answer.result.fields;
+					this.formSections = response.formStructure.answer.result.sections;
+					this.fieldsValues = response.formData.answer.result[0];
+					this.canUseTelephony = response.canUseTelephony.answer.result;
+					resolve();
 				});
 			});
 		}
+
+		showNoPermissionsAlert = async () => {
+			const title = Loc.getMessage('PROFILE_PERMISSIONS_ALERT_TITLE');
+
+			return new Promise((resolve) => {
+				Haptics.impactLight();
+				Alert.confirm(
+					title,
+					null,
+					[
+						{
+							type: ButtonType.DEFAULT,
+							onPress: resolve,
+						},
+					],
+				);
+			});
+		};
 
 		render()
 		{

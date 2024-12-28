@@ -12,6 +12,11 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-disabled-conten
 
 	class FlowDisabledContent extends FlowContent
 	{
+		get shouldShowAiAdviceFooter()
+		{
+			return false;
+		}
+
 		get testId()
 		{
 			return `flow-disabled-content-${this.props.id}`;

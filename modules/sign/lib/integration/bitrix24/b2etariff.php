@@ -53,7 +53,7 @@ class B2eTariff
 
 	public function getB2eSignersCountLimit(): int
 	{
-		return 20;
+		return 100;
 	}
 
 	public function getCommonAccessError(): Error

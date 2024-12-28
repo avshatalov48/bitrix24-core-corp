@@ -9,6 +9,8 @@ use Bitrix\Crm\AutomatedSolution\AutomatedSolutionManager;
 use Bitrix\Crm\AutomatedSolution\Entity\AutomatedSolutionTable;
 use Bitrix\Crm\Component\Base;
 use Bitrix\Crm\Component\EntityList\Grid;
+use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
+use Bitrix\Crm\Security\Role\Manage\Manager\CustomSectionListSelection;
 use Bitrix\Crm\Summary\SummaryFactory;
 use Bitrix\Main\Grid\Settings;
 use Bitrix\Main\Loader;
@@ -25,6 +27,8 @@ if (!Loader::includeModule('crm'))
 
 class CrmAutomatedSolutionListComponent extends Base
 {
+	public const TOOLBAR_SETTINGS_BUTTON_ID = 'automated_solution-list-toolbar-settings-button';
+
 	private AutomatedSolutionManager $manager;
 	private SummaryFactory $summaryFactory;
 
@@ -34,7 +38,7 @@ class CrmAutomatedSolutionListComponent extends Base
 	{
 		parent::init();
 
-		if (!$this->userPermissions->canWriteConfig())
+		if (!$this->userPermissions->canEditAutomatedSolutions())
 		{
 			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 
@@ -65,7 +69,7 @@ class CrmAutomatedSolutionListComponent extends Base
 	protected function getToolbarParameters(): array
 	{
 		$buttons = [];
-		if ($this->userPermissions->canWriteConfig())
+		if ($this->userPermissions->canEditAutomatedSolutions())
 		{
 			$createUrl = $this->router->getAutomatedSolutionDetailUrl(0);
 
@@ -76,6 +80,23 @@ class CrmAutomatedSolutionListComponent extends Base
 				'text' => Loc::getMessage('CRM_COMMON_ACTION_CREATE'),
 				'link' => $createUrl->getUri(),
 			]);
+		}
+
+		$settingsItems = $this->getSettingsItems();
+		if (count($settingsItems) > 0)
+		{
+			$settingsButton = new Buttons\SettingsButton([
+				'menu' => [
+					'id' => 'automated_solution-list-toolbar-settings-menu',
+					'items' => $settingsItems,
+					'offsetLeft' => 20,
+					'closeByEsc' => true,
+					'angle' => true
+				],
+			]);
+
+			$settingsButton->addAttribute('id', static::TOOLBAR_SETTINGS_BUTTON_ID);
+			$buttons[Toolbar\ButtonLocation::RIGHT][] = $settingsButton;
 		}
 
 		return array_merge(parent::getToolbarParameters(), [
@@ -100,6 +121,19 @@ class CrmAutomatedSolutionListComponent extends Base
 			'isWithFavoriteStar' => true,
 			'hideBorder' => true,
 		]);
+	}
+
+	private function getSettingsItems(): array
+	{
+		$items = [];
+
+		$permissionItem = new PermissionItem(new CustomSectionListSelection());
+		if ($permissionItem->canShow())
+		{
+			$items[] = $permissionItem->toArray();
+		}
+
+		return $items;
 	}
 
 	private function prepareGridParams(): array

@@ -4,7 +4,7 @@ namespace Bitrix\Sign\Document\Entity;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Main\LoaderException;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Sign\Document;
@@ -19,21 +19,16 @@ Loc::loadMessages(__FILE__);
 class Smart extends Dummy
 {
 	/**
-	 * @var Item Entity item.
-	 */
-	private $item;
-
-	/**
 	 * Class constructor.
 	 *
 	 * @param int|null $id Entity id
 	 */
 	public function __construct(?int $id = null)
 	{
-		if ($id !== null && \Bitrix\Main\Loader::includeModule('crm'))
+		if ($id !== null && Loader::includeModule('crm'))
 		{
 			$entityTypeId = \CCrmOwnerType::SmartDocument;
-			$factory = Service\Container::getInstance()->getFactory($entityTypeId);
+			$factory = Container::getInstance()->getFactory($entityTypeId);
 			$this->item = $factory?->getItem($id);
 		}
 	}
@@ -72,12 +67,17 @@ class Smart extends Dummy
 	 */
 	public function refreshNumber()
 	{
+		if (!Loader::includeModule('crm'))
+		{
+			return null;
+		}
+
 		if (!$this->item)
 		{
 			return null;
 		}
 
-		$factory = Service\Container::getInstance()->getFactory(\CCrmOwnerType::SmartDocument);
+		$factory = Container::getInstance()->getFactory(\CCrmOwnerType::SmartDocument);
 		$field = $factory
 			->getFieldsCollection()
 			->getField(\Bitrix\Crm\Item\SmartDocument::FIELD_NAME_NUMBER)
@@ -160,6 +160,11 @@ class Smart extends Dummy
 	 */
 	public function getCompanyTitle(): ?string
 	{
+		if (!Loader::includeModule('crm'))
+		{
+			return null;
+		}
+
 		$companyId = $this->getCompanyId();
 
 		if (!$companyId)
@@ -168,7 +173,7 @@ class Smart extends Dummy
 		}
 
 		$entityTypeId = \CCrmOwnerType::Company;
-		$factory = Service\Container::getInstance()->getFactory($entityTypeId);
+		$factory = Container::getInstance()->getFactory($entityTypeId);
 		$item = $factory->getItem($companyId);
 
 		if (!$item)
@@ -185,7 +190,7 @@ class Smart extends Dummy
 	 */
 	public static function getEntityTypeId(): int
 	{
-		if (!\Bitrix\Main\Loader::includeModule('crm'))
+		if (!Loader::includeModule('crm'))
 		{
 			return 0;
 		}
@@ -199,7 +204,7 @@ class Smart extends Dummy
 	 */
 	public static function getEntityDetailUrlId(): string
 	{
-		if (!\Bitrix\Main\Loader::includeModule('crm'))
+		if (!Loader::includeModule('crm'))
 		{
 			return '';
 		}
@@ -214,6 +219,11 @@ class Smart extends Dummy
 	 */
 	public static function getDefaultStageId(int $categoryId): ?string
 	{
+		if (!Loader::includeModule('crm'))
+		{
+			return null;
+		}
+
 		$entityTypeId = self::getEntityTypeId();
 
 		if (!$entityTypeId)
@@ -221,7 +231,7 @@ class Smart extends Dummy
 			return null;
 		}
 
-		$container = Service\Container::getInstance();
+		$container = Container::getInstance();
 		$factory = $container->getFactory($entityTypeId);
 		if (!$factory || !$factory->isStagesSupported())
 		{
@@ -389,13 +399,18 @@ class Smart extends Dummy
 	 * Creates new entity and returns its id.
 	 * @return int|null
 	 */
-	public static function create(bool $checkPermission = true): ?int
+	public static function create(\Bitrix\Sign\Item\Document $document, bool $checkPermission = true): ?int
 	{
+		if (!Loader::includeModule('crm'))
+		{
+			return null;
+		}
+
 		$entityTypeId = self::getEntityTypeId();
 
 		if ($entityTypeId)
 		{
-			$userPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+			$userPermissions = Container::getInstance()->getUserPermissions();
 			if ($checkPermission && !$userPermissions->checkAddPermissions(\CCrmOwnerType::SmartDocument))
 			{
 				Error::getInstance()->addError(
@@ -405,10 +420,10 @@ class Smart extends Dummy
 				return null;
 			}
 			
-			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+			$factory = Container::getInstance()->getFactory($entityTypeId);
 			if ($factory)
 			{
-				$item = $factory->createItem();
+				$item = $factory->createItem(self::getItemData($document));
 				$operation = $factory->getAddOperation($item)
 					->disableAllChecks()
 					->disableAutomation()
@@ -435,5 +450,10 @@ class Smart extends Dummy
 		}
 
 		return null;
+	}
+
+	protected static function getItemData(\Bitrix\Sign\Item\Document $document): array
+	{
+		return [];
 	}
 }

@@ -54,8 +54,15 @@ class All extends Queue
 	 */
 	public function returnUserToQueue(array $userIds): void
 	{
+		$config = ImOpenLines\Model\ConfigTable::getRow([
+			'select' => ['WELCOME_BOT_ENABLE', 'WELCOME_BOT_ID'],
+			'filter' => [
+				'=ID' => $this->configLine['ID']
+			],
+		]);
+
 		$sessionList = SessionCheckTable::getList([
-			'select' => ['SESSION_ID'],
+			'select' => ['SESSION_ID', 'OPERATOR_ID' => 'SESSION.OPERATOR_ID'],
 			'filter' => [
 				'=SESSION.CONFIG_ID' => $this->configLine['ID'],
 				'<SESSION.STATUS' => Session::STATUS_ANSWER,
@@ -65,6 +72,14 @@ class All extends Queue
 
 		while ($session = $sessionList->fetch())
 		{
+			if (
+				$config['WELCOME_BOT_ENABLE'] === 'Y'
+				&& $config['WELCOME_BOT_ID'] == $session['OPERATOR_ID']
+			)
+			{
+				continue;
+			}
+
 			ImOpenLines\Queue::returnSessionToQueue($session['SESSION_ID']);
 		}
 
@@ -168,6 +183,7 @@ class All extends Queue
 				'select' => [
 					'ID' => 'SESSION_ID',
 					'STATUS' => 'SESSION.STATUS',
+					'OPERATOR_ID' => 'SESSION.OPERATOR_ID',
 					'DATE_CLOSE'
 				],
 				'filter' => [
@@ -216,6 +232,24 @@ class All extends Queue
 
 				if (!empty($sessionNotAccepted))
 				{
+					$config = ImOpenLines\Model\ConfigTable::getRow([
+						'select' => ['WELCOME_BOT_ENABLE', 'WELCOME_BOT_ID'],
+						'filter' => [
+							'=ID' => $this->configLine['ID']
+						],
+					]);
+
+					if ($config['WELCOME_BOT_ENABLE'] === 'Y')
+					{
+						foreach ($sessionNotAccepted as $sessionId => $session)
+						{
+							if ($config['WELCOME_BOT_ID'] == $session['OPERATOR_ID'])
+							{
+								unset($sessionNotAccepted[$sessionId]);
+							}
+						}
+					}
+
 					$this->returnSessionsNotAcceptedUsersToQueue(array_keys($sessionNotAccepted), $reasonReturn);
 				}
 			}

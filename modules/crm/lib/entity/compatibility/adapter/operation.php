@@ -240,7 +240,13 @@ final class Operation extends Adapter
 		}
 	}
 
-	protected function doCheckRequiredFields(array $fields, array $compatibleOptions, array $requiredFields): Result
+	protected function doCheckRequiredFields(
+		array $fields,
+		array $compatibleOptions,
+		array $requiredFields,
+		?int $id = null,
+		bool $enrichCurrentFieldsWithPrevious = false
+	): Result
 	{
 		$operation = $compatibleOptions['__OPERATION'] ?? null;
 		if (!($operation instanceof Service\Operation))
@@ -407,6 +413,8 @@ final class Operation extends Adapter
 				$fields,
 				$compatibleOptions + ['__OPERATION' => $operation],
 				$operation->getRequiredFields(),
+				$id,
+				$this->factory->isStagesEnabled() && $item->isChangedStageId(),
 			);
 			if (!$result->isSuccess())
 			{

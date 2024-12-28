@@ -59,18 +59,210 @@ class User
 					'JOIN' => 'INNER JOIN b_biconnector_dictionary_data D ON D.DICTIONARY_ID = ' . \Bitrix\BIConnector\Dictionary::USER_DEPARTMENT . ' AND D.VALUE_ID = U.ID',
 					'LEFT_JOIN' => 'LEFT JOIN b_biconnector_dictionary_data D ON D.DICTIONARY_ID = ' . \Bitrix\BIConnector\Dictionary::USER_DEPARTMENT . ' AND D.VALUE_ID = U.ID',
 				],
+
 			],
 		];
 
+		$result['user']['DICTIONARY'] = [];
 		if (\Bitrix\BIConnector\DictionaryManager::isAvailable(\Bitrix\BIConnector\Dictionary::USER_DEPARTMENT))
 		{
-			$result['user']['DICTIONARY'] = [
-				\Bitrix\BIConnector\Dictionary::USER_DEPARTMENT,
-			];
+			$result['user']['DICTIONARY'][] = \Bitrix\BIConnector\Dictionary::USER_DEPARTMENT;
 		}
 		else
 		{
 			unset($result['user']['FIELDS']['DEPARTMENT']);
+		}
+
+		if (
+			\Bitrix\BIConnector\DictionaryManager::isAvailable(\Bitrix\BIConnector\Dictionary::USER_STRUCTURE_DEPARTMENT)
+			&& \Bitrix\BIConnector\DictionaryManager::isAvailable(\Bitrix\BIConnector\Dictionary::DEPARTMENT_PARENT_AGGREGATION)
+		)
+		{
+			$result['user']['DICTIONARY'][] = \Bitrix\BIConnector\Dictionary::USER_STRUCTURE_DEPARTMENT;
+			$result['user']['DICTIONARY'][] = \Bitrix\BIConnector\Dictionary::DEPARTMENT_PARENT_AGGREGATION;
+
+			$dshrJoin = 'INNER JOIN b_biconnector_dictionary_data DSHR ON DSHR.DICTIONARY_ID = ' . \Bitrix\BIConnector\Dictionary::USER_STRUCTURE_DEPARTMENT . ' AND DSHR.VALUE_ID = U.ID';
+			$dshrLeftJoin = 'LEFT JOIN b_biconnector_dictionary_data DSHR ON DSHR.DICTIONARY_ID = ' . \Bitrix\BIConnector\Dictionary::USER_STRUCTURE_DEPARTMENT . ' AND DSHR.VALUE_ID = U.ID';
+
+			$departmentJoin =  'INNER JOIN b_biconnector_dict_structure_agg AS SN ON SN.DEP_ID = SUBSTRING_INDEX(DSHR.VALUE_STR, \',\', 1)';
+			$departmentLeftJoin = 'LEFT JOIN b_biconnector_dict_structure_agg AS SN ON SN.DEP_ID = SUBSTRING_INDEX(DSHR.VALUE_STR, \',\', 1)';
+
+			$result['user']['FIELDS'] = array_merge($result['user']['FIELDS'], [
+				'DEPARTMENT_IDS' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'DSHR.VALUE_STR',
+					'FIELD_TYPE' => 'string',
+					'JOIN' => $dshrJoin,
+					'LEFT_JOIN' => $dshrLeftJoin,
+				],
+				'DEPARTMENT_ID' => [
+					'FIELD_NAME' => 'SN.DEP_ID',
+					'JOIN' => $departmentJoin,
+					'LEFT_JOIN' => $departmentLeftJoin,
+				],
+				'DEPARTMENT_NAME' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'SN.DEP_NAME',
+					'FIELD_TYPE' => 'string',
+					'JOIN' => [
+						$dshrJoin,
+						$departmentJoin,
+					],
+					'LEFT_JOIN' => [
+						$dshrLeftJoin,
+						$departmentLeftJoin,
+					],
+				],
+				'DEPARTMENT_ID_NAME' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'CONCAT(\'[\', SN.DEP_ID, \'] \', SN.DEP_NAME)',
+					'FIELD_TYPE' => 'string',
+					'JOIN' => [
+						$dshrJoin,
+						$departmentJoin,
+					],
+					'LEFT_JOIN' => [
+						$dshrLeftJoin,
+						$departmentLeftJoin,
+					],
+				],
+				'DEP1' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'SUBSTRING_INDEX(SN.DEP_NAMES, \',\', 1)',
+					'FIELD_TYPE' => 'string',
+					'JOIN' => [
+						$dshrJoin,
+						$departmentJoin,
+					],
+					'LEFT_JOIN' => [
+						$dshrLeftJoin,
+						$departmentLeftJoin,
+					],
+				],
+				'DEP2' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => '
+					CASE
+		WHEN SUBSTRING_INDEX(SN.DEP_IDS, \',\', 1) = SUBSTRING_INDEX(SUBSTRING_INDEX(SN.DEP_IDS, \',\', 2), \',\', -1)
+			THEN NULL
+		ELSE SUBSTRING_INDEX(SUBSTRING_INDEX(SN.DEP_NAMES, \',\', 2), \',\', -1) END',
+					'FIELD_TYPE' => 'string',
+					'JOIN' => [
+						$dshrJoin,
+						$departmentJoin,
+					],
+					'LEFT_JOIN' => [
+						$dshrLeftJoin,
+						$departmentLeftJoin,
+					],
+				],
+				'DEP3' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'CASE
+		WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(SN.DEP_IDS, \',\', 2), \',\', -1) = SUBSTRING_INDEX(SUBSTRING_INDEX(SN.DEP_IDS, \',\', 3), \',\', -1)
+			THEN NULL
+		ELSE SUBSTRING_INDEX(SUBSTRING_INDEX(SN.DEP_NAMES, \',\', 3), \',\', -1) END',
+					'FIELD_TYPE' => 'string',
+					'JOIN' => [
+						$dshrJoin,
+						$departmentJoin,
+					],
+					'LEFT_JOIN' => [
+						$dshrLeftJoin,
+						$departmentLeftJoin,
+					],
+				],
+				'DEP1_ID' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'SUBSTRING_INDEX(SN.DEP_IDS, \',\', 1)',
+					'FIELD_TYPE' => 'string',
+					'JOIN' => [
+						$dshrJoin,
+						$departmentJoin,
+					],
+					'LEFT_JOIN' => [
+						$dshrLeftJoin,
+						$departmentLeftJoin,
+					],
+				],
+				'DEP2_ID' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'CASE
+		WHEN SUBSTRING_INDEX(SN.DEP_IDS, \',\', 1) = SUBSTRING_INDEX(SUBSTRING_INDEX(SN.DEP_IDS, \',\', 2), \',\', -1)
+			THEN NULL
+		ELSE SUBSTRING_INDEX(SUBSTRING_INDEX(SN.DEP_IDS, \',\', 2), \',\', -1) END',
+					'FIELD_TYPE' => 'string',
+					'JOIN' => [
+						$dshrJoin,
+						$departmentJoin,
+					],
+					'LEFT_JOIN' => [
+						$dshrLeftJoin,
+						$departmentLeftJoin,
+					],
+				],
+				'DEP3_ID' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'CASE
+		WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(SN.DEP_IDS, \',\', 2), \',\', -1) = SUBSTRING_INDEX(SUBSTRING_INDEX(SN.DEP_IDS, \',\', 3), \',\', -1)
+			THEN NULL
+		ELSE SUBSTRING_INDEX(SUBSTRING_INDEX(SN.DEP_IDS, \',\', 3), \',\', -1) END',
+					'FIELD_TYPE' => 'string',
+					'JOIN' => [
+						$dshrJoin,
+						$departmentJoin,
+					],
+					'LEFT_JOIN' => [
+						$dshrLeftJoin,
+						$departmentLeftJoin,
+					],
+				],
+				'DEP1_N' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'SUBSTRING_INDEX(SN.DEP_NAME_IDS, \',\', 1)',
+					'FIELD_TYPE' => 'string',
+					'JOIN' => [
+						$dshrJoin,
+						$departmentJoin,
+					],
+					'LEFT_JOIN' => [
+						$dshrLeftJoin,
+						$departmentLeftJoin,
+					],
+				],
+				'DEP2_N' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'CASE
+		WHEN SUBSTRING_INDEX(SN.DEP_IDS, \',\', 1) = SUBSTRING_INDEX(SUBSTRING_INDEX(SN.DEP_IDS, \',\', 2), \',\', -1)
+			THEN NULL
+		ELSE SUBSTRING_INDEX(SUBSTRING_INDEX(SN.DEP_NAME_IDS, \',\', 2), \',\', -1) END',
+					'FIELD_TYPE' => 'string',
+					'JOIN' => [
+						$dshrJoin,
+						$departmentJoin,
+					],
+					'LEFT_JOIN' => [
+						$dshrLeftJoin,
+						$departmentLeftJoin,
+					],
+				],
+				'DEP3_N' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'CASE
+		WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(SN.DEP_IDS, \',\', 2), \',\', -1) = SUBSTRING_INDEX(SUBSTRING_INDEX(SN.DEP_IDS, \',\', 3), \',\', -1)
+			THEN NULL
+		ELSE SUBSTRING_INDEX(SUBSTRING_INDEX(SN.DEP_NAME_IDS, \',\', 3), \',\', -1) END',
+					'FIELD_TYPE' => 'string',
+					'JOIN' => [
+						$dshrJoin,
+						$departmentJoin,
+					],
+					'LEFT_JOIN' => [
+						$dshrLeftJoin,
+						$departmentLeftJoin,
+					],
+				],
+			]);
 		}
 
 		$messages = Loc::loadLanguageFile(__FILE__, $languageId);

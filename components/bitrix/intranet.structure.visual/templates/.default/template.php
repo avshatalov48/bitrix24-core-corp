@@ -1,5 +1,6 @@
-<?
+<?php
 
+GLOBAL $APPLICATION;
 use Bitrix\Main\Web\Uri;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();

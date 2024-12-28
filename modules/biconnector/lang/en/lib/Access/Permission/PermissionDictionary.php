@@ -9,6 +9,7 @@ $MESS["BIC_DASHBOARD_EDIT_SCOPE"] = "Edit dashboard scope";
 $MESS["BIC_DASHBOARD_EXPORT"] = "Export";
 $MESS["BIC_DASHBOARD_TAG_MODIFY"] = "Create and edit dashboard tag";
 $MESS["BIC_DASHBOARD_VIEW"] = "View";
+$MESS["BIC_EXTERNAL_DASHBOARD_CONFIG"] = "Analytics hub access";
 $MESS["BIC_SETTINGS_ACCESS"] = "Edit settings";
 $MESS["BIC_SETTINGS_EDIT_RIGHTS"] = "Manage access permissions";
 $MESS["HINT_BIC_DASHBOARD_DELETE"] = "Applicable to custom dashboards only. Built-in dashboards cannot be deleted.";

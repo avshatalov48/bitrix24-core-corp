@@ -4,7 +4,7 @@ namespace Bitrix\Crm\Service\Timeline\Item\LogMessage\AI\Call;
 
 use Bitrix\Main\Localization\Loc;
 
-class FillingEntityFieldsStarted extends Base
+final class FillingEntityFieldsStarted extends Base
 {
 	public function getType(): string
 	{

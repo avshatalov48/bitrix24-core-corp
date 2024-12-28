@@ -11,6 +11,7 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 	const { EventType, ComponentCode } = require('im/messenger/const');
 	const { DialogRest } = require('im/messenger/provider/rest');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { ShareDialogCache } = require('im/messenger/cache/share-dialog');
 	const logger = LoggerManager.getInstance().getLogger('recent--chat-recent');
 
 	/**
@@ -26,51 +27,31 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 		bindMethods()
 		{
 			super.bindMethods();
-			this.recentAddHandler = this.recentAddHandler.bind(this);
-			this.recentUpdateHandler = this.recentUpdateHandler.bind(this);
-			this.recentDeleteHandler = this.recentDeleteHandler.bind(this);
-			this.dialogUpdateHandler = this.dialogUpdateHandler.bind(this);
-			this.commentCountersDeleteHandler = this.commentCountersDeleteHandler.bind(this);
 
+			this.commentCountersDeleteHandler = this.commentCountersDeleteHandler.bind(this);
 			this.departmentColleaguesGetHandler = this.departmentColleaguesGetHandler.bind(this);
-			this.initMessengerHandler = this.initMessengerHandler.bind(this);
 		}
 
 		subscribeViewEvents()
 		{
+			super.subscribeViewEvents();
+
 			this.view
 				.on(EventType.recent.itemSelected, this.onItemSelected.bind(this))
 				.on(EventType.recent.searchShow, this.onShowSearchDialog.bind(this))
 				.on(EventType.recent.searchHide, this.onHideSearchDialog.bind(this))
-				.on(EventType.recent.loadNextPage, this.onLoadNextPage.bind(this))
-				.on(EventType.recent.itemAction, this.onItemAction.bind(this))
 				.on(EventType.recent.createChat, this.onCreateChat.bind(this))
 				.on(EventType.recent.readAll, this.onReadAll.bind(this))
-				.on(EventType.recent.refresh, this.onRefresh.bind(this))
 			;
 		}
 
 		subscribeStoreEvents()
 		{
+			super.subscribeStoreEvents();
+
 			this.storeManager
-				.on('recentModel/add', this.recentAddHandler)
-				.on('recentModel/update', this.recentUpdateHandler)
-				.on('recentModel/delete', this.recentDeleteHandler)
-				.on('dialoguesModel/add', this.dialogUpdateHandler)
-				.on('dialoguesModel/update', this.dialogUpdateHandler)
 				.on('commentModel/deleteChannelCounters', this.commentCountersDeleteHandler)
 			;
-		}
-
-		subscribeMessengerEvents()
-		{
-			BX.addCustomEvent(EventType.messenger.afterRefreshSuccess, this.stopRefreshing);
-			BX.addCustomEvent(EventType.messenger.renderRecent, this.renderInstant);
-		}
-
-		subscribeInitMessengerEvent()
-		{
-			this.messagerInitService.onInit(this.initMessengerHandler);
 		}
 
 		/* region Events */
@@ -109,19 +90,6 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 			MessengerEmitter.emit(EventType.messenger.hideSearch, {}, ComponentCode.imMessenger);
 		}
 
-		onLoadNextPage()
-		{
-			this.loadNextPage();
-		}
-
-		onItemAction(event)
-		{
-			const action = event.action.identifier;
-			const itemId = event.item.params.id;
-
-			this.itemAction.do(action, itemId);
-		}
-
 		onCreateChat()
 		{
 			MessengerEmitter.emit(EventType.messenger.createChat, {}, ComponentCode.imMessenger);
@@ -147,15 +115,6 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 					this.logger.error(`${this.constructor.name}.readAllMessages catch:`, error);
 				})
 			;
-		}
-
-		onRefresh()
-		{
-			MessengerEmitter.emit(
-				EventType.messenger.refresh,
-				{ redrawHeaderTruly: true, shortMode: true },
-				ComponentCode.imMessenger,
-			);
 		}
 
 		joinCall(callId)
@@ -218,36 +177,6 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 		}
 
 		/* endregion Events */
-		recentAddHandler(mutation)
-		{
-			const recentList = [];
-			const recentItemList = clone(mutation.payload.data.recentItemList);
-
-			recentItemList.forEach((item) => recentList.push(item.fields));
-
-			this.addItems(recentList);
-		}
-
-		recentUpdateHandler(mutation)
-		{
-			const recentList = [];
-
-			mutation.payload.data.recentItemList.forEach((item) => {
-				recentList.push(clone(this.store.getters['recentModel/getCollection']()[item.index]));
-			});
-
-			this.updateItems(recentList);
-		}
-
-		dialogUpdateHandler(mutation)
-		{
-			const dialogId = mutation.payload.data.dialogId;
-			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
-			if (recentItem)
-			{
-				this.updateItems([recentItem]);
-			}
-		}
 
 		commentCountersDeleteHandler(mutation)
 		{
@@ -264,7 +193,7 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 
 		initMessengerHandler(data)
 		{
-			void this.updatePageFromServer(data);
+			super.initMessengerHandler(data);
 
 			if (data?.departmentColleagues)
 			{
@@ -280,6 +209,51 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 				.catch((err) => {
 					this.logger.error(`${this.constructor.name}.departmentColleaguesGetHandler.usersModel/set.catch:`, err);
 				});
+		}
+
+		/**
+		 * @param {Array<object>} recentItems
+		 * @return {Promise<any>}
+		 */
+		async saveRecentData(recentItems)
+		{
+			const modelData = this.prepareDataForModels(recentItems);
+
+			const usersPromise = await this.store.dispatch('usersModel/set', modelData.users);
+			const dialoguesPromise = await this.store.dispatch('dialoguesModel/set', modelData.dialogues);
+			const recentPromise = await this.store.dispatch('recentModel/set', modelData.recent);
+
+			if (this.recentService.pageNavigation.currentPage === 1)
+			{
+				const recentIndex = [];
+				modelData.recent.forEach((item) => recentIndex.push(item.id.toString()));
+
+				const idListForDeleteFromCache = [];
+				this.store.getters['recentModel/getCollection']()
+					.forEach((item) => {
+						if (!recentIndex.includes(item.id.toString()))
+						{
+							idListForDeleteFromCache.push(item.id);
+						}
+					});
+
+				idListForDeleteFromCache.forEach((id) => {
+					this.store.dispatch('recentModel/deleteFromModel', { id });
+				});
+
+				await this.saveShareDialogCache(modelData.recent);
+			}
+
+			return Promise.all([usersPromise, dialoguesPromise, recentPromise]);
+		}
+
+		/**
+		 * @param {Array} recentItems
+		 * @return {Promise}
+		 */
+		saveShareDialogCache(recentItems)
+		{
+			return ShareDialogCache.saveRecentItemList(recentItems);
 		}
 	}
 

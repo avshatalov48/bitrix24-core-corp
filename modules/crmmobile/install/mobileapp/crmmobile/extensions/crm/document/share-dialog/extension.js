@@ -485,6 +485,7 @@ jn.define('crm/document/share-dialog', (require, exports, module) => {
 				title: Loc.getMessage('M_CRM_DOCUMENT_SHARED_PHRASES_DESKTOP_VERSION'),
 				redirectUrl: this.props.entityDetailUrl,
 				layout: this.layoutWidget,
+				analyticsSection: 'crm',
 			});
 		}
 

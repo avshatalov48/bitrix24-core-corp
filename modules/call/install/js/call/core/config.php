@@ -10,6 +10,8 @@ if (!\Bitrix\Main\Loader::includeModule('im'))
 }
 
 use Bitrix\Main\Config\Option;
+use Bitrix\Call\Settings;
+use Bitrix\Call\Integration\AI\CallAISettings;
 
 return [
 	'js' => [
@@ -20,6 +22,7 @@ return [
 	],
 	'rel' => [
 		'im.lib.utils',
+		'im.v2.lib.promo',
 		'ui.switcher',
 		'ui.dialogs.messagebox',
 		'ui.buttons',
@@ -27,10 +30,12 @@ return [
 		'im.v2.const',
 		'intranet.desktop-download',
 		'main.core.events',
-		'main.popup',
-		'main.core',
 		'im.v2.lib.utils',
 		'call.lib.analytics',
+		'main.core',
+		'main.popup',
+		'call.component.user-list-popup',
+		'call.component.user-list',
 		'loader',
 		'resize_observer',
 		'webrtc_adapter',
@@ -66,7 +71,21 @@ return [
 				'call_docs_status' => \Bitrix\Im\Integration\Disk\Documents::getDocumentsInCallStatus(),
 				'call_resumes_status' => \Bitrix\Im\Integration\Disk\Documents::getResumesOfCallStatus(),
 				'call_features' => $features,
-				'conference_chat_enabled' => \Bitrix\Call\Settings::isConferenceChatEnabled(),
+				'conference_chat_enabled' => Settings::isConferenceChatEnabled(),
+				'call_use_tcp_sdp' => Settings::useTcpSdp(),
+			],
+			'settings' => [
+				'ai' => [
+					'serviceEnabled' => Settings::isAIServiceEnabled(),
+					'settingsEnabled' => CallAISettings::isEnableBySettings(),
+					'recordingMinUsers' => CallAISettings::getRecordMinUsers(),
+					'agreementAccepted' => CallAISettings::isAgreementAccepted(),
+					'tariffAvailable' => CallAISettings::isTariffAvailable(),
+					'baasAvailable' => CallAISettings::isBaasServiceHasPackage(),
+					'feedBackLink' => CallAISettings::getFeedBackLink(),
+					'baasPromoSlider' => CallAISettings::getBaasSliderCode(),
+					'helpSlider' => CallAISettings::getHelpSliderCode(),
+				]
 			],
 		];
 	},

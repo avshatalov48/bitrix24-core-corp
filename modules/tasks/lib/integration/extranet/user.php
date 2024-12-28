@@ -10,6 +10,8 @@
 
 namespace Bitrix\Tasks\Integration\Extranet;
 
+use Bitrix\Extranet\Service\ServiceContainer;
+
 final class User extends \Bitrix\Tasks\Integration\Extranet
 {
 	protected static $cache = array();
@@ -64,5 +66,18 @@ final class User extends \Bitrix\Tasks\Integration\Extranet
 		}
 
 		return $result;
+	}
+
+	public static function isCollaber(int $userId): bool
+	{
+		if(!static::isConfigured())
+		{
+			return false;
+		}
+
+		return ServiceContainer::getInstance()
+			->getCollaberService()
+			->isCollaberById($userId)
+		;
 	}
 }

@@ -2,7 +2,8 @@
 
 namespace Bitrix\Crm\Security\Role\Manage\Permissions;
 
-use Bitrix\Main\Access\Permission\PermissionDictionary;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\BaseControlType;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\Toggler;
 
 class MyCardView extends Permission
 {
@@ -28,8 +29,8 @@ class MyCardView extends Permission
 		return \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL;
 	}
 
-	public function controlType(): string
+	protected function createDefaultControlType(): BaseControlType
 	{
-		return PermissionDictionary::TYPE_TOGGLER;
+		return new Toggler();
 	}
 }

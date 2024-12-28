@@ -21,6 +21,7 @@ use CCrmOwnerType;
 
 class FillFields implements Contract\Operation
 {
+	private const USER_FIELD_PREFIX = 'UF_';
 	private const SUPPORTED_MEMBER_ENTITY_TYPES = [
 		EntityType::COMPANY,
 		EntityType::CONTACT,
@@ -31,16 +32,26 @@ class FillFields implements Contract\Operation
 
 	private DocumentRepository $documentRepository;
 	private Service\Providers\ProfileProvider $profileProvider;
+	private Service\Providers\MemberDynamicFieldInfoProvider $memberDynamicFieldProvider;
 
+	/**
+	 * @param list<array{name: string, value: string}> $fields
+	 * @param Sign\Item\Member $member
+	 * @param DocumentRepository|null $documentRepository
+	 * @param Service\Providers\ProfileProvider|null $profileProvider
+	 */
 	public function __construct(
-		private array $fields,
-		private Sign\Item\Member $member,
+		private readonly array $fields,
+		private readonly Sign\Item\Member $member,
 		?DocumentRepository $documentRepository = null,
 		?Service\Providers\ProfileProvider $profileProvider = null,
+		?Service\Providers\MemberDynamicFieldInfoProvider $memberDynamicFieldProvider = null,
 	)
 	{
-		$this->documentRepository = $documentRepository ?? Service\Container::instance()->getDocumentRepository();
-		$this->profileProvider = $profileProvider ?? Service\Container::instance()->getServiceProfileProvider();
+		$container = Service\Container::instance();
+		$this->documentRepository = $documentRepository ?? $container->getDocumentRepository();
+		$this->profileProvider = $profileProvider ?? $container->getServiceProfileProvider();
+		$this->memberDynamicFieldProvider = $memberDynamicFieldProvider ?? $container->getMemberDynamicFieldProvider();
 	}
 
 	public function launch(): Result
@@ -64,6 +75,13 @@ class FillFields implements Contract\Operation
 			if ($this->isUserProfileField($fieldCode))
 			{
 				$this->updateUserProfileField($field, $document, $fieldCode);
+				continue;
+			}
+
+			if ($this->isMemberDynamicField($fieldCode))
+			{
+				$this->updateMemberDynamicField($field, $fieldCode);
+
 				continue;
 			}
 
@@ -220,10 +238,10 @@ class FillFields implements Contract\Operation
 	}
 
 	/**
-	 * @param mixed $field
+	 * @param array $field
 	 * @param \Bitrix\Sign\Item\Document|null $document
 	 *
-	 * @return array
+	 * @return array{0: array, 1:string, 2:Item|null, 3:string}
 	 */
 	public function extractFieldItem(array $field, ?Sign\Item\Document $document): array
 	{
@@ -283,19 +301,12 @@ class FillFields implements Contract\Operation
 
 	private function isUserProfileField(string $fieldCode): bool
 	{
-		if (!str_starts_with($fieldCode, Sign\Factory\Field::USER_FIELD_CODE_PREFIX))
-		{
-			return false;
-		}
-
-		$fieldName = $this->getProfileFieldNameByFieldCode($fieldCode);
-
-		return $this->profileProvider->isProfileField($fieldName);
+		return $this->profileProvider->isFieldCodeUserProfileField($fieldCode);
 	}
 
 	private function updateUserProfileField(array $field, Document $document, string $fieldCode): void
 	{
-		$fieldName = $this->getProfileFieldNameByFieldCode($fieldCode);
+		$fieldName = $this->profileProvider->getProfileFieldNameByFieldCode($fieldCode);
 		$value = $field['value'] ?? null;
 		if ($value === null)
 		{
@@ -314,11 +325,6 @@ class FillFields implements Contract\Operation
 
 
 		$this->profileProvider->updateFieldData($userId, $fieldName, $field['value']);
-	}
-
-	private function getProfileFieldNameByFieldCode(string $fieldCode): string
-	{
-		return mb_substr($fieldCode, mb_strlen(Sign\Factory\Field::USER_FIELD_CODE_PREFIX));
 	}
 
 	private function getUserId(Document $document, Sign\Item\Member $member): ?int
@@ -421,6 +427,9 @@ class FillFields implements Contract\Operation
 		return '';
 	}
 
+	/**
+	 * @return array<string, array{name: string, value: string|array, type: string}>
+	 */
 	private function parseFields(): array
 	{
 		$parsedFields = [];
@@ -466,5 +475,26 @@ class FillFields implements Contract\Operation
 		}
 
 		return $result;
+	}
+
+	private function isMemberDynamicField(string $fieldCode): bool
+	{
+		return $this->memberDynamicFieldProvider->isFieldCodeMemberDynamicField($fieldCode);
+	}
+
+	private function updateMemberDynamicField(array $field, string $fieldCode): void
+	{
+		$value = $field['value'] ?? null;
+		if ($value === null)
+		{
+			return;
+		}
+
+		if ($field['type'] === FieldType::ADDRESS)
+		{
+			$value = $this->convertKeysToLocationFormat($value);
+		}
+
+		$this->memberDynamicFieldProvider->updateFieldData($this->member->id, $fieldCode, $value);
 	}
 }

@@ -3,6 +3,7 @@ jn.define('bbcode/formatter/plain-text-formatter', (require, exports, module) =>
 	const { inAppUrl } = require('in-app-url');
 	const { Type } = require('type');
 	const { Formatter, NodeFormatter } = require('bbcode/formatter');
+	const { BBCodeNode } = require('bbcode/model');
 	const {
 		DiskNodeFormatter,
 		MentionFormatter,
@@ -10,12 +11,15 @@ jn.define('bbcode/formatter/plain-text-formatter', (require, exports, module) =>
 		TableFormatter,
 		CodeFormatter,
 		ListFormatter,
-		ListItemFormatter,
+		LinebreaksWrapper,
 	} = require('bbcode/formatter/shared');
+
+	const defaultWrapInLinebreaks = ['disk', 'table', 'code', 'list'];
 
 	class PlainTextFormatter extends Formatter
 	{
 		#allowedTags = [];
+		#wrapInLinebreaks = defaultWrapInLinebreaks;
 
 		/**
 		 * @param options {{
@@ -26,11 +30,23 @@ jn.define('bbcode/formatter/plain-text-formatter', (require, exports, module) =>
 		 *     tableRenderType?: 'link' | 'placeholder' | 'none',
 		 *     codeRenderType?: 'code' | 'text' | 'placeholder' | 'none',
 		 *     listRenderType?: 'list' | 'text' | 'placeholder' | 'none',
+		 *     wrapInLinebreaks?: Array<string>,
 		 * }}
 		 */
 		constructor(options = {})
 		{
 			const formatters = [
+				new NodeFormatter({
+					name: '#root',
+					convert({ node }) {
+						return node.clone();
+					},
+					after({ element }) {
+						element.trimLinebreaks();
+
+						return element;
+					},
+				}),
 				new TextFormatter({
 					name: '#text',
 				}),
@@ -51,10 +67,6 @@ jn.define('bbcode/formatter/plain-text-formatter', (require, exports, module) =>
 				new CodeFormatter({
 					name: 'code',
 					renderType: options.codeRenderType || 'text',
-				}),
-				new ListItemFormatter({
-					name: '*',
-					renderType: options.listRenderType || 'text',
 				}),
 				new ListFormatter({
 					name: 'list',
@@ -86,6 +98,11 @@ jn.define('bbcode/formatter/plain-text-formatter', (require, exports, module) =>
 			this.formatters = formatters;
 
 			this.setAllowedTags(options?.allowedTags);
+
+			if (Type.isArrayFilled(options?.wrapInLinebreaks))
+			{
+				this.setWrapInLinebreaks(options.wrapInLinebreaks);
+			}
 		}
 
 		setAllowedTags(allowedTags)
@@ -101,35 +118,58 @@ jn.define('bbcode/formatter/plain-text-formatter', (require, exports, module) =>
 			return this.#allowedTags.includes(tagName);
 		}
 
+		setWrapInLinebreaks(tags)
+		{
+			this.#wrapInLinebreaks = tags;
+		}
+
+		isAllowWrapInLinebreaks(tagName)
+		{
+			return (
+				Type.isArray(this.#wrapInLinebreaks)
+				&& this.#wrapInLinebreaks.includes(tagName)
+			);
+		}
+
+		format({ source, data })
+		{
+			const preparedSource = Formatter.prepareSourceNode(source).clone({ deep: true });
+
+			BBCodeNode
+				.flattenAst(preparedSource)
+				.forEach((node) => {
+					if (this.isAllowWrapInLinebreaks(node.getName()))
+					{
+						const sourceNode = node;
+						const targetNode = sourceNode.clone({ deep: true });
+						targetNode.trimLinebreaks();
+
+						node.replace(
+							LinebreaksWrapper.wrapNode({
+								sourceNode,
+								targetNode,
+							}),
+						);
+					}
+				});
+
+			return super.format({
+				source: preparedSource,
+				data,
+			});
+		}
+
 		getDefaultUnknownNodeCallback(options)
 		{
 			return () => {
 				return new NodeFormatter({
 					name: 'unknown',
 					convert: ({ node }) => {
-						if (
-							node.getName() === '#root'
-							|| this.isAllowedTag(node.getName())
-						)
-						{
-							return node.clone();
-						}
-
 						const fragment = node.getScheme().createFragment({
 							children: [...node.getChildren()],
 						});
 
-						const firstChild = fragment.getFirstChild();
-						if (firstChild && firstChild.getName() === '#linebreak')
-						{
-							firstChild.remove();
-						}
-
-						const lastChild = fragment.getFirstChild();
-						if (lastChild && lastChild.getName() === '#linebreak')
-						{
-							lastChild.remove();
-						}
+						fragment.trimLinebreaks();
 
 						return fragment;
 					},

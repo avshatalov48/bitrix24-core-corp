@@ -4,25 +4,22 @@ namespace Bitrix\Sign\Operation;
 
 use Bitrix\Main;
 use Bitrix\Sign\Callback\Messages\Member\MemberStatusChanged;
-use Bitrix\Sign\Contract\Operation;
+use Bitrix\Sign\Contract\Operation as OperationContract;
+use Bitrix\Sign\Operation;
 use Bitrix\Sign\Item\Document;
 use Bitrix\Sign\Item\Member;
 use Bitrix\Sign\Result\Operation\MemberWebStatusResult;
-use Bitrix\Sign\Service\Container;
-use Bitrix\Sign\Service\Counter\B2e\UserToSignDocumentCounterService;
 use Bitrix\Sign\Type;
+use Bitrix\Sign\Type\CounterType;
 
-class SyncMemberStatus implements Operation
+class SyncMemberStatus implements OperationContract
 {
-	private readonly UserToSignDocumentCounterService $b2eUserToSignDocumentCounterService;
-
 	public function __construct(
 		private readonly Member $member,
 		private readonly Document $document,
 		private readonly ?MemberStatusChanged $message = null
 	)
 	{
-		$this->b2eUserToSignDocumentCounterService = Container::instance()->getB2eUserToSignDocumentCounterService();
 	}
 
 	public function launch(): Main\Result|MemberWebStatusResult
@@ -61,7 +58,16 @@ class SyncMemberStatus implements Operation
 
 		if (Type\DocumentScenario::isB2EScenario($this->document->scenario))
 		{
-			$this->b2eUserToSignDocumentCounterService->updateByMember($this->member);
+			$updateMyDocumentsCounterResult = (new Operation\Member\UpdateCounter(
+				CounterType::SIGN_B2E_MY_DOCUMENTS,
+				$this->member,
+				$this->document,
+			))->launch();
+
+			if (!$updateMyDocumentsCounterResult->isSuccess())
+			{
+				return $updateMyDocumentsCounterResult;
+			}
 		}
 
 		return $memberWebStatusResult;

@@ -38,7 +38,6 @@ jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
 	 * @return {string}
 	 */
 	const getFirstLetters = (name) => {
-
 		if (!Type.isStringFilled(name))
 		{
 			return '';
@@ -54,13 +53,10 @@ jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
 				return initials;
 			}
 
-			for (const letter of word)
+			const firstLetter = word[0];
+			if (firstLetter && ALLOWED_CHARACTERS_PATTERN.test(firstLetter))
 			{
-				if (ALLOWED_CHARACTERS_PATTERN.test(letter))
-				{
-					initials += letter;
-					break;
-				}
+				initials += firstLetter;
 			}
 		}
 
@@ -180,5 +176,5 @@ jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
 		);
 	};
 
-	module.exports = { EmptyAvatar, UserLetters, getColor, getBackgroundColorStyles };
+	module.exports = { EmptyAvatar, UserLetters, getColor, getBackgroundColorStyles, getFirstLetters };
 });

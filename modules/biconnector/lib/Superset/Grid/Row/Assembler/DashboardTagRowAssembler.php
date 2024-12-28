@@ -9,7 +9,7 @@ class DashboardTagRowAssembler extends RowAssembler
 	protected function prepareFieldAssemblers(): array
 	{
 		return [
-			new Field\TagTitleFieldAssembler([
+			new Field\Dashboard\TagTitleFieldAssembler([
 				'TITLE',
 			]),
 		];

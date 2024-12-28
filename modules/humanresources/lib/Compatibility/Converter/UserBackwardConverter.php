@@ -153,7 +153,7 @@ class UserBackwardConverter
 		}
 		catch (CreationFailedException $exception)
 		{
-			return $result->addErrors($exception->getErrors());
+			return $result->addErrors($exception->getErrors()->toArray());
 		}
 
 		return $result;
@@ -161,7 +161,13 @@ class UserBackwardConverter
 
 	private function getUserModelById(int $userId): ?Main\EO_User
 	{
-		return Main\UserTable::getById($userId)
+		return Main\UserTable::query()
+			->setSelect([
+				'ID',
+				'ACTIVE',
+				]
+			)
+			->where('ID', $userId)
 			->fetchObject()
 		;
 	}

@@ -9,7 +9,16 @@
 	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/project/utils';
 	const projectCache = new Map();
 	const projectKeys = new Set([
-		'ID', 'NAME', 'OPENED', 'NUMBER_OF_MEMBERS', 'AVATAR', 'AVATAR_TYPE', 'AVATAR_TYPES', 'ADDITIONAL_DATA',
+		'ID',
+		'NAME',
+		'OPENED',
+		'NUMBER_OF_MEMBERS',
+		'AVATAR',
+		'AVATAR_TYPE',
+		'AVATAR_TYPES',
+		'ADDITIONAL_DATA',
+		'TYPE',
+		'DIALOG_ID',
 	]);
 
 	class WorkgroupUtil
@@ -37,6 +46,8 @@
 
 			const isTasksMobileInstalled = BX.prop.getBoolean(jnExtensionData.get('project/utils'), 'isTasksMobileInstalled', false);
 
+			const isAirDiskFeatureEnable = BX.prop.getBoolean(jnExtensionData.get('project/utils'), 'isAirDiskFeatureEnable', false);
+
 			if (availableFeatures.includes('tasks') && isTasksMobileInstalled)
 			{
 				result.push(
@@ -63,9 +74,14 @@
 
 			if (availableFeatures.includes('files'))
 			{
-				result.push(
-					WorkgroupUtil.getDiskTab({ item }),
-				);
+				if (isAirDiskFeatureEnable)
+				{
+					result.push(WorkgroupUtil.getAirDiskTab({ item }));
+				}
+				else
+				{
+					result.push(WorkgroupUtil.getDiskTab({ item }));
+				}
 			}
 
 			if (availableFeatures.includes('calendar'))
@@ -157,7 +173,7 @@
 
 			return {
 				id: WorkgroupUtil.tabNames.disk,
-				title: BX.message('MOBILE_PROJECT_TAB_DRIVE'),
+				title: BX.message('MOBILE_PROJECT_TAB_DRIVE_MSGVER_1'),
 				component: {
 					name: 'JSStackComponent',
 					scriptPath: availableComponents['user.disk'].publicUrl,
@@ -175,6 +191,33 @@
 						ownerId: item.id,
 						title: item.title,
 						entityType: 'group',
+					},
+				},
+			};
+		}
+
+		static getAirDiskTab(params)
+		{
+			const item = params.item;
+
+			return {
+				id: WorkgroupUtil.tabNames.disk,
+				title: BX.message('MOBILE_PROJECT_TAB_DRIVE_MSGVER_1'),
+				component: {
+					name: 'JSStackComponent',
+					componentCode: 'disk.tabs.group',
+					scriptPath: availableComponents['disk:disk.tabs.group'].publicUrl,
+					canOpenInDefault: false,
+					rootWidget: {
+						name: 'layout',
+						settings: {
+							objectName: 'layout',
+							useSearch: true,
+							useLargeTitleMode: true,
+						},
+					},
+					params: {
+						GROUP_ID: item.id,
 					},
 				},
 			};
@@ -264,6 +307,7 @@
 				redirectUrl: url || '',
 				showHint: true,
 				title: BX.message('MOBILE_PROJECT_TAB_CALENDAR_QR_TITLE'),
+				analyticsSection: 'project',
 			});
 		}
 
@@ -309,27 +353,29 @@
 							return;
 						}
 
-						const item = {
-							id: params.projectId,
-							title: (data.NAME || ''),
-							params: {
-								avatar: WorkgroupUtil.getAvatarUrl(data),
-								initiatedByType: data.ADDITIONAL_DATA.INITIATED_BY_TYPE,
-								features: data.ADDITIONAL_DATA.FEATURES,
-								membersCount: parseInt(data.NUMBER_OF_MEMBERS || 0),
-								role: data.ADDITIONAL_DATA.ROLE,
-								opened: (data.OPENED || 'N'),
-							},
-						};
-
 						params.newsPathTemplate = (data.ADDITIONAL_DATA.projectNewsPathTemplate || '');
 						params.calendarWebPathTemplate = (data.ADDITIONAL_DATA.projectCalendarWebPathTemplate || '');
 
-						WorkgroupUtil.openComponent(item, params);
+						WorkgroupUtil.openComponent(
+							{
+								id: params.projectId,
+								title: (data.NAME || ''),
+								params: {
+									avatar: WorkgroupUtil.getAvatarUrl(data),
+									initiatedByType: data.ADDITIONAL_DATA.INITIATED_BY_TYPE,
+									features: data.ADDITIONAL_DATA.FEATURES,
+									membersCount: parseInt(data.NUMBER_OF_MEMBERS || 0, 10),
+									role: data.ADDITIONAL_DATA.ROLE,
+									opened: (data.OPENED || 'N'),
+									isCollab: data.TYPE === 'collab',
+									dialogId: data.DIALOG_ID,
+								},
+							},
+							params,
+						);
 					})
-					.catch(() => {
-						BX.postComponentEvent('project.background::hideLoadingIndicator');
-					});
+					.catch(() => BX.postComponentEvent('project.background::hideLoadingIndicator'))
+				;
 			}
 			else
 			{

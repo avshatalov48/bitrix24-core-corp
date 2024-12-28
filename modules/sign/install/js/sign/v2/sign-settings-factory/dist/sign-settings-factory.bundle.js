@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 (function (exports,sign_v2_b2b_signSettings,sign_v2_b2e_signSettings) {
@@ -7,15 +8,19 @@ this.BX.Sign = this.BX.Sign || {};
 	  b2b: sign_v2_b2b_signSettings.B2BSignSettings,
 	  b2e: sign_v2_b2e_signSettings.B2ESignSettings
 	};
-	function createSignSettings(containerId, options) {
+	function createSignSettings(containerId, options, analyticContext = null) {
 	  var _settings$type;
 	  const {
 	    type,
-	    uid
+	    uid,
+	    templateUid
 	  } = options;
 	  const SignSettingsConstructor = (_settings$type = settings[type]) != null ? _settings$type : sign_v2_b2b_signSettings.B2BSignSettings;
 	  const signSettings = new SignSettingsConstructor(containerId, options);
-	  signSettings.init(uid);
+	  if (analyticContext) {
+	    signSettings.setAnalyticsContext(analyticContext);
+	  }
+	  signSettings.init(uid, templateUid);
 	}
 
 	exports.createSignSettings = createSignSettings;

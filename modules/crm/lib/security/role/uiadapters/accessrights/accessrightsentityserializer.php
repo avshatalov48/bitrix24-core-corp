@@ -2,18 +2,16 @@
 
 namespace Bitrix\Crm\Security\Role\UIAdapters\AccessRights;
 
+use Bitrix\Crm\Security\EntityPermission\ApproveCustomPermsToExistRole;
 use Bitrix\Crm\Security\Role\Manage\DTO\EntityDTO;
-use Bitrix\Crm\Security\Role\Manage\Permissions\MyCardView;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Permission;
-use Bitrix\Crm\Security\Role\Manage\Permissions\Transition;
 use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\Utils\PermCodeTransformer;
-use Bitrix\Main\Access\Permission\PermissionDictionary;
 
 class AccessRightsEntitySerializer
 {
 	/**
 	 * @param EntityDTO[] $entities
-	 * @return array
+	 * @return array[]
 	 */
 	public function serialize(array $entities): array
 	{
@@ -28,11 +26,16 @@ class AccessRightsEntitySerializer
 				$rightCode = PermCodeTransformer::getInstance()->makeAccessRightPermCode(
 					new PermIdentifier($entity->code(), $perm->code())
 				);
+				if ((new ApproveCustomPermsToExistRole())->hasWaitingPermission($perm))
+				{
+					continue;
+				}
 
 				$permRight = $this->createRight(
 					$perm->name(),
 					$rightCode,
 					$perm,
+					$perm->variants()?->getValuesForSection()
 				);
 
 				$permRight['groupHead'] = $perm->canAssignPermissionToStages() && !empty($entity->fields());
@@ -51,22 +54,43 @@ class AccessRightsEntitySerializer
 							new PermIdentifier($entity->code(), $perm->code(), $fieldName, $valueCode)
 						);
 
-						$rights[] = $this->createRight(
+						$right = $this->createRight(
 							$valueName,
 							$fieldRightCode,
 							$perm,
+							$perm->variants()?->getValuesForSubsection($valueCode),
 							$rightCode
 						);
+
+						// prefer 'inherit' on group actions
+						$right['setEmptyOnGroupActions'] = true;
+
+						$rights[] = $right;
 					}
 				}
-
-
 			}
-
-			$accessRights[] = [
+			if (empty($rights))
+			{
+				continue;
+			}
+			$accessRightSection = [
 				'sectionTitle' => $entity->name(),
+				'sectionCode' => $entity->code(),
 				'rights' => $rights,
 			];
+			if ($entity->description())
+			{
+				$accessRightSection['sectionSubTitle'] = $entity->description();
+			}
+			if ($entity->iconCode() && $entity->iconColor())
+			{
+				$accessRightSection['sectionIcon'] = [
+					'type' => $entity->iconCode(),
+					'bgColor' => $entity->iconColor(),
+				];
+			}
+
+			$accessRights[] = $accessRightSection;
 		}
 
 		return $accessRights;
@@ -76,80 +100,84 @@ class AccessRightsEntitySerializer
 		string $rightName,
 		string $rightCode,
 		Permission $permission,
+		?array $variables = null,
 		?string $parentCode = null,
 	): array
 	{
+		$result = [
+			'id' => $rightCode,
+			'title' => $rightName ?: $permission->name(),
+			'hint' => $permission->explanation(),
+			'group' => $parentCode,
+		];
+		$controlType = $permission->getControlType();
+		$result['type'] = $controlType->getType();
+		$result['minValue'] = $controlType->getMinValue();
+		$result['maxValue'] = $controlType->getMaxValue();
+		$result = array_merge($result,  $controlType->getExtraOptions());
 
-		switch ($permission->code())
+		if (!is_null($variables))
 		{
-			case MyCardView::CODE:
-				return [
-					'id' => $rightCode,
-					'title' => $rightName ? $rightName : $permission->name(),
-					'group' => $parentCode,
-					'type' => PermissionDictionary::TYPE_TOGGLER,
-				];
+			$result['variables'] = $variables;
 
-			case Transition::CODE:
+			$emptyValue = $this->getEmptyValue($variables);
+			if ($emptyValue !== null)
+			{
+				$result['emptyValue'] = $emptyValue;
+			}
 
-				$variables = [];
-				foreach ($permission->variants() as $variantCode => $variantName)
-				{
-					$item = [
-						'id' => $variantCode,
-						'title' => $variantName,
-					];
+			$nothingSelectedValue = $this->getNothingSelectedValue($variables);
+			if ($nothingSelectedValue !== null)
+			{
+				$result['nothingSelectedValue'] = $nothingSelectedValue;
+			}
 
-					if (in_array($variantCode, [Transition::TRANSITION_ANY, Transition::TRANSITION_INHERIT]))
-					{
-						$item['selectedAction'] = 'clear-other';
-					}
-
-					$variables[] = $item;
-				}
-
-				$variables[] = [
-					'id' => 'denied',
-					'title' => 'Denied',
-					'selectedAction' => 'clear-other'
-				];
-
-				return [
-					'id' => $rightCode,
-					'title' => $rightName ? $rightName : $permission->name(),
-					'group' => $parentCode,
-					'type' => PermissionDictionary::TYPE_MULTIVARIABLES,
-					'variables' => $variables,
-					'changerOptions' => [
-						'disableSelectAll' => true,
-						'useSelectedActions' => true,
-						'replaceNullValueTo' => '0'
-					]
-				];
-
-			default:
-				$variables = [];
-				foreach ($permission->variants() as $variantCode => $variantName)
-				{
-					if ($variantCode === '' || $variantCode === null)
-					{
-						$variantCode = '0';
-					}
-
-					$variables[] = ['id' => $variantCode, 'title' => $variantName];
-				}
-
-				return [
-					'id' => $rightCode,
-					'title' => $rightName ? $rightName : $permission->name(),
-					'group' => $parentCode,
-					'type' => PermissionDictionary::TYPE_VARIABLES,
-					'variables' => $variables,
-					'changerOptions' => [
-						'replaceNullValueTo' => '0'
-					]
-				];
+			$defaultValue = $this->getDefaultValue($variables);
+			if ($defaultValue !== null)
+			{
+				$result['defaultValue'] = $defaultValue;
+			}
 		}
+
+		return $result;
 	}
 
+	private function getEmptyValue(array $variables): ?string
+	{
+		foreach ($variables as $variable)
+		{
+			if ($variable['useAsEmpty'] ?? false)
+			{
+				return $variable['id'];
+			}
+		}
+
+		return null;
+	}
+
+	private function getNothingSelectedValue(array $variables): ?string
+	{
+		foreach ($variables as $variable)
+		{
+			if ($variable['useAsNothingSelected'] ?? false)
+			{
+				return $variable['id'];
+			}
+		}
+
+		return null;
+	}
+
+	private function getDefaultValue(array $variables): ?string
+	{
+		foreach ($variables as $variable)
+		{
+			if ($variable['default'] ?? false)
+			{
+				return $variable['id'];
+			}
+		}
+
+		return null;
+	}
 }

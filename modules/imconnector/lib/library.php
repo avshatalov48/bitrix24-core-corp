@@ -159,7 +159,9 @@ class Library
 		EVENT_DIALOG_START = 'OnImConnectorDialogStart',
 		EVENT_DIALOG_FINISH = 'OnImConnectorDialogFinish',
 
-		EVENT_DELETE_LINE = 'OnDeleteLine'
+		EVENT_DELETE_LINE = 'OnDeleteLine',
+
+		EVENT_NEW_CHAT_NAME = 'OnNewChatName'
 	;
 
 	public const CODE_ID_ARTICLE_TIME_LIMIT = '10632966';

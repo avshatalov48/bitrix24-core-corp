@@ -14,8 +14,10 @@ class StructureBackwardAdapter
 {
 	private static ?int $headRole = null;
 	private static array $nodeHeads = [];
-	private const STRUCTURE_EMPLOYEE_CACHE_KEY = 'humanresources/employee/structure/%d/%d';
-	private const STRUCTURE_CACHE_KEY = 'humanresources/structure/%d/%d';
+	private const STRUCTURE_EMPLOYEE_CACHE_KEY = 'humanresources/employee/structure/%s/%s';
+	private const STRUCTURE_CACHE_KEY = 'humanresources/structure/%s/%s';
+
+	private const CACHE_SUB_DIR = 'structure';
 
 	/**
 	 * @throws \Bitrix\Main\ObjectPropertyException
@@ -29,10 +31,38 @@ class StructureBackwardAdapter
 			return [];
 		}
 
+		if (\COption::GetOptionInt("humanresources", "check_user_existence") !== 1)
+		{
+			\CAgent::AddAgent(
+				name: '\Bitrix\HumanResources\Install\Agent\CheckUserExistence::run();',
+				module: 'humanresources',
+				interval: 60,
+				next_exec: \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
+				existError: false,
+			);
+
+			\COption::SetOptionInt("humanresources", "check_user_existence", 1);
+		}
+
+		if (\COption::GetOptionInt("humanresources", "re_sync_user_structure") !== 1)
+		{
+			\CAgent::AddAgent(
+				name: '\Bitrix\HumanResources\Compatibility\Converter\StructureBackwardConverter::startDefaultConverting();',
+				module: 'humanresources',
+				interval: 60,
+				next_exec: \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
+				existError: false,
+			);
+
+			\COption::SetOptionInt("humanresources", "re_sync_user_structure", 1);
+		}
+
+		$depthKey = $depth === null ? 'full' : $depth;
+
 		$cacheManager = self::getCacheManager();
 
-		$employeeCacheKey = sprintf(self::STRUCTURE_EMPLOYEE_CACHE_KEY, (int)$fromIblockSectionId, (int)$depth);
-		$structureCache = $cacheManager->getData($employeeCacheKey);
+		$employeeCacheKey = sprintf(self::STRUCTURE_EMPLOYEE_CACHE_KEY, (int)$fromIblockSectionId, $depthKey);
+		$structureCache = $cacheManager->getData($employeeCacheKey, self::CACHE_SUB_DIR);
 
 		if ($structureCache !== null)
 		{
@@ -69,7 +99,7 @@ class StructureBackwardAdapter
 			}
 		}
 
-		$cacheManager->setData($employeeCacheKey, $structure);
+		$cacheManager->setData($employeeCacheKey, $structure, self::CACHE_SUB_DIR);
 
 		return $structure;
 	}
@@ -83,7 +113,7 @@ class StructureBackwardAdapter
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function getStructureWithoutEmployee(?int $fromIblockSectionId = null, ?int $depth = 0): array
+	public static function getStructureWithoutEmployee(?int $fromIblockSectionId = null, ?int $depth = null): array
 	{
 		if (!Config\Storage::instance()->isIntranetUtilsDisabled())
 		{
@@ -94,11 +124,16 @@ class StructureBackwardAdapter
 		{
 			return [];
 		}
+		$depthKey = $depth === null ? 'full' : $depth;
 
 		$cacheManager = self::getCacheManager();
-		$cacheKey = sprintf(self::STRUCTURE_CACHE_KEY, (int)$fromIblockSectionId, (int)$depth);
+		$cacheKey = sprintf(
+			self::STRUCTURE_CACHE_KEY,
+			(int)$fromIblockSectionId,
+			$depthKey
+		);
 
-		$structureCache = $cacheManager->getData($cacheKey);
+		$structureCache = $cacheManager->getData($cacheKey, self::CACHE_SUB_DIR);
 
 		if ($structureCache !== null)
 		{
@@ -139,7 +174,7 @@ class StructureBackwardAdapter
 			return [];
 		}
 
-		$children = $nodeRepository->getChildOf($rootNode, !$depth ? DepthLevel::FULL : $depth);
+		$children = $nodeRepository->getChildOf($rootNode, $depth === null ? DepthLevel::FULL : ($depth - 1));
 
 		$structureArray = [
 			'TREE' => [],
@@ -199,7 +234,7 @@ class StructureBackwardAdapter
 			$parentNodes[$child->parentId] ??= $parentId;
 		}
 
-		$cacheManager->setData($cacheKey, $structureArray);
+		$cacheManager->setData($cacheKey, $structureArray, self::CACHE_SUB_DIR);
 
 		return $structureArray;
 	}
@@ -240,7 +275,6 @@ class StructureBackwardAdapter
 	{
 		return Container::getCacheManager()
 			->setTtl(86400)
-			->setDir('structure')
 		;
 	}
 
@@ -252,6 +286,6 @@ class StructureBackwardAdapter
 		self::$nodeHeads = [];
 		self::$headRole = null;
 
-		self::getCacheManager()->cleanDir();
+		self::getCacheManager()->cleanDir(self::CACHE_SUB_DIR);
 	}
 }

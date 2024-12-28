@@ -52,7 +52,7 @@ jn.define('layout/ui/warning-block', (require, exports, module) => {
 
 		getRenderProps()
 		{
-			const { redirectUrl, redirectTitle, onClickCallback } = this.props;
+			const { redirectUrl, redirectTitle, onClickCallback, analyticsSection = '' } = this.props;
 
 			const renderProps = { style: styles.container(this.getTypeBackground()) };
 
@@ -67,6 +67,7 @@ jn.define('layout/ui/warning-block', (require, exports, module) => {
 						title: redirectTitle,
 						redirectUrl,
 						layout: this.props.layout || layout,
+						analyticsSection,
 					});
 				};
 			}

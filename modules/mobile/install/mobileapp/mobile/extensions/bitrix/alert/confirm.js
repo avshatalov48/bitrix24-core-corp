@@ -3,6 +3,7 @@
  */
 jn.define('alert/confirm', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { Type } = require('type');
 
 	const ButtonType = {
 		DEFAULT: 'default',
@@ -48,43 +49,81 @@ jn.define('alert/confirm', (require, exports, module) => {
 
 		prepareButtons(buttons)
 		{
-			const buttonsArrayCancel = buttons.filter(({ type }) => type === ButtonType.CANCEL);
+			if (!Type.isArrayFilled(buttons))
+			{
+				return buttons;
+			}
+
+			let preparedButtons = [...buttons];
+			const buttonsArrayCancel = preparedButtons.filter(({ type }) => type === ButtonType.CANCEL);
 			if (buttonsArrayCancel.length > 1)
 			{
 				throw new Error(`Only one button with type "${ButtonType.CANCEL}" is allowed.`);
 			}
 
-			if (buttons.length === 0)
+			if (preparedButtons.length === 0)
 			{
-				buttons.push({
+				preparedButtons.push({
 					text: Loc.getMessage('ALERT_CONFIRMATION_CONFIRM'),
 					type: ButtonType.DEFAULT,
 				});
 			}
-
-			buttons = this.moveCancelButtonLast(buttons);
-
-			// fix weird android behavior when last button becomes first
-			if (isAndroid && buttons.length === 3)
+			else
 			{
-				const [first, ...others] = buttons;
-
-				buttons = [...others, first];
+				preparedButtons = this.setButtonsTextByType(preparedButtons);
 			}
 
-			buttons = buttons.map((button) => (
-				button.type === ButtonType.CANCEL
-					? {
-						...button,
-						text: button.text || Loc.getMessage('ALERT_CONFIRMATION_CANCEL'),
-					}
-					: button));
+			preparedButtons = this.moveCancelButtonLast(preparedButtons);
+
+			// fix weird android behavior when last button becomes first
+			if (isAndroid && preparedButtons.length === 3)
+			{
+				const [first, ...others] = preparedButtons;
+
+				preparedButtons = [...others, first];
+			}
 
 			return (
 				Application.getApiVersion() >= MIN_API_VERSION
-					? buttons
-					: buttons.map(({ text }) => text)
+					? preparedButtons
+					: preparedButtons.map(({ text }) => text)
 			);
+		}
+
+		setButtonsTextByType(buttons)
+		{
+			if (Type.isArrayFilled(buttons))
+			{
+				return buttons.map((button) => {
+					if (button.text)
+					{
+						return button;
+					}
+
+					switch (button.type)
+					{
+						case ButtonType.DEFAULT:
+							return {
+								...button,
+								text: Loc.getMessage('ALERT_CONFIRMATION_CONFIRM'),
+							};
+						case ButtonType.CANCEL:
+							return {
+								...button,
+								text: Loc.getMessage('ALERT_CONFIRMATION_CANCEL'),
+							};
+						case ButtonType.DESTRUCTIVE:
+							return {
+								...button,
+								text: Loc.getMessage('ALERT_CONFIRM_DELETING'),
+							};
+						default:
+							return button;
+					}
+				});
+			}
+
+			return buttons;
 		}
 
 		moveCancelButtonLast(buttons)

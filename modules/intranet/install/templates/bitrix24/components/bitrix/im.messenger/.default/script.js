@@ -66,7 +66,9 @@ BX.namespace("BX.Intranet.Bitrix24.ImBar");
 				promoter.show();
 
 				const analyticsManager = BX.Messenger.v2.Lib.Analytics.getInstance();
-				analyticsManager.onOpenCopilotTab({ isAvailable: false });
+				analyticsManager.copilot.onOpenTab({
+					isAvailable: false,
+				});
 
 				return;
 			}

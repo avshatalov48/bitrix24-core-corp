@@ -1,0 +1,2 @@
+<?php
+$MESS["M_DISK_TARIFF_PLAN_RESTRICTION_COMMON_STORAGE"] = "Company files";

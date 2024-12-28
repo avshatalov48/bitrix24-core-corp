@@ -126,6 +126,7 @@ class ConferenceApplication
 		this.onCallConnectionQualityChangedHandler = this.onCallConnectionQualityChanged.bind(this);
 		this.onCallToggleRemoteParticipantVideoHandler = this.onCallToggleRemoteParticipantVideo.bind(this);
 		this._onGetUserMediaEndedHandler = this.onGetUserMediaEnded.bind(this);
+		this._onSwitchTrackRecordStatusHandler = this.onUpdateCallCopilotState.bind(this);
 
 		this.onPreCallDestroyHandler = this.onPreCallDestroy.bind(this);
 		this.onPreCallUserStateChangedHandler = this.onPreCallUserStateChanged.bind(this);
@@ -407,12 +408,14 @@ class ConferenceApplication
 						language: this.params.language,
 						layout: Utils.device.isMobile() ? Call.View.Layout.Mobile : Call.View.Layout.Centered,
 						uiState: Call.View.UiState.Preparing,
-						blockedButtons: ['camera', 'microphone', 'floorRequest', 'screen', 'record'],
+						blockedButtons: ['camera', 'microphone', 'floorRequest', 'screen', 'record', 'copilot'],
 						localUserState: Call.UserState.Idle,
 						hiddenTopButtons: !this.isBroadcast() || this.getBroadcastPresenters().length > 1? []: ['grid'],
 						hiddenButtons: hiddenButtons,
 						broadcastingMode: this.isBroadcast(),
 						broadcastingPresenters: this.getBroadcastPresenters(),
+						isCopilotFeaturesEnabled: false,
+						isCopilotActive: false,
 					});
 
 					this.callView.subscribe(Call.View.Event.onButtonClick, this.onCallButtonClick.bind(this));
@@ -934,7 +937,7 @@ class ConferenceApplication
 		}
 	}
 
-	startCall(videoEnabled, viewerMode = false)
+	startCall(videoEnabled, viewerMode = false, withCopilot)
 	{
 		if (this.initCallPromise)
 		{
@@ -984,6 +987,9 @@ class ConferenceApplication
 			this.currentCall = e.call;
 			//this.currentCall.useHdVideo(Call.Hardware.preferHdQuality);
 			this.currentCall.useHdVideo(true);
+			this.onUpdateCallCopilotState({
+				isTrackRecordOn: this.currentCall.isCopilotActive,
+			});
 			if(Call.Hardware.defaultMicrophone)
 			{
 				this.currentCall.setMicrophoneId(Call.Hardware.defaultMicrophone);
@@ -1016,6 +1022,7 @@ class ConferenceApplication
 						audio: !Call.Hardware.isMicrophoneMuted,
 					},
 					status: Analytics.AnalyticsStatus.success,
+					isCopilotActive: this.currentCall.isCopilotActive,
 				});
 
 				this.currentCall.inviteUsers();
@@ -1716,6 +1723,7 @@ class ConferenceApplication
 			floorRequest: this.onCallViewFloorRequestButtonClick.bind(this),
 			feedback: this.onCallViewFeedbackButtonClick.bind(this),
 			onUserClick: this.onCallUserClick.bind(this),
+			copilot: this.onCallCopilotButtonClick.bind(this),
 		};
 
 		if(handlers[buttonName])
@@ -2181,6 +2189,53 @@ class ConferenceApplication
 		});
 	}
 
+	onCallCopilotButtonClick()
+	{
+		this.onChangeStateCopilot();
+
+		/* if (!Call.Util.isAIServiceEnabled())
+		{
+			BX.SidePanel.Instance.open(CallAI.serviceEnabled, {
+				cacheable: false
+			});
+			return;
+		}
+
+		this.copilotPopup = new Call.CopilotPopup({
+			isCopilotActive: this.currentCall.isCopilotActive,
+			isCopilotFeaturesEnabled: this.currentCall.isCopilotFeaturesEnabled,
+			updateCopilotState: () => {
+				this.onChangeStateCopilot();
+			},
+			onClose: () => {
+				this.copilotPopup = null;
+			}
+		});
+
+		if (this.copilotPopup)
+		{
+			this.copilotPopup.toggle();
+		} */
+	}
+
+	onUpdateCallCopilotState({ isTrackRecordOn })
+	{
+		this.currentCall.isCopilotActive = isTrackRecordOn;
+		this.callView.updateCopilotState(this.currentCall.isCopilotActive);
+	}
+
+	onChangeStateCopilot()
+	{
+		const action = !this.currentCall.isCopilotActive ? 'call.Track.start' : 'call.Track.stop';
+		BX.ajax.runAction(action, {
+			data: { callId: this.currentCall.id }
+		}).then(() => {
+			this.onUpdateCallCopilotState({
+				isTrackRecordOn: !this.currentCall.isCopilotActive,
+			});
+		});
+	}
+
 	onCallViewFloorRequestButtonClick()
 	{
 		Analytics.getInstance().onFloorRequest({
@@ -2240,6 +2295,7 @@ class ConferenceApplication
 		this.currentCall.addEventListener(Call.Event.onConnectionQualityChanged, this.onCallConnectionQualityChangedHandler);
 		this.currentCall.addEventListener(Call.Event.onToggleRemoteParticipantVideo, this.onCallToggleRemoteParticipantVideoHandler);
 		this.currentCall.addEventListener(Call.Event.onGetUserMediaEnded, this._onGetUserMediaEndedHandler);
+		this.currentCall.addEventListener(Call.Event.onSwitchTrackRecordStatus, this._onSwitchTrackRecordStatusHandler);
 	}
 
 	removeCallEvents()
@@ -2270,6 +2326,7 @@ class ConferenceApplication
 		this.currentCall.removeEventListener(Call.Event.onReconnected, this.onReconnectedHandler);
 		this.currentCall.addEventListener(Call.Event.onUpdateLastUsedCameraId, this.onUpdateLastUsedCameraIdHandler);
 		this.currentCall.removeEventListener(Call.Event.onGetUserMediaEnded, this._onGetUserMediaEndedHandler);
+		this.currentCall.removeEventListener(Call.Event.onSwitchTrackRecordStatus, this._onSwitchTrackRecordStatusHandler);
 	}
 
 	onCallUserInvited(e)
@@ -2294,6 +2351,11 @@ class ConferenceApplication
 		{
 			this.clearConnectionQualityTimer(e.userId);
 			this.callView.setUserConnectionQuality(e.userId, 5);
+
+			if (false && CallAI.serviceEnabled)
+			{
+				this.callView.unblockButtons(['copilot']);
+			}
 		}
 
 		if (

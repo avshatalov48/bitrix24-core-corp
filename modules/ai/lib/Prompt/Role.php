@@ -106,7 +106,7 @@ class Role
 		}
 
 		$role = RoleTable::query()
-			->setSelect(['ID', 'CODE', 'INSTRUCTION', 'INDUSTRY_CODE', 'DATE_MODIFY', 'RULES'])
+			->setSelect(['ID', 'CODE', 'INSTRUCTION', 'INDUSTRY_CODE', 'DATE_MODIFY', 'RULES', 'IS_SYSTEM'])
 			->where('CODE', $code)
 			->setLimit(1)
 			->fetchObject()
@@ -140,6 +140,15 @@ class Role
 	public static function getUniversalRole(): self
 	{
 		return self::get(RoleManager::getUniversalRoleCode());
+	}
+
+	/**
+	 * Returns universal Role instance.
+	 * @return self
+	 */
+	public static function getLibrarySystemRole(): self
+	{
+		return self::get(RoleManager::getLibrarySystemRoleCode());
 	}
 
 

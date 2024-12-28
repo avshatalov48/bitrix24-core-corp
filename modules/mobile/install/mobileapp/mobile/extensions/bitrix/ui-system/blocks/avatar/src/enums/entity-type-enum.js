@@ -3,6 +3,7 @@
  */
 jn.define('ui-system/blocks/avatar/src/enums/entity-type-enum', (require, exports, module) => {
 	const { Type } = require('type');
+	const { Color } = require('tokens');
 	const { isNil } = require('utils/type');
 	const { BaseEnum } = require('utils/enums/base');
 	const { AvatarShape } = require('ui-system/blocks/avatar/src/enums/shape-enum');
@@ -16,33 +17,48 @@ jn.define('ui-system/blocks/avatar/src/enums/entity-type-enum', (require, export
 	class AvatarEntityType extends BaseEnum
 	{
 		static COLLAB = new AvatarEntityType('COLLAB', {
-			shape: AvatarShape.HEXAGON,
-			emptyAvatar: 'person_green.svg',
+			accent: true,
+			shape: AvatarShape.CIRCLE,
+			placeholder: {
+				emptyAvatar: 'person_green.svg',
+				backgroundColor: Color.collabAccentPrimary,
+			},
 			accentGradient: AvatarAccentGradient.GREEN,
 		});
 
 		static GROUP = new AvatarEntityType('GROUP', {
-			emptyAvatar: 'person.svg',
+			placeholder: {
+				emptyAvatar: 'person.svg',
+			},
 			shape: AvatarShape.CIRCLE,
 			accentGradient: AvatarAccentGradient.BLUE,
 		});
 
 		static USER = new AvatarEntityType('USER', {
-			emptyAvatar: 'person.svg',
+			placeholder: {
+				emptyAvatar: 'person.svg',
+			},
 			shape: AvatarShape.CIRCLE,
 			accentGradient: AvatarAccentGradient.BLUE,
 		});
 
 		static EXTRANET = new AvatarEntityType('EXTRANET', {
-			emptyAvatar: 'person.svg',
+			accent: true,
+			placeholder: {
+				emptyAvatar: 'person_orange.svg',
+				backgroundColor: Color.accentMainWarning,
+			},
 			shape: AvatarShape.CIRCLE,
+			accentGradient: AvatarAccentGradient.ORANGE,
 		});
 
-		static resolveType(value, defaultEnum)
+		static resolveType(value)
 		{
+			const defaultEnum = AvatarEntityType.USER;
+
 			if (isNil(value))
 			{
-				return AvatarEntityType.resolve(defaultEnum, AvatarEntityType.USER);
+				return defaultEnum;
 			}
 
 			if (AvatarEntityType.has(value))
@@ -54,7 +70,17 @@ jn.define('ui-system/blocks/avatar/src/enums/entity-type-enum', (require, export
 				return Type.isStringFilled(value) && key.toLowerCase() === value.toLowerCase();
 			});
 
-			return AvatarEntityType.resolve(AvatarEntityType.getEnum(enumKey), AvatarEntityType.USER);
+			return AvatarEntityType.resolve(AvatarEntityType.getEnum(enumKey), defaultEnum);
+		}
+
+		isCollab()
+		{
+			return this.equal(AvatarEntityType.COLLAB);
+		}
+
+		isExtranet()
+		{
+			return this.equal(AvatarEntityType.EXTRANET);
 		}
 	}
 

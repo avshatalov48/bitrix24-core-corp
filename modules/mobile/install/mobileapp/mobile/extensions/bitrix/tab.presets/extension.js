@@ -13,6 +13,7 @@ jn.define('tab.presets', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Color } = require('tokens');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
+	const { Tourist } = require('tourist');
 
 	class TabPresetsComponent extends LayoutComponent
 	{
@@ -37,6 +38,28 @@ jn.define('tab.presets', (require, exports, module) => {
 						// widget.back()
 					});
 				});
+		}
+
+		componentDidMount()
+		{
+			this.setUserVisitedTabPresets();
+		}
+
+		setUserVisitedTabPresets()
+		{
+			if (Tourist.firstTime('visited_tab_presets'))
+			{
+				Tourist.remember('visited_tab_presets')
+					.then(() => {
+						BX.postComponentEvent('onSetUserCounters', [
+							{
+								[String(env.siteId)]: { menu_tab_presets: 0 },
+							},
+						]);
+					})
+					.catch(console.error)
+				;
+			}
 		}
 
 		updateState(state, init = false)
@@ -256,9 +279,10 @@ jn.define('tab.presets', (require, exports, module) => {
 				const title = tabsDesc?.[code]?.shortTitle ?? '';
 				const color = index === 0 ? Color.base1 : Color.base4;
 				const iconId = tabsDesc?.[code]?.iconId ?? code;
+				const icon = getIcon(iconId) || getIcon(code);
 				const iconNode = this.getIconView({
+					icon,
 					color,
-					code: iconId,
 					animated: index === 0 && active,
 				});
 
@@ -296,7 +320,7 @@ jn.define('tab.presets', (require, exports, module) => {
 			layout.showComponent(new Editor(this.state.tabs, layout));
 		}
 
-		getIconView({ code, color = Color.base4, animated = false })
+		getIconView({ icon, color = Color.base4, animated = false })
 		{
 			return IconView({
 				forwardRef: (ref) => {
@@ -320,10 +344,7 @@ jn.define('tab.presets', (require, exports, module) => {
 				},
 				size: 30,
 				iconColor: color,
-				icon: getIcon(code),
-				// svg: {
-				// 	content: getSvg(code, index === 0 ? AppTheme.colors.accentMainPrimary : AppTheme.colors.base6),
-				// },
+				icon,
 			});
 		}
 	}

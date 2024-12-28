@@ -2,12 +2,7 @@
 
 return [
 	'extensions' => [
-		'type',
-		'utils/url',
-		'layout/ui/safe-image',
-		'layout/ui/user/empty-avatar',
-		'statemanager/redux/connect',
-		'statemanager/redux/slices/users',
+		'ui-system/blocks/avatar',
 	],
 	'bundle' => [
 		'./src/redux-avatar',

@@ -202,7 +202,9 @@ this.BX = this.BX || {};
 	    });
 	  }
 	  openSignDocumentModifySlider(documentId) {
-	    return Router.openSlider(`/sign/doc/0/?docId=${documentId}&stepId=changePartner&noRedirect=Y`);
+	    return Router.openSlider(`/sign/doc/0/?docId=${documentId}&stepId=changePartner&noRedirect=Y`, {
+	      width: 1250
+	    });
 	  }
 	  openCalendarEventSlider(eventId, isSharing) {
 	    const sliderId = `crm-calendar-slider-${eventId}-${Math.floor(Math.random() * 1000)}`;

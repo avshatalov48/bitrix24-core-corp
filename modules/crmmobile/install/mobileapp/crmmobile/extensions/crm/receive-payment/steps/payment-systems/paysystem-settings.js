@@ -86,6 +86,7 @@ jn.define('crm/receive-payment/steps/payment-systems/paysystem-settings', (requi
 								title: Loc.getMessage('M_RP_PS_PAY_SYSTEM_SETTINGS_QRAUTH_TITLE'),
 								redirectUrl: '/saleshub/',
 								layout: this.layoutWidget,
+								analyticsSection: 'crm',
 							});
 						}
 						else

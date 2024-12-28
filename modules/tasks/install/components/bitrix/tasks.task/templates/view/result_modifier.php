@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Tasks\Integration\SocialNetwork\Collab\Url\UrlManager;
 use Bitrix\Tasks\UI;
 use \Bitrix\Tasks\Util\Type;
 
@@ -258,10 +259,9 @@ if ($taskData["GROUP_ID"] && isset($arResult["DATA"]["GROUP"][$taskData["GROUP_I
 	$group = $arResult["DATA"]["GROUP"][$taskData["GROUP_ID"]];
 	$arResult["TEMPLATE_DATA"]["GROUP"]["NAME"] = $group["NAME"];
 	$arResult["TEMPLATE_DATA"]["GROUP"]["ID"] = $group["ID"];
-	$arResult["TEMPLATE_DATA"]["GROUP"]["URL"] = CComponentEngine::makePathFromTemplate(
-		$arParams["PATH_TO_GROUP"],
-		array("group_id" => $taskData["GROUP_ID"])
-	);
+	$arResult['TEMPLATE_DATA']['GROUP']['TYPE'] = $group['TYPE'] ?? null;
+	$arResult['TEMPLATE_DATA']['GROUP']['CHAT_ID'] = $group['CHAT_ID'] ?? 0;
+	$arResult['TEMPLATE_DATA']['GROUP']['URL'] = UrlManager::getUrlByType((int)$group['ID'], $group['TYPE'] ?? null);
 }
 
 //Parent Task

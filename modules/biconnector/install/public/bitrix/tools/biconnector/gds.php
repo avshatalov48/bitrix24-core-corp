@@ -77,8 +77,9 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	}
 	else
 	{
-		$accessKey = substr($_GET['token'], 0 ,32);
-		$languageCode = substr($_GET['token'], 32, 2);
+		$token = $_GET['token'] ?? '';
+		$accessKey = substr($token, 0 ,32);
+		$languageCode = substr($token, 32, 2);
 	}
 
 	$lockFileName = CTempFile::GetAbsoluteRoot() . '/' . md5($accessKey) . '-bi.lock';
@@ -86,8 +87,6 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	$isLocked = $lockFile ? flock($lockFile, LOCK_EX) : false;
 
 	$manager = Bitrix\BIConnector\Manager::getInstance();
-	$service = $manager->createService('gds');
-	$service->setLanguage($languageCode);
 
 	$limitManager = \Bitrix\BIConnector\LimitManager::getInstance();
 	if ($supersetKey)
@@ -101,6 +100,11 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	{
 		$limitManager->setIsSuperset();
 	}
+
+	$serviceCode = 'gds';
+	$service = $manager->createService($serviceCode);
+	$service->setLanguage($languageCode);
+	$tableName = isset($_GET['table']) ? (string)$_GET['table'] : null;
 
 	if (!$manager->checkAccessKey($accessKey))
 	{
@@ -119,13 +123,13 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 		$tableList = $service->getTableList();
 		echo Bitrix\Main\Web\Json::encode($tableList, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 	}
-	elseif (!$service->getTableFields($_GET['table']))
+	elseif (empty($tableName) || !$service->getTableFields($tableName))
 	{
 		echo Bitrix\Main\Web\Json::encode(['error' => 'NO_TABLE']);
 	}
 	elseif (isset($_GET['desc']))
 	{
-		$tableFields = $service->getTableFields($_GET['table']);
+		$tableFields = $service->getTableFields($tableName);
 		if (isset($_GET['pp']))
 		{
 			ob_start();
@@ -140,7 +144,12 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	}
 	elseif (isset($_GET['explain']))
 	{
-		$result = $service->getData($_GET['table'], $input);
+		$limit = (int)($_GET['limit'] ?? 0);
+		if ($limit > 0)
+		{
+			$input['limit'] = $limit;
+		}
+		$result = $service->getData($tableName, $input);
 		if (isset($result['error']))
 		{
 			echo Bitrix\Main\Web\Json::encode($result);
@@ -166,8 +175,12 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	}
 	elseif (isset($_GET['data']))
 	{
-		$limit = isset($_GET['limit']) ? intval($_GET['limit']) : 0;
-		$result = $service->getData($_GET['table'], $input);
+		$limit = (int)($_GET['limit'] ?? 0);
+		if ($limit > 0)
+		{
+			$input['limit'] = $limit;
+		}
+		$result = $service->getData($tableName, $input);
 		if (isset($result['error']))
 		{
 			echo Bitrix\Main\Web\Json::encode($result);
@@ -190,7 +203,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 			};
 
 			$logId = $manager->startQuery(
-				$_GET['table']
+				$tableName
 				,implode(', ', array_map($getIdFunction, $result['schema']))
 				,\Bitrix\Main\Web\Json::encode($result['where'], JSON_UNESCAPED_UNICODE)
 				,\Bitrix\Main\Web\Json::encode($input, JSON_UNESCAPED_UNICODE)
@@ -278,7 +291,8 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 				{
 					if ($limit && $count === $limit)
 					{
-						continue; //Avoid "Commands out of sync" error.
+						/** It`s Avoiding "Commands out of sync" error. The issue is 0205035 */
+						continue;
 					}
 
 					foreach ($result['onAfterFetch'] as $i => $callback)

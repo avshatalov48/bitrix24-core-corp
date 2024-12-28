@@ -500,7 +500,16 @@ class CIntranetUtils
 
 		$arParams['SELECT'] = array_merge(
 			$arParams['SELECT'],
-			array_diff(array('DATE_ACTIVE_FROM', 'DATE_ACTIVE_TO', 'PROPERTY_USER'), $arParams['SELECT'])
+			array_diff(
+				[
+					'DATE_ACTIVE_FROM',
+					'DATE_ACTIVE_TO',
+					'PROPERTY_USER',
+					'CREATED_BY',
+					'MODIFIED_BY',
+				],
+				$arParams['SELECT'],
+			)
 		);
 
 		$calendar2 = COption::GetOptionString("intranet", "calendar_2", "N") == "Y";
@@ -993,7 +1002,11 @@ class CIntranetUtils
 				Loader::includeModule('humanresources')
 				&& Storage::instance()->isIntranetUtilsDisabled())
 			{
-				$subStructure = StructureBackwardAdapter::getStructureWithoutEmployee($sectionId, (int)$depth);
+				$subStructure = StructureBackwardAdapter::getStructureWithoutEmployee($sectionId,
+					$depth === false
+					? null
+					: (int) $depth
+				);
 
 				if (!empty($subStructure) && !empty($subStructure['DATA']))
 				{

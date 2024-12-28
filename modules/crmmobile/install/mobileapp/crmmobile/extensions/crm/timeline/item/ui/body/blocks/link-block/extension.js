@@ -13,6 +13,8 @@ jn.define('crm/timeline/item/ui/body/blocks/link-block', (require, exports, modu
 	{
 		render()
 		{
+			const rowLimit = BX.prop.getInteger(this.props, 'rowLimit', 0);
+
 			return View(
 				{
 					onClick: () => this.onAction(),
@@ -20,7 +22,7 @@ jn.define('crm/timeline/item/ui/body/blocks/link-block', (require, exports, modu
 				Text({
 					text: this.props.text,
 					ellipsize: 'end',
-					numberOfLines: this.props.inline ? 1 : 0,
+					numberOfLines: rowLimit === 0 ? (this.props.inline ? 1 : 0) : rowLimit,
 					style: {
 						fontSize: 14,
 						color: AppTheme.colors.accentMainLinks,

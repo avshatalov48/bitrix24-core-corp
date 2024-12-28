@@ -19,6 +19,7 @@ jn.define('crm/timeline/action/redirect', (require, exports, module) => {
 				qrauth.open({
 					title: Loc.getMessage('CRM_TIMELINE_DESKTOP_VERSION'),
 					redirectUrl: url.toString(),
+					analyticsSection: 'crm',
 				});
 			});
 

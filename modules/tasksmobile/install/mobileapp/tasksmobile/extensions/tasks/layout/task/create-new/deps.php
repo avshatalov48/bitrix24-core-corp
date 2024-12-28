@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'alert',
 		'analytics',
+		'bbcode/formatter/plain-text-formatter',
 		'bottom-sheet',
 		'feature',
 		'haptics',
@@ -14,6 +15,8 @@ return [
 		'tasks:layout/fields/flow/theme/air-compact',
 		'tasks:layout/fields/date-plan/theme/air-compact',
 		'tasks:layout/fields/time-tracking/theme/air-compact',
+		'tasks:layout/fields/user-fields/theme/air-compact',
+		'tasks:layout/fields/user-fields/validator',
 
 		'layout/ui/fields/user/theme/air-compact',
 		'layout/ui/fields/project/theme/air-compact',
@@ -29,11 +32,8 @@ return [
 		'layout/ui/fields/file',
 		'layout/ui/fields/textarea',
 		'layout/ui/loading-screen',
-		'layout/ui/user/avatar',
-		'layout/ui/user/empty-avatar',
 		'layout/ui/user-selection-manager',
 		'layout/ui/widget-header-button',
-		'notify',
 		'rest/run-action-executor',
 		'selector/widget/factory',
 		'statemanager/redux/slices/users',

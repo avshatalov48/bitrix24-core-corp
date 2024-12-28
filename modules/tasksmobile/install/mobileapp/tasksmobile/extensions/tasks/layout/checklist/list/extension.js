@@ -340,9 +340,6 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		{
 			return View(
 				{
-					safeArea: {
-						bottom: true,
-					},
 					onClick: () => {
 						this.handleOnBlurFocusedItem();
 					},

@@ -26,7 +26,17 @@ jn.define('im/messenger/const/dialog-type', (require, exports, module) => {
 		channel: 'channel',
 		openChannel: 'openChannel',
 		generalChannel: 'generalChannel',
+		collab: 'collab',
 	});
 
-	module.exports = { DialogType };
+	const DialogWidgetType = Object.freeze({
+		chat: 'messenger',
+		copilot: 'copilot',
+		collab: 'collab',
+	});
+
+	module.exports = {
+		DialogType,
+		DialogWidgetType,
+	};
 });

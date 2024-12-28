@@ -2,8 +2,12 @@
  * @module im/messenger/view/base
  */
 jn.define('im/messenger/view/base', (require, exports, module) => {
+	const { EventsCheckpoint } = require('im/messenger/view/lib/events-checkpoint');
+
 	class View
 	{
+		#viewName;
+
 		constructor(options = {})
 		{
 			if (!options.ui)
@@ -12,9 +16,15 @@ jn.define('im/messenger/view/base', (require, exports, module) => {
 			}
 
 			this.ui = options.ui;
-
+			this.#viewName = options.viewName ?? '';
 			this.customUiEventEmitter = new JNEventEmitter();
 			this.customUiEventList = new Set();
+			this.eventsCheckpoint = new EventsCheckpoint();
+		}
+
+		get viewName()
+		{
+			return this.#viewName;
 		}
 
 		setCustomEvents(eventList = [])
@@ -34,42 +44,45 @@ jn.define('im/messenger/view/base', (require, exports, module) => {
 
 		on(eventName, eventHandler)
 		{
+			const wrappedHandler = this.eventsCheckpoint.add(this.viewName, eventName, eventHandler);
 			if (this.customUiEventList.has(eventName))
 			{
-				this.customUiEventEmitter.on(eventName, eventHandler);
+				this.customUiEventEmitter.on(eventName, wrappedHandler);
 
 				return this;
 			}
 
-			this.ui.on(eventName, eventHandler);
+			this.ui.on(eventName, wrappedHandler);
 
 			return this;
 		}
 
 		off(eventName, eventHandler)
 		{
+			const wrappedHandler = this.eventsCheckpoint.getWrappedHandler(eventHandler);
 			if (this.customUiEventList.has(eventName))
 			{
-				this.customUiEventEmitter.off(eventName, eventHandler);
+				this.customUiEventEmitter.off(eventName, wrappedHandler);
 
 				return this;
 			}
 
-			this.ui.off(eventName, eventHandler);
+			this.ui.off(eventName, wrappedHandler);
 
 			return this;
 		}
 
 		once(eventName, eventHandler)
 		{
+			const wrappedHandler = this.eventsCheckpoint.add(eventName, eventHandler);
 			if (this.customUiEventList.has(eventName))
 			{
-				this.customUiEventEmitter.once(eventName, eventHandler);
+				this.customUiEventEmitter.once(eventName, wrappedHandler);
 
 				return this;
 			}
 
-			this.ui.once(eventName, eventHandler);
+			this.ui.once(eventName, wrappedHandler);
 
 			return this;
 		}
@@ -78,6 +91,8 @@ jn.define('im/messenger/view/base', (require, exports, module) => {
 		{
 			this.customUiEventEmitter.removeAll();
 			this.ui.removeAll();
+			// removeAll - delete only own events, the first nesting (ui.eventName)
+			// the export object event will not be deleted (ui.textField.eventName)
 		}
 	}
 

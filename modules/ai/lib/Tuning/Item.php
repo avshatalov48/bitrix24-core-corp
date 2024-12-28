@@ -16,9 +16,11 @@ class Item
 
 	/**
 	 * Values for list type (selector)
-	 * @var array|null
+	 * @var array
 	 */
-	private ?array $options = null;
+	private array $options = [];
+
+	private array $recommended = [];
 
 	/**
 	 * Field sort in group
@@ -34,9 +36,9 @@ class Item
 
 	/**
 	 * Additional options for different purposes.
-	 * @var array|null
+	 * @var array
 	 */
-	private ?array $additional = null;
+	private array $additional = [];
 
 	private function __construct(
 		private string $code,
@@ -105,6 +107,11 @@ class Item
 			$item->setAdditional($data['additional']);
 		}
 
+		if (!empty($data['recommended']))
+		{
+			$item->setRecommended($data['recommended']);
+		}
+
 		return $item;
 	}
 
@@ -121,11 +128,6 @@ class Item
 	public function getHeader(): ?string
 	{
 		return $this->header;
-	}
-
-	public function getOptions(): ?array
-	{
-		return $this->options;
 	}
 
 	/**
@@ -159,7 +161,7 @@ class Item
 		$this->getOnSave()?->call();
 	}
 
-	public function getAdditional(): ?array
+	public function getAdditional(): array
 	{
 		return $this->additional;
 	}
@@ -202,12 +204,71 @@ class Item
 		}
 	}
 
+	/**
+	 * Set options, if list element
+	 * @param array $options - array of code => option
+	 * @return void
+	 */
 	public function setOptions(array $options): void
 	{
-		if ($this->type == Type::LIST)
+		if ($this->type === Type::LIST)
 		{
 			$this->options = $options;
 		}
+	}
+
+	/**
+	 * Return options of list element
+	 * @return array of code => option
+	 */
+	public function getOptions(): array
+	{
+		if ($this->type === Type::LIST)
+		{
+			return $this->options;
+		}
+
+		return [];
+	}
+
+	/**
+	 * Set preferred option for list item
+	 * @param string|array $optionCodes `preferred` options
+	 * @return void
+	 */
+	public function setRecommended(string|array $optionCodes): void
+	{
+		if ($this->type == Type::LIST)
+		{
+			foreach ((array)$optionCodes as $code)
+			{
+				if (isset($this->getOptions()[$code]))
+				{
+					$this->recommended[] = $code;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Get preferred option for list item
+	 * @return array of stings (code of options)
+	 */
+	public function getRecommended(): array
+	{
+		$recommended = [];
+		if ($this->type === Type::LIST)
+		{
+			foreach ($this->recommended as $code)
+			{
+				if (isset($this->getOptions()[$code]))
+				{
+					$recommended[] = $code;
+				}
+			}
+		}
+
+		return $recommended;
 	}
 
 	public function getValue(): mixed
@@ -230,7 +291,8 @@ class Item
 		];
 		if ($this->type === Type::LIST)
 		{
-			$itemData['options'] = $this->options ?? [];
+			$itemData['options'] = $this->getOptions();
+			$itemData['recommended'] = $this->getRecommended();
 		}
 		if (isset($this->value))
 		{

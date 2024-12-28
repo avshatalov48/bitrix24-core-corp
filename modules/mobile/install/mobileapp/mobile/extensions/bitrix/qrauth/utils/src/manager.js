@@ -5,8 +5,12 @@ jn.define('qrauth/utils/src/manager', (require, exports, module) => {
 	const { Loc } = require('loc');
 
 	// eslint-disable-next-line no-undef
-	const componentUrl = availableComponents.qrcodeauth.publicUrl;
+	const componentUrl = availableComponents.qrcodeauth?.publicUrl;
 
+	/**
+	 * @param {QRCodeAuthProps} params
+	 * @returns {Promise<void>}
+	 */
 	async function openManager(params = {})
 	{
 		const { title, layout, external, ...restParams } = params;
@@ -34,7 +38,7 @@ jn.define('qrauth/utils/src/manager', (require, exports, module) => {
 				settings: {
 					objectName: 'layout',
 					titleParams: {
-						text: title || Loc.getMessage('LOGIN_ON_DESKTOP_DEFAULT_TITLE_MSGVER_2'),
+						text: title || Loc.getMessage('LOGIN_ON_DESKTOP_DEFAULT_TITLE_MSGVER_3'),
 						type: 'dialog',
 					},
 					backdrop: {

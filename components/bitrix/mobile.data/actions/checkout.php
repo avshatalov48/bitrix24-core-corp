@@ -13,13 +13,13 @@ if (!Defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 global $APPLICATION, $USER;
 
 use Bitrix\Intranet\UI\LeftMenu\Preset\Manager;
-use Bitrix\Crm;
 use Bitrix\Main;
 use Bitrix\Main\Authentication\ApplicationPasswordTable;
 use Bitrix\Main\Context;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\ModuleManager;
-use Bitrix\Im;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Mobile\AvaMenu;
 
 if ($_SERVER["REQUEST_METHOD"] == "OPTIONS")
 {
@@ -168,7 +168,7 @@ else
 
 		if ($avatar && $avatar["src"] <> '')
 		{
-			$avatarSource = $avatar["src"];
+			$avatarSource = Uri::urnEncode($avatar["src"]);
 		}
 	}
 
@@ -227,7 +227,8 @@ else
 			;
 		}
 
-		if (str_starts_with($intent, 'preset_')) {
+		if (str_starts_with($intent, 'preset_'))
+		{
 			$components = explode('_', $intent);
 			if (count($components) >= 2)
 			{
@@ -251,8 +252,6 @@ else
 	}
 
 	$menuTabs = $manager->getActiveTabsData();
-
-	$avaMenuManager = new \Bitrix\Mobile\AvaMenu\Manager($context);
 
 	$voximplantOptions = [
 		'voximplantInstalled' => false,
@@ -317,7 +316,6 @@ else
 		"LOGIN" => $USER->GetLogin(),
 	]);
 
-
 	$canCopyText = true;
 	$canTakeScreenshot = true;
 	if (ServiceLocator::getInstance()->has('intranet.option.mobile_app'))
@@ -334,19 +332,27 @@ else
 		}
 	}
 
+	$avaMenuManager = new AvaMenu\Manager($context);
+	$profile = new AvaMenu\Profile\Profile();
+
 	$data = [
 		"status" => "success",
 		"id" => $USER->GetID(),
 		"login" => $USER->GetLogin(),
 		"name" => $userName,
 		"sessid_md5" => bitrix_sessid(),
+		"cloud" => \Bitrix\Main\ModuleManager::isModuleInstalled("bitrix24") && COption::GetOptionString('bitrix24', 'network', 'N') == 'Y',
 		"backend_version" => \Bitrix\Main\ModuleManager::getVersion('mobile'),
 		"target" => md5($USER->GetID() . CMain::GetServerUniqID()),
 		"photoUrl" => $avatarSource,
 		"newStyleSupported" => true,
 		"tabs" => $menuTabs,
+		"user" => [
+			"type" => $profile->getUserType(),
+			"avatar" => $profile->getAvatar(),
+		],
 		'avamenu' => [
-			'userInfo' => $avaMenuManager->getProfileData(),
+			'userInfo' => $profile->getData(),
 			'totalCounter' => $avaMenuManager->getTotalCounter(),
 			'items' => $avaMenuManager->getMenuData(),
 		],

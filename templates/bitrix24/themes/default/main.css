@@ -1,7 +1,5 @@
 body {
-	background: #eef2f4;
-	background: -webkit-linear-gradient(top, #535c69 63px, transparent 63px) repeat-x, #eef2f4;
-	background: linear-gradient(to bottom, #535c69 63px, transparent 63px) repeat-x, #eef2f4;
+	background: #eef2f4 !important;
 }
 
 .im-bar-mode table.bx-layout-inner-inner-table td.bx-layout-inner-inner-cont {

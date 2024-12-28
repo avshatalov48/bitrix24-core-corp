@@ -2,6 +2,7 @@
 
 namespace Bitrix\Tasks\Grid\Scope;
 
+use Bitrix\Tasks\Grid\Scope\Types\CollabStrategy;
 use Bitrix\Tasks\Grid\Scope\Types\ProjectFlowStrategy;
 use Bitrix\Tasks\Grid\Scope\Types\SpaceStrategy;
 use Bitrix\Tasks\Grid\Scope\Types\StageStrategy;
@@ -18,6 +19,11 @@ class ScopeStrategyFactory
 		if (mb_strtolower($parameters['SCOPE'] ?? '') === Scope::SPACES)
 		{
 			$strategies[] = new SpaceStrategy();
+		}
+
+		if (mb_strtolower($parameters['SCOPE'] ?? '') === Scope::COLLAB)
+		{
+			$strategies[] = new CollabStrategy();
 		}
 
 		if (($parameters['GROUP_ID'] ?? 0) > 0)

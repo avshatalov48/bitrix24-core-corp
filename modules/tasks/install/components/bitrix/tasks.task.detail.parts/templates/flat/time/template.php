@@ -23,7 +23,7 @@ $rowTemplate = <<<HTML
 <tr class="{{rowClass}}" id="{{rowId}}">
 	<td class="task-time-date-column"><span class="task-time-date">{{date}}</span></td>
 	<td class="task-time-author-column">
-		<a class="task-log-author" href="{{pathToUserProfile}}" target="_top">{{userName}}</a>
+		<a class="task-log-author {{userTypeClass}}" href="{{pathToUserProfile}}" target="_top">{{userName}}</a>
 		<span class="task-log-author-text">{{userName}}</span>
 	</td>
 	<td class="task-time-spent-column">
@@ -52,7 +52,7 @@ HTML;
 	<tr>
 		<th class="task-time-date-column"><?=Loc::getMessage("TASKS_ELAPSED_DATE")?></th>
 		<th class="task-time-author-column"><?=Loc::getMessage("TASKS_ELAPSED_AUTHOR")?></th>
-		<th class="task-time-spent-column"><?=Loc::getMessage("TASKS_ELAPSED_TIME_SHORT")?></th>
+		<th class="task-time-spent-column"><?=Loc::getMessage("TASKS_ELAPSED_TIME_SHORT_MSGVER_1")?></th>
 		<th class="task-time-comment-column"><?=Loc::getMessage("TASKS_ELAPSED_COMMENT")?></th>
 	</tr>
 	<?
@@ -87,6 +87,9 @@ HTML;
 		$profileLink = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER_PROFILE"], array("user_id" => $time["USER_ID"]));
 		$userName = tasksFormatNameShort($time["USER_NAME"], $time["USER_LAST_NAME"], $time["USER_LOGIN"], $time["USER_SECOND_NAME"], $arParams["NAME_TEMPLATE"], true);
 
+		$userType = \Bitrix\Tasks\Integration\Intranet\User::getType($time['USER_ID']);
+		$userTypeClass = $userType ? "task-log-author-$userType" : "";
+
 		$sourceNote = "";
 		if ($time["SOURCE"] == CTaskElapsedItem::SOURCE_MANUAL)
 		{
@@ -119,7 +122,8 @@ HTML;
 				"{{userName}}",
 				"{{sourceNote}}",
 				"{{comment}}",
-				"{{timeFormatted}}"
+				"{{timeFormatted}}",
+				"{{userTypeClass}}",
 			),
 			array(
 				$rowId,
@@ -130,6 +134,7 @@ HTML;
 				$sourceNote,
 				$comment,
 				\Bitrix\Tasks\UI::formatTimeAmount($time["SECONDS"]),
+				$userTypeClass,
 			),
 			$rowTemplate
 		);

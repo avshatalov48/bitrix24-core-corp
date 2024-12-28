@@ -7,7 +7,7 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Client;
 
 abstract class Base extends LogMessage
 {
-	final public function getContentBlocks(): ?array
+	public function getContentBlocks(): ?array
 	{
 		$result = [];
 

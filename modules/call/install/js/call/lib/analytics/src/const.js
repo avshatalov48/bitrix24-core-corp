@@ -26,15 +26,21 @@ export const AnalyticsEvent = Object.freeze({
 	save: 'save',
 	upload: 'upload',
 	openResume: 'open_resume',
+	clickCallButton: 'click_call_button',
+	clickStartConf: 'click_start_conf',
+	aiRecordStart: 'ai_record_start',
 });
 
 export const AnalyticsTool = Object.freeze({
 	im: 'im',
+	ai: 'ai',
 });
 
 export const AnalyticsCategory = Object.freeze({
 	call: 'call',
 	callDocs: 'call_docs',
+	messenger: 'messenger',
+	callsOperations: 'calls_operations',
 });
 
 export const AnalyticsType = Object.freeze({
@@ -45,6 +51,8 @@ export const AnalyticsType = Object.freeze({
 	doc: 'doc',
 	presentation: 'presentation',
 	sheet: 'sheet',
+	privateCall: 'private',
+	groupCall: 'group',
 });
 
 export const AnalyticsSection = Object.freeze({
@@ -52,6 +60,8 @@ export const AnalyticsSection = Object.freeze({
 	callPopup: 'call_popup',
 	chatList: 'chat_list',
 	chatWindow: 'chat_window',
+	callMessage: 'call_message',
+	callFollowup: 'call_followup',
 });
 
 export const AnalyticsSubSection = Object.freeze({
@@ -64,11 +74,16 @@ export const AnalyticsElement = Object.freeze({
 	answerButton: 'answer_button',
 	joinButton: 'join_button',
 	videocall: 'videocall',
+	audiocall: 'audiocall',
 	recordButton: 'record_button',
 	disconnectButton: 'disconnect_button',
 	finishForAllButton: 'finish_for_all_button',
 	videoButton: 'video_button',
 	audioButton: 'audio_button',
+	startButton: 'start_button',
+	initialBanner: 'initial_banner',
+	startMessage: 'start_message',
+	finishMessage: 'finish_message',
 });
 
 export const AnalyticsStatus = Object.freeze({
@@ -80,6 +95,9 @@ export const AnalyticsStatus = Object.freeze({
 	lastUserLeft: 'last_user_left',
 	finishedForAll: 'finished_for_all',
 	privateToGroup: 'private_to_group',
+	errorAgreement: 'error_agreement',
+	errorLimitBaas: 'error_limit_baas',
+	errorB24: 'error_b24',
 });
 
 export const AnalyticsDeviceStatus = Object.freeze({
@@ -87,4 +105,9 @@ export const AnalyticsDeviceStatus = Object.freeze({
 	videoOff: 'video_off',
 	micOn: 'mic_on',
 	micOff: 'mic_off',
+});
+
+export const AnalyticsAIStatus = Object.freeze({
+	aiOn: 'ai_on',
+	aiOff: 'ai_off',
 });

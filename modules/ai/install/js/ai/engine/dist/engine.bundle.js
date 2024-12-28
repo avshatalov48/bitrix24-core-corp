@@ -388,6 +388,35 @@ this.BX = this.BX || {};
 	      });
 	    }
 	  }, {
+	    key: "getImageEngineParams",
+	    value: function getImageEngineParams(engineCode) {
+	      _classPrivateMethodGet(this, _addSystemParameters, _addSystemParameters2).call(this);
+	      var data = {
+	        engineCode: engineCode,
+	        parameters: babelHelpers.classPrivateFieldGet(this, _parameters)
+	      };
+	      return new Promise(function (resolve, reject) {
+	        var fd = main_core.Http.Data.convertObjectToFormData(data);
+	        var xhr = main_core.ajax({
+	          method: 'POST',
+	          dataType: 'json',
+	          url: Engine.getImageParamsUrl,
+	          data: fd,
+	          start: false,
+	          preparePost: false,
+	          onsuccess: function onsuccess(response) {
+	            if (response.status === 'error') {
+	              reject(response);
+	            } else {
+	              resolve(response);
+	            }
+	          },
+	          onfailure: reject
+	        });
+	        xhr.send(fd);
+	      });
+	    }
+	  }, {
 	    key: "getRolesDialogData",
 	    value: function () {
 	      var _getRolesDialogData = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
@@ -675,6 +704,7 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(Engine, "saveImageUrl", '/bitrix/services/main/ajax.php?action=ai.api.image.save');
 	babelHelpers.defineProperty(Engine, "getToolingUrl", '/bitrix/services/main/ajax.php?action=ai.api.tooling.get');
 	babelHelpers.defineProperty(Engine, "getImageToolingUrl", '/bitrix/services/main/ajax.php?action=ai.api.image.getTooling');
+	babelHelpers.defineProperty(Engine, "getImageParamsUrl", '/bitrix/services/main/ajax.php?action=ai.api.image.getParams');
 	babelHelpers.defineProperty(Engine, "installKitUrl", '/bitrix/services/main/ajax.php?action=ai.api.tooling.installKit');
 	babelHelpers.defineProperty(Engine, "getRolesListUrl", '/bitrix/services/main/ajax.php?action=ai.api.role.list');
 	babelHelpers.defineProperty(Engine, "getRolesDialogDataUrl", '/bitrix/services/main/ajax.php?action=ai.api.role.picker');

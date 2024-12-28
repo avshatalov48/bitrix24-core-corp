@@ -1,0 +1,27 @@
+<?php
+$MESS["ROLE_MASTER_ABOUT_ROLE_MASTER_LINK"] = "Learn more";
+$MESS["ROLE_MASTER_BACK_TO_EDITOR_BTN"] = "Back to editor";
+$MESS["ROLE_MASTER_CLOSE_BTN"] = "Close";
+$MESS["ROLE_MASTER_EDIT_WARNING_TEXT"] = "This will update the role for everyone using it.";
+$MESS["ROLE_MASTER_FILE_DROPAREA_TEXT"] = "Drag your files here";
+$MESS["ROLE_MASTER_LOADER_TEXT"] = "Saving role...";
+$MESS["ROLE_MASTER_NEXT_BUTTON"] = "Next";
+$MESS["ROLE_MASTER_POPUP_TITLE"] = "New role";
+$MESS["ROLE_MASTER_POPUP_TITLE_EDIT_MODE"] = "Edit role";
+$MESS["ROLE_MASTER_PREV_BUTTON"] = "Back";
+$MESS["ROLE_MASTER_REPEAT_REQUEST_BTN"] = "Try again";
+$MESS["ROLE_MASTER_ROLE_AVATAR_AND_NAME_FIELD"] = "Name and icon";
+$MESS["ROLE_MASTER_ROLE_AVATAR_AND_NAME_FIELD_PLACEHOLDER"] = "Max. 70 characters";
+$MESS["ROLE_MASTER_ROLE_DESCRIPTION_FIELD"] = "Description";
+$MESS["ROLE_MASTER_ROLE_DESCRIPTION_FIELD_HINT"] = "Hint for \"Description\" field";
+$MESS["ROLE_MASTER_ROLE_DESCRIPTION_FIELD_PLACEHOLDER"] = "I will analyze data, improve concept and create a project summary";
+$MESS["ROLE_MASTER_ROLE_MAIN_STEP_TITLE"] = "Name and permissions";
+$MESS["ROLE_MASTER_ROLE_TEXT_FIELD_PLACEHOLDER"] = "Enter the prompt text for this role. For example, for Architect the prompt could read like this. Act like an experienced architect. Your job is help me analyze real world data like geographical and topographical conditions.";
+$MESS["ROLE_MASTER_ROLE_TEXT_STEP_TITLE"] = "Add a prompt for this role";
+$MESS["ROLE_MASTER_ROLE_TEXT_STEP_TITLE_HINT"] = "Define the role and describe the task";
+$MESS["ROLE_MASTER_ROLE_USERS_WITH_ACCESS_FIELD"] = "Make available to";
+$MESS["ROLE_MASTER_SAVE_BUTTON"] = "Save";
+$MESS["ROLE_MASTER_SAVE_PROMPT_ON_ERROR_SHORT_TEXT"] = "Could not save role.";
+$MESS["ROLE_MASTER_SAVE_PROMPT_ON_ERROR_TEXT"] = "If the issue persists, go back to the prompt editor and copy the prompt text to make sure it's not lost.";
+$MESS["ROLE_MASTER_SAVING_DONE"] = "Done";
+$MESS["ROLE_MASTER_USER_SELECTOR_ADD_BTN"] = "Edit";

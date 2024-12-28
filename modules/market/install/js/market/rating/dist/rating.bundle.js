@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,ui_vue3,market_installStore,main_popup,ui_designTokens,ui_vue3_pinia) {
+(function (exports,ui_vue3,ui_ears,main_popup) {
 	'use strict';
 
 	const Stars = {
@@ -287,60 +287,77 @@ this.BX = this.BX || {};
 	};
 
 	const Rating = {
-	  emits: ['can-review', 'review-info', 'update-rating'],
 	  components: {
 	    RatingItem,
 	    PopupWrapper
 	  },
-	  props: ['appInfo', 'showNoAccessInstallButton'],
+	  props: ['appInfo', 'isSite', 'showNoAccessInstallButton'],
 	  data() {
 	    return {
+	      application: {},
+	      needInstallBeforeAdd: true,
 	      ratingClickState: false,
+	      // клик по звёздам, когда не установлено
 	      addingReview: false,
+	      // клик по кнопке "добавить отзыв"
 	      policyChecked: false,
 	      rulesChecked: false,
 	      feedbackBlock: null,
+	      // блок с отзывами, чтобы прикрутить уши для прокрутки
 	      reviewText: '',
+	      // текст отзыва для добавления
 	      currentRating: 0,
 	      starsError: false,
 	      sendingReview: false
 	    };
 	  },
+	  beforeMount() {
+	    this.application = this.appInfo;
+	    this.needInstallBeforeAdd = this.isSite !== true;
+	  },
 	  computed: {
 	    canReview: function () {
-	      return this.appInfo.REVIEWS.CAN_REVIEW === 'Y';
+	      return this.application.REVIEWS.CAN_REVIEW === 'Y';
 	    },
 	    showPolicy: function () {
-	      return this.appInfo.REVIEWS.SHOW_POLICY_CHECKBOX === 'Y';
+	      return this.application.REVIEWS.SHOW_POLICY_CHECKBOX === 'Y';
 	    },
 	    showRules: function () {
-	      return this.appInfo.REVIEWS.SHOW_RULES_CHECKBOX === 'Y';
+	      return this.application.REVIEWS.SHOW_RULES_CHECKBOX === 'Y';
 	    },
 	    allChecked: function () {
 	      return this.policyChecked && this.rulesChecked;
 	    },
 	    appWasInstalled: function () {
-	      return this.appInfo.WAS_INSTALLED && this.appInfo.WAS_INSTALLED === 'Y';
+	      return this.application.WAS_INSTALLED && this.application.WAS_INSTALLED === 'Y';
 	    },
 	    showInstallState: function () {
-	      return !this.appWasInstalled && (!this.$parent.countReviews || this.addingReview);
+	      return this.needInstallBeforeAdd && !this.appWasInstalled && (!this.countReviews || this.addingReview);
 	    },
 	    canRatingClick: function () {
 	      return this.canReview && !this.sendingReview;
 	    },
-	    ...ui_vue3_pinia.mapState(market_installStore.marketInstallState, ['installStep', 'slider', 'timer'])
+	    countReviews: function () {
+	      return parseInt(this.application.REVIEWS.RATING.COUNT, 10);
+	    },
+	    totalRating: function () {
+	      if (this.application.REVIEWS.RATING && this.application.REVIEWS.RATING.RATING) {
+	        return this.application.REVIEWS.RATING.RATING;
+	      }
+	      return 0;
+	    }
 	  },
 	  mounted() {
 	    this.feedbackBlock = this.$refs.marketFeedback;
 	    if (this.feedbackBlock) {
-	      new BX.UI.Ears({
+	      new ui_ears.Ears({
 	        container: this.feedbackBlock,
 	        smallSize: true,
 	        noScrollbar: true
 	      }).init();
 	    }
 	    if (!this.canReview) {
-	      this.currentRating = this.appInfo.REVIEWS.USER_RATING;
+	      this.currentRating = this.application.REVIEWS.USER_RATING;
 	    }
 	    if (!this.showPolicy) {
 	      this.policyChecked = true;
@@ -397,15 +414,18 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      this.sendingReview = true;
+	      const isSiteTemplate = this.isSite === true ? 'Y' : 'N';
 	      BX.ajax.runAction('market.Application.addReview', {
 	        data: {
-	          appCode: this.appInfo.CODE,
+	          appCode: this.application.REVIEW_APP_CODE,
 	          reviewText: this.reviewText,
-	          currentRating: this.currentRating
+	          currentRating: this.currentRating,
+	          isSite: isSiteTemplate
 	        },
 	        analyticsLabel: {
-	          appCode: this.appInfo.CODE,
-	          currentRating: this.currentRating
+	          appCode: this.application.REVIEW_APP_CODE,
+	          currentRating: this.currentRating,
+	          isSite: isSiteTemplate
 	        }
 	      }).then(response => {
 	        this.sendingReview = false;
@@ -434,34 +454,33 @@ this.BX = this.BX || {};
 	      });
 	    },
 	    getCountStars: function (star) {
-	      if (!this.appInfo.REVIEWS.RATING || !this.appInfo.REVIEWS.RATING.RATING_DETAIL) {
+	      if (!this.application.REVIEWS.RATING || !this.application.REVIEWS.RATING.RATING_DETAIL) {
 	        return 0;
 	      }
-	      if (this.appInfo.REVIEWS.RATING.RATING_DETAIL[star]) {
-	        return this.appInfo.REVIEWS.RATING.RATING_DETAIL[star];
+	      if (this.application.REVIEWS.RATING.RATING_DETAIL[star]) {
+	        return this.application.REVIEWS.RATING.RATING_DETAIL[star];
 	      }
 	      return 0;
 	    },
 	    getStarWidth: function (star) {
-	      if (this.getCountStars(star) === 0 || !this.$parent.countReviews) {
+	      if (this.getCountStars(star) === 0 || !this.countReviews) {
 	        return '0%';
 	      }
-	      return this.getCountStars(star) / this.$parent.countReviews * 100 + '%';
+	      return this.getCountStars(star) / this.countReviews * 100 + '%';
 	    },
 	    successReviewHandler: function (data) {
 	      this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_SUCCESS'));
-	      if (data && data.can_review) {
-	        this.$emit('can-review', data.can_review);
+	      if (data && data.hasOwnProperty('can_review')) {
+	        this.application.REVIEWS.CAN_REVIEW = data.can_review;
 	      }
-	      if (data && data.review_info) {
-	        this.$emit('review-info', data.review_info);
+	      if (data && data.hasOwnProperty('review_info') && BX.Type.isArray(this.application.REVIEWS.ITEMS)) {
+	        this.application.REVIEWS.ITEMS.unshift(data.review_info);
 	      }
-	      if (data && data.rating) {
-	        this.$emit('update-rating', data.rating);
+	      if (data && data.hasOwnProperty('rating') && data.rating.hasOwnProperty('RATING_DETAIL')) {
+	        this.application.REVIEWS.RATING = data.rating;
 	      }
 	      this.addingReview = false;
-	    },
-	    ...ui_vue3_pinia.mapActions(market_installStore.marketInstallState, ['showInstallPopup'])
+	    }
 	  },
 	  template: `
 		<div class="market-detail__app-rating-info">
@@ -475,7 +494,7 @@ this.BX = this.BX || {};
 
 						<div class="market-rating__app-rating-info_stars-container">
 							<svg class="market-rating__app-rating_star"
-								 :class="{'--active': isActiveStar(1, $parent.totalRating)}"
+								 :class="{'--active': isActiveStar(1, totalRating)}"
 								 @click="ratingClick"
 								 width="18" height="18" viewBox="0 0 18 18"
 								 fill="none" xmlns="http://www.w3.org/2000/svg"
@@ -485,7 +504,7 @@ this.BX = this.BX || {};
 							</svg>
 
 							<svg class="market-rating__app-rating_star "
-								 :class="{'--active': isActiveStar(2, $parent.totalRating)}"
+								 :class="{'--active': isActiveStar(2, totalRating)}"
 								 @click="ratingClick"
 								 width="18" height="18" viewBox="0 0 18 18"
 								 fill="none" xmlns="http://www.w3.org/2000/svg"
@@ -495,7 +514,7 @@ this.BX = this.BX || {};
 							</svg>
 
 							<svg class="market-rating__app-rating_star"
-								 :class="{'--active': isActiveStar(3, $parent.totalRating)}"
+								 :class="{'--active': isActiveStar(3, totalRating)}"
 								 @click="ratingClick"
 								 width="18" height="18" viewBox="0 0 18 18"
 								 fill="none" xmlns="http://www.w3.org/2000/svg"
@@ -505,7 +524,7 @@ this.BX = this.BX || {};
 							</svg>
 
 							<svg class="market-rating__app-rating_star"
-								 :class="{'--active': isActiveStar(4, $parent.totalRating)}"
+								 :class="{'--active': isActiveStar(4, totalRating)}"
 								 @click="ratingClick"
 								 width="18" height="18" viewBox="0 0 18 18"
 								 fill="none" xmlns="http://www.w3.org/2000/svg"
@@ -515,7 +534,7 @@ this.BX = this.BX || {};
 							</svg>
 
 							<svg class="market-rating__app-rating_star"
-								 :class="{'--active': isActiveStar(5, $parent.totalRating)}"
+								 :class="{'--active': isActiveStar(5, totalRating)}"
 								 @click="ratingClick"
 								 width="18" height="18" viewBox="0 0 18 18"
 								 fill="none" xmlns="http://www.w3.org/2000/svg"
@@ -526,7 +545,7 @@ this.BX = this.BX || {};
 						</div>
 
 						<div class="market-rating__app-rating-info_stars-number">
-							{{ $parent.totalRating }}
+							{{ totalRating }}
 							<span class="market-rating__app-rating-info_stars-all-number">/5</span>
 						</div>
 					</div>
@@ -598,9 +617,9 @@ this.BX = this.BX || {};
 	
 						<div class="market-detail__app-rating_feedback-info"
 							 :class="{'market-detail__app-rating_feedback-info__back' : !appWasInstalled && addingReview}"
-							 v-if="$parent.countReviews"
+							 v-if="countReviews"
 							 @click="backToReviews"
-						>{{ $Bitrix.Loc.getMessage('MARKET_RATING_JS_REVIEWS_TOTAL', {'#NUMBER#': $parent.countReviews}) }}
+						>{{ $Bitrix.Loc.getMessage('MARKET_RATING_JS_REVIEWS_TOTAL', {'#NUMBER#': countReviews}) }}
 						</div>
 					</div>
 					<div class="market-detail__app-rating_feedback-content">
@@ -624,7 +643,7 @@ this.BX = this.BX || {};
 							></div>
 							<button class="ui-btn ui-btn-xs ui-btn-success market-detail__app-rating_install-btn"
 									:class="{'ui-btn-disabled': showNoAccessInstallButton}"
-									@click="$parent.installApp"
+									@click="$emit('installApp')"
 							>
 								{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_INSTALL') }}
 							</button>
@@ -653,7 +672,7 @@ this.BX = this.BX || {};
 								</div>
 
 								<RatingItem
-									v-for="review in appInfo.REVIEWS.ITEMS"
+									v-for="review in application.REVIEWS.ITEMS"
 									:review="review"
 								/>
 							</div>
@@ -661,13 +680,16 @@ this.BX = this.BX || {};
 					</div>
 				</div>
 			</div>
-			<PopupWrapper v-if="addingReview && !showInstallState" @close="cancelAddingReviewClick">
+			<PopupWrapper 
+				v-if="addingReview && !showInstallState"
+				@close="cancelAddingReviewClick"
+			>
 				<div class="market-detail__app-rating_feedback-form">
-					<div class="market-detail__app-rating_feedback-img">
-						<img :src="appInfo.ICON" alt="icon">
+					<div class="market-detail__app-rating_feedback-img" v-if="isSite !== true">
+						<img :src="application.ICON" alt="icon">
 					</div>
 					<div class="market-detail__app-rating_feedback-subtitle"
-						 v-html="$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_TITLE', {'#APP_NAME#' : appInfo.NAME})"
+						 v-html="$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_TITLE', {'#APP_NAME#' : application.NAME})"
 					></div>
 					<p class="market-detail__app-rating_feedback-text">{{ $Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_FEEDBACK_TEXT') }}</p>
 					<div class="market-rating__app-rating-info_stars-container">
@@ -718,7 +740,7 @@ this.BX = this.BX || {};
 								   v-model="policyChecked"
 							>
 							<span class="ui-ctl-label-text market-detail__app-rating_feedback-label"
-								  v-html="$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_POLICY', {'#POLICY_URL#': appInfo.REVIEWS.POLICY_URL})"
+								  v-html="$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_POLICY', {'#POLICY_URL#': application.REVIEWS.POLICY_URL})"
 							>
 								</span>
 						</label>
@@ -730,7 +752,7 @@ this.BX = this.BX || {};
 								   v-model="rulesChecked"
 							>
 							<span class="ui-ctl-label-text market-detail__app-rating_feedback-label"
-								  v-html="$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_POSTING_GUIDELINES', {'#RULES_URL#': appInfo.REVIEWS.POSTING_GUIDELINES_URL})"
+								  v-html="$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_POSTING_GUIDELINES', {'#RULES_URL#': application.REVIEWS.POSTING_GUIDELINES_URL})"
 							>
 								</span>
 						</label>
@@ -757,4 +779,4 @@ this.BX = this.BX || {};
 
 	exports.Rating = Rating;
 
-}((this.BX.Market = this.BX.Market || {}),BX.Vue3,BX.Market,BX.Main,BX,BX.Vue3.Pinia));
+}((this.BX.Market = this.BX.Market || {}),BX.Vue3,BX.UI,BX.Main));

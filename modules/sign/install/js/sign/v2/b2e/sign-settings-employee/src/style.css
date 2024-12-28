@@ -15,3 +15,73 @@
 .sign-settings__head_title-help:hover {
 	color: inherit;
 }
+
+.sign-settings__empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	height: 100%;
+	background-color: var(--ui-color-background-primary);
+	border-radius: var(--ui-border-radius-2xl);
+	text-align: center;
+	justify-content: center;
+}
+
+.sign-settings__empty-state_icon {
+	margin-bottom: var(--ui-space-stack-md);
+}
+
+.sign-settings__empty-state_icon img {
+	width: 180px;
+	height: 180px;
+}
+
+.sign-settings__empty-state_title {
+	font-size: var(--ui-font-size-3xl);
+	color: var(--ui-color-palette-gray-90);
+	font-weight: var(--ui-font-weight-semi-bold);
+	margin-bottom: var(--ui-space-stack-sm);
+	letter-spacing: var(--ui-text-letter-spacing-auto);
+	margin-top: 0;
+	width: 300px;
+}
+
+.sign-settings__empty-state_text {
+	font-size: var(--ui-font-size-2xl);
+	color: var(--ui-color-palette-gray-70);
+	max-width: 480px;
+	line-height: var(--ui-font-line-height-md);
+	margin-bottom: 40px;
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.sign-settings__empty-state_link {
+	border-bottom: 1px var(--ui-color-palette-gray-70) solid;
+	color: var(--ui-color-palette-gray-70);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.sign-settings__empty-state_link:hover {
+	border-color: var(--ui-color-palette-gray-80);
+	color: var(--ui-color-palette-gray-80);
+}
+
+.no-step-mode .sign-settings__head,
+.no-step-mode .sign-wizard__stages_item,
+.no-step-mode .sign-wizard__stages {
+	display: none;
+}
+
+.no-step-mode .sign-wizard__footer {
+	margin: 0;
+	text-align: center;
+}
+
+.no-step-mode .sign-wizard {
+	min-height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	justify-content: center;
+}

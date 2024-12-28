@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'feature',
 		'type',
 		'loc',
 		'in-app-url',
@@ -18,21 +19,29 @@ return [
 		'utils/file',
 		'utils/date/formats',
 		'utils/url',
+		'utils/color',
+		'tokens',
+		'ui-system/layout/card',
+		'ui-system/blocks/badges/counter',
+		'ui-system/blocks/badges/counter/src/design-enum',
+		'selector/widget/entity/socialnetwork/user',
 
 		'im:lib/theme',
 		'im:messenger/const',
 		'im:messenger/assets/common',
 
+		'im:messenger/controller/chat-composer',
 		'im:messenger/controller/user-profile',
 		'im:messenger/controller/user-add',
 		'im:messenger/controller/participant-manager',
 		'im:messenger/controller/dialog/lib/helper/text',
 
 		'im:messenger/lib/params',
+		'im:messenger/lib/feature',
 		'im:messenger/lib/rest',
 		'im:messenger/lib/element',
 		'im:messenger/lib/logger',
-		'im/messenger/lib/helper',
+		'im:messenger/lib/helper',
 		'im:messenger/lib/utils',
 		'im:messenger/lib/plan-limit',
 		'im:messenger/lib/permission-manager',
@@ -50,6 +59,10 @@ return [
 	],
 	'bundle' => [
 		'./lib/assets/icons',
+		'./lib/const',
+		
+		'./src/base/sidebar-controller',
+		
 		'./src/chat/sidebar-controller',
 		'./src/chat/sidebar-view',
 		'./src/chat/sidebar-friendly-date',
@@ -86,5 +99,14 @@ return [
 		'./src/comment/sidebar-controller',
 		'./src/comment/sidebar-view',
 		'./src/comment/profile-info',
+
+		'./src/collab/sidebar-view',
+		'./src/collab/profile-info',
+		'./src/collab/sidebar-controller',
+		'./src/collab/profile-buttons-controller',
+		'./src/collab/profile-button-view',
+		'./src/collab/tabs/participants/participants-view',
+		'./src/collab/tabs/tab-view',
+		'./src/collab/header-top-menu',
 	],
 ];

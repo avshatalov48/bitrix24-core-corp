@@ -27,6 +27,16 @@ class MemberRepository
 	public const SIGN_DOCUMENT_LIST_QUERY_REF_FIELD_NAME_COMPANY = 'REF_COMPANY';
 
 	private ?UserCache $userCache = null;
+	/**
+	 * @var list<string>
+	 */
+	private array $userCacheFields = [
+		'ID',
+		'NAME',
+		'SECOND_NAME',
+		'LAST_NAME',
+		'LOGIN',
+	];
 
 	/**
 	 * @param \Bitrix\Sign\Item\Member $item
@@ -139,6 +149,10 @@ class MemberRepository
 				type: ReminderType::tryFromInt($model->getReminderType()) ?? ReminderType::NONE,
 				startDate: $model->getReminderStartDate(),
 			),
+			dateSend: $model->getDateSend(),
+			employeeId: $model->getEmployeeId(),
+			hcmLinkJobId: $model->getHcmlinkJobId(),
+			dateStatusChanged: $model->getDateStatusChanged(),
 		);
 	}
 
@@ -163,6 +177,7 @@ class MemberRepository
 
 		$users = $this->getUserModels($modelCollection);
 		$this->userCache?->setCache($users);
+		$this->userCache?->setCachedFields($this->userCacheFields);
 
 		$items = array_map(
 			fn(Internal\Member $member) => $this->extractItemFromModel($member,$users[$member->getEntityId()] ?? null),
@@ -207,6 +222,9 @@ class MemberRepository
 			->setReminderLastSendDate($item->reminder->lastSendDate)
 			->setReminderPlannedNextSendDate($item->reminder->plannedNextSendDate)
 			->setReminderCompleted($item->reminder->completed)
+			->setEmployeeId($item->employeeId)
+			->setHcmlinkJobId($item->hcmLinkJobId)
+			->setDateStatusChanged($item->dateStatusChanged)
 		;
 	}
 
@@ -323,7 +341,7 @@ class MemberRepository
 		return $this->prepareListB2eDocumentsByUserIdCollection($query);
 	}
 
-	public function listByDocumentIdWithRole(int $documentId, string $role, int $limit = 0): Item\MemberCollection
+	public function listByDocumentIdWithRole(int $documentId, string $role, int $limit = 0, int $offset = 0): Item\MemberCollection
 	{
 		$models = Internal\MemberTable
 			::query()
@@ -331,9 +349,15 @@ class MemberRepository
 			->where('DOCUMENT_ID', $documentId)
 			->where('ROLE', $this->convertRoleToInt($role))
 		;
+
 		if ($limit)
 		{
 			$models->setLimit($limit);
+		}
+
+		if ($offset)
+		{
+			$models->setOffset($offset);
 		}
 
 		return $this->extractItemCollectionFromModelCollection($models->fetchCollection());
@@ -618,6 +642,27 @@ class MemberRepository
 		{
 			$member->setReminderType($item->reminder->type->toInt());
 		}
+		if (isset($item->dateSend))
+		{
+			$member->setDateSend($item->dateSend);
+		}
+
+		if (isset($item->employeeId))
+		{
+			$member->setEmployeeId($item->employeeId);
+		}
+
+		if (isset($item->hcmLinkJobId))
+		{
+			$member->setHcmlinkJobId($item->hcmLinkJobId);
+		}
+
+		$member->setDateModify(new DateTime());
+
+		if (isset($item->dateStatusChanged))
+		{
+			$member->setDateStatusChanged($item->dateStatusChanged);
+		}
 
 		return $member->save();
 	}
@@ -726,6 +771,31 @@ class MemberRepository
 			->setQueryTotal((int)$query->queryCountTotal());
 	}
 
+	public function listSignersByUserIdIsNotWait(
+		int $entityId,
+		ConditionTree $filter,
+		int $limit = 20,
+		int $offset = 0,
+	): Item\MemberCollection
+	{
+		$query = Internal\MemberTable
+			::query()
+			->setSelect(['*'])
+			->where('ENTITY_TYPE', EntityType::USER)
+			->where('ENTITY_ID', $entityId)
+			->whereNot('SIGNED', MemberStatus::WAIT)
+			->where($filter)
+			->setLimit($limit)
+			->setOffset($offset)
+			->setOrder(['ID' => 'desc'])
+		;
+
+		$this->updateQueryByRefFields($filter, $query);
+
+		return $this->extractItemCollectionFromModelCollection($query->fetchCollection())
+			->setQueryTotal((int)$query->queryCountTotal());
+	}
+
 	public function getAssigneeByDocumentId(int $documentId): ?Item\Member
 	{
 		$model = Internal\MemberTable
@@ -775,8 +845,8 @@ class MemberRepository
 		$roleRelevance = array_flip(
 			array_map(
 				static fn(string $value): int => Role::convertRoleToInt($value),
-				array_flip($roleRelevance)
-			)
+				array_flip($roleRelevance),
+			),
 		);
 
 		$query = Internal\MemberTable
@@ -792,8 +862,8 @@ class MemberRepository
 				->addSelect(new Main\Entity\ExpressionField(
 					'ROLE_RELEVANCE',
 					$this->getExpressionByRelevance($roleRelevance),
-					'ROLE'
-					)
+					'ROLE',
+					),
 				)
 				->addOrder('ROLE_RELEVANCE')
 			;
@@ -805,8 +875,8 @@ class MemberRepository
 				new Main\Entity\ExpressionField(
 					'SIGNED_RELEVANCE',
 					$this->getExpressionByRelevance($statusRelevance),
-					'SIGNED'
-					)
+					'SIGNED',
+					),
 				)
 				->addOrder('SIGNED_RELEVANCE')
 			;
@@ -843,7 +913,7 @@ class MemberRepository
 					WHEN %s = '$signer' 
 					AND %s = '$refusedMemberStatus' 
 					THEN 1 ELSE 0 END)",
-					['ROLE', 'SIGNED']
+					['ROLE', 'SIGNED'],
 				),
 				new Main\Entity\ExpressionField(
 					'SUCCESS_MEMBERS_COUNTER',
@@ -851,7 +921,7 @@ class MemberRepository
 					WHEN %s = '$signer' 
 					AND %s = '$doneMemberStatus' 
 					THEN 1 ELSE 0 END)",
-					['ROLE', 'SIGNED']
+					['ROLE', 'SIGNED'],
 				),
 			])
 			->where('DOCUMENT_ID', $document->id)
@@ -867,8 +937,8 @@ class MemberRepository
 					AND (%s = '$readyMemberStatus' 
 					OR %s = '$processingMemberStatus') 
 					THEN 1 ELSE 0 END)",
-					['ROLE', 'SIGNED', 'SIGNED']
-				)
+					['ROLE', 'SIGNED', 'SIGNED'],
+				),
 			);
 		}
 		else
@@ -882,8 +952,8 @@ class MemberRepository
 					OR %s = '$stoppableReadyMemberStatus' 
 					OR %s = '$processingMemberStatus') 
 					THEN 1 ELSE 0 END)",
-					['ROLE', 'SIGNED', 'SIGNED', 'SIGNED']
-				)
+					['ROLE', 'SIGNED', 'SIGNED', 'SIGNED'],
+				),
 			);
 		}
 
@@ -902,12 +972,12 @@ class MemberRepository
 			return [
 				'REFUSED_MEMBERS_COUNTER' => 0,
 				'SUCCESS_MEMBERS_COUNTER' => 0,
-				'READY_MEMBERS_COUNTER' => 0
+				'READY_MEMBERS_COUNTER' => 0,
 			];
 		}
 	}
 
-	public function listB2eMembersWithResultFiles(
+	public function listB2eMembersWithResultFilesForMySafe(
 		ConditionTree $filter,
 		int $limit = 20,
 		int $offset = 0,
@@ -932,6 +1002,11 @@ class MemberRepository
 			)
 			->whereIn('DOCUMENT.STATUS', DocumentStatus::getEnding())
 			->where($filter)
+			// exclude signer result file if the signer has initiated the process
+			->whereNot(Query::filter()
+				->where('DOCUMENT.INITIATED_BY_TYPE', Type\Document\InitiatedByType::EMPLOYEE->toInt())
+				->where('ROLE', Role::convertRoleToInt(Role::SIGNER))
+			)
 			->setLimit($limit)
 			->setOffset($offset)
 			->setOrder(['ID' => 'desc'])
@@ -1072,6 +1147,510 @@ class MemberRepository
 		;
 	}
 
+	public function listB2eMembersWithNotWaitStatus(
+		int $entityId,
+		int $limit,
+		int $offset,
+		?Item\MyDocumentsGrid\MyDocumentsFilter $filter = null,
+	): Item\MemberCollection
+	{
+		$query = $this->getQueryForMemberCollectionNotWaitStatus($entityId, $filter);
+		$query->setOffset($offset);
+		$query->setLimit($limit);
+
+		if ($filter === null || $filter->isNeedActionFeatureSort())
+		{
+			$readyForSigningWithDelimiters = implode("','", MemberStatus::getReadyForSigning());
+			$query
+				->addSelect(
+					new Main\Entity\ExpressionField(
+						name: 'STATUS_RELEVANCE',
+						expression: "CASE 
+						WHEN (
+						 	(
+								%s = '" . MemberStatus::READY . "'
+								AND %s = {$this->convertRoleToInt(Role::SIGNER)}
+								AND %s = '". Type\ProviderCode::GOS_KEY. "'
+								AND %s IN ('". DocumentStatus::SIGNING ."', '". DocumentStatus::STOPPED ."')
+							)
+							OR 
+							(
+								%s IN ('$readyForSigningWithDelimiters')
+								AND %s = '". DocumentStatus::SIGNING ."'
+							)
+						)
+						THEN 0 
+						ELSE 1
+						END",
+						buildFrom: [
+								  'SIGNED',
+								  'ROLE',
+								  'DOCUMENT.PROVIDER_CODE',
+								  'DOCUMENT.STATUS',
+								  'SIGNED',
+								  'DOCUMENT.STATUS',
+							  ],
+					),
+				)
+				->addOrder('STATUS_RELEVANCE')
+			;
+		}
+
+		$query->addOrder('ID', 'DESC');
+
+		return $this->extractItemCollectionFromModelCollection($query->fetchCollection())
+			->setQueryTotal((int)$query->queryCountTotal())
+			;
+	}
+
+	public function isAnyMyDocumentsGridInSignedStatus(int $userId): bool
+	{
+		$filter = (new Item\MyDocumentsGrid\MyDocumentsFilter(
+			statuses: [Type\MyDocumentsGrid\FilterStatus::SIGNED],
+		));
+		$query = $this->getQueryForMemberCollectionNotWaitStatus($userId, $filter);
+		$query->setLimit(1)
+			->setSelect(['ID'])
+		;
+
+		return !empty($query->fetch());
+	}
+
+	public function isAnyMyDocumentsGridInProgressStatus(int $userId): bool
+	{
+		$filter = (new Item\MyDocumentsGrid\MyDocumentsFilter(
+			statuses: [Type\MyDocumentsGrid\FilterStatus::IN_PROGRESS],
+		));
+		$query = $this->getQueryForMemberCollectionNotWaitStatus($userId, $filter);
+		$query->setLimit(1)
+			->setSelect(['ID'])
+		;
+
+		return !empty($query->fetch());
+	}
+
+	public function getSecondSideMemberForEmployee(
+		int $userId,
+		int $documentId,
+		int $limit,
+		int $offset,
+		int $memberId,
+	): Item\MemberCollection
+	{
+		$filter = Query::filter()
+			->logic('or')
+			->where(
+				Query::filter()
+					->logic('and')
+					->where('DOCUMENT_ID', '=', $documentId)
+					->where('ID',  '!=', $memberId)
+					->where('DOCUMENT.ENTITY_TYPE', '=', Type\Document\EntityType::SMART_B2E)
+					->whereIn('DOCUMENT.STATUS', [DocumentStatus::DONE, DocumentStatus::STOPPED])
+					->where(
+						Query::filter()
+							->logic('or')
+							->whereNot('SIGNED', MemberStatus::DONE)
+							->where(Query::filter()->whereColumn('PART', 'DOCUMENT.PARTIES'))
+					)
+				,
+			)
+			->where(
+				Query::filter()
+					->logic('and')
+					->where('DOCUMENT_ID', '=', $documentId)
+					->where('ID',  '!=', $memberId)
+					->where('SIGNED', MemberStatus::READY)
+					->where('DOCUMENT.ENTITY_TYPE', '=', Type\Document\EntityType::SMART_B2E)
+				,
+			);
+
+		$query =  Internal\MemberTable
+			::query()
+			->addSelect('*')
+			->where($filter)
+		;
+		$query->setOffset($offset);
+		$query->setLimit($limit);
+		$query->setOrder(['PART' => 'ASC']);
+
+		return $this->extractItemCollectionFromModelCollection($query->fetchCollection())
+			->setQueryTotal((int)$query->queryCountTotal())
+			;
+	}
+
+	public function getTotalMemberCollectionCountWithNotWaitStatus(
+		int $entityId,
+		?Item\MyDocumentsGrid\MyDocumentsFilter $filter = null,
+	): int
+	{
+		$query = $this->getQueryForMemberCollectionNotWaitStatus($entityId, $filter);
+
+		return (int)$query->queryCountTotal();
+	}
+
+	public function getQueryForMemberCollectionNotWaitStatus(
+		int $userId,
+		?Item\MyDocumentsGrid\MyDocumentsFilter $filter = null,
+	): Query
+	{
+		$baseFilter = Query::filter()
+			->logic('or')
+			->where(
+				Query::filter()
+					->logic('and')
+					->where('ENTITY_TYPE', '=', EntityType::USER)
+					->where('ENTITY_ID', $userId)
+				,
+			)
+			->where(
+				Query::filter()
+					->logic('and')
+					->where('ENTITY_TYPE', '=', EntityType::COMPANY)
+					->where('ROLE', '=', $this->convertRoleToInt(Role::ASSIGNEE))
+					->where('DOCUMENT.REPRESENTATIVE_ID', '=', $userId)
+				,
+			);
+
+		$filterForStopped = Query::filter()
+			->logic('and')
+			->where('ROLE', $this->convertRoleToInt(Role::SIGNER))
+			->where('SIGNED', MemberStatus::STOPPED)
+			->where(Query::filter()
+				->logic('or')
+				->where('DOCUMENT.INITIATED_BY_TYPE', Type\Document\InitiatedByType::COMPANY->toInt())
+				->where(
+					Query::filter()
+						->logic('and')
+						->where('DOCUMENT.INITIATED_BY_TYPE', Type\Document\InitiatedByType::EMPLOYEE->toInt())
+						->whereColumn('DOCUMENT.STOPPED_BY_ID', 'ENTITY_ID')
+				)
+			)
+		;
+
+		$readyInDoneDocuments = Query::filter()
+			->logic('and')
+			->whereIn('DOCUMENT.STATUS', DocumentStatus::getFinalStatuses())
+			->whereIn('SIGNED', MemberStatus::getReadyForSigning())
+			->whereNot(
+				Query::filter()
+					->logic('and')
+					->where('ROLE', $this->convertRoleToInt(Role::SIGNER))
+					->where('DOCUMENT.PROVIDER_CODE', Type\ProviderCode::GOS_KEY)
+			)
+		;
+
+		$excludeStopped = Query::filter()
+			->logic('or')
+			->where($filterForStopped)
+			->where($readyInDoneDocuments);
+
+		$query = Internal\MemberTable
+			::query()
+			->addSelect('*')
+			->whereNot('SIGNED', MemberStatus::WAIT)
+			->where('DOCUMENT.ENTITY_TYPE', '=', Type\Document\EntityType::SMART_B2E)
+			->where($baseFilter)
+			->whereNot($excludeStopped)
+			;
+
+		if ($filter?->role === Type\MyDocumentsGrid\ActorRole::INITIATOR)
+		{
+			$query
+				->where('DOCUMENT.INITIATED_BY_TYPE', Type\Document\InitiatedByType::EMPLOYEE->toInt())
+				->where('ROLE', $this->convertRoleToInt(Role::SIGNER))
+			;
+		}
+		elseif ($filter?->role === Type\MyDocumentsGrid\ActorRole::REVIEWER)
+		{
+			$query->where('ROLE', $this->convertRoleToInt(Role::REVIEWER));
+		}
+		elseif ($filter?->role === Type\MyDocumentsGrid\ActorRole::EDITOR)
+		{
+			$query->where('ROLE', $this->convertRoleToInt(Role::EDITOR));
+		}
+		elseif ($filter?->role === Type\MyDocumentsGrid\ActorRole::SIGNER)
+		{
+			$query->where('ROLE', $this->convertRoleToInt(Role::SIGNER))
+				  ->where('DOCUMENT.INITIATED_BY_TYPE', Type\Document\InitiatedByType::COMPANY->toInt())
+			;
+		}
+		elseif ($filter?->role === Type\MyDocumentsGrid\ActorRole::ASSIGNEE)
+		{
+			$query->where('ROLE', $this->convertRoleToInt(Role::ASSIGNEE));
+		}
+
+		if ($filter?->initiators)
+		{
+			$query->whereIn('DOCUMENT.CREATED_BY_ID', $filter->initiators);
+		}
+
+		if ($filter?->editors)
+		{
+			$this->appendMemberExistConditionByRole(Role::EDITOR, $filter->editors, $query);
+		}
+
+		if ($filter?->reviewers)
+		{
+			$this->appendMemberExistConditionByRole(Role::REVIEWER, $filter->reviewers, $query);
+		}
+
+		if ($filter?->signers)
+		{
+			$this->appendMemberExistConditionByRole(Role::SIGNER, $filter->signers, $query);
+		}
+
+		if ($filter?->assignees)
+		{
+			$query->whereIn('DOCUMENT.REPRESENTATIVE_ID', $filter->assignees);
+		}
+
+		if ($filter?->assigneesOrSigners)
+		{
+			$this->appendAssigneeOrSignerCondition($filter->assigneesOrSigners, $query);
+		}
+
+		if ($filter?->companies)
+		{
+			$subQuery = Internal\MemberTable::query()
+				->setCustomBaseTableAlias("sign_internal_member_company")
+				->where('DOCUMENT_ID', new \Bitrix\Main\DB\SqlExpression('%s'))
+				->where('ENTITY_TYPE', EntityType::COMPANY)
+				->whereIn('ENTITY_ID', $filter->companies)
+			;
+			$query->whereExpr("EXISTS({$subQuery->getQuery()})", ['DOCUMENT_ID']);
+		}
+
+		if ($filter?->statuses)
+		{
+			$statusesFilter = Query::filter()->logic('or');
+			foreach ($filter->statuses as $status)
+			{
+				$this->appendStatusCondition($status, $statusesFilter, $userId);
+			}
+			$query->where($statusesFilter);
+		}
+
+		if ($filter?->dateModifyFrom)
+		{
+			$query->where('DATE_MODIFY', '>=', $filter->dateModifyFrom);
+		}
+
+		if ($filter?->dateModifyTo)
+		{
+			$query->where('DATE_MODIFY', '<=', $filter->dateModifyTo);
+		}
+
+		if ($filter?->text)
+		{
+			$query->whereLike('DOCUMENT.TITLE', "%$filter->text%");
+		}
+
+		return $query;
+	}
+
+	private function appendMemberExistConditionByRole(string $role, array $userIds, Query $query): void
+	{
+		$subQuery = $this->getMemberExistsSubqueryByRole($role, $userIds);
+		$query->whereExpr("EXISTS({$subQuery->getQuery()})", ['DOCUMENT_ID']);
+	}
+
+	private function getMemberExistsSubqueryByRole(string $role, array $userIds): Query
+	{
+		return Internal\MemberTable::query()
+			->setCustomBaseTableAlias("sign_internal_member_{$role}")
+			->where('DOCUMENT_ID', new \Bitrix\Main\DB\SqlExpression('%s'))
+			->where('ENTITY_TYPE', EntityType::USER)
+			->where('ROLE', $this->convertRoleToInt($role))
+			->whereIn('ENTITY_ID', $userIds)
+		;
+	}
+
+	private function appendAssigneeOrSignerCondition(array $userIds, Query $query): void
+	{
+		$subQuery = $this->getMemberExistsSubqueryByRole(Role::SIGNER, $userIds);
+		$query->where(Query::filter()
+		   ->logic('or')
+		   ->whereExpr("EXISTS({$subQuery->getQuery()})", ['DOCUMENT_ID'])
+		   ->whereIn('DOCUMENT.REPRESENTATIVE_ID', $userIds)
+		);
+	}
+
+	private function appendStatusCondition(
+		Type\MyDocumentsGrid\FilterStatus $status,
+		ConditionTree $statusesFilter,
+		int $userId,
+	): void
+	{
+		match ($status)
+		{
+			Type\MyDocumentsGrid\FilterStatus::SIGNED => $this->appendSignedStatusCondition($statusesFilter),
+			Type\MyDocumentsGrid\FilterStatus::MY_SIGNED => $this->appendMySignedStatusCondition($statusesFilter),
+			Type\MyDocumentsGrid\FilterStatus::IN_PROGRESS => $this->appendInProgressStatusCondition($statusesFilter),
+			Type\MyDocumentsGrid\FilterStatus::NEED_ACTION => $this->appendNeedActionStatusCondition($statusesFilter),
+			Type\MyDocumentsGrid\FilterStatus::MY_REVIEW => $this->appendMyReviewStatusCondition($statusesFilter),
+			Type\MyDocumentsGrid\FilterStatus::MY_EDITED => $this->appendMyEditedStatusCondition($statusesFilter),
+			Type\MyDocumentsGrid\FilterStatus::MY_STOPPED => $this->appendMyStoppedStatusCondition($statusesFilter, $userId),
+			Type\MyDocumentsGrid\FilterStatus::STOPPED => $this->appendStoppedStatusCondition($statusesFilter),
+			Type\MyDocumentsGrid\FilterStatus::MY_ACTION_DONE => $this->appendMyActionDoneStatusCondition($statusesFilter),
+		};
+	}
+
+	private function appendSignedStatusCondition(ConditionTree $statusesFilter): void
+	{
+		$statusesFilter->where(
+			Query::filter()
+				 ->logic('and')
+				 ->where('SIGNED', MemberStatus::DONE)
+				 ->where('ROLE', $this->convertRoleToInt(Role::SIGNER))
+				 ->where(
+					 Query::filter()
+						  ->logic('or')
+						  ->where('PART', '>', '1')
+						  ->where('DOCUMENT.STATUS', DocumentStatus::DONE),
+				 )
+			,
+		);
+	}
+
+	private function appendMySignedStatusCondition(ConditionTree $statusesFilter): void
+	{
+		$statusesFilter->where(
+			Query::filter()
+				 ->logic('and')
+				 ->where('SIGNED', MemberStatus::DONE)
+				 ->where('ROLE', $this->convertRoleToInt(Role::ASSIGNEE))
+				 ->whereIn('DOCUMENT.STATUS', [DocumentStatus::SIGNING, DocumentStatus::DONE]),
+		);
+	}
+
+	private function appendInProgressStatusCondition(ConditionTree $statusesFilter): void
+	{
+		$statusesFilter->where(
+			Query::filter()
+				 ->logic('or')
+				 ->where(
+					 Query::filter()
+						  ->logic('and')
+						  ->where('SIGNED', MemberStatus::READY)
+						  ->where('ROLE', '=', $this->convertRoleToInt(Role::SIGNER))
+						  ->where('DOCUMENT.PROVIDER_CODE', Type\ProviderCode::GOS_KEY)
+						  ->whereIn('DOCUMENT.STATUS', [DocumentStatus::SIGNING, DocumentStatus::STOPPED]),
+				 )
+				 ->where(
+					 Query::filter()
+						  ->logic('and')
+						  ->whereIn('SIGNED', MemberStatus::getReadyForSigning())
+						  ->where('DOCUMENT.STATUS', DocumentStatus::SIGNING),
+				 )
+				 ->where(
+					 Query::filter()
+						  ->logic('and')
+						  ->where('SIGNED', MemberStatus::DONE)
+						  ->where('ROLE', $this->convertRoleToInt(Role::SIGNER))
+						  ->where('DOCUMENT.STATUS', DocumentStatus::SIGNING)
+						  ->where('PART', 1),
+				 ),
+		);
+	}
+
+	private function appendNeedActionStatusCondition(ConditionTree $statusesFilter): void
+	{
+		$statusesFilter->where(
+			Query::filter()
+				 ->logic('or')
+				 ->where(
+					 Query::filter()
+						  ->logic('and')
+						  ->where('SIGNED', MemberStatus::READY)
+						  ->where('ROLE', '=', $this->convertRoleToInt(Role::SIGNER))
+						  ->where('DOCUMENT.PROVIDER_CODE', Type\ProviderCode::GOS_KEY)
+						  ->whereIn('DOCUMENT.STATUS', DocumentStatus::getEnding()),
+				 )
+				 ->where(
+					 Query::filter()
+						  ->logic('and')
+						  ->whereIn('SIGNED', MemberStatus::getReadyForSigning())
+						  ->where('DOCUMENT.STATUS', DocumentStatus::SIGNING),
+				 ),
+		);
+	}
+
+	private function appendMyReviewStatusCondition(ConditionTree $statusesFilter): void
+	{
+		$statusesFilter->where(
+			Query::filter()
+				 ->logic('and')
+				 ->where('SIGNED', MemberStatus::DONE)
+				 ->where('ROLE', $this->convertRoleToInt(Role::REVIEWER)),
+		);
+	}
+
+	private function appendMyEditedStatusCondition(ConditionTree $statusesFilter): void
+	{
+		$statusesFilter->where(
+			Query::filter()
+				 ->logic('and')
+				 ->where('SIGNED', MemberStatus::DONE)
+				 ->where('ROLE', $this->convertRoleToInt(Role::EDITOR)),
+		);
+	}
+
+	private function appendMyStoppedStatusCondition(ConditionTree $statusesFilter, int $userId): void
+	{
+		$statusesFilter->where(
+			Query::filter()
+				 ->logic('or')
+				 ->where('SIGNED', MemberStatus::REFUSED)
+				 ->where(
+					 Query::filter()
+						  ->logic('and')
+						  ->whereNot('SIGNED', MemberStatus::DONE)
+						  ->where('DOCUMENT.STATUS', DocumentStatus::STOPPED)
+						  ->where('DOCUMENT.STOPPED_BY_ID', $userId),
+				 ),
+		);
+	}
+
+	private function appendStoppedStatusCondition(ConditionTree $statusesFilter): void
+	{
+		$statusesFilter->where(
+			Query::filter()
+				 ->logic('and')
+				 ->where('ROLE', $this->convertRoleToInt(Role::SIGNER))
+				 ->where(Query::filter()
+						->logic('or')
+						->where('SIGNED', MemberStatus::STOPPED)
+					 	->where(Query::filter()
+							->logic('and')
+							->where('DOCUMENT.STATUS', DocumentStatus::STOPPED)
+							->where('DOCUMENT.INITIATED_BY_TYPE', Type\Document\InitiatedByType::EMPLOYEE->toInt())
+							->where('SIGNED', MemberStatus::DONE)
+					 	)
+				 )
+			,
+		);
+	}
+
+	private function appendMyActionDoneStatusCondition(ConditionTree $statusesFilter): void
+	{
+		$notSignerRoles = [
+			$this->convertRoleToInt(Role::ASSIGNEE),
+			$this->convertRoleToInt(Role::REVIEWER),
+			$this->convertRoleToInt(Role::EDITOR),
+		];
+		$statusesFilter->where(
+			Query::filter()
+				 ->logic('or')
+				 ->where('SIGNED', MemberStatus::REFUSED)
+				 ->where(
+					 Query::filter()
+						  ->logic('and')
+						  ->whereIn('SIGNED', [MemberStatus::DONE, MemberStatus::STOPPED])
+						  ->whereIn('ROLE', $notSignerRoles)
+				 )
+		);
+	}
+
 	public function listB2eMembersWithReadyStatusByDocumentIds(array $documentIds, int $entityId): Item\MemberCollection
 	{
 		$query = $this->getQueryForMemberCollectionReadyStatus($entityId)
@@ -1111,12 +1690,12 @@ class MemberRepository
 			->where(
 				Query::filter()
 					->logic('and')
-					->whereIn('SIGNED', [MemberStatus::REFUSED, MemberStatus::STOPPED])
+					->whereIn('SIGNED', [MemberStatus::REFUSED, MemberStatus::STOPPED]),
 			)->where(
 				Query::filter()
 					->logic('and')
 					->where('DOCUMENT.STATUS', DocumentStatus::STOPPED)
-					->whereNot('SIGNED', MemberStatus::DONE)
+					->whereNot('SIGNED', MemberStatus::DONE),
 			);
 
 		$result = Internal\MemberTable::query()
@@ -1150,13 +1729,13 @@ class MemberRepository
 										 ->where('SIGNED', MemberStatus::READY)
 										 ->where('ROLE', '=', $this->convertRoleToInt(Role::SIGNER))
 										 ->where('DOCUMENT.PROVIDER_CODE', Type\ProviderCode::GOS_KEY)
-										 ->whereIn('DOCUMENT.STATUS', [DocumentStatus::SIGNING, DocumentStatus::STOPPED])
+										 ->whereIn('DOCUMENT.STATUS', [DocumentStatus::SIGNING, DocumentStatus::STOPPED]),
 							)
 							->where(Query::filter()
 										 ->logic('and')
 										 ->whereIn('SIGNED', MemberStatus::getReadyForSigning())
-										 ->where('DOCUMENT.STATUS', DocumentStatus::SIGNING)
-							)
+										 ->where('DOCUMENT.STATUS', DocumentStatus::SIGNING),
+							),
 					)
 				,
 			)
@@ -1199,13 +1778,7 @@ class MemberRepository
 
 		$userModels = Main\UserTable::query()
 			->whereIn('ID', $userIds)
-			->setSelect([
-				'ID',
-				'NAME',
-				'SECOND_NAME',
-				'LAST_NAME',
-				'LOGIN',
-			])
+			->setSelect($this->userCacheFields)
 			->fetchCollection()
 		;
 
@@ -1352,7 +1925,7 @@ class MemberRepository
 	public function countMembersByDocumentIdAndRoleAndStatus(
 		int $documentId,
 		array $statuses = [],
-		string $role = Role::SIGNER
+		string $role = Role::SIGNER,
 	): int
 	{
 		$query = Internal\MemberTable
@@ -1471,6 +2044,22 @@ class MemberRepository
 		return $this->extractItemCollectionFromModelCollection($models);
 	}
 
+	/**
+	 * @param list<MemberStatus::*> $memberStatuses
+	 */
+	public function listByDocumentIdWithStatuses(int $documentId, array $memberStatuses): Item\MemberCollection
+	{
+		$models = Internal\MemberTable
+			::query()
+			->addSelect('*')
+			->where('DOCUMENT_ID', $documentId)
+			->whereIn('SIGNED', $memberStatuses)
+			->fetchCollection()
+		;
+
+		return $this->extractItemCollectionFromModelCollection($models);
+	}
+
 	public function existsByDocumentIdWithRoleAndStatus(int $documentId, string $role, string $status): bool
 	{
 		$roleInt = $this->convertRoleToInt($role);
@@ -1523,5 +2112,51 @@ class MemberRepository
 		;
 
 		return $model !== null ? $this->extractItemFromModel($model) : null;
+	}
+
+	/**
+	 * @param int $documentId
+	 *
+	 * @return list<int>
+	 */
+	public function listUserIdsByDocumentId(int $documentId): array
+	{
+		$flatArray = [];
+		$result = Internal\MemberTable::query()
+			->setSelect(['ENTITY_ID'])
+			->setDistinct()
+			->where('DOCUMENT_ID', $documentId)
+			->where('ENTITY_TYPE', EntityType::USER)
+			->exec()
+		;
+
+		while ($row = $result->fetch())
+		{
+			$flatArray[] = (int)$row['ENTITY_ID'];
+		}
+
+		return $flatArray;
+	}
+
+	public function getCancellationInitiatorIdByDocumentId(int $documentId): ?int
+	{
+		$query = Internal\MemberTable::query()
+			->setSelect(['ID'])
+			->where('DOCUMENT_ID', $documentId)
+			->where('DOCUMENT.INITIATED_BY_TYPE', Type\Document\InitiatedByType::COMPANY->toInt())
+			->whereNot('ROLE', $this->convertRoleToInt(Role::SIGNER))
+			->where('DOCUMENT.STATUS', DocumentStatus::STOPPED)
+			->whereIn('SIGNED', MemberStatus::getStatusesIsFinished())
+			->setOrder(['PART' => 'DESC'])
+			->setLimit(1)
+			->exec()
+			;
+
+		if ($row = $query->fetch())
+		{
+			return (int)$row['ID'];
+		}
+
+		return null;
 	}
 }

@@ -119,6 +119,17 @@ class Video extends Base
 				$params['HEIGHT'] = $this->getJsViewerHeight();
 			}
 		}
+
+		if ($params['WIDTH'] < 400)
+		{
+			$params['WIDTH'] = 400;
+		}
+
+		if ($params['HEIGHT'] < 130)
+		{
+			$params['HEIGHT'] = 130;
+		}
+
 		$autostart = 'Y';
 		if(isset($params['AUTOSTART']) && $params['AUTOSTART'] == 'N')
 		{

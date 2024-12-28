@@ -16,7 +16,6 @@ use Bitrix\Sign\Integration\CRM\Model\EventData;
 use Bitrix\Crm\Activity\Provider\SignDocument;
 use \Bitrix\Crm;
 use Bitrix\Sign\Service\Container;
-use Bitrix\Sign\Type\DocumentScenario;
 use Bitrix\Sign\Type\Member\ChannelType;
 use Bitrix\Sign\Type\Member\Role;
 use Bitrix\Sign;
@@ -76,14 +75,14 @@ class EventHandlerService
 			}
 
 			$this->createTimelineEvent(
-				$eventData
+				$eventData,
 			);
 		}
 	}
 
 	public function handleCurrentDocumentStatus(
 		Sign\Item\Document $document,
-		?Sign\Item\Member $stopInitiatorMember = null
+		?Sign\Item\Member $stopInitiatorMember = null,
 	): void
 	{
 		$eventType = match ($document->status)
@@ -115,26 +114,45 @@ class EventHandlerService
 		MemberStatusChanged $message,
 	): void
 	{
-		$eventType = $this->getEventTypeForMember($member, $message->getInitiatorUid(), $message->getErrorCode());
+		$eventTypes = $this->isByEmployee($document)
+			? $this->getByEmployeeEventTypeForMember($document, $member, $message->getInitiatorUid(), $message->getErrorCode())
+			: $this->getEventTypeForMember($document, $member, $message->getInitiatorUid(), $message->getErrorCode())
+		;
 
-		if ($eventType === null)
+		if (!$eventTypes)
 		{
 			return;
 		}
 
 		$userId = $this->getInitiatorUserIdByUid($document, $message->getInitiatorUid());
 
-		$eventData = new EventData();
-		$eventData->setEventType($eventType)
-			->setDocumentItem($document)
-			->setMemberItem($member)
-			->addDataValue(EventData::DATA_KEY_INITIATOR, $userId)
-			->addDataValue(EventData::DATA_KEY_PROVIDER_NAME, $message->getProvider())
-			->addDataValue(EventData::DATA_KEY_SES_SIGN, $message->getSesSign())
-			->addDataValue(EventData::DATA_KEY_SES_USERNAME, $message->getSesUsername())
-		;
+		foreach ($eventTypes as $eventType)
+		{
+			$eventData = new EventData();
+			$eventData
+				->setEventType($eventType)
+				->setDocumentItem($document)
+				->setMemberItem($this->getMemberForEvent($eventType, $document, $member))
+				->addDataValue(EventData::DATA_KEY_INITIATOR, $userId)
+				->addDataValue(EventData::DATA_KEY_PROVIDER_NAME, $message->getProvider())
+				->addDataValue(EventData::DATA_KEY_SES_SIGN, $message->getSesSign())
+				->addDataValue(EventData::DATA_KEY_SES_USERNAME, $message->getSesUsername())
+			;
 
-		$this->createTimelineEvent($eventData);
+			$this->createTimelineEvent($eventData);
+		}
+	}
+
+	private function getMemberForEvent(string $eventType, Sign\Item\Document $document, Sign\Item\Member $eventMember): Sign\Item\Member
+	{
+		return match ($eventType)
+		{
+			EventData::TYPE_ON_SIGNED_BY_RESPONSIBILITY_PERSON => $document->isInitiatedByEmployee()
+				? $this->memberService->getSigner($document) // signer, on assignee done (by employee)
+				: $eventMember // signer, on signer done (by company)
+			,
+			default => $eventMember,
+		};
 	}
 
 	private function getStoppedByUserId(Sign\Item\Document $document, ?Sign\Item\Member $member): ?int
@@ -195,7 +213,7 @@ class EventHandlerService
 	{
 		$itemId = new \Bitrix\Crm\ItemIdentifier(
 			\CCrmOwnerType::SmartDocument,
-			$smartDocumentId
+			$smartDocumentId,
 		);
 
 		$itemId = (new RelationManager)->getParentElements($itemId)[0] ?? null;
@@ -231,22 +249,22 @@ class EventHandlerService
 			];
 		}
 
-		$documentData =  DocumentData::createFromArray([
+		$documentData = DocumentData::createFromArray([
 			'documentId' => $document->id,
 			'documentHash' => $document->uid,
 			'memberHash' => $member?->uid,
 			'item' => $item,
 			'bindings' => $bindings,
 			'initiatorUserId' => $eventData->getData()[EventData::DATA_KEY_INITIATOR] ?? null,
+			'initiatedByType' => $document->initiatedByType->value,
 		]);
-
 
 		if ($member?->channelValue)
 		{
 			$documentData->addSigner(Signer::createFromArray([
 					'title' => $member->channelValue,
 					'hash' => $member->uid,
-				]
+				],
 			));
 		}
 
@@ -299,7 +317,7 @@ class EventHandlerService
 			'provider' => [
 				'name' =>  $eventData->getData()[$eventData::DATA_KEY_PROVIDER_NAME] ?? null,
 				'goskey' => [
-					'orderId' => $eventData->getData()[$eventData::DATA_KEY_GOSKEY_ORDER_ID] ?? null
+					'orderId' => $eventData->getData()[$eventData::DATA_KEY_GOSKEY_ORDER_ID] ?? null,
 				],
 				'ses' => [
 					'username' => $eventData->getData()[$eventData::DATA_KEY_SES_USERNAME] ?? null,
@@ -317,16 +335,56 @@ class EventHandlerService
 		};
 	}
 
-	private function getEventTypeForMember(Sign\Item\Member $member, string $initiatorUid = '', string $errorCode = ''): ?string
+	/**
+	 * @return array<string>
+	 */
+	private function getEventTypeForMember(
+		Sign\Item\Document $document,
+		Sign\Item\Member $member,
+		string $initiatorUid = '',
+		string $errorCode = '',
+	): array
 	{
-		return match ($member->role)
+		$event = match ($member->role)
 		{
 			Role::SIGNER => $this->getEventTypeForSigner($member, $initiatorUid, $errorCode),
 			Role::ASSIGNEE => $this->getEventTypeForAssignee($member),
-			Role::REVIEWER => $this->getEventTypeForReviewer($member),
+			Role::REVIEWER => $this->getEventTypeForReviewer($document, $member),
 			Role::EDITOR => $this->getEventTypeForEditor($member),
 			default => null,
 		};
+		return $event !== null ? [$event] : [];
+	}
+
+	/**
+	 * @return array<string>
+	 */
+	private function getByEmployeeEventTypeForMember(
+		Sign\Item\Document $document,
+		Sign\Item\Member $member,
+		string $initiatorUid = '',
+		string $errorCode = '',
+	): array
+	{
+		// in byCompany scenario assignee->done fired TYPE_ON_ASSIGNEE_DONE
+		if ($member->role === Role::ASSIGNEE && $member->status === Sign\Type\MemberStatus::DONE)
+		{
+			return [
+				EventData::TYPE_ON_SIGNED_BY_RESPONSIBILITY_PERSON,
+				EventData::TYPE_ON_ASSIGNEE_DONE,
+			];
+		}
+
+		// in byCompany scenario signer->ready fired TYPE_ON_SIGNED_BY_RESPONSIBILITY_PERSON event
+		if (
+			$member->role === Role::SIGNER
+			&& in_array($member->status, [Sign\Type\MemberStatus::READY, Sign\Type\MemberStatus::STOPPABLE_READY], true)
+		)
+		{
+			return [];
+		}
+
+		return $this->getEventTypeForMember($document, $member, $initiatorUid, $errorCode);
 	}
 
 	private function getEventTypeForAssignee(Sign\Item\Member $member): ?string
@@ -334,6 +392,7 @@ class EventHandlerService
 		return match ($member->status)
 		{
 			Sign\Type\MemberStatus::STOPPED => EventData::TYPE_ON_CANCELED_BY_RESPONSIBILITY_PERSON,
+			Sign\Type\MemberStatus::DONE => EventData::TYPE_ON_ASSIGNEE_DONE,
 			default => null,
 		};
 	}
@@ -399,11 +458,27 @@ class EventHandlerService
 		};
 	}
 
-	private function getEventTypeForReviewer(Sign\Item\Member $member): ?string
+	private function getEventTypeForReviewer(Sign\Item\Document $document, Sign\Item\Member $member): ?string
 	{
+		if ($member->documentId === null)
+		{
+			return null;
+		}
+
+		if ($document->id === null)
+		{
+			return null;
+		}
+
+		if ($document->id !== $member->documentId)
+		{
+			return null;
+		}
+
 		if (
 			$member->status === Sign\Type\MemberStatus::DONE
 			&& $this->isDocumentMustBeStopped($member->documentId)
+			&& !$document?->isInitiatedByEmployee()
 		)
 		{
 			return null;
@@ -431,5 +506,10 @@ class EventHandlerService
 	private function isDocumentMustBeStopped(int $documentId): bool
 	{
 		return $this->memberService->countUnfinishedSigners($documentId) === 0;
+	}
+
+	private function isByEmployee(Sign\Item\Document $document): bool
+	{
+		return $document->initiatedByType === Sign\Type\Document\InitiatedByType::EMPLOYEE;
 	}
 }

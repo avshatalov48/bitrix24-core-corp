@@ -57,6 +57,28 @@ class EntityForm
 	}
 
 	/**
+	 * Returns an array with keys for the REST.
+	 *
+	 * @return array
+	 */
+	public function toRest(): array
+	{
+		return [
+			'id' => $this->getId(),
+			'groupId' => $this->getGroupId(),
+			'entityType' => $this->getEntityType(),
+			'name' => $this->getName(),
+			'goal' => $this->getInfo()->getSprintGoal(),
+			'sort' => $this->getSort(),
+			'createdBy' => $this->getCreatedBy(),
+			'modifiedBy' => $this->getModifiedBy(),
+			'dateStart' => $this->getDateStart(),
+			'dateEnd' => $this->getDateEnd(),
+			'status' => $this->getStatus(),
+		];
+	}
+
+	/**
 	 * Checks if an object is empty based on an Id. If id empty, it means that it was not possible to get data
 	 * from the storage or did not fill out the id.
 	 *

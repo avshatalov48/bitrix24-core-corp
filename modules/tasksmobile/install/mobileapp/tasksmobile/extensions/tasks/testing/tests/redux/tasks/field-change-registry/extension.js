@@ -111,6 +111,7 @@
 				id: 1,
 				deadline: Math.ceil(now / 1000) + 10 * 3600,
 				activityDate: Math.ceil(now / 1000) + 5 * 3600,
+				userFieldNames: [],
 			};
 
 			// pending
@@ -146,6 +147,7 @@
 				id: 1,
 				deadline: Math.ceil(now / 1000) + 10 * 3600,
 				activityDate: Math.ceil(now / 1000) + 5 * 3600,
+				userFieldNames: [],
 			};
 
 			// pending 1
@@ -285,6 +287,7 @@
 				id: 1,
 				responsible: 69,
 				activityDate: Math.ceil(now / 1000) + 10 * 3600,
+				userFieldNames: [],
 			};
 
 			// pending
@@ -320,6 +323,7 @@
 				id: 1,
 				responsible: 69,
 				activityDate: Math.ceil(now / 1000) + 10 * 3600,
+				userFieldNames: [],
 			};
 
 			// pending 1

@@ -127,6 +127,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 							?> src="<?=LazyLoad::getBase64Stub()?>" <?
 							?> width="<?=$file["THUMB"]["width"]?>"<?
 							?> height="<?=$file["THUMB"]["height"]?>"<?
+							?> data-thumb-src="<?=$file["THUMB"]["src"]?>"<?
 							?> border="0"<?
 							?> alt="<?=htmlspecialcharsbx($file["NAME"])?>"<?
 							?> <?=$file['ATTRIBUTES_FOR_VIEWER']?> <?
@@ -332,4 +333,3 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 		?>
 	});
 </script>
-

@@ -15,6 +15,7 @@ BX.Tasks.Kanban.Grid = function(options)
 	this.groupId = Number(options.groupId);
 	this.groupingMode = Boolean(options.isGroupingMode);
 	this.isSprintView = (options.isSprintView === 'Y');
+	this.isCollab = (options.isCollab === 'Y');
 	this.networkEnabled = options.networkEnabled || false;
 
 	this.gridHeader = Boolean(options.gridHeader);
@@ -125,6 +126,9 @@ BX.Tasks.Kanban.Grid.prototype = {
 		new BX.Pull.QueueManager({
 			moduleId: 'tasks',
 			userId: this.ownerId,
+			config: {
+				loadItemsDelay: 1000,
+			},
 			additionalData: {},
 			events: {
 				onBeforePull: (event) => {
@@ -395,22 +399,44 @@ BX.Tasks.Kanban.Grid.prototype = {
 			typeof BX.Intranet.NotifyDialog !== "undefined"
 		)
 		{
-			if (this.accessNotifyDialog === null)
+			if (this.isCollab)
 			{
-				this.accessNotifyDialog = new BX.Intranet.NotifyDialog({
-					listUserData: this.getData().admins,
-					notificationHandlerUrl: BX.Uri.addParam(this.getAjaxHandlerPath(), {
-						action: 'notifyAdmin',
-					}),
-					popupTexts: {
-						sendButton: BX.message("TASKS_KANBAN_NOTIFY_BUTTON"),
-						title: BX.message("TASKS_KANBAN_NOTIFY_TITLE"),
-						header: BX.message("TASKS_KANBAN_NOTIFY_HEADER"),
-						description: BX.message("TASKS_KANBAN_NOTIFY_TEXT")
-					}
+				const popup = new BX.Main.Popup({
+					closeIcon: true,
+					titleBar: BX.message("TASKS_KANBAN_COLLAB_NOTIFY_HEADER"),
+					content: BX.message("TASKS_KANBAN_COLLAB_NOTIFY_TEXT"),
+					cacheable: true,
+					buttons: [
+						new BX.UI.Button({
+							text: BX.message("TASKS_KANBAN_COLLAB_NOTIFY_BUTTON"),
+							color: BX.UI.Button.Color.LIGHT_BORDER,
+							onclick: function(button, event) {
+								popup.close();
+							},
+						}),
+					],
 				});
+				popup.show();
 			}
-			this.accessNotifyDialog.show();
+			else
+			{
+				if (this.accessNotifyDialog === null)
+				{
+					this.accessNotifyDialog = new BX.Intranet.NotifyDialog({
+						listUserData: this.getData().admins,
+						notificationHandlerUrl: BX.Uri.addParam(this.getAjaxHandlerPath(), {
+							action: 'notifyAdmin',
+						}),
+						popupTexts: {
+							sendButton: BX.message("TASKS_KANBAN_NOTIFY_BUTTON"),
+							title: BX.message("TASKS_KANBAN_NOTIFY_TITLE"),
+							header: BX.message("TASKS_KANBAN_NOTIFY_HEADER"),
+							description: BX.message("TASKS_KANBAN_NOTIFY_TEXT")
+						}
+					});
+				}
+				this.accessNotifyDialog.show();
+			}
 		}
 	},
 
@@ -2025,6 +2051,11 @@ BX.Tasks.Kanban.Grid.prototype = {
 		return this.isSprintView;
 	},
 
+	isCollabMode: function()
+	{
+		return this.isCollab;
+	},
+
 	isGroupingMode: function()
 	{
 		return this.groupingMode;
@@ -2186,6 +2217,11 @@ BX.Tasks.Kanban.Grid.prototype = {
 
 		if (this.getGroupId())
 		{
+			if (this.isCollabMode())
+			{
+				return 'collab';
+			}
+
 			return 'project';
 		}
 

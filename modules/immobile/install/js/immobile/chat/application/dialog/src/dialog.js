@@ -1023,7 +1023,7 @@ export class MobileDialogApplication
 
 		result.name = dialog.name;
 
-		let chatTypeTitle = this.getLocalize('MOBILE_HEADER_MENU_CHAT_TYPE_CHAT_NEW');
+		let chatTypeTitle = this.getLocalize('MOBILE_HEADER_MENU_CHAT_TYPE_CHAT_NEW_MSGVER_1');
 		if (this.chatShowUserCounter && this.getLocalize().MOBILE_HEADER_MENU_CHAT_USER_COUNT)
 		{
 			chatTypeTitle = this.getLocalize('MOBILE_HEADER_MENU_CHAT_USER_COUNT').replace('#COUNT#', dialog.userCounter);
@@ -1031,6 +1031,10 @@ export class MobileDialogApplication
 		else if (this.getLocalize()[`MOBILE_HEADER_MENU_CHAT_TYPE_${dialog.type.toUpperCase()}_NEW`])
 		{
 			chatTypeTitle = this.getLocalize(`MOBILE_HEADER_MENU_CHAT_TYPE_${dialog.type.toUpperCase()}_NEW`);
+		}
+		else if (this.getLocalize()[`MOBILE_HEADER_MENU_CHAT_TYPE_${dialog.type.toUpperCase()}_NEW_MSGVER_1`])
+		{
+			chatTypeTitle = this.getLocalize(`MOBILE_HEADER_MENU_CHAT_TYPE_${dialog.type.toUpperCase()}_NEW_MSGVER_1`);
 		}
 		result.desc = chatTypeTitle;
 

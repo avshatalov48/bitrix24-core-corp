@@ -6,6 +6,7 @@ jn.define('tasks/layout/task/create-new/description', (require, exports, module)
 	const { Loc } = require('loc');
 	const { TaskField } = require('tasks/enum');
 	const { TextEditor } = require('text-editor');
+	const { PlainTextFormatter } = require('bbcode/formatter/plain-text-formatter');
 
 	class Description extends LayoutComponent
 	{
@@ -90,7 +91,10 @@ jn.define('tasks/layout/task/create-new/description', (require, exports, module)
 				return `[color=${Color.base5}]${text}[/color]`;
 			}
 
-			return description;
+			const plaintTextFormatter = new PlainTextFormatter();
+			const plainAst = plaintTextFormatter.format({ source: description });
+
+			return plainAst.toString();
 		}
 	}
 

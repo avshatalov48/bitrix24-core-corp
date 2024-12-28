@@ -84,24 +84,32 @@ abstract class EntityDataProvider extends DataProvider
 	 */
 	protected function fetchData()
 	{
-		if($this->data === null)
+		if ($this->data === null)
 		{
 			$this->data = [];
+
 			/** @var \Bitrix\Main\Entity\DataManager $className */
 			$className = $this->getTableClass();
-			if(!is_a($className, DataManager::class, true) || is_object($this->source))
+			if (!is_a($className, DataManager::class, true) || is_object($this->source))
 			{
 				return;
 			}
+
+			if ($this->source === null || (is_numeric($this->source) && (int)$this->source <= 0))
+			{
+				return;
+			}
+
 			try
 			{
 				$data = $className::getByPrimary($this->source, $this->getGetListParameters())->fetch();
 			}
-			catch(SystemException $systemException)
+			catch (SystemException)
 			{
 				$data = $className::getByPrimary($this->source, ['select' => ['*']])->fetch();
 			}
-			if($data)
+
+			if ($data)
 			{
 				$this->data = $data;
 			}

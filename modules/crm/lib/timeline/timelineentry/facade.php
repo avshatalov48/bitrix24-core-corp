@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Timeline\TimelineEntry;
 
 use Bitrix\Crm\Timeline\AI;
+use Bitrix\Crm\Timeline\Booking;
 use Bitrix\Crm\Timeline\CalendarSharing;
 use Bitrix\Crm\Timeline\ConversionEntry;
 use Bitrix\Crm\Timeline\CreationEntry;
@@ -18,6 +19,7 @@ use Bitrix\Crm\Timeline\SignB2eDocument;
 use Bitrix\Crm\Timeline\Tasks;
 use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Crm\Timeline\UnlinkEntry;
+use Bitrix\Crm\Timeline\Bizproc;
 use Bitrix\Main\ArgumentException;
 
 class Facade
@@ -41,6 +43,9 @@ class Facade
 	public const SIGN_B2E_DOCUMENT = SignB2eDocument\Entry::class;
 
 	public const SIGN_B2E_DOCUMENT_LOG = SignB2eDocument\LogEntry::class;
+
+	public const BIZPROC = Bizproc\Entry::class;
+	public const BOOKING = Booking\Entry::class;
 
 	/** @var TimelineEntry */
 	protected $timelineEntryClass = TimelineEntry::class;

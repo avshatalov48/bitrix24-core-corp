@@ -14,7 +14,7 @@ final class YandexGPT extends CloudEngine implements IContext, IQueueOptional
 {
 	protected const CATEGORY_CODE = Engine::CATEGORIES['text'];
 	protected const ENGINE_NAME = 'YandexGPT 2';
-	protected const ENGINE_CODE = 'YandexGPT';
+	public const ENGINE_CODE = 'YandexGPT';
 
 	protected const URL_COMPLETIONS = 'https://llm.api.cloud.yandex.net/foundationModels/v1/completion';
 
@@ -139,7 +139,18 @@ final class YandexGPT extends CloudEngine implements IContext, IQueueOptional
 	 */
 	public function getResultFromRaw(mixed $rawResult, bool $cached = false): Result
 	{
-		$text = $rawResult['result']['message']['text'] ?? $rawResult['result']['alternatives'][0]['message']['text'];
+		if (isset($rawResult['result']['message']['text']))
+		{
+			$text = $rawResult['result']['message']['text'];
+			$text = $this->restoreReplacements($text);
+			$rawResult['result']['message']['text'] = $text;
+		}
+		else
+		{
+			$text = $rawResult['result']['alternatives'][0]['message']['text'];
+			$text = $this->restoreReplacements($text);
+			$rawResult['result']['alternatives'][0]['message']['text'] = $text;
+		}
 
 		return new Result($rawResult, $text, $cached);
 	}

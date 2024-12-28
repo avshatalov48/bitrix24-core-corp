@@ -9,6 +9,7 @@ class Text extends ContentBlock implements TextPropertiesInterface
 	use TextPropertiesMixin;
 
 	public const COLOR_GREEN = 'green';
+	public const COLOR_PURPLE = 'purple';
 	public const COLOR_BASE_50 = 'base_50';
 	public const COLOR_BASE_60 = 'base_60';
 	public const COLOR_BASE_70 = 'base_70';

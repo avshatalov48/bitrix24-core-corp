@@ -4,8 +4,12 @@ return [
 	'extensions' => [
 		'loc',
 		'tokens',
-		'ui-system/typography/text',
 		'user/profile',
-		'layout/ui/user/avatar',
+		'layout/ui/user/user-name',
+		'ui-system/blocks/avatar',
+		'ui-system/typography/text',
 	],
+	'bundle' => [
+		'./src/list'
+	]
 ];

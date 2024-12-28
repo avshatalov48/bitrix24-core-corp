@@ -3,6 +3,7 @@
 namespace Bitrix\BIConnector\Integration\Superset;
 
 
+use Bitrix\BIConnector\Integration\Superset\Integrator\Request\IntegratorResponse;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetUserTable;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
 use Bitrix\BIConnector\Integration\Superset\Repository\DashboardRepository;
@@ -56,7 +57,11 @@ final class SupersetController
 
 		if ($user->clientId)
 		{
-			$result->addError(new Main\Error('User already exists'));
+			$result->setData([
+				'user' => $user,
+				'response' => new IntegratorResponse(200),
+			]);
+
 			return $result;
 		}
 

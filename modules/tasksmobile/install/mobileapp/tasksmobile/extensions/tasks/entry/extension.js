@@ -66,7 +66,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 			const { userId, groupId } = data;
 
 			PageManager.openPage({
-				url: `/mobile/tasks/snmrouter/?routePage=efficiency&USER_ID=${userId}&GROUP_ID=${groupId}`,
+				url: `${env.siteDir}/mobile/tasks/snmrouter/?routePage=efficiency&USER_ID=${userId}&GROUP_ID=${groupId}`,
 				titleParams: {
 					text: Loc.getMessage('TASKSMOBILE_ENTRY_EFFICIENCY_TITLE'),
 				},
@@ -353,20 +353,33 @@ jn.define('tasks/entry', (require, exports, module) => {
 				flowEfficiency: data.flowEfficiency || null,
 				canCreateTask: data.canCreateTask ?? true,
 				groupId: data.groupId || 0,
+				collabId: data.collabId || 0,
 				ownerId: data.ownerId || userId,
 				getProjectData: data.getProjectData || true,
 				analyticsLabel: data.analyticsLabel || {},
 			};
 
 			PageManager.openComponent('JSStackComponent', {
-				componentCode: Entry.getTaskListComponentCode(),
+				componentCode: 'tasks.dashboard',
 				canOpenInDefault: true,
-				title: (extendedData.groupName || Loc.getMessage('TASKSMOBILE_ENTRY_TASK_LIST_TITLE')),
-				scriptPath: Entry.getTaskListScriptPath(),
-				rootWidget: Entry.getTaskListRootWidget(),
+				title: (
+					extendedData.collabId > 0
+						? Loc.getMessage('TASKSMOBILE_ENTRY_COLLAB_TASK_LIST_TITLE')
+						: (extendedData.groupName || Loc.getMessage('TASKSMOBILE_ENTRY_TASK_LIST_TITLE'))
+				),
+				scriptPath: availableComponents['tasks:tasks.dashboard'].publicUrl,
+				rootWidget: {
+					name: 'layout',
+					settings: {
+						objectName: 'layout',
+						useSearch: true,
+						useLargeTitleMode: true,
+					},
+				},
 				params: {
-					COMPONENT_CODE: Entry.getTaskListComponentCode(),
+					COMPONENT_CODE: 'tasks.dashboard',
 					GROUP_ID: extendedData.groupId,
+					COLLAB_ID: extendedData.collabId,
 					USER_ID: extendedData.ownerId,
 					FLOW_ID: extendedData.flowId,
 					FLOW_NAME: extendedData.flowName,
@@ -377,33 +390,9 @@ jn.define('tasks/entry', (require, exports, module) => {
 					SITE_DIR: siteDir,
 					LANGUAGE_ID: languageId,
 					PATH_TO_TASK_ADD: `${siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`,
-					analyticsLabel: extendedData.analyticsLabel,
+					ANALYTICS_LABEL: extendedData.analyticsLabel,
 				},
 			});
-		}
-
-		static getTaskListComponentCode()
-		{
-			return 'tasks.dashboard';
-		}
-
-		static getTaskListScriptPath()
-		{
-			const componentName = 'tasks:tasks.dashboard';
-
-			return availableComponents[componentName].publicUrl;
-		}
-
-		static getTaskListRootWidget()
-		{
-			return {
-				name: 'layout',
-				settings: {
-					objectName: 'layout',
-					useSearch: true,
-					useLargeTitleMode: true,
-				},
-			};
 		}
 	}
 

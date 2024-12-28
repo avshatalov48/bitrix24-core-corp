@@ -351,6 +351,14 @@ BX.Tasks.UserItemSet = BX.Tasks.Util.ItemSet.extend({
 			{
 				data.IS_NETWORK_USER = data.type.network;
 			}
+			if (data.type && 'collab' in data.type)
+			{
+				data.IS_COLLAB = data.type.collab;
+			}
+			if (data.type && 'collaber' in data.type)
+			{
+				data.IS_COLLABER_USER = data.type.collaber;
+			}
 
 			if(!('entityType' in data))
 			{
@@ -381,10 +389,19 @@ BX.Tasks.UserItemSet = BX.Tasks.Util.ItemSet.extend({
 					data.USER_TYPE = "mail";
 					typeSet.push('mail');
 				}
+				else if (data.IS_COLLABER_USER)
+				{
+					data.USER_TYPE = "collaber";
+					typeSet.push('collaber');
+				}
 				else if (data.IS_EXTRANET_USER)
 				{
 					data.USER_TYPE = "extranet";
 					typeSet.push('extranet');
+				}
+				else if (data.IS_COLLAB)
+				{
+					typeSet.push('collab');
 				}
 				data.ENTITY_TYPE_CODE = 'USER';
 			}

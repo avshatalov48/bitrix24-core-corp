@@ -1,0 +1,40 @@
+.app {
+	display: flex;
+	flex-direction: row;
+	width: 100%;
+	gap: 20px;
+}
+
+.app__block {
+	width: 100%;
+}
+
+.app__block--narrow {
+	width: 500px;
+}
+
+.app__block .ui-section__wrapper {
+	margin-bottom: 0;
+}
+
+/* temp */
+.ui-side-panel-wrap-workarea {
+	overflow: visible !important;
+}
+
+.app-body.ui-page-slider-padding {
+	padding: 0 20px 18px !important;
+}
+
+.app-root__button-wrapper {
+	display: inline-block;
+	margin-right: 12px;
+}
+
+.app-root__button-wrapper--blocked {
+	cursor: not-allowed;
+}
+
+.app-root__button--blocked {
+	pointer-events: none;
+}

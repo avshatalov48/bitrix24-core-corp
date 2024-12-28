@@ -9,6 +9,7 @@ return [
 	'css' => 'dist/team-popup.bundle.css',
 	'js' => 'dist/team-popup.bundle.js',
 	'rel' => [
+		'main.core.events',
 		'main.loader',
 		'main.popup',
 		'tasks.side-panel-integration',

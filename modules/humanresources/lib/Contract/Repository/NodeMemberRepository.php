@@ -2,18 +2,30 @@
 
 namespace Bitrix\HumanResources\Contract\Repository;
 
+use Bitrix\HumanResources\Enum\NodeActiveFilter;
 use Bitrix\HumanResources\Exception\UpdateFailedException;
 use Bitrix\HumanResources\Item;
+use Bitrix\HumanResources\Item\NodeMember;
 use Bitrix\HumanResources\Type\MemberEntityType;
+use Bitrix\HumanResources\Type\NodeEntityType;
 use Bitrix\Main;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Result;
+use Bitrix\Main\SystemException;
 
 interface NodeMemberRepository
 {
 	/**
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\SystemException
+	 * @param \Bitrix\HumanResources\Item\NodeMember $nodeMember
+	 *
+	 * @return \Bitrix\HumanResources\Item\NodeMember
 	 * @throws \Bitrix\HumanResources\Exception\CreationFailedException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 * @throws \Bitrix\Main\DB\DuplicateEntryException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function create(Item\NodeMember $nodeMember): Item\NodeMember;
 	public function remove(Item\NodeMember $nodeMember): bool;
@@ -22,7 +34,8 @@ interface NodeMemberRepository
 		int $nodeId,
 		bool $withAllChildNodes = false,
 		int $limit = 100,
-		int $offset = 0
+		int $offset = 0,
+		bool $onlyActive = true,
 	): Item\Collection\NodeMemberCollection;
 	public function findAllByNodeIdAndEntityType(
 		int $nodeId,
@@ -51,7 +64,7 @@ interface NodeMemberRepository
 	 */
 	public function removeAllMembersByNodeId(int $nodeId): void;
 
-	public function findAllByRoleIdAndNodeId(?int $roleId, ?int $nodeId): Item\Collection\NodeMemberCollection;
+	public function findAllByRoleIdAndNodeId(?int $roleId, ?int $nodeId, ?int $limit, ?int $offset, bool $ascendingSort = true): Item\Collection\NodeMemberCollection;
 
 	/**
 	 * @param \Bitrix\HumanResources\Item\NodeMember $member
@@ -60,6 +73,10 @@ interface NodeMemberRepository
 	 * @throws UpdateFailedException
 	 */
 	public function update(Item\NodeMember $member): Item\NodeMember;
+
+	public function updateByCollection(
+		Item\Collection\NodeMemberCollection $nodeMemberCollection
+	): Item\Collection\NodeMemberCollection;
 
 	public function setActiveByEntityTypeAndEntityId(
 		MemberEntityType $entityType,
@@ -136,4 +153,49 @@ interface NodeMemberRepository
 	 * @return int The total count of members associated with the given node ID.
 	 */
 	public function countAllByByNodeId(int $nodeId): int;
+
+	/**
+	 * Finds the first NodeMember by the given entity ID, entity type, node type, and active status.
+	 *
+	 * @param int $entityId
+	 * @param MemberEntityType $entityType
+	 * @param NodeEntityType $nodeType
+	 * @param bool|null $active
+	 *
+	 * @return NodeMember|null
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public function findFirstByEntityIdAndEntityTypeAndNodeTypeAndActive(
+		int $entityId,
+		MemberEntityType $entityType,
+		NodeEntityType $nodeType,
+		?bool $active = null
+	): ?Item\NodeMember;
+
+	public function findAllByEntityIdAndEntityTypeAndNodeType(
+		int $entityId,
+		MemberEntityType $entityType,
+		NodeEntityType $nodeType,
+		int $limit = 0,
+		int $offset = 0,
+		NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE
+	): item\Collection\NodeMemberCollection;
+
+	public function findAllByEntityIdsAndEntityTypeAndNodeType(
+		array $entityIds,
+		MemberEntityType $entityType,
+		NodeEntityType $nodeType,
+	): Item\Collection\NodeMemberCollection;
+
+	/**
+	 * @param Item\Collection\NodeMemberCollection $nodeMemberCollection
+	 *
+	 * @return bool
+	 * @throws Main\DB\SqlQueryException
+	 */
+	public function removeByCollection(
+		Item\Collection\NodeMemberCollection $nodeMemberCollection
+	): bool;
 }

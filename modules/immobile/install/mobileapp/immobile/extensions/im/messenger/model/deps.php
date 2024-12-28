@@ -39,6 +39,8 @@ return [
 		'./src/messages/reactions',
 		'./src/messages/pin',
 		'./src/dialogues/copilot',
+		'./src/dialogues/collab/collab',
+		'./src/dialogues/collab/validators',
 		'./src/validators/message',
 		'./src/validators/pin',
 		'./src/validators/comment',

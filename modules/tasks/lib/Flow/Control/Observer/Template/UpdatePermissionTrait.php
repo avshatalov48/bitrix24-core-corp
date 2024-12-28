@@ -25,7 +25,6 @@ trait UpdatePermissionTrait
 	{
 		$accessCodes = $this->convertAccessCodes($command);
 
-		/** @var TemplatePermissionService $service */
 		$service = ServiceLocator::getInstance()->get('tasks.flow.template.permission.service');
 
 		$templateCommand = (new TemplatePermissionCommand())

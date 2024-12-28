@@ -14,7 +14,6 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 	const { EntityReady } = require('entity-ready');
 	const {
 		AppStatus,
-		EventType,
 		MessengerInitRestMethod,
 	} = require('im/messenger/const');
 

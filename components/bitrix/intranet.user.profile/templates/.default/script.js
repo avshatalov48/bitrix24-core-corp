@@ -36,6 +36,8 @@
 			this.isCurrentUserIntegrator = params.isCurrentUserIntegrator === "Y";
 			this.personalMobile = this.initialFields["PERSONAL_MOBILE"];
 			this.isCurrentUserAdmin = params.isCurrentUserAdmin;
+			this.avatarUri = BX.type.isNotEmptyString(this.initialFields.PHOTO) ? this.initialFields.PHOTO : null;
+			this.userpicUploadAttribute = params.userpicUploadAttribute ?? '';
 
 			this.entityEditorInstance = new namespace.EntityEditor({
 				managerInstance: this,
@@ -64,6 +66,7 @@
 					options: params
 				});
 
+				this.initAvatar();
 				this.initAvailableActions();
 				this.initAvatarLoader();
 
@@ -99,6 +102,61 @@
 					bottomContainer.appendChild(cardButtonLink);
 				}
 			}.bind(this));
+		},
+
+		initAvatar()
+		{
+			const avatarOptions = {
+				size: 212,
+				userpicPath: this.avatarUri,
+			};
+
+			if (this.userStatus === 'collaber')
+			{
+				this.avatar = new BX.UI.AvatarRoundGuest(avatarOptions);
+			}
+			else if (this.userStatus === 'extranet')
+			{
+				this.avatar = new BX.UI.AvatarRoundExtranet(avatarOptions);
+			}
+			else
+			{
+				this.avatar = new BX.UI.AvatarRound(avatarOptions);
+			}
+
+			const avatarWrapper = BX.Tag.render`<div class="intranet-user-profile-photo" id="intranet-user-profile-photo"></div>`;
+			this.avatar.renderTo(avatarWrapper);
+			const avatarContainer = BX('intranet-user-profile-userpic-avatar');
+			BX.Dom.append(avatarWrapper, avatarContainer);
+
+			if (this.canEditProfile || this.isOwnProfile)
+			{
+				BX.Dom.append(this.getAvatarEditorButtons(), avatarContainer);
+				BX.Dom.append(this.getAvatarRemoveButton(), avatarContainer);
+			}
+		},
+
+		getAvatarEditorButtons()
+		{
+			return BX.Tag.render`
+				<div class="intranet-user-profile-userpic-load">
+					<div class="intranet-user-profile-userpic-create" id="intranet-user-profile-photo-camera">
+						${BX.message('INTRANET_USER_PROFILE_AVATAR_CAMERA')}
+					</div>
+					<div class="intranet-user-profile-userpic-upload" id="intranet-user-profile-photo-file" ${this.userpicUploadAttribute}>
+						${BX.message('INTRANET_USER_PROFILE_AVATAR_LOAD')}
+					</div>
+				</div>
+			`;
+		},
+
+		getAvatarRemoveButton()
+		{
+			return BX.Tag.render`
+				<div class="intranet-user-profile-userpic-remove" id="intranet-user-profile-photo-remove"
+					${this.initialFields.PERSONAL_PHOTO ? '' : 'hidden'}>
+				</div>
+			`;
 		},
 
 		initAvailableActions: function()
@@ -173,12 +231,12 @@
 				}
 			}
 
-			BX.bind(BX("intranet-user-profile-photo-remove"), "click", function () {
-				if (BX("intranet-user-profile-photo").style.backgroundImage != "")
+			BX.bind(BX('intranet-user-profile-photo-remove'), 'click', (() => {
+				if (this.avatar.picPath)
 				{
-					this.showConfirmPopup(BX.message("INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM"), this.deletePhoto.bind(this));
+					this.showConfirmPopup(BX.message('INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM'), this.deletePhoto.bind(this));
 				}
-			}.bind(this))
+			}));
 		},
 
 		showActionPopup: function(bindElement)
@@ -595,57 +653,55 @@
 			}
 		},
 
-		changePhoto: function(event)
+		changePhoto(event)
 		{
-			var dataObj = (event.getData())['form'];
-			var loader = this.showLoader({node: BX("intranet-user-profile-photo"), loader: null, size: 100});
+			const dataObj = event.getData().form;
+			const loader = this.showLoader({ node: BX('intranet-user-profile-photo'), loader: null, size: 100 });
 
-			BX.ajax.runComponentAction(this.componentName, "loadPhoto", {
+			BX.ajax.runComponentAction(this.componentName, 'loadPhoto', {
 				signedParameters: this.signedParameters,
 				mode: 'ajax',
-				data: dataObj
+				data: dataObj,
 			})
-			.then(
-				(response) => {
+				.then((response) => {
 					if (response.data)
 					{
 						(top || window).BX.onCustomEvent('BX.Intranet.UserProfile:Avatar:changed', [{
 							userId: this.userId,
-							url: response.data
+							url: response.data,
 						}]);
 
-						BX("intranet-user-profile-photo").style = "background-image: url('" + encodeURI(response.data) + "'); background-size: cover;";
+						this.avatar.setUserPic(encodeURI(response.data));
 					}
-					this.hideLoader({loader: loader});
-				},
-				(response) => {
-					this.hideLoader({loader: loader});
-					this.showErrorPopup(response["errors"][0].message);
-				}
-			);
+
+					this.hideLoader({ loader });
+				})
+				.catch((response) => {
+					this.hideLoader({ loader });
+					this.showErrorPopup(response.errors[0].message);
+				});
 
 			BX('intranet-user-profile-photo-remove').hidden = false;
 		},
 
-		deletePhoto: function()
+		deletePhoto()
 		{
-			var loader = this.showLoader({node: BX("intranet-user-profile-photo"), loader: null, size: 100});
+			const loader = this.showLoader({ node: BX('intranet-user-profile-photo'), loader: null, size: 100 });
 
-			BX.ajax.runComponentAction(this.componentName, "deletePhoto", {
+			BX.ajax.runComponentAction(this.componentName, 'deletePhoto', {
 				signedParameters: this.signedParameters,
 				mode: 'ajax',
-				data: {}
-			}).then(function (response) {
-
-				BX("intranet-user-profile-photo").style = "";
-				this.hideLoader({loader: loader});
-
-			}.bind(this), function (response) {
-				this.hideLoader({loader: loader});
-				this.showErrorPopup(response["errors"][0].message);
-			}.bind(this));
-
-			BX('intranet-user-profile-photo-remove').hidden = true;
+				data: {},
+			})
+				.then((response) => {
+					this.avatar.removeUserPic();
+					this.hideLoader({ loader });
+					BX('intranet-user-profile-photo-remove').hidden = true;
+				})
+				.catch((response) => {
+					this.hideLoader({ loader });
+					this.showErrorPopup(response.errors[0].message);
+				});
 		},
 
 		setAdminRights: function()
@@ -868,6 +924,7 @@
 						offsetTop:7,
 						autoHide:true
 					}).show();
+					BX.SidePanel.Instance.postMessageTop(window, 'BX.Bitrix24.EmailConfirmation:showPopup');
 				}
 			}.bind(this), function (response) {
 				this.hideLoader({loader: loader});

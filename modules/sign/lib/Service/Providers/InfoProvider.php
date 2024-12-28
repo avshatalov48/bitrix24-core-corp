@@ -8,6 +8,17 @@ abstract class InfoProvider
 {
 	protected const USER_FIELD_ENTITY_ID = '';
 
+	/**
+	 * @return list<array{
+	 *     type: string,
+	 *     entity_name: string,
+	 *	   name: string,
+	 *     caption: string,
+	 *     multiple: bool,
+	 *     required: bool,
+	 *     hidden: bool
+	 * }>
+	 */
 	public function getFieldsForSelector(): array
 	{
 		$fields = $this->getUserFields();
@@ -29,6 +40,18 @@ abstract class InfoProvider
 		return $result;
 	}
 
+	/**
+	 * @return array<string, array{
+	 *     type: string,
+	 *     caption: string,
+	 *     sort: int,
+	 *     source:int,
+	 *     sourceName: string,
+	 *     entityId: string,
+	 *     userFieldId: int,
+	 *	   items: list<array{id: int, value: string, sort: int, userFieldId: int, xmlId: string}>
+	 *	 }>
+	 */
 	public function getFieldsMap(): array
 	{
 		$result = [];
@@ -74,6 +97,20 @@ abstract class InfoProvider
 		return $fields;
 	}
 
+	/**
+	 * @param string $fieldName
+	 *
+	 * @return array{
+	 *      type: string,
+	 *      caption: string,
+	 *      sort: int,
+	 *      source:int,
+	 *      sourceName: string,
+	 *      entityId: string,
+	 *      userFieldId: int,
+	 *       items: list<array{id: int, value: string, sort: int, userFieldId: int, xmlId: string}>
+	 *     }|null
+	 */
 	public function getFieldDescription(string $fieldName): ?array
 	{
 		return $this->getFieldsMap()[$fieldName] ?? null;
@@ -94,6 +131,11 @@ abstract class InfoProvider
 		return $field['USER_TYPE_ID'] ?? FieldType::STRING;
 	}
 
+	/**
+	 * @param array{ID: int} $field
+	 *
+	 * @return list<array{id: int, value: string, sort: int, userFieldId: int, xmlId: string}>
+	 */
 	private function getEnumItems(array $field): array
 	{
 		$items = [];
@@ -111,6 +153,5 @@ abstract class InfoProvider
 		}
 
 		return $items;
-
 	}
 }

@@ -6,11 +6,8 @@ jn.define('tasks/layout/fields/task/theme/air/src/entity', (require, exports, mo
 	const { Text4 } = require('ui-system/typography/text');
 	const { IconView } = require('ui-system/blocks/icon');
 	const { DeadlinePill } = require('tasks/layout/deadline-pill');
-	const { ReduxAvatar } = require('layout/ui/user/avatar');
-	const {
-		Line,
-		Circle,
-	} = require('utils/skeleton');
+	const { Avatar } = require('ui-system/blocks/avatar');
+	const { Line, Circle } = require('utils/skeleton');
 	const { TaskStatus } = require('tasks/enum');
 	const { Entry } = require('tasks/entry');
 
@@ -120,9 +117,11 @@ jn.define('tasks/layout/fields/task/theme/air/src/entity', (require, exports, mo
 								alignItems: 'center',
 							},
 						},
-						ReduxAvatar({
+						Avatar({
+							size: 24,
 							id: responsible,
 							testId: `${testId}_RESPONSIBLE`,
+							withRedux: true,
 						}),
 						DeadlinePill({
 							id,

@@ -16,6 +16,7 @@ return [
 		'main.core.events',
 		'market.market-links',
 		'ui.vue3',
+		'ui.ears',
 	],
 	'skip_core' => true,
 ];

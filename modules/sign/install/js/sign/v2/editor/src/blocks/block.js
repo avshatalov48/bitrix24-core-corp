@@ -3,7 +3,7 @@ import { Backend } from 'sign.backend';
 import { EventEmitter } from 'main.core.events';
 import { Api } from 'sign.v2.api';
 import type { FieldSelectEvent } from '../types/events/fieldSelectEvent';
-import { Date, Dummy, MyRequisites, MySign, MyStamp, Number, Reference, Requisites, Sign, Stamp, Text, MyReference, B2eReference, MyB2eReference } from './index';
+import { Date, Dummy, MyRequisites, MySign, MyStamp, Number, Reference, Requisites, Sign, Stamp, Text, MyReference, B2eReference, MyB2eReference, EmployeeDynamic, HcmLinkReference } from './index';
 import { BlocksManager } from './blocksManager';
 import Style from './style';
 import { PositionType, BlockOptions } from '../types/block';
@@ -41,6 +41,9 @@ export default class Block extends EventEmitter
 
 		b2ereference: B2eReference,
 		myb2ereference: MyB2eReference,
+		employeedynamic: EmployeeDynamic,
+
+		hcmlinkreference: HcmLinkReference,
 	};
 	#currentFontSize: String;
 
@@ -91,7 +94,9 @@ export default class Block extends EventEmitter
 
 		Event.bind(this.#layout, 'click', this.#onClick.bind(this));
 
-		if (options.party > 1)
+		if (
+			options.party > 1
+			&& !['b2ereference', 'employeedynamic', 'hcmlinkreference'].includes(this.#code.toLowerCase()))
 		{
 			this.#allowMembers = true;
 		}
@@ -394,6 +399,8 @@ export default class Block extends EventEmitter
 			|| this.#code.toLowerCase() === 'text'
 			|| this.#code.toLowerCase() === 'b2ereference'
 			|| this.#code.toLowerCase() === 'myb2ereference'
+			|| this.#code.toLowerCase() === 'employeedynamic'
+			|| this.#code.toLowerCase() === 'hcmlinkreference'
 		)
 		{
 			resizeNode.style.setProperty('display', 'block');
@@ -437,14 +444,11 @@ export default class Block extends EventEmitter
 
 					const parent = element.parentNode
 
-					while (!overflow && i < this.maxTextSize)
+					while (!overflow && i <= this.maxTextSize)
 					{
 						element.style.fontSize = `${i}${unit}`;
 						overflow = this.isOverflownX(parent);
-						if (!overflow)
-						{
-							i += step;
-						}
+						i += step;
 					}
 					this.#currentFontSize = `${i - step}${unit}`;
 					element.style.fontSize = this.#currentFontSize;
@@ -512,7 +516,7 @@ export default class Block extends EventEmitter
 		if (this.#allowMembers)
 		{
 			if (
-				this.#code.toLowerCase() === 'b2ereference'
+				['hcmlinkreference', 'b2ereference'].includes(this.#code.toLowerCase())
 			)
 			{
 				return;
@@ -713,5 +717,10 @@ export default class Block extends EventEmitter
 	#onFieldSelect(event: FieldSelectEvent): void
 	{
 		this.emit('onFieldSelect', event);
+	}
+
+	setMemberParty(party: Number): void
+	{
+		this.#memberPart = party;
 	}
 }

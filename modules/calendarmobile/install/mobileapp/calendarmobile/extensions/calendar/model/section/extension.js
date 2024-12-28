@@ -2,6 +2,13 @@
  * @module calendar/model/section
  */
 jn.define('calendar/model/section', (require, exports, module) => {
+	const { Type } = require('type');
+	const {
+		BooleanParams,
+		SectionPermissionActions,
+		SectionExternalTypes,
+	} = require('calendar/enums');
+
 	/**
 	 * @class SectionModel
 	 */
@@ -21,6 +28,10 @@ jn.define('calendar/model/section', (require, exports, module) => {
 			this.color = BX.prop.getString(props, 'COLOR', '');
 			this.externalType = BX.prop.getString(props, 'EXTERNAL_TYPE', '');
 			this.active = BX.prop.getString(props, 'ACTIVE', 'Y');
+			this.permissions = BX.prop.getObject(props, 'PERM', {});
+			this.calDavCalendar = BX.prop.getString(props, 'CAL_DAV_CAL', '');
+			this.calDavConnection = BX.prop.getString(props, 'CAL_DAV_CON', '');
+			this.connectionLinks = props?.connectionLinks ?? [];
 		}
 
 		getId()
@@ -53,14 +64,52 @@ jn.define('calendar/model/section', (require, exports, module) => {
 			return this.externalType;
 		}
 
+		getPermissions()
+		{
+			return this.permissions;
+		}
+
 		isActive()
 		{
-			return this.active === 'Y';
+			return this.active === BooleanParams.YES;
 		}
 
 		setSectionStatus(status)
 		{
-			this.active = status ? 'Y' : 'N';
+			this.active = status ? BooleanParams.YES : BooleanParams.NO;
+		}
+
+		canDo(action)
+		{
+			if (action === SectionPermissionActions.EDIT_SECTION && env.isCollaber)
+			{
+				return false;
+			}
+
+			return Boolean(this.permissions?.[action]);
+		}
+
+		isSyncSection()
+		{
+			if (this.externalType === SectionExternalTypes.LOCAL)
+			{
+				return this.hasConnection();
+			}
+
+			return Object.values(SectionExternalTypes).find((type) => type === this.externalType)
+				|| this.hasConnection()
+				|| this.isCalDav()
+			;
+		}
+
+		hasConnection()
+		{
+			return this.connectionLinks.length > 0;
+		}
+
+		isCalDav()
+		{
+			return Type.isStringFilled(this.calDavCalendar) && Type.isStringFilled(this.calDavConnection);
 		}
 	}
 

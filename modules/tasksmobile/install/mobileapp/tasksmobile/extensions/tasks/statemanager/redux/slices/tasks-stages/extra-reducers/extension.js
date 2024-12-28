@@ -139,19 +139,20 @@ jn.define('tasks/statemanager/redux/slices/tasks-stages/extra-reducers', (requir
 				viewMode: Views.KANBAN,
 				userId,
 			});
+			state.prevTaskStage = state.entities[entity];
 			entityAdapter.removeOne(state, entity);
 		}
 	};
 
 	const updateTaskFulfilled = (state, action) => {
-		const { data } = action.payload;
+		const { data, status } = action.payload;
 		const {
 			taskId,
 			reduxFields,
 			userId,
 		} = action.meta.arg;
 
-		if (Number.isInteger(reduxFields?.groupId))
+		if (Number.isInteger(reduxFields?.groupId) && status === statusTypes.success)
 		{
 			if (Number.isInteger(data?.stageId))
 			{
@@ -173,6 +174,20 @@ jn.define('tasks/statemanager/redux/slices/tasks-stages/extra-reducers', (requir
 				entityAdapter.removeOne(state, entity);
 			}
 		}
+		else
+		{
+			entityAdapter.upsertOne(state, state.prevTaskStage);
+		}
+
+		state.prevTaskStage = null;
+	};
+
+	const updateTaskRejected = (state) => {
+		state.status = statusTypes.failure;
+		if (state.prevTaskStage)
+		{
+			entityAdapter.upsertOne(state, state.prevTaskStage);
+		}
 
 		state.prevTaskStage = null;
 	};
@@ -186,5 +201,6 @@ jn.define('tasks/statemanager/redux/slices/tasks-stages/extra-reducers', (requir
 		updateTaskDeadlineFulfilled,
 		updateTaskPending,
 		updateTaskFulfilled,
+		updateTaskRejected,
 	};
 });

@@ -14,6 +14,7 @@ use Bitrix\Tasks\Flow\Control\FlowService;
 use Bitrix\Tasks\Flow\Internal\FlowTaskTable;
 use Bitrix\Tasks\Flow\Internal\Link\FlowLink;
 use Bitrix\Tasks\Flow\Notification\NotificationService;
+use Bitrix\Tasks\Flow\Provider\FlowProvider;
 use Bitrix\Tasks\Flow\Task\Status;
 use Bitrix\Tasks\InvalidCommandException;
 use Exception;
@@ -66,7 +67,12 @@ class FlowTaskEventHandler
 		FlowLink::link($this->currentFlowId, $this->taskId);
 
 		$this->sendAddNotification();
-		$this->upActivity();
+		$this->upActivity(
+			(new FlowProvider())->preparePushParamsForActivity(
+				$this->currentFlowId,
+				\Bitrix\Tasks\Flow\Task\Status::FLOW_PENDING,
+			)
+		);
 	}
 
 	/**
@@ -118,9 +124,18 @@ class FlowTaskEventHandler
 	{
 		$this->sendUpdateNotification();
 
-		if ($this->isStatusChanged())
+		if (
+			$this->isStatusChanged()
+			&& isset($this->previousFields['REAL_STATUS'])
+		)
 		{
-			$this->upActivity();
+			$this->upActivity(
+				(new FlowProvider())->preparePushParamsForActivity(
+					$this->currentFlowId,
+					\Bitrix\Tasks\Flow\Task\Status::getFlowStatus($this->changedFields['STATUS']),
+					\Bitrix\Tasks\Flow\Task\Status::getFlowStatus($this->previousFields['REAL_STATUS']),
+				)
+			);
 		}
 	}
 
@@ -130,7 +145,6 @@ class FlowTaskEventHandler
 	 */
 	private function sendUpdateNotification(): void
 	{
-		/** @var NotificationService $notificationService */
 		$notificationService = ServiceLocator::getInstance()->get('tasks.flow.notification.service');
 
 		if (isset($this->changedFields['DEADLINE']))
@@ -146,7 +160,6 @@ class FlowTaskEventHandler
 
 	private function sendOnFlowChangedNotification(): void
 	{
-		/** @var NotificationService $notificationService */
 		$notificationService = ServiceLocator::getInstance()->get('tasks.flow.notification.service');
 
 		$notificationService->onTaskToFlowAdded($this->taskId, $this->currentFlowId);
@@ -158,28 +171,29 @@ class FlowTaskEventHandler
 	 */
 	private function sendAddNotification(): void
 	{
-		/** @var NotificationService $notificationService */
 		$notificationService = ServiceLocator::getInstance()->get('tasks.flow.notification.service');
 		$notificationService->onTaskToFlowAdded($this->taskId, $this->currentFlowId);
 	}
 
 	/**
-	 * @throws NotFoundExceptionInterface
-	 * @throws FlowNotUpdatedException
-	 * @throws ObjectNotFoundException
-	 * @throws SqlQueryException
+	 * @param array $pushParams Push params.
+	 * @return void
 	 * @throws CommandNotFoundException
 	 * @throws FlowNotFoundException
+	 * @throws FlowNotUpdatedException
 	 * @throws InvalidCommandException
+	 * @throws NotFoundExceptionInterface
+	 * @throws ObjectNotFoundException
+	 * @throws SqlQueryException
 	 */
-	private function upActivity(): void
+	private function upActivity(array $pushParams = []): void
 	{
-		/** @var FlowService $flowService */
 		$flowService = ServiceLocator::getInstance()->get('tasks.flow.service');
 
 		$updateCommand = (new UpdateCommand())
 			->setId($this->currentFlowId)
-			->setActivity(new DateTime());
+			->setActivity(new DateTime())
+			->setPushParams($pushParams);
 
 		$flowService->update($updateCommand);
 	}

@@ -7,6 +7,7 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 	const { createSlice } = require('statemanager/redux/toolkit');
 	const { sliceName, usersAdapter } = require('statemanager/redux/slices/users/meta');
 	const { usersSelector } = require('statemanager/redux/slices/users/selector');
+	const { updateUserThunk } = require('statemanager/redux/slices/users/thunk');
 
 	const initialState = StateCache.getReducerState(sliceName, usersAdapter.getInitialState());
 
@@ -14,6 +15,8 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 		id,
 		login,
 		isAdmin,
+		isCollaber,
+		isExtranet,
 		name,
 		lastName,
 		secondName,
@@ -28,6 +31,8 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 		id: Number(id),
 		login,
 		isAdmin,
+		isCollaber,
+		isExtranet,
 		name,
 		lastName,
 		secondName,
@@ -51,6 +56,8 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 		link: `/company/personal/user/${user.id}/`,
 		avatarSizeOriginal: user.imageUrl,
 		avatarSize100: user.imageUrl,
+		isExtranet: user.entityType === 'extranet',
+		isCollaber: user.entityType === 'collaber',
 	});
 
 	const usersSlice = createSlice({
@@ -108,6 +115,20 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 						{
 							usersAdapter.upsertMany(state, users.map((user) => prepareUser(user)));
 						}
+					}
+				})
+				.addCase(updateUserThunk.fulfilled, (state, action) => {
+					const { data, isSuccess } = action.payload;
+					if (isSuccess && data)
+					{
+						const preparedData = Object.keys(data).reduce((acc, key) => {
+							// eslint-disable-next-line no-param-reassign
+							acc[key.toLowerCase()] = data[key];
+
+							return acc;
+						}, {});
+
+						usersAdapter.upsertOne(state, preparedData);
 					}
 				});
 		},

@@ -1,31 +1,59 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 (function (exports,ui_sidepanel_layout,ui_userfieldfactory,ui_buttons,main_core_events,main_core) {
 	'use strict';
 
+	const DefaultUri = 'sign.api_v1.b2e.fields.load';
+	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
 	var _request = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("request");
+	var _getUri = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUri");
 	class Backend extends main_core_events.EventEmitter {
 	  constructor(options) {
 	    super();
+	    Object.defineProperty(this, _getUri, {
+	      value: _getUri2
+	    });
 	    Object.defineProperty(this, _request, {
 	      value: _request2
 	    });
+	    Object.defineProperty(this, _options, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _options)[_options] = options;
 	    this.setEventNamespace('BX.Sign.B2E.FieldsSelector.Backend');
-	    this.subscribeFromOptions(options.events);
+	    this.subscribeFromOptions(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].events);
+	  }
+	  setCustomSettings(customSettings) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _options)[_options] = {
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _options)[_options],
+	      customSettings
+	    };
 	  }
 	  getData(requestOptions = {}) {
+	    var _babelHelpers$classPr, _babelHelpers$classPr2;
 	    return babelHelpers.classPrivateFieldLooseBase(this, _request)[_request]({
-	      action: 'load',
-	      data: requestOptions
+	      data: {
+	        ...requestOptions,
+	        ...((_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].customSettings) == null ? void 0 : _babelHelpers$classPr2.requestOptions) != null ? _babelHelpers$classPr : {})
+	      }
 	    });
 	  }
 	}
 	function _request2(requestOptions) {
 	  return new Promise((resolve, reject) => {
-	    main_core.ajax.runAction(`sign.api_v1.b2e.fields.${requestOptions.action}`, {
+	    main_core.ajax.runAction(babelHelpers.classPrivateFieldLooseBase(this, _getUri)[_getUri](), {
 	      json: requestOptions.data
 	    }).then(resolve).catch(reject);
 	  });
+	}
+	function _getUri2() {
+	  var _babelHelpers$classPr3;
+	  if (main_core.Type.isStringFilled((_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].customSettings) == null ? void 0 : _babelHelpers$classPr3.uri)) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].customSettings.uri;
+	  }
+	  return DefaultUri;
 	}
 
 	let _ = t => t,
@@ -259,6 +287,7 @@ this.BX.Sign = this.BX.Sign || {};
 	var _cache$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
 	var _defaultFilter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("defaultFilter");
 	var _defaultFieldsFactoryFilter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("defaultFieldsFactoryFilter");
+	var _permissionAddByCategory = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("permissionAddByCategory");
 	var _setOptions$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setOptions");
 	var _getOptions$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOptions");
 	var _getBackend = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBackend");
@@ -304,9 +333,13 @@ this.BX.Sign = this.BX.Sign || {};
 	var _selectFirstCategory = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectFirstCategory");
 	var _getSliderId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSliderId");
 	var _onSliderCloseComplete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSliderCloseComplete");
+	var _setAddButtonEnabledByCategory = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setAddButtonEnabledByCategory");
 	class FieldSelector extends main_core_events.EventEmitter {
 	  constructor(_options = {}) {
 	    super();
+	    Object.defineProperty(this, _setAddButtonEnabledByCategory, {
+	      value: _setAddButtonEnabledByCategory2
+	    });
 	    Object.defineProperty(this, _onSliderCloseComplete, {
 	      value: _onSliderCloseComplete2
 	    });
@@ -446,9 +479,20 @@ this.BX.Sign = this.BX.Sign || {};
 	      writable: true,
 	      value: new main_core.Cache.MemoryCache()
 	    });
+	    Object.defineProperty(this, _permissionAddByCategory, {
+	      writable: true,
+	      value: {}
+	    });
 	    this.setEventNamespace('BX.Sign.B2e.FieldsSelector');
 	    this.subscribeFromOptions(_options.events);
 	    babelHelpers.classPrivateFieldLooseBase(this, _setOptions$2)[_setOptions$2](_options);
+	  }
+	  setCustomBackendSettings(customBackendSettings) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _setOptions$2)[_setOptions$2]({
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getOptions$2)[_getOptions$2](),
+	      customBackendSettings
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _getBackend)[_getBackend]().setCustomSettings(babelHelpers.classPrivateFieldLooseBase(this, _getOptions$2)[_getOptions$2]().customBackendSettings);
 	  }
 	  getFieldsList(filtering = true) {
 	    const fieldsList = babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].get('fieldsList', {});
@@ -467,8 +511,9 @@ this.BX.Sign = this.BX.Sign || {};
 	    }
 	    return fieldsList;
 	  }
-	  static loadFieldList(options) {
+	  static loadFieldList(options, customBackendSettings = null) {
 	    return new Backend({
+	      customSettings: customBackendSettings,
 	      events: {
 	        onError: () => {}
 	      }
@@ -533,6 +578,7 @@ this.BX.Sign = this.BX.Sign || {};
 	function _getBackend2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].remember('backend', () => {
 	    return new Backend({
+	      customSettings: babelHelpers.classPrivateFieldLooseBase(this, _getOptions$2)[_getOptions$2]().customBackendSettings,
 	      events: {
 	        onError: babelHelpers.classPrivateFieldLooseBase(this, _onBackendError)[_onBackendError].bind(this)
 	      }
@@ -590,7 +636,7 @@ this.BX.Sign = this.BX.Sign || {};
 	      });
 	      return allowed && !disallowed;
 	    });
-	    if (main_core.Type.isArrayFilled(filteredFields)) {
+	    if (filter.allowEmptyFieldList ? main_core.Type.isArray(filteredFields) : main_core.Type.isArrayFilled(filteredFields)) {
 	      acc[categoryId] = {
 	        ...category,
 	        FIELDS: filteredFields
@@ -627,9 +673,11 @@ this.BX.Sign = this.BX.Sign || {};
 	  }).then(({
 	    data
 	  }) => {
+	    var _data$options$isLeadE, _data$options, _data$options$permiss, _data$options2, _data$options2$permis, _data$options2$permis2, _data$options$permiss2, _data$options3, _data$options3$permis, _data$options3$permis2;
 	    babelHelpers.classPrivateFieldLooseBase(this, _setFieldsList)[_setFieldsList](data.fields);
-	    babelHelpers.classPrivateFieldLooseBase(this, _setIsLeadEnabled)[_setIsLeadEnabled](data.options.isLeadEnabled);
-	    babelHelpers.classPrivateFieldLooseBase(this, _setIsAllowedCreateField)[_setIsAllowedCreateField](data.options.permissions.userField.add);
+	    babelHelpers.classPrivateFieldLooseBase(this, _setIsLeadEnabled)[_setIsLeadEnabled]((_data$options$isLeadE = (_data$options = data.options) == null ? void 0 : _data$options.isLeadEnabled) != null ? _data$options$isLeadE : false);
+	    babelHelpers.classPrivateFieldLooseBase(this, _setIsAllowedCreateField)[_setIsAllowedCreateField]((_data$options$permiss = (_data$options2 = data.options) == null ? void 0 : (_data$options2$permis = _data$options2.permissions) == null ? void 0 : (_data$options2$permis2 = _data$options2$permis.userField) == null ? void 0 : _data$options2$permis2.add) != null ? _data$options$permiss : false);
+	    babelHelpers.classPrivateFieldLooseBase(this, _permissionAddByCategory)[_permissionAddByCategory] = (_data$options$permiss2 = (_data$options3 = data.options) == null ? void 0 : (_data$options3$permis = _data$options3.permissions) == null ? void 0 : (_data$options3$permis2 = _data$options3$permis.userField) == null ? void 0 : _data$options3$permis2.addByCategory) != null ? _data$options$permiss2 : {};
 	  });
 	}
 	function _setIsLeadEnabled2(value) {
@@ -728,6 +776,7 @@ this.BX.Sign = this.BX.Sign || {};
 	      });
 	    });
 	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _setAddButtonEnabledByCategory)[_setAddButtonEnabledByCategory](categoryId);
 	}
 	function _getDisabledFields2() {
 	  var _babelHelpers$classPr2;
@@ -948,7 +997,11 @@ this.BX.Sign = this.BX.Sign || {};
 	          items: babelHelpers.classPrivateFieldLooseBase(this, _getSidebarItems)[_getSidebarItems]()
 	        },
 	        toolbar: () => {
-	          return [babelHelpers.classPrivateFieldLooseBase(this, _getSearch)[_getSearch]().getLayout(), babelHelpers.classPrivateFieldLooseBase(this, _getCreateFieldButton)[_getCreateFieldButton]()];
+	          const toolbarItems = [babelHelpers.classPrivateFieldLooseBase(this, _getSearch)[_getSearch]().getLayout()];
+	          if (babelHelpers.classPrivateFieldLooseBase(this, _getOptions$2)[_getOptions$2]().alwaysHideCreateFieldButton !== true) {
+	            toolbarItems.push(babelHelpers.classPrivateFieldLooseBase(this, _getCreateFieldButton)[_getCreateFieldButton]());
+	          }
+	          return toolbarItems;
 	        },
 	        buttons: ({
 	          SaveButton,
@@ -1009,6 +1062,13 @@ this.BX.Sign = this.BX.Sign || {};
 	  this.emit('onSliderCloseComplete');
 	  babelHelpers.classPrivateFieldLooseBase(this, _setSelectedFields)[_setSelectedFields]([]);
 	}
+	function _setAddButtonEnabledByCategory2(categoryId) {
+	  if (Object.hasOwn(babelHelpers.classPrivateFieldLooseBase(this, _permissionAddByCategory)[_permissionAddByCategory], categoryId)) {
+	    const isAllowed = babelHelpers.classPrivateFieldLooseBase(this, _permissionAddByCategory)[_permissionAddByCategory][categoryId];
+	    babelHelpers.classPrivateFieldLooseBase(this, _setIsAllowedCreateField)[_setIsAllowedCreateField](isAllowed);
+	    babelHelpers.classPrivateFieldLooseBase(this, _getCreateFieldButton)[_getCreateFieldButton]().setDisabled(!isAllowed);
+	  }
+	}
 	Object.defineProperty(FieldSelector, _defaultFilter, {
 	  writable: true,
 	  value: {
@@ -1023,7 +1083,7 @@ this.BX.Sign = this.BX.Sign || {};
 	Object.defineProperty(FieldSelector, _defaultFieldsFactoryFilter, {
 	  writable: true,
 	  value: {
-	    '-types': ['employee', 'money', 'double', 'boolean', 'file', 'datetime', 'date']
+	    '-types': ['employee', 'money', 'double', 'boolean', 'file', 'datetime']
 	  }
 	});
 

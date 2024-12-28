@@ -51,6 +51,12 @@ BX.namespace('Tasks.Component');
 		this.taskTimeElapsedEnabled = parameters.taskTimeElapsedEnabled;
 		this.taskTimeElapsedFeatureId = parameters.taskTimeElapsedFeatureId;
 
+		this.flowParams = parameters.flowParams;
+		this.toggleFlowParams = parameters.toggleFlowParams;
+
+		this.isExtranetUser = parameters.isExtranetUser;
+		this.canEditTask = parameters.canEditTask;
+
 		BX.addCustomEvent(window, 'tasksTaskEvent', this.onTaskEvent.bind(this));
 		BX.addCustomEvent('SidePanel.Slider:onClose', this.onSliderClose.bind(this, false));
 		BX.addCustomEvent('SidePanel.Slider:onCloseByEsc', this.onSliderClose.bind(this, true));
@@ -88,6 +94,7 @@ BX.namespace('Tasks.Component');
 			this.toggleFooterWrap(true);
 		}.bind(this));
 
+		this.initFlowSelector();
 		this.initFavorite();
 		this.initCreateButton();
 		this.initSwitcher();
@@ -115,6 +122,26 @@ BX.namespace('Tasks.Component');
 				window.mplCheckForQuote(e, e.currentTarget, xmlId, authorNodeId, { copilotParams });
 			});
 		}
+	};
+
+	BX.Tasks.Component.TaskView.prototype.initFlowSelector = function()
+	{
+		const flowSelectorNode = document.getElementById('tasks-flow-selector-container');
+		if (!flowSelectorNode)
+		{
+			return;
+		}
+
+		const selectorParams = {
+			taskId: this.taskId,
+			canEditTask: this.canEditTask,
+			isExtranet: this.isExtranetUser,
+			toggleFlowParams: this.toggleFlowParams,
+			flowParams: this.flowParams,
+		};
+
+		this.flowSelector = new BX.Tasks.Flow.EntitySelector(selectorParams);
+		this.flowSelector.show(flowSelectorNode);
 	};
 
 	BX.Tasks.Component.TaskView.prototype.extendWatch = function()

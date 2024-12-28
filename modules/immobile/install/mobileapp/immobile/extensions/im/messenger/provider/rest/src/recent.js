@@ -5,12 +5,17 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { RestMethod } = require('im/messenger/const');
+	const { callMethod } = require('im/messenger/lib/rest');
 
 	/**
 	 * @class RecentRest
 	 */
 	class RecentRest
 	{
+		/**
+		 * @param options
+		 * @returns {Promise<RestResult>}
+		 */
 		getList(options = {})
 		{
 			const methodParams = {};
@@ -30,7 +35,7 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 				methodParams.DATE_LAST_ACTIVITY = options.lastActivityDate;
 			}
 
-			return BX.rest.callMethod(RestMethod.imRecentList, methodParams);
+			return callMethod(RestMethod.imRecentList, methodParams);
 		}
 
 		getChannelList(options = {})
@@ -53,6 +58,28 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 			}
 
 			return BX.rest.callMethod(RestMethod.imV2RecentChannelTail, methodParams);
+		}
+
+		getCollabList(options = {})
+		{
+			const methodParams = {};
+
+			if (Type.isNumber(options.limit))
+			{
+				methodParams.limit = options.limit;
+			}
+
+			if (Type.isPlainObject(options.filter))
+			{
+				methodParams.filter = {};
+
+				if (Type.isNumber(options.filter.lastMessageDate) || Type.isStringFilled(options.filter.lastMessageDate))
+				{
+					methodParams.filter.lastMessageDate = options.filter.lastMessageDate;
+				}
+			}
+
+			return BX.rest.callMethod(RestMethod.imV2RecentCollabTail, methodParams);
 		}
 
 		pinChat(options = {})

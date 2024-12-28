@@ -10,6 +10,7 @@ use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Recyclebin\Task;
 use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 use Bitrix\Tasks\UI\ScopeDictionary;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 $isIFrame = isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y';
 
@@ -25,8 +26,24 @@ Extension::load([
 	'task-popups',
 	'CJSTask',
 	'ui.counter',
+	'ui.avatar',
 ]);
 
+$isCollab = isset($arResult['CONTEXT']) && $arResult['CONTEXT'] === Context::getCollab();
+$collabClass = $isCollab ? 'sn-collab-tasks__wrapper' : '';
+
+if ($isCollab)
+{
+	Toolbar::deleteFavoriteStar();
+	$this->SetViewTarget('in_pagetitle') ?>
+
+	<div class="sn-collab-icon__wrapper">
+		<div id="sn-collab-icon-<?=HtmlFilter::encode($arResult["OWNER_ID"])?>" class="sn-collab-icon__hexagon-bg"></div>
+	</div>
+	<div class="sn-collab__subtitle"><?=HtmlFilter::encode($arResult["COLLAB_NAME"])?></div>
+	<?php
+	$this->EndViewTarget();
+}
 /** intranet-settings-support */
 if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
 {
@@ -46,8 +63,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 $APPLICATION->SetAdditionalCSS("/bitrix/js/tasks/css/tasks.css");
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
-$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass . " " : "") . "page-one-column");
-
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass . " " : "") . "page-one-column"  . " " . $collabClass);
 $APPLICATION->IncludeComponent(
 	'bitrix:main.calendar',
 	'',
@@ -376,6 +392,18 @@ BX.ready(function(){
 			{
 			});
 	});
+	<?php if ($isCollab): ?>
+		const collabImagePath = "<?=$arResult["COLLAB_IMAGE"]?>" || null;
+		const collabName = "<?=HtmlFilter::encode($arResult["COLLAB_NAME"])?>";
+		const ownerId = "<?=HtmlFilter::encode($arResult["OWNER_ID"])?>";
+		const avatar = new BX.UI.AvatarHexagonGuest({
+			size: 42,
+			userName: collabName.toUpperCase(),
+			baseColor: '#19CC45',
+			userpicPath: collabImagePath,
+		});
+		avatar.renderTo(BX('sn-collab-icon-' + ownerId));
+	<?php endif; ?>
 });
 //endregion
 
@@ -466,6 +494,8 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 			'DEFAULT_ROLEID' => $arParams['DEFAULT_ROLEID'] ?? null,
 			'USE_AJAX_ROLE_FILTER' => 'Y',
 			'SCOPE' => ScopeDictionary::SCOPE_TASKS_CALENDAR,
+			'CONTEXT' => $arResult['CONTEXT'] ?? null,
+			'CONTEXT' => $arResult['CONTEXT'] ?? null,
 		),
 		$component,
 		array('HIDE_ICONS' => true)

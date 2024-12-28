@@ -1,6 +1,7 @@
 import { RolesDialogGroupData } from '../roles-dialog';
 import { BIcon } from 'ui.icon-set.api.vue';
 import { Actions } from 'ui.icon-set.api.core';
+import { EventEmitter } from 'main.core.events';
 
 import '../css/roles-dialog-group-item.css';
 
@@ -41,6 +42,23 @@ export const RolesDialogGroupItem = {
 		chevronRightIconName(): string
 		{
 			return Actions.CHEVRON_RIGHT;
+		},
+	},
+	created() {
+		if (this.groupData.groupData.id === 'recents')
+		{
+			EventEmitter.subscribe('update-complete', this.onUpdate);
+		}
+	},
+	beforeDestroy() {
+		if (this.groupData.groupData.id === 'recents')
+		{
+		EventEmitter.unsubscribe('update-complete', this.onUpdate);
+		}
+	},
+	methods: {
+		onUpdate() {
+			this.groupData.handleClick();
 		},
 	},
 	template: `

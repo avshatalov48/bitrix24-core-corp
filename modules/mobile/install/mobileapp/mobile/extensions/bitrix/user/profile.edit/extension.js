@@ -8,6 +8,8 @@ jn.define('user/profile.edit', (require, exports, module) => {
 	const { FileConverter } = require('files/converter');
 	const { openDeleteDialog } = require('user/account-delete');
 	const { AvaMenu } = require('ava-menu');
+	const store = require('statemanager/redux/store');
+	const { updateUserThunk } = require('statemanager/redux/slices/users/thunk');
 
 	class ProfileEdit extends Profile
 	{
@@ -252,7 +254,8 @@ jn.define('user/profile.edit', (require, exports, module) => {
 
 							data.ID = this.userId;
 							dialogs.showLoadingIndicator();
-							BX.rest.callMethod('mobile.user.update', data)
+							store.dispatch(updateUserThunk({ data }))
+								.unwrap()
 								.then(this.#syncWithAvaMenu)
 								.then(() => {
 									this.isBeingUpdated = false;
@@ -265,9 +268,9 @@ jn.define('user/profile.edit', (require, exports, module) => {
 								.catch((response) => {
 									this.isBeingUpdated = false;
 									dialogs.hideLoadingIndicator();
-									if (response.answer && response.answer.error && response.answer.error_description)
+									if (response.error && response.error_description)
 									{
-										this.error(response.answer.error_description.replace('<br>', ''));
+										this.error(response.error_description.replace('<br>', ''));
 
 										return;
 									}

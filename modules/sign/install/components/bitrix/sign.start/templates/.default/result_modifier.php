@@ -17,12 +17,12 @@ if ($component->isFrame())
 
 $component->registerSidePanels(
 	[$arParams['PAGE_URL_DOCUMENT']],
-	['customLeftBoundary' => 0]
+	['width' => 1250]
 );
 
 $component->registerSidePanels(
 	[$arParams['PAGE_URL_B2E_DOCUMENT']],
-	['customLeftBoundary' => 0]
+	['width' => 1250]
 );
 
 $component->registerSidePanels(

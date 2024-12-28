@@ -1,3 +1,15 @@
 .ui-side-panel-wrap-workarea {
 	background-color: unset;
+	padding: 15px 15px 20px;
+}
+
+.hr-permission-config-access-denied-slider {
+	overflow-y: auto;
+}
+.ui-access-rights-column {
+	min-width: 270px;
+}
+
+.ui-page-slider-wrapper-hr.--premissions {
+	overflow: visible;
 }

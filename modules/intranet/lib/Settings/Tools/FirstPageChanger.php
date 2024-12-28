@@ -19,7 +19,7 @@ class FirstPageChanger
 	public function changeForAllUsers(string $siteId = SITE_ID): void
 	{
 		$presetId = Option::get('intranet', 'left_menu_preset', '', $siteId);
-		$preset = Manager::getPreset($presetId);
+		$preset = Manager::getPreset($presetId, $siteId);
 		$structure = [];
 
 		if ($preset instanceof PresetAbstract)
@@ -27,7 +27,7 @@ class FirstPageChanger
 			$structure = $preset->getToolsStructure() ?? $preset->getStructure();
 		}
 
-		$firstPage = $this->getAvailableFirstPage($structure);
+		$firstPage = $this->getAvailableFirstPage($structure, $siteId);
 
 		if ($firstPage)
 		{
@@ -81,16 +81,16 @@ class FirstPageChanger
 		return !$isFirstPageChanged && ($userSortedItems || ($userPreset && $userPreset !== $sitePreset));
 	}
 
-	private function getAvailableFirstPage($structure): ?string
+	private function getAvailableFirstPage(array $structure, string $siteId = SITE_ID): ?string
 	{
-		$menuId = $this->getAvailableMenuIdFromStructure($structure['shown']);
-		$availableUrl = $this->getUrlByMenuId($menuId);
+		$menuId = is_array($structure['shown']) ? $this->getAvailableMenuIdFromStructure($structure['shown']) : null;
+		$availableUrl = $menuId ? $this->getUrlByMenuId($menuId) : null;
 
 		if (!$availableUrl)
 		{
 			$menuUser = new \Bitrix\Intranet\UI\LeftMenu\User();
 
-			foreach (Manager::getPreset()->getItems() as $item)
+			foreach (Manager::getPreset(siteId: $siteId)->getItems() as $item)
 			{
 				$customItem = $item->prepareData($menuUser);
 

@@ -91,9 +91,7 @@ else
 		}
 		else
 		{
-			$strTopic .= (
-				array_key_exists("TITLE_24", $arEvent["EVENT_FORMATTED"])
-				&& $arEvent["EVENT_FORMATTED"]["TITLE_24"] <> ''
+			$strTopic .= (!empty($arEvent["EVENT_FORMATTED"]["TITLE_24"])
 					? '<div class="post-item-top-text'.(!empty($arEvent["EVENT_FORMATTED"]["STYLE"]) ? ' post-item-'.$arEvent["EVENT_FORMATTED"]["STYLE"] : '').'">'.$arEvent["EVENT_FORMATTED"]["TITLE_24"].'</div>'
 					: '<div class="post-item-top-text'.(!empty($arEvent["EVENT_FORMATTED"]["STYLE"]) ? ' post-item-'.$arEvent["EVENT_FORMATTED"]["STYLE"] : '').'">'.$arEvent["EVENT_FORMATTED"]["TITLE"].'</div>'
 			);

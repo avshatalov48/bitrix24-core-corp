@@ -51,7 +51,11 @@ class Add extends Operation
 
 	protected function save(): Result
 	{
-		return $this->item->save($this->isCheckFieldsEnabled() && $this->isCheckRequiredUserFields());
+		return $this->item->save(
+			$this->isCheckFieldsEnabled()
+			&& $this->isCheckRequiredUserFields()
+			&& $this->isCheckRequiredByAttributeUserFields()
+		);
 	}
 
 	protected function registerDuplicateCriteria(): void

@@ -6,6 +6,7 @@ namespace Bitrix\Disk;
 use Bitrix\Disk\Controller\DocumentService;
 use Bitrix\Disk\Document\DocumentHandler;
 use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
+use Bitrix\Disk\Integration\Collab\CollabService;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\SharingTable;
@@ -404,7 +405,7 @@ final class Sharing extends Internals\Model
 	public static function connectGroupToSelfUserStorage($userId, Storage $storage, ErrorCollection $errorCollection)
 	{
 		return self::connectToUserStorage($userId, array(
-			'SELF_CONNECT' => true,
+			'AUTO_CONNECT' => true,
 			'CREATED_BY' => $userId,
 			'LINK_NAME' => Ui\Text::correctFolderName($storage->getProxyType()->getEntityTitle()),
 			'REAL_OBJECT' => $storage->getRootObject(),
@@ -421,7 +422,7 @@ final class Sharing extends Internals\Model
 	public static function connectObjectToSelfUserStorage($userId, BaseObject $object, ErrorCollection $errorCollection)
 	{
 		return self::connectToUserStorage($userId, array(
-			'SELF_CONNECT' => true,
+			'AUTO_CONNECT' => true,
 			'CREATED_BY' => $userId,
 			'REAL_OBJECT' => $object,
 		), $errorCollection);
@@ -437,11 +438,19 @@ final class Sharing extends Internals\Model
 	 */
 	public static function connectStorageToUserStorage($createdBy, $userId, Storage $storage, ErrorCollection $errorCollection)
 	{
-		return self::connectToUserStorage($userId, array(
+		$autoConnect = null;
+		$collabService = new CollabService();
+		if ($collabService->isCollabStorage($storage))
+		{
+			$autoConnect = true;
+		}
+
+		return self::connectToUserStorage($userId, array_filter([
+			'AUTO_CONNECT' => $autoConnect,
 			'CREATED_BY' => $createdBy,
 			'LINK_NAME' => Ui\Text::correctFolderName($storage->getProxyType()->getEntityTitle()),
 			'REAL_OBJECT' => $storage->getRootObject(),
-		), $errorCollection);
+		]), $errorCollection);
 	}
 
 	/**
@@ -475,9 +484,9 @@ final class Sharing extends Internals\Model
 			return null;
 		}
 
-		$selfConnect = !empty($data['SELF_CONNECT']);
+		$autoConnect = !empty($data['AUTO_CONNECT']);
 		$linkName = !empty($data['LINK_NAME'])? $data['LINK_NAME'] : null;
-		unset($data['SELF_CONNECT'], $data['LINK_NAME']);
+		unset($data['SELF_CONNECT'], $data['AUTO_CONNECT'], $data['LINK_NAME']);
 
 		$data['TYPE'] = SharingTable::TYPE_TO_USER;
 		$data['FROM_ENTITY'] = self::CODE_USER . (int)$userId;
@@ -521,7 +530,7 @@ final class Sharing extends Internals\Model
 		}
 		$sharingModel->setAttributes(array('REAL_OBJECT' => $objectToSharing));
 
-		if(!$selfConnect)
+		if(!$autoConnect)
 		{
 			self::processConnectAndNotify(array($sharingModel), $objectToSharing);
 		}

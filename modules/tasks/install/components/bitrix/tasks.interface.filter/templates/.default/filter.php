@@ -4,6 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\UI\Filter\Theme;
+
 $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
 $filterId = $arParams["FILTER_ID"] ?? null;
 ?>
@@ -18,7 +20,7 @@ $filterId = $arParams["FILTER_ID"] ?? null;
 		"ENABLE_LABEL" => true,
 		'ENABLE_LIVE_SEARCH' => isset($arParams['USE_LIVE_SEARCH']) && $arParams['USE_LIVE_SEARCH'] === 'Y',
 		'RESET_TO_DEFAULT_MODE' => true,
-		'THEME' => Bitrix\Main\UI\Filter\Theme::MUTED,
+		'THEME' => Theme::MUTED,
 	];
 
 	if (isset($arResult['LIMIT_EXCEEDED']))

@@ -174,6 +174,44 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 		$this->arResult['ACTIVITY_EDITOR_ID'] = $this->arParams['~ACTIVITY_EDITOR_ID'] ?? '';
 		$this->arResult['SERVICE_URL'] = $this->arParams['~SERVICE_URL'] ?? '';
 
+		if (array_key_exists('BIZPROC_STARTER_DATA', $this->arParams))
+		{
+			$this->arResult['BIZPROC_STARTER_DATA'] = $this->arParams['BIZPROC_STARTER_DATA'] ?? [];
+
+			$availabilityLock  = $this->arResult['BIZPROC_STARTER_DATA']['availabilityLock'] ?? null;
+			if (!empty($this->arResult['BIZPROC_STARTER_DATA']) && !$availabilityLock)
+			{
+				$starterData = [
+					'moduleId' => $this->arResult['BIZPROC_STARTER_DATA']['moduleId'] ?? null,
+					'entity' => $this->arResult['BIZPROC_STARTER_DATA']['entity'] ?? null,
+					'documentType' => $this->arResult['BIZPROC_STARTER_DATA']['documentType'] ?? null,
+					'documentId' => $this->arResult['BIZPROC_STARTER_DATA']['documentId'] ?? null,
+				];
+
+				if (
+					\Bitrix\Main\Loader::includeModule('bizproc')
+					&& class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class)
+				)
+				{
+					$starterData['signedDocumentType'] = CBPDocument::signDocumentType(
+						[$starterData['moduleId'], $starterData['entity'], $starterData['documentType']]
+					);
+					$starterData['signedDocumentId'] = CBPDocument::signDocumentType(
+						[$starterData['moduleId'], $starterData['entity'], $starterData['documentId']]
+					);
+
+					unset(
+						$starterData['moduleId'],
+						$starterData['entity'],
+						$starterData['documentType'],
+						$starterData['documentId']
+					);
+
+					$this->arResult['BIZPROC_STARTER_DATA'] = $starterData;
+				}
+			}
+		}
+
 		$this->arResult['PATH_TO_QUOTE_EDIT'] = CrmCheckPath(
 			'PATH_TO_QUOTE_EDIT',
 			$this->arParams['PATH_TO_QUOTE_EDIT'] ?? '',

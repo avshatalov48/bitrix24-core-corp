@@ -19,6 +19,7 @@ use Bitrix\Disk\Integration\Socialnetwork\Context\Context;
 use Bitrix\Disk\Internals\BaseComponent;
 use Bitrix\Disk\Internals\Grid\FolderListOptions;
 use Bitrix\UI\Buttons\JsCode;
+use Bitrix\UI\Toolbar\ButtonLocation;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
@@ -37,7 +38,6 @@ $documentRoot = Application::getDocumentRoot();
 $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
 $isInIframe = Main\Context::getCurrent()->getRequest()->get('IFRAME') === 'Y';
 
-
 CJSCore::Init(array(
 	'ui.design-tokens',
 	'ui.icon-set.actions',
@@ -54,7 +54,9 @@ CJSCore::Init(array(
 	'ui.buttons.icons',
 	'ui.tilegrid',
 	'ui.icons',
+	'ui.avatar',
 	'ui.actionpanel',
+	'ui.avatar',
 	'sidepanel',
 	'tooltip',
 	'update_stepper',
@@ -77,6 +79,11 @@ if ($arResult['GRID']['MODE'] === FolderListOptions::VIEW_MODE_TILE)
 {
 	$bodyClasses .= ' no-background';
 }
+$isCollab = !empty($arResult['STORAGE']['IS_COLLAB']);
+if ($isCollab)
+{
+	$bodyClasses .= ' disk-collab-scope';
+}
 
 $bodyClass = $APPLICATION->getPageProperty('BodyClass', false);
 $APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, $bodyClasses)));
@@ -90,6 +97,21 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 
 include('process.php');
 
+
+if ($isCollab)
+{
+	$collabName = htmlspecialcharsbx($arResult['STORAGE']['NAME']);
+	Toolbar::deleteFavoriteStar();
+	Toolbar::addUnderTitleHtml(<<<HTML
+	<div class="disk-collab-icon__wrapper">
+		<div id="disk-collab-icon-{$arResult['STORAGE']['ID']}" class="disk-collab-icon__hexagon-bg"></div>
+	</div>
+	<div class="disk-collab__subtitle" title="{$collabName}">{$collabName}</div>
+HTML
+);
+
+}
+
 if ($arResult['CONTEXT'] !== Context::SPACES)
 {
 	Toolbar::addFilter([
@@ -100,6 +122,7 @@ if ($arResult['CONTEXT'] !== Context::SPACES)
 		'ENABLE_LIVE_SEARCH' => $arResult['FILTER']['ENABLE_LIVE_SEARCH'],
 		'ENABLE_LABEL' => $arResult['FILTER']['ENABLE_LABEL'],
 		'RESET_TO_DEFAULT_MODE' => $arResult['FILTER']['RESET_TO_DEFAULT_MODE'],
+		'THEME' => Bitrix\Main\UI\Filter\Theme::MUTED,
 	]);
 	Toolbar::setTitleMinWidth(158);
 }
@@ -255,14 +278,14 @@ if (
 	{
 		$filterJsAction = $arResult['STORAGE']['BLOCK_ADD_BUTTONS'] ? Bitrix24Manager::filterJsAction('disk_common_storage', '') : '';
 		$addBtn = new Button([
-			"color" => Color::PRIMARY,
+			"color" => $isCollab ? Color::SUCCESS : Color::PRIMARY,
 			"className" => $filterJsAction? '' : 'js-disk-add-button',
 			"click" => new JsCode($filterJsAction),
 			"text" => Loc::getMessage('DISK_FOLDER_LIST_TITLE_ADD_COMPLEX'),
 		]);
 		$addBtn->setDropdown();
 
-		Toolbar::addButton($addBtn);
+		Toolbar::addButton($addBtn, $isCollab ? ButtonLocation::AFTER_TITLE : ButtonLocation::RIGHT);
 	}
 	else
 	{
@@ -712,6 +735,17 @@ BX(function () {
 	BX.bind(BX("bx-disk-destroy-btn"), "click", function()	{
 		BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].openConfirmEmptyTrash();
 	});
+});
+BX.ready(() => {
+	const collabImagePath = '<?=$arResult['STORAGE']['AVATAR']?>' || null;
+	const collabName = '<?=CUtil::JSEscape($arResult['STORAGE']['NAME'])?>';
+	const ownerId = '<?=$arResult['STORAGE']['ID']?>';
+	const avatar = new BX.UI.AvatarHexagonGuest({
+		size: 41,
+		userName: collabName.toUpperCase(),
+		userpicPath: collabImagePath,
+	});
+	avatar.renderTo(BX('disk-collab-icon-' + ownerId));
 });
 </script>
 

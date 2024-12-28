@@ -40,7 +40,7 @@ jn.define('background/notifications/base', (require, exports, module) => {
 		{
 			if (this.isSubscribed)
 			{
-				this.sendAnalytics();
+				this.sendAnalytics(message);
 				BX.postComponentEvent(this.getNotificationEventName(), [message]);
 			}
 			else

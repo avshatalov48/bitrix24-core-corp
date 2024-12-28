@@ -13,6 +13,11 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-promo-content',
 
 	class FlowPromoContent extends FlowContent
 	{
+		get shouldShowAiAdviceFooter()
+		{
+			return false;
+		}
+
 		get testId()
 		{
 			return `flow-promo-content-${this.props.id}`;
@@ -195,6 +200,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-promo-content',
 							qrauth.open({
 								redirectUrl: this.enableFlowUrl,
 								showHint: true,
+								analyticsSection: 'tasks',
 							});
 						},
 					}),

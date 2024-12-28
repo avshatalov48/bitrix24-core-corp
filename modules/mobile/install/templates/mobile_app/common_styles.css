@@ -3197,6 +3197,10 @@ table.forum-spoiler th {
     color: var(--accent-main-warning);
 }
 
+.post-comment-author.feed-com-name-collaber {
+	color: var(--collab-accent-primary-alt);
+}
+
 .post-comment-detail {
     padding-top: 4px;
     overflow: hidden;
@@ -7277,7 +7281,7 @@ textarea.crm_input_text {
     /*padding: 2px;*/
     /*margin: 5px 0;*/
     /*box-shadow: inset 0 0 3px 0 rgba(var(--base2-rgb), 0.3);*/
-	
+
 	/*position: absolute;*/
 	top: -3px;
 	right: 10px;

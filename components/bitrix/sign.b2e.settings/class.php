@@ -54,7 +54,7 @@ class SignB2eSettingsComponent extends \CBitrixComponent
 	public function prepareComponentParams(): void
 	{
 		$this->arResult['IS_SHOW_TITLE'] = true;
-		$this->arResult['TITLE'] = Loc::getMessage('SIGN_B2E_SETTINGS_PAGE_TITLE');
+		$this->arResult['TITLE'] = Loc::getMessage('SIGN_B2E_SETTINGS_PAGE_TITLE_MSG_VER_1');
 	}
 
 	public function prepareGridParams(): void

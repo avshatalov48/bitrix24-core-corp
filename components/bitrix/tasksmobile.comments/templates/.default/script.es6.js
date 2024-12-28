@@ -126,7 +126,14 @@ export default class Comments
 			}
 		});
 
-		EventEmitter.subscribe('onUCFormSubmit', () => this.resolveVisibility(Comments.block.comments));
+		EventEmitter.subscribe('onUCFormSubmit', (event) => {
+			const [data] = event.getData();
+			if (data === `TASK_${this.taskId}`)
+			{
+				this.sendOnCommentWrittenEvent();
+			}
+			this.resolveVisibility(Comments.block.comments);
+		});
 
 		EventEmitter.subscribe('OnUCCommentWasPulled', (event) => {
 			const [id, data] = event.getData();
@@ -222,6 +229,14 @@ export default class Comments
 				this.readComments();
 			}
 		}
+	}
+
+	sendOnCommentWrittenEvent(): void
+	{
+		const params = {
+			taskId: this.taskId,
+		};
+		BXMobileApp.Events.postToComponent('tasks.task.comments:onCommentWritten', params);
 	}
 
 	sendOnCommentsReadEvent(newCommentsCount: number = 0): void

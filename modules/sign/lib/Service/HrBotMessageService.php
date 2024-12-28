@@ -3,12 +3,14 @@
 namespace Bitrix\Sign\Service;
 
 use Bitrix\Main\Error;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\Result;
-use Bitrix\Main\UserTable;
 use Bitrix\Sign\Config;
+use Bitrix\Sign\Contract\Chat\Message;
 use Bitrix\Sign\Item\Document;
 use Bitrix\Sign\Item\Member;
 use Bitrix\Sign\Repository\MemberRepository;
+use Bitrix\Sign\Service\Integration\Imbot\HrBot;
 use Bitrix\Sign\Service\Sign\UrlGeneratorService;
 use Bitrix\Sign\Type;
 use Bitrix\Sign\Service\Integration\Im\ImService;
@@ -24,6 +26,7 @@ class HrBotMessageService
 	private MemberRepository $memberRepository;
 	private Config\Storage $config;
 	private UrlGeneratorService $urlGenerator;
+	private UserService $userService;
 
 	public function __construct(
 		?ImService $imService = null,
@@ -31,66 +34,59 @@ class HrBotMessageService
 		?MemberRepository $memberRepository = null,
 		?Config\Storage $config = null,
 		?UrlGeneratorService $urlGenerator = null,
+		?UserService $userService = null,
 	)
 	{
 		$this->imService = $imService ?? Container::instance()->getImService();
 		$this->memberService = $memberService ?? Container::instance()->getMemberService();
 		$this->memberRepository = $memberRepository ?? Container::instance()->getMemberRepository();
 		$this->urlGenerator = $urlGenerator ?? Container::instance()->getUrlGeneratorService();
+		$this->userService = $userService ?? Container::instance()->getUserService();
 		$this->config = $config ?? Config\Storage::instance();
 	}
 
-	public function isAvailable(): bool
-	{
-		return $this->imService->isAvailable();
-	}
-
+	/**
+	 * @throws ObjectNotFoundException
+	 */
 	public function sendInviteMessage(Document $document, Member $member, string $providerCode): Result
 	{
-		$userIdFrom = $this->getBotUserId() ?? $document->createdById;
-		$userIdTo = $this->memberService->getUserIdForMember($member);
-		$signingLink = $this->urlGenerator->makeSigningUrl($member);
+		$message = $this->isByEmployee($document)
+			? $this->createByEmployeeInviteMessage($document, $member)
+			: $this->createByCompanyInviteMessage($document, $member, $providerCode)
+		;
 
-		if (!$userIdTo || !$userIdFrom)
+		if ($message !== null)
 		{
-			return (new Result())->addError(new Error('no such user'));
+			$message->setLang($this->userService->getUserLanguage($message->getUserTo()));
+			return $this->imService->sendMessage($message);
 		}
 
-		$initiatorUserId = $document->createdById;
-		$initiatorName = $this->memberService->getUserRepresentedName($initiatorUserId);
-
-		$message = match ($member->role)
-		{
-			Role::ASSIGNEE => $userIdTo !== $document->createdById
-				? new Im\Messages\InviteToSign\CompanyWithInitiator($userIdFrom, $userIdTo, $initiatorUserId, $initiatorName, $document, $signingLink)
-				: new Im\Messages\InviteToSign\Company($userIdFrom, $userIdTo, $document, $signingLink)
-			,
-			Role::REVIEWER => $userIdTo !== $document->createdById
-					? new Im\Messages\InviteToSign\ReviewerWithInitiator($userIdFrom, $userIdTo, $initiatorUserId, $initiatorName, $document, $signingLink)
-					: new Im\Messages\InviteToSign\Reviewer($userIdFrom, $userIdTo, $document, $signingLink)
-			,
-			Role::EDITOR => $userIdTo !== $document->createdById
-				? new Im\Messages\InviteToSign\EditorWithInitiator($userIdFrom, $userIdTo, $initiatorUserId, $initiatorName, $document, $signingLink)
-				: new Im\Messages\InviteToSign\Editor($userIdFrom, $userIdTo, $document, $signingLink)
-			,
-			Role::SIGNER => match ($providerCode)
-			{
-				ProviderCode::GOS_KEY => new Im\Messages\InviteToSign\Goskey($userIdFrom, $userIdTo, $initiatorUserId, $initiatorName, $document, $signingLink),
-				default => new Im\Messages\InviteToSign\EmployeeSes($userIdFrom, $userIdTo, $initiatorUserId, $initiatorName, $document, $signingLink),
-			},
-		};
-
-		$message->setLang(self::getUserLanguage($userIdTo));
-
-		return $this->imService->sendMessage($message);
+		return new Result();
 	}
 
 	public function handleDocumentStatusChangedMessage(Document $document, string $newStatus, ?Member $stopInitiatorMember = null): Result
 	{
+		if ($this->isByEmployee($document))
+		{
+			switch ($newStatus)
+			{
+				case Type\DocumentStatus::STOPPED:
+					return $this->handleByEmployeeDocumentStoppedStatus($document, $stopInitiatorMember);
+				case Type\DocumentStatus::DONE:
+					$result = $this->byEmployeeSendDoneMessageToEmployee($document);
+					$result->addErrors(
+						$this->byEmployeeSendDoneMessageToCompany($document)->getErrors()
+					);
+					return $result;
+			}
+
+			return new Result();
+		}
+
 		switch ($newStatus)
 		{
 			case Type\DocumentStatus::STOPPED:
-				return $this->handleDocumentStoppedStatus($document, $stopInitiatorMember);
+				return $this->handleByCompanyDocumentStoppedStatus($document, $stopInitiatorMember);
 
 			case Type\DocumentStatus::DONE:
 				$signedDone = $this->memberService->countSuccessfulSigners($document->id);
@@ -108,6 +104,19 @@ class HrBotMessageService
 
 	public function handleMemberStatusChangedMessage(Document $document, Member $member): Result
 	{
+		if ($this->isByEmployee($document))
+		{
+			switch (true)
+			{
+				case $member->role === Role::SIGNER && $member->status === Type\MemberStatus::DONE:
+					$userIdFrom = $this->getBotUserId() ?? $document->representativeId;
+					$userIdTo = $this->memberService->getUserIdForMember($member);
+					return $this->byEmployeeSendEmployeeSignedMessageToEmployee($userIdFrom, $userIdTo, $document, $member);
+			}
+
+			return new Result();
+		}
+
 		$memberUserId = $this->memberService->getUserIdForMember($member);
 
 		switch ($member->role)
@@ -152,7 +161,122 @@ class HrBotMessageService
 		return $result;
 	}
 
-	private function handleDocumentStoppedStatus(Document $document, ?Member $stopInitiatorMember = null): Result
+	/**
+	 * @throws ObjectNotFoundException
+	 */
+	private function createByCompanyInviteMessage(Document $document, Member $member, string $providerCode): ?Message
+	{
+		$userIdFrom = $this->getBotUserId() ?? $document->createdById;
+		$userIdTo = $this->memberService->getUserIdForMember($member);
+		$signingLink = $this->urlGenerator->makeSigningUrl($member);
+
+		if (!$userIdTo || !$userIdFrom)
+		{
+			throw new ObjectNotFoundException('hrbot: no such user');
+		}
+
+		$initiatorUserId = $document->createdById;
+		$initiatorName = $this->memberService->getUserRepresentedName($initiatorUserId);
+
+		return match ($member->role)
+		{
+			Role::ASSIGNEE => $userIdTo !== $document->createdById
+				? new Im\Messages\InviteToSign\CompanyWithInitiator($userIdFrom, $userIdTo, $initiatorUserId, $initiatorName, $document, $signingLink)
+				: new Im\Messages\InviteToSign\Company($userIdFrom, $userIdTo, $document, $signingLink)
+		,
+			Role::REVIEWER => $userIdTo !== $document->createdById
+				? new Im\Messages\InviteToSign\ReviewerWithInitiator($userIdFrom, $userIdTo, $initiatorUserId, $initiatorName, $document, $signingLink)
+				: new Im\Messages\InviteToSign\Reviewer($userIdFrom, $userIdTo, $document, $signingLink)
+		,
+			Role::EDITOR => $userIdTo !== $document->createdById
+				? new Im\Messages\InviteToSign\EditorWithInitiator($userIdFrom, $userIdTo, $initiatorUserId, $initiatorName, $document, $signingLink)
+				: new Im\Messages\InviteToSign\Editor($userIdFrom, $userIdTo, $document, $signingLink)
+		,
+			Role::SIGNER => match ($providerCode)
+			{
+				ProviderCode::GOS_KEY => new Im\Messages\InviteToSign\Goskey($userIdFrom, $userIdTo, $initiatorUserId, $initiatorName, $document, $signingLink),
+				default => new Im\Messages\InviteToSign\EmployeeSes($userIdFrom, $userIdTo, $initiatorUserId, $initiatorName, $document, $signingLink),
+			},
+			default => null,
+		};
+	}
+
+	/**
+	 * @throws ObjectNotFoundException
+	 */
+	private function createByEmployeeInviteMessage(Document $document, Member $member): ?Message
+	{
+		$userIdFrom = $this->getBotUserId() ?? $document->createdById;
+		$userIdTo = $this->memberService->getUserIdForMember($member);
+
+		$link = $this->urlGenerator->makeSigningUrl($member);
+
+		if (!$userIdTo || !$userIdFrom)
+		{
+			throw new ObjectNotFoundException('hrbot: no such user');
+		}
+
+		$initiatorUserId = $document->createdById;
+		$initiatorName = $this->memberService->getUserRepresentedName($initiatorUserId);
+
+		return match ($member->role)
+		{
+			Role::ASSIGNEE => new Im\Messages\ByEmployee\InviteCompany($userIdFrom, $userIdTo, $initiatorUserId, $initiatorName, $document, $link),
+			Role::REVIEWER => new Im\Messages\ByEmployee\InviteReviewer($userIdFrom, $userIdTo, $initiatorUserId, $initiatorName, $document, $link),
+			Role::SIGNER => new Im\Messages\ByEmployee\InviteEmployee($userIdFrom, $userIdTo, $document, $link),
+			default => null,
+		};
+	}
+
+	private function handleByEmployeeDocumentStoppedStatus(Document $document, ?Member $stopInitiatorMember = null): Result
+	{
+		$result = new Result();
+
+		$stopInitiatorMemberUserId = $stopInitiatorMember
+			? $this->memberService->getUserIdForMember($stopInitiatorMember)
+			: $document->stoppedById
+		;
+
+		$userFrom =
+			$this->getBotUserId()
+			?? $stopInitiatorMemberUserId
+			?? $document->representativeId
+			?? $this->memberService->getUserIdForMember($this->memberService->getAssignee($document))
+		;
+
+		if ($stopInitiatorMemberUserId !== $document->createdById)
+		{
+			$userTo =
+				$document->createdById
+				?? $this->memberService->getUserIdForMember($this->memberService->getSigner($document))
+			;
+
+			// message to employee
+			$result->addErrors($this->sendByEmployeeStoppedToEmployeeMessage(
+				$userFrom,
+				$userTo,
+				$document,
+				$stopInitiatorMemberUserId,
+			)->getErrors());
+		}
+
+		// message to active member from company side
+		$memberFromCompanySide = $this->memberService->getCurrentParticipantFromCompanySide($document);
+		if ($memberFromCompanySide && $this->isMemberStillDoingHisJob($memberFromCompanySide, $document))
+		{
+			$userTo = $this->getActiveReviewerOrAssigneeUserId($document, $memberFromCompanySide);
+			if ($userTo && $userTo !== $stopInitiatorMemberUserId && $userTo !== $document->createdById)
+			{
+				$result->addErrors(
+					$this->sendStoppedMessageToCompany($userFrom, $userTo, $document, $stopInitiatorMemberUserId, $memberFromCompanySide?->role)->getErrors(),
+				);
+			}
+		}
+
+		return $result;
+	}
+
+	private function handleByCompanyDocumentStoppedStatus(Document $document, ?Member $stopInitiatorMember = null): Result
 	{
 		$result = new Result();
 
@@ -252,7 +376,7 @@ class HrBotMessageService
 				document: $document,
 				member: $assignee,
 				link: $this->urlGenerator->getSigningProcessLink($document),
-			))->setLang(self::getUserLanguage($userIdTo))
+			))->setLang($this->userService->getUserLanguage($userIdTo))
 		);
 	}
 
@@ -267,7 +391,7 @@ class HrBotMessageService
 				toUser: $userIdTo,
 				document: $document,
 				link: $this->urlGenerator->makeSigningUrl($assignee),
-			))->setLang(self::getUserLanguage($userIdTo))
+			))->setLang($this->userService->getUserLanguage($userIdTo))
 		);
 	}
 
@@ -285,7 +409,7 @@ class HrBotMessageService
 				toUser: $userIdTo,
 				initiatorUserId: $whoStoppedUserId,
 				initiatorName: $this->memberService->getUserRepresentedName($whoStoppedUserId),
-				initiatorGender: $this->getGender($whoStoppedUserId),
+				initiatorGender: $this->userService->getGender($whoStoppedUserId),
 				document: $document,
 				link: $this->urlGenerator->getSigningProcessLink($document),
 				role: $role,
@@ -293,7 +417,7 @@ class HrBotMessageService
 		;
 
 		return $this->imService->sendMessage(
-			$message->setLang(self::getUserLanguage($userIdTo))
+			$message->setLang($this->userService->getUserLanguage($userIdTo))
 		);
 	}
 
@@ -307,11 +431,80 @@ class HrBotMessageService
 				toUser: $userIdTo,
 				document: $document,
 				link: $this->urlGenerator->makeSigningUrl($memberTo)
-			))->setLang(self::getUserLanguage($userIdTo))
+			))->setLang($this->userService->getUserLanguage($userIdTo))
 		);
 	}
 
-	public function sendDoneMessageToCompany(int $userIdFrom, int $userIdTo, Document $document): Result
+	private function byEmployeeSendEmployeeSignedMessageToEmployee(
+		int $userIdFrom,
+		int $userIdTo,
+		Document $document,
+		Member $employee,
+	): Result
+	{
+		return $this->imService->sendMessage(
+			(new Im\Messages\ByEmployee\SignedByEmployee(
+				fromUser: $userIdFrom,
+				toUser: $userIdTo,
+				document: $document,
+				link: $this->urlGenerator->makeSigningUrl($employee),
+			))->setLang($this->userService->getUserLanguage($userIdTo))
+		);
+	}
+
+	private function byEmployeeSendDoneMessageToEmployee(Document $document): Result
+	{
+		$assignee = $this->memberService->getAssignee($document);
+
+		if (!$assignee)
+		{
+			return (new Result())->addError(new Error('Assignee not found'));
+		}
+
+		$employee = $this->memberService->getSigner($document);
+
+		if (!$employee)
+		{
+			return (new Result())->addError(new Error('Employee not found'));
+		}
+
+		$userFrom = $this->getBotUserId() ?? $document->representativeId ?? $this->memberService->getUserIdForMember($assignee);
+		$userTo = $document->createdById ?? $this->memberService->getUserIdForMember($employee);
+
+		return $this->imService->sendMessage(
+			(new Im\Messages\ByEmployee\DoneEmployee(
+				fromUser: $userFrom,
+				toUser: $userTo,
+				initiatorUserId: $document->representativeId,
+				initiatorName: $this->memberService->getUserRepresentedName($document->representativeId),
+				initiatorGender: $this->userService->getGender($document->representativeId),
+				document: $document,
+				link: $this->urlGenerator->makeSigningUrl($employee),
+			))->setLang($this->userService->getUserLanguage($userTo))
+		);
+	}
+
+	private function byEmployeeSendDoneMessageToCompany(Document $document): Result
+	{
+		$userFrom = $this->getBotUserId() ?? $document->representativeId ?? $this->memberService->getUserIdForMember(
+			$this->memberService->getAssignee($document)
+		);
+		$userTo = $document->representativeId ?? $this->memberService->getUserIdForMember(
+			$this->memberService->getAssignee($document)
+		);
+
+		return $this->imService->sendMessage(
+			(new Im\Messages\ByEmployee\DoneCompany(
+				fromUser: $userFrom,
+				toUser: $userTo,
+				initiatorUserId: $document->createdById,
+				initiatorName: $this->memberService->getUserRepresentedName($document->createdById),
+				document: $document,
+			))->setLang($this->userService->getUserLanguage($userTo))
+		);
+	}
+
+	private function sendDoneMessageToCompany(int $userIdFrom, int $userIdTo, Document $document): Result
 	{
 		return $this->imService->sendMessage(
 			(new Im\Messages\Done\AllSignedToCompany(
@@ -319,7 +512,7 @@ class HrBotMessageService
 				toUser: $userIdTo,
 				document: $document,
 				link: $this->config->getB2eMySafeUrl(),
-			))->setLang(self::getUserLanguage($userIdTo))
+			))->setLang($this->userService->getUserLanguage($userIdTo))
 		);
 	}
 
@@ -337,9 +530,24 @@ class HrBotMessageService
 				toUser: $userIdTo,
 				initiatorUserId: $whoStoppedUserId,
 				initiatorName: $this->memberService->getUserRepresentedName($whoStoppedUserId),
-				initiatorGender: $this->getGender($whoStoppedUserId),
+				initiatorGender: $this->userService->getGender($whoStoppedUserId),
 				document: $document,
-			))->setLang(self::getUserLanguage($userIdTo))
+			))->setLang($this->userService->getUserLanguage($userIdTo))
+		);
+	}
+
+	private function sendByEmployeeStoppedToEmployeeMessage(int $userIdFrom, int $userIdTo, Document $document, int $whoStoppedUserId): Result
+	{
+		return $this->imService->sendMessage(
+			(new Im\Messages\ByEmployee\StoppedToEmployee(
+				fromUser: $userIdFrom,
+				toUser: $userIdTo,
+				initiatorUserId: $whoStoppedUserId,
+				initiatorName: $this->memberService->getUserRepresentedName($whoStoppedUserId),
+				initiatorGender: $this->userService->getGender($whoStoppedUserId),
+				document: $document,
+				link: $this->urlGenerator->makeSigningUrl($this->memberService->getSigner($document)),
+			))->setLang($this->userService->getUserLanguage($userIdTo))
 		);
 	}
 
@@ -351,11 +559,11 @@ class HrBotMessageService
 				toUser: $userIdTo,
 				initiatorUserId: $whoStoppedUserId,
 				initiatorName: $this->memberService->getUserRepresentedName($whoStoppedUserId),
-				initiatorGender: $this->getGender($whoStoppedUserId),
+				initiatorGender: $this->userService->getGender($whoStoppedUserId),
 				document: $document,
 				member: $memberSigner,
 				link: $this->urlGenerator->getSigningProcessLink($document),
-			))->setLang(self::getUserLanguage($userIdTo))
+			))->setLang($this->userService->getUserLanguage($userIdTo))
 		);
 	}
 
@@ -368,9 +576,9 @@ class HrBotMessageService
 				document: $document,
 				initiatorUserId: $userIdFrom,
 				initiatorName: $this->memberService->getUserRepresentedName($userIdFrom),
-				initiatorGender: $this->getGender($userIdFrom),
+				initiatorGender: $this->userService->getGender($userIdFrom),
 				link: $this->urlGenerator->getSigningProcessLink($document),
-			))->setLang(self::getUserLanguage($userIdTo))
+			))->setLang($this->userService->getUserLanguage($userIdTo))
 		);
 	}
 
@@ -416,52 +624,13 @@ class HrBotMessageService
 		return $document->representativeId;
 	}
 
-	public static function getUserLanguage(null|int $userId): null|string
+	private function getBotUserId(): ?int
 	{
-		if (!$userId)
-		{
-			return null;
-		}
-
-		$res = UserTable::query()
-			->where('ID', $userId)
-			->setSelect([
-							'NOTIFICATION_LANGUAGE_ID',
-						])
-			->exec()
-			->fetchObject()
-		;
-
-		return ($res)
-			? $res->getNotificationLanguageId()
-			: null
-		;
+		return (new HrBot())->getBotUserId();
 	}
 
-	public function getBotUserId(): ?int
+	private function isByEmployee(Document $document): bool
 	{
-		if (!\Bitrix\Main\Loader::includeModule('imbot'))
-		{
-			return null;
-		}
-
-		if (!class_exists(\Bitrix\Imbot\Bot\HrBot::class))
-		{
-			return null;
-		}
-
-		return \Bitrix\Imbot\Bot\HrBot::getBotIdOrRegister() ?: null;
-	}
-
-	private function getGender(int $userId): Type\User\Gender
-	{
-		$profileGender = UserTable::getById($userId)?->fetchObject()?->getPersonalGender();
-		// known (supported) genders
-		return match ($profileGender)
-		{
-			'M' => Type\User\Gender::MALE,
-			'F' => Type\User\Gender::FEMALE,
-			default => Type\User\Gender::DEFAULT,
-		};
+		return $document->initiatedByType === Type\Document\InitiatedByType::EMPLOYEE;
 	}
 }

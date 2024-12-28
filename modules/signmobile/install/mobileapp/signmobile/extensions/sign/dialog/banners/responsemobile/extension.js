@@ -26,12 +26,14 @@ jn.define('sign/dialog/banners/responsemobile', (require, exports, module) => {
 				memberId,
 				url = '',
 				documentTitle,
+				initiatedByType,
 			} = props;
 
 			this.documentTitle = documentTitle;
 			this.memberId = memberId;
 			this.url = url;
 			this.layoutWidget = layoutWidget;
+			this.initiatedByType = initiatedByType;
 		}
 
 		closeLayout(callback = {})
@@ -68,6 +70,7 @@ jn.define('sign/dialog/banners/responsemobile', (require, exports, module) => {
 									layoutWidget: this.layoutWidget,
 									documentTitle: this.documentTitle,
 									memberId: this.memberId,
+									initiatedByType: this.initiatedByType,
 								}));
 							}).catch(() => {
 								NotifyManager.showErrors([{

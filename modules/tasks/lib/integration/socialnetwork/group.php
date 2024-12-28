@@ -12,6 +12,9 @@ use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Query\Filter;
 use Bitrix\Main\Search\Content;
+use Bitrix\Socialnetwork\Internals\Registry\GroupRegistry;
+use Bitrix\Socialnetwork\Item\Workgroup\Type;
+use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Socialnetwork\WorkgroupTable;
 use Bitrix\Socialnetwork\Helper\Workgroup;
 use Bitrix\Tasks\Integration\SocialNetwork\Exception\NotFoundException;
@@ -139,9 +142,29 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 					continue;
 				}
 
-				$groups[$id]['ADDITIONAL_DATA'] = ($additionalData[$id] ?? []) ;
+				$groups[$id]['ADDITIONAL_DATA'] = $additionalData[$id];
 			}
 		}
+
+		if (($params['WITH_CHAT'] ?? false) === true && !empty($groups))
+		{
+			$chatIds = \Bitrix\Socialnetwork\Integration\Im\Chat\Workgroup::getChatData([
+					'group_id' => array_keys($groups),
+					'skipAvailabilityCheck' => true,
+				]
+			);
+
+			foreach ($chatIds as $groupId => $chatId)
+			{
+				if (!isset($groups[$groupId]))
+				{
+					continue;
+				}
+
+				$groups[$groupId]['CHAT_ID'] = (int)$chatId;
+			}
+		}
+
 		return $groups;
 	}
 
@@ -194,6 +217,26 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 		if(intval($group['ID']))
 		{
 			$safe['ID'] = intval($group['ID']);
+		}
+
+		if (!empty($safe['ID']))
+		{
+			$safe['IS_EXTRANET_GROUP'] = (new \Bitrix\Tasks\Integration\Extranet\Group())->isExtranetGroup($safe['ID']);
+		}
+
+		if (isset($group['URL']))
+		{
+			$safe['URL'] = $group['URL'];
+		}
+
+		if (isset($group['CHAT_ID']))
+		{
+			$safe['CHAT_ID'] = $group['CHAT_ID'];
+		}
+
+		if (isset($group['TYPE']))
+		{
+			$safe['TYPE'] = $group['TYPE'];
 		}
 
 		return $safe;
@@ -465,11 +508,17 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 	 * @return bool
 	 * @throws Main\LoaderException
 	 */
-	public static function usersHasCommonGroup(int $userIdA, int $userIdB): bool
+	public static function usersHasCommonGroup(int $userIdA, int $userIdB, bool $includeInvited = false): bool
 	{
 		if (!Loader::includeModule('socialnetwork'))
 		{
 			return false;
+		}
+
+		$roles = UserToGroupTable::getRolesMember();
+		if ($includeInvited)
+		{
+			$roles[] = UserToGroupTable::ROLE_REQUEST;
 		}
 
 		global $DB;
@@ -480,10 +529,10 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 			INNER JOIN b_sonet_user2group ug2
 				ON ug.GROUP_ID = ug2.GROUP_ID 
 				AND ug2.USER_ID = '. $userIdB .'
-				AND ug2.ROLE IN (\''. implode("','", \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember()) .'\')
+				AND ug2.ROLE IN (\''. implode("','", $roles) .'\')
 			WHERE 
 				ug.USER_ID = '. $userIdA .'
-				AND ug.ROLE IN (\''. implode("','", \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember()) .'\')
+				AND ug.ROLE IN (\''. implode("','", $roles) .'\')
 		';
 
 		$res = $DB->query($sql);
@@ -499,16 +548,16 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 	/**
 	 * @throws SocialnetworkException
 	 */
-	public static function getById(int $spaceId): ?\Bitrix\Socialnetwork\Item\Workgroup
+	public static function getById(int $groupId): ?\Bitrix\Socialnetwork\Item\Workgroup
 	{
-		if (!static::includeModule())
+		if ($groupId <= 0 || !static::includeModule())
 		{
 			return null;
 		}
 
 		try
 		{
-			return \Bitrix\Socialnetwork\Item\Workgroup::getById($spaceId);
+			return GroupRegistry::getInstance()->get($groupId);
 		}
 		catch (Exception $exception)
 		{
@@ -555,5 +604,20 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 		}
 
 		return $cache[$groupId];
+	}
+
+	public static function isCollab(?string $type = null): bool
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return false;
+		}
+
+		if ($type === null)
+		{
+			return false;
+		}
+
+		return Type::tryFrom($type) === Type::Collab;
 	}
 }

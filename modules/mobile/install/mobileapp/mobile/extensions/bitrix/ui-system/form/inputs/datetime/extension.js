@@ -2,7 +2,8 @@
  * @module ui-system/form/inputs/datetime
  */
 jn.define('ui-system/form/inputs/datetime', (require, exports, module) => {
-	const { isNil } = require('type');
+	const { isNil } = require('utils/type');
+	const { refSubstitution } = require('utils/function');
 	const { PureComponent } = require('layout/pure-component');
 	const { PropTypes } = require('utils/validation');
 	const { DateTimeFieldClass, DatePickerType } = require('layout/ui/fields/datetime');
@@ -208,9 +209,8 @@ jn.define('ui-system/form/inputs/datetime', (require, exports, module) => {
 	module.exports = {
 		/**
 		 * @param {DateTimeInputProps} props
-		 * @returns {DateTimeInput}
 		 */
-		DateTimeInput: (props) => new DateTimeInput(props),
+		DateTimeInput: (props) => refSubstitution(DateTimeInput)(props),
 		InputSize,
 		InputMode,
 		InputDesign,

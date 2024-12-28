@@ -8,8 +8,8 @@ use \Bitrix\Main\PhoneNumber\Format;
 class Phone
 {
 	public function __construct(
-		private string $phoneNumber,
-		private ?string $countryCode = null
+		private readonly string $phoneNumber,
+		private readonly ?string $countryCode = null
 	){}
 
 	public function format(string $format): string

@@ -40,6 +40,14 @@ class MenuItemFactory
 		;
 	}
 
+	public static function createDeleteTagMenuItem(): MenuItem
+	{
+		return (new MenuItem(Loc::getMessage('CRM_TIMELINE_MENU_DELETE_TAG')))
+			->setHideIfReadonly()
+			->setSort(9992)
+		;
+	}
+
 	public static function createRepeatMenuItem(): MenuItem
 	{
 		return (new MenuItem(Loc::getMessage('CRM_TIMELINE_MENU_REPEAT')))
@@ -60,6 +68,13 @@ class MenuItemFactory
 			->setHideIfReadonly()
 			->setSort(9995)
 		;
+	}
+
+	public static function createFilterRelatedMenuItem(): MenuItem
+	{
+		return (new MenuItem(Loc::getMessage('CRM_TIMELINE_MENU_FILTER_RELATED')))
+			->setSort(9997)
+			;
 	}
 
 	public static function createMoveToMenuItem(): MenuItem

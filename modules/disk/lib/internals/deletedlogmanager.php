@@ -82,6 +82,17 @@ final class DeletedLogManager
 
 	public function mark(BaseObject $object, $deletedBy)
 	{
+		$objectEvent = $object->makeObjectEvent(
+			'objectMarkDeleted',
+			[
+				'object' => [
+					'id' => (int)$object->getId(),
+					'deletedBy' => (int)$deletedBy,
+				],
+			]
+		);
+		$objectEvent->sendToObjectChannel();
+
 		if ($object instanceof Folder)
 		{
 			$dateTime = new DateTime();

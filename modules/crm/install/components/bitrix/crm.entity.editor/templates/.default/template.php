@@ -23,6 +23,7 @@ use Bitrix\Crm;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\EventHandler;
 use Bitrix\Main;
+use Bitrix\Main\Web\Json;
 
 Main\UI\Extension::load("ui.label");
 Main\UI\Extension::load("crm.entity-editor");
@@ -207,66 +208,126 @@ if ($arResult['ENABLE_CONFIG_CONTROL'])
 	</span><?php
 }
 ?>
-</div><?
-if(!empty($htmlEditorConfigs))
+</div>
+<?php
+if (!empty($htmlEditorConfigs))
 {
-	CModule::IncludeModule('fileman');
-	foreach($htmlEditorConfigs as $htmlEditorConfig)
+	foreach ($htmlEditorConfigs as $fieldName => $htmlEditorConfig)
 	{
-		?><div id="<?=htmlspecialcharsbx($htmlEditorConfig['containerId'])?>" style="display:none;"><?
-			$editor = new CHTMLEditor();
-			$editor->Show(
-				array(
-					'name' => $htmlEditorConfig['id'],
-					'id' => $htmlEditorConfig['id'],
-					'siteId' => SITE_ID,
-					'width' => '100%',
-					'minBodyWidth' => 230,
-					'normalBodyWidth' => 530,
-					'height' => 200,
-					'minBodyHeight' => 200,
-					'showTaskbars' => false,
-					'showNodeNavi' => false,
-					'autoResize' => true,
-					'autoResizeOffset' => 10,
-					'bbCode' => $htmlEditorConfig['bb'],
-					'saveOnBlur' => false,
-					'bAllowPhp' => false,
-					'lazyLoad' => true,
-					'limitPhpAccess' => false,
-					'setFocusAfterShow' => false,
-					'askBeforeUnloadPage' => false,
-					'useFileDialogs' => false,
-					'controlsMap' => $htmlEditorConfig['controlsMap'],
-					'isCopilotTextEnabledBySettings' => AIManager::isEnabledInGlobalSettings(EventHandler::SETTINGS_FILL_CRM_TEXT_ENABLED_CODE),
-					'copilotParams' => [
-						'moduleId' => 'crm',
-						'contextId' => 'crm_details_comment_editor_' . $htmlEditorConfig['id'],
-						'category' => 'crm_comment_field',
-						'autoHide' => true,
-					],
-				)
+		$fieldInfo = $arResult['ENTITY_AVAILABLE_FIELDS_INFO'][$fieldName] ?? [];
+		?>
+		<div id="<?=htmlspecialcharsbx($htmlEditorConfig['containerId'])?>" style="display:none;">
+			<?php
+			$editorControlsMap = $htmlEditorConfig['controlsMap'];
+			$parserList = [];
+
+			if (is_array($arResult['DISABLED_HTML_CONTROLS']))
+			{
+				$editorControls = [];
+				foreach ($editorControlsMap as $item)
+				{
+					$itemId = $item['id'] ?? false;
+					$isSeparator = $item['separator'] ?? false;
+
+					if ($itemId)
+					{
+						$parserList[] = $itemId;
+
+						if (in_array($itemId, $arResult['DISABLED_HTML_CONTROLS'], true))
+						{
+							continue;
+						}
+					}
+
+					if (
+						$isSeparator
+						&& isset($editorControls[array_key_last($editorControls)]['separator'])
+					)
+					{
+						continue;
+					}
+					$editorControls[] = $item;
+				}
+			}
+			else
+			{
+				$editorControls = $editorControlsMap;
+			}
+
+			$chtmlEditorParams = [
+				'name' => $htmlEditorConfig['id'],
+				'id' => $htmlEditorConfig['id'],
+				'siteId' => SITE_ID,
+				'width' => '100%',
+				'minBodyWidth' => 230,
+				'normalBodyWidth' => 530,
+				'height' => 200,
+				'minBodyHeight' => 200,
+				'showTaskbars' => false,
+				'showNodeNavi' => false,
+				'autoResize' => true,
+				'autoResizeOffset' => 10,
+				'bbCode' => $htmlEditorConfig['bb'],
+				'saveOnBlur' => false,
+				'bAllowPhp' => false,
+				'lazyLoad' => false,
+				'limitPhpAccess' => false,
+				'setFocusAfterShow' => false,
+				'askBeforeUnloadPage' => false,
+				'useFileDialogs' => false,
+				'controlsMap' => $htmlEditorConfig['controlsMap'],
+				'isMentionUnavailable' => $fieldInfo['copilotIntegrationParams']['isMentionUnavailable'] ?? false,
+				'isCopilotTextEnabledBySettings' => AIManager::isEnabledInGlobalSettings(EventHandler::SETTINGS_FILL_CRM_TEXT_ENABLED_CODE),
+				'copilotParams' => [
+					'moduleId' => 'crm',
+					'contextId' => 'crm_details_comment_editor_' . $htmlEditorConfig['id'],
+					'category' => 'crm_comment_field',
+					'autoHide' => true,
+				],
+			];
+
+			$APPLICATION->IncludeComponent(
+				'bitrix:main.post.form',
+				'',
+				[
+					'PARSER' => $parserList,
+					'BUTTONS' => $fieldInfo['buttons'] ?? [],
+					'UPLOAD_FILE' => false,
+					'LHE' => $chtmlEditorParams,
+					'isAiImageEnabled' => $fieldInfo['postFormSettings']['isAiImageEnabled'] ?? false,
+					'isDnDEnabled' => $fieldInfo['postFormSettings']['isDnDEnabled'] ?? false,
+				],
+				false,
+				[
+					"HIDE_ICONS" => "Y",
+				]
 			);
-		?></div><?
+			?>
+		</div>
+		<?php
 	}
 }
 ?>
 
-<?if (!empty($arResult['BIZPROC_MANAGER_CONFIG'])):
+<?php if (!empty($arResult['BIZPROC_MANAGER_CONFIG'])):
 	$arResult['BIZPROC_MANAGER_CONFIG']['containerId'] = "{$prefix}_bizproc_manager_container";
-?><div id="<?=htmlspecialcharsbx($arResult['BIZPROC_MANAGER_CONFIG']['containerId'])?>" style="display:none;"><?
-	\CJSCore::init(array('bp_starter'));
-	$APPLICATION->IncludeComponent("bitrix:bizproc.workflow.start",
-		'modern',
-		array(
-			"MODULE_ID" => $arResult['BIZPROC_MANAGER_CONFIG']['moduleId'],
-			"ENTITY" => $arResult['BIZPROC_MANAGER_CONFIG']['entity'],
-			"DOCUMENT_TYPE" => $arResult['BIZPROC_MANAGER_CONFIG']['documentType'],
-			"AUTO_EXECUTE_TYPE" => $arResult['BIZPROC_MANAGER_CONFIG']['autoExecuteType'],
-		)
-	);
-?></div>
-<?endif?>
+?><div id="<?= htmlspecialcharsbx($arResult['BIZPROC_MANAGER_CONFIG']['containerId']) ?>" style="display:none;"><?php
+	\Bitrix\Main\UI\Extension::load(['bp_starter']);
+	if (!class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
+	{
+		$APPLICATION->IncludeComponent(
+			"bitrix:bizproc.workflow.start",
+			'modern',
+			[
+				'MODULE_ID' => $arResult['BIZPROC_MANAGER_CONFIG']['moduleId'],
+				'ENTITY' => $arResult['BIZPROC_MANAGER_CONFIG']['entity'],
+				'DOCUMENT_TYPE' => $arResult['BIZPROC_MANAGER_CONFIG']['documentType'],
+				'AUTO_EXECUTE_TYPE' => $arResult['BIZPROC_MANAGER_CONFIG']['autoExecuteType'],
+			],
+		);
+	}
+	?></div>
+<?php endif ?>
 <script>
 	BX.ready(
 		function()
@@ -375,7 +436,7 @@ if(!empty($htmlEditorConfigs))
 			var model = BX.Crm.EntityEditorModelFactory.create(
 				<?=$arResult['ENTITY_TYPE_ID']?>,
 				"",
-				{ entityTypeId: <?=$arResult['ENTITY_TYPE_ID']?>, data: <?=CUtil::PhpToJSObject($arResult['ENTITY_DATA'])?> }
+				{ entityTypeId: <?=$arResult['ENTITY_TYPE_ID']?>, data: <?= Json::encode($arResult['PREPARED_ENTITY_DATA'])?> }
 			);
 
 			BX.CrmDuplicateSummaryPopup.messages =

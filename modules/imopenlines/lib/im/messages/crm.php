@@ -196,7 +196,20 @@ class Crm
 
 			foreach ($entityIds as $entityId)
 			{
-				$entityData = ImOpenLines\Crm\Common::get($entityType, $entityId, true);
+				$entityData = ImOpenLines\Crm\Common::get(
+					$entityType,
+					$entityId,
+					true,
+					[
+						'ID',
+						'TITLE',
+						'FULL_NAME',
+						'COMPANY_TITLE',
+						'POST',
+						'HAS_PHONE',
+						'HAS_EMAIL',
+					]
+				);
 				if (!$entityData)
 				{
 					continue;

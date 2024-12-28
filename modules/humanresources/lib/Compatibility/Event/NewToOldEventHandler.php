@@ -5,19 +5,25 @@ namespace Bitrix\HumanResources\Compatibility\Event;
 use Bitrix\HumanResources\Compatibility\Adapter\StructureBackwardAdapter;
 use Bitrix\HumanResources\Compatibility\Utils\DepartmentBackwardAccessCode;
 use Bitrix\HumanResources\Compatibility\Utils\OldStructureUtils;
+use Bitrix\HumanResources\Contract\Repository\NodeRepository;
 use Bitrix\HumanResources\Enum\EventName;
+use Bitrix\HumanResources\Item\Node;
+use Bitrix\HumanResources\Model\NodeTable;
 use Bitrix\HumanResources\Service\Container;
+use Bitrix\HumanResources\Service\UserService;
 use Bitrix\HumanResources\Type\MemberEntityType;
 use Bitrix\HumanResources\Enum\LoggerEntityType;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Event;
+use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 
 class NewToOldEventHandler
 {
-	private const MODULE_NAME = 'humanresources-';
+	private const MODULE_NAME_PREFIX = 'humanresources-';
 
 	/**
 	 * @param \Bitrix\Main\Event $event
@@ -26,7 +32,7 @@ class NewToOldEventHandler
 	 */
 	public static function onNodeAdded(Event $event): void
 	{
-		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME . EventName::NODE_ADDED->name))
+		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME_PREFIX . EventName::NODE_ADDED->name))
 		{
 			return;
 		}
@@ -48,8 +54,6 @@ class NewToOldEventHandler
 			{
 				return;
 			}
-
-			StructureBackwardAdapter::clearCache();
 
 			$parent =
 				$node->parentId
@@ -80,6 +84,8 @@ class NewToOldEventHandler
 				'userId' => CurrentUser::get()->getId(),
 			]);
 		}
+
+		self::clearCacheInBackground($node);
 	}
 
 	/**
@@ -89,7 +95,7 @@ class NewToOldEventHandler
 	 */
 	public static function onNodeDeleted(Event $event): void
 	{
-		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME . EventName::NODE_DELETED->name))
+		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME_PREFIX . EventName::NODE_DELETED->name))
 		{
 			return;
 		}
@@ -120,8 +126,6 @@ class NewToOldEventHandler
 				return;
 			}
 
-			StructureBackwardAdapter::clearCache();
-
 			OldStructureUtils::deleteDepartment([
 				'ID' => $id,
 			]);
@@ -135,6 +139,8 @@ class NewToOldEventHandler
 				'userId' => CurrentUser::get()->getId(),
 			]);
 		}
+
+		self::clearCacheInBackground($node);
 	}
 
 	/**
@@ -148,7 +154,7 @@ class NewToOldEventHandler
 	 */
 	public static function onNodeUpdated(Event $event): void
 	{
-		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME . EventName::NODE_UPDATED->name))
+		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME_PREFIX . EventName::NODE_UPDATED->name))
 		{
 			return;
 		}
@@ -203,6 +209,8 @@ class NewToOldEventHandler
 		catch (\Exception)
 		{
 		}
+
+		self::clearCacheInBackground($node);
 	}
 
 	/**
@@ -215,7 +223,7 @@ class NewToOldEventHandler
 	 */
 	public static function onMemberAdded(Event $event): void
 	{
-		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME . EventName::MEMBER_ADDED->name))
+		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME_PREFIX . EventName::MEMBER_ADDED->name))
 		{
 			return;
 		}
@@ -233,33 +241,45 @@ class NewToOldEventHandler
 			return;
 		}
 
-		StructureBackwardAdapter::clearCache();
-
-		$nodes = Container::getNodeRepository()
-			->findAllByUserId($member->entityId);
-
-		$departments = [];
-
-		foreach ($nodes as $node)
-		{
-			$accessCode = DepartmentBackwardAccessCode::extractIdFromCode($node->accessCode);
-			if ($accessCode !== null)
-			{
-				$departments[] = $accessCode;
-			}
-		}
-
 		$onAfterUserUpdateEvent = 'main-OnAfterUserUpdate';
 		Container::getSemaphoreService()->lock($onAfterUserUpdateEvent);
+		Container::getEventSenderService()->removeEventHandlers('iblock', 'OnBeforeIBlockSectionUpdate');
+		Container::getEventSenderService()->removeEventHandlers('main', 'OnAfterUserUpdate');
 
-		$user = new \CUser();
-		$user->Update(
-			$member->entityId,
-			[
-				'UF_DEPARTMENT' => $departments,
-			]
-		);
+		// possible synchronization problem between old and new structure
+		static $jobSentForUser = [];
 
+		if (!isset($jobSentForUser[$member->entityId]))
+		{
+			\Bitrix\Main\Application::getInstance()->addBackgroundJob(function ($member) {
+				NodeTable::cleanCache();
+				$nodes = Container::getNodeRepository()
+					->findAllByUserId($member->entityId);
+
+				$departments = [];
+
+				foreach ($nodes as $node)
+				{
+					$accessCode = DepartmentBackwardAccessCode::extractIdFromCode($node->accessCode);
+					if ($accessCode !== null)
+					{
+						$departments[] = $accessCode;
+					}
+				}
+
+				$user = new \CUser();
+				$user->Update(
+					$member->entityId,
+					[
+						'UF_DEPARTMENT' => $departments,
+					],
+				);
+			}, [$member]);
+
+			$jobSentForUser[$member->entityId] = true;
+		}
+
+		$node = null;
 		if ($member->role === Container::getRoleHelperService()->getHeadRoleId())
 		{
 			$node = Container::getNodeRepository()->getById($member->nodeId);
@@ -274,6 +294,7 @@ class NewToOldEventHandler
 			{
 			}
 		}
+		self::clearCacheInBackground($node, $member);
 
 		Container::getSemaphoreService()->unlock($onAfterUserUpdateEvent);
 	}
@@ -282,7 +303,7 @@ class NewToOldEventHandler
 	{
 		if (
 			Container::getSemaphoreService()
-				->isLocked(self::MODULE_NAME . EventName::MEMBER_DELETED->name)
+				->isLocked(self::MODULE_NAME_PREFIX . EventName::MEMBER_DELETED->name)
 		)
 		{
 			return;
@@ -348,6 +369,134 @@ class NewToOldEventHandler
 		{
 		}
 
+		self::clearCacheInBackground($node, $member);
+
 		Container::getSemaphoreService()->unlock($onAfterUserDeleteEvent);
+	}
+
+	public static function onMemberUpdated(Event $event): void
+	{
+		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME_PREFIX . EventName::MEMBER_UPDATED->name))
+		{
+			return;
+		}
+
+		$changedFields = $event->getParameter('fields');
+
+		if (array_intersect($changedFields, ['role']))
+		{
+			$member = $event->getParameter('member');
+			$node = Container::getNodeRepository()->getById($member->nodeId);
+
+			$departmentId = DepartmentBackwardAccessCode::extractIdFromCode($node->accessCode);
+			$memberDepartment = OldStructureUtils::getOldDepartmentById($departmentId ?? 0) ?? null;
+			$isHead = $member->role === Container::getRoleHelperService()->getHeadRoleId();
+
+			if (!$isHead && $memberDepartment && (int)$memberDepartment['UF_HEAD'] === $member->entityId)
+			{
+				try
+				{
+					OldStructureUtils::updateDepartment(
+						[
+							'ID' => $departmentId,
+							'UF_HEAD' => null,
+						],
+					);
+				}
+				catch (\Exception)
+				{
+				}
+			}
+		}
+
+		self::onMemberAdded($event);
+	}
+
+	/**
+	 * @param mixed $node
+	 * @param \Bitrix\HumanResources\Item\NodeMember $member
+	 *
+	 * @return void
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function clearCache(?Node $node = null, ?\Bitrix\HumanResources\Item\NodeMember $member = null): void
+	{
+		$taggedCacheManager = Application::getInstance()->getTaggedCache();
+
+		if ($node)
+		{
+			if (Loader::includeModule('iblock'))
+			{
+				$iblockId = \COption::getOptionInt('intranet', 'iblock_structure');
+				\CIBlockSection::ReSort($iblockId);
+			}
+
+			$taggedCacheManager->clearByTag(
+				'iblock_id_' . DepartmentBackwardAccessCode::extractIdFromCode($node->accessCode)
+			);
+		}
+
+		StructureBackwardAdapter::clearCache();
+		Container::getCacheManager()->clean(NodeRepository::NODE_ENTITY_RESTRICTION_CACHE);
+		NodeTable::cleanCache();
+
+		$taggedCacheManager->clearByTag('intranet_users');
+		$taggedCacheManager->clearByTag('intranet_department_structure');
+
+		if ($member)
+		{
+			Container::getCacheManager()->clean(sprintf(UserService::USER_DEPARTMENT_EXISTS_KEY, $member->entityId));
+			Container::getCacheManager()->clean(
+				$member->entityId,
+				"/user_card_" . (int)($member->entityId / TAGGED_user_card_size)
+			);
+
+			if (Loader::includeModule('intranet'))
+			{
+				\Bitrix\Intranet\Composite\CacheProvider::deleteUserCache($member->entityId);
+			}
+		}
+	}
+
+	public static function clearCacheInBackground(?Node $node = null, ?\Bitrix\HumanResources\Item\NodeMember $member = null)
+	{
+		static $jobPrepared = [];
+
+		if (isset($jobPrepared[(int)$node?->id][(int)$member?->id]))
+		{
+			return;
+		}
+
+		$jobPrepared[(int)$node?->id][(int)$member?->id] = true;
+
+		\Bitrix\Main\Application::getInstance()->addBackgroundJob(function ($node, $member) {
+			self::clearCache($node, $member);
+		}, [$node, $member]);
+
+		static $tagGroupCache = [];
+		$groupCacheKey = (int)($member->entityId / TAGGED_user_card_size);
+
+		if (isset($tagGroupCache[$groupCacheKey]))
+		{
+			return;
+		}
+
+		$tagGroupCache[$groupCacheKey] = true;
+
+		\Bitrix\Main\Application::getInstance()->addBackgroundJob(
+			function($groupCacheKey) {
+				if (defined('BX_COMP_MANAGED_CACHE'))
+				{
+					$taggedCacheManager = Application::getInstance()->getTaggedCache();
+
+					$taggedCacheManager->clearByTag("USER_CARD_" . $groupCacheKey);
+				}
+			},
+			[$groupCacheKey],
+		);
+
 	}
 }

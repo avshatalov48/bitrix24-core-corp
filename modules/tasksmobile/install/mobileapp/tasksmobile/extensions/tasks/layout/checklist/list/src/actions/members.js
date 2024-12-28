@@ -3,13 +3,13 @@
  */
 jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, module) => {
 	const { Color, Indent } = require('tokens');
-	const { Avatar } = require('layout/ui/user/avatar');
-	const { ElementsStack } = require('elements-stack');
+	const { AvatarStack } = require('ui-system/blocks/avatar-stack');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const {
 		MEMBER_TYPE_ICONS,
 		MEMBER_TYPE_RESTRICTION_FEATURE_META,
 	} = require('tasks/layout/checklist/list/src/constants');
+	const { Text4 } = require('ui-system/typography/text');
 
 	const IMAGE_SIZE = 22;
 
@@ -44,37 +44,31 @@ jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, 
 
 		renderMemberTypes()
 		{
-			const { item, onClick } = this.props;
+			const { item, testId } = this.props;
 			const memberSections = {};
 
-			item.getPrepareMembers().forEach((member) => {
-				const type = member.type;
-
+			item.getPrepareMembers().forEach(({ type, id }) => {
 				if (memberSections[type])
 				{
-					memberSections[type].push(this.createMembersElement(member));
+					memberSections[type].push(id);
 				}
 				else
 				{
-					memberSections[type] = [this.createMembersElement(member)];
+					memberSections[type] = [id];
 				}
 			});
 
-			const memberSectionsKeys = Object.keys(memberSections).sort();
+			const memberSectionsKeys = Object.entries(memberSections).sort();
 
-			return memberSectionsKeys.map((memberType, i) => View(
+			return memberSectionsKeys.map(([memberType, ids], i) => View(
 				{
 					testId: `${memberType}_user`,
 					style: {
 						flexDirection: 'row',
+						alignItems: 'center',
 						marginRight: memberSectionsKeys.length - 1 === i ? 0 : Indent.M.toNumber(),
 					},
-					onClick: () => {
-						if (onClick)
-						{
-							onClick(item.getId(), memberType);
-						}
-					},
+					onClick: this.handleOnClick(memberType),
 				},
 				IconView({
 					icon: (
@@ -85,27 +79,38 @@ jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, 
 					size: IMAGE_SIZE,
 					color: Color.base3,
 				}),
-				this.membersStack(memberSections[memberType]),
+				AvatarStack({
+					testId,
+					entities: ids,
+					size: IMAGE_SIZE,
+					withRedux: true,
+					visibleEntityCount: 1,
+					restView: this.renderRestView,
+					onClick: this.handleOnClick(memberType),
+				}),
 			));
 		}
 
-		membersStack(children)
-		{
-			const { testId } = this.props;
+		renderRestView = (count) => {
+			if (!count)
+			{
+				return null;
+			}
 
-			return ElementsStack({
-				testId,
-				maxElements: 1,
-				textColor: Color.base3,
-			}, ...children);
-		}
+			return Text4({
+				text: `+${count}`,
+				color: Color.base3,
+				style: {
+					marginLeft: Indent.S.toNumber(),
+				},
+			});
+		};
 
-		createMembersElement(member)
-		{
-			const { id, name, image } = member;
+		handleOnClick = (memberType) => () => {
+			const { onClick, item } = this.props;
 
-			return Avatar({ id: Number(id), name, size: IMAGE_SIZE, image });
-		}
+			onClick(item.getId(), memberType);
+		};
 	}
 
 	module.exports = { ItemMembers };

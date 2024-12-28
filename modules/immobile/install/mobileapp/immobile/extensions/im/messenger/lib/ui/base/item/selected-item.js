@@ -2,8 +2,11 @@
  * @module im/messenger/lib/ui/base/item/selected-item
  */
 jn.define('im/messenger/lib/ui/base/item/selected-item', (require, exports, module) => {
+	const { Type } = require('type');
+	const { Feature: MobileFeature } = require('feature');
+
+	const { Avatar: MessengerAvatarLegacy } = require('im/messenger/lib/ui/base/avatar');
 	const { CheckBox } = require('im/messenger/lib/ui/base/checkbox');
-	const { Avatar } = require('im/messenger/lib/ui/base/avatar');
 	const { ItemInfo } = require('im/messenger/lib/ui/base/item/item-info');
 	const { styles: itemStyles, selectedItemStyles } = require('im/messenger/lib/ui/base/item/style');
 	const { Item } = require('im/messenger/lib/ui/base/item/item');
@@ -82,6 +85,22 @@ jn.define('im/messenger/lib/ui/base/item/selected-item', (require, exports, modu
 		render()
 		{
 			const style = this.getStyleBySize();
+
+			let avatar = null;
+			if (Type.isObject(this.props.data.avatar) && MobileFeature.isNativeAvatarSupported())
+			{
+				avatar = Avatar(this.props.data.avatar);
+			}
+			else
+			{
+				avatar = new MessengerAvatarLegacy({
+					text: this.props.data.title,
+					uri: this.props.data.avatarUri,
+					color: this.props.data.avatarColor,
+					size: this.props.size,
+					isSuperEllipse: this.props.isSuperEllipseAvatar,
+				});
+			}
 
 			return View(
 				{
@@ -164,13 +183,7 @@ jn.define('im/messenger/lib/ui/base/item/selected-item', (require, exports, modu
 									marginRight: -1, //pixel perfect
 								},
 							},
-							new Avatar({
-								text: this.props.data.title,
-								uri: this.props.data.avatarUri,
-								color: this.props.data.avatarColor,
-								size: this.props.size,
-								isSuperEllipse: this.props.isSuperEllipseAvatar,
-							}),
+							avatar,
 						),
 						View(
 							{

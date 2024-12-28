@@ -2,15 +2,15 @@
 
 namespace Bitrix\Mobile\AvaMenu;
 
-use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Mobile\AvaMenu\Items\Calendar;
 use Bitrix\Mobile\AvaMenu\Items\CheckIn;
 use Bitrix\Mobile\AvaMenu\Items\EmailConfirm;
 use Bitrix\Mobile\AvaMenu\Items\GoToWeb;
 use Bitrix\Mobile\AvaMenu\Items\Settings;
+use Bitrix\Mobile\AvaMenu\Items\Signing;
+use Bitrix\Mobile\AvaMenu\Items\SwitchAccount;
 use Bitrix\Mobile\AvaMenu\Items\Timeman;
-use Bitrix\Mobile\AvaMenu\Profile\Profile;
 use Bitrix\Mobile\Context;
 
 class Manager
@@ -27,14 +27,11 @@ class Manager
 			new CheckIn($context),
 			new Timeman($context),
 			new Calendar($context),
+			new Signing($context),
 			new Settings($context),
 			new GoToWeb($context),
+			new SwitchAccount($context),
 		];
-	}
-
-	public function getProfileData() : array
-	{
-		return (new Profile())->getData();
 	}
 
 	public function getMenuData(): array
@@ -68,14 +65,14 @@ class Manager
 		return $result;
 	}
 
-	private function getItemTitle(AbstractMenuItem $item): string
+	public function getTotalCounter(): int
 	{
-		if ($item->getId() === 'timeman')
-		{
-			return Loc::getMessage('AVA_MENU_NAME_TIMEMAN_MSGVER_1');
-		}
+		return array_reduce($this->getMenuData(), fn($acc, $item) => $acc + (int)($item['counter'] ?? 0), 0);
+	}
 
-		return Loc::getMessage('AVA_MENU_NAME_' . mb_strtoupper($item->getId()));
+	private function getItemTitle(AbstractMenuItem $item): ?string
+	{
+		return Loc::getMessage($item->getMessageCode());
 	}
 
 	private function getSeparator(): array
@@ -83,10 +80,5 @@ class Manager
 		return [
 			'type' => 'separator',
 		];
-	}
-
-	public function getTotalCounter(): int
-	{
-		return array_reduce($this->getMenuData(), fn ($acc, $item) => $acc + (int)($item['counter'] ?? 0), 0);
 	}
 }

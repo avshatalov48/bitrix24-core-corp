@@ -1,0 +1,6 @@
+<?php
+$MESS["BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_LOCKED_PARAM_SOURCE_CLOSE_BUTTON"] = "Schließen";
+$MESS["BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_LOCKED_PARAM_SOURCE_OPEN_DESCRIPTION"] = "Verbindung kann nicht hergestellt werden.";
+$MESS["BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_LOCKED_PARAM_SOURCE_OPEN_DESCRIPTION_BI"] = "Verbindung kann nicht hergestellt werden.";
+$MESS["BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_LOCKED_PARAM_SOURCE_OPEN_TITLE"] = "Vorschau nicht verfügbar";
+$MESS["BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_TRACKING_SOURCE_DATASET_INFO"] = "Anzeigendatenquellen finden Sie im Datensatz <b>tracking_source</b>. Anzeigenkostenstatistik im <b>tracking_source_expenses</b>.";

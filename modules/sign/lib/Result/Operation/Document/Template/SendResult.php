@@ -9,7 +9,7 @@ use Bitrix\Sign\Result\SuccessResult;
 class SendResult extends SuccessResult
 {
 	public function __construct(
-		public Document $document,
+		public Document $newDocument,
 		public Member $employeeMember,
 	)
 	{

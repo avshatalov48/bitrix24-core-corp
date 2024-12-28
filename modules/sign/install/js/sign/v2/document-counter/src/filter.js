@@ -9,7 +9,7 @@ export class Filter
 		this.#filter = BX.Main.filterManager.getById(options.filterId);
 	}
 
-	toggleField(name: string, value: string): boolean
+	toggleField(name: string, value: string, resetAllFields: boolean): boolean
 	{
 		const field = this.#filter.getFieldByName(name);
 
@@ -32,6 +32,16 @@ export class Filter
 			return false;
 		}
 
+		if (this.isFieldValueAlreadyApplied(name, filteredValues, resetAllFields))
+		{
+			return false;
+		}
+
+		if (resetAllFields)
+		{
+			this.#filter.getApi().setFields({});
+		}
+
 		this.#filter.getApi().extendFilter({
 			[name]: { ...filteredValues },
 		});
@@ -48,5 +58,56 @@ export class Filter
 	{
 		this.#filter.getApi().setFields({});
 		this.#filter.getApi().apply();
+	}
+
+	isFieldValueAlreadyApplied(name: string, setValues: Array, withoutOtherFilters: boolean): boolean
+	{
+		const filterRows = this.getFilterRows();
+		const currentValuesObject = filterRows[name];
+		if (!Type.isObject(currentValuesObject))
+		{
+			return false;
+		}
+
+		if (withoutOtherFilters && this.isSomeOtherFilterPresent(name))
+		{
+			return false;
+		}
+
+		const currentValuesArray = Object.values(currentValuesObject);
+		for (const setValue of setValues)
+		{
+			if (!currentValuesArray.includes(setValue))
+			{
+				return false;
+			}
+		}
+
+		if (withoutOtherFilters)
+		{
+			for (const currentValue of currentValuesArray)
+			{
+				if (!setValues.includes(currentValue))
+				{
+					return false;
+				}
+			}
+		}
+
+		return true;
+	}
+
+	isSomeOtherFilterPresent(name: string): boolean
+	{
+		for (const [key, value] of Object.entries(this.getFilterRows()))
+		{
+			const isPresent = Type.isStringFilled(value) || Type.isArrayFilled(value);
+			if (key !== name && isPresent)
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

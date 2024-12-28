@@ -5,6 +5,7 @@ namespace Bitrix\Tasks\Integration\Recyclebin;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Data\Cache;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\Error;
@@ -18,6 +19,9 @@ use Bitrix\Recyclebin\Internals\Entity;
 use Bitrix\Recyclebin\Internals\Contracts\Recyclebinable;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
+use Bitrix\Tasks\Control\Log\ActionDictionary;
+use Bitrix\Tasks\Control\Log\Command\AddCommand;
+use Bitrix\Tasks\Control\Log\TaskLogService;
 use Bitrix\Tasks\Control\Tag;
 use Bitrix\Tasks\Flow\Internal\FlowTaskTable;
 use Bitrix\Tasks\Integration;
@@ -26,6 +30,7 @@ use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
 use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Internals\CacheConfig;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Log\LogFacade;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Routes\RouteDictionary;
 use Bitrix\Tasks\Internals\Task\RegularParametersTable;
@@ -60,6 +65,7 @@ use CTasks;
 use CTaskTags;
 use CTaskTemplates;
 use Exception;
+use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * Class Task
@@ -95,7 +101,28 @@ class Task implements Recyclebinable
 		$result = $recyclebin->save();
 		$resultData = $result->getData();
 
+		self::addDeletionToLog($taskId);
+
 		return $resultData['ID'];
+	}
+
+	protected static function addDeletionToLog(int $taskId): void
+	{
+		$addCommand = (new AddCommand())
+			->setField(ActionDictionary::DELETE)
+			->setTaskId($taskId)
+			->setCreatedDate(new DateTime())
+			->setUserId(User::getId());
+
+		try
+		{
+			$service = ServiceLocator::getInstance()->get('tasks.control.log.task.service');
+			$service->add($addCommand);
+		}
+		catch (Exception|NotFoundExceptionInterface $exception)
+		{
+			LogFacade::logThrowable($exception);
+		}
 	}
 
 	/**
@@ -332,7 +359,7 @@ class Task implements Recyclebinable
 				"TASK_ID" => $taskId,
 				"USER_ID" => User::getId(),
 				"CREATED_DATE" => new DateTime(),
-				"FIELD" => 'RENEW',
+				"FIELD" => ActionDictionary::RENEW,
 			];
 
 			$log = new CTaskLog();

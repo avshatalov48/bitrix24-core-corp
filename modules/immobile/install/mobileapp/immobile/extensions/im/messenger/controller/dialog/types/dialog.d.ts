@@ -2,13 +2,14 @@ import {DialogId} from "../../../types/common";
 import {DialoguesModelState} from "../../../model/types/dialogues";
 import {MessengerCoreStore } from "../../../../core/types/store";
 import {IServiceLocator} from "../../../lib/di/service-locator/types";
+import { ForwardMessageIds} from "../lib/reply-manager/types/reply-manager";
 
 declare type DialogOpenOptions = {
 	dialogId: string,
 	messageId?: string | number,
 	withMessageHighlight?: boolean,
 	dialogTitleParams?: DialogTitleParams,
-	forwardMessageId?: string,
+	forwardMessageIds?: ForwardMessageIds,
 	chatType?: string,
 	userCode?: string, // for openlines dialog only
 	fallbackUrl?: string, // for openlines dialog only

@@ -23,41 +23,14 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 			super({ ...options, logger });
 		}
 
-		bindMethods()
-		{
-			super.bindMethods();
-			this.recentAddHandler = this.recentAddHandler.bind(this);
-			this.recentUpdateHandler = this.recentUpdateHandler.bind(this);
-			this.recentDeleteHandler = this.recentDeleteHandler.bind(this);
-			this.dialogUpdateHandler = this.dialogUpdateHandler.bind(this);
-		}
-
 		subscribeViewEvents()
 		{
+			super.subscribeViewEvents();
+
 			this.view
 				.on(EventType.recent.itemSelected, this.onItemSelected.bind(this))
-				.on(EventType.recent.loadNextPage, this.onLoadNextPage.bind(this))
-				.on(EventType.recent.itemAction, this.onItemAction.bind(this))
 				.on(EventType.recent.createChat, this.onCreateChat.bind(this))
-				.on(EventType.recent.refresh, this.onRefresh.bind(this))
 			;
-		}
-
-		subscribeStoreEvents()
-		{
-			this.storeManager
-				.on('recentModel/add', this.recentAddHandler)
-				.on('recentModel/update', this.recentUpdateHandler)
-				.on('recentModel/delete', this.recentDeleteHandler)
-				.on('dialoguesModel/add', this.dialogUpdateHandler)
-				.on('dialoguesModel/update', this.dialogUpdateHandler)
-			;
-		}
-
-		subscribeMessengerEvents()
-		{
-			BX.addCustomEvent(EventType.messenger.afterRefreshSuccess, this.stopRefreshing);
-			BX.addCustomEvent(EventType.messenger.renderRecent, this.renderInstant);
 		}
 
 		/**
@@ -156,8 +129,6 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 				idListForDeleteFromCache.forEach((id) => {
 					this.store.dispatch('recentModel/delete', { id });
 				});
-
-				await this.saveShareDialogCache(modelData.recent);
 			}
 		}
 
@@ -251,50 +222,12 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 			this.openDialog(recentItem.id, ComponentCode.imCopilotMessenger);
 		}
 
-		onLoadNextPage()
-		{
-			this.loadNextPage();
-		}
-
-		onItemAction(event)
-		{
-			const action = event.action.identifier;
-			const itemId = event.item.params.id;
-
-			this.itemAction.do(action, itemId);
-		}
-
 		onCreateChat()
 		{
 			MessengerEmitter.emit(EventType.messenger.createChat, {}, ComponentCode.imCopilotMessenger);
 		}
 
-		onRefresh()
-		{
-			MessengerEmitter.emit(EventType.messenger.refresh, true, ComponentCode.imCopilotMessenger);
-		}
-
 		/* endregion Events */
-		recentAddHandler(mutation)
-		{
-			const recentList = [];
-			const recentItemList = clone(mutation.payload.data.recentItemList);
-
-			recentItemList.forEach((item) => recentList.push(item.fields));
-
-			this.addItems(recentList);
-		}
-
-		recentUpdateHandler(mutation)
-		{
-			const recentList = [];
-
-			mutation.payload.data.recentItemList.forEach((item) => {
-				recentList.push(clone(this.store.getters['recentModel/getCollection']()[item.index]));
-			});
-
-			this.updateItems(recentList);
-		}
 
 		dialogUpdateHandler(mutation)
 		{
@@ -312,16 +245,6 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 		showWelcomeScreen()
 		{
 			this.view.showWelcomeScreen();
-		}
-
-		/**
-		 * @override
-		 * @param {Array} recentItems
-		 * @return {Promise}
-		 */
-		saveShareDialogCache(recentItems)
-		{
-			return Promise.resolve(true);
 		}
 	}
 

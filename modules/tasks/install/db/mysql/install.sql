@@ -740,7 +740,8 @@ CREATE TABLE IF NOT EXISTS b_tasks_task_tag (
 	TAG_ID INT(11) NOT NULL,
 	TASK_ID INT(11) NOT NULL,
 	PRIMARY KEY (ID),
-	UNIQUE INDEX TASKS_TASK_TAG (TAG_ID, TASK_ID)
+	UNIQUE INDEX TASKS_TASK_TAG (TAG_ID, TASK_ID),
+	INDEX ix_b_tasks_task_tag_task_id(TASK_ID)
 );
 
 CREATE TABLE IF NOT EXISTS b_tasks_viewed_group (
@@ -754,7 +755,8 @@ CREATE TABLE IF NOT EXISTS b_tasks_viewed_group (
 
 CREATE TABLE IF NOT EXISTS b_tasks_scenario (
 	TASK_ID  INT(11) UNSIGNED NOT NULL,
-	SCENARIO varchar(8) NOT NULL DEFAULT 'default'
+	SCENARIO varchar(8) NOT NULL DEFAULT 'default',
+	INDEX task_scenario_index (TASK_ID, SCENARIO)
 );
 
 CREATE TABLE IF NOT EXISTS b_tasks_template_scenario (
@@ -891,4 +893,31 @@ create table if not exists b_tasks_flow_auto_created_robot
 	ROBOT varchar(255) not null,
 	primary key (ID),
 	unique index ix_flow_robot(FLOW_ID, ROBOT)
+);
+
+create table if not exists b_tasks_flow_user_option
+(
+	ID int not null auto_increment,
+	FLOW_ID int not null,
+	USER_ID int not null,
+	NAME varchar(255) not null,
+	VALUE varchar(255) not null,
+	primary key (ID),
+	unique index ix_b_task_flow_user_option_name_value(FLOW_ID, USER_ID, NAME)
+);
+
+
+create table if not exists b_tasks_flow_copilot_advice
+(
+	FLOW_ID int not null,
+	ADVICE  text,
+	UPDATED_DATE datetime default null,
+	primary key (FLOW_ID)
+);
+
+create table if not exists b_tasks_flow_copilot_collected_data
+(
+	FLOW_ID int not null,
+	DATA  text,
+	primary key (FLOW_ID)
 );

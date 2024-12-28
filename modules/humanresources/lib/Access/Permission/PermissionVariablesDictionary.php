@@ -6,10 +6,11 @@ use Bitrix\Main\Localization\Loc;
 
 class PermissionVariablesDictionary
 {
-	public const VARIABLE_NONE = 1;
-	public const VARIABLE_ALL = 2;
-	public const VARIABLE_SELF_DEPARTMENTS = 3;
-	public const VARIABLE_SELF_DEPARTMENTS_SUBDEPARTMENTS = 4;
+	public const VARIABLE_NONE = 0;
+	public const VARIABLE_SELF_DEPARTMENTS = 10;
+	public const VARIABLE_SELF_DEPARTMENTS_SUB_DEPARTMENTS = 20;
+	public const VARIABLE_ALL = 30;
+
 
 	/**
 	 * returns variables for permissions with prepared options
@@ -20,11 +21,11 @@ class PermissionVariablesDictionary
 		return [
 			[
 				'id' => self::VARIABLE_ALL,
-				'title' => Loc::getMessage('HUMAN_RESOURCES_ACCESS_RIGHTS_VARIABLES_ALL'),
+				'title' => Loc::getMessage('HUMAN_RESOURCES_ACCESS_RIGHTS_VARIABLES_ALL_MSGVER_1'),
 			],
 			[
-				'id' => self::VARIABLE_SELF_DEPARTMENTS_SUBDEPARTMENTS,
-				'title' => Loc::getMessage('HUMAN_RESOURCES_ACCESS_RIGHTS_SELF_DEPARTMENTS_SUBDEPARTMENTS'),
+				'id' => self::VARIABLE_SELF_DEPARTMENTS_SUB_DEPARTMENTS,
+				'title' => Loc::getMessage('HUMAN_RESOURCES_ACCESS_RIGHTS_SELF_DEPARTMENTS_SUBDEPARTMENTS_MSGVER_1'),
 			],
 			[
 				'id' => self::VARIABLE_SELF_DEPARTMENTS,
@@ -32,7 +33,7 @@ class PermissionVariablesDictionary
 			],
 			[
 				'id' => self::VARIABLE_NONE,
-				'title' => Loc::getMessage('HUMAN_RESOURCES_ACCESS_RIGHTS_VARIABLES_NONE'),
+				'title' => Loc::getMessage('HUMAN_RESOURCES_ACCESS_RIGHTS_VARIABLES_NONE_MSGVER_1'),
 			],
 		];
 	}

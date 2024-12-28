@@ -14,6 +14,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 	const { MessageText } = require('im/messenger/lib/parser/elements/dialog/message/text');
 	const { QuoteActive } = require('im/messenger/lib/parser/elements/dialog/message/quote-active');
 	const { QuoteInactive } = require('im/messenger/lib/parser/elements/dialog/message/quote-inactive');
+	const { Code } = require('im/messenger/lib/parser/elements/dialog/message/code');
 	const { parserUrl } = require('im/messenger/lib/parser/functions/url');
 
 	const QUOTE_SIGN = '>>';
@@ -200,18 +201,18 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 			result = result.replaceAll(
 				/\[code](.*?)\[\/code]?/gis,
 				(textWithTag, context, index) => {
-					const textBeforeTag = text.slice(prevPhraseFirstIndex, index).trim();
-					const textAfterTag = text.slice(index + textWithTag.length).trim();
+					const textBeforeTag = text.slice(prevPhraseFirstIndex, index).replaceAll(' ', '');
+					const textAfterTag = text.slice(index + textWithTag.length).replaceAll(' ', '');
 
 					const startTag = /((.*\n)|^)$/gi.test(textBeforeTag) ? '' : '\n';
 					const endTag = /^((\n.*)|$)/gi.test(textAfterTag) ? '' : '\n';
-
-					const inactiveQuote = new QuoteInactive('', context);
-					const inactiveQuoteId = parsedElements.add(inactiveQuote);
+					const formattedContext = context.replace(/(^\n\s*)|(\n\s*$)/, '');
+					const code = new Code(formattedContext);
+					const codeId = parsedElements.add(code);
 
 					prevPhraseFirstIndex = index + textWithTag.length;
 
-					return `${startTag}${PLACEHOLDER}${inactiveQuoteId}${endTag}`;
+					return `${startTag}${PLACEHOLDER}${codeId}${endTag}`;
 				},
 			);
 

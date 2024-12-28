@@ -5,13 +5,12 @@ namespace Bitrix\CalendarMobile\Controller;
 use Bitrix\Calendar\Controller\SyncAjax;
 use Bitrix\Calendar\Core\Role\Helper;
 use Bitrix\Calendar\Core\Role\User;
+use Bitrix\Calendar\Integration\Pull\PushCommand;
 use Bitrix\Calendar\Util;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
-
-Loader::requireModule('calendar');
 
 class Sync extends Controller
 {
@@ -230,16 +229,16 @@ class Sync extends Controller
 			$type
 		);
 	}
-	
+
 	public function updateConnectionsAction(): bool
 	{
 		$userId = \CCalendar::GetCurUserId();
-		
+
 		if (!$userId)
 		{
 			return false;
 		}
-		
+
 		return \CCalendarSync::UpdateUserConnections();
 	}
 
@@ -309,7 +308,7 @@ class Sync extends Controller
 	private function sendPushConnectionSuccess(string $vendorName): void
 	{
 		Util::addPullEvent(
-			'handle_successful_connection',
+			PushCommand::HandleSuccessfulConnection,
 			\CCalendar::GetCurUserId(),
 			[
 				'vendorName' => $vendorName,

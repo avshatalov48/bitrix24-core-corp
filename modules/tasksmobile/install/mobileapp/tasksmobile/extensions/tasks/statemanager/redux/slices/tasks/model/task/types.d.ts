@@ -30,6 +30,7 @@ declare type TaskReduxModel = {
 	tags?: TagsDTO[],
 	files?: FilesDTO[],
 	uploadedFiles: UploadingFilesDTO[],
+	userFieldNames: string[],
 
 	isMuted?: boolean,
 	isPinned?: boolean,
@@ -42,6 +43,7 @@ declare type TaskReduxModel = {
 	allowTimeTracking?: boolean,
 	allowTaskControl?: boolean,
 	isTimerRunningForCurrentUser?: boolean,
+	areUserFieldsLoaded?: boolean,
 
 	deadline?: number,
 	activityDate?: number,
@@ -151,4 +153,19 @@ export type UploadingFilesDTO = {
 	type: string,
 	isUploading: boolean,
 	hasError: boolean,
+}
+
+export type UserFieldsDTO = {
+	id: number,
+	type: string,
+	entityId: string,
+	fieldName: string,
+	title: string,
+	value: string | string[],
+	sort: number,
+	isMandatory: boolean,
+	isMultiple: boolean,
+	isVisible: boolean,
+	isEditable: boolean,
+	settings: any[],
 }

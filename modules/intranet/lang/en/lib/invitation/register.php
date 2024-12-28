@@ -1,4 +1,5 @@
 <?php
+$MESS["INTRANET_INVITATION_DAILY_EMAIL_LIMIT_EXCEEDED"] = "Daily invitation email limit exceeded.";
 $MESS["INTRANET_INVITATION_DAILY_PHONE_LIMIT_EXCEEDED"] = "Exceeded daily limit of invitations using phone number.";
 $MESS["INTRANET_INVITATION_EMAIL_ERROR"] = "Email addresses are incorrect:";
 $MESS["INTRANET_INVITATION_EMAIL_LIMIT_EXCEEDED"] = "Maximum number of email addresses in the invitation exceeded.";

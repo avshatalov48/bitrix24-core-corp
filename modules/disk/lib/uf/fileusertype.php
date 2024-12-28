@@ -6,10 +6,13 @@ use Bitrix\Disk\AttachedObject;
 use Bitrix\Disk\BaseObject;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
+use Bitrix\Disk\Folder;
+use Bitrix\Disk\Integration\Collab\CollabService;
 use Bitrix\Disk\Search\ContentManager;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\SystemUser;
+use Bitrix\Disk\ProxyType;
 use Bitrix\Disk\User;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
@@ -299,6 +302,27 @@ final class FileUserType
 		return $valuesToInsert;
 	}
 
+	private static function isNewUploadedFile(File $file): bool
+	{
+		$storage = $file->getStorage();
+		if (!$storage)
+		{
+			return false;
+		}
+
+		if (!($storage->getProxyType() instanceof ProxyType\User))
+		{
+			return false;
+		}
+
+		if (!$file->isFirstVersion())
+		{
+			return false;
+		}
+
+		return $file->getParent()?->getCode() === Folder::CODE_FOR_UPLOADED_FILES;
+	}
+
 	public static function onBeforeSave($userField, $value, $userId = false)
 	{
 		[$type, $realValue] = self::detectType($value);
@@ -321,6 +345,37 @@ final class FileUserType
 			if (!$fileModel || !$fileModel->getStorage())
 			{
 				return '';
+			}
+
+			$collabService = new CollabService();
+			$collabStorage = $collabService->getCollabStorageByEntity($userField['VALUE_ID'], $userField['ENTITY_ID']);
+			if ($collabStorage)
+			{
+				if (self::isNewUploadedFile($fileModel))
+				{
+					$originalStorage = $fileModel->getStorage();
+					$moveStatus = $fileModel->moveToAnotherFolder($collabStorage->getFolderForUploadedFiles(), $fileModel->getCreatedBy(), true);
+					if ($moveStatus && $originalStorage)
+					{
+						$folderForUploadedFiles = $originalStorage->getFolderForUploadedFiles();
+						if ($folderForUploadedFiles && !$folderForUploadedFiles->hasChildren())
+						{
+							$folderForUploadedFiles->deleteTree(SystemUser::SYSTEM_USER_ID);
+						}
+					}
+				}
+				else
+				{
+					$collabFile = $fileModel->copyTo($collabStorage->getFolderForUploadedFiles(), $fileModel->getCreatedBy(), true);
+					if ($collabFile)
+					{
+						$newName = Loc::getMessage('DISK_FILE_USER_TYPE_NEW_FILE_IN_COLLAB', [
+							'#NAME#' => $fileModel->getName()
+						]);
+						$collabFile->rename($newName, true);
+						$fileModel = $collabFile;
+					}
+				}
 			}
 
 			if ($userId === false)

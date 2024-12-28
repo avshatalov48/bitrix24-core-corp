@@ -54,11 +54,11 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 			return {
 				title: this.getEditorTitle(),
 				placeholder: this.getEditorPlaceholder(),
-				useBBCodeEditor: this.props.useBBCodeEditor,
+				readOnly: !this.state.editable,
 				bbCodeEditorParams: {
-					readOnly: !this.props.editable,
 					closeOnSave: true,
 				},
+				useBBCodeEditor: this.props.useBBCodeEditor,
 			};
 		}
 

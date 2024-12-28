@@ -6,6 +6,8 @@ jn.define('utils/email', (require, exports, module) => {
 	const { domains } = require('utils/email/src/domains');
 	const DEFAULT = 'default';
 
+	const emailRegExp = /([\w%+.-]+@(?:[\dA-Za-z-]+\.)+[A-Za-z]{2,})/;
+
 	/**
 	 * @param {string} email
 	 * @returns {string|null}
@@ -45,9 +47,8 @@ jn.define('utils/email', (require, exports, module) => {
 		{
 			return false;
 		}
-		const regExp = /^[^@]+@[^@]+\.[^@]+$/;
 
-		return regExp.test(email);
+		return emailRegExp.test(email);
 	}
 
 	/**
@@ -69,6 +70,7 @@ jn.define('utils/email', (require, exports, module) => {
 
 	module.exports = {
 		isValidEmail,
+		emailRegExp: new RegExp(emailRegExp.source),
 		getEmailDomain,
 		getDomainImageUri,
 		getEmailServiceName,

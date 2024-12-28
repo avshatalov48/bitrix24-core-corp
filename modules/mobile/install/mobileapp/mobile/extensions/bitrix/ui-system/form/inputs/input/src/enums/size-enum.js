@@ -48,7 +48,7 @@ jn.define('ui-system/form/inputs/input/src/enums/size-enum', (require, exports, 
 		static S = new InputSize('S', {
 			input: {
 				height: 28,
-				textSize: 6,
+				textSize: 5,
 				paddingHorizontal: Indent.M,
 				paddingVertical: Indent.S,
 			},

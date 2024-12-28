@@ -95,6 +95,16 @@ class Presets
 					new Recipient(Recipient::FLOW_OWNER),
 				]
 			),
+			// Notify himself distribution flow manager when task wasn't taken
+			new Item(
+				new Caption('TASKS_FLOW_NOTIFICATION_CAPTION_HIMSELF_ADMIN_TASK_NOT_TAKEN'),
+				new Message('TASKS_FLOW_NOTIFICATION_MESSAGE_HIMSELF_ADMIN_TASK_NOT_TAKEN'),
+				new When(When::HIMSELF_FLOW_TASK_NOT_TAKEN),
+				new Where(Where::NOTIFICATION_CENTER),
+				[
+					new Recipient(Recipient::TASK_FLOW_OWNER),
+				]
+			),
 		];
 	}
 

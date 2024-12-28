@@ -834,7 +834,15 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 							if ($ID == false)
 							{
 								//we have saved report?
-								$dbres = CTimeManReportFull::GetList(["ID" => "desc"], ["ACTIVE" => "N", "USER_ID" => $curUser], ["ID"], ["nTopCount" => 1]);
+								$dbres = CTimeManReportFull::GetList(
+									["ID" => "desc"],
+									[
+										"=ACTIVE" => "N",
+										"USER_ID" => $curUser
+									],
+									["ID"],
+									["nTopCount" => 1],
+								);
 								if ($arCurrentReport = $dbres->Fetch())
 								{
 									$ID = $arCurrentReport["ID"];

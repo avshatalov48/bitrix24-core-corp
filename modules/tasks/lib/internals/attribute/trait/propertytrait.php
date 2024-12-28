@@ -80,4 +80,17 @@ trait PropertyTrait
 
 		return $reflection->getProperty($property)->isInitialized($this);
 	}
+
+	protected function isFilledProperty(string $property): bool
+	{
+		if (!$this->hasProperty($property))
+		{
+			return false;
+		}
+
+		$reflection = new ReflectionClass($this);
+		$property = $reflection->getProperty($property);
+
+		return $property->getValue($this) !== null;
+	}
 }

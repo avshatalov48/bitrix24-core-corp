@@ -38,6 +38,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imChatUserAdd: 'im.chat.user.add',
 
 		imV2RecentChannelTail: 'im.v2.Recent.Channel.tail',
+		imV2RecentCollabTail: 'im.v2.Recent.Collab.tail',
 
 		imV2ChatGet: 'im.v2.Chat.get',
 		imV2ChatExtendPullWatch: 'im.v2.Chat.extendPullWatch',
@@ -73,6 +74,11 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatAddManagers: 'im.v2.Chat.addManagers',
 		imV2ChatDeleteManagers: 'im.v2.Chat.deleteManagers',
 
+		imV2ChatUpdate: 'im.v2.Chat.update',
+		imV2ChatUpdateAvatar: 'im.v2.Chat.updateAvatar',
+		imV2ChatSetTitle: 'im.v2.Chat.setTitle',
+		imV2ChatSetManageUI: 'im.v2.Chat.setManageUI',
+
 		imV2ChatMessageReactionAdd: 'im.v2.Chat.Message.Reaction.add',
 		imV2ChatMessageReactionDelete: 'im.v2.Chat.Message.Reaction.delete',
 		imV2ChatMessageReactionTail: 'im.v2.Chat.Message.Reaction.tail',
@@ -82,6 +88,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatCommentReadAll: 'im.v2.Chat.Comment.readAll',
 
 		imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
+		imV2ChatMemberEntitiesList: 'im.v2.Chat.MemberEntities.list',
 
 		imDialogGet: 'im.dialog.get',
 		imDialogMessagesGet: 'im.dialog.messages.get',
@@ -144,6 +151,12 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		immobileTabChatLoad: 'immobile.Tab.Chat.load',
 		immobileTabCopilotLoad: 'immobile.Tab.Copilot.load',
 		immobileTabChannelLoad: 'immobile.Tab.Channel.load',
+		immobileTabCollabLoad: 'immobile.Tab.Collab.load',
+
+		socialnetworkCollabMemberAdd: 'socialnetwork.collab.Member.add',
+		socialnetworkCollabMemberDelete: 'socialnetwork.collab.Member.delete',
+		socialnetworkCollabDelete: 'socialnetwork.collab.Collab.delete',
+		socialnetworkCollabMemberLeave: 'socialnetwork.collab.Member.leave',
 	});
 
 	module.exports = {

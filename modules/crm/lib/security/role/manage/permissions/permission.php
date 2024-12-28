@@ -2,7 +2,9 @@
 
 namespace Bitrix\Crm\Security\Role\Manage\Permissions;
 
-use Bitrix\Main\Access\Permission\PermissionDictionary;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\BaseControlType;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\Variables;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\Variants;
 
 /**
  * Base class for permissions
@@ -10,20 +12,34 @@ use Bitrix\Main\Access\Permission\PermissionDictionary;
  */
 abstract class Permission
 {
-	public function __construct(private readonly array $variants = [])
+	public function __construct(private ?Variants $variants = null, private ?BaseControlType $controlType = null)
 	{
-
+		if (!isset($this->controlType))
+		{
+			$this->controlType = $this->createDefaultControlType();
+		}
+		$this->controlType->setPermission($this);
 	}
 
 	abstract public function code(): string;
 
 	abstract public function name(): string;
 
+	public function explanation(): ?string
+	{
+		return null;
+	}
+
 	abstract public function canAssignPermissionToStages(): bool;
 
-	public function variants(): array
+	public function variants(): ?Variants
 	{
 		return $this->variants;
+	}
+
+	public function setVariants(Variants $variants): void
+	{
+		$this->variants = $variants;
 	}
 
 	public function toArray(): array
@@ -31,7 +47,7 @@ abstract class Permission
 		return [
 			'code' => $this->code(),
 			'name' => $this->name(),
-			'variants' => $this->variants(),
+			'variants' => $this->variants()?->toArray(),
 			'canAssignPermissionToStages' => $this->canAssignPermissionToStages(),
 			'defaultAttribute' => $this->getDefaultAttribute(),
 			'defaultSettings' => $this->getDefaultSettings(),
@@ -67,10 +83,11 @@ abstract class Permission
 	 * control type define way how to draw this permission on the frontend and convert it value from/to frontend
 	 *
 	 * @return string
+	 * @deprecated see \Bitrix\Crm\Security\Role\Manage\Permissions\Permission::getControlType
 	 */
-	public function controlType(): string
+	public function getControlTypeCode(): string
 	{
-		return PermissionDictionary::TYPE_VARIABLES;
+		return $this->createDefaultControlType()->getType();
 	}
 
 	public function getMaxSettingsValue(): array
@@ -81,5 +98,15 @@ abstract class Permission
 	public function getMinSettingsValue(): array
 	{
 		return [];
+	}
+
+	public function getControlType(): BaseControlType
+	{
+		return $this->controlType;
+	}
+
+	protected function createDefaultControlType(): BaseControlType
+	{
+		return new Variables();
 	}
 }

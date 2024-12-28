@@ -2,11 +2,11 @@
 
 namespace Bitrix\Crm\Kanban\Entity;
 
+use Bitrix\Crm\Item\Quote as QuoteItem;
 use Bitrix\Crm\Kanban\Entity\Deadlines\DeadlinesStageManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
-use Bitrix\Crm\Item\Quote as QuoteItem;
 
 class QuoteDeadlines extends Quote
 {
@@ -25,6 +25,11 @@ class QuoteDeadlines extends Quote
 	public function getStageFieldName(): string
 	{
 		return DeadlinesStageManager::FILTER_FIELD_CONTAINS_STAGE;
+	}
+
+	public function getDbStageFieldName(): string
+	{
+		return parent::getStageFieldName();
 	}
 
 	public function getStagesList(): array

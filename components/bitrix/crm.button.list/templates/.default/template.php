@@ -1,14 +1,26 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
+use Bitrix\Crm\Security\Role\Manage\Manager\ButtonSelection;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Uri;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Toolbar\ButtonLocation;
 
-/** @var CBitrixComponentTemplate $this */
-/** @var array $arParams */
-/** @var array $arResult */
+/**
+ * @var CBitrixComponentTemplate $this
+ * @var array $arParams
+ * @var array $arResult
+ * @var CMain $APPLICATION
+ * @var CBitrixComponent $component
+ */
 
 Extension::load([
 	'ui.design-tokens',
@@ -16,6 +28,39 @@ Extension::load([
 	'clipboard',
 	'ui.buttons',
 ]);
+
+$interfaceToolbarButtons = [];
+
+if ($arResult['PERM_CAN_EDIT'])
+{
+	$interfaceToolbarButtons[] = [
+		'TITLE' => Loc::getMessage('CRM_BUTTON_LIST_ADD_CAPTION'),
+		'TEXT' => Loc::getMessage('CRM_BUTTON_LIST_ADD_CAPTION'),
+		'LINK' => $arResult['PATH_TO_BUTTON_NEW'],
+		'LOCATION' => ButtonLocation::RIGHT,
+		'COLOR' => Color::PRIMARY,
+	];
+}
+
+$permissionButton = new PermissionItem(new ButtonSelection());
+if ($permissionButton->canShow())
+{
+	$interfaceToolbarButtons[] = $permissionButton->toInterfaceToolbarButton();
+}
+
+$APPLICATION->IncludeComponent(
+	'bitrix:crm.interface.toolbar',
+	SITE_TEMPLATE_ID === 'bitrix24' ? 'title' : '',
+	[
+		'TOOLBAR_ID' => 'crm_button_toolbar',
+		'BUTTONS' => $interfaceToolbarButtons,
+		'TOOLBAR_PARAMS' => [],
+	],
+	$component,
+	[
+		'HIDE_ICONS' => 'Y',
+	]
+);
 
 ?>
 
@@ -319,19 +364,6 @@ Extension::load([
 		));
 	});
 </script>
-
-<?
-	if ($arResult['PERM_CAN_EDIT'])
-	{
-		$this->SetViewTarget("pagetitle", 10);
-		?>
-			<a id="CRM_BUTTON_LIST_ADD" href="<?=htmlspecialcharsbx($arResult['PATH_TO_BUTTON_NEW'])?>" class="ui-btn ui-btn-primary">
-				<?=Loc::getMessage('CRM_BUTTON_LIST_ADD_CAPTION')?>
-			</a>
-		<?
-		$this->EndViewTarget();
-	}
-?>
 
 <div style="display: none;">
 	<div id="SCRIPT_CONTAINER" class="crm-button-list-sidebar-insert-code-container">

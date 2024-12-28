@@ -6,6 +6,22 @@ namespace Bitrix\AI\Model;
 
 use Bitrix\Main\Entity;
 
+/**
+ * Class RolePromptTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_RolePrompt_Query query()
+ * @method static EO_RolePrompt_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_RolePrompt_Result getById($id)
+ * @method static EO_RolePrompt_Result getList(array $parameters = [])
+ * @method static EO_RolePrompt_Entity getEntity()
+ * @method static \Bitrix\AI\Model\EO_RolePrompt createObject($setDefaultValues = true)
+ * @method static \Bitrix\AI\Model\EO_RolePrompt_Collection createCollection()
+ * @method static \Bitrix\AI\Model\EO_RolePrompt wakeUpObject($row)
+ * @method static \Bitrix\AI\Model\EO_RolePrompt_Collection wakeUpCollection($rows)
+ */
 class RolePromptTable extends Entity\DataManager
 {
 	/**

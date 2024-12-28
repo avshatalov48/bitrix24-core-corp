@@ -30,6 +30,12 @@ $arUrlRewrite = array(
 		"PATH" => "/pub/payment_slip.php",
 	),
 	array(
+		"CONDITION" => "#^/pub/booking/confirmation/([0-9a-z\.]+)/#",
+		"RULE" => "hash=\$1",
+		"ID" => "bitrix:booking.pub.confirm",
+		"PATH" => "/pub/booking/confirmation.php",
+	),
+	array(
 		"CONDITION" => "#^/pub/calendar-event/([0-9]+)/([0-9a-zA-Z]+)/?([^/]*)#",
 		"RULE" => "event_id=\$1&hash=\$2",
 		"ID" => "bitrix:calendar.pub.event",
@@ -229,6 +235,12 @@ $arUrlRewrite = array(
 		"RULE" => "",
 		"ID" => "bitrix:crm.config.preset",
 		"PATH" => "/crm/configs/preset/index.php",
+	),
+	array(
+		"CONDITION" => "#^/crm/configs/communication_channel_routes/#",
+		"RULE" => "",
+		"ID" => "bitrix:crm.config.communication_channel_routes",
+		"PATH" => "/crm/configs/communication_channel_routes/index.php",
 	),
 	array(
 		"CONDITION" => "#^/marketplace/configuration/#",
@@ -899,10 +911,10 @@ $arUrlRewrite = array(
 		'PATH' => '/spaces/index.php',
 	],
 	[
-		'CONDITION' => '#^/humanresources/#',
+		'CONDITION' => '#^/hr/#',
 		'RULE' => '',
 		'ID' => 'bitrix:humanresources.start',
-		'PATH' => '/humanresources/index.php',
+		'PATH' => '/hr/index.php',
 	],
 	array(
 		"CONDITION" => "#^/vibe/edit/#",
@@ -923,9 +935,21 @@ $arUrlRewrite = array(
 		"PATH" => "/desktop_menu/index.php",
 	],
 	[
+		'CONDITION' => '#^/booking/detail/([0-9]+)#',
+		'RULE' => "id=\$1",
+		'ID' => 'bitrix:booking.booking.detail',
+		'PATH' => '/booking/detail.php',
+	],
+	[
 		'CONDITION' => '#^/booking/#',
 		'RULE' => '',
 		'ID' => 'bitrix:booking',
 		'PATH' => '/booking/index.php',
+	],
+	[
+		'CONDITION' => '#^/crm/#',
+		'RULE' => '',
+		'ID' => 'bitrix:crm.router',
+		'PATH' => '/crm/index.php',
 	],
 );

@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Integration\IM\Notification\UseCase;
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Integration\IM\Notification;
+use Bitrix\Tasks\Integration\SocialNetwork\Collab\Provider\CollabProvider;
 use Bitrix\Tasks\Internals\Notification\Message;
 use Bitrix\Tasks\Internals\Notification\User;
 use Bitrix\Tasks\Internals\Notification\UserRepositoryInterface;
@@ -67,7 +68,9 @@ class TaskUpdated
 				continue;
 			}
 
-			$actionMessage = Loc::getMessage('TASKS_MESSAGE_' . $this->mapKey($key), null, $recepient->getLang());
+			$resolvedKey = $this->mapKey($this->replaceKey($value['FROM_VALUE'], $value['TO_VALUE'], $key));
+
+			$actionMessage = Loc::getMessage('TASKS_MESSAGE_' . $resolvedKey, null, $recepient->getLang());
 			if(empty($actionMessage) && isset($trackedFields[$key]) && !empty($trackedFields[$key]['TITLE']))
 			{
 				$actionMessage = $trackedFields[$key]['TITLE'];
@@ -147,7 +150,7 @@ class TaskUpdated
 						$fromGroupId = (int)$value['FROM_VALUE'];
 						$toGroupId = (int)$value['TO_VALUE'];
 
-						if($fromGroupId && $this->checkUserCanViewGroup($recepient->getId(), $fromGroupId))
+						if($fromGroupId)
 						{
 							$arGroupFrom = $this->getSocNetGroup($fromGroupId);
 							{
@@ -157,7 +160,7 @@ class TaskUpdated
 								}
 							}
 						}
-						if($toGroupId && $this->checkUserCanViewGroup($recepient->getId(), $toGroupId))
+						if($toGroupId)
 						{
 							$arGroupTo = $this->getSocNetGroup($toGroupId);
 							{
@@ -378,16 +381,6 @@ class TaskUpdated
 		return ($duration);
 	}
 
-	private function checkUserCanViewGroup(int $userId, int $groupId): bool
-	{
-		if(!\Bitrix\Main\Loader::includeModule('socialnetwork'))
-		{
-			return false;
-		}
-
-		return \CSocNetGroup::CanUserViewGroup($userId, $groupId);
-	}
-
 	private function getSocNetGroup(int $id): ?array
 	{
 		if(!\Bitrix\Main\Loader::includeModule('socialnetwork'))
@@ -402,6 +395,15 @@ class TaskUpdated
 		}
 
 		return $group;
+	}
+
+	private function replaceKey(mixed $fromValue, mixed $toValue, string $key): ?string
+	{
+		return match ($key)
+		{
+			'GROUP_ID' => CollabProvider::getInstance()?->isCollab((int)$toValue) ? 'COLLAB_ID' : $key,
+			default => $key,
+		};
 	}
 
 	private function mapKey(string $key): string

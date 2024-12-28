@@ -6,13 +6,16 @@ use Bitrix\Fileman\UserField\Types\AddressType;
 use Bitrix\Location\Entity\Address;
 use Bitrix\Location\Service\FormatService;
 use Bitrix\Main;
-use Bitrix\Sign\Connector;
 use Bitrix\Sign\Connector\MemberConnectorFactory;
 use Bitrix\Sign\Helper\Field\NameHelper;
 use Bitrix\Sign\Integration\CRM;
 use Bitrix\Sign\Item;
+use Bitrix\Sign\Operation\GetRequiredFieldsWithCache;
+use Bitrix\Sign\Repository\BlockRepository;
 use Bitrix\Sign\Service\Container;
-use Bitrix\Sign\Service\Providers\LegalInfoProvider;
+use Bitrix\Sign\Service\Integration\HumanResources\HcmLinkFieldService;
+use Bitrix\Sign\Service\Providers\MemberDynamicFieldInfoProvider;
+use Bitrix\Sign\Service\Result\Sign\Block\B2eRequiredFieldsResult;
 use Bitrix\Sign\Type;
 use Bitrix\Sign\Type\BlockCode;
 use Bitrix\Sign\Type\Field\ConnectorType;
@@ -56,12 +59,32 @@ final class Field
 	private const SNILS_FIELD_CODE = 'UF_LEGAL_SNILS';
 
 	private MemberConnectorFactory $memberConnectorFactory;
+	private readonly BlockRepository $blockRepository;
+	private readonly FieldValue $fieldValueFactory;
+	private readonly HcmLinkFieldService $hcmLinkFieldService;
+	private readonly \Bitrix\Sign\Blanks\Block\Factory $blockFactory;
 
-	public function __construct()
+	public function __construct(
+		?BlockRepository $blockRepository = null,
+		?HcmLinkFieldService $hcmLinkFieldService = null,
+		?\Bitrix\Sign\Blanks\Block\Factory $blockFactory = null,
+	)
 	{
 		$this->memberConnectorFactory = new MemberConnectorFactory();
+		$this->blockRepository = $blockRepository ?? Container::instance()->getBlockRepository();
+		$this->fieldValueFactory = new FieldValue();
+		$this->hcmLinkFieldService = $hcmLinkFieldService ?? Container::instance()->getHcmLinkFieldService();
+		$this->blockFactory = $blockFactory ?? new \Bitrix\Sign\Blanks\Block\Factory();
 	}
 
+	/**
+	 * @param int $userId
+	 * @param array{entityId: string, sourceName: string, type: string, userFieldId: string} $field
+	 * @param string $subFieldName
+	 * @param bool $originalValue
+	 *
+	 * @return mixed
+	 */
 	public static function getUserFieldValue(int $userId, array $field, string $subFieldName = '', bool $originalValue = false): mixed
 	{
 		global $USER_FIELD_MANAGER;
@@ -134,7 +157,7 @@ final class Field
 	public function createByBlocks(
 		Item\BlockCollection $blocks,
 		?Item\Member $member,
-		?Item\Document $document = null
+		?Item\Document $document = null,
 	): Item\FieldCollection
 	{
 		if (!Main\Loader::includeModule('crm'))
@@ -206,6 +229,18 @@ final class Field
 					$document,
 					$registeredFields,
 				),
+				BlockCode::EMPLOYEE_DYNAMIC => $this->createDynamicMemberFields(
+					$block,
+					$member,
+					$document,
+					$registeredFields,
+				),
+				BlockCode::B2E_HCMLINK_REFERENCE => $this->createHcmLinkFields(
+					$block,
+					$member,
+					$document,
+					$registeredFields,
+				),
 			};
 		}
 
@@ -267,6 +302,11 @@ final class Field
 
 		$fieldCode = new CRM\FieldCode($fieldCode);
 		$fieldDescription = $fieldCode->getDescription($member->presetId);
+		if (empty($fieldDescription))
+		{
+			return new Item\FieldCollection();
+		}
+
 		$fieldType = match ($fieldDescription['TYPE'] ?? '')
 		{
 			FieldType::DATE, FieldType::DATETIME => FieldType::DATE,
@@ -293,10 +333,7 @@ final class Field
 
 		$fieldName = NameHelper::create($block->code, $fieldType, $member->party, $fieldCode->getCode());
 
-		$field = $registeredFields->findFirst(
-			static fn(Item\Field $field) => $field->name === $fieldName,
-		);
-
+		$field = $registeredFields->getFirstFieldByName($fieldName);
 		if ($field !== null)
 		{
 			return new Item\FieldCollection($field);
@@ -469,7 +506,192 @@ final class Field
 		}
 
 		$fieldDescription = $profileProvider->getDescriptionByFieldName($fieldCode);
-		$fieldType = match ($fieldDescription['type'] ?? '')
+		$fieldType = $this->convertUserFieldType($fieldDescription['type'] ?? '');
+
+		if ($fieldCode === self::SNILS_FIELD_CODE)
+		{
+			$fieldType = FieldType::SNILS;
+		}
+
+		$fieldCode = self::USER_FIELD_CODE_PREFIX . $fieldCode;
+		$fieldName = NameHelper::create($block->code, $fieldType, $member->party, $fieldCode);
+
+		return $this->makeFieldsByUserFieldDescription(
+			$fieldName,
+			$fieldType,
+			$fieldDescription,
+			$member->party,
+			$registeredFields,
+		);
+	}
+
+	public function createByRequired(
+		Item\Document $document,
+		Item\MemberCollection $members,
+		Item\B2e\RequiredField $requiredField,
+	): ?Item\Field
+	{
+		$firstByRole = $members->findFirstByRole($requiredField->role);
+		if (!$firstByRole)
+		{
+			return null;
+		}
+
+		$block = $this->blockFactory->makeStubBlockByRequiredField($document, $requiredField, $firstByRole->party);
+		if (!$block)
+		{
+			return null;
+		}
+
+		return $this->createByBlocks(new Item\BlockCollection($block), $firstByRole, $document)->getFirst();
+	}
+
+	public function createDocumentMemberFields(
+		Item\Document $document,
+		Item\Member $member,
+		bool $withValues = false,
+	): Item\FieldCollection
+	{
+		$blocks = $this->blockRepository
+			->getCollectionByBlankId($document->blankId)
+			->filterByRole($member->role)
+		;
+
+		$fieldNameKeyMap = [];
+		foreach ($blocks as $block)
+		{
+			$fields = $this->createByBlocks(new Item\BlockCollection($block), $member, $document);
+			foreach ($fields as $field)
+			{
+				$fieldNameKeyMap[$field->name] = $field;
+				if ($withValues)
+				{
+					$this->createAndAppendValueToFieldWithSubfields($block, $field, $member, $document);
+				}
+			}
+		}
+
+		foreach ($this->getB2eRequiredFields($document) as $requiredField)
+		{
+			if ($member->role !== $requiredField->role)
+			{
+				continue;
+			}
+
+			$block = $this->blockFactory->makeStubBlockByRequiredField($document, $requiredField, $member->party);
+			$fields = $this->createByBlocks(new Item\BlockCollection($block), $member, $document);
+			foreach ($fields as $field)
+			{
+				if (isset($fieldNameKeyMap[$field->name]))
+				{
+					continue;
+				}
+				$fieldNameKeyMap[$field->name] = $field;
+				if ($withValues)
+				{
+					$this->createAndAppendValueToFieldWithSubfields($block, $field, $member, $document);
+				}
+			}
+		}
+
+		return new Item\FieldCollection(...array_values($fieldNameKeyMap));
+	}
+
+	private function createAndAppendValueToFieldWithSubfields(
+		Item\Block $block,
+		Item\Field $field,
+		Item\Member $member,
+		Item\Document $document,
+	): void
+	{
+		if (!$field->subfields)
+		{
+			$field->replaceValueIfPresent($this->fieldValueFactory->createByBlock($block, $field, $member, $document));
+
+			return;
+		}
+
+		foreach ($field->subfields as $subfield)
+		{
+			$subfield->replaceValueIfPresent($this->fieldValueFactory->createByBlock($block, $subfield, $member, $document));
+		}
+	}
+
+	private function getB2eRequiredFields(Item\Document $document): Item\B2e\RequiredFieldsCollection
+	{
+		if (!Type\DocumentScenario::isB2EScenario($document->scenario) || !$document->id || !$document->companyUid)
+		{
+			return new Item\B2e\RequiredFieldsCollection();
+		}
+
+		$operation = new GetRequiredFieldsWithCache(
+			documentId: $document->id,
+			companyUid: $document->companyUid,
+		);
+		$result = $operation->launch();
+
+		return $result instanceof B2eRequiredFieldsResult ? $result->collection : new Item\B2e\RequiredFieldsCollection();
+	}
+
+	public function createDocumentFutureSignerFields(
+		Item\Document $document,
+		int $userId,
+		bool $withValues = true,
+	): Item\FieldCollection
+	{
+		$member = new Item\Member(
+			documentId: $document->id,
+			party: 1,
+			entityType: \Bitrix\Sign\Type\Member\EntityType::USER,
+			entityId: $userId,
+			role: Type\Member\Role::SIGNER,
+		);
+
+		$fields = $this->createDocumentMemberFields($document, $member, $withValues);
+
+		// don't show trusted fields
+		return $fields->filter(static fn(Item\Field $field) => !$field->values?->getFirst()?->trusted);
+	}
+
+	private function createDynamicMemberFields(
+		Item\Block $block,
+		Item\Member $member,
+		Item\Document $document,
+		Item\FieldCollection $registeredFields,
+	): Item\FieldCollection
+	{
+		if (!Type\DocumentScenario::isB2EScenario($document->scenario))
+		{
+			return new Item\FieldCollection();
+		}
+
+		$fieldCode = $block->data['field'] ?? '';
+		if (!is_string($fieldCode))
+		{
+			return new Item\FieldCollection();
+		}
+
+		$fieldDescription = (new MemberDynamicFieldInfoProvider())->getFieldDescription($fieldCode);
+		if (empty($fieldDescription))
+		{
+			return new Item\FieldCollection();
+		}
+
+		$fieldType = $this->convertUserFieldType($fieldDescription['type'] ?? '');
+		$fieldName = NameHelper::create($block->code, $fieldType, $member->party, $fieldCode);
+
+		return $this->makeFieldsByUserFieldDescription(
+			$fieldName,
+			$fieldType,
+			$fieldDescription,
+			$member->party,
+			$registeredFields,
+		);
+	}
+
+	private function convertUserFieldType(string $userFieldType): string
+	{
+		return match ($userFieldType)
 		{
 			FieldType::SNILS => FieldType::SNILS,
 			FieldType::FIRST_NAME => FieldType::FIRST_NAME,
@@ -483,47 +705,59 @@ final class Field
 			FieldType::ADDRESS => FieldType::ADDRESS,
 			default => FieldType::STRING
 		};
+	}
 
-		if ($fieldCode === self::SNILS_FIELD_CODE)
+	/**
+	 * @param array{type: string, items: array} $fieldDescription
+	 *
+	 * @return Item\Field\ItemCollection|null
+	 */
+	private function convertUserFieldItems(array $fieldDescription): ?Item\Field\ItemCollection
+	{
+		if (
+			empty($fieldDescription['items'])
+			|| !is_array($fieldDescription['items'])
+			&& FieldType::LIST !== $this->convertUserFieldType($fieldDescription['type'] ?? '')
+		)
 		{
-			$fieldType = FieldType::SNILS;
+			return null;
 		}
 
-		$fieldCode = self::USER_FIELD_CODE_PREFIX . $fieldCode;
-		$fieldName = NameHelper::create($block->code, $fieldType, $member->party, $fieldCode);
+		$itemCollection = new Item\Field\ItemCollection();
+		foreach ($fieldDescription['items'] as $item)
+		{
+			$itemCollection->add(
+				new Item\Field\Item(
+					id: $item['id'], value: $item['value'],
+				),
+			);
+		}
 
-		$field = $registeredFields->findFirst(
-			static fn(Item\Field $field) => $field->name === $fieldName,
-		);
+		return $itemCollection;
+	}
+
+	private function makeFieldsByUserFieldDescription(
+		string $fieldName,
+		string $fieldType,
+		array $fieldDescription,
+		int $party,
+		Item\FieldCollection $registeredFields,
+	): Item\FieldCollection
+	{
+		$field = $registeredFields->getFirstFieldByName($fieldName);
 		if ($field !== null)
 		{
 			return new Item\FieldCollection($field);
 		}
 
-		$itemCollection = new Item\Field\ItemCollection();
-		if(
-			$fieldType === FieldType::LIST
-			&& is_array($fieldDescription['items'])
-		)
-		{
-			foreach ($fieldDescription['items'] as $item)
-			{
-				$itemCollection->add(
-					new Item\Field\Item(
-						id: $item['id'], value: $item['value'],
-					),
-				);
-			}
-		}
-
 		$field = new Item\Field(
 			blankId: 0,
-			party: $member->party,
+			party: $party,
 			type: $fieldType,
 			name: $fieldName,
 			label: $fieldDescription['caption'] ?? '',
-			items: $itemCollection->isEmpty() ? null : $itemCollection,
-			required: in_array($fieldType, self::NOT_REQUIRED_FIELD_TYPES, true) ? false : null,
+			items: $this->convertUserFieldItems($fieldDescription),
+			required: $this->getFieldRequiredByType($fieldType),
 		);
 
 		if ($field->type === FieldType::ADDRESS)
@@ -534,40 +768,65 @@ final class Field
 		return new Item\FieldCollection($field);
 	}
 
-	public function createByRequired(
+	private function createHcmLinkFields(
+		Item\Block $block,
+		Item\Member $member,
 		Item\Document $document,
-		Item\MemberCollection $members,
-		Item\B2e\RequiredField $requiredField
-	): ?Item\Field
+		Item\FieldCollection $registeredFields,
+	): Item\FieldCollection
 	{
-		$blockFactory = new \Bitrix\Sign\Blanks\Block\Factory();
-		$legalInfoFields = (new LegalInfoProvider())->getFieldsItems();
-		foreach ($legalInfoFields as $legalField)
+		if (!Type\DocumentScenario::isB2EScenario($document->scenario))
 		{
-			if ($legalField->type !== $requiredField->type)
-			{
-				continue;
-			}
-
-			$code = BlockCode::getB2eReferenceCodeByRole($requiredField->role);
-			$firstByRole = $members->findFirstByRole($requiredField->role);
-			if (!$firstByRole)
-			{
-				return null;
-			}
-
-			$block = $blockFactory->makeItem(
-				document: $document,
-				code: $code,
-				party: $firstByRole->party,
-				data: ['field' => $legalField->name],
-				skipSecurity: true,
-				role: $requiredField->role,
-			);
-
-			return $this->createByBlocks(new Item\BlockCollection($block), $firstByRole)->getFirst();
+			return new Item\FieldCollection();
 		}
 
-		return null;
+		$fieldCode = $block->data['field'] ?? '';
+		if (!is_string($fieldCode))
+		{
+			return new Item\FieldCollection();
+		}
+
+		if (!$this->hcmLinkFieldService->isAvailable())
+		{
+			return new Item\FieldCollection();
+		}
+
+		$parsedName = $this->hcmLinkFieldService->parseName($fieldCode);
+		if (!$parsedName || $parsedName->integrationId !== $document->hcmLinkCompanyId)
+		{
+			return new Item\FieldCollection();
+		}
+
+		$fieldType = $this->hcmLinkFieldService->getFieldTypeByName($fieldCode);
+		$fieldName = NameHelper::create($block->code, $fieldType, $member->party, $fieldCode);
+
+		$field = $registeredFields->getFirstFieldByName($fieldName);
+		if ($field !== null)
+		{
+			return new Item\FieldCollection($field);
+		}
+
+		$hcmField = $this->hcmLinkFieldService->getFieldById($parsedName->id);
+
+		$field = new Item\Field(
+			blankId: 0,
+			party: $member->party,
+			type: $fieldType,
+			name: $fieldName,
+			label: $hcmField->title ?? '',
+			required: $this->getFieldRequiredByType($fieldType),
+		);
+
+		if ($field->type === FieldType::ADDRESS)
+		{
+			$field->subfields = $this->createAddressSubfieldsByField($field);
+		}
+
+		return new Item\FieldCollection($field);
+	}
+
+	private function getFieldRequiredByType(string $fieldType): ?bool
+	{
+		return in_array($fieldType, self::NOT_REQUIRED_FIELD_TYPES, true) ? false : null;
 	}
 }

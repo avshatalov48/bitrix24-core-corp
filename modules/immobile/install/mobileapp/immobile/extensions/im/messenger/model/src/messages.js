@@ -7,7 +7,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 	const { Type } = require('type');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Uuid } = require('utils/uuid');
-	const { mergeImmutable, clone } = require('utils/object');
+	const { mergeImmutable, clone, isEqual } = require('utils/object');
 	const { reactionsModel } = require('im/messenger/model/messages/reactions');
 	const { pinModel } = require('im/messenger/model/messages/pin');
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -28,6 +28,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 		date: new Date(),
 		text: '',
 		loadText: '',
+		uploadFileId: '',
 		params: {},
 		replaces: [],
 		files: [],
@@ -53,6 +54,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 			collection: {},
 			chatCollection: {},
 			temporaryMessages: {},
+			uploadingMessageCollection: new Set(),
 		}),
 		modules: {
 			reactionsModel,
@@ -96,6 +98,34 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 					...message,
 					reactions: rootGetters['messagesModel/reactionsModel/getByMessageId'](messageId),
 				};
+			},
+
+			/**
+			 * @function messagesModel/getListByIds
+			 * @return {Array<MessagesModelState>}
+			 */
+			getListByIds: (state, getters, rootState, rootGetters) => (messageIds) => {
+				if (!Type.isArrayFilled(messageIds))
+				{
+					return [];
+				}
+
+				const messageCollection = [];
+				for (const id of messageIds)
+				{
+					const message = state.collection[id.toString()];
+					if (message)
+					{
+						const fullMessageData = {
+							...message,
+							reactions: rootGetters['messagesModel/reactionsModel/getByMessageId'](id),
+						};
+
+						messageCollection.push(fullMessageData);
+					}
+				}
+
+				return messageCollection.sort((a, b) => sortCollection(a, b));
 			},
 
 			/**
@@ -203,7 +233,10 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				return lastId;
 			},
 
-			/** @function messagesModel/getBreakMessages */
+			/**
+			 * @function messagesModel/getBreakMessages
+			 * @return {Array<MessagesModelState>}
+			 */
 			getBreakMessages: (state) => (chatId) => {
 				const allCollectionList = clone(state.collection);
 
@@ -212,6 +245,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 					return [];
 				}
 
+				/** @type {Array<MessagesModelState>} */
 				const list = [];
 				for (const messageId of Object.keys(allCollectionList))
 				{
@@ -222,7 +256,10 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 					}
 				}
 
-				return list;
+				// sort broken messages in the order they are sent
+				return list.sort((a, b) => {
+					return a.date - b.date;
+				});
 			},
 
 			/** @function messagesModel/getTemporaryMessagesMessages */
@@ -286,6 +323,28 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				return null;
+			},
+
+			/**
+			 * @function messagesModel/getUploadingMessages
+			 * @return {Array<MessagesModelState>}
+			 */
+			getUploadingMessages: (state) => (chatId) => {
+				return [...state.uploadingMessageCollection]
+					.filter((id) => state.collection[id]?.chatId === chatId)
+					.map((id) => state.collection[id])
+					.sort((message1, message2) => {
+						return message1.date.getTime() - message2.date.getTime();
+					})
+				;
+			},
+
+			/**
+			 * @function messagesModel/isUploadingMessage
+			 * @return {boolean}
+			 */
+			isUploadingMessage: (state) => (id) => {
+				return state.uploadingMessageCollection.has(id);
 			},
 		},
 		actions: {
@@ -476,6 +535,16 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 					...validate(payload),
 				};
 
+				if (message.files.some((fileId) => Uuid.isV4(fileId)))
+				{
+					store.commit('addToUploadingCollection', {
+						actionName: 'add',
+						data: {
+							id: message.id,
+						},
+					});
+				}
+
 				store.commit('store', {
 					actionName,
 					actionUid: waiter.actionUid,
@@ -536,23 +605,38 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 
 			/** @function messagesModel/updateWithId */
 			updateWithId: (store, payload) => {
-				const { id, fields } = payload;
+				const { id } = payload;
 				if (!store.state.collection[id])
 				{
 					return;
+				}
+
+				const fields = validate(payload.fields);
+
+				if (
+					store.getters.isUploadingMessage(id)
+					&& fields?.files?.every?.((fileId) => Type.isNumber(Number(fileId)))
+				)
+				{
+					store.commit('deleteFromUploadingCollection', {
+						actionName: 'updateWithId',
+						data: {
+							id,
+						},
+					});
 				}
 
 				store.commit('updateWithId', {
 					actionName: 'updateWithId',
 					data: {
 						id,
-						fields: validate(fields),
+						fields,
 					},
 				});
 			},
 
 			/** @function messagesModel/update */
-			update: (store, { id, fields }) => {
+			update: (store, { id, fields, skipCheckEquality = false }) => {
 				if (!store.state.collection[id])
 				{
 					return;
@@ -563,12 +647,78 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 					fields: validate(fields),
 				};
 
+				if (
+					store.getters.isUploadingMessage(id)
+					&& updateMessageData.fields?.files?.every?.((fileId) => Type.isNumber(Number(fileId)))
+				)
+				{
+					store.commit('deleteFromUploadingCollection', {
+						actionName: 'update',
+						data: {
+							id,
+						},
+					});
+				}
+
+				const storedMessage = store.state.collection[id];
+
+				if (
+					!skipCheckEquality
+					&& isEqual(storedMessage, mergeImmutable(storedMessage, updateMessageData.fields))
+				)
+				{
+					return;
+				}
+
 				store.dispatch('pinModel/updateMessage', updateMessageData);
 
 				store.commit('update', {
 					actionName: 'update',
 					data: updateMessageData,
 				});
+			},
+
+			/** @function messagesModel/updateParams */
+			updateParams: async (store, { id, params }) => {
+				if (!store.state.collection[id])
+				{
+					return Promise.resolve(null);
+				}
+
+				const { params: formatedParams } = validate({ params });
+				const { params: storedParams } = store.state.collection[id];
+
+				if (!Type.isPlainObject(storedParams))
+				{
+					return store.dispatch('update', {
+						id,
+						fields: {
+							params,
+						},
+						skipCheckEquality: true,
+					});
+				}
+
+				let needUpdateMessage = false;
+				for (const [paramName, value] of Object.entries(formatedParams))
+				{
+					if (!isEqual(value, storedParams[paramName]))
+					{
+						needUpdateMessage = true;
+						break;
+					}
+				}
+
+				if (needUpdateMessage)
+				{
+					return store.dispatch('update', {
+						id,
+						fields: {
+							params,
+						},
+						skipCheckEquality: true,
+					});
+				}
 			},
 
 			/** @function messagesModel/deleteByChatId */
@@ -605,6 +755,17 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				const { id } = payload;
 
 				store.dispatch('pinModel/deleteMessage', { id });
+
+				if (store.getters.isUploadingMessage(id))
+				{
+					store.commit('deleteFromUploadingCollection', {
+						actionName: 'delete',
+						data: {
+							id,
+							chatId: store.state.collection[id].chatId,
+						},
+					});
+				}
 
 				store.commit('delete', {
 					actionName: 'delete',
@@ -726,8 +887,8 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 					return;
 				}
 
-				const { loadText: currentLoadText } = message;
-				if (currentLoadText === payload.loadText)
+				const { loadText: currentLoadText, uploadFileId: currentUploadFileId } = message;
+				if (currentLoadText === payload.loadText && currentUploadFileId === payload.uploadFileId)
 				{
 					return;
 				}
@@ -736,7 +897,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 					actionName: 'updateLoadTextProgress',
 					data: {
 						id: payload.id,
-						fields: { loadText: payload.loadText },
+						fields: { loadText: payload.loadText, uploadFileId: payload.uploadFileId },
 					},
 				});
 			},
@@ -993,7 +1154,11 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 
 				const { chatId } = message;
 
-				state.chatCollection[chatId].delete(id);
+				if (Type.isSet(state.chatCollection[chatId]))
+				{
+					state.chatCollection[chatId].delete(id);
+				}
+
 				delete state.collection[id];
 			},
 
@@ -1054,22 +1219,39 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 
 				state.chatCollection[chatId] = new Set();
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload<MessagesAddToUploadingCollectionData, MessagesAddToUploadingCollectionActions>} payload
+			 */
+			addToUploadingCollection: (state, payload) => {
+				logger.log('messagesModel: addToUploadingCollection mutation', payload);
+
+				const { id } = payload.data;
+
+				state.uploadingMessageCollection.add(id);
+			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload<
+			 * MessagesDeleteFromUploadingCollectionData,
+			 * MessagesDeleteFromUploadingCollectionActions
+			 * >} payload
+			 */
+			deleteFromUploadingCollection: (state, payload) => {
+				logger.log('messagesModel: deleteFromUploadingCollection mutation', payload);
+
+				const { id } = payload.data;
+
+				state.uploadingMessageCollection.delete(id);
+			},
 		},
 	};
 
 	function sortCollection(a, b)
 	{
-		if (Uuid.isV4(a.id) && !Uuid.isV4(b.id))
-		{
-			return 1;
-		}
-
-		if (!Uuid.isV4(a.id) && Uuid.isV4(b.id))
-		{
-			return -1;
-		}
-
-		if (Uuid.isV4(a.id) && Uuid.isV4(b.id))
+		if (Uuid.isV4(a.id) || Uuid.isV4(b.id))
 		{
 			return a.date.getTime() - b.date.getTime();
 		}
@@ -1079,6 +1261,6 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 
 	module.exports = {
 		messagesModel,
-		messageDefaultElement
+		messageDefaultElement,
 	};
 });

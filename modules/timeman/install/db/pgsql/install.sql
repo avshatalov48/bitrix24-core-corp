@@ -91,7 +91,7 @@ CREATE TABLE b_timeman_report_full (
   FORUM_TOPIC_ID int NOT NULL DEFAULT 0,
   PRIMARY KEY (ID)
 );
-CREATE INDEX ix_b_timeman_report_full_user_id ON b_timeman_report_full (user_id);
+CREATE INDEX ix_b_timeman_report_full_user_id_active ON b_timeman_report_full (user_id, active);
 CREATE INDEX ix_b_timeman_report_full_active_date_from ON b_timeman_report_full (active, date_from);
 CREATE INDEX ix_b_timeman_report_full_user_id_date_to ON b_timeman_report_full (user_id, date_to);
 

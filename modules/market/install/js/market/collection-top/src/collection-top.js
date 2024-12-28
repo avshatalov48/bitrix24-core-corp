@@ -1,6 +1,7 @@
 import { RatingStars } from "market.rating-stars";
 import { MarketLinks } from "market.market-links";
 import { Type } from "main.core";
+import { Ears } from 'ui.ears'
 
 import "./collection-top.css";
 
@@ -18,7 +19,7 @@ export const CollectionTop = {
 		}
 	},
 	mounted: function() {
-		(new BX.UI.Ears({
+		(new Ears({
 			container: document.querySelector('#item_' + this.item.CAROUSEL_ID),
 			smallSize: true,
 			noScrollbar: true,

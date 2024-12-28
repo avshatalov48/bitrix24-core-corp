@@ -2,6 +2,9 @@
  * @module qrauth
  */
 jn.define('qrauth', (require, exports, module) => {
+	// eslint-disable-next-line no-undef
+	include('SharedBundle');
+
 	const { QRCodeScannerComponent } = require('qrauth/src/scanner');
 	const { QRCodeAuthComponent } = require('qrauth/src/auth');
 
@@ -12,9 +15,6 @@ jn.define('qrauth', (require, exports, module) => {
 });
 
 (function() {
-	// eslint-disable-next-line no-undef
-	include('SharedBundle');
-
 	const require = (ext) => jn.require(ext);
 	const { QRCodeScannerComponent, QRCodeAuthComponent } = require('qrauth');
 

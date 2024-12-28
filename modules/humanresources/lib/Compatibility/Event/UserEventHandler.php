@@ -4,15 +4,18 @@ namespace Bitrix\HumanResources\Compatibility\Event;
 
 use Bitrix\HumanResources\Compatibility\Utils\DepartmentBackwardAccessCode;
 use Bitrix\HumanResources\Config\Storage;
+use Bitrix\HumanResources\Contract\Repository\NodeRepository;
 use Bitrix\HumanResources\Enum\EventName;
 use Bitrix\HumanResources\Enum\LoggerEntityType;
 use Bitrix\HumanResources\Exception\CreationFailedException;
 use Bitrix\HumanResources\Item\NodeMember;
 use Bitrix\HumanResources\Service\Container;
+use Bitrix\HumanResources\Service\UserService;
 use Bitrix\HumanResources\Type\MemberEntityType;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\UserTable;
 use Bitrix\Main\Web\Json;
 
 class UserEventHandler
@@ -36,6 +39,9 @@ class UserEventHandler
 		}
 
 		self::updateNodeMemberActive($fields);
+
+		Container::getCacheManager()->clean(NodeRepository::NODE_ENTITY_RESTRICTION_CACHE);
+		NewToOldEventHandler::clearCacheInBackground();
 	}
 
 	public static function onAfterUserDelete($id): void
@@ -62,6 +68,8 @@ class UserEventHandler
 		];
 
 		self::updateNodeMemberLink($fields);
+
+		NewToOldEventHandler::clearCacheInBackground();
 	}
 
 	public static function onAfterUserAdd($fields): void
@@ -81,6 +89,8 @@ class UserEventHandler
 		{
 			self::updateNodeMemberLink($fields);
 		}
+
+		NewToOldEventHandler::clearCacheInBackground();
 	}
 
 	private static function updateNodeMemberLink(array $fields): void
@@ -92,6 +102,7 @@ class UserEventHandler
 		}
 
 		$userId = $fields['ID'];
+		$isActive = ($fields['ACTIVE'] ?? 'N') === 'Y';
 
 		$currentLinks = Container::getNodeMemberRepository()
 			->findAllByEntityIdAndEntityType($userId, MemberEntityType::USER)
@@ -163,7 +174,8 @@ class UserEventHandler
 					$nodeMember = new NodeMember(
 						entityType: MemberEntityType::USER,
 						entityId: $userId,
-						nodeId: $nodeId
+						nodeId: $nodeId,
+						active: $isActive,
 					);
 
 					try
@@ -195,34 +207,36 @@ class UserEventHandler
 		catch (ObjectPropertyException|ArgumentException|SystemException)
 		{
 		}
+
+		NewToOldEventHandler::clearCacheInBackground();
+
+		Container::getCacheManager()->clean(sprintf(UserService::USER_DEPARTMENT_EXISTS_KEY, $userId));
 	}
 
 	private static function updateNodeMemberActive(array $fields): void
 	{
-		$user = \CUser::GetByID($fields['ID'])->Fetch();
+		$user = UserTable::query()
+			->setSelect(
+				[
+					'ID',
+					'ACTIVE',
+				],
+			)
+			->where('ID', $fields['ID'])
+			->fetchObject()
+		;
 
-		$fields['ACTIVE'] = $user['ACTIVE'];
-		$activeValue = $fields['ACTIVE'];
-		if (!in_array($activeValue, ['Y', 'N'], true))
+		if (!$user)
 		{
 			return;
 		}
 
-		$active = $activeValue === 'Y';
+		$active = $user->getActive();
 
 		$userId = (int)$fields['ID'];
 
 		try
 		{
-			if ($active)
-			{
-				$userConverter = Container::getStructureUserBackwardConverter();
-				if (!$userConverter->isConverted($userId))
-				{
-					$userConverter->convert($userId);
-				}
-			}
-
 			Container::getNodeMemberRepository()
 				->setActiveByEntityTypeAndEntityId(MemberEntityType::USER, $userId, $active)
 			;

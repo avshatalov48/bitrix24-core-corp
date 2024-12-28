@@ -7,14 +7,14 @@ return [
 		'apptheme',
 		'assets/common',
 
-		'utils/url',
 		'utils/date',
 		'assets/icons',
 		'utils/date/formats',
 		'utils/object',
 		'utils/function',
 
-		'layout/ui/user/empty-avatar',
+		'ui-system/blocks/avatar',
+
 		'layout/ui/item-selector',
 		'layout/ui/date-pill',
 		'layout/ui/fields/file',

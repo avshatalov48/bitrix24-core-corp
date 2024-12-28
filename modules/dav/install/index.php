@@ -121,11 +121,8 @@ Class dav extends CModule
 
 	function InstallFiles()
 	{
-		if($_ENV["COMPUTERNAME"]!='BX')
-		{
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/install/bitrix",  $_SERVER["DOCUMENT_ROOT"]."/bitrix", true, True);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
-		}
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/install/bitrix",  $_SERVER["DOCUMENT_ROOT"]."/bitrix", true, True);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
 
 		return true;
 	}

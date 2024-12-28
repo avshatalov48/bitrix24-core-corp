@@ -107,6 +107,7 @@ jn.define('layout/ui/entity-editor/control/opportunity', (require, exports, modu
 						,
 					},
 				},
+				analytics: this.getAnalytics(),
 			};
 
 			return new DocumentList(data);

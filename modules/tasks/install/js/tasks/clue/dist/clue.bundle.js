@@ -34,7 +34,8 @@ this.BX = this.BX || {};
 	  showLight() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight)[_spotlight] = new BX.SpotLight({
 	      targetElement: babelHelpers.classPrivateFieldLooseBase(this, _targetElement)[_targetElement],
-	      targetVertex: 'middle-center'
+	      targetVertex: 'middle-center',
+	      color: this.getSpotlightColor()
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight)[_spotlight].show();
 	  }
@@ -44,11 +45,38 @@ this.BX = this.BX || {};
 	  getIconSrc() {
 	    return null;
 	  }
+	  getSpotlightColor() {
+	    return null;
+	  }
+	  getConditionColor() {
+	    return 'primary';
+	  }
 	  getTitle() {}
 	  getText() {}
 	}
 	Spot.WIDTH = 380;
 	Spot.PATH_TO_IMAGES = '/bitrix/js/tasks/clue/images/spot/';
+
+	class FlowCopilotAdvice extends Spot {
+	  getWidth() {
+	    return 340;
+	  }
+	  getIconSrc() {
+	    return null;
+	  }
+	  getTitle() {
+	    return main_core.Loc.getMessage('TASKS_CLUE_FLASH_COPILOT_ADVICE_TITLE');
+	  }
+	  getText() {
+	    return main_core.Loc.getMessage('TASKS_CLUE_FLASH_COPILOT_ADVICE_TEXT');
+	  }
+	  getSpotlightColor() {
+	    return '#8e52ec';
+	  }
+	  getConditionColor() {
+	    return 'copilot';
+	  }
+	}
 
 	class MyTasks extends Spot {
 	  getIconSrc() {
@@ -111,7 +139,7 @@ this.BX = this.BX || {};
 	        condition: {
 	          top: true,
 	          bottom: false,
-	          color: 'primary'
+	          color: babelHelpers.classPrivateFieldLooseBase(this, _spot)[_spot].getConditionColor()
 	        }
 	      }]
 	    });
@@ -159,7 +187,8 @@ this.BX = this.BX || {};
 	}
 	Clue.SPOT = Object.freeze({
 	  MY_TASKS: new MyTasks(),
-	  TASK_START: new TaskStart()
+	  TASK_START: new TaskStart(),
+	  FLOW_COPILOT_ADVICE: new FlowCopilotAdvice()
 	});
 
 	exports.Clue = Clue;

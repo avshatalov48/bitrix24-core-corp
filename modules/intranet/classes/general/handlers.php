@@ -11,19 +11,28 @@ class CIntranetEventHandlers
 {
 	protected static $userDepartmentCache = array();
 	protected static $userActiveCache = false;
+	protected static $fieldsCache = [];
 
 	public static function SPRegisterUpdatedItem($arFields)
 	{
-		if (CBXFeatures::IsFeatureEnabled('intranet_sharepoint'))
+		if (!CBXFeatures::IsFeatureEnabled('intranet_sharepoint')
+			|| CIntranetSharepoint::$bUpdateInProgress || empty($arFields['IBLOCK_ID']))
 		{
-			if (CIntranetSharepoint::$bUpdateInProgress)
-				return;
+			return;
+		}
 
+		if (!self::$fieldsCache[$arFields['IBLOCK_ID']])
+		{
 			$dbRes = CIntranetSharepoint::GetByID($arFields['IBLOCK_ID']);
 			if ($arRes = $dbRes->Fetch())
 			{
-				CIntranetSharepoint::AddToUpdateLog($arFields);
+				self::$fieldsCache[$arFields['IBLOCK_ID']] = $arRes;
 			}
+		}
+
+		if (self::$fieldsCache[$arFields['IBLOCK_ID']])
+		{
+			CIntranetSharepoint::AddToUpdateLog(self::$fieldsCache[$arFields['IBLOCK_ID']]);
 		}
 	}
 
@@ -1010,17 +1019,19 @@ class CIntranetEventHandlers
 			'select' => ['ID', 'INVITATION_TYPE', 'IS_MASS', 'IS_DEPARTMENT', 'IS_INTEGRATOR', 'IS_REGISTER'],
 			'limit' => 1
 		]);
-		if ($invitationFields = $res->fetch())
+		$invitationFields = $res->fetch();
+
+		if ($invitationFields)
 		{
 			InvitationTable::update($invitationFields['ID'], [
 				'INITIALIZED' => 'Y'
 			]);
-
-			(new \Bitrix\Main\Event('intranet', 'onUserFirstInitialization', [
-				'invitationFields' => $invitationFields,
-				'userId' => $userId
-			]))->send();
 		}
+
+		(new \Bitrix\Main\Event('intranet', 'onUserFirstInitialization', [
+			'invitationFields' => $invitationFields,
+			'userId' => $userId
+		]))->send();
 	}
 
 	public static function OnAfterUserAdd($arUser)

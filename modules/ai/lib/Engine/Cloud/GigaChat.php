@@ -15,7 +15,7 @@ final class GigaChat extends CloudEngine implements IContext, IQueueOptional
 {
 	protected const CATEGORY_CODE = Engine::CATEGORIES['text'];
 	protected const ENGINE_NAME = 'GigaChat 3.0+';
-	protected const ENGINE_CODE = 'GigaChat';
+	public const ENGINE_CODE = 'GigaChat';
 
 	protected const URL_COMPLETIONS = 'https://gigachat.devices.sberbank.ru/api/v1/chat/completions';
 
@@ -158,6 +158,9 @@ final class GigaChat extends CloudEngine implements IContext, IQueueOptional
 	public function getResultFromRaw(mixed $rawResult, bool $cached = false): Result
 	{
 		$text = $rawResult['choices'][0]['message']['content'] ?? null;
+		$text = $this->restoreReplacements($text);
+		$rawResult['choices'][0]['message']['content'] = $text;
+
 		return new Result($rawResult, $text, $cached);
 	}
 

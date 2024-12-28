@@ -2,8 +2,14 @@
 
 namespace Bitrix\Intranet\User\Grid\Row\Assembler\Field;
 
+use Bitrix\Intranet\Entity\Collection\UserCollection;
+use Bitrix\Intranet\Entity\User;
+use Bitrix\Intranet\User\Grid\Settings\UserSettings;
 use Bitrix\Main\Grid\Row\FieldAssembler;
 
+/**
+ * @method UserSettings getSettings()
+ */
 abstract class CustomUserFieldAssembler extends FieldAssembler
 {
 	protected function prepareRow(array $row): array
@@ -33,5 +39,12 @@ abstract class CustomUserFieldAssembler extends FieldAssembler
 	protected function prepareColumnForExport($data): string
 	{
 		return $this->prepareColumn($data);
+	}
+
+	protected function getUserEntityById(int $userId): ?User
+	{
+		return $this->getSettings()
+			->getUserCollection()
+			->getByUserId($userId);
 	}
 }

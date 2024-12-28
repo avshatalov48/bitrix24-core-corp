@@ -1,0 +1,41 @@
+.ai__role-master_editor {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+}
+
+.ai__role-master_editor-text-field {
+	flex: 1;
+	padding: 12px;
+	resize: none;
+	border: var(--ui-border-width-thin) solid rgba(var(--ui-color-copilot-primary-rgb), 0.6);
+	border-radius: var(--ui-border-radius-sm);
+	outline: none;
+	/*color: var(--ui-color-text-primary);*/
+	/*font-family: inherit;*/
+	/*font-size: var(--ui-font-size-lg);*/
+	/*line-height: var(--ui-font-line-height-sm);*/
+	/*font-style: normal;*/
+}
+
+.ui-ctl-textarea .ai__role-master_editor-text-field.ui-ctl-element {
+	padding: 10px 12px;
+	max-height: none;
+}
+
+.ai__role-master_editor-text-field:hover {
+	border-color: rgba(var(--ui-color-copilot-primary-rgb), 0.8);
+}
+
+.ai__role-master_editor-text-field:focus {
+	border-color: rgba(var(--ui-color-copilot-primary-rgb), 1);
+}
+
+.ai__role-master_editor-character-counter {
+	margin-top: 4px;
+	font-size: var(--ui-font-size-4xs);
+	line-height: var(--ui-font-line-height-2xs);
+	text-align: right;
+	color: var(--ui-color-base-60);
+}

@@ -3,6 +3,7 @@
 namespace Bitrix\Imbot\Bot;
 
 use Bitrix\Im\V2\Analytics\CopilotAnalytics;
+use Bitrix\Im\V2\Relation\AddUsersConfig;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Error;
@@ -195,7 +196,10 @@ class CopilotChatBot extends Base
 		while ($chatData = $chatRes->fetch())
 		{
 			$chat = Im\V2\Chat::getInstance((int)$chatData['ID']);
-			$chat->addUsers([self::getBotId()], [], true, false, true);
+			$chat->addUsers(
+				[self::getBotId()],
+				new AddUsersConfig(hideHistory: true, withMessage: false, skipRecent: true)
+			);
 		}
 	}
 
@@ -322,16 +326,14 @@ class CopilotChatBot extends Base
 		$context = new AI\Context(self::CONTEXT_MODULE, self::CONTEXT_SUMMARY);
 		$engineItem = (new AI\Tuning\Manager())->getItem(Im\V2\Integration\AI\Restriction::SETTING_COPILOT_CHAT_PROVIDER);
 		$engine = AI\Engine::getByCode(isset($engineItem) ? $engineItem->getValue() : '', $context, AI\Engine::CATEGORIES['text']);
-		$serviceRestriction = self::checkAiServeRestriction($engine);
+		$serviceRestriction = self::checkAiServeRestriction($engine, (int)$messageFields['FROM_USER_ID']);
 		if (!$serviceRestriction->isSuccess())
 		{
 			$serviceRestrictionError = $serviceRestriction->getErrors()[0];
 			self::sendError($messageFields['DIALOG_ID'], $serviceRestrictionError->getMessage());
 
-			(new CopilotAnalytics())->addGenerate(
-				$chat,
+			(new CopilotAnalytics($chat))->addGenerate(
 				$serviceRestriction,
-				$engine,
 				$messageFields['PARAMS']['COPILOT_PROMPT_CODE'] ?? null,
 			);
 
@@ -574,10 +576,8 @@ class CopilotChatBot extends Base
 			}
 		}
 
-		(new CopilotAnalytics())->addGenerate(
-			$params['CHAT'],
+		(new CopilotAnalytics($params['CHAT']))->addGenerate(
 			$result,
-			$engine,
 			$params['PROMPT_CODE'],
 		);
 
@@ -949,7 +949,7 @@ class CopilotChatBot extends Base
 	 * Check service AI unavailability and restrictions.
 	 * @return Result
 	 */
-	protected static function checkAiServeRestriction(?AI\Engine $engine): Result
+	protected static function checkAiServeRestriction(?AI\Engine $engine, int $currentUserId): Result
 	{
 		$checkResult = new Result();
 		if (Loader::includeModule('ai'))
@@ -958,28 +958,7 @@ class CopilotChatBot extends Base
 			{
 				if (!$engine->isAvailableByAgreement())
 				{
-					$isB24 = Main\ModuleManager::isModuleInstalled('bitrix24');
-					if (method_exists(AI\Facade\Bitrix24::class, 'shouldUseB24'))
-					{
-						$isB24 = AI\Facade\Bitrix24::shouldUseB24();
-					}
-
-					if ($isB24)
-					{
-						$checkResult->addError(new Error(
-							Loc::getMessage('IMBOT_COPILOT_AGREEMENT_RESTRICTION') ?? 'AI service agreement must be accepted',
-							self::ERROR_AGREEMENT
-						));
-					}
-					else
-					{
-						$checkResult->addError(new Error(
-							Loc::getMessage('IMBOT_COPILOT_AGREEMENT_RESTRICTION_BOX', [
-								'#LINK#' => '/online/?AI_UX_TRIGGER=box_agreement',
-							]) ?? 'AI service agreement must be accepted',
-							self::ERROR_AGREEMENT
-						));
-					}
+					$checkResult->addError(self::getErrorMessageOnTariffRestriction($currentUserId));
 				}
 				elseif (!$engine->isAvailableByTariff())
 				{
@@ -1006,6 +985,43 @@ class CopilotChatBot extends Base
 		}
 
 		return $checkResult;
+	}
+
+	protected static function getErrorMessageOnTariffRestriction(int $currentUserId): Error
+	{
+		$isB24 = Main\ModuleManager::isModuleInstalled('bitrix24');
+		if (method_exists(AI\Facade\Bitrix24::class, 'shouldUseB24'))
+		{
+			$isB24 = AI\Facade\Bitrix24::shouldUseB24();
+		}
+
+		if (!$isB24)
+		{
+			return new Error(
+				Loc::getMessage('IMBOT_COPILOT_AGREEMENT_RESTRICTION_BOX', [
+					'#LINK#' => '/online/?AI_UX_TRIGGER=box_agreement',
+				]) ?? 'AI service agreement must be accepted',
+				self::ERROR_AGREEMENT
+			);
+		}
+
+		if (
+			Loader::includeModule('bitrix24')
+			&& \CBitrix24::IsPortalAdmin($currentUserId)
+		)
+		{
+			return new Error(
+				Loc::getMessage('IMBOT_COPILOT_AGREEMENT_RESTRICTION_ADMIN', [
+					'#LINK#' => '/',
+				]) ?? 'AI service agreement must be accepted',
+				self::ERROR_AGREEMENT
+			);
+		}
+
+		return new Error(
+			Loc::getMessage('IMBOT_COPILOT_AGREEMENT_RESTRICTION_USER') ?? 'AI service agreement must be accepted',
+			self::ERROR_AGREEMENT
+		);
 	}
 
 	/**

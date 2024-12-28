@@ -12627,7 +12627,7 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission unsetAttr()
 	 * @method \string fillAttr()
 	 * @method array getSettings()
-	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission setSettings(array|\Bitrix\Main\DB\SqlExpression $settings)
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission setSettings(array|\Bitrix\Main\DB\SqlExpression|null $settings)
 	 * @method bool hasSettings()
 	 * @method bool isSettingsFilled()
 	 * @method bool isSettingsChanged()
@@ -12636,6 +12636,16 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission resetSettings()
 	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission unsetSettings()
 	 * @method array fillSettings()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role getRole()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role remindActualRole()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role requireRole()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission setRole(\Bitrix\Crm\Security\Role\Model\EO_Role $object)
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission resetRole()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission unsetRole()
+	 * @method bool hasRole()
+	 * @method bool isRoleFilled()
+	 * @method bool isRoleChanged()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role fillRole()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -12658,7 +12668,7 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method void removeFrom($fieldName, $value)
 	 * @method void removeAll($fieldName)
 	 * @method \Bitrix\Main\ORM\Data\Result delete()
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
 	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
 	 * @method static \Bitrix\Crm\Security\Role\Model\EO_RolePermission wakeUp($data)
@@ -12692,6 +12702,11 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method \string[] fillPermType()
 	 * @method \string[] getAttrList()
 	 * @method \string[] fillAttr()
+	 * @method array[] getSettingsList()
+	 * @method array[] fillSettings()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role[] getRoleList()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission_Collection getRoleCollection()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role_Collection fillRole()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -12704,7 +12719,7 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission[] getAll()
 	 * @method bool remove(\Bitrix\Crm\Security\Role\Model\EO_RolePermission $object)
 	 * @method void removeByPrimary($primary)
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method array|\Bitrix\Main\ORM\Objectify\Collection|null fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method static \Bitrix\Crm\Security\Role\Model\EO_RolePermission_Collection wakeUp($data)
 	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
 	 * @method void offsetSet() ArrayAccess
@@ -12717,7 +12732,7 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
-	 * @method EO_RolePermission_Collection merge(?EO_RolePermission_Collection $collection)
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission_Collection merge(?\Bitrix\Crm\Security\Role\Model\EO_RolePermission_Collection $collection)
 	 * @method bool isEmpty()
 	 */
 	class EO_RolePermission_Collection implements \ArrayAccess, \Iterator, \Countable {
@@ -12733,10 +12748,6 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method EO_RolePermission_Result exec()
 	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission fetchObject()
 	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission_Collection fetchCollection()
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
 	 */
 	class EO_RolePermission_Query extends \Bitrix\Main\ORM\Query\Query {}
 	/**
@@ -12786,6 +12797,16 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method \Bitrix\Crm\Security\Role\Model\EO_RoleRelation resetRelation()
 	 * @method \Bitrix\Crm\Security\Role\Model\EO_RoleRelation unsetRelation()
 	 * @method \string fillRelation()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role getRole()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role remindActualRole()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role requireRole()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RoleRelation setRole(\Bitrix\Crm\Security\Role\Model\EO_Role $object)
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RoleRelation resetRole()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RoleRelation unsetRole()
+	 * @method bool hasRole()
+	 * @method bool isRoleFilled()
+	 * @method bool isRoleChanged()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role fillRole()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -12808,7 +12829,7 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method void removeFrom($fieldName, $value)
 	 * @method void removeAll($fieldName)
 	 * @method \Bitrix\Main\ORM\Data\Result delete()
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
 	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
 	 * @method static \Bitrix\Crm\Security\Role\Model\EO_RoleRelation wakeUp($data)
@@ -12834,6 +12855,9 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method \int[] fillRoleId()
 	 * @method \string[] getRelationList()
 	 * @method \string[] fillRelation()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role[] getRoleList()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RoleRelation_Collection getRoleCollection()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role_Collection fillRole()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -12846,7 +12870,7 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method \Bitrix\Crm\Security\Role\Model\EO_RoleRelation[] getAll()
 	 * @method bool remove(\Bitrix\Crm\Security\Role\Model\EO_RoleRelation $object)
 	 * @method void removeByPrimary($primary)
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method array|\Bitrix\Main\ORM\Objectify\Collection|null fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method static \Bitrix\Crm\Security\Role\Model\EO_RoleRelation_Collection wakeUp($data)
 	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
 	 * @method void offsetSet() ArrayAccess
@@ -12859,7 +12883,7 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
-	 * @method EO_RoleRelation_Collection merge(?EO_RoleRelation_Collection $collection)
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RoleRelation_Collection merge(?\Bitrix\Crm\Security\Role\Model\EO_RoleRelation_Collection $collection)
 	 * @method bool isEmpty()
 	 */
 	class EO_RoleRelation_Collection implements \ArrayAccess, \Iterator, \Countable {
@@ -12875,10 +12899,6 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method EO_RoleRelation_Result exec()
 	 * @method \Bitrix\Crm\Security\Role\Model\EO_RoleRelation fetchObject()
 	 * @method \Bitrix\Crm\Security\Role\Model\EO_RoleRelation_Collection fetchCollection()
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
 	 */
 	class EO_RoleRelation_Query extends \Bitrix\Main\ORM\Query\Query {}
 	/**
@@ -12938,16 +12958,38 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role resetCode()
 	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role unsetCode()
 	 * @method \string fillCode()
-	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission getPermission()
-	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission remindActualPermission()
-	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission requirePermission()
-	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role setPermission(\Bitrix\Crm\Security\Role\Model\EO_RolePermission $object)
-	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role resetPermission()
-	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role unsetPermission()
-	 * @method bool hasPermission()
-	 * @method bool isPermissionFilled()
-	 * @method bool isPermissionChanged()
-	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission fillPermission()
+	 * @method \string getGroupCode()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role setGroupCode(\string|\Bitrix\Main\DB\SqlExpression $groupCode)
+	 * @method bool hasGroupCode()
+	 * @method bool isGroupCodeFilled()
+	 * @method bool isGroupCodeChanged()
+	 * @method \string remindActualGroupCode()
+	 * @method \string requireGroupCode()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role resetGroupCode()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role unsetGroupCode()
+	 * @method \string fillGroupCode()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission_Collection getPermissions()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission_Collection requirePermissions()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission_Collection fillPermissions()
+	 * @method bool hasPermissions()
+	 * @method bool isPermissionsFilled()
+	 * @method bool isPermissionsChanged()
+	 * @method void addToPermissions(\Bitrix\Crm\Security\Role\Model\EO_RolePermission $rolePermission)
+	 * @method void removeFromPermissions(\Bitrix\Crm\Security\Role\Model\EO_RolePermission $rolePermission)
+	 * @method void removeAllPermissions()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role resetPermissions()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role unsetPermissions()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RoleRelation_Collection getRelations()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RoleRelation_Collection requireRelations()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RoleRelation_Collection fillRelations()
+	 * @method bool hasRelations()
+	 * @method bool isRelationsFilled()
+	 * @method bool isRelationsChanged()
+	 * @method void addToRelations(\Bitrix\Crm\Security\Role\Model\EO_RoleRelation $roleRelation)
+	 * @method void removeFromRelations(\Bitrix\Crm\Security\Role\Model\EO_RoleRelation $roleRelation)
+	 * @method void removeAllRelations()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role resetRelations()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role unsetRelations()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -12970,7 +13012,7 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method void removeFrom($fieldName, $value)
 	 * @method void removeAll($fieldName)
 	 * @method \Bitrix\Main\ORM\Data\Result delete()
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
 	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
 	 * @method static \Bitrix\Crm\Security\Role\Model\EO_Role wakeUp($data)
@@ -12998,9 +13040,14 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method \string[] fillIsSystem()
 	 * @method \string[] getCodeList()
 	 * @method \string[] fillCode()
-	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission[] getPermissionList()
-	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role_Collection getPermissionCollection()
-	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission_Collection fillPermission()
+	 * @method \string[] getGroupCodeList()
+	 * @method \string[] fillGroupCode()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission_Collection[] getPermissionsList()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission_Collection getPermissionsCollection()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission_Collection fillPermissions()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RoleRelation_Collection[] getRelationsList()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RoleRelation_Collection getRelationsCollection()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RoleRelation_Collection fillRelations()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -13013,7 +13060,7 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role[] getAll()
 	 * @method bool remove(\Bitrix\Crm\Security\Role\Model\EO_Role $object)
 	 * @method void removeByPrimary($primary)
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method array|\Bitrix\Main\ORM\Objectify\Collection|null fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method static \Bitrix\Crm\Security\Role\Model\EO_Role_Collection wakeUp($data)
 	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
 	 * @method void offsetSet() ArrayAccess
@@ -13026,7 +13073,7 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
-	 * @method EO_Role_Collection merge(?EO_Role_Collection $collection)
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role_Collection merge(?\Bitrix\Crm\Security\Role\Model\EO_Role_Collection $collection)
 	 * @method bool isEmpty()
 	 */
 	class EO_Role_Collection implements \ArrayAccess, \Iterator, \Countable {
@@ -13042,10 +13089,6 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method EO_Role_Result exec()
 	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role fetchObject()
 	 * @method \Bitrix\Crm\Security\Role\Model\EO_Role_Collection fetchCollection()
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
 	 */
 	class EO_Role_Query extends \Bitrix\Main\ORM\Query\Query {}
 	/**

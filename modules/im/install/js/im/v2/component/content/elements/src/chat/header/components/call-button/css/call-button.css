@@ -39,15 +39,23 @@
 }
 
 .bx-im-chat-header-call-button__text {
-	margin-right: 5px;
 	font: var(--im-font-size-xs)/var(--im-font-line-height-3xs) var(--im-font-family-system);
 	font-weight: var(--im-font-weight-medium);
 	color: var(--im-chat-header-call-button__font-color);
 }
 
+.bx-im-chat-header-call-button__icon {
+	width: 19px;
+	height: 19px;
+	background-image: url('images/call.svg');
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
 .bx-im-chat-header-call-button__separator {
 	width: 1px;
 	height: 12px;
+	margin-left: 5px;
 	background-color: var(--im-chat-header-call-button__background-color_separator);
 }
 

@@ -33,6 +33,11 @@ final class Storage extends Base
 	 */
 	protected function get($id)
 	{
+		if (!is_numeric($id))
+		{
+			return null;
+		}
+
 		$storage = $this->getStorageById($id);
 		$securityContext = $storage->getCurrentUserSecurityContext();
 		if(!$storage->getRootObject()->canRead($securityContext))
@@ -215,6 +220,11 @@ final class Storage extends Base
 	 */
 	protected function addFolder($id, array $data, array $rights = array())
 	{
+		if (!is_numeric($id))
+		{
+			return null;
+		}
+
 		if(!$this->checkRequiredInputParams($data, array('NAME')))
 		{
 			return null;

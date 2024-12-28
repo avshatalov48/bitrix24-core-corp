@@ -10,9 +10,6 @@ use Bitrix\Main\Grid\Settings;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 
-/**
- * @method UserSettings getSettings()
- */
 class ActivityDateFieldAssembler extends JsExtensionFieldAssembler
 {
 	private string $dateFormat;

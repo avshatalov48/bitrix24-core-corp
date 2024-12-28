@@ -11,6 +11,7 @@ return [
 	],
 	'skip_core' => false,
 	'rel' => [
+		'ui.avatar',
 		'ui.label',
 		'ui.form-elements.field',
 		'main.popup',

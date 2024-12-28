@@ -49,7 +49,7 @@ $MESS["MB_SEC_B24_MSGVER_1"] = "Ваш Битрикс24";
 $MESS["MENU_WORK_DAY"] = "РАБОЧИЙ ДЕНЬ";
 $MESS["MENU_WORK_DAY_MSGVER_1"] = "Рабочий день";
 $MESS["MB_SEC_FAVORITE"] = "ИЗБРАННОЕ";
-$MESS["MB_SEC_FAVORITE_MSGVER_1"] = "Избранное";
+$MESS["MB_SEC_FAVORITE_MSGVER_2"] = "Инструменты";
 $MESS["MB_SEC_GROUPS"] = "ГРУППЫ";
 $MESS["MB_SEC_GROUPS_MSGVER_1"] = "Группы";
 $MESS["MB_SEC_EXTRANET"] = "ГРУППЫ ЭКСТРАНЕТ";
@@ -57,3 +57,7 @@ $MESS["MB_SEC_EXTRANET_MSGVER_1"] = "Группы экстранет";
 $MESS["TO_LOGIN_ON_DESKTOP_MSGVER_1"] = "Войти в веб-версию";
 $MESS["MENU_CRM_TERMINAL"] = "Терминал";
 $MESS["MENU_CRM_TERMINAL_V2"] = "Платёжный терминал";
+$MESS["MENU_MY_DOCUMENTS"] = "Мои документы";
+
+$MESS['MENU_BITRIX24_INVITE'] = 'Пригласить';
+$MESS['MENU_BITRIX24_MENU_BOTTOM'] = 'Нижнее меню';

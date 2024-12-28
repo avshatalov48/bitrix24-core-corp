@@ -79,4 +79,19 @@ class GroupService
 
 		return $this->hasModule;
 	}
+
+	public function getAllGroupCodes(): array
+	{
+		$list = WorkgroupTable::query()
+			->setSelect(['ID'])
+			->fetchCollection()
+		;
+
+		if ($list->isEmpty())
+		{
+			return [];
+		}
+
+		return $list->getIdList();
+	}
 }

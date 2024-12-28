@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\Web\Json;
+
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -65,7 +67,7 @@ if (!$arResult['isIframe'])
 			},
 			{
 				condition: [
-					"type/automated_solution/details/(\\d+)/?$"
+					"type/automated_solution/details/(\\d+)/?$",
 				],
 				options: {
 					width: 876,
@@ -83,12 +85,65 @@ if (!$arResult['isIframe'])
 					allowChangeHistory: false
 				}
 			},
+			{
+				condition: [
+					"perms/[A-Za-z0-9-_]+/?$",
+					"type/automated_solution/permissions/?$",
+				],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+				}
+			},
+			{
+				condition: [
+					"copilot-call-assessment/details/[0-9]+/?",
+				],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					width: 700,
+				},
+			},
 		];
 
-		var roots = <?=\CUtil::PhpToJSObject($arResult['roots'])?>;
+		const roots = <?=\CUtil::PhpToJSObject($arResult['roots'])?>;
 		if (BX.Type.isArray(roots) && BX.Type.isArray(rules))
 		{
 			BX.Crm.Component.Router.bindAnchors(roots, rules);
+		}
+
+		const rulesByCustomSections = [
+			{
+				condition: [
+					"perms/?$",
+				],
+				options: {
+					cacheable: false,
+					allowChangeHistory: true,
+				}
+			},
+			{
+				condition: [
+					"perms/[A-Za-z0-9-_]+/?$",
+				],
+				options: {
+					cacheable: false,
+					allowChangeHistory: true,
+				}
+			},
+		];
+
+		const customSectionRoots = <?= Json::encode($arResult['customSectionRoots']) ?>;
+		if (
+			BX.Type.isArray(rulesByCustomSections)
+			&& BX.Type.isArray(customSectionRoots)
+		)
+		{
+			BX.Crm.Component.Router.bindAnchors(
+				customSectionRoots,
+				rulesByCustomSections,
+			);
 		}
 	});
 </script>
@@ -108,6 +163,7 @@ $APPLICATION->IncludeComponent(
 		'USE_UI_TOOLBAR' => $arResult['isUseToolbar'] ? 'Y' : 'N',
 		'POPUP_COMPONENT_USE_BITRIX24_THEME' => $arResult['isUseBitrix24Theme'] ? 'Y' : 'N',
 		'DEFAULT_THEME_ID' => $arResult['defaultBitrix24Theme'],
+		'USE_BACKGROUND_CONTENT' => $arResult['isUseBackgroundContent'],
 	],
 	$this->getComponent()
 );?>

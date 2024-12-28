@@ -2,12 +2,17 @@
  * @module im/messenger/controller/recent/collab/recent
  */
 jn.define('im/messenger/controller/recent/collab/recent', (require, exports, module) => {
-	const { clone } = require('utils/object');
+	const { Type } = require('type');
+
 	const { BaseRecent } = require('im/messenger/controller/recent/lib');
-	const { RestMethod } = require('im/messenger/const');
-	const { restManager } = require('im/messenger/lib/rest-manager');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { EventType, ComponentCode } = require('im/messenger/const');
+	const {
+		EventType,
+		ComponentCode,
+		DialogType,
+	} = require('im/messenger/const');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('recent--collab-recent');
 
 	/**
 	 * @class CollabRecent
@@ -16,94 +21,17 @@ jn.define('im/messenger/controller/recent/collab/recent', (require, exports, mod
 	{
 		constructor(options = {})
 		{
-			super(options);
-
-			this.lastMessageId = null;
-		}
-
-		async fillStoreFromCache()
-		{
-			return Promise.resolve();
-		}
-
-		async drawCacheItems()
-		{
-			return Promise.resolve();
-		}
-
-		async loadPageFromDbHandler()
-		{
-			return Promise.resolve();
-		}
-
-		async init()
-		{
-			await super.init();
-
-			this.view.showLoader();
-		}
-
-		bindMethods()
-		{
-			this.recentAddHandler = this.recentAddHandler.bind(this);
-			this.recentUpdateHandler = this.recentUpdateHandler.bind(this);
-			this.recentDeleteHandler = this.recentDeleteHandler.bind(this);
-			this.dialogUpdateHandler = this.dialogUpdateHandler.bind(this);
-
-			this.stopRefreshing = this.stopRefreshing.bind(this);
-			this.renderInstant = this.renderInstant.bind(this);
-			this.loadPage = this.loadPage.bind(this);
+			super({ ...options, logger });
 		}
 
 		subscribeViewEvents()
 		{
+			super.subscribeViewEvents();
+
 			this.view
 				.on(EventType.recent.itemSelected, this.onItemSelected.bind(this))
-				.on(EventType.recent.loadNextPage, this.onLoadNextPage.bind(this))
-				.on(EventType.recent.itemAction, this.onItemAction.bind(this))
 				.on(EventType.recent.createChat, this.onCreateChat.bind(this))
-				.on(EventType.recent.refresh, this.onRefresh.bind(this))
 			;
-		}
-
-		subscribeStoreEvents()
-		{
-			this.storeManager
-				.on('recentModel/add', this.recentAddHandler)
-				.on('recentModel/update', this.recentUpdateHandler)
-				.on('recentModel/delete', this.recentDeleteHandler)
-				.on('dialoguesModel/add', this.dialogUpdateHandler)
-				.on('dialoguesModel/update', this.dialogUpdateHandler)
-			;
-		}
-
-		subscribeMessengerEvents()
-		{
-			BX.addCustomEvent(EventType.messenger.afterRefreshSuccess, this.stopRefreshing);
-			BX.addCustomEvent(EventType.messenger.renderRecent, this.renderInstant);
-		}
-
-		stopRefreshing()
-		{
-			this.logger.info(`${this.constructor.name}.stopRefreshing`);
-			this.view.stopRefreshing();
-		}
-
-		initRequests()
-		{
-			this.recentCollabInitRequest();
-			this.countersInitRequest();
-		}
-
-		recentCollabInitRequest()
-		{
-			// TODO: implement collab rest
-
-			restManager.on(
-				RestMethod.imV2RecentChannelTail,
-				this.getRestManagerRecentListOptions(),
-				this.restManagerRecentListHandler.bind(this),
-			);
 		}
 
 		onItemSelected(recentItem)
@@ -116,16 +44,9 @@ jn.define('im/messenger/controller/recent/collab/recent', (require, exports, mod
 			this.openDialog(recentItem.id, ComponentCode.imCollabMessenger);
 		}
 
-		onLoadNextPage()
-		{
-			this.loadNextPage();
-		}
-
-		pageHandler(response)
+		pageHandler(data)
 		{
 			return new Promise((resolve) => {
-				/** @type {imV2RecentChannelTailResult} */
-				const data = response.data();
 				this.logger.info(`${this.constructor.name}.pageHandler data:`, data);
 				this.recentService.pageNavigation.turnPage();
 
@@ -137,13 +58,6 @@ jn.define('im/messenger/controller/recent/collab/recent', (require, exports, mod
 				if (data.recentItems.length === 0)
 				{
 					this.view.hideLoader();
-				}
-
-				if (data.recentItems.length > 0)
-				{
-					const recentMessageIdList = data.recentItems.map((item) => item.messageId);
-
-					this.lastMessageId = Math.min(...recentMessageIdList);
 				}
 
 				this.saveRecentData(data)
@@ -163,7 +77,7 @@ jn.define('im/messenger/controller/recent/collab/recent', (require, exports, mod
 		}
 
 		/**
-		 * @param {imV2RecentChannelTailResult} recentData
+		 * @param {imV2CollabTailResult} recentData
 		 * @return {Promise<void>}
 		 * @override
 		 */
@@ -200,14 +114,14 @@ jn.define('im/messenger/controller/recent/collab/recent', (require, exports, mod
 		}
 
 		/**
-		 *
-		 * @param {imV2RecentChannelTailResult} recentData
+		 * @param {imV2CollabTailResult} recentData
 		 */
 		prepareDataForModels(recentData)
 		{
+			const dialogCounters = {};
 			const result = {
 				users: recentData.users,
-				dialogues: recentData.chats,
+				dialogues: [],
 				files: recentData.files,
 				recent: [],
 				messages: [...recentData.messages, ...recentData.additionalMessages],
@@ -235,17 +149,21 @@ jn.define('im/messenger/controller/recent/collab/recent', (require, exports, mod
 				};
 
 				result.recent.push(item);
+				dialogCounters[recentItem.dialogId] = recentItem.counter;
+			});
+
+			recentData.chats.forEach((chatItem) => {
+				const chat = chatItem;
+				const counter = dialogCounters[chatItem.dialogId];
+				if (Type.isNumber(counter))
+				{
+					chat.counter = counter;
+				}
+
+				result.dialogues.push(chat);
 			});
 
 			return result;
-		}
-
-		onItemAction(event)
-		{
-			const action = event.action.identifier;
-			const itemId = event.item.params.id;
-
-			this.itemAction.do(action, itemId);
 		}
 
 		onCreateChat()
@@ -253,7 +171,7 @@ jn.define('im/messenger/controller/recent/collab/recent', (require, exports, mod
 			MessengerEmitter.emit(
 				EventType.navigation.broadCastEventWithTabChange,
 				{
-					broadCastEvent: EventType.messenger.createChannel,
+					broadCastEvent: EventType.messenger.createCollab,
 					toTab: ComponentCode.imMessenger,
 					data: {},
 				},
@@ -261,76 +179,23 @@ jn.define('im/messenger/controller/recent/collab/recent', (require, exports, mod
 			);
 		}
 
-		onRefresh()
-		{
-			MessengerEmitter.emit(EventType.messenger.refresh, true, ComponentCode.imChannelMessenger);
-		}
-
-		recentAddHandler(mutation)
-		{
-			const recentList = [];
-			const recentItemList = clone(mutation.payload.data.recentItemList);
-
-			recentItemList.forEach((item) => recentList.push(item.fields));
-
-			this.addItems(recentList);
-		}
-
-		recentUpdateHandler(mutation)
-		{
-			const recentList = [];
-
-			mutation.payload.data.recentItemList.forEach((item) => {
-				recentList.push(clone(this.store.getters['recentModel/getCollection']()[item.index]));
-			});
-
-			this.updateItems(recentList);
-		}
-
-		recentDeleteHandler(mutation)
-		{
-			this.renderer.removeFromQueue(mutation.payload.data.id);
-
-			this.view.removeItem({ id: mutation.payload.data.id });
-			if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
-			{
-				this.view.hideLoader();
-			}
-
-			this.checkEmpty();
-		}
-
-		dialogUpdateHandler(mutation)
-		{
-			const dialogId = mutation.payload.data.dialogId;
-			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
-			if (recentItem)
-			{
-				this.updateItems([recentItem]);
-			}
-		}
-
-		/**
-		 * @return {object}
-		 */
-		getRestManagerRecentListOptions()
-		{
-			return {
-				limit: this.recentService.pageNavigation.itemsPerPage,
-			};
-		}
-
-		saveShareDialogCache(recentItems)
-		{
-			return Promise.resolve(true);
-		}
-
 		/**
 		 * @return {Promise<any>}
 		 */
 		getPageFromServer()
 		{
-			return this.recentService.getCollabPageFromService(this.lastMessageId);
+			return this.recentService.getCollabPageFromService();
+		}
+
+		/**
+		 * @return {ListByDialogTypeFilter}
+		 */
+		getDbFilter()
+		{
+			return {
+				dialogTypes: [DialogType.collab],
+				limit: this.recentService.getRecentListRequestLimit(),
+			};
 		}
 	}
 

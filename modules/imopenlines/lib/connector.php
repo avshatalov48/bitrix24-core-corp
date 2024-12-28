@@ -81,6 +81,29 @@ class Connector
 		}
 	}
 
+	public function setChatName($params)
+	{
+		if (empty($params['connector']) || empty($params['name']))
+		{
+			return false;
+		}
+
+		$session = new Session();
+		$resultLoadSession = $session->load([
+			'USER_CODE' => self::getUserCode($params['connector']),
+			'CONNECTOR' => $params,
+			'SKIP_CREATE' => 'Y',
+		]);
+
+		if (!$resultLoadSession)
+		{
+			return false;
+		}
+
+		$chat = new \CIMChat(0);
+		return $chat->Rename($session->getData('CHAT_ID'), $params['name'], false);
+	}
+
 	/**
 	 * Adding an incoming message from an external channel.
 	 *
@@ -311,7 +334,8 @@ class Connector
 										'SYSTEM' => 'Y',
 										'SKIP_COMMAND' => 'Y',
 										'PARAMS' => [
-											'CLASS' => 'bx-messenger-content-item-system'
+											'CLASS' => 'bx-messenger-content-item-system',
+											'COMPONENT_ID' => 'HiddenMessage',
 										],
 									]);
 								}
@@ -326,7 +350,8 @@ class Connector
 									'SKIP_COMMAND' => 'Y',
 									'URL_PREVIEW' => 'N',
 									'PARAMS' => [
-										'CLASS' => 'bx-messenger-content-item-system'
+										'CLASS' => 'bx-messenger-content-item-system',
+										'COMPONENT_ID' => 'HiddenMessage',
 									],
 								]);
 								unset($params['message']['description']);
@@ -700,6 +725,14 @@ class Connector
 								'SESSION_ID' => $session->isNowCreated()? $session->getData('ID'): 0,
 								'MESSAGE_ID' => $messageId
 							];
+
+							if ($session->getData('ID'))
+							{
+								$result['SESSION'] = [
+									'ID' => $session->getData('ID'),
+									'CHAT_ID' => $session->getData('CHAT_ID')
+								];
+							}
 						}
 
 						if (
@@ -1009,6 +1042,17 @@ class Connector
 				{
 					$result->addErrors($resultSendMessage->getErrors());
 				}
+
+				$restEvent = new \Bitrix\Main\Event(
+					'imopenlines',
+					'OnOpenLineMessageAdd',
+					[
+						'CONNECTOR' => $params['connector']['connector_id'],
+						'LINE' => $params['connector']['line_id'],
+						'DATA' => $params
+					]
+				);
+				$restEvent->send();
 			}
 		}
 
@@ -1250,6 +1294,17 @@ class Connector
 
 			$connector = new Output($connectorId, $lineId);
 			$connector->updateMessage([$fields]);
+
+			$event = new \Bitrix\Main\Event(
+				'imopenlines',
+				'OnOpenLineMessageUpdate',
+				[
+					'CONNECTOR' => $connectorId,
+					'LINE' => $lineId,
+					'DATA' => $fields
+				]
+			);
+			$event->send();
 		}
 
 		return true;
@@ -1321,6 +1376,17 @@ class Connector
 			{
 				$connector = new Output($connectorType, $lineId);
 				$connector->deleteMessage($fields);
+
+				$event = new \Bitrix\Main\Event(
+					'imopenlines',
+					'OnOpenLineMessageDelete',
+					[
+						'CONNECTOR' => $connectorType,
+						'LINE' => $lineId,
+						'DATA' => $fields
+					]
+				);
+				$event->send();
 			}
 		}
 
@@ -1362,8 +1428,8 @@ class Connector
 			)
 		)
 		{
-			\CIMMessageParam::Set($messageId, ['CLASS' => 'bx-messenger-content-item-system']);
-			\CIMMessageParam::SendPull($messageId, ['CLASS']);
+			\CIMMessageParam::Set($messageId, ['CLASS' => 'bx-messenger-content-item-system', 'COMPONENT_ID' => 'HiddenMessage']);
+			\CIMMessageParam::SendPull($messageId, ['CLASS', 'COMPONENT_ID']);
 			return false;
 		}
 
@@ -2037,6 +2103,49 @@ class Connector
 		];
 	}
 
+	public static function onNewChatName(Event $event)
+	{
+		$params = $event->getParameters();
+		if (empty($params))
+		{
+			return false;
+		}
+
+		if (
+			empty($params['name'])
+			|| empty($params['connector'])
+			|| empty($params['line'])
+			|| empty($params['chat_id'])
+		)
+		{
+			return false;
+		}
+
+		$fields = [
+			'name' => $params['name'],
+			'connector' => [
+				'connector_id' => $params['connector'],
+				'line_id' => $params['line'],
+				'chat_id' => $params['chat_id'],
+				'user_id' => 0,
+			]
+		];
+
+		Log::write($fields, 'CONNECTOR - NEW CHAT NAME');
+
+		$renameResult = (new self())->setChatName($fields);
+		$result = new \Bitrix\Main\Result();
+		if (!$renameResult)
+		{
+			$result->addError(new \Bitrix\ImConnector\Error(
+				'Chat renaming failed',
+				'CHAT_RENAMING_FAILED'
+			));
+		}
+
+		return $result;
+	}
+
 	/**
 	 * @param $params
 	 * @return array|false
@@ -2062,7 +2171,20 @@ class Connector
 			return false;
 		}
 
-		return static::onReceivedEntity($params);
+		$result = static::onReceivedEntity($params);
+		if ($result !== false)
+		{
+			$restEvent = new \Bitrix\Main\Event(
+				'imopenlines',
+				'OnOpenLineMessageAdd',
+				[
+					'DATA' => self::processReceivedEntity($params)
+				]
+			);
+			$restEvent->send();
+		}
+
+		return $result;
 	}
 
 	/**
@@ -2098,7 +2220,21 @@ class Connector
 
 		Log::write($fields, 'CONNECTOR - ENTITY UPDATE');
 
-		return (new self())->updateMessage($fields);
+		$result = (new self())->updateMessage($fields);
+
+		if ($result)
+		{
+			$restEvent = new \Bitrix\Main\Event(
+				'imopenlines',
+				'OnOpenLineMessageUpdate',
+				[
+					'DATA' => $fields
+				]
+			);
+			$restEvent->send();
+		}
+
+		return $result;
 	}
 
 	/**
@@ -2126,7 +2262,20 @@ class Connector
 
 		Log::write($fields, 'CONNECTOR - ENTITY DELETE');
 
-		return (new self())->deleteMessage($fields);
+		$result = (new self())->deleteMessage($fields);
+		if ($result)
+		{
+			$restEvent = new \Bitrix\Main\Event(
+				'imopenlines',
+				'OnOpenLineMessageDelete',
+				[
+					'DATA' => $fields
+				]
+			);
+			$restEvent->send();
+		}
+
+		return $result;
 	}
 
 	/**
@@ -2787,7 +2936,7 @@ class Connector
 				'SYSTEM' => 'Y',
 				'SKIP_COMMAND' => 'Y',
 				"PARAMS" => [
-					"CLASS" => "bx-messenger-content-item-system"
+					"CLASS" => "bx-messenger-content-item-system",
 				],
 			]);
 		}

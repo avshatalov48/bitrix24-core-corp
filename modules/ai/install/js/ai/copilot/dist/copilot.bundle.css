@@ -794,6 +794,7 @@
 .ai__copilot-menu_role {
 	height: 54px;
 	width: 100%;
+	padding-right: 24px;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
@@ -820,7 +821,6 @@
 }
 
 .ai__copilot-menu_role-title {
-	max-width: 180px;
 	margin-bottom: 2px;
 	overflow: hidden;
 	text-overflow: ellipsis;

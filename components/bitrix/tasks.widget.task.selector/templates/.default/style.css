@@ -1,0 +1,8 @@
+.widget-task-selector-container .ui-tag-selector-add-button
+{
+	min-width: 200px;
+}
+
+.ui-tag-selector-add-button-caption {
+	font-size: 13px !important;
+}

@@ -21,4 +21,17 @@ class PermissionsLayoutV2 extends BaseFeature
 	{
 		return 'use_v2_version_config_perms';
 	}
+
+	public function enable(): void
+	{
+		if (!$this->isEnabled())
+		{
+			parent::enable();
+
+			\CAgent::AddAgent(
+				'\Bitrix\Crm\Agent\Security\SeparateRolesAgent::doRun();',
+				'crm'
+			);
+		}
+	}
 }

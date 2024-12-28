@@ -157,6 +157,7 @@ jn.define('crm/communication/button', (require, exports, module) => {
 				showConnectionStubs,
 				clientOptions,
 				uid,
+				analyticsSection: 'crm',
 			});
 
 			this.communicationMenu.show();

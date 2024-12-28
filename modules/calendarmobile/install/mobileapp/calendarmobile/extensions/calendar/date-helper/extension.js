@@ -3,12 +3,51 @@
  */
 jn.define('calendar/date-helper', (require, exports, module) => {
 	const { Moment } = require('utils/date');
+	const { dayOfWeekMonth, fullDate, date: shortDate, shortTime } = require('utils/date/formats');
+	const { capitalize } = require('utils/string');
 
 	class DateHelper
 	{
-		static getDayCode(day)
+		static get dayLength()
 		{
-			return `${this.addZero(day.getDate())}.${this.addZero(day.getMonth() + 1)}.${day.getFullYear()}`;
+			return 86_400_000;
+		}
+
+		static getDayCode(date)
+		{
+			return `${this.addZero(date.getDate())}.${this.addZero(date.getMonth() + 1)}.${date.getFullYear()}`;
+		}
+
+		static getMonthCode(date)
+		{
+			return `${this.addZero(date.getMonth() + 1)}.${date.getFullYear()}`;
+		}
+
+		static getDayMonthCode(date)
+		{
+			return `${date.getDate()}.${this.addZero(date.getMonth() + 1)}`;
+		}
+
+		static addZero(date)
+		{
+			return `0${date}`.slice(-2);
+		}
+
+		static get timezoneOffset()
+		{
+			return new Date().getTimezoneOffset() * 60000;
+		}
+
+		static getDateTimezoneOffset(date)
+		{
+			return date.getTimezoneOffset() * 60000;
+		}
+
+		static getDateFromDayCode(dayCode)
+		{
+			const parsed = DateHelper.parseDayCode(dayCode);
+
+			return new Date(parsed.year, parsed.month - 1, parsed.date, 0, 0, 0, 0);
 		}
 
 		static getTimestampFromDayCode(dayCode)
@@ -47,16 +86,63 @@ jn.define('calendar/date-helper', (require, exports, module) => {
 			};
 		}
 
-		static addZero(date)
+		static formatMonthCode(monthCode)
 		{
-			return `0${date}`.slice(-2);
+			const date = DateHelper.getDateFromMonthCode(monthCode);
+
+			return DateHelper.formatMonthYear(date);
 		}
 
-		static getMonthName(day)
+		static getDateFromMonthCode(monthCode)
 		{
-			const moment = Moment.createFromTimestamp(day.getTime() / 1000);
+			const [month, year] = monthCode.split('.').map((code) => parseInt(code, 10));
+
+			return new Date(year, month - 1, 1, 0, 0, 0, 0);
+		}
+
+		static formatMonthYear(date)
+		{
+			const month = DateHelper.getMonthName(date);
+			const year = date.getFullYear().toString();
+
+			return `${capitalize(month)} ${year}`;
+		}
+
+		static getMonthName(date)
+		{
+			const moment = Moment.createFromTimestamp(date.getTime() / 1000);
+
+			return moment.format('LLLL');
+		}
+
+		static getShortMonthName(date)
+		{
+			const moment = Moment.createFromTimestamp(date.getTime() / 1000);
 
 			return moment.format('LLL');
+		}
+
+		static formatDate(date)
+		{
+			const moment = Moment.createFromTimestamp(date.getTime() / 1000);
+
+			return moment.format(shortDate());
+		}
+
+		static formatTime(date)
+		{
+			const moment = Moment.createFromTimestamp(date.getTime() / 1000);
+
+			return moment.format(shortTime());
+		}
+
+		static getDateHeaderString(timestamp)
+		{
+			const moment = Moment.createFromTimestamp(timestamp / 1000);
+			const format = moment.inThisYear ? dayOfWeekMonth() : fullDate();
+			const dateString = moment.format(format);
+
+			return dateString.at(0).toUpperCase() + dateString.slice(1);
 		}
 	}
 

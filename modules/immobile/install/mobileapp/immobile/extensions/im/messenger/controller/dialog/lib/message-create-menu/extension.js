@@ -3,65 +3,68 @@
  */
 jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { isModuleInstalled } = require('module');
+
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { Icon } = require('assets/icons');
-
+	const { AnalyticsEvent } = require('analytics');
+	const { Analytics } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
-	const { RestMethod } = require('im/messenger/const/rest');
-
-	let openTaskCreateForm = null;
-	try
-	{
-		openTaskCreateForm = require('tasks/layout/task/create/opener')?.openTaskCreateForm;
-	}
-	catch (error)
-	{
-		console.warn('Cannot get openTaskCreateForm', error);
-	}
+	const { EntityManager } = require('im/messenger/controller/dialog/lib/entity-manager');
+	const { AnalyticsHelper } = require('im/messenger/provider/service/classes/analytics/helper');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 
 	/**
-	 * @class MessageAvatarMenu
+	 * @class MessageCreateMenu
 	 */
 	class MessageCreateMenu
 	{
 		/**
+		 * @param {DialogId} dialogId
 		 * @param {MessagesModelState} messageData
-		 * @param {DialogLocator} serviceLocator
+		 * @param {MessengerCoreStore} store
 		 */
-		constructor(messageData, serviceLocator) {
-			this.actionsName = this.getActionNames();
+		constructor(dialogId, messageData, store)
+		{
+			this.dialogId = dialogId;
+			this.actions = this.constructor.getActions();
 			this.actionsData = [];
 			this.messageData = messageData;
-			this.serviceLocator = serviceLocator;
+			this.store = store;
+			this.entityManager = new EntityManager(dialogId, store);
 		}
 
 		/**
+		 * @param {DialogId} dialogId
 		 * @param {MessagesModelState} messageData
-		 * @param {DialogLocator} serviceLocator
+		 * @param {MessengerCoreStore} store
 		 */
-		static open(messageData, serviceLocator)
+		static open(dialogId, messageData, store)
 		{
-			const instanceClass = new MessageCreateMenu(messageData, serviceLocator);
+			const instanceClass = new MessageCreateMenu(dialogId, messageData, store);
 			instanceClass.show();
 		}
 
 		static hasActions()
 		{
-			const instanceClass = new MessageCreateMenu();
-
-			return instanceClass.getActionNames().length > 0;
+			return this.getActions().length > 0;
 		}
 
-		getActionNames()
+		static getActions()
 		{
-			const actionsName = [];
+			const actions = [];
 
-			if (openTaskCreateForm)
+			if (isModuleInstalled('tasks'))
 			{
-				actionsName.push('task');
+				actions.push({ name: 'task', icon: Icon.TASK });
 			}
 
-			return actionsName;
+			if (isModuleInstalled('calendar'))
+			{
+				actions.push({ name: 'calendar', icon: Icon.CALENDAR_WITH_SLOTS });
+			}
+
+			return actions;
 		}
 
 		show()
@@ -69,6 +72,7 @@ jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, ex
 			this.setCloseMenuPromise();
 			this.createMenu();
 			this.menu.show().catch((err) => Logger.error('MessageCreateMenu.open.catch:', err));
+			this.#senAnalyticsShowMenu();
 		}
 
 		createMenu()
@@ -86,13 +90,13 @@ jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, ex
 
 		prepareActionsData()
 		{
-			this.actionsName.forEach((actionName) => {
+			this.actions.forEach(({ name, icon }) => {
 				this.actionsData.push({
-					id: actionName,
-					title: Loc.getMessage(`IMMOBILE_DIALOG_MESSAGE_CREATE_MENU_${actionName.toUpperCase()}`),
-					icon: Icon.TASK,
-					onClickCallback: this.getCallbackByAction(actionName),
-					testId: `IMMOBILE_DIALOG_MESSAGE_CREATE_MENU_${actionName.toUpperCase()}`,
+					id: name,
+					title: Loc.getMessage(`IMMOBILE_DIALOG_MESSAGE_CREATE_MENU_${name.toUpperCase()}`),
+					icon,
+					onClickCallback: this.getCallbackByAction(name),
+					testId: `IMMOBILE_DIALOG_MESSAGE_CREATE_MENU_${name.toUpperCase()}`,
 				});
 			});
 		}
@@ -121,76 +125,46 @@ jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, ex
 			});
 		}
 
-		async onClickActionTask()
+		onClickActionCalendar()
 		{
-			Logger.log(`${this.constructor.name}.onClickActionTask`);
-			const taskData = await this.getPrepareDataFromRest();
-			if (!taskData.params || !openTaskCreateForm)
-			{
-				return;
-			}
-
-			let auditors = [];
-			try
-			{
-				if (taskData.params?.AUDITORS)
-				{
-					const auditorsIds = taskData.params.AUDITORS.split(',');
-					this.store = this.serviceLocator.get('store');
-					auditors = auditorsIds.map((id) => {
-						const user = this.store.getters['usersModel/getById'](id);
-						if (user && user.name)
-						{
-							return Object.create({ id, name: user.name });
-						}
-
-						return Object.create({ id, name: '' });
-					});
-				}
-			}
-			catch (error)
-			{
-				Logger.error(`${this.constructor.name}.onClickActionTask get auditors error find ${error}`);
-			}
-
-			const files = taskData.params?.UF_TASK_WEBDAV_FILES_DATA || [];
+			Logger.log(`${this.constructor.name}.onClickActionCalendar`);
 
 			this.closePromise.then(() => {
-				openTaskCreateForm({
-					initialTaskData: {
-						title: this.messageData.text,
-						description: taskData.params.DESCRIPTION,
-						auditors,
-						files,
-						IM_CHAT_ID: taskData.params.IM_CHAT_ID,
-						IM_MESSAGE_ID: taskData.params.IM_MESSAGE_ID,
-					},
-					closeAfterSave: true,
-					analyticsLabel: {
-						c_section: 'chat',
-						c_element: 'create_button',
-					},
-				});
+				void this.entityManager.createMeeting(this.messageData.id);
+			})
+				.catch((error) => Logger.log(`${this.constructor.name}.onClickActionCalendar.closePromise.catch:`, error));
+		}
+
+		onClickActionTask()
+		{
+			Logger.log(`${this.constructor.name}.onClickActionTask`);
+
+			this.closePromise.then(() => {
+				this.entityManager.createTaskFomMessage(this.messageData);
 			})
 				.catch((error) => Logger.log(`${this.constructor.name}.onClickActionTask.closePromise.catch:`, error));
 		}
 
-		/**
-		 * @return {Promise}
-		 */
-		getPrepareDataFromRest()
+		#senAnalyticsShowMenu()
 		{
-			return new Promise((resolve, reject) => {
-				BX.rest.callMethod(RestMethod.imChatTaskPrepare, { MESSAGE_ID: this.messageData.id })
-					.then((result) => {
-						Logger.log(`${this.constructor.name}.getPrepareDataFromRest result`, result.data());
-						resolve(result.data());
-					})
-					.catch((result) => {
-						Logger.error(`${this.constructor.name}.getPrepareDataFromRest catch:`, result.error());
-						reject(result.error());
-					});
-			});
+			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
+
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.Tool.im)
+				.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
+				.setEvent(Analytics.Event.clickAttach)
+				.setSection(Analytics.Section.messageContextMenu)
+				.setP1(AnalyticsHelper.getP1ByChatType())
+				.setP2(AnalyticsHelper.getP2ByUserType())
+				.setP5(AnalyticsHelper.getFormattedChatId(dialog.chatId));
+
+			const isCollab = DialogHelper.createByDialogId(this.dialogId)?.isCollab;
+			if (isCollab)
+			{
+				analytics.setP4(AnalyticsHelper.getFormattedCollabIdByDialogId(dialog.dialogId));
+			}
+
+			analytics.send();
 		}
 	}
 

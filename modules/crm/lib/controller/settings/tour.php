@@ -94,6 +94,19 @@ final class Tour extends Base
 			$isNumberOfViewsExceeded = $newNumberOfViews > $numberOfViewsLimit;
 		}
 
+		if (is_array($options['additionalTourIdsForDisable'] ?? null))
+		{
+			foreach ($options['additionalTourIdsForDisable'] as $additionalId)
+			{
+				Config::setPersonalValue(
+					$category,
+					$additionalId,
+					Config::CODE_CLOSED,
+					'Y'
+				);
+			}
+		}
+
 		return [
 			'isNumberOfViewsExceeded' => $isNumberOfViewsExceeded,
 		];

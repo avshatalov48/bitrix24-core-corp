@@ -387,6 +387,8 @@ class Task extends Base
 		$fields = $this->cleanStatus($fields);
 		$fields = $this->cleanForumData($fields);
 		$fields = $this->cleanSystemUfData($fields);
+		$fields = $this->cleanFlow($fields);
+
 		return $fields;
 	}
 
@@ -422,6 +424,13 @@ class Task extends Base
 	protected function cleanSystemUfData(array $fields): array
 	{
 		unset($fields["UF_TASK_WEBDAV_FILES"]);
+		return $fields;
+	}
+
+	protected function cleanFlow(array $fields): array
+	{
+		unset($fields['FLOW_ID']);
+
 		return $fields;
 	}
 

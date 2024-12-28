@@ -258,6 +258,7 @@ $canReadGroupTasks = (
 				'MIN' => 1,
 				'MAX' => 1,
 				'ENABLE_SYNC' => true,
+				'FLOW_ID' => $taskData['FLOW_ID'],
 				'ENTITY_ID' => $taskData["ID"],
 				'ENTITY_ROUTE' => 'task',
 				'TITLE' => Loc::getMessage('TASKS_TTDP_TEMPLATE_USER_VIEW_ASSIGNEE'),
@@ -266,7 +267,7 @@ $canReadGroupTasks = (
 				'PATH_TO_TASKS' => $arParams["PATH_TO_TASKS"],
 				'NAME_TEMPLATE' => $arParams["NAME_TEMPLATE"],
 				'HIDE_IF_EMPTY' => 'N',
-				'DISABLE_JS_IF_READ_ONLY' => 'Y',
+				'DISABLE_JS_IF_READ_ONLY' => 'N',
 				'CHECK_ABSENCE'=>'Y',
 				'GROUP_ID' => (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0,
 				'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_RESPONSIBLE,
@@ -329,6 +330,8 @@ $canReadGroupTasks = (
 					'TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR_MSGVER_1' :
 					'TASKS_TTDP_TEMPLATE_USER_VIEW_ENTER_AUDITOR'
 				),
+				'TASKS_LEAVE_AUDITOR_MESSAGE' => Loc::getMessage('TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR_MSGVER_1'),
+				'TASKS_ENTER_AUDITOR_MESSAGE' => Loc::getMessage('TASKS_TTDP_TEMPLATE_USER_VIEW_ENTER_AUDITOR'),
 				'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
 				'GROUP_ID' => (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0,
 				'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_AUDITOR,
@@ -474,7 +477,7 @@ if(\Bitrix\Main\Loader::includeModule('rest'))
 ?>
 
 <script>
-	new BX.Tasks.Component.TaskViewSidebar({
+	BX.Tasks.Component.TaskViewSidebarObject = new BX.Tasks.Component.TaskViewSidebar({
 		taskId: <?=$taskData["ID"]?>,
 		groupId: <?= (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0 ?>,
 		deadline: "<?=CUtil::JSEscape($taskData["DEADLINE"])?>",

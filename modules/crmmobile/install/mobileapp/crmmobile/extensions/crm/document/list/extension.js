@@ -382,6 +382,7 @@ jn.define('crm/document/list', (require, exports, module) => {
 				title: Loc.getMessage('M_CRM_DOCUMENT_SHARED_PHRASES_DESKTOP_VERSION'),
 				redirectUrl: `/crm/documents/templates/?entityTypeId=${this.props.documentGeneratorProvider}`,
 				layout: this.layoutWidget,
+				analyticsSection: 'crm',
 			});
 		}
 	}

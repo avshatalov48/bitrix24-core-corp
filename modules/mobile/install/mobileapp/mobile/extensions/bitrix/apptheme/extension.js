@@ -11,7 +11,7 @@ jn.define('apptheme', (require, exports, module) => {
 		newlight: 'light',
 	};
 
-	const { styles, typography } = require('apptheme/list');
+	const { colors: localColors, styles, typography } = require('apptheme/list');
 	const nativeAppTheme = (Application.getApiVersion() >= 52) ? require('native/apptheme')?.AppTheme : undefined;
 
 	const componentTokens = {
@@ -49,15 +49,14 @@ jn.define('apptheme', (require, exports, module) => {
 
 		static get realColors()
 		{
-			if (AppTheme.cachedColors.currentRealColors)
+			if (!AppTheme.cachedColors.currentRealColors)
 			{
-				return AppTheme.cachedColors.currentRealColors;
+				const colors = nativeAppTheme.getColors();
+				const localThemeColors = localColors[nativeAppTheme.getId()] ?? {};
+				AppTheme.cachedColors.currentRealColors = { ...localThemeColors, ...colors };
 			}
 
-			const colors = nativeAppTheme.getColors();
-			AppTheme.cachedColors.currentRealColors = colors;
-
-			return colors;
+			return AppTheme.cachedColors.currentRealColors;
 		}
 
 		static get typography()

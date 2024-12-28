@@ -2,10 +2,14 @@
 namespace Bitrix\Sign\Access\Service;
 
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Result;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
+use Bitrix\Sign\Access\AccessController;
+use Bitrix\Sign\Access\Model\UserModel;
 use Bitrix\Sign\Access\Permission\PermissionTable;
 use Bitrix\Sign\Access\Permission\PermissionDictionary;
 use Bitrix\Sign\Access\Permission\SignPermissionDictionary;
@@ -13,6 +17,8 @@ use Bitrix\Sign\Access\SectionDictionary;
 use CCrmPerms;
 
 Loc::loadMessages(__FILE__);
+
+Loader::includeModule('crm');
 
 class RolePermissionService extends \Bitrix\Crm\Integration\Sign\Access\Service\RolePermissionService
 {
@@ -24,7 +30,7 @@ class RolePermissionService extends \Bitrix\Crm\Integration\Sign\Access\Service\
 	];
 
 	/**
-	 * @param array $permissionSettings permission settings array
+	 * @param list<array{id: string, title: string, accessRights: list<array{id: string, value: string|int}>}> $permissionSettings permission settings array
 	 */
 	public function saveRolePermissions(array &$permissionSettings): void
 	{
@@ -171,13 +177,13 @@ class RolePermissionService extends \Bitrix\Crm\Integration\Sign\Access\Service\
 		{
 			$roles[] = (int)$row['ID'];
 		}
-		
+
 		$permissions = $this->getSavedPermissions($roles);
 		static::$settings = $this->mapCurrentPermissions($permissions);
-		
+
 		return static::$settings;
 	}
-	
+
 	protected function mapCurrentPermissions($permissions): array
 	{
 		$preparedPermissions = parent::mapCurrentPermissions($permissions);
@@ -232,6 +238,23 @@ class RolePermissionService extends \Bitrix\Crm\Integration\Sign\Access\Service\
 		}
 	}
 
+	public function isAllSignPermissionsEmpty(): bool
+	{
+		if (!Loader::includeModule('crm'))
+		{
+			return false;
+		}
+
+		$signPermissions = PermissionTable::query()
+			->setSelect(['ID'])
+			->whereNotIn('VALUE', ['0', \CCrmPerms::PERM_NONE])
+			->setLimit(1)
+			->fetchAll()
+		;
+
+		return empty($signPermissions);
+	}
+
 	protected function getLocalPermissionList(): array
 	{
 		return PermissionDictionary::getList();
@@ -244,6 +267,11 @@ class RolePermissionService extends \Bitrix\Crm\Integration\Sign\Access\Service\
 
 	public function getValueForPermission(array $roles, string $permissionId): ?string
 	{
+		if (empty($roles))
+		{
+			return null;
+		}
+
 		try
 		{
 			$permissions = PermissionTable::query()
@@ -274,13 +302,12 @@ class RolePermissionService extends \Bitrix\Crm\Integration\Sign\Access\Service\
 	}
 
 	/**
-	 * @return array<int, array{CODE: string}
+	 * @return array<int, array{CODE: string} role id to its code
 	 */
 	public function getDefaultRoles(): array
 	{
-		$rolePermissionService = \Bitrix\Sign\Service\Container::instance()->getRolePermissionService();
 		$defaultRoleIds = [];
-		foreach ($rolePermissionService->getRoleList() as $role)
+		foreach ($this->getRoleList() as $role)
 		{
 			if (in_array($role['CODE'], self::DEFAULT_ROLES_CODE, true))
 			{
@@ -289,5 +316,21 @@ class RolePermissionService extends \Bitrix\Crm\Integration\Sign\Access\Service\
 		}
 
 		return $defaultRoleIds;
+	}
+
+	/**
+	 * @return list<array{id: string|int, value: string, type: string, enableSearch: bool}> its not return sign permissions if its empty
+	 */
+	public function getFlatAccessRightsFromAllRoles(): array
+	{
+		$userGroups = $this->getUserGroups();
+		$accessRights = array_column($userGroups, 'accessRights');
+		$flatAccessRightsFromAllRoles = [];
+		foreach ($accessRights as $accessRight)
+		{
+			$flatAccessRightsFromAllRoles = array_merge($flatAccessRightsFromAllRoles, $accessRight);
+		}
+
+		return $flatAccessRightsFromAllRoles;
 	}
 }

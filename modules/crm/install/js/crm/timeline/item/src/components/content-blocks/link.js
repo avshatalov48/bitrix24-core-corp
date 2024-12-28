@@ -31,6 +31,11 @@ export default {
 			required: false,
 			default: '',
 		},
+		rowLimit: {
+			type: Number,
+			required: false,
+			default: 0,
+		},
 	},
 
 	computed: {
@@ -84,6 +89,7 @@ export default {
 				this.colorClassName,
 				this.boldClassName,
 				this.decorationClassName,
+				this.rowLimitClassName,
 			];
 		},
 
@@ -125,6 +131,22 @@ export default {
 				`--code-${this.icon}`,
 			];
 		},
+
+		rowLimitClassName(): string
+		{
+			return this.rowLimit ? '--limit' : '';
+		},
+		rowLimitStyle(): Object
+		{
+			if (this.rowLimit && this.rowLimit > 0)
+			{
+				return {
+					'-webkit-line-clamp': this.rowLimit,
+				};
+			}
+
+			return {};
+		},
 	},
 
 	methods: {
@@ -145,6 +167,7 @@ export default {
 				v-bind="linkAttrs"
 				:class="className"
 				:title="title"
+				:style="rowLimitStyle"
 			>{{text}}<span v-if="icon" :class="iconClassName"></span>
 			</a>
 			<span
@@ -152,6 +175,7 @@ export default {
 				@click="executeAction"
 				:class="className"
 				:title="title"
+				:style="rowLimitStyle"
 			>{{text}}<span v-if="icon" :class="iconClassName"></span>
 			</span>
 		`,

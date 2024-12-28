@@ -9,6 +9,7 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 		FeatureFlag,
 		ComponentCode,
 		OpenRequest,
+		OpenDialogContextType,
 	} = require('im/messenger/const');
 
 	/**
@@ -24,6 +25,11 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 			return 4;
 		}
 
+		static get context()
+		{
+			return OpenDialogContextType;
+		}
+
 		/**
 		 * Opens a dialog on top of the parent widget.
 		 *
@@ -36,6 +42,9 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 		 * @param {string} [options.dialogTitleParams.description]
 		 * @param {string} [options.dialogTitleParams.avatar]
 		 * @param {string} [options.dialogTitleParams.color]
+		 *
+		 * @see DialogOpener.context
+		 * @param {string} [options.context] from opened. Need for analytics
 		 *
 		 * @param {object} [options.parentWidget]
 		 *

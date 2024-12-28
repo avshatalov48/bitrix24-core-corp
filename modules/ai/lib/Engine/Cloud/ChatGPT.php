@@ -7,6 +7,7 @@ use Bitrix\AI\Context\Message;
 use Bitrix\AI\Engine;
 use Bitrix\AI\Engine\IContext;
 use Bitrix\AI\Engine\IQueueOptional;
+use Bitrix\AI\Facade\Bitrix24;
 use Bitrix\AI\Quality;
 use Bitrix\AI\Result;
 use Bitrix\AI\Tokenizer\GPT;
@@ -22,7 +23,7 @@ final class ChatGPT extends CloudEngine implements IContext, IQueueOptional
 
 	protected const CATEGORY_CODE = Engine::CATEGORIES['text'];
 	protected const ENGINE_NAME = 'gpt-3.5-turbo';
-	protected const ENGINE_CODE = 'ChatGPT';
+	public const ENGINE_CODE = 'ChatGPT';
 
 	protected const URL_COMPLETIONS = 'https://api.openai.com/v1/chat/completions';
 
@@ -174,11 +175,14 @@ final class ChatGPT extends CloudEngine implements IContext, IQueueOptional
 	public function getResultFromRaw(mixed $rawResult, bool $cached = false): Result
 	{
 		$text = $rawResult['choices'][0]['message']['content'] ?? null;
-		$dataJson =  null;
+		$dataJson = null;
+
+		$text = $this->restoreReplacements($text);
+		$rawResult['choices'][0]['message']['content'] = $text;
 
 		if ($text && $this->isModeResponseJson)
 		{
-			$dataJson = json_decode($rawResult['choices'][0]['message']['content'], true) ?? null;
+			$dataJson = json_decode($text, true) ?? null;
 		}
 
 		return new Result($rawResult, $text, $cached, $dataJson);
@@ -202,5 +206,24 @@ final class ChatGPT extends CloudEngine implements IContext, IQueueOptional
 		$region = Application::getInstance()->getLicense()->getRegion();
 
 		return !in_array($region, ['ru', 'by', 'cn']);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function isPreferredForQuality(?Quality $quality = null): bool
+	{
+		$zone = Bitrix24::getPortalZone();
+		if (\in_array($zone, ['ru', 'by', 'cn'], true))
+		{
+			return false;
+		}
+
+		$prefer = [
+			Quality::QUALITIES['translate'],
+			Quality::QUALITIES['fields_highlight'],
+		];
+
+		return $quality === null || !empty(array_intersect($quality->getRequired(), $prefer));
 	}
 }

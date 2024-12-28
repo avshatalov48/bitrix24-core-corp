@@ -1,12 +1,15 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Bitrix24\Service\PortalNotifications;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
 use Bitrix\Bitrix24\Util;
 use Bitrix\Intranet;
+use Bitrix\Socialnetwork\Collab\CollabFeature;
+use Bitrix\Socialnetwork\Internals\Registry\GroupRegistry;
 
 Loc::loadMessages(__FILE__);
 
@@ -73,12 +76,22 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 			];
 		}
 
+		$isOnlyIntranetUsersInvite = (
+			!isset($this->arParams['USER_OPTIONS']['intranetUsersOnly'])
+			|| $this->arParams['USER_OPTIONS']['intranetUsersOnly'] !== true
+		);
+		$isExtranetInvitationAvailable = (
+			!$this->arResult['IS_COLLAB_ENABLED']
+			|| (
+				isset($this->arParams['USER_OPTIONS']['groupId'])
+				&& $this->isExtranetGroupById($this->arParams['USER_OPTIONS']['groupId'])
+			)
+		);
+
 		if (
 			$this->arResult["IS_EXTRANET_INSTALLED"]
-			&& (
-				!isset($this->arParams['USER_OPTIONS']['intranetUsersOnly'])
-				|| $this->arParams['USER_OPTIONS']['intranetUsersOnly'] !== true
-			)
+			&& $isOnlyIntranetUsersInvite
+			&& $isExtranetInvitationAvailable
 		)
 		{
 			$this->arResult["MENU_ITEMS"]["extranet"] = [
@@ -116,6 +129,17 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 		}
 	}
 
+	private function isExtranetGroupById($groupId): bool
+	{
+		$group = GroupRegistry::getInstance()->get($groupId);
+
+		return (
+			isset($group)
+			&& $group->getSiteId() === $this->arResult['EXTRANET_SITE_ID']
+			&& !$group->isCollab()
+		);
+	}
+
 	private function prepareLinkRegisterData(): void
 	{
 		$this->arResult["REGISTER_SETTINGS"] = Intranet\Invitation::getRegisterSettings();
@@ -141,7 +165,7 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 			$this->arResult["USER_MAX_COUNT"] = CBitrix24::getMaxBitrix24UsersCount();
 		}
 
-		$this->arResult["USER_CURRENT_COUNT"] = Util::getCurrentUserCount();
+		$this->arResult["USER_CURRENT_COUNT"] = \Bitrix\Bitrix24\License\User::getInstance()->getCount();
 	}
 
 	public function executeComponent()
@@ -183,6 +207,7 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 			&& Option::get('bitrix24', 'phone_invite_allowed', 'N') === 'Y';
 
 		$this->arResult['canCurrentUserInvite'] = \Bitrix\Intranet\Invitation::canCurrentUserInvite();
+		$this->arResult['IS_COLLAB_ENABLED'] = CollabFeature::isOn();
 
 		$this->prepareMenuItems();
 		$this->arResult["IS_CREATOR_EMAIL_CONFIRMED"] = true;
@@ -190,7 +215,9 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 		{
 			$this->prepareLinkRegisterData();
 			$this->prepareUserData();
-			$this->arResult["IS_CREATOR_EMAIL_CONFIRMED"] = \CBitrix24::isEmailConfirmed();
+			$this->arResult["IS_CREATOR_EMAIL_CONFIRMED"] = !\Bitrix\Bitrix24\Service\PortalSettings::getInstance()
+				->getEmailConfirmationRequirements()
+				->isRequiredByType(\Bitrix\Bitrix24\Portal\Settings\EmailConfirmationRequirements\Type::INVITE_USERS);
 		}
 
 		if ($this->arResult['canCurrentUserInvite'])
@@ -218,6 +245,18 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 		)
 		{
 			$this->arResult['FIRST_INVITATION_BLOCK'] = $_GET['firstInvitationBlock'];
+		}
+
+		if(isset($_GET['departments']) && is_array($_GET['departments']))
+		{
+			$this->arParams['USER_OPTIONS']['departmentsId'] = array_map(
+				fn($departmentId) => (int)$departmentId,
+				$_GET['departments']
+			);
+			$this->arParams['USER_OPTIONS']['departmentsId'] = array_filter(
+				$this->arParams['USER_OPTIONS']['departmentsId'],
+				fn($departmentId) => $departmentId > 0
+			);
 		}
 
 		$this->includeComponentTemplate();

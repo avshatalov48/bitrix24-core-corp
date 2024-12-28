@@ -3,6 +3,9 @@
 namespace Bitrix\Disk\Controller;
 
 use Bitrix\Disk;
+use Bitrix\Disk\Controller\DataProviders\ChildrenDataProvider;
+use Bitrix\Disk\Controller\Types;
+use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\ZipNginx;
@@ -12,7 +15,9 @@ use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Engine\Response\DataType\Page;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\Result;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\Engine\Response;
 
@@ -115,78 +120,43 @@ class Folder extends BaseObject
 		return $this->get($subFolder);
 	}
 
-	private function validateOrder(array $order): Result
-	{
-		$whitelistColumns = [
-			'NAME', 'CREATE_TIME', 'UPDATE_TIME', 'SIZE', 'ID',
-		];
-
-		$result = new Result();
-		foreach ($order as $column => $direction)
-		{
-			if (!\in_array($column, $whitelistColumns, true))
-			{
-				$result->addError(new Error("Column '{$column}' is not allowed for sorting."));
-			}
-			if (!\in_array($direction, ['ASC', 'DESC'], true))
-			{
-				$result->addError(new Error("Direction '{$direction}' is not allowed for sorting."));
-			}
-		}
-
-		return $result;
-	}
-
 	/**
 	 * Returns children of folder.
 	 * @param Disk\Folder $folder Destination folder to get children.
+	 * @param CurrentUser $currentUser Current user, autowired automatically.
 	 * @param string|null $search Search string.
+	 * @param bool $showRights Should be true if you want to show rights for each element.
+	 * @param array $context Additional context for recognizing folderType. Necessary when user deep in folder tree.
 	 * @param array $order How to sort elements. For example: ['NAME' => 'ASC']
 	 * @param PageNavigation|null $pageNavigation Autowired automatically. Describe how to slice elements.
 	 * @return Page|null
+	 * @throws NotImplementedException
 	 * @see \Bitrix\DiskMobile\Controller\Folder::getChildrenAction()
 	 */
 	public function getChildrenAction(
 		Disk\Folder $folder,
+		CurrentUser $currentUser,
 		string $search = null,
+		string $searchScope = 'currentFolder',
+		bool $showRights = false,
+		array $context = [],
 		array $order = [],
 		PageNavigation $pageNavigation = null
 	): ?Response\DataType\Page
 	{
-		$orderResult = $this->validateOrder($order);
-		if (!$orderResult->isSuccess())
+		$childrenDataProvider = new ChildrenDataProvider();
+		$result = $childrenDataProvider->getChildren($folder, $currentUser, $search, $searchScope, $showRights, $context, $order, $pageNavigation);
+
+		if (!$result->isSuccess())
 		{
-			$this->addErrors($orderResult->getErrors());
+			$this->addErrors($result->getErrors());
 
 			return null;
 		}
 
-		$storage = $folder->getStorage();
-		if (!$storage)
-		{
-			$this->addError(new Error('Could not find storage for folder.'));
+		$data = $result->getData();
 
-			return null;
-		}
-
-		$filter = [];
-		if ($search)
-		{
-			$filter['%=NAME'] = str_replace('%', '', $search) . '%';
-		}
-
-		$limit = $pageNavigation?->getLimit() ?: 50;
-		$offset = $pageNavigation?->getOffset() ?: 0;
-
-		$securityContext = $storage->getSecurityContext($this->getCurrentUser()?->getId());
-		$children = $folder->getChildren($securityContext, [
-			'filter' => $filter,
-			'order' => $order,
-			'limit' => $limit,
-			'offset' => $offset,
-		]);
-
-		return new Response\DataType\Page('children', $children, 0);
+		return new Response\DataType\Page('children', $data['children'], $data['total']);
 	}
 
 	public function copyToAction(Disk\Folder $folder, Disk\Folder $toFolder)

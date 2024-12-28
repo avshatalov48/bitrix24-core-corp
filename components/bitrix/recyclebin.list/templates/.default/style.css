@@ -20,6 +20,18 @@
 	color: #d9930a;
 }
 
+.recyclebin-grid-avatar-collaber {
+	color: #19CC45;
+}
+
+.recyclebin-grid-avatar.recyclebin-grid-avatar-collaber {
+	border-radius: 50%;
+	outline: 1px solid #19CC45;
+	border: 3px solid #fff;
+	outline-offset: -1px;
+	box-sizing: border-box;
+}
+
 .recyclebin-grid-avatar.recyclebin-grid-avatar-extranet:after {
 	content: '';
 	width: 10px;

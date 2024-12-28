@@ -6,6 +6,7 @@ use ArrayIterator;
 use Bitrix\Sign\Contract;
 use Bitrix\Sign\Helper\IterationHelper;
 use Bitrix\Sign\Type\Member\Role;
+use Bitrix\Sign\Type\MemberStatus;
 use Closure;
 use Countable;
 use Iterator;
@@ -129,6 +130,21 @@ class MemberCollection implements Contract\Item, Contract\ItemCollection, Iterat
 		}
 
 		return null;
+	}
+
+	/**
+	 * @param array<MemberStatus::*> $statuses
+	 *
+	 * @return Member|null
+	 */
+	final public function findFirstByStatuses(array $statuses): ?Member
+	{
+		return $this->findFirst(static fn(Member $member): bool => in_array($member->status, $statuses, true));
+	}
+
+	final public function filterByStatuses(array $statuses): static
+	{
+		return $this->filter(static fn(Member $member): bool => in_array($member->status, $statuses, true));
 	}
 
 	final public function findFirstByParty(int $party): ?Member

@@ -17,6 +17,7 @@ jn.define('sign/dialog', (require, exports, module) => {
 	const SIGNED_BY_EDITOR_BANNER_TYPE = 'SIGNED_BY_EDITOR';
 	const PROCESSING_WAITING_BANNER_TYPE = 'PROCESSING_WAITING';
 	const ERROR_ACCESS_DENIED_BANNER_TYPE = 'ERROR_ACCESS_DENIED';
+	const REFUSED_BY_ASSIGNEE_BANNER_TYPE = 'REFUSED_BY_ASSIGNEE';
 
 	/**
 	 * @class SignDialog
@@ -159,6 +160,15 @@ jn.define('sign/dialog', (require, exports, module) => {
 		}
 
 		/**
+		 * @function REFUSED_BY_ASSIGNEE_BANNER_TYPE
+		 * @returns {string}
+		 * @constructor
+		 */
+		static get REFUSED_BY_ASSIGNEE_BANNER_TYPE() {
+			return REFUSED_BY_ASSIGNEE_BANNER_TYPE;
+		}
+
+		/**
 		 * @function openSignConfirmationDialog
 		 *
 		 * @param props
@@ -171,6 +181,7 @@ jn.define('sign/dialog', (require, exports, module) => {
 				title = '',
 				memberId = 0,
 				role,
+				initiatedByType
 			} = props;
 
 			ComponentHelper.openLayout(
@@ -182,6 +193,7 @@ jn.define('sign/dialog', (require, exports, module) => {
 						role,
 						title,
 						memberId,
+						initiatedByType
 					},
 				},
 			);
@@ -216,6 +228,7 @@ jn.define('sign/dialog', (require, exports, module) => {
 				role,
 				isGoskey,
 				isExternal,
+				initiatedByType
 			} = props;
 
 			ComponentHelper.openLayout(
@@ -230,6 +243,7 @@ jn.define('sign/dialog', (require, exports, module) => {
 						url,
 						isGoskey,
 						isExternal,
+						initiatedByType
 					},
 				},
 			);
@@ -306,6 +320,10 @@ jn.define('sign/dialog', (require, exports, module) => {
 				[SignDialog.REVIEW_SUCCESS_BANNER_TYPE]: {
 					path: 'dialog/banners/reviewsuccess',
 					component: 'ReviewSuccess',
+				},
+				[SignDialog.REFUSED_BY_ASSIGNEE_BANNER_TYPE]: {
+					path: 'dialog/banners/refusedbyassignee',
+					component: 'RefusedByAssignee',
 				},
 			};
 

@@ -2,11 +2,14 @@
  * @bxjs_lang_path extension.php
  */
 jn.define('tab/presets/editor', (require, exports, module) => {
+	const AppTheme = require('apptheme');
+	const TabPresetUtils = require('tab.presets/utils');
 	const { colors, styles, getIcon } = require('tab/settings/res');
 	const { Haptics } = require('haptics');
-	const AppTheme = require('apptheme');
 	const { Color } = require('tokens');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
+	const { Notify } = require('notify');
+
 	const CellType = {
 		SECTION: 'section',
 		ELEMENT: 'element',
@@ -38,7 +41,9 @@ jn.define('tab/presets/editor', (require, exports, module) => {
 				ListView({
 					dragInteractionEnabled: true,
 					isRefreshing: false,
-					ref: (ref) => this.listRef = ref,
+					ref: (ref) => {
+						this.listRef = ref;
+					},
 					style: {
 						height: '100%',
 						paddingTop: 100,
@@ -46,9 +51,7 @@ jn.define('tab/presets/editor', (require, exports, module) => {
 						marginBottom: 20,
 						backgroundColor: colors.listViewBackground,
 					},
-
 					data: this.getData(),
-					isRefreshing: false,
 					onItemDrop: ({ from, to }) => this.handleMove(from, to),
 					canItemDrop: (data) => this.canDropItem(data),
 					renderSectionHeader: (data, index) => this.renderSection({ data, index }),
@@ -74,7 +77,7 @@ jn.define('tab/presets/editor', (require, exports, module) => {
 			));
 		}
 
-		renderSection({ data, index })
+		renderSection({ data })
 		{
 			const renderableSections = ['active', 'inactive', 'bottom', 'desc'];
 			if (renderableSections.includes(data.id) === false)
@@ -121,7 +124,8 @@ jn.define('tab/presets/editor', (require, exports, module) => {
 			);
 		}
 
-		renderDesc() {
+		renderDesc()
+		{
 			return View(
 				{
 					style: {
@@ -151,7 +155,6 @@ jn.define('tab/presets/editor', (require, exports, module) => {
 				View(
 					{
 						style: {
-							// opacity: this.inactiveItems.length === 0 ? 0.5 : 0.0,
 							justifyContent: 'center',
 							alignItems: 'center',
 							flexDirection: 'row',
@@ -176,7 +179,7 @@ jn.define('tab/presets/editor', (require, exports, module) => {
 			);
 		}
 
-		renderItem({ title, type, iconId })
+		renderItem({ title, type, iconId, id })
 		{
 			if (type === CellType.ELEMENT_DRAG_PLACEHOLDER)
 			{
@@ -212,7 +215,7 @@ jn.define('tab/presets/editor', (require, exports, module) => {
 						: IconView({
 							size: 20,
 							color: iconTintColor,
-							icon: Icon.DRAG
+							icon: Icon.DRAG,
 						}),
 				),
 				View(
@@ -227,7 +230,7 @@ jn.define('tab/presets/editor', (require, exports, module) => {
 					IconView({
 						size: 32,
 						color: Color.base4,
-						icon: getIcon(iconId),
+						icon: getIcon(iconId) || getIcon(id),
 					}),
 				),
 				View(
@@ -261,48 +264,38 @@ jn.define('tab/presets/editor', (require, exports, module) => {
 			this.activeItems = [];
 			this.activeItemsUnchangeable = [];
 			const activeKeys = Object.keys(props.current);
-			this.inactiveItems = Object.keys(props.list)
-				.filter((key) => activeKeys.includes(key) === false)
-				.map((key) => {
-					return {
+			this.inactiveItems = (
+				Object.keys(props.list)
+					.filter((key) => activeKeys.includes(key) === false)
+					.map((key) => ({
 						type: CellType.ELEMENT_INACTIVE,
 						id: key,
 						iconId: props.list[key].iconId,
 						key,
 						title: props.list[key].title,
 						canBeRemoved: true,
-					};
-				})
-			;
+					}))
+			);
 
-			Object.keys(props.current)
-				.forEach((key) => {
-					const isUnchangeable = props.current[key].canChangeSort === false;
-					const canBeRemoved = props.current[key].canBeRemoved;
-					const data = {
-						id: key,
-						iconId: props.current[key].iconId,
-						key,
-						title: props.current[key].title,
-						canBeRemoved,
-					};
-					if (isUnchangeable)
-					{
-						this.activeItemsUnchangeable.push({ ...data, type: CellType.ELEMENT_UNCHANGEABLE });
-					}
-					else
-					{
-						this.activeItems.push({ ...data, type: CellType.ELEMENT });
-					}
-				});
-		}
-
-		listHeight()
-		{
-			let items = []; // holder
-			items = items.concat(this.activeItems, this.activeItemsUnchangeable, this.inactiveItems);
-
-			return items.length * CELL_HEIGHT + SECTION_FOOTER_HEIGHT + SECTION_HEADER_HEIGHT * 2 + CELL_DRAG_HOLDER_HEIGHT;
+			Object.keys(props.current).forEach((key) => {
+				const isUnchangeable = props.current[key].canChangeSort === false;
+				const canBeRemoved = props.current[key].canBeRemoved;
+				const data = {
+					id: key,
+					iconId: props.current[key].iconId,
+					key,
+					title: props.current[key].title,
+					canBeRemoved,
+				};
+				if (isUnchangeable)
+				{
+					this.activeItemsUnchangeable.push({ ...data, type: CellType.ELEMENT_UNCHANGEABLE });
+				}
+				else
+				{
+					this.activeItems.push({ ...data, type: CellType.ELEMENT });
+				}
+			});
 		}
 
 		getData()
@@ -326,7 +319,6 @@ jn.define('tab/presets/editor', (require, exports, module) => {
 					id: 'inactive',
 				},
 				bottomBorderSection,
-				// {items: [{type: CellType.ELEMENT_DRAG_PLACEHOLDER}], dragInteractionEnabled: false},
 			];
 		}
 
@@ -342,11 +334,14 @@ jn.define('tab/presets/editor', (require, exports, module) => {
 					const item = this.activeItems[i];
 					if (item.canBeRemoved && to.index !== i)
 					{
-						this.listRef.moveRow(item, this.inactiveIndex, 0, true).then(() => {
-							this.activeItems.splice(i, 1);
-							this.inactiveItems.unshift(item);
-							Haptics.impactMedium();
-						}).catch((e) => console.error(e));
+						this.listRef.moveRow(item, this.inactiveIndex, 0, true)
+							.then(() => {
+								this.activeItems.splice(i, 1);
+								this.inactiveItems.unshift(item);
+								Haptics.impactMedium();
+							})
+							.catch((e) => console.error(e))
+						;
 						break;
 					}
 				}
@@ -416,32 +411,34 @@ jn.define('tab/presets/editor', (require, exports, module) => {
 		save()
 		{
 			const config = {};
-			this.activeItems
-				.concat(this.activeItemsUnchangeable)
-				.forEach((item, index) => config[item.id] = index);
+			[...this.activeItems, ...this.activeItemsUnchangeable].forEach((item, index) => {
+				config[item.id] = index;
+			});
 
-			const TabPresetUtils = jn.require('tab.presets/utils');
-			Notify.showIndicatorLoading();
+			void Notify.showIndicatorLoading();
 			TabPresetUtils.setUserConfig(config)
-				.catch((e) => {
-					Haptics.notifyFailure();
-					Notify.showIndicatorError({ hideAfter: 1000, text: BX.message('TAB_PRESET_APPLY_ERROR') });
-				})
 				.then((result) => {
 					if (result)
 					{
 						Haptics.notifySuccess();
-						Notify.showIndicatorSuccess({ hideAfter: 1000, text: BX.message('SETTINGS_TAB_APPLIED') });
+						void Notify.showIndicatorSuccess({ hideAfter: 1000, text: BX.message('SETTINGS_TAB_APPLIED') });
 						setTimeout(() => Application.relogin(), 1500);
 					}
-				});
+				})
+				.catch(() => {
+					Haptics.notifyFailure();
+					void Notify.showIndicatorError({ hideAfter: 1000, text: BX.message('TAB_PRESET_APPLY_ERROR') });
+				})
+			;
 		}
 
-		get activeIndex() {
+		get activeIndex()
+		{
 			return 0;
 		}
 
-		get inactiveIndex() {
+		get inactiveIndex()
+		{
 			return 4;
 		}
 	}

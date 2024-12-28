@@ -8,27 +8,29 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 
 	/**
+	 * @typedef {Object} CardProps
+	 * @property {string} testId
+	 * @property {Object} [style={}]
+	 * @property {Object} [excludePaddingSide={}]
+	 * @property {boolean} [excludePaddingSide.left=false]
+	 * @property {boolean} [excludePaddingSide.right=false]
+	 * @property {boolean} [excludePaddingSide.top=false]
+	 * @property {boolean} [excludePaddingSide.bottom=false]
+	 * @property {boolean} [excludePaddingSide.horizontal=false]
+	 * @property {boolean} [excludePaddingSide.vertical=false]
+	 * @property {boolean} [excludePaddingSide.all]
+	 * @property {boolean} [hideCross=true]
+	 * @property {boolean} [selected=true]
+	 * @property {boolean} [accent=false]
+	 * @property {boolean} [border=false]
+	 * @property {BadgeStatusMode} [badgeMode=null]
+	 * @property {function} [onClose=null]
+	 * @property {function} [onClick=null]
+	 * @property {CardDesign} [design=CardDesign.PRIMARY]
+	 *
 	 * @function Card
-	 * @param {object} props
-	 * @param {string} props.testId
-	 * @param {object=} [props.style={}]
-	 * @param {object=} [props.excludePaddingSide={}]
-	 * @param {boolean} [props.excludePaddingSide.left=false]
-	 * @param {boolean} [props.excludePaddingSide.right=false]
-	 * @param {boolean} [props.excludePaddingSide.top=false]
-	 * @param {boolean} [props.excludePaddingSide.bottom=false]
-	 * @param {boolean} [props.excludePaddingSide.horizontal=false]
-	 * @param {boolean} [props.excludePaddingSide.vertical=false]
-	 * @param {boolean} [props.excludePaddingSide.all]
-	 * @param {boolean} [props.hideCross=true]
-	 * @param {boolean} [props.selected=true]
-	 * @param {boolean} [props.border=false]
-	 * @param {BadgeStatusMode} [props.badgeMode=null]
-	 * @param {function} [props.onClose=null]
-	 * @param {function} [props.onClick=null]
-	 * @param {CardDesign} [props.design=CardDesign.PRIMARY]
-	 * @param children
-	 * @return Card
+	 * @param {CardProps} props
+	 * @param {Array} children
 	 */
 	function Card(props = {}, ...children)
 	{
@@ -43,6 +45,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 			badgeMode = null,
 			hideCross = true,
 			selected = false,
+			accent = false,
 			onClick = null,
 			onClose = null,
 			...restProps
@@ -55,15 +58,32 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 		const paddingTop = top || all || vertical ? 0 : Component.cardPaddingT.toNumber();
 		const paddingBottom = bottom || all || vertical ? 0 : Component.cardPaddingB.toNumber();
 
+		const {
+			backgroundColor: designBackgroundColor,
+			accentColor: designAccentColor,
+		} = CardDesign.resolve(design, CardDesign.PRIMARY).getValue();
+
 		const cardStyle = {
 			borderRadius: Component.cardCorner.toNumber(),
-			...CardDesign.resolve(design, CardDesign.PRIMARY).getStyle(),
+			backgroundColor: designBackgroundColor.toHex(),
 		};
 
 		if (border)
 		{
 			cardStyle.borderWidth = 1;
-			cardStyle.borderColor = (selected ? Color.base3 : Color.bgSeparatorPrimary).toHex();
+			cardStyle.borderColor = Color.bgSeparatorPrimary.toHex();
+		}
+
+		if (selected)
+		{
+			cardStyle.borderWidth = 1;
+			cardStyle.borderColor = Color.base3.toHex();
+		}
+
+		if (accent)
+		{
+			cardStyle.borderWidth = 2;
+			cardStyle.borderColor = designAccentColor?.toHex();
 		}
 
 		const status = BadgeStatusMode.has(badgeMode)
@@ -127,6 +147,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 		hideCross: true,
 		selected: true,
 		border: false,
+		accent: false,
 		excludePaddingSide: {},
 		onClose: null,
 		onClick: null,
@@ -134,15 +155,19 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 
 	Card.propTypes = {
 		testId: PropTypes.string.isRequired,
-		badgeMode: PropTypes.object,
 		hideCross: PropTypes.bool,
 		selected: PropTypes.bool,
 		border: PropTypes.bool,
-		design: PropTypes.object,
+		design: PropTypes.instanceOf(CardDesign),
+		badgeMode: PropTypes.instanceOf(BadgeStatusMode),
 		excludePaddingSide: PropTypes.objectOf(PropTypes.bool),
 		onClose: PropTypes.func,
 		onClick: PropTypes.func,
 	};
 
-	module.exports = { Card, CardDesign, BadgeStatusMode };
+	module.exports = {
+		Card,
+		CardDesign,
+		BadgeStatusMode,
+	};
 });

@@ -632,7 +632,7 @@
 
 .ai__history-image_item-wrapper {
 	overflow: hidden;
-	padding-bottom: 36px;
+	padding-bottom: 24px;
 	-webkit-transition: 0.5s ease-out height, 0.5s ease-out opacity;
 	-o-transition: 0.5s ease-out height, 0.5s ease-out opacity;
 	transition: 0.5s ease-out height, 0.5s ease-out opacity;
@@ -656,8 +656,8 @@
 	    -ms-flex-pack: center;
 	        justify-content: center;
 	position: relative;
-	width: calc(50% - 1px);
-	padding-bottom: calc(50% - 1px);
+	width: 100%;
+	padding-bottom: 100%;
 	height: 0;
 	background-color: var(--ui-color-base-02);
 }
@@ -682,6 +682,9 @@
 
 .ai__picker_history-image-group-item.--empty .ai__picker_history-image-group-item-loader {
 	display: block;
+	-webkit-transform: scale(1.8);
+	    -ms-transform: scale(1.8);
+	        transform: scale(1.8);
 	--ai__picker-image-loader-font-color: var(--ui-color-base-02);
 }
 
@@ -801,6 +804,7 @@
 .ai__picker_text-history-item-loader-container {
 
 }
+
 .ai__picker_icon-close {
 	position: absolute;
 	top: 9px;

@@ -38,7 +38,7 @@ final class Site
 	{
 		if(!$id)
 		{
-			if(defined(SITE_ID))
+			if(defined('SITE_ID'))
 			{
 				$id = SITE_ID;
 			}

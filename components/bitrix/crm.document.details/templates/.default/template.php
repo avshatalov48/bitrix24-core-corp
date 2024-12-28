@@ -68,8 +68,16 @@ if(isset($arResult['jsParams']['messages']['crmTimelineHistoryStub']))
 	</script>
 
 <?php
+
+$componentParams = $arResult['entityDetailsParams'];
+
+if (array_key_exists('bizprocStarterConfig', $arResult))
+{
+	$componentParams['BIZPROC_STARTER_DATA'] = $arResult['bizprocStarterConfig'] ?? [];
+}
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.entity.details',
 	'',
-	$arResult['entityDetailsParams']
+	$componentParams
 );

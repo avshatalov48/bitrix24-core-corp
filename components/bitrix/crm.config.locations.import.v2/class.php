@@ -55,7 +55,7 @@ class CBitrixCrmConfigLocationImport2Component extends CBitrixSaleLocationImport
 		if(!LocationHelper::checkLocationEnabled())
 			$errors[] = 'Locations were disabled or data has not been converted';
 
-		if($parameters['CHECK_CSRF'])
+		if(!empty($parameters['CHECK_CSRF']))
 		{
 			$post = \Bitrix\Main\Context::getCurrent()->getRequest()->getPostList();
 			if(!mb_strlen($post['csrf']) || bitrix_sessid() != $post['csrf'])

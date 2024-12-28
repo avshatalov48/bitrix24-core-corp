@@ -32,7 +32,7 @@ class CBPCreateCrmCompanyDocumentActivity extends CBPCreateDocumentActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$documentType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Company);
+		$documentType = $this->getCreatedDocumentType();
 		$documentService = $this->workflow->GetService('DocumentService');
 
 		$fields = $this->Fields;
@@ -57,7 +57,21 @@ class CBPCreateCrmCompanyDocumentActivity extends CBPCreateDocumentActivity
 			$this->ErrorMessage = $e->getMessage();
 		}
 
+		if (
+			$this->CompanyId
+			&& (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024')
+			&& method_exists($this, 'fixResult')
+		)
+		{
+			$this->fixResult($this->makeResultFromId($this->CompanyId));
+		}
+
 		return CBPActivityExecutionStatus::Closed;
+	}
+
+	protected function getCreatedDocumentType(): array
+	{
+		return \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Company);
 	}
 
 	protected function reInitialize()

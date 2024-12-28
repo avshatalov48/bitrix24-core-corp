@@ -1,3 +1,4 @@
+/** @lang MySQL */
 DROP TABLE `b_hr_structure_node_backward_access_code`;
 DROP TABLE `b_hr_structure_node_member_role`;
 DROP TABLE `b_hr_structure_node_member`;
@@ -11,3 +12,10 @@ DROP TABLE `b_hr_access_role`;
 DROP TABLE `b_hr_access_role_relation`;
 DROP TABLE `b_hr_access_permission`;
 DROP TABLE `b_hr_log`;
+DROP TABLE `b_hr_hcmlink_company`;
+DROP TABLE `b_hr_hcmlink_employee`;
+DROP TABLE `b_hr_hcmlink_field`;
+DROP TABLE `b_hr_hcmlink_field_value`;
+DROP TABLE `b_hr_hcmlink_job`;
+DROP TABLE `b_hr_hcmlink_person`;
+

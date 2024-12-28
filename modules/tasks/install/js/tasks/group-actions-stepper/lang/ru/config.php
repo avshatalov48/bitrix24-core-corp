@@ -1,0 +1,23 @@
+<?php
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_UNMUTE"] = "Включаем звук в задачах. Процесс остановится, если вы закроете это окно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_MUTE"] = "Выключаем звук в задачах. Процесс остановится, если вы закроете это окно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_PING"] = "Отправляем пинги сотрудникам. Процесс остановится, если вы закроете это окно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_COMPLETE"] = "Завершаем выбранные задачи. Процесс остановится, если вы закроете это окно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETDEADLINE"] = "Указываем крайний срок в задачах. Процесс остановится, если вы закроете это окно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_ADJUSTDEADLINE"] = "Переносим крайний срок в задачах. Процесс остановится, если вы закроете это окно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETTASKCONTROL"] = "Отключаем контроль после завершения задачи. Процесс остановится, если вы закроете это окно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETTASKCONTROL_YES"] = "Включаем контроль после завершения задачи. Процесс остановится, если вы закроете это окно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETRESPONSIBLE"] = "Заменяем исполнителя в задачах. Процесс остановится, если вы закроете это окно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETORIGINATOR"] = "Заменяем постановщика в задачах. Процесс остановится, если вы закроете это окно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_ADDAUDITOR"] = "Добавляем наблюдателя в задачи. Процесс остановится, если вы закроете это окно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_ADDACCOMPLICE"] = "Добавляем соисполнителя в задачи. Процесс остановится, если вы закроете это окно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_ADDTOFAVORITE"] = "Добавляем задачи в избранное. Процесс остановится, если вы закроете это окно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_REMOVEFROMFAVORITE"] = "Убираем задачи из избранного. Процесс остановится, если вы закроете это окно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETGROUP"] = "Добавляем задачи в группу. Процесс остановится, если вы закроете это окно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETFLOW"] = "Добавляем задачи в поток. Процесс остановится, если вы закроете это окно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_DELETE"] = "Удаляем выбранные задачи. Процесс остановится, если вы закроете это окно";
+$MESS["TASKS_GRID_GROUP_ACTION_NONE"] = "Действие не определено";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME"] = "Групповое действие";
+$MESS["TASKS_GRID_GROUP_ACTION_DESCRIPTION"] = "Групповое действие может занять продолжительное время, это зависит от количества элементов. Дождитесь окончания процесса или отмените его";
+$MESS["TASKS_GRID_GROUP_ACTION_COUNTING_ELEMENTS_PROGRESS"] = "Подсчитываем элементы";
+$MESS["TASKS_GRID_GROUP_ACTION_CANCELING"] = "Останавливаем групповое действие";

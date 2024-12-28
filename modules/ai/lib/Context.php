@@ -27,6 +27,11 @@ class Context
 		return new self('fake', 'fake');
 	}
 
+	public function isFake(): bool
+	{
+		return $this->moduleId === 'fake' && $this->contextId === 'fake';
+	}
+
 	public function getModuleId(): string
 	{
 		return $this->moduleId;

@@ -8,5 +8,6 @@ return [
 		'utils/type',
 		'statemanager/redux/slices/users/meta',
 		'statemanager/redux/slices/users/selector',
+		'statemanager/redux/slices/users/thunk',
 	],
 ];

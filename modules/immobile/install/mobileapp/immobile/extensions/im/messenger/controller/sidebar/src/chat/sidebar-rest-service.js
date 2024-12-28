@@ -2,13 +2,15 @@
  * @module im/messenger/controller/sidebar/chat/sidebar-rest-service
  */
 jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require, exports, module) => {
-	const { RestMethod } = require('im/messenger/const/rest');
+	const { Type } = require('type');
+	const { RestMethod, EventType, ComponentCode } = require('im/messenger/const');
 	const { CopilotRest } = require('im/messenger/provider/rest');
 	const { runAction } = require('im/messenger/lib/rest');
-	const { Type } = require('type');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const logger = LoggerManager.getInstance().getLogger('sidebar--sidebar-rest-service');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { ChatService } = require('im/messenger/provider/service');
 
 	/**
 	 * @class SidebarRestService
@@ -19,6 +21,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 		{
 			this.dialogId = dialogId;
 			this.store = serviceLocator.get('core').getStore();
+			this.chatService = new ChatService();
 		}
 
 		/**
@@ -64,16 +67,17 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 							});
 						}
 
-						if (Array.isArray(data) && data.length === 0)
-						{
-							this.store.dispatch('dialoguesModel/update', {
-								dialogId: this.dialogId,
-								fields: {
-									participants: [],
-									lastLoadParticipantId: 0,
-								},
-							});
-						}
+						// @see bugfix 0202206
+						// if (Array.isArray(data) && data.length === 0)
+						// {
+						// 	this.store.dispatch('dialoguesModel/update', {
+						// 		dialogId: this.dialogId,
+						// 		fields: {
+						// 			participants: [],
+						// 			lastLoadParticipantId: 0,
+						// 		},
+						// 	});
+						// }
 
 						resolve(data);
 					},
@@ -88,11 +92,62 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 		 */
 		deleteParticipant(userId)
 		{
-			return runAction(RestMethod.imV2ChatDeleteUser, {
-				data: {
-					dialogId: this.dialogId,
-					userId,
+			return this.chatService.kickUserFromChat(this.dialogId, userId);
+		}
+
+		/**
+		 * @desc Rest call add participant
+		 * @param {Array<numbers>} userIds
+		 * @return {Promise}
+		 */
+		addParticipants(userIds)
+		{
+			const chatSettings = Application.storage.getObject('settings.chat', {
+				historyShow: true,
+			});
+
+			const addUserData = {
+				id: this.dialogId.replace('chat', ''),
+				userIds,
+				hideHistory: chatSettings.historyShow ? 'N' : 'Y',
+			};
+
+			return runAction(RestMethod.imV2ChatAddUsers, { data: addUserData })
+				.then((response) => {
+					logger.log(`${this.constructor.name}.addParticipants response: `, response);
+				});
+		}
+
+		/**
+		 * @desc Rest call add chat from private dialog
+		 * @param {Array<numbers>} userIds
+		 * @return {Promise}
+		 */
+		addChat(userIds)
+		{
+			return BX.rest.callMethod(
+				RestMethod.imChatAdd,
+				{
+					USERS: userIds,
 				},
+			).then((result) => {
+				const chatId = parseInt(result.data(), 10);
+				if (chatId > 0)
+				{
+					setTimeout(
+						() => {
+							MessengerEmitter.emit(EventType.messenger.openDialog, {
+								dialogId: `chat${chatId}`,
+							}, ComponentCode.imMessenger);
+						},
+						500,
+					);
+
+					if (result.answer.error)
+					{
+						logger.error(`${this.constructor.name}.addChat.error`, result.answer.error_description);
+					}
+				}
 			});
 		}
 
@@ -188,21 +243,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 		 */
 		leaveChat()
 		{
-			return BX.rest.callMethod(
-				RestMethod.imChatLeave,
-				{
-					DIALOG_ID: this.dialogId,
-				},
-			).then(
-				(result) => {
-					if (result.error())
-					{
-						logger.error(result.error());
-					}
-
-					return result.data();
-				},
-			);
+			return this.chatService.leaveFromChat(this.dialogId);
 		}
 
 		/**
@@ -218,14 +259,14 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 				},
 			})
 				.then(
-					(result) => {
-						if (result.error())
+					(response) => {
+						if (response.result !== true)
 						{
-							logger.error(`${this.constructor.name}.addManager.error:`, result.error());
+							logger.error(`${this.constructor.name}.addManager.error:`, response.result);
 						}
-						logger.log(`${this.constructor.name}.addManager.result:`, result.data());
+						logger.log(`${this.constructor.name}.addManager.result:`, response.result);
 
-						return result.data();
+						return response.result;
 					},
 				);
 		}
@@ -243,14 +284,14 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 				},
 			})
 				.then(
-					(result) => {
-						if (result.error())
+					(response) => {
+						if (response.result !== true)
 						{
-							logger.error(`${this.constructor.name}.removeManager.error:`, result.error());
+							logger.error(`${this.constructor.name}.removeManager.error:`, response.result);
 						}
-						logger.log(`${this.constructor.name}.removeManager.result:`, result.data());
+						logger.log(`${this.constructor.name}.removeManager.result:`, response.result);
 
-						return result.data();
+						return response.result;
 					},
 				);
 		}
@@ -266,13 +307,9 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 				.catch((error) => logger.error(`${this.constructor.name}.changeCopilotRole.catch:`, error));
 		}
 
-		async deleteChat(dialogId)
+		deleteChat()
 		{
-			return runAction(RestMethod.imV2ChatDelete, {
-				data: {
-					dialogId,
-				},
-			});
+			return this.chatService.deleteChat(this.dialogId);
 		}
 	}
 

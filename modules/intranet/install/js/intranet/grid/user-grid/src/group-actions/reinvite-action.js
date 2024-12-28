@@ -41,6 +41,7 @@ export class ReinviteAction extends BaseAction
 				category: 'menu-self-item-popup',
 				autoHideDelay: 3000,
 			});
+			BX.Bitrix24?.EmailConfirmation?.showPopupDispatched();
 		}
 
 		this.unselectRows(this.grid);

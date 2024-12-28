@@ -28,6 +28,7 @@ return [
 		'statemanager/redux/slices/users',
 		'statemanager/redux/store',
 		'user/profile',
+		'utils/function',
 		'utils/date/duration',
 		'utils/date',
 		'utils/date/formats',

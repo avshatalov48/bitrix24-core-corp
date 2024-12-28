@@ -849,6 +849,13 @@ class Form
 
 		foreach ($arResult["FormFields"] as $key => $field)
 		{
+			if (
+				$arResult['SHOW_FACEBOOK_RESTRICTIONS']
+				&& $field['name'] === 'UF_FACEBOOK'
+			)
+			{
+				$field['title'] = '*' . $field['title'];
+			}
 
 			$fieldData = [
 				"NAME" => ($field["title"] <> '' ? $field["title"] : $field["name"]),

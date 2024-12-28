@@ -1,7 +1,7 @@
 <?php
 namespace Bitrix\Tasks\Scrum\Service;
 
-use Bitrix\Main\Application;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Error;
 use Bitrix\Main\Errorable;
@@ -10,7 +10,6 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Query\Query;
-use Bitrix\Main\Result;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\PageNavigation;
@@ -18,9 +17,11 @@ use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\Control\Log\Command\AddCommand;
 use Bitrix\Tasks\Control\Tag;
 use Bitrix\Tasks\Internals\Counter\Template\CounterStyle;
 use Bitrix\Tasks\Internals\Counter\Template\TaskCounter;
+use Bitrix\Tasks\Internals\Log\LogFacade;
 use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Internals\Task\Status;
@@ -34,6 +35,8 @@ use Bitrix\Tasks\Scrum\Form\ItemForm;
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
+use Bitrix\Tasks\Util\User;
+use Throwable;
 
 class TaskService implements Errorable
 {
@@ -1116,7 +1119,7 @@ class TaskService implements Errorable
 
 					foreach ($fields['DEPENDS_ON'] as $linkedTaskId)
 					{
-						$taskService->updateTaskLinks($linkedTaskId, $taskId);
+						$taskService->updateTaskLinks((int)$linkedTaskId, $taskId);
 					}
 				}
 			}
@@ -1891,6 +1894,67 @@ class TaskService implements Errorable
 			{
 				$kanbanService->addTaskToFinishStatus($sprint->getId(), $scrumItem->getSourceId());
 			}
+		}
+	}
+
+	private static function isTaskInSprint(int $taskId, int $groupId): bool
+	{
+		$itemService = new ItemService();
+		$sprintService = new SprintService();
+		$scrumItem = $itemService->getItemBySourceId($taskId);
+		if (!$itemService->getErrors() && !$scrumItem->isEmpty())
+		{
+			$sprints = $sprintService->getSprintsByGroupId($groupId);
+			$sprintsIds = array_map(function ($sprint)
+			{
+				return $sprint->getId();
+			},
+				$sprints);
+
+			return (in_array($scrumItem->getEntityId(), $sprintsIds));
+		}
+
+		return false;
+	}
+
+	public static function addTaskMovingToLog(int $taskId, int $groupId): void
+	{
+		if(self::isTaskInSprint($taskId, $groupId))
+		{
+			self::addTaskMovingToSprintToLog($taskId);
+		}
+		else
+		{
+			self::addTaskMovingToBacklogToLog($taskId);
+		}
+	}
+
+	private static function addTaskMovingToSprintToLog(int $taskId): void
+	{
+		self::addActionToLog(\Bitrix\Tasks\Control\Log\ActionDictionary::MOVE_TO_SPRINT, $taskId);
+	}
+
+	private static function addTaskMovingToBacklogToLog(int $taskId): void
+	{
+		self::addActionToLog(\Bitrix\Tasks\Control\Log\ActionDictionary::MOVE_TO_BACKLOG, $taskId);
+	}
+
+	private static function addActionToLog(string $action, int $taskId): void
+	{
+		$addCommand = (new AddCommand())
+			->setField($action)
+			->setTaskId($taskId)
+			->setCreatedDate(new DateTime())
+			->setUserId(User::getId());
+
+		try
+		{
+			$service = ServiceLocator::getInstance()->get('tasks.control.log.task.service');
+			$service->add($addCommand);
+		}
+		catch (Throwable $exception)
+		{
+			LogFacade::logThrowable($exception);
 		}
 	}
 }

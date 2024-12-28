@@ -8,8 +8,8 @@ return [
 	'css' => 'script.css',
 	'js' => 'script.js',
 	'rel' => [
-		'main.core.events',
 		'main.core',
+		'main.core.events',
 	],
 	'skip_core' => false,
 ];

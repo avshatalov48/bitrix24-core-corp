@@ -2,7 +2,9 @@
 
 namespace Bitrix\Crm\Security\Role\Manage\DTO;
 
-class PermissionModel
+use Bitrix\Crm\Security\Role\Model\EO_RolePermission;
+
+class PermissionModel implements \JsonSerializable
 {
 	public function __construct(
 		private string $entity,
@@ -45,6 +47,23 @@ class PermissionModel
 		return $this->settings;
 	}
 
+	public function toArray(): array
+	{
+		return [
+			'entity' => $this->entity,
+			'permissionCode' => $this->permissionCode,
+			'field' => $this->field,
+			'filedValue' => $this->filedValue,
+			'attribute' => $this->attribute,
+			'settings' => $this->settings,
+		];
+	}
+
+	public function jsonSerialize(): array
+	{
+		return $this->toArray();
+	}
+
 	public function isValidIdentifier(): bool
 	{
 		if ($this->field === '-')
@@ -82,4 +101,27 @@ class PermissionModel
 		return $result;
 	}
 
+	public static function createFromEntityObject(EO_RolePermission $permissionEntity): self
+	{
+		return new self(
+			$permissionEntity->getEntity() ?? '',
+			$permissionEntity->getPermType() ?? '',
+			$permissionEntity->getField() ?? '',
+			$permissionEntity->getFieldValue(),
+			$permissionEntity->getAttr(),
+			$permissionEntity->getSettings()
+		);
+	}
+
+	public static function createFromDbArray(array $permissionParams): self
+	{
+		return new self(
+			$permissionParams['ENTITY'] ?? '',
+			$permissionParams['PERM_TYPE'] ?? '',
+			$permissionParams['FIELD'] ?? '',
+			$permissionParams['FIELD_VALUE'] ?? null,
+			$permissionParams['ATTR'] ?? null,
+			$permissionParams['SETTINGS'] ?? null
+		);
+	}
 }

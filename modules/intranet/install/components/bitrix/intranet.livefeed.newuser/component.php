@@ -22,7 +22,15 @@ if (isset($arParams['USER']))
 		)
 	)
 	{
-		$arParams['USER']['TYPE'] = 'extranet';
+		$collaberService = \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService();
+		if ($collaberService->isCollaberById((int)$arParams['USER']['ID']))
+		{
+			$arParams['USER']['TYPE'] = 'collaber';
+		}
+		else
+		{
+			$arParams['USER']['TYPE'] = 'extranet';
+		}
 	}
 }
 

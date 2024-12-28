@@ -32,7 +32,8 @@ class Session
 				'#LINK#' => ImOpenLines\Session\Common::getUrlImHistoryBbCode($sessionId, $sessionId)
 			]),
 			'PARAMS' => [
-				'CLASS' => 'bx-messenger-content-item-ol-start'
+				'CLASS' => 'bx-messenger-content-item-ol-start',
+				'COMPONENT_ID' => 'StartDialogMessage',
 			]
 		];
 
@@ -55,7 +56,8 @@ class Session
 				'#LINK2#' => ImOpenLines\Session\Common::getUrlImHistoryBbCode($sessionIdParent, $sessionIdParent)
 			]),
 			'PARAMS' => [
-				'CLASS' => 'bx-messenger-content-item-ol-start'
+				'CLASS' => 'bx-messenger-content-item-ol-start',
+				'COMPONENT_ID' => 'StartDialogMessage',
 			]
 		];
 
@@ -71,7 +73,8 @@ class Session
 				'#LINK#' => ImOpenLines\Chat::getUrlImChat($chatIdChild, $sessionId)
 			]),
 			'PARAMS' => [
-				'CLASS' => 'bx-messenger-content-item-ol-start'
+				'CLASS' => 'bx-messenger-content-item-ol-start',
+				'COMPONENT_ID' => 'StartDialogMessage',
 			]
 		];
 
@@ -93,7 +96,8 @@ class Session
 				'#LINK2#' => ImOpenLines\Chat::getUrlImChat($parentChatId, $parentSessionId),
 			]),
 			'PARAMS' => [
-				'CLASS' => 'bx-messenger-content-item-ol-start'
+				'CLASS' => 'bx-messenger-content-item-ol-start',
+				'COMPONENT_ID' => 'StartDialogMessage',
 			]
 		];
 
@@ -114,7 +118,8 @@ class Session
 				'#LINK#' => ImOpenLines\Session\Common::getUrlImHistoryBbCode($sessionId, $sessionId)
 			]),
 			'PARAMS' => [
-				'CLASS' => 'bx-messenger-content-item-ol-start'
+				'CLASS' => 'bx-messenger-content-item-ol-start',
+				'COMPONENT_ID' => 'StartDialogMessage',
 			],
 			'RECENT_ADD' => 'N'
 		];

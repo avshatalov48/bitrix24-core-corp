@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Flow\Control\Command;
 
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Flow\Attribute\AccessCodes;
+use Bitrix\Tasks\Flow\Attribute\DistributionType;
 use Bitrix\Tasks\Flow\Attribute\Instantiable;
 use Bitrix\Tasks\AbstractCommand;
 use Bitrix\Tasks\Flow\Configuration;
@@ -14,6 +15,7 @@ use Bitrix\Tasks\Internals\Attribute\InArray;
 use Bitrix\Tasks\Internals\Attribute\Length;
 use Bitrix\Tasks\Internals\Attribute\Min;
 use Bitrix\Tasks\Internals\Attribute\Max;
+use Bitrix\Tasks\Internals\Attribute\NotEmpty;
 use Bitrix\Tasks\Internals\Attribute\PositiveNumber;
 use Bitrix\Tasks\Internals\Attribute\Required;
 use Bitrix\Tasks\Internals\Attribute\Nullable;
@@ -36,8 +38,7 @@ use Bitrix\Tasks\Internals\Attribute\User;
  * @method self setName(string $name)
  * @method self setDescription(string $description)
  * @method self setDistributionType(string $distributionType)
- * @method self setManualDistributorId(int $manualDistributorId)
- * @method self setResponsibleQueue(array $responsibleQueue)
+ * @method self setResponsibleList(array $responsibleList)
  * @method self setTaskCreators(array $taskCreators)
  * @method self setNotifyOnQueueOverflow(int $notifyOnQueueOverflow)
  * @method self setNotifyAtHalfTime(bool $notifyAtHalfTime)
@@ -92,24 +93,34 @@ class AddCommand extends AbstractCommand
 	public string $description = '';
 
 	#[Required]
-	#[InArray([Flow::DISTRIBUTION_TYPE_QUEUE, Flow::DISTRIBUTION_TYPE_MANUALLY])]
+	#[DistributionType]
 	public ?string $distributionType = null;
 
-	#[Nullable]
-	public ?int $manualDistributorId = null;
+	#[Required]
+	#[AccessCodes]
+	#[NotEmpty]
+	public array $responsibleList;
 
 	#[Nullable]
-	#[ExpectedNumeric]
 	#[User]
-	public ?array $responsibleQueue = null;
+	#[Parse(new UserFromAccess(), 'responsibleList')]
+	public ?array $userResponsibleList = null;
+
+	#[Nullable]
+	#[Department]
+	#[Parse(new Parse\DepartmentFromAccess(), 'responsibleList')]
+	public ?array $departmentResponsibleList = null;
 
 	public bool $responsibleCanChangeDeadline = true;
 
 	public bool $matchWorkTime = true;
 
+	public bool $matchSchedule = false;
+
 	public bool $notifyAtHalfTime = false;
 
 	public bool $taskControl = false;
+	public bool $notifyWhenTaskNotTaken = true;
 
 	#[Nullable]
 	#[Min(0)]

@@ -2,6 +2,8 @@ import { Tag, Dom, Event, Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { BlankSelector, type BlankSelectorConfig } from 'sign.v2.blank-selector';
 import { Api } from 'sign.v2.api';
+import type { DocumentModeType } from 'sign.v2.sign-settings';
+import { isTemplateMode } from 'sign.v2.sign-settings';
 import { Button } from 'ui.buttons';
 import { Alert } from 'ui.alerts';
 import type { DocumentData } from './type';
@@ -17,13 +19,21 @@ export const DocumentInitiated: Readonly<Record<string, DocumentInitiatedType>> 
 export class DocumentSetup extends EventEmitter
 {
 	blankSelector: BlankSelector;
-	setupData: null | { uid: string, initiatedByType: DocumentInitiatedType, templateUid: ?string, ...};
+	setupData: null | {
+		uid: string,
+		initiatedByType: DocumentInitiatedType,
+		templateUid: ?string,
+		templateId: ?number,
+		...
+	};
 	layout: HTMLElement;
 	#notificationContainer: HTMLElement;
 	#changeDomainWarningContainer: ?HTMLElement;
 	#scenarioType: BlankSelectorConfig['type'];
 	#api: Api;
 	#uids: Map<number, string>;
+	#documentMode: DocumentModeType;
+	#chatId: 0;
 
 	constructor(blankSelectorConfig: BlankSelectorConfig)
 	{
@@ -42,11 +52,13 @@ export class DocumentSetup extends EventEmitter
 				clearFiles: () => this.emit('clearFiles'),
 			},
 		});
-		const { type, portalConfig } = blankSelectorConfig;
+		const { type, portalConfig, documentMode, chatId } = blankSelectorConfig;
 		this.setupData = null;
 		this.#scenarioType = type;
 		this.#api = new Api();
 		this.#uids = new Map();
+		this.#documentMode = documentMode;
+		this.#chatId = chatId;
 		this.initLayout();
 		this.#initNotifications(portalConfig);
 	}
@@ -57,6 +69,12 @@ export class DocumentSetup extends EventEmitter
 		const buttonsContainer = this.layout.querySelector('.sign-blank-selector__tile-widget');
 		Dom.insertBefore(this.#notificationContainer, buttonsContainer);
 		const { isDomainChanged, isEdoRegion, isUnsecuredScheme } = portalConfig;
+
+		if (this.#isChatCreated() && this.#scenarioType !== 'b2e')
+		{
+			this.#appendChatWarningContainer();
+		}
+
 		if (isDomainChanged)
 		{
 			this.#appendChangeDomainWarningContainer();
@@ -73,21 +91,44 @@ export class DocumentSetup extends EventEmitter
 		}
 	}
 
-	async #register(blankId: string, isTemplateMode: boolean = false): Promise<{
+	#isChatCreated(): boolean
+	{
+		return this.#chatId > 0;
+	}
+
+	#appendChatWarningContainer(): void
+	{
+		const text = `<div>${Loc.getMessage('SIGN_DOCUMENT_SETUP_COLLAB_WARNING')}</div>`;
+		const warning = this.#getWarning();
+		warning.setText(text);
+		Dom.append(warning.getContainer(), this.#notificationContainer);
+	}
+
+	async #register(blankId: string, isTemplateMode: boolean = false, chatId: number = 0): Promise<{
 		uid: string,
-		templateUid: string | null
+		templateUid: string | null,
+		templateId: number | null,
+		chatId: number,
 	}>
 	{
-		const data = await this.#api.register(blankId, this.#scenarioType, isTemplateMode);
+		const data = await this.#api.register(
+			blankId,
+			this.#scenarioType,
+			isTemplateMode,
+			chatId,
+		);
 
 		return data ?? {};
 	}
 
-	async #change(uid: string, blankId: number): Promise<string>
+	async #changeDocumentBlank(uid: string, blankId: number): Promise<{
+		uid: string,
+		templateUid: string | null,
+	}>
 	{
 		const data = await this.#api.changeDocument(uid, blankId);
 
-		return data?.uid ?? '';
+		return data ?? {};
 	}
 
 	async #getPages(uid: string): Promise<{url: string;}[]>
@@ -253,21 +294,39 @@ export class DocumentSetup extends EventEmitter
 			else
 			{
 				this.ready = false;
+				const isBlankChanged = selectedBlankId || this.blankSelector.isFilesReadyForUpload();
 				blankId = selectedBlankId || await this.blankSelector.createBlank();
-				const isRegistered = this.#uids.has(blankId);
+				let documentUid = this.setupData?.uid;
 
-				const { uid, templateUid } = isRegistered
-					? await this.#change(this.#uids.get(blankId), blankId)
-					: await this.#register(blankId, isTemplateMode);
+				let documentTemplateUid = null;
+				if (
+					isBlankChanged
+					&& isTemplateMode
+					&& documentUid
+				)
+				{
+					const { templateUid } = await this.#changeDocumentBlank(documentUid, blankId);
+					documentTemplateUid = templateUid;
+				}
+				else
+				{
+					const isRegistered = this.#uids.has(blankId);
 
-				this.#uids.set(blankId, uid);
-				await this.#api.upload(uid);
+					const { uid, templateUid } = isRegistered
+						? await this.#changeDocumentBlank(this.#uids.get(blankId), blankId)
+						: await this.#register(blankId, isTemplateMode, this.#chatId);
+
+					documentUid = uid;
+					documentTemplateUid = templateUid;
+				}
+				this.#uids.set(blankId, documentUid);
+				await this.#api.upload(documentUid);
 				const [loadedData, blocks] = await Promise.all([
-					this.#api.loadDocument(uid),
-					this.#api.loadBlocksByDocument(uid),
+					this.#api.loadDocument(documentUid),
+					this.#api.loadBlocksByDocument(documentUid),
 				]);
 				const isTemplate = Boolean(selectedBlankId);
-				this.#setDocumentData({ ...loadedData, blocks, isTemplate, templateUid });
+				this.#setDocumentData({ ...loadedData, blocks, isTemplate, templateUid: documentTemplateUid });
 			}
 		}
 		catch
@@ -358,5 +417,10 @@ export class DocumentSetup extends EventEmitter
 		{
 			Dom.addClass(this.layout, '--pending');
 		}
+	}
+
+	isTemplateMode(): boolean
+	{
+		return isTemplateMode(this.#documentMode);
 	}
 }

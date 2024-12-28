@@ -11,6 +11,7 @@ class Manager
 	const IS_EXTERNAL_URL = 2;
 
 	protected static $instance = null;
+	/** @deprecated @var $dataSources array  */
 	protected $dataSources = [];
 	protected $connectionName = '';
 	protected $serviceId = '';
@@ -63,6 +64,8 @@ class Manager
 	}
 
 	/**
+	 * @deprecated
+	 *
 	 * Fires OnBIConnectorDataSources event to gather all available data sources.
 	 *
 	 * @param string $languageId Interface language.
@@ -84,6 +87,8 @@ class Manager
 	}
 
 	/**
+	 * @deprecated
+	 *
 	 * Returns all available data sources descriptions.
 	 *
 	 * @param string $languageId Interface language.
@@ -98,6 +103,8 @@ class Manager
 	}
 
 	/**
+	 * @deprecated
+	 *
 	 * Returns data source description by its code.
 	 *
 	 * @param string $table Data source code.

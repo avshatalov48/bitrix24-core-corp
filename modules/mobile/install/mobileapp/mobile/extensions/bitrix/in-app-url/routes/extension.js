@@ -11,49 +11,59 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 	 * @param {InAppUrl} inAppUrl
 	 */
 	module.exports = function(inAppUrl) {
-		inAppUrl.register('/bitrix/tools/disk/focus.php', (params, { queryParams, url }) => {
-			const diskParams = {};
-			const resolveParams = ['folderId', 'objectId'];
-			resolveParams.forEach((param) => {
-				const value = queryParams[param];
-				if (value)
-				{
-					diskParams[param] = value;
-				}
-			});
 
-			if (!Feature.isOpenImageNonContextSupported())
-			{
-				return Application.openUrl(getHttpPath(url));
-			}
+		try
+		{
+			const diskmobileInAppUrlRoutes = require('disk/in-app-url/routes');
+		}
+		catch (err)
+		{
+			console.warn('Cannot get diskmobile routes, try to install diskmobile', err);
 
-			return BX.postComponentEvent('onDiskFolderOpen', [diskParams], 'background');
-		}).name('disk:entity');
-
-		inAppUrl.register(`/company/personal/user/${env.userId}/disk/path/`, () => {
-			BX.postComponentEvent('onDiskFolderOpen', [], 'background');
-		}).name('disk:personal');
-
-		inAppUrl.register('/workgroups/group/:ownerId/disk/path/', ({ ownerId }) => {
-			BX.postComponentEvent('onDiskFolderOpen', [{ entityType: 'group', ownerId }], 'background');
-		}).name('disk:group');
-
-		inAppUrl.register('/docs/:folder/', ({ folder }) => {
-			const folders = ['shared', 'path'];
-			let params = [];
-
-			if (folders.includes(folder))
-			{
-				params = [
+			inAppUrl.register('/bitrix/tools/disk/focus.php', (params, { queryParams, url }) => {
+				const diskParams = {};
+				const resolveParams = ['folderId', 'objectId'];
+				resolveParams.forEach((param) => {
+					const value = queryParams[param];
+					if (value)
 					{
-						entityType: 'common',
-						ownerId: `shared_files_${env.siteId}`,
-					},
-				];
-			}
+						diskParams[param] = value;
+					}
+				});
 
-			BX.postComponentEvent('onDiskFolderOpen', params, 'background');
-		}).name('disk:common');
+				if (!Feature.isOpenImageNonContextSupported())
+				{
+					return Application.openUrl(getHttpPath(url));
+				}
+
+				return BX.postComponentEvent('onDiskFolderOpen', [diskParams], 'background');
+			}).name('disk:entity');
+
+			inAppUrl.register(`/company/personal/user/${env.userId}/disk/path/`, () => {
+				BX.postComponentEvent('onDiskFolderOpen', [], 'background');
+			}).name('disk:personal');
+
+			inAppUrl.register('/workgroups/group/:ownerId/disk/path/', ({ ownerId }) => {
+				BX.postComponentEvent('onDiskFolderOpen', [{ entityType: 'group', ownerId }], 'background');
+			}).name('disk:group');
+
+			inAppUrl.register('/docs/:folder/', ({ folder }) => {
+				const folders = ['shared', 'path'];
+				let params = [];
+
+				if (folders.includes(folder))
+				{
+					params = [
+						{
+							entityType: 'common',
+							ownerId: `shared_files_${env.siteId}`,
+						},
+					];
+				}
+
+				BX.postComponentEvent('onDiskFolderOpen', params, 'background');
+			}).name('disk:common');
+		}
 
 		inAppUrl.register('/company/personal/user/:userId/(\\?\\w+)?$', ({ userId }, { context = {} }) => {
 			const widgetParams = { groupStyle: true };

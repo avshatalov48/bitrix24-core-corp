@@ -1,0 +1,53 @@
+.bx-imol-message-hidden__container {
+	--imol-message-hidden__background-color: rgba(82, 92, 105, 0.4);
+	--imol-message-hidden__font-color: var(--ui-color-palette-white-base);
+}
+
+.bx-imol-message-hidden__content {
+	padding: 9px 10px 6px 14px;
+	border-radius: 10px;
+	background-color: var(--imol-message-hidden__background-color);
+	color: var(--imol-message-hidden__font-color);
+}
+
+.bx-imol-message-hidden-content__text {
+	min-width: calc(100% + 1px);
+	padding-right: 20px;
+	font: 15px/1.3 var(--ui-font-family-system);
+	color: var(--imol-message-hidden__font-color);
+	word-break: break-word;
+}
+
+.bx-imol-message-hidden-content__attach {
+	margin: 8px 0 5px;
+}
+
+.bx-imol-message-hidden-content__bottom-panel {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+}
+
+.bx-imol-message-hidden-content__reaction-list {
+	margin: 10px 8px 0 0;
+}
+
+.bx-imol-message-hidden-content__container-date {
+	display: flex;
+	margin-left: auto;
+	font: 10px/11px var(--ui-font-family-system);
+	color: var(--imol-message-hidden__font-color);
+}
+
+.bx-imol-message-hidden-content__date {
+	margin-right: 8px;
+}
+
+.bx-imol-message-hidden-content__lock {
+	position: relative;
+	cursor: pointer;
+}
+
+.bx-imol-message-hidden-content__attach .bx-im-attach-message__container > a {
+	color: var(--imol-message-hidden__font-color);
+}

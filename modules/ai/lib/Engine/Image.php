@@ -3,6 +3,7 @@
 namespace Bitrix\AI\Engine;
 
 use Bitrix\AI;
+use Bitrix\AI\Facade\File;
 use Bitrix\Main\Localization\Loc;
 
 /**
@@ -11,7 +12,7 @@ use Bitrix\Main\Localization\Loc;
  * This abstract class represents an AI engine for image processing.
  * It implements the IEngine and IQueue interfaces.
  */
-abstract class Image extends Engine implements IEngine, IQueue
+abstract class Image extends Engine implements IEngine
 {
 	/**
 	 * The category code for the image engine.
@@ -44,6 +45,24 @@ abstract class Image extends Engine implements IEngine, IQueue
 		$widthAndHeightByFormat = $this->getImageFormats();
 
 		return $widthAndHeightByFormat[$format] ?? $widthAndHeightByFormat[self::DEFAULT_FORMAT];
+	}
+
+	/**
+	 * Save base64 coded image to file and return src.
+	 *
+	 * @param string $imageBase64
+	 *
+	 * @return string|null
+	 */
+	protected function getImageSrcFromBase64String(string $imageBase64): ?string
+	{
+		$fileId = File::saveImageByBase64Content($imageBase64, 'ai');
+		if ($fileId && ($fileArray = \CFile::GetFileArray($fileId)) && !empty($fileArray['SRC']))
+		{
+			return $fileArray['SRC'];
+		}
+
+		return null;
 	}
 
 	/**

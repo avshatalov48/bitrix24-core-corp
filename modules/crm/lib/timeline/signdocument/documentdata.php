@@ -10,6 +10,9 @@ use Bitrix\Main\Web\Uri;
 
 final class DocumentData implements \JsonSerializable, Arrayable
 {
+	private const TYPE_COMPANY = 'company';
+	private const TYPE_EMPLOYEE = 'employee';
+
 	protected int $documentId;
 	protected ?string $documentHash = null;
 	protected ?string $memberHash = null;
@@ -24,6 +27,7 @@ final class DocumentData implements \JsonSerializable, Arrayable
 	protected ?Item $item = null;
 	protected ?int $fieldsCount = null;
 	protected ?int $initiatorUserId = null;
+	protected string $initiatedByType = self::TYPE_COMPANY;
 
 	public function __construct(int $documentId)
 	{
@@ -54,6 +58,12 @@ final class DocumentData implements \JsonSerializable, Arrayable
 		{
 			$eventData->setDocumentHash($data['documentHash']);
 		}
+
+		if (is_string($data['initiatedByType'] ?? null))
+		{
+			$eventData->setInitiatedByType($data['initiatedByType']);
+		}
+
 		if (!empty($data['bindings']) && is_array($data['bindings']))
 		{
 			foreach ($data['bindings'] as $binding)
@@ -239,6 +249,21 @@ final class DocumentData implements \JsonSerializable, Arrayable
 	public function getFileUrl(): ?Uri
 	{
 		return $this->fileUrl;
+	}
+
+	public function getInitiatedByType(): string
+	{
+		return $this->initiatedByType;
+	}
+
+	public function setInitiatedByType(string $initiatedByType): void
+	{
+		if (!in_array($initiatedByType, [self::TYPE_COMPANY, self::TYPE_EMPLOYEE], true))
+		{
+			return;
+		}
+
+		$this->initiatedByType = $initiatedByType;
 	}
 
 	public function setMySigner(Signer $mySigner): self

@@ -4,6 +4,7 @@ namespace Bitrix\Sign\Access;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sign\Access\Permission\PermissionDictionary;
 use Bitrix\Sign\Access\Permission\SignPermissionDictionary;
+use Bitrix\Sign\Config\Feature;
 use Bitrix\Sign\Service\Container;
 use ReflectionClass;
 
@@ -34,10 +35,15 @@ class SectionDictionary
 				PermissionDictionary::SIGN_CRM_SMART_B2E_DOC_ADD,
 				PermissionDictionary::SIGN_CRM_SMART_B2E_DOC_WRITE,
 				PermissionDictionary::SIGN_CRM_SMART_B2E_DOC_DELETE,
+				SignPermissionDictionary::SIGN_B2E_TEMPLATE_READ,
+				SignPermissionDictionary::SIGN_B2E_TEMPLATE_CREATE,
+				SignPermissionDictionary::SIGN_B2E_TEMPLATE_WRITE,
+				SignPermissionDictionary::SIGN_B2E_TEMPLATE_DELETE,
 				SignPermissionDictionary::SIGN_B2E_PROFILE_FIELDS_READ,
 				SignPermissionDictionary::SIGN_B2E_PROFILE_FIELDS_ADD,
 				SignPermissionDictionary::SIGN_B2E_PROFILE_FIELDS_EDIT,
 				SignPermissionDictionary::SIGN_B2E_PROFILE_FIELDS_DELETE,
+				SignPermissionDictionary::SIGN_B2E_MEMBER_DYNAMIC_FIELDS_DELETE,
 				SignPermissionDictionary::SIGN_B2E_MY_SAFE,
 				SignPermissionDictionary::SIGN_B2E_MY_SAFE_DOCUMENTS,
 				SignPermissionDictionary::SIGN_B2E_TEMPLATES,
@@ -50,6 +56,10 @@ class SectionDictionary
 		if (!\Bitrix\Sign\Config\Storage::instance()->isB2eAvailable())
 		{
 			unset($map[self::B2E]);
+		}
+		elseif (!Feature::instance()->isSendDocumentByEmployeeEnabled())
+		{
+			$map = self::removeSendByEmployeePermissions($map);
 		}
 
 		return $map;
@@ -86,5 +96,33 @@ class SectionDictionary
 		$title = $sectionsList[$value];
 
 		return Loc::getMessage("SIGN_CONFIG_SECTIONS_".$title) ?? '';
+	}
+
+	private static function removeSendByEmployeePermissions(array $map): array
+	{
+		if (!isset($map[self::B2E]))
+		{
+			return $map;
+		}
+
+		$sendByEmployeePermissions = [
+			SignPermissionDictionary::SIGN_B2E_MEMBER_DYNAMIC_FIELDS_DELETE,
+			SignPermissionDictionary::SIGN_B2E_TEMPLATE_WRITE,
+			SignPermissionDictionary::SIGN_B2E_TEMPLATE_READ,
+			SignPermissionDictionary::SIGN_B2E_TEMPLATE_CREATE,
+			SignPermissionDictionary::SIGN_B2E_TEMPLATE_DELETE,
+		];
+
+		foreach($map[self::B2E] as $key => $permission)
+		{
+			if (in_array($permission, $sendByEmployeePermissions, true))
+			{
+				unset($map[self::B2E][$key]);
+			}
+		}
+
+		$map[self::B2E] = array_values($map[self::B2E]); // reset keys
+
+		return $map;
 	}
 }

@@ -2,9 +2,12 @@
 
 namespace Bitrix\Crm\Service\Scenario;
 
+use Bitrix\Crm\Feature;
 use Bitrix\Crm\Service;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
+use Bitrix\Crm\Security\Role\Utils\RolePermissionLogContext;
+use Bitrix\Main\Application;
 
 class DefaultCategoryPermissions extends Service\Scenario
 {
@@ -26,16 +29,7 @@ class DefaultCategoryPermissions extends Service\Scenario
 	{
 		$result = new Result();
 
-		$permissionEntity = Service\UserPermissions::getPermissionEntityType(
-			$this->entityTypeId,
-			$this->categoryId
-		);
 		Service\Container::getInstance()->getFactory($this->entityTypeId)?->clearCategoriesCache();
-
-		/** @var \CCrmRole $role */
-		$role = new $this->roleClassName;
-		$roleDbResult = $this->roleClassName::GetList();
-		$systemRolesIds = \Bitrix\Crm\Security\Role\RolePermission::getSystemRolesIds();
 
 		$categoryIdentifier = new \Bitrix\Crm\CategoryIdentifier($this->entityTypeId, $this->categoryId);
 		$defaultPermissionSet =
@@ -48,39 +42,73 @@ class DefaultCategoryPermissions extends Service\Scenario
 		{
 			return $result;
 		}
+		Application::getInstance()->addBackgroundJob([$this, 'addPermissionsForNewCategory']); // delayed because depends on binding the smart process to an automated solution
+
+		return $result;
+	}
+
+	public function addPermissionsForNewCategory(): void
+	{
+		$permissionEntity = Service\UserPermissions::getPermissionEntityType(
+			$this->entityTypeId,
+			$this->categoryId
+		);
+		Service\Container::getInstance()->getFactory($this->entityTypeId)?->clearCategoriesCache();
+
+		/** @var \CCrmRole $role */
+		$role = new $this->roleClassName;
+		$roleDbResult = $this->roleClassName::GetList();
+
+		$systemRolesIds = \Bitrix\Crm\Security\Role\RolePermission::getSystemRolesIds();
+
+		$categoryIdentifier = new \Bitrix\Crm\CategoryIdentifier($this->entityTypeId, $this->categoryId);
+		$defaultPermissionSet =
+			$this->needSetOpenPermissions
+				? \CCrmRole::getDefaultPermissionSetForEntity($categoryIdentifier)
+				: \CCrmRole::getBasePermissionSetForEntity($categoryIdentifier)
+		;
+
+		if (empty($defaultPermissionSet))
+		{
+			return;
+		}
+
+		RolePermissionLogContext::getInstance()->set([
+			'scenario' => 'add category',
+			'entityTypeId' => $this->entityTypeId,
+			'categoryId' => $this->categoryId,
+		]);
+
+		$strictByRoleGroupCode =
+			Feature::enabled(\Bitrix\Crm\Feature\PermissionsLayoutV2::class)
+				? (string)\Bitrix\Crm\Security\Role\GroupCodeGenerator::getGroupCodeByEntityTypeId($this->entityTypeId)
+				: null
+		;
 
 		while($roleFields = $roleDbResult->Fetch())
 		{
 			$roleID = (int)$roleFields['ID'];
+			$roleGroupCode = (string)$roleFields['GROUP_CODE'];
 			if (in_array($roleID, $systemRolesIds, false)) // do not affect system roles
 			{
 				continue;
 			}
+			if (!is_null($strictByRoleGroupCode) && $roleGroupCode !== $strictByRoleGroupCode)
+			{
+				continue;
+			}
+
 			$roleRelation = \CCrmRole::getRolePermissionsAndSettings($roleID);
 			if(isset($roleRelation[$permissionEntity]))
 			{
 				continue;
 			}
+			$roleRelation[$permissionEntity] = $defaultPermissionSet;
 
-			if(!isset($roleRelation[$permissionEntity]))
-			{
-				$roleRelation[$permissionEntity] = $defaultPermissionSet;
-			}
 			$fields = ['RELATION' => $roleRelation];
-			$updateResult = $role->Update($roleID, $fields);
-			if (!$updateResult)
-			{
-				if (isset($fields['RESULT_MESSAGE']))
-				{
-					$result->addError(new Error($fields['RESULT_MESSAGE']));
-				}
-				else
-				{
-					$result->addError(new Error('Error setting default category permissions'));
-				}
-			}
+			$role->Update($roleID, $fields);
 		}
 
-		return $result;
+		RolePermissionLogContext::getInstance()->clear();
 	}
 }

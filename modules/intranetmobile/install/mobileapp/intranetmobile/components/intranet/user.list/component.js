@@ -72,7 +72,7 @@
 
 			// todo need to use the Application.getApiVersion() when it becomes clear which one
 			// todo bug on android when opening the keyboard a scroll appears and hides the departments area
-			this.scrollOffset = Animated.newCalculatedValue2D(0, 0);
+			this.scrollOffset = Animated.newCalculatedValue2D(0, Indent.M.toNumber());
 			if (this.scrollOffset.getValue2().diffClampWithConfig)
 			{
 				this.departmentTop = this.scrollOffset.getValue2().diffClampWithConfig(-52, Indent.M.toNumber(), { direction: 'reverse', option: 'disableTopBounce' });
@@ -192,6 +192,8 @@
 				typeGenerator: {
 					generator: TypeGenerator.generators.bySelectedProperties,
 					properties: [
+						'isCollaber',
+						'isExtranet',
 						'isAdmin',
 						'workPosition',
 						'employeeStatus',

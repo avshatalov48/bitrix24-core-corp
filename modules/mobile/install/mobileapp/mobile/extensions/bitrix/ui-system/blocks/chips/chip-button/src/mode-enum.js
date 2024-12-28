@@ -12,6 +12,7 @@ jn.define('ui-system/blocks/chips/chip-button/src/mode-enum', (require, exports,
 	class ChipButtonMode extends BaseEnum
 	{
 		static SOLID = new ChipButtonMode('SOLID', 'solid');
+
 		static OUTLINE = new ChipButtonMode('OUTLINE', 'outline');
 	}
 

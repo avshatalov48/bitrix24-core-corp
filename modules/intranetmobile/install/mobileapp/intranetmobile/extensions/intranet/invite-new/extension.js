@@ -96,6 +96,11 @@ jn.define('intranet/invite-new', (require, exports, module) => {
 			return this.props.creatorEmailConfirmed ?? {};
 		}
 
+		get adminConfirm()
+		{
+			return this.props.adminConfirm ?? '';
+		}
+
 		get onInviteSentHandler()
 		{
 			return this.props.onInviteSentHandler ?? null;
@@ -138,12 +143,12 @@ jn.define('intranet/invite-new', (require, exports, module) => {
 			return [
 				{
 					id: Tabs.PHONE,
-					title: Loc.getMessage('INTRANET_INVITE_BY_PHONE_TEXT'),
+					title: Loc.getMessage('INTRANET_INVITE_BY_PHONE_TEXT_MSGVER_1'),
 					isSelected: this.state.selectedTabType === Tabs.PHONE,
 				},
 				{
 					id: Tabs.LINK,
-					title: Loc.getMessage('INTRANET_INVITE_BY_LINK_TEXT'),
+					title: Loc.getMessage('INTRANET_INVITE_BY_LINK_TEXT_MSGVER_1'),
 					isSelected: this.state.selectedTabType === Tabs.LINK,
 				},
 			];
@@ -196,6 +201,7 @@ jn.define('intranet/invite-new', (require, exports, module) => {
 						sharingMessage: this.sharingMessage,
 						inviteLink: this.inviteLink,
 						analytics: this.analytics,
+						adminConfirm: this.adminConfirm,
 					});
 					break;
 				default:
@@ -205,8 +211,8 @@ jn.define('intranet/invite-new', (require, exports, module) => {
 		#renderSingleTab()
 		{
 			const text = this.state.selectedTabType === Tabs.PHONE
-				? Loc.getMessage('INTRANET_INVITE_BY_PHONE_TEXT')
-				: Loc.getMessage('INTRANET_INVITE_BY_LINK_TEXT');
+				? Loc.getMessage('INTRANET_INVITE_BY_PHONE_TEXT_MSGVER_1')
+				: Loc.getMessage('INTRANET_INVITE_BY_LINK_TEXT_MSGVER_1');
 
 			return View(
 				{

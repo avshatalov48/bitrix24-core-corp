@@ -10,8 +10,7 @@ jn.define('sign/dialog/banners/signed', (require, exports, module) => {
 	} = require('ui-system/form/buttons/button');
 	const { BannerTemplate } = require('sign/dialog/banners/template');
 	const { Indent, Color } = require('tokens');
-	const { NotifyManager } = require('notify-manager');
-	const { Filesystem, utils } = require('native/filesystem');
+	const { downloadFile } = require('sign/download-file');
 	const { BBCodeParser } = require('bbcode/parser');
 	const parser = new BBCodeParser();
 
@@ -32,23 +31,9 @@ jn.define('sign/dialog/banners/signed', (require, exports, module) => {
 			this.layoutWidget = layoutWidget;
 		}
 
-		downloadFile()
-		{
-			NotifyManager.showLoadingIndicator();
-			Filesystem.downloadFile(this.fileDownloadUrl)
-				.then((localPath) => {
-					NotifyManager.hideLoadingIndicatorWithoutFallback();
-					this.closeLayout(() => {
-						utils.saveFile(localPath).catch(() => dialogs.showSharingDialog({ uri: localPath }));
-					});
-				})
-				.catch(() => {
-					NotifyManager.showErrors([{
-						message: Loc.getMessage('SIGN_MOBILE_DIALOG_SIGNED_SAVE_FILE_ERROR_TEXT'),
-					}]);
-				})
-			;
-		}
+		#onDownloadButtonClickHandler = () => {
+			return downloadFile(this.fileDownloadUrl);
+		};
 
 		closeLayout(callback = {})
 		{
@@ -61,7 +46,7 @@ jn.define('sign/dialog/banners/signed', (require, exports, module) => {
 				iconPathName: 'signed.svg',
 				title: Loc.getMessage('SIGN_MOBILE_DIALOG_SIGNED_TITLE'),
 				description: Loc.getMessage(
-					'SIGN_MOBILE_DIALOG_SIGNED_DESCRIPTION',
+					'SIGN_MOBILE_DIALOG_SIGNED_DESCRIPTION_MSGVER_1',
 					{
 						'#DOCUMENT_TITLE#': parser.parse(this.documentTitle).toPlainText(),
 						'#COLOR_OF_HIGHLIGHTED_TEXT#': Color.base1.toHex(),
@@ -76,9 +61,7 @@ jn.define('sign/dialog/banners/signed', (require, exports, module) => {
 						disabled: false,
 						badge: false,
 						stretched: true,
-						onClick: () => {
-							this.downloadFile();
-						},
+						onClick: this.#onDownloadButtonClickHandler,
 						style: {
 							marginBottom: Indent.L.toNumber(),
 						},

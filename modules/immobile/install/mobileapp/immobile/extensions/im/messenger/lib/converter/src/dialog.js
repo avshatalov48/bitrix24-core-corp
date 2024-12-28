@@ -274,6 +274,7 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 			if (dialog.type === DialogType.copilot)
 			{
 				options.canBeQuoted = false;
+				options.canBeChecked = false;
 			}
 
 			if ([DialogType.openChannel, DialogType.channel, DialogType.generalChannel].includes(dialog.type))

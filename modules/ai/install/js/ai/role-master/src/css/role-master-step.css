@@ -1,0 +1,41 @@
+.ai__role-master_step {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+}
+
+.ai__role-master_step-header {
+	margin-bottom: 20px;
+}
+
+.ai__role-master_step-title {
+	display: inline-flex;
+	margin: 0;
+	padding: 0;
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-xl);
+	vertical-align: bottom;
+}
+
+.ai__role-master_step-title-hint {
+	display: inline-flex;
+}
+
+.ai__role-master_step-progress {
+	margin-top: 11px;
+}
+
+.ai__role-master_step-warning {
+	margin-top: 12px;
+}
+
+.ai__role-master_step-warning .ui-alert {
+	margin-bottom: 0;
+}
+
+.ai__role-master_step-content {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+}

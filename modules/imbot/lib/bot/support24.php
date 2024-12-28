@@ -1250,7 +1250,11 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 	 */
 	protected static function checkMessageRestriction(array $messageFields): bool
 	{
-		if (!self::isUserAdmin(self::getCurrentUser()->getId()) && !self::isUserIntegrator(self::getCurrentUser()->getId()))
+		if (
+			!self::isUserAdmin(self::getCurrentUser()->getId())
+			&& !self::isUserIntegrator(self::getCurrentUser()->getId())
+			&& !self::isActivePaidSupportForAll()
+		)
 		{
 			return false;
 		}

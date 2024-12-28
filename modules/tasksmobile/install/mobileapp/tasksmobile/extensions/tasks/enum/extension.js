@@ -77,7 +77,6 @@ jn.define('tasks/enum', (require, exports, module) => {
 		UPDATE_RESPONSIBLE: 'updateResponsible',
 		UPDATE_ACCOMPLICES: 'updateAccomplices',
 		UPDATE_DEADLINE: 'updateDeadline',
-		UPDATE_FLOW: 'updateFlow',
 		UPDATE_PROJECT: 'updateProject',
 	};
 
@@ -122,7 +121,7 @@ jn.define('tasks/enum', (require, exports, module) => {
 		[TaskField.TITLE]: TaskActionAccess.UPDATE,
 		[TaskField.DESCRIPTION]: TaskActionAccess.UPDATE,
 		[TaskField.PROJECT]: TaskActionAccess.UPDATE_PROJECT,
-		[TaskField.FLOW]: TaskActionAccess.UPDATE_FLOW,
+		[TaskField.FLOW]: TaskActionAccess.UPDATE,
 		[TaskField.RESULT]: TaskActionAccess.UPDATE,
 		[TaskField.FILES]: TaskActionAccess.UPDATE,
 		[TaskField.CHECKLIST]: TaskActionAccess.UPDATE,
@@ -131,6 +130,7 @@ jn.define('tasks/enum', (require, exports, module) => {
 		[TaskField.CRM]: TaskActionAccess.UPDATE,
 		[TaskField.SUBTASKS]: TaskActionAccess.UPDATE,
 		[TaskField.RELATED_TASKS]: TaskActionAccess.UPDATE,
+		[TaskField.USER_FIELDS]: TaskActionAccess.UPDATE,
 
 		[TaskField.CREATOR]: TaskActionAccess.UPDATE_CREATOR,
 		[TaskField.RESPONSIBLE]: TaskActionAccess.UPDATE_RESPONSIBLE,
@@ -147,7 +147,6 @@ jn.define('tasks/enum', (require, exports, module) => {
 		// [TaskField.UPLOADED_FILES]: 'update',
 		// [TaskField.SUBTASKS]: 'update',
 		// [TaskField.RELATED_TASKS]: 'update',
-		// [TaskField.USER_FIELDS]: 'update',
 		//
 		// [TaskField.START_DATE_PLAN]: 'update',
 		// [TaskField.END_DATE_PLAN]: 'update',
@@ -195,7 +194,15 @@ jn.define('tasks/enum', (require, exports, module) => {
 		RESULT_REQUIREMENT: 'tasks_status_summary',
 		TASK_CONTROL: 'tasks_control',
 		WORK_TIME_MATCH: 'tasks_skip_weekends',
+		USER_FIELDS: 'tasks_custom_fields',
 		SEARCH: 'tasks_search',
+	};
+
+	const UserFieldType = {
+		BOOLEAN: 'boolean',
+		DATETIME: 'datetime',
+		DOUBLE: 'double',
+		STRING: 'string',
 	};
 
 	module.exports = {
@@ -215,5 +222,6 @@ jn.define('tasks/enum', (require, exports, module) => {
 		TaskField,
 		TaskFieldActionAccess,
 		TimerState,
+		UserFieldType,
 	};
 });

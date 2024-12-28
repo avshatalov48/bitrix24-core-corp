@@ -22,10 +22,12 @@ use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\Main\Text\HtmlFilter;
 
-Extension::load(["ui.notification", "ui.icons"]);
-
-if (Main\ModuleManager::isModuleInstalled('rest'))
+Extension::load(["ui.notification", "ui.icons", "ui.avatar",]);
+$isExtranetUser = \Bitrix\Tasks\Integration\Extranet\User::isExtranet();
+if (Main\ModuleManager::isModuleInstalled('rest') && !$isExtranetUser)
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:app.placement',
@@ -73,6 +75,20 @@ else
 {
 	$shortTitle = Loc::getMessage('TASKS_TITLE');
 	$title = CUser::FormatName($arParams['NAME_TEMPLATE'], $arResult['USER'], true, false).": ".$shortTitle;
+}
+
+if ($arResult["IS_COLLAB"])
+{
+	Toolbar::deleteFavoriteStar();
+	$shortTitle = Loc::getMessage('TASKS_TITLE');
+
+	$this->SetViewTarget('in_pagetitle') ?>
+
+	<div class="sn-collab-icon__wrapper">
+		<div id="sn-collab-icon-<?=HtmlFilter::encode($arResult["OWNER_ID"])?>" class="sn-collab-icon__hexagon-bg"></div>
+	</div>
+	<div class="sn-collab__subtitle"><?=HtmlFilter::encode($arResult["COLLAB_NAME"])?></div>
+	<?php $this->EndViewTarget();
 }
 
 $APPLICATION->SetPageProperty('title', $title);
@@ -157,7 +173,7 @@ if (!empty($arResult['LIST']))
 		}
 	}
 
-	$groups = SocialNetwork\Group::getData($groups);
+	$groups = SocialNetwork\Group::getData($groups, ['TYPE'], ['WITH_CHAT']);
 	$preparedRows = $grid->prepareRows();
 	$prevGroupId = $arResult['LAST_GROUP_ID'];
 
@@ -169,7 +185,9 @@ if (!empty($arResult['LIST']))
 		if ($arResult['GROUP_BY_PROJECT'] && $groupId !== $prevGroupId)
 		{
 			$groupName = htmlspecialcharsbx($groups[$groupId]['NAME']);
-			$groupUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_GROUP'], ['group_id' => $groupId]);
+			$groupType = $groups[$groupId]['TYPE'] ?? null;
+			$groupChatId = $groups[$groupId]['CHAT_ID'] ?? 0;
+			$groupUrl = SocialNetwork\Collab\Url\UrlManager::getUrlByType($groupId, $groupType, ['chatId' => $groupChatId]);
 
 			$actionCreateTask = SocialNetwork\Group::ACTION_CREATE_TASKS;
 			$actionEditTask = SocialNetwork\Group::ACTION_EDIT_TASKS;
@@ -231,3 +249,20 @@ if (
 
 $arResult['LIST'] = Bitrix\Main\Engine\Response\Converter::toJson()->process($arResult['LIST']);
 $arResult['GROUP_ACTIONS'] = (new Task\GroupAction())->prepareGroupActions($arParams['GRID_ID'], $disabledActions);
+
+if ($arResult["IS_COLLAB"]): ?>
+<script>
+	BX.ready(() => {
+		const collabImagePath = "<?=$arResult["COLLAB_IMAGE"] ?>" || null;
+		const collabName = "<?=HtmlFilter::encode($arResult["COLLAB_NAME"])?>";
+		const ownerId = "<?=HtmlFilter::encode($arResult["OWNER_ID"])?>";
+		const avatar = new BX.UI.AvatarHexagonGuest({
+			size: 42,
+			userName: collabName.toUpperCase(),
+			baseColor: '#19CC45',
+			userpicPath: collabImagePath,
+		});
+		avatar.renderTo(BX('sn-collab-icon-' + ownerId));
+	});
+</script>
+<?php endif;

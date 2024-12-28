@@ -2576,7 +2576,7 @@ RecentList.pull.eventExecute = function(data)
 		// 	}));
 		// }
 	}
-	else if (command == 'dialogChange')
+	else if (command == 'applicationOpenChat')
 	{
 		if (
 			this.base.isRecent()
@@ -4317,11 +4317,11 @@ RecentList.search.openChat = function(chat)
 		// TODO: delete when the mobile chat learns about open lines, call chats and others.
 		if (chat.customData.imChat.TYPE === 'open')
 		{
-			dialogParams.description = BX.message('MOBILE_EXT_CHAT_SELECTOR_CHANNEL_SUBTITLE');
+			dialogParams.description = BX.message('MOBILE_EXT_CHAT_SELECTOR_CHANNEL_SUBTITLE_MSGVER_1');
 		}
 		else
 		{
-			dialogParams.description = BX.message('MOBILE_EXT_CHAT_SELECTOR_GROUP_SUBTITLE');
+			dialogParams.description = BX.message('MOBILE_EXT_CHAT_SELECTOR_GROUP_SUBTITLE_MSGVER_1');
 		}
 	}
 

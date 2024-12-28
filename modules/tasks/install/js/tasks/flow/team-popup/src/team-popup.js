@@ -1,4 +1,5 @@
-import { Dom, Event, Loc, Tag } from 'main.core';
+import { Dom, Event, Loc, Tag, Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { Popup, PopupManager } from 'main.popup';
 import { SidePanelIntegration } from 'tasks.side-panel-integration';
@@ -11,6 +12,7 @@ import { TeamMember } from './team-member';
 type Params = {
 	flowId: number,
 	bindElement: HTMLElement,
+	excludeMembers: ?number[],
 };
 
 export class TeamPopup
@@ -35,6 +37,7 @@ export class TeamPopup
 		this.#teamAjax = new TeamAjax(this.#params.flowId);
 
 		void this.#load();
+		this.#subscribeEvents();
 	}
 
 	static showInstance(params: Params): void
@@ -49,6 +52,23 @@ export class TeamPopup
 		return this.instances[params.flowId];
 	}
 
+	static removeInstance(flowId: number): void
+	{
+		if (Object.hasOwn(this.instances, flowId))
+		{
+			delete this.instances[flowId];
+		}
+	}
+
+	#subscribeEvents(): void
+	{
+		EventEmitter.subscribe('BX.Tasks.Flow.EditForm:afterSave', (event) => {
+			const flowId = event.data?.id ?? 0;
+
+			TeamPopup.removeInstance(flowId);
+		});
+	}
+
 	async #load(): Promise
 	{
 		if (this.#layout.loader)
@@ -58,10 +78,17 @@ export class TeamPopup
 
 		this.#showLoader();
 
-		const { members, page } = await this.#teamAjax.get();
+		let { members, page } = await this.#teamAjax.get();
+
+		if (!Type.isNil(this.#params.excludeMembers))
+		{
+			const isNeedToExclude = (member: MemberData) => this.#params.excludeMembers.includes(Number(member.id));
+
+			page = page.filter((member: MemberData) => !isNeedToExclude(member));
+			members = members.filter((member: MemberData) => !isNeedToExclude(member));
+		}
 
 		this.#members = members;
-
 		page.forEach((data: MemberData) => Dom.append(new TeamMember(data).render(), this.#layout.members));
 
 		this.#destroyLoader();

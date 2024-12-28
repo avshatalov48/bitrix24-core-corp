@@ -3,12 +3,11 @@
 namespace Bitrix\Crm\Kanban\Entity;
 
 use Bitrix\Crm\Filter\ItemDataProvider;
-use Bitrix\Crm\Item;
+use Bitrix\Crm\Item\SmartInvoice as SmartInvoiceItem;
 use Bitrix\Crm\Kanban\Entity\Deadlines\DeadlinesStageManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
-use Bitrix\Crm\Item\SmartInvoice as SmartInvoiceItem;
 
 class SmartInvoiceDeadlines extends SmartInvoice
 {
@@ -26,6 +25,11 @@ class SmartInvoiceDeadlines extends SmartInvoice
 	public function getStageFieldName(): string
 	{
 		return DeadlinesStageManager::FILTER_FIELD_CONTAINS_STAGE;
+	}
+
+	public function getDbStageFieldName(): string
+	{
+		return parent::getStageFieldName();
 	}
 
 	public function getStagesList(): array

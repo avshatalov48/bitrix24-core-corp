@@ -23,11 +23,10 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 	const { datetime } = require('utils/date/formats');
 	const { WorkTimeMoment } = require('crm/work-time');
 	const { get } = require('utils/object');
-	const { withCurrentDomain } = require('utils/url');
 	const { ItemSelector } = require('layout/ui/item-selector');
 	const { DatePill } = require('layout/ui/date-pill');
-	const { EmptyAvatar } = require('layout/ui/user/empty-avatar');
 	const { debounce } = require('utils/function');
+	const { Avatar } = require('ui-system/blocks/avatar');
 
 	const INITIAL_HEIGHT = 1000;
 
@@ -537,39 +536,23 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 				return null;
 			}
 
-			let userAvatar = null;
-			if (user.imageUrl)
-			{
-				userAvatar = Image({
-					style: {
-						width: 26,
-						height: 26,
-						borderRadius: 500,
-						backgroundColor: AppTheme.colors.base5,
-					},
-					resizeMode: 'contain',
-					uri: withCurrentDomain(user.imageUrl),
-				});
-			}
-			else
-			{
-				userAvatar = EmptyAvatar({ id: user.userId, name: user.title, size: 26 });
-			}
+			const { userId, title, imageUrl } = user;
+			const testId = 'TimelineSchedulerActivityResponsibleUser';
 
-			return View(
-				{
-					testId: 'TimelineSchedulerActivityResponsibleUser',
-					style: {
-						alignSelf: 'center',
-						justifyContent: 'center',
-						alignItems: 'center',
-						paddingHorizontal: 8,
-						paddingVertical: 4,
-					},
-					onClick: this.openResponsibleUserSelector,
+			return Avatar({
+				id: userId,
+				testId,
+				size: 26,
+				name: title,
+				uri: imageUrl,
+				withRedux: true,
+				style: {
+					alignSelf: 'center',
+					paddingHorizontal: 8,
+					paddingVertical: 4,
 				},
-				userAvatar,
-			);
+				onClick: this.openResponsibleUserSelector,
+			});
 		}
 
 		openResponsibleUserSelector()

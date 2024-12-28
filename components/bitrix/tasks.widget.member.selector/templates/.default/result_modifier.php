@@ -119,15 +119,22 @@ foreach($arParams['DATA'] as $i => $item)
 
 	$item['DISPLAY_ICON'] = $displayIcon;
 	$item['DISPLAY'] = $display;
-
+	$isCollab = ($item['TYPE'] ?? null) === 'collab';
 	// define URL
-	$item['URL'] = ((int)$item['ID'] ? str_replace('{{ID}}', $item['ID'], $url) : 'javascript:void(0);');
+	if (!$isCollab)
+	{
+		$item['URL'] = ((int)$item['ID'] ? str_replace('{{ID}}', $item['ID'], $url) : 'javascript:void(0);');
+	}
 
 	// define TYPE class
 	$typeSet = array();
 	if($entityType == $uPref)
 	{
-		if($item['IS_EXTRANET_USER'] ?? null)
+		if ($item['IS_COLLABER_USER'] ?? null)
+		{
+			$typeSet[] = 'collaber';
+		}
+		else if(($item['IS_EXTRANET_USER'] ?? null))
 		{
 			$typeSet[] = 'extranet';
 		}
@@ -143,6 +150,14 @@ foreach($arParams['DATA'] as $i => $item)
 	elseif($entityType == $gPref)
 	{
 		$typeSet[] = 'group';
+		if (!$isCollab && $item['IS_EXTRANET_GROUP'] ?? null)
+		{
+			$typeSet[] = 'extranet';
+		}
+		if ($isCollab)
+		{
+			$typeSet[] = 'collab';
+		}
 	}
 	else
 	{
@@ -167,7 +182,10 @@ $arResult['JS_DATA'] = array(
 	'path' => array(
 		'SG' => $gUrl,
 		'U' => $uUrl,
+		'collab' => SocialNetwork\Collab\Url\UrlManager::getCollabUrlTemplateDialogId(),
 	),
+	'loc' => $arParams['loc'] ?? [],
+	'entityId' => $arParams['ENTITY_ID'] ?? 0,
 	'data' => $arParams['DATA'],
 	'min' => $arParams['MIN'],
 	'max' => is_infinite($arParams['MAX']) ? 99999 : $arParams['MAX'],
@@ -184,4 +202,6 @@ $arResult['JS_DATA'] = array(
 	'context' => $arParams['CONTEXT'],
 	'isProjectLimitExceeded' => $arResult['isProjectLimitExceeded'],
 	'projectFeatureId' => $arResult['projectFeatureId'],
+	'isCollaber' => $arResult['isCollaber'],
+	'isNeedShowPreselectedCollabHint' => $arResult['isNeedShowPreselectedCollabHint'],
 );

@@ -14,6 +14,7 @@ use Bitrix\BIConnector\Integration\Superset\Registrar;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Request\IntegratorResponse;
 use Bitrix\BIConnector\Integration\Superset\SupersetStatusOptionContainer;
+use Bitrix\BIConnector\ExternalSource\Internal\ExternalDatasetTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Error;
@@ -53,6 +54,11 @@ final class Integrator
 	private const PROXY_ACTION_CREATE_EMPTY_DASHBOARD = '/dashboard/createEmpty';
 	private const PROXY_ACTION_SET_DASHBOARD_OWNER = '/dashboard/setOwner';
 	private const PROXY_ACTION_CHANGE_DASHBOARD_OWNER = '/dashboard/changeOwner';
+	private const PROXY_ACTION_LIST_DATASET = '/dataset/list';
+	private const PROXY_ACTION_GET_DATASET = '/dataset/get';
+	private const PROXY_ACTION_CREATE_DATASET = '/dataset/create';
+	private const PROXY_ACTION_DELETE_DATASET = '/dataset/delete';
+	private const PROXY_ACTION_GET_DATASET_URL = '/dataset/getUrl';
 
 	static private self $instance;
 
@@ -188,7 +194,6 @@ final class Integrator
 		])->fetchAll();
 
 		$requestParams = [
-			'ids' => $ids,
 			'neqIds' => array_column($inversedIdList, 'EXTERNAL_ID'),
 		];
 
@@ -925,6 +930,144 @@ final class Integrator
 		;
 	}
 
+	/**
+	 * Returns response with list of dataset info on successful request.
+	 * If response code is not OK - returns empty data.
+	 *
+	 * @param array $ids External ids of dashboards.
+	 * @return IntegratorResponse
+	 */
+	public function getDatasetList(array $ids): IntegratorResponse
+	{
+		if (empty($ids))
+		{
+			return new IntegratorResponse(
+				status: IntegratorResponse::STATUS_OK,
+				data: []
+			);
+		}
+
+		$inversedIdList = ExternalDatasetTable::getList([
+			'select' => ['EXTERNAL_ID'],
+			'filter' => [
+				'!@EXTERNAL_ID' => $ids,
+			],
+		])->fetchAll();
+
+		$requestParams = [
+			'neqIds' => array_column($inversedIdList, 'EXTERNAL_ID'),
+		];
+
+		$response =
+			$this
+				->createDefaultRequest(self::PROXY_ACTION_LIST_DATASET)
+				->setParams($requestParams)
+				->perform()
+		;
+
+		if ($response->hasErrors())
+		{
+			return $response;
+		}
+
+		$resultData = $response->getData();
+
+		return $response->setData($resultData['datasets']);
+	}
+
+	/**
+	 * Returns response with dataset info on successful request.
+	 *
+	 * @param int $id
+	 * @return IntegratorResponse
+	 */
+	public function getDatasetById(int $id): IntegratorResponse
+	{
+		$requestParams = [
+			'id' => $id,
+		];
+
+		$response =
+			$this
+				->createDefaultRequest(self::PROXY_ACTION_GET_DATASET)
+				->setParams($requestParams)
+				->perform()
+		;
+
+		if ($response->hasErrors())
+		{
+			return $response;
+		}
+
+		$resultData = $response->getData();
+
+		return $response->setData($resultData);
+	}
+
+	/**
+	 * Adds dataset
+	 *
+	 * @param array $fields
+	 * @return IntegratorResponse
+	 */
+	public function createDataset(array $fields): IntegratorResponse
+	{
+		$parameters = [
+			'name' => $fields['name'],
+		];
+
+		return
+			$this
+				->createDefaultRequest(self::PROXY_ACTION_CREATE_DATASET)
+				->removeBefore(Middleware\ReadyGate::getMiddlewareId())
+				->removeAfter(Middleware\StatusArbiter::getMiddlewareId())
+				->setParams(['fields' => $parameters])
+				->perform()
+			;
+	}
+
+	/**
+	 * Deletes dataset
+	 *
+	 * @param int $id
+	 * @return IntegratorResponse
+	 */
+	public function deleteDataset(int $id): IntegratorResponse
+	{
+		$parameters = [
+			'id' => $id,
+		];
+
+		return
+			$this
+				->createDefaultRequest(self::PROXY_ACTION_DELETE_DATASET)
+				->removeBefore(Middleware\ReadyGate::getMiddlewareId())
+				->removeAfter(Middleware\StatusArbiter::getMiddlewareId())
+				->setParams($parameters)
+				->perform()
+			;
+	}
+
+	/**
+	 * Gets dataset url for creating chart
+	 *
+	 * @param int $id
+	 * @return IntegratorResponse
+	 */
+	public function getDatasetUrl(int $id): IntegratorResponse
+	{
+		$parameters = [
+			'id' => $id,
+		];
+
+		return
+			$this
+				->createDefaultRequest(self::PROXY_ACTION_GET_DATASET_URL)
+				->setParams($parameters)
+				->perform()
+			;
+	}
+
 	// endregion
 
 	private function decode(string $data)
@@ -969,6 +1112,10 @@ final class Integrator
 			self::PROXY_ACTION_CREATE_EMPTY_DASHBOARD => true,
 			self::PROXY_ACTION_SET_DASHBOARD_OWNER => true,
 			self::PROXY_ACTION_CHANGE_DASHBOARD_OWNER => false,
+			self::PROXY_ACTION_LIST_DATASET => false,
+			self::PROXY_ACTION_GET_DATASET => false,
+			self::PROXY_ACTION_CREATE_DATASET => true,
+			self::PROXY_ACTION_DELETE_DATASET => true,
 		];
 
 		if (!array_key_exists($action, $actions))

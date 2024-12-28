@@ -2,19 +2,23 @@
 
 namespace Bitrix\Crm\Integration\AI\Operation;
 
-use Bitrix\Crm\Activity\IncomingChannel;
-use Bitrix\Crm\Activity\Provider\Call;
-use Bitrix\Crm\ActivityTable;
+use Bitrix\Crm\Copilot\CallAssessment\CallAssessmentItemChecker;
+use Bitrix\Crm\Copilot\CallAssessment\ItemFactory;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Dto\SummarizeCallTranscriptionPayload;
 use Bitrix\Crm\Integration\AI\Dto\TranscribeCallRecordingPayload;
+use Bitrix\Crm\Integration\AI\Enum\GlobalSetting;
+use Bitrix\Crm\Integration\AI\ErrorCode as AIErrorCode;
 use Bitrix\Crm\Integration\AI\JobRepository;
+use Bitrix\Crm\Integration\AI\Model\QueueTable;
+use Bitrix\Crm\Integration\AI\Operation\Autostart\FillFieldsSettings;
+use Bitrix\Crm\Integration\AI\Operation\Autostart\ScoreCallSettings;
 use Bitrix\Crm\Integration\AI\Result;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Main\ObjectException;
-use Bitrix\Main\Type\DateTime;
+use CCrmActivity;
+use CCrmOwnerType;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -24,22 +28,15 @@ use Psr\Log\LoggerInterface;
 final class Orchestrator
 {
 	private Container $container;
-	private JobRepository $jobRepo;
-	private IncomingChannel $incomingChannel;
 	private LoggerInterface $logger;
 
 	public function __construct()
 	{
 		$this->container = Container::getInstance();
-		$this->jobRepo = JobRepository::getInstance();
-		$this->incomingChannel = IncomingChannel::getInstance();
 		$this->logger = AIManager::logger();
 	}
 
-	public function launchNextOperationIfNeeded(
-		Result $previousJobResult,
-		AutostartSettings $settings
-	): void
+	public function launchNextOperationIfNeeded(Result $previousJobResult, FillFieldsSettings $settings): void
 	{
 		$this->logger->info(
 			'{date}: Trying to autostart next operation after finish of another operation.'
@@ -48,7 +45,7 @@ final class Orchestrator
 		);
 
 		$activityId = $previousJobResult->getTarget()?->getEntityId();
-		$activity = Container::getInstance()->getActivityBroker()->getById($activityId);
+		$activity = $this->container->getActivityBroker()->getById($activityId);
 
 		if (
 			$previousJobResult->getTypeId() === TranscribeCallRecording::TYPE_ID
@@ -119,169 +116,31 @@ final class Orchestrator
 		}
 	}
 
-	public function launchOperationAfterCallActivityAddIfNeeded(
-		array $activityFields,
-		AutostartSettings $settings,
-	): void
-	{
-		$this->logger->info(
-			'{date}: Trying to autostart operation after call activity was added.'
-			. ' Autostart settings {autostartSettings}, activity {activity}' . PHP_EOL,
-			['autostartSettings' => $settings, 'activity' => $activityFields],
-		);
-
-		if (!$settings->shouldAutostart(
-			TranscribeCallRecording::TYPE_ID,
-			(int)($activityFields['DIRECTION'] ?? 0)
-		))
-		{
-			return;
-		}
-
-		$activityId = (int)($activityFields['ID'] ?? null);
-
-		$nextTarget = $this->findPossibleFillFieldsTargetByBindings($activityFields['BINDINGS'] ?? []);
-		$userId = $nextTarget ? $this->findAssigned($nextTarget) : null;
-
-		$storageTypeId = (int)($activityFields['STORAGE_TYPE_ID'] ?? null);
-
-		$storageElementIds = (array)($activityFields['STORAGE_ELEMENT_IDS'] ?? []);
-		$storageElementIds = array_map('intval', $storageElementIds);
-		$storageElementIds = array_filter($storageElementIds, fn(int $id) => $id > 0);
-
-		if (
-			$activityId > 0
-			&& $nextTarget
-			&& $userId > 0
-			&& Call::hasRecordings($activityFields)
-			&& AIManager::checkForSuitableAudios((string)$activityFields['ORIGIN_ID'], $storageTypeId, serialize($storageElementIds))->isSuccess()
-		)
-		{
-			if ($settings->isAutostartTranscriptionOnlyOnFirstCallWithRecording())
-			{
-				$shouldStart = $this->isFirstCallActivityWithFilesForItem($activityFields, $nextTarget);
-			}
-			else
-			{
-				$shouldStart = true;
-			}
-
-			if ($shouldStart)
-			{
-				$this->logger->info(
-					'{date}: Trying to autostart operation with type {operationType}' . PHP_EOL,
-					['operationType' => TranscribeCallRecording::TYPE_ID]
-				);
-				AIManager::launchCallRecordingTranscription(
-					$activityId,
-					$userId,
-					$storageTypeId,
-					max($storageElementIds),
-					false,
-				);
-			}
-		}
-	}
-
-	public function launchOperationAfterCallActivityUpdateIfNeeded(
-		array $activityFields,
-		array $changedFields,
-		AutostartSettings $settings,
-	): void
-	{
-		$this->logger->info(
-			'{date}: Trying to autostart operation after call activity was updated.'
-			. ' Autostart settings {autostartSettings}, changed fields {changedFields}, new activity state {activity}' . PHP_EOL,
-			['autostartSettings' => $settings, 'activity' => $activityFields, 'changedFields' => $changedFields],
-		);
-
-		if (!$settings->shouldAutostart(
-			TranscribeCallRecording::TYPE_ID,
-			(int)($activityFields['DIRECTION'] ?? 0)
-		))
-		{
-			return;
-		}
-
-		$activityId = (int)($activityFields['ID'] ?? null);
-
-		$nextTarget = $this->findPossibleFillFieldsTargetByBindings($activityFields['BINDINGS'] ?? []);
-		$userId = $nextTarget ? $this->findAssigned($nextTarget) : null;
-
-		$storageTypeId = (int)($changedFields['STORAGE_TYPE_ID'] ?? null);
-
-		$storageElementIds = (array)($changedFields['STORAGE_ELEMENT_IDS'] ?? []);
-		$storageElementIds = array_map('intval', $storageElementIds);
-		$storageElementIds = array_filter($storageElementIds, fn(int $id) => $id > 0);
-
-		if (
-			$activityId > 0
-			&& $nextTarget
-			&& $userId > 0
-			&& Call::hasRecordings($activityFields)
-			&& !$this->jobRepo->isJobOfSameTypeAlreadyExistsForTarget(
-				new ItemIdentifier(\CCrmOwnerType::Activity, $activityId),
-				TranscribeCallRecording::TYPE_ID,
-			)
-			&& AIManager::checkForSuitableAudios((string)$activityFields['ORIGIN_ID'], $storageTypeId, serialize($storageElementIds))->isSuccess()
-		)
-		{
-			if ($settings->isAutostartTranscriptionOnlyOnFirstCallWithRecording())
-			{
-				$shouldStart = $this->isFirstCallActivityWithFilesForItem($activityFields, $nextTarget);
-			}
-			else
-			{
-				$shouldStart = true;
-			}
-
-			if ($shouldStart)
-			{
-				$this->logger->info(
-					'{date}: Trying to autostart operation with type {operationType}' . PHP_EOL,
-					['operationType' => TranscribeCallRecording::TYPE_ID]
-				);
-				AIManager::launchCallRecordingTranscription(
-					$activityId,
-					$userId,
-					$storageTypeId,
-					max($storageElementIds),
-					false,
-				);
-			}
-		}
-	}
-
+	// @todo: rename
 	public function findPossibleFillFieldsTarget(int $activityId): ?ItemIdentifier
 	{
-		return $this->findPossibleFillFieldsTargetByBindings(\CCrmActivity::GetBindings($activityId));
+		$bindings = CCrmActivity::GetBindings($activityId);
+		$bindings = is_array($bindings) ? $bindings : [];
+
+		return $this->findPossibleTargetByBindings($bindings);
 	}
 
-	private function findPossibleFillFieldsTargetByBindings(array $bindings): ?ItemIdentifier
+	public function findPossibleTargetByBindings(array $bindings): ?ItemIdentifier
 	{
 		$this->logger->debug(
 			'{date}: Trying to find possible fill item fields target by activity bindings {bindings}' . PHP_EOL,
-			['bindings' => $bindings],
+			[
+				'bindings' => $bindings,
+			],
 		);
 
 		static $whitelist = [
 			// sorted by priority - first found entity type is used
-			\CCrmOwnerType::Deal => \CCrmOwnerType::Deal,
-			\CCrmOwnerType::Lead => \CCrmOwnerType::Lead,
+			CCrmOwnerType::Deal => CCrmOwnerType::Deal,
+			CCrmOwnerType::Lead => CCrmOwnerType::Lead,
 		];
 
-		$filteredBindings = [];
-		foreach ($bindings as $binding)
-		{
-			$ownerTypeId = (int)$binding['OWNER_TYPE_ID'];
-			$ownerId = (int)$binding['OWNER_ID'];
-
-			if (isset($whitelist[$ownerTypeId]) && $ownerId > 0)
-			{
-				$filteredBindings[$ownerTypeId][$ownerId] = $ownerId;
-			}
-		}
-
+		$filteredBindings = $this->filterBindings($bindings, $whitelist);
 		if (empty($filteredBindings))
 		{
 			$this->logger->debug('{date}: All given bindings were filtered out, cant find target' . PHP_EOL);
@@ -350,143 +209,24 @@ final class Orchestrator
 			}
 		}
 
-		$this->logger->debug('{date}: No target found for bindings {bindings}' . PHP_EOL, ['bindings' => $bindings]);
+		$this->logger->debug(
+			'{date}: No target found for bindings {bindings}' . PHP_EOL,
+			[
+				'bindings' => $bindings,
+			]
+		);
 
 		return null;
 	}
 
-	private function findAssigned(ItemIdentifier $target): ?int
-	{
-		$factory = $this->container->getFactory($target->getEntityTypeId());
-		if (!$factory || !\CCrmOwnerType::isUseFactoryBasedApproach($target->getEntityTypeId()))
-		{
-			return null;
-		}
-
-		$item = current($factory->getItems([
-			'select' => [Item::FIELD_NAME_ASSIGNED],
-			'filter' => ['=ID' => $target->getEntityId()]
-		]));
-
-		return $item ? $item->getAssignedById() : null;
-	}
-
-	private function isFirstCallActivityWithFilesForItem(array $activityFields, ItemIdentifier $possibleTarget): bool
-	{
-		$this->logger->debug(
-			'{date}: Trying to determine if the activity is first call activity with files for item: {activity}' . PHP_EOL,
-			['activity' => $activityFields],
-		);
-
-		$allOtherCallActivityIdsOfTarget = ActivityTable::query()
-			->setSelect(['ID'])
-			->where('PROVIDER_ID', Call::ACTIVITY_PROVIDER_ID)
-			->whereNotNull('ORIGIN_ID') // check that it's a real call from voximplant
-			->where('BINDINGS.OWNER_TYPE_ID', $possibleTarget->getEntityTypeId())
-			->where('BINDINGS.OWNER_ID', $possibleTarget->getEntityId())
-			->setLimit(100)
-			->fetchCollection()
-			->getIdList()
-		;
-
-		// exclude activity that we are testing right now
-		$allOtherCallActivityIdsOfTarget = array_diff($allOtherCallActivityIdsOfTarget, [(int)$activityFields['ID']]);
-		if (empty($allOtherCallActivityIdsOfTarget))
-		{
-			$this->logger->debug(
-				'{date}: No other call activities found for target {target} {activity}' . PHP_EOL,
-				['target' => $possibleTarget, 'activity' => $activityFields],
-			);
-
-			return true;
-		}
-
-		$incomingCallsActivityIds = $this->incomingChannel->getIncomingChannelActivityIds(
-			$allOtherCallActivityIdsOfTarget,
-		);
-		if (empty($incomingCallsActivityIds))
-		{
-			$this->logger->debug(
-				'{date}: All call activities found for target {target} are not incoming {ids} {activity}' . PHP_EOL,
-				['target' => $possibleTarget, 'ids' => $allOtherCallActivityIdsOfTarget, 'activity' => $activityFields],
-			);
-
-			return true;
-		}
-
-		$createdTime = $activityFields['CREATED'] ?? null;
-		if (is_string($createdTime))
-		{
-			try
-			{
-				$createdTime = DateTime::createFromUserTime($createdTime);
-			}
-			catch (ObjectException)
-			{
-				$createdTime = null;
-			}
-		}
-		if (!($createdTime instanceof DateTime))
-		{
-			$this->logger->error(
-				'{date}: Didnt find valid CREATED time in activity fields: {activity}' . PHP_EOL,
-				['activity' => $activityFields],
-			);
-
-			return false;
-		}
-
-		$previousCalls = ActivityTable::query()
-			->setSelect(['ID', 'STORAGE_ELEMENT_IDS', 'STORAGE_TYPE_ID', 'ORIGIN_ID'])
-			->whereIn('ID', $incomingCallsActivityIds)
-			->where('CREATED', '<', $createdTime)
-			->fetchCollection()
-		;
-		if (count($previousCalls) <= 0)
-		{
-			$this->logger->debug(
-				'{date}: All previous calls were created after the given activity: {activity}' . PHP_EOL,
-				['activity' => $activityFields]
-			);
-
-			return true;
-		}
-
-		$emptyArraySerializedString = serialize([]);
-		foreach ($previousCalls as $previousCall)
-		{
-			// if a call has any files, we consider that it has recordings
-			if (
-				!empty($previousCall->requireStorageElementIds())
-				&& $previousCall->requireStorageElementIds() !== $emptyArraySerializedString
-				&& AIManager::checkForSuitableAudios(
-					(string)$previousCall->requireOriginId(),
-					(int)$previousCall->requireStorageTypeId(),
-					(string)$previousCall->requireStorageElementIds()
-				)->isSuccess()
-			)
-			{
-				$this->logger->debug(
-					'{date}: Found a call activity that was created before and has files: {id}' . PHP_EOL,
-					['ID' => $previousCall->getId()]
-				);
-
-				return false;
-			}
-		}
-
-		$this->logger->debug('{date}: No other call activity with files found' . PHP_EOL);
-
-		return true;
-	}
-
-	public function getSettingsByActivity(array $activity): ?AutostartSettings
+	public function getFillFieldsSettingsByActivity(array $activity): ?FillFieldsSettings
 	{
 		$target = null;
 		if (isset($activity['BINDINGS']) && is_array($activity['BINDINGS']))
 		{
-			$target = $this->findPossibleFillFieldsTargetByBindings($activity['BINDINGS']);
+			$target = $this->findPossibleTargetByBindings($activity['BINDINGS']);
 		}
+
 		if (isset($activity['ID']) && (int)$activity['ID'] > 0)
 		{
 			$target = $this->findPossibleFillFieldsTarget((int)$activity['ID']);
@@ -497,10 +237,10 @@ final class Orchestrator
 			return null;
 		}
 
-		return AutostartSettings::get($target->getEntityTypeId(), $target->getCategoryId());
+		return FillFieldsSettings::get($target->getEntityTypeId(), $target->getCategoryId());
 	}
 
-	public function getSettingsByPreviousJobResult(Result $result): ?AutostartSettings
+	public function getFillFieldsSettingsByPreviousJobResult(Result $result): ?FillFieldsSettings
 	{
 		$dummyActivity = match ($result->getTypeId()) {
 			TranscribeCallRecording::TYPE_ID, SummarizeCallTranscription::TYPE_ID => [
@@ -509,6 +249,140 @@ final class Orchestrator
 			default => [],
 		};
 
-		return $this->getSettingsByActivity($dummyActivity);
+		return $this->getFillFieldsSettingsByActivity($dummyActivity);
+	}
+
+	public function getScoreCallSettingsByActivity(array $activity): ?ScoreCallSettings
+	{
+		$activityId = (int)($activity['ID'] ?? null);
+		if ($activityId <= 0)
+		{
+			return null;
+		}
+
+		$callAssessmentItem = ItemFactory::getByActivityId($activityId);
+		$checkerResult = CallAssessmentItemChecker::getInstance()
+			->setItem(ItemFactory::getByActivityId($activityId))
+			->run()
+		;
+		if (!$checkerResult->isSuccess())
+		{
+			return null;
+		}
+
+		return new ScoreCallSettings($callAssessmentItem?->getAutoCheckTypeId());
+	}
+
+	public function launchScoreCallOperationIfNeeded(Result $result, bool $checkExecuted = false): void
+	{
+		if (!AIManager::isEnabledInGlobalSettings(GlobalSetting::CallAssessment))
+		{
+			return;
+		}
+
+		$activityId = $result->getTarget()?->getEntityTypeId() === CCrmOwnerType::Activity
+			? $result->getTarget()?->getEntityId()
+			: FillItemFieldsFromCallTranscription::getParentActivityId($result);
+		if ($activityId <= 0)
+		{
+			$this->logger->error(
+				'{date}: Unable to autostart operation with type {operationType}: unable to find activity ID' . PHP_EOL,
+				['operationType' => ScoreCall::TYPE_ID]
+			);
+
+			return;
+		}
+
+		$transcriptResult = JobRepository::getInstance()->getTranscribeCallRecordingResultByActivity($activityId);
+		if (is_null($transcriptResult))
+		{
+			$this->logger->error(
+				'{date}: Unable to autostart operation with type {operationType}: CoPilot call transcription not found' . PHP_EOL,
+				['operationType' => ScoreCall::TYPE_ID]
+			);
+
+			return;
+		}
+
+		if (!$transcriptResult->isSuccess())
+		{
+			$this->logger->error(
+				'{date}: Unable to autostart operation with type {operationType}: {errors} ' . PHP_EOL,
+				[
+					'operationType' => ScoreCall::TYPE_ID,
+					'errors' => $transcriptResult->getErrors()
+				]
+			);
+
+			return;
+		}
+
+		if ($transcriptResult->getNextTypeId() === SummarizeCallTranscription::TYPE_ID)
+		{
+			return;
+		}
+
+		$payload = $transcriptResult->getPayload();
+		if (is_null($payload))
+		{
+			$this->logger->error(
+				'{date}: Unable to autostart operation with type {operationType}: {errors} ' . PHP_EOL,
+				[
+					'operationType' => ScoreCall::TYPE_ID,
+					'errors' => AIErrorCode::getPayloadNotFoundError()
+				]
+			);
+
+			return;
+		}
+
+		/** @var Result<TranscribeCallRecordingPayload> $transcriptResult */
+		$scoreCall = new ScoreCall(
+			$transcriptResult->getTarget(),
+			$transcriptResult->getPayload()->transcription,
+			$transcriptResult->getUserId() ?? Container::getInstance()->getContext()->getUserId(),
+			$transcriptResult->getJobId(),
+		);
+
+		if ($checkExecuted)
+		{
+			$executedJob = QueueTable::query()
+				->setSelect(['ID'])
+				->where('ENTITY_TYPE_ID', $transcriptResult->getTarget()?->getEntityTypeId())
+				->where('ENTITY_ID', $transcriptResult->getTarget()?->getEntityId())
+				->where('TYPE_ID', ScoreCall::TYPE_ID)
+				->setLimit(1)
+				->fetchObject()
+			;
+			if ($executedJob)
+			{
+				return;
+			}
+		}
+
+		$this->logger->info(
+			'{date}: Trying to autostart operation with type {operationType}' . PHP_EOL,
+			['operationType' => ScoreCall::TYPE_ID]
+		);
+
+		$scoreCall->setIsManualLaunch($transcriptResult->isManualLaunch());
+		$scoreCall->launch();
+	}
+
+	private function filterBindings(array $bindings, array $whitelist): array
+	{
+		$filteredBindings = [];
+		foreach ($bindings as $binding)
+		{
+			$ownerTypeId = (int)$binding['OWNER_TYPE_ID'];
+			$ownerId = (int)$binding['OWNER_ID'];
+
+			if (isset($whitelist[$ownerTypeId]) && $ownerId > 0)
+			{
+				$filteredBindings[$ownerTypeId][$ownerId] = $ownerId;
+			}
+		}
+
+		return $filteredBindings;
 	}
 }

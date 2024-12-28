@@ -20,19 +20,19 @@ class MobileAppSettings
 
 	public function canTakeScreenshot(): bool
 	{
-		return $this->option->get('copy_screenshot_disabled', 'N') === 'Y';
+		return $this->option->get('copy_screenshot_disabled', 'N') !== 'Y';
 	}
 
 	public function canCopyText(): bool
 	{
-		return $this->option->get('copy_text_disabled', 'N') === 'Y';
+		return $this->option->get('copy_text_disabled', 'N') !== 'Y';
 	}
 
 	public function setAllowScreenshot(bool $allow): void
 	{
 		$this->option->set(
 			'copy_screenshot_disabled',
-			$allow ? 'Y' : 'N'
+			$allow ? 'N' : 'Y'
 		);
 	}
 
@@ -40,7 +40,7 @@ class MobileAppSettings
 	{
 		$this->option->set(
 			'copy_text_disabled',
-			$allow ? 'Y' : 'N'
+			$allow ? 'N' : 'Y'
 		);
 	}
 }

@@ -34,6 +34,8 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 	protected $users;
 	protected $isExternalDynamicTypes;
 	protected $gridId;
+	protected ?int $filteredByAutomatedSolutionId = null;
+	protected bool $showAllFromAutomatedSolutions = false;
 
 	protected function init(): void
 	{
@@ -43,12 +45,6 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 		if ($consistentUrl)
 		{
 			LocalRedirect($consistentUrl->getUri());
-			return;
-		}
-
-		if (!Container::getInstance()->getUserPermissions()->canWriteConfig())
-		{
-			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED'));
 			return;
 		}
 
@@ -68,6 +64,12 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 		$this->filter = new Filter\Filter($settings->getID(), $this->provider);
 
 		$this->isExternalDynamicTypes = $this->provider->getSettings()->getIsExternalDynamicalTypes();
+		[$this->filteredByAutomatedSolutionId, $this->showAllFromAutomatedSolutions] = $this->getAutomatedSolutionIdFromFilter();
+
+		if (!$this->checkPermissions())
+		{
+			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED'));
+		}
 	}
 
 	public function executeComponent()
@@ -344,7 +346,7 @@ HTML;
 	protected function getToolbarParameters(): array
 	{
 		$buttons = [];
-		if(Container::getInstance()->getUserPermissions()->canAddType())
+		if(Container::getInstance()->getUserPermissions()->canAddType($this->filteredByAutomatedSolutionId))
 		{
 			$eventData = [];
 			if ($this->isExternalDynamicTypes)
@@ -375,5 +377,46 @@ HTML;
 	protected function getTopPanelId(int $entityTypeId): string
 	{
 		return 'DYNAMIC_LIST';
+	}
+
+	private function checkPermissions(): bool
+	{
+		$userPermissions = Container::getInstance()->getUserPermissions();
+
+		if ($this->filteredByAutomatedSolutionId === 0)
+		{
+			return $userPermissions->isCrmAdmin();
+		}
+		if ($this->filteredByAutomatedSolutionId > 0)
+		{
+			return $userPermissions->isAutomatedSolutionAdmin($this->filteredByAutomatedSolutionId);
+		}
+		if ($this->showAllFromAutomatedSolutions)
+		{
+			return $userPermissions->canEditAutomatedSolutions();
+		}
+
+		return $userPermissions->canWriteConfig() && $userPermissions->canEditAutomatedSolutions(); // without filter must be both crm admin and automated solution admin
+	}
+
+	private function getAutomatedSolutionIdFromFilter(): array
+	{
+		$listFilter = $this->getListFilter();
+
+		if (array_key_exists('=CUSTOM_SECTION_ID', $listFilter) && $listFilter['=CUSTOM_SECTION_ID'] === null)
+		{
+			return [0, false];
+		}
+		if (array_key_exists('!=CUSTOM_SECTION_ID', $listFilter) && $listFilter['!=CUSTOM_SECTION_ID'] === null)
+		{
+			return [null, true];
+		}
+
+		if (isset($listFilter['=CUSTOM_SECTION_ID']) && (int)$listFilter['=CUSTOM_SECTION_ID'] > 0)
+		{
+			return [(int)$listFilter['=CUSTOM_SECTION_ID'], false];
+		}
+
+		return [null, false];
 	}
 }

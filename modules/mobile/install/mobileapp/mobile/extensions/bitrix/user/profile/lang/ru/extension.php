@@ -46,3 +46,5 @@ $MESS["PROFILE_USER_TASKS_MSGVER_1"] = "Задачи сотрудника";
 $MESS["PROFILE_USER_FILES_MSGVER_1"] = "Файлы сотрудника";
 $MESS["PROFILE_USER_MESSAGES_MSGVER_1"] = "Сообщения сотрудника";
 $MESS['DELETE_ACCOUNT'] = 'Удалить профиль';
+
+$MESS['PROFILE_PERMISSIONS_ALERT_TITLE'] = 'Недостаточно прав на просмотр профиля';

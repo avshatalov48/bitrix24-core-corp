@@ -1272,6 +1272,9 @@ this.BX = this.BX || {};
 	  };
 	}
 	function _getRoleMenuItemHtml2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _roleInfoContainer)[_roleInfoContainer]) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _roleInfoContainer)[_roleInfoContainer];
+	  }
 	  const {
 	    name,
 	    avatar
@@ -3610,6 +3613,9 @@ this.BX = this.BX || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _adjustTextareaHeight)[_adjustTextareaHeight]();
 	    });
 	  }
+	  adjustHeight() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _adjustTextareaHeight)[_adjustTextareaHeight]();
+	  }
 	  clearErrors() {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _inputError)[_inputError] && babelHelpers.classPrivateFieldLooseBase(this, _inputError)[_inputError].getErrors().length > 0) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _inputError)[_inputError].setErrors([]);
@@ -3948,6 +3954,7 @@ this.BX = this.BX || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea].setStyle('height', 'auto');
 	  const textAreaPaddingBottom = parseInt(babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea].getComputedStyle().getPropertyValue('padding-bottom'), 10);
 	  const errorFieldHeight = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _errorContainer)[_errorContainer]).height;
+	  const placeholderHeight = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _placeholder)[_placeholder].getContainer()).height;
 	  const textAreaHeight = babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea].scrollHeight;
 	  const hasTextAreaMoreThanOneRow = textAreaHeight - textAreaPaddingBottom > 40;
 	  if (hasTextAreaMoreThanOneRow) {
@@ -3959,7 +3966,10 @@ this.BX = this.BX || {};
 	    const loaderHeight = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _loaderTextContainer)[_loaderTextContainer]).height;
 	    babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea].setStyle('height', `${loaderHeight}px`);
 	  } else {
-	    const newTextAreaHeight = babelHelpers.classPrivateFieldLooseBase(this, _inputError)[_inputError] && babelHelpers.classPrivateFieldLooseBase(this, _inputError)[_inputError].getErrors().length > 0 ? errorFieldHeight : babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea].scrollHeight;
+	    let newTextAreaHeight = babelHelpers.classPrivateFieldLooseBase(this, _inputError)[_inputError] && babelHelpers.classPrivateFieldLooseBase(this, _inputError)[_inputError].getErrors().length > 0 ? errorFieldHeight : babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea].scrollHeight;
+	    if (placeholderHeight > newTextAreaHeight && !babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea].value) {
+	      newTextAreaHeight = placeholderHeight;
+	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea].setStyle('height', `${newTextAreaHeight}px`);
 	  }
 	  this.emit(CopilotInputEvents.adjustHeight);
@@ -4073,6 +4083,7 @@ this.BX = this.BX || {};
 	var _useText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("useText");
 	var _useImage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("useImage");
 	var _showResultInCopilot = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showResultInCopilot");
+	var _windowResizeHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("windowResizeHandler");
 	var _staticEulaRestrictCallback = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("staticEulaRestrictCallback");
 	var _getBaasPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBaasPopup");
 	var _initCopilotPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initCopilotPopup");
@@ -4251,6 +4262,10 @@ this.BX = this.BX || {};
 	      value: void 0
 	    });
 	    Object.defineProperty(this, _showResultInCopilot, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _windowResizeHandler, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -4481,6 +4496,12 @@ this.BX = this.BX || {};
 	        babelHelpers.classPrivateFieldLooseBase(this, _inputField)[_inputField].stopRecording();
 	        (_babelHelpers$classPr27 = babelHelpers.classPrivateFieldLooseBase(this, _getBaasPopup)[_getBaasPopup]()) == null ? void 0 : _babelHelpers$classPr27.close();
 	        this.emit(CopilotEvents.HIDE);
+	        main_core.Event.unbind(window, 'resize', babelHelpers.classPrivateFieldLooseBase(this, _windowResizeHandler)[_windowResizeHandler]);
+	      },
+	      onPopupShow: () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _windowResizeHandler)[_windowResizeHandler] = () => babelHelpers.classPrivateFieldLooseBase(this, _inputField)[_inputField].adjustHeight();
+	        main_core.Event.bind(window, 'resize', babelHelpers.classPrivateFieldLooseBase(this, _windowResizeHandler)[_windowResizeHandler]);
+	        babelHelpers.classPrivateFieldLooseBase(this, _inputField)[_inputField].clearErrors();
 	      }
 	    }
 	  });

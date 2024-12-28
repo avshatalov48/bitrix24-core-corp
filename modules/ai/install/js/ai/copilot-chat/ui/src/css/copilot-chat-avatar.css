@@ -1,0 +1,8 @@
+.ai__copilot-chat-avatar {
+	display: inline-flex;
+	min-width: 32px;
+	width: 32px;
+	min-height: 32px;
+	height: 32px;
+	border-radius: var(--ui-border-radius-circle);
+}

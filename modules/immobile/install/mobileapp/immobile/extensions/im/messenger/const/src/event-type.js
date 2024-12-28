@@ -36,14 +36,12 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			hideSearch: 'ImMobile.Messenger.Search:close',
 			createChat: 'ImMobile.Messenger.Chat:create',
 			createChannel: 'ImMobile.Messenger.Channel:create',
+			createCollab: 'ImMobile.Messenger.Collab:create',
 			refresh: 'ImMobile.Messenger:refresh',
 			init: 'ImMobile.Messenger.Init',
 			afterRefreshSuccess: 'ImMobile.Messenger:afterRefreshSuccess',
 			renderRecent: 'ImMobile.Messenger:renderRecent',
 			destroyDialog: 'ImMobile.Messenger:destroyDialog',
-			uploadFiles: 'ImMobile.Messenger:uploadFiles',
-			uploadFileError: 'ImMobile.Messenger:uploadFileError',
-			cancelFileUpload: 'ImMobile.Messenger:cancelFileUpload',
 			dialogAccessError: 'ImMobile.Messenger:dialogAccessError',
 			updatePlanLimitsData: 'ImMobile.Messenger:updatePlanLimitsData',
 		},
@@ -140,6 +138,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 				close: 'ImMobile.Messenger.Dialog:close',
 				delete: 'ImMobile.Messenger.Dialog:delete',
 				deleteComment: 'ImMobile.Messenger.Dialog:deleteComment',
+				resend: 'ImMobile.Messenger.Dialog:resend',
 			},
 
 			textField: {
@@ -160,6 +159,16 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			},
 			pinPanel: {
 				itemTap: 'itemTap',
+				buttonTap: 'buttonTap',
+			},
+			multiSelect: {
+				disable: 'disable',
+				enable: 'enable',
+				selected: 'selected',
+				unselected: 'unselected',
+				maxCountExceeded: 'maxCountExceeded',
+			},
+			actionPanel: {
 				buttonTap: 'buttonTap',
 			},
 		},
@@ -194,6 +203,15 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			broadCastEventWithTabChange: 'ImMobile.Navigation:broadCastEventWithChangeTab',
 			changeTab: 'ImMobile.Navigation:changeTab',
 			changeTabResult: 'ImMobile.Navigation:changeTabResult',
+		},
+		sidebar: {
+			destroy: 'sidebarDestroy',
+			closeWidget: 'sidebarWidgetClose',
+			changeMuteButton: 'changeMuteButton',
+			updateAllButton: 'updateAllButton',
+		},
+		calendar: {
+			addMeeting: 'Calendar.EventEditForm::onAfterEventSave',
 		},
 	});
 

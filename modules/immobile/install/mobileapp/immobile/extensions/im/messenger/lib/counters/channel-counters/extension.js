@@ -3,12 +3,19 @@
  */
 jn.define('im/messenger/lib/counters/channel-counters', (require, exports, module) => {
 	const { BaseCounters } = require('im/messenger/lib/counters/lib/base-counters');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('counters--chat');
 
 	/**
 	 * @class ChannelCounters
 	 */
 	class ChannelCounters extends BaseCounters
 	{
+		constructor()
+		{
+			super({ logger });
+		}
+
 		/**
 		 * @param {immobileTabChannelLoadResult} data
 		 */

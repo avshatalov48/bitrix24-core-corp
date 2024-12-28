@@ -54,6 +54,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		startTimer,
 		pauseTimer,
 		start,
+		take,
 		pause,
 		complete,
 		renew,
@@ -98,6 +99,8 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		pauseTimerFulfilled,
 		startPending,
 		startFulfilled,
+		takePending,
+		takeFulfilled,
 		pausePending,
 		pauseFulfilled,
 		completePending,
@@ -243,6 +246,15 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 					uploadedFiles,
 				});
 			},
+			commentWritten: (state, { payload }) => {
+				const { taskId } = payload;
+				const task = state.entities[taskId];
+
+				tasksAdapter.upsertOne(state, {
+					...task,
+					commentsCount: task.commentsCount + 1,
+				});
+			},
 			tasksRead: (state, { payload }) => {
 				const { taskIds } = payload;
 				const readTasks = (
@@ -293,6 +305,8 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 				.addCase(pauseTimer.fulfilled, pauseTimerFulfilled)
 				.addCase(start.pending, startPending)
 				.addCase(start.fulfilled, startFulfilled)
+				.addCase(take.pending, takePending)
+				.addCase(take.fulfilled, takeFulfilled)
 				.addCase(pause.pending, pausePending)
 				.addCase(pause.fulfilled, pauseFulfilled)
 				.addCase(complete.pending, completePending)
@@ -350,6 +364,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		unmarkAsRemoved,
 		updateChecklist,
 		updateUploadingFiles,
+		commentWritten,
 		tasksRead,
 		setTimeElapsed,
 		setAttachedFiles,
@@ -373,6 +388,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		unmarkAsRemoved,
 		updateChecklist,
 		updateUploadingFiles,
+		commentWritten,
 		tasksRead,
 		setTimeElapsed,
 		setAttachedFiles,
@@ -419,6 +435,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		startTimer,
 		pauseTimer,
 		start,
+		take,
 		pause,
 		complete,
 		renew,

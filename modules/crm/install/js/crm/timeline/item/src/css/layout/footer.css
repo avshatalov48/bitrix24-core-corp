@@ -59,14 +59,24 @@
 	min-width: 100px;
 }
 
+.crm-timeline__card-action-btn .ui-btn-icon-ai.ui-btn-split.ui-btn-disabled .ui-btn-main,
+.crm-timeline__card-action-btn .ui-btn-icon-ai.ui-btn-split.ui-btn-disabled .ui-btn-menu,
 .crm-timeline__card-action-btn .ui-btn-icon-ai.ui-btn.ui-btn-disabled {
 	background-color: transparent;
 	border-color: #c6cdd3;
 	color: #535b69;
 }
 
+
+.crm-timeline__card-action-btn .ui-btn-icon-ai.ui-btn-split.ui-btn-disabled .ui-btn-main::after,
+.crm-timeline__card-action-btn .ui-btn-icon-ai.ui-btn-split.ui-btn-disabled .ui-btn-menu::after,
 .crm-timeline__card-action-btn .ui-btn-icon-ai.ui-btn.ui-btn-disabled::after {
 	background-color: #535b69;
+}
+
+.crm-timeline__card-action-btn .ui-btn-icon-ai.ui-btn-split.ui-btn-disabled .ui-btn-menu::before {
+	border: 4px solid var(--ui-color-background-transparent);
+	border-top-color: #535b69;
 }
 
 .crm-timeline__card_add-button {

@@ -8,6 +8,7 @@ import { DateCode, DateFormatter } from 'im.v2.lib.date-formatter';
 import { CallManager } from 'im.v2.lib.call';
 import { Messenger } from 'im.public';
 import { ChatType } from 'im.v2.const';
+import { Analytics } from 'call.lib.analytics';
 
 import './css/call-message.css';
 
@@ -158,6 +159,10 @@ export const CallMessage = {
 
 				return;
 			}
+
+			this.componentParams.messageType === MESSAGE_TYPE.start
+				? Analytics.getInstance().onStartCallMessageClick({ dialog: this.dialog })
+				: Analytics.getInstance().onFinishCallMessageClick({ dialog: this.dialog });
 
 			this.isConference
 				? Messenger.openConference({ code: this.dialog.public.code })

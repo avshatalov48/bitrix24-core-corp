@@ -1,0 +1,2 @@
+<?php
+$MESS["SIGN_MY_DOCUMENT_COUNTER_ITEMS_TITLE_MSG_1"] = "Документы:";

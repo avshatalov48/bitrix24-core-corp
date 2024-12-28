@@ -304,11 +304,7 @@ class CAllCrmActivity
 
 		if(!$isRestoration && $regEvent)
 		{
-			foreach($arBindings as $arBinding)
-			{
-				self::RegisterAddEvent($arBinding['OWNER_TYPE_ID'], $arBinding['OWNER_ID'], $arFields, false);
-			}
-			unset($arBinding);
+			self::registerAddEvent($arBindings, $arFields, false);
 		}
 
 		// Synchronize user activity -->
@@ -2052,10 +2048,17 @@ class CAllCrmActivity
 			}
 			$fields['~LAST_UPDATED'] = $DB->CurrentTimeFunction();
 
-			if(!isset($fields['EDITOR_ID']))
+			/**
+			 * The EDITOR_ID update for mail items is excluded,
+			 * since the data of mail messages can be supplemented on the hits of different users.
+			 */
+			if (
+				!isset($fields['EDITOR_ID'])
+				&& ($fields['PROVIDER_ID'] ?? null) !== Provider\Email::getId()
+			)
 			{
-				$userID = isset($fields['AUTHOR_ID']) ? $fields['AUTHOR_ID'] : 0;
-				if($userID <= 0)
+				$userID = $fields['AUTHOR_ID'] ?? 0;
+				if ($userID <= 0)
 				{
 					$userID = $currentUserID;
 				}
@@ -5514,16 +5517,45 @@ class CAllCrmActivity
 		return $changed;
 	}
 
-	private static function RegisterAddEvent($ownerTypeID, $ownerID, $arRow, $checkPerms)
+	private static function registerAddEvent(array $bindings, array $fields, bool $checkPerms): void
 	{
-		$typeID = self::GetActivityType($arRow);
-		$providerID = $arRow['PROVIDER_ID'] ?? '';
+		$eventId = self::createAddEvent($bindings[0]['OWNER_TYPE_ID'], $bindings[0]['OWNER_ID'], $fields, false);
+
+		if (empty($eventId))
+		{
+			return;
+		}
+
+		unset($bindings[0]);
+
+		if (empty($bindings))
+		{
+			return;
+		}
+
+		$CCrmEvent = new CCrmEvent();
+		$arEvents = [];
+		foreach ($bindings as $key => $arBinding)
+		{
+			$arEvents[$key]['ENTITY_TYPE'] = CCrmOwnerType::ResolveName($arBinding['OWNER_TYPE_ID']);
+			$arEvents[$key]['ENTITY_ID'] = $arBinding['OWNER_ID'];
+			$arEvents[$key]['ENTITY_FIELD'] = 'ACTIVITIES';
+			$arEvents[$key]['USER_ID']  = (int)($fields['EDITOR_ID'] ?? CCrmSecurityHelper::GetCurrentUserID());
+		}
+
+		$CCrmEvent->AddRelation($eventId, $arEvents, $checkPerms);
+	}
+
+	private static function createAddEvent(int $ownerTypeId, int $ownerId, array $row, bool $checkPerms): ?int
+	{
+		$typeID = self::GetActivityType($row);
+		$providerID = $row['PROVIDER_ID'] ?? '';
 		$typeName = self::ResolveEventTypeName($typeID, self::ACTIVITY_DEFAULT, $providerID);
 
-		$subject = $arRow['SUBJECT'] ?? '';
-		$location = $arRow['LOCATION'] ?? '';
-		$description = $arRow['DESCRIPTION'] ?? '';
-		$descriptionType = isset($arRow['DESCRIPTION_TYPE']) ? (int)$arRow['DESCRIPTION_TYPE'] : CCrmContentType::PlainText;
+		$subject = $row['SUBJECT'] ?? '';
+		$location = $row['LOCATION'] ?? '';
+		$description = $row['DESCRIPTION'] ?? '';
+		$descriptionType = isset($row['DESCRIPTION_TYPE']) ? (int)$row['DESCRIPTION_TYPE'] : CCrmContentType::PlainText;
 
 		$eventText = '';
 		if($subject !== '' && $providerID !== ToDo::getId())
@@ -5552,7 +5584,7 @@ class CAllCrmActivity
 
 		if ($providerID === ToDo::getId())
 		{
-			$subject = ToDo::getActivityTitle($arRow);
+			$subject = ToDo::getActivityTitle($row);
 			if (empty($eventText))
 			{
 				$eventText = $subject;
@@ -5563,16 +5595,14 @@ class CAllCrmActivity
 			}
 		}
 
-		$arEvents = [
-			[
-				'EVENT_NAME' => Loc::getMessage("CRM_ACTIVITY_{$typeName}_ADD"),
-				'EVENT_TEXT_1' => $eventText,
-				'EVENT_TEXT_2' => '',
-				'USER_ID' => (int)($arRow['EDITOR_ID'] ?? 0),
-			],
+		$arEvent = [
+			'EVENT_NAME' => Loc::getMessage("CRM_ACTIVITY_{$typeName}_ADD"),
+			'EVENT_TEXT_1' => $eventText,
+			'EVENT_TEXT_2' => '',
+			'USER_ID' => (int)($row['EDITOR_ID'] ?? 0),
 		];
 
-		return self::RegisterEvents($ownerTypeID, $ownerID, $arEvents, $checkPerms);
+		return self::createEvent($ownerTypeId, $ownerId, $arEvent, $checkPerms);
 	}
 
 	private static function RegisterUpdateEvent($ownerTypeID, $ownerID, $arNewRow, $arOldRow, $checkPerms)
@@ -5800,24 +5830,37 @@ class CAllCrmActivity
 	}
 	protected static function RegisterEvents($ownerTypeID, $ownerID, $arEvents, $checkPerms)
 	{
-		$CCrmEvent = new CCrmEvent();
 		foreach($arEvents as $arEvent)
 		{
-			$arEvent['EVENT_TYPE'] = 1;
-			$arEvent['ENTITY_TYPE'] = CCrmOwnerType::ResolveName($ownerTypeID);
-			$arEvent['ENTITY_ID'] = $ownerID;
-			$arEvent['ENTITY_FIELD'] = 'ACTIVITIES';
-
-			if(!isset($arEvent['USER_ID']) || $arEvent['USER_ID'] <= 0)
-			{
-				$arEvent['USER_ID']  = CCrmSecurityHelper::GetCurrentUserID();
-			}
-
-			$CCrmEvent->Add($arEvent, $checkPerms);
+			self::createEvent($ownerTypeID, $ownerID, $arEvent, $checkPerms);
 		}
 
 		return true;
 	}
+
+	private static function createEvent(int $ownerTypeId, int $ownerId, array $event, bool $checkPerms): ?int
+	{
+		$CCrmEvent = new CCrmEvent();
+
+		$event['EVENT_TYPE'] = 1;
+		$event['ENTITY_TYPE'] = CCrmOwnerType::ResolveName($ownerTypeId);
+		$event['ENTITY_ID'] = $ownerId;
+		$event['ENTITY_FIELD'] = 'ACTIVITIES';
+
+		if(!isset($event['USER_ID']) || $event['USER_ID'] <= 0)
+		{
+			$event['USER_ID']  = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId();
+		}
+
+		$result = $CCrmEvent->Add($event, $checkPerms);
+		if (!$result)
+		{
+			return null;
+		}
+
+		return $result;
+	}
+
 	protected static function GetUserPermissions()
 	{
 		if(self::$USER_PERMISSIONS === null)

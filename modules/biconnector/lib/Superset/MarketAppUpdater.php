@@ -3,7 +3,6 @@
 namespace Bitrix\BIConnector\Superset;
 
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
-use Bitrix\BIConnector\Superset\Logger\MarketDashboardLogger;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;

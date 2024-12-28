@@ -5,8 +5,10 @@ namespace Bitrix\Tasks\Grid\Task;
 use Bitrix\Main\Grid\Column;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Tasks\Flow\FlowFeature;
 use CCrmOwnerType;
+use Bitrix\Tasks\Integration\Extranet\User;
 
 /**
  * Class Grid
@@ -53,6 +55,8 @@ class Grid extends \Bitrix\Tasks\Grid\Grid
 
 	private function fillWithDefaultHeaders(): static
 	{
+		$isExtranet = User::isExtranet((int)CurrentUser::get()->getId());
+		$isCollaber = User::isCollaber((int)CurrentUser::get()->getId());
 		$this->headers = [];
 
 		$this->headers['ID'] = [
@@ -131,16 +135,18 @@ class Grid extends \Bitrix\Tasks\Grid\Grid
 			'default' => false,
 		];
 
+		$groupName = $isCollaber ? Loc::getMessage('TASKS_GRID_TASK_GRID_HEADER_COLLAB_NAME') : Loc::getMessage('TASKS_GRID_TASK_GRID_HEADER_GROUP_NAME');
+
 		$this->headers['GROUP_NAME'] = [
 			'id' => 'GROUP_NAME',
-			'name' => Loc::getMessage('TASKS_GRID_TASK_GRID_HEADER_GROUP_NAME'),
+			'name' => $groupName,
 			'sort' => false,
 			'first_order' => 'desc',
 			'editable' => false,
 			'default' => true,
 		];
 
-		if (FlowFeature::isOn())
+		if (FlowFeature::isOn() && !$isExtranet)
 		{
 			$this->headers['FLOW'] = [
 				'id' => 'FLOW',

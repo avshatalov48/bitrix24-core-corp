@@ -193,7 +193,7 @@ class CCrmBizProcHelper
 			'DOCUMENT_TYPE' => array('crm', $docName, $ownerTypeName),
 			'AUTO_EXECUTE' => $eventType,
 			'ACTIVE' => 'Y',
-			'!PARAMETERS' => null
+			'!PARAMETERS' => null,
 		);
 		return (\CBPWorkflowTemplateLoader::getList(array(), $filter, array()) > 0);
 	}
@@ -315,7 +315,12 @@ class CCrmBizProcHelper
 
 	public static function resolveEntityId(array $documentId): array
 	{
-		[$entityTypeName, $entityId] = mb_split('_(?=[^_]*$)', $documentId[2]);
+		return self::resolveEntityIdByDocumentId((string)$documentId[2]);
+	}
+
+	public static function resolveEntityIdByDocumentId(string $documentId): array
+	{
+		[$entityTypeName, $entityId] = mb_split('_(?=[^_]*$)', $documentId);
 
 		return [\CCrmOwnerType::ResolveID($entityTypeName), (int)$entityId];
 	}
@@ -380,6 +385,53 @@ class CCrmBizProcHelper
 		}
 
 		return $userOption;
+	}
+
+	// temporary method, delete with option
+	public static function needShowBPTab(): bool
+	{
+		$hideTab = (bool)\Bitrix\Main\Config\Option::get('crm', 'need_hide_bp_tab_in_entity_details', 0);
+
+		return !$hideTab;
+	}
+
+	public static function getBpStarterConfig(int $entityTypeId, int $entityId = null): array
+	{
+		if (!\Bitrix\Main\Loader::includeModule('bizproc') || !CBPRuntime::isFeatureEnabled())
+		{
+			return [];
+		}
+
+		$documentType = self::ResolveDocumentType($entityTypeId);
+		if (!$documentType)
+		{
+			return [];
+		}
+
+		$documentId = $entityId > 0 ? self::ResolveDocumentId($entityTypeId, $entityId) : null;
+
+		if (class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
+		{
+			$starterConfig = ['signedDocumentType' => CBPDocument::signDocumentType($documentType)];
+			if ($documentId)
+			{
+				$starterConfig['signedDocumentId'] = CBPDocument::signDocumentType($documentId);
+			}
+
+			return $starterConfig;
+		}
+
+		$starterConfig = [
+			'moduleId' => $documentType[0],
+			'entity' => $documentType[1],
+			'documentType' => $documentType[2],
+		];
+		if ($documentId)
+		{
+			$starterConfig['documentId'] = $documentId[2];
+		}
+
+		return $starterConfig;
 	}
 }
 

@@ -14,6 +14,14 @@ jn.define('layout/ui/fields/number', (require, exports, module) => {
 	};
 
 	/**
+	 * @typedef {Object} NumberFieldProps
+	 * @property {boolean} [shouldShowToolbar=true]
+	 * @property {boolean} [hideZero=true]
+	 * @property {'.' | ','} [decimalSeparator='.']
+	 * @property {boolean} [useGroupSeparator=false]
+	 * @property {number} [groupSize=0]
+	 * @property {string} [groupSeparator=' ']
+	 *
 	 * @class NumberField
 	 */
 	class NumberField extends StringFieldClass
@@ -178,12 +186,27 @@ jn.define('layout/ui/fields/number', (require, exports, module) => {
 		}
 	}
 
+	NumberField.defaultProps = {
+		shouldShowToolbar: true,
+		hideZero: true,
+		useGroupSeparator: false,
+	};
+
 	NumberField.propTypes = {
 		value: PropTypes.number,
+		shouldShowToolbar: PropTypes.bool,
+		hideZero: PropTypes.bool,
+		decimalSeparator: PropTypes.oneOf(['.', ',']),
+		useGroupSeparator: PropTypes.bool,
+		groupSize: PropTypes.number,
+		groupSeparator: PropTypes.string,
 	};
 
 	module.exports = {
 		NumberType: 'number',
+		/**
+		 * @param {NumberFieldProps} props
+		 */
 		NumberField: (props) => new NumberField(props),
 		NumberPrecision: Types,
 	};

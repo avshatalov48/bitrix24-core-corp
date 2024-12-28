@@ -41,20 +41,20 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 		show(deadline)
 		{
 			return new Promise((resolve, reject) => {
-				this.getItems(deadline, resolve, reject).then((items) => {
-					this.picker = new ContextMenu({
-						params: {
-							title: Loc.getMessage('TASKSMOBILE_DEADLINE_PICKER_TITLE'),
-							isRawIcon: true,
-							showCancelButton: true,
-						},
-						onCancel: () => {
-							reject();
-						},
-						actions: items,
-					});
-					this.picker.show(this.parentWidget);
-				}).catch(console.error);
+				this.getItems(deadline, resolve, reject)
+					.then((items) => {
+						new ContextMenu({
+							params: {
+								title: Loc.getMessage('TASKSMOBILE_DEADLINE_PICKER_TITLE'),
+								isRawIcon: true,
+								showCancelButton: true,
+							},
+							actions: items,
+							onCancel: () => reject(),
+						}).show(this.parentWidget);
+					})
+					.catch(console.error)
+				;
 			});
 		}
 
@@ -200,20 +200,18 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 
 			// today
 			const { hours, minutes } = calendarSettings.workTime[0].end;
-			const serverToday = this.toServerDate(new Date(now), calendarSettings);
-			serverToday.setHours(hours, minutes);
-			const clientToday = this.toClientDate(serverToday, calendarSettings);
-			if (now.getTime() < clientToday.getTime())
+			const today = new Date(new Date(now).setHours(hours, minutes, 0, 0));
+			if (now.getTime() < today.getTime())
 			{
-				values.set(PickerItemType.TODAY, clientToday.getTime());
+				values.set(PickerItemType.TODAY, today.getTime());
 			}
 
 			// tomorrow
-			const tomorrow = new Date(clientToday);
+			const tomorrow = new Date(today);
 			tomorrow.setDate(tomorrow.getDate() + 1);
 			values.set(PickerItemType.TOMORROW, tomorrow.getTime());
 
-			const thisWeekLastDay = this.toClientDate(this.getLastDayOfWeek(serverToday), calendarSettings);
+			const thisWeekLastDay = this.getLastDayOfWeek(today);
 			const nextWeekFirstDay = new Date(thisWeekLastDay);
 			nextWeekFirstDay.setDate(nextWeekFirstDay.getDate() + 1);
 			const nextWeekLastDay = new Date(thisWeekLastDay);
@@ -223,7 +221,7 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 			const thisWeekLastWorkDay = this.getClosestWorkDayBackward(
 				calendarSettings,
 				thisWeekLastDay,
-				clientToday,
+				today,
 			);
 			if ([...values.values()].every((value) => value < thisWeekLastWorkDay.getTime()))
 			{
@@ -294,14 +292,14 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 		 */
 		getClosestWorkDayBackward(calendarSettings, clientStartDate, clientStopDate = new Date())
 		{
-			const serverDate = this.toServerDate(clientStartDate, calendarSettings);
-			const serverStopDate = this.toServerDate(clientStopDate, calendarSettings);
+			const startDate = new Date(clientStartDate);
+			const stopDate = new Date(clientStopDate);
 
-			while (serverDate.getTime() > serverStopDate.getTime())
+			while (startDate.getTime() > stopDate.getTime())
 			{
-				if (calendarSettings.isWeekendInLocal(serverDate) || calendarSettings.isHolidayInLocal(serverDate))
+				if (calendarSettings.isWeekendInLocal(startDate) || calendarSettings.isHolidayInLocal(startDate))
 				{
-					serverDate.setDate(serverDate.getDate() - 1);
+					startDate.setDate(startDate.getDate() - 1);
 				}
 				else
 				{
@@ -309,7 +307,7 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 				}
 			}
 
-			return this.toClientDate(serverDate, calendarSettings);
+			return new Date(startDate);
 		}
 
 		/**
@@ -325,14 +323,14 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 			clientStopDate = new Date(Date.now() + 31 * 86_400_000),
 		)
 		{
-			const serverDate = this.toServerDate(clientStartDate, calendarSettings);
-			const serverStopDate = this.toServerDate(clientStopDate, calendarSettings);
+			const startDate = new Date(clientStartDate);
+			const stopDate = new Date(clientStopDate);
 
-			while (serverDate.getTime() <= serverStopDate.getTime())
+			while (startDate.getTime() <= stopDate.getTime())
 			{
-				if (calendarSettings.isWeekendInLocal(serverDate) || calendarSettings.isHolidayInLocal(serverDate))
+				if (calendarSettings.isWeekendInLocal(startDate) || calendarSettings.isHolidayInLocal(startDate))
 				{
-					serverDate.setDate(serverDate.getDate() + 1);
+					startDate.setDate(startDate.getDate() + 1);
 				}
 				else
 				{
@@ -340,12 +338,12 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 				}
 			}
 
-			if (serverDate.getTime() > serverStopDate.getTime())
+			if (startDate.getTime() > stopDate.getTime())
 			{
 				return null;
 			}
 
-			return this.toClientDate(serverDate, calendarSettings);
+			return new Date(startDate);
 		}
 
 		/**
@@ -419,36 +417,6 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 					],
 				);
 			});
-		}
-
-		/**
-		 * @private
-		 * @param {Date|number} clientDate
-		 * @param {Calendar} calendarSettings
-		 * @returns {Date}
-		 */
-		toServerDate(clientDate, calendarSettings)
-		{
-			const { serverOffset, clientOffset } = calendarSettings;
-			const serverDate = new Date(clientDate);
-			serverDate.setSeconds(serverOffset - clientOffset, 0);
-
-			return serverDate;
-		}
-
-		/**
-		 * @private
-		 * @param {Date|number} serverDate
-		 * @param {Calendar} calendarSettings
-		 * @returns {Date}
-		 */
-		toClientDate(serverDate, calendarSettings)
-		{
-			const { serverOffset, clientOffset } = calendarSettings;
-			const clientDate = new Date(serverDate);
-			clientDate.setSeconds(clientOffset - serverOffset, 0);
-
-			return clientDate;
 		}
 	}
 

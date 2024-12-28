@@ -13,6 +13,7 @@ return [
 		'im:messenger/lib/helper',
 		'im:messenger/lib/params',
 		'im:messenger/lib/counters',
+		'im:messenger/lib/parser',
 		'im:messenger/lib/notifier',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/uuid-manager',
@@ -28,5 +29,7 @@ return [
 		'./src/pull-handler',
 		'./src/dialog',
 		'./src/message',
+		'./src/application',
+		'./src/counter',
 	],
 ];

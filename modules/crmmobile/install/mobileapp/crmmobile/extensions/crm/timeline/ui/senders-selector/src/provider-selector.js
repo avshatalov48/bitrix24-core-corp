@@ -120,6 +120,7 @@ jn.define('crm/timeline/ui/senders-selector/provider-selector', (require, export
 				title: Loc.getMessage('M_CRM_TIMELINE_SENDERS_SELECTOR_TO_LOGIN_ON_DESKTOP'),
 				redirectUrl: this.contactCenterUrl,
 				layout: this.menu.layoutWidget,
+				analyticsSection: 'crm',
 			});
 
 			return Promise.resolve({ closeMenu: false });

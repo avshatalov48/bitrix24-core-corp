@@ -23,8 +23,7 @@ final class OrganizationCriterion extends CriterionRegistrar\Decorator
 	{
 		$fields = $data->getCurrentFields();
 
-		$companyTitle = $fields[$this->companyTitleFieldName] ? (string)$fields[$this->companyTitleFieldName] : '';
-
+		$companyTitle = (string)($fields[$this->companyTitleFieldName] ?? '');
 		if ($companyTitle !== '')
 		{
 			DuplicateOrganizationCriterion::register($data->getEntityTypeId(), $data->getEntityId(), $companyTitle);

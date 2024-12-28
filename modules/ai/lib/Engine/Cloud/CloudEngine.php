@@ -33,6 +33,7 @@ abstract class CloudEngine extends Engine\Engine implements IEngine
 	{
 		$data = [
 			'moduleId' => $this->getContext()->getModuleId(),
+			'contextId' => $this->getContext()->getContextId(),
 			'userId' => $this->getContext()->getUserId(),
 		];
 		try

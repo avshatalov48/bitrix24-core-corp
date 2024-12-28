@@ -24,6 +24,7 @@ jn.define('tokens/src/color', (require, exports, module) => {
 	Color.accentExtraBrown = new Color('accentExtraBrown', AppTheme.realColors.accentExtraBrown);
 	Color.accentExtraDarkblue = new Color('accentExtraDarkblue', AppTheme.realColors.accentExtraDarkblue);
 	Color.accentExtraGrass = new Color('accentExtraGrass', AppTheme.realColors.accentExtraGrass);
+	Color.accentExtraOrange = new Color('accentExtraOrange', AppTheme.realColors.accentExtraOrange);
 	Color.accentExtraPink = new Color('accentExtraPink', AppTheme.realColors.accentExtraPink);
 	Color.accentMainAlert = new Color('accentMainAlert', AppTheme.realColors.accentMainAlert);
 	Color.accentMainLink = new Color('accentMainLink', AppTheme.realColors.accentMainLink);

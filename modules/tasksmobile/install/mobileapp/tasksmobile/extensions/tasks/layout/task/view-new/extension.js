@@ -9,7 +9,15 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 	const { Icon } = require('assets/icons');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 	const { getDiskFolderId } = require('tasks/disk');
-	const { PullCommand, TaskMark, TaskPriority, TaskField: Field, TaskActionAccess, ViewMode, WorkModeByViewMode } = require('tasks/enum');
+	const {
+		PullCommand,
+		TaskMark,
+		TaskPriority,
+		TaskField: Field,
+		TaskActionAccess,
+		ViewMode,
+		WorkModeByViewMode,
+	} = require('tasks/enum');
 	const { ParentTask } = require('tasks/layout/task/parent-task');
 	const { LikesPanel } = require('tasks/layout/task/view-new/ui/likes-panel');
 	const { ActionButtons } = require('tasks/layout/task/view-new/ui/action-buttons');
@@ -56,7 +64,9 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 		setAttachedFiles,
 		updateDeadline,
 	} = require('tasks/statemanager/redux/slices/tasks');
-	const { groupsUpserted, groupsAddedFromEntitySelector, selectGroupById } = require('tasks/statemanager/redux/slices/groups');
+	const { groupsUpserted, groupsAddedFromEntitySelector, selectGroupById } = require(
+		'tasks/statemanager/redux/slices/groups',
+	);
 	const { fetch, setFromServer } = require('tasks/statemanager/redux/slices/tasks-results');
 	const { observeCreationError } = require('tasks/statemanager/redux/slices/tasks/observers/creation-error-observer');
 	const { AnalyticsEvent } = require('analytics');
@@ -113,14 +123,13 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				this.init(props);
 			}
 
-			const analyticsLabel = Array.isArray(props.analyticsLabel) ? props.analyticsLabel : [props.analyticsLabel];
-			this.analyticsLabel = analyticsLabel.map((label) => ({
+			this.analyticsLabel = {
 				tool: 'tasks',
 				category: 'task_operations',
-				event: 'task_view',
 				type: 'task',
-				...label,
-			}));
+				event: 'task_view',
+				...this.props.analyticsLabel,
+			};
 
 			this.bindScrollViewRef = this.bindScrollViewRef.bind(this);
 			this.bindFormRef = this.bindFormRef.bind(this);
@@ -210,7 +219,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				),
 			);
 
-			this.commentsOpener = new CommentsOpener();
+			this.commentsOpener = new CommentsOpener(this.analyticsLabel);
 
 			if (this.#task)
 			{
@@ -255,14 +264,15 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 			if (!selectIsCreating(this.#task))
 			{
-				Promise.allSettled([
-					this.#getTaskData({
-						withResultData: true,
-						withChecklistData: true,
-					}),
-					this.#getDiskFolderId(),
-				])
-					.then((results) => this.#onDataFetchSuccess(results))
+				Promise
+					.allSettled([
+						this.#getTaskData({
+							withResultData: true,
+							withChecklistData: true,
+						}),
+						this.#getDiskFolderId(),
+					])
+					.then((results) => setTimeout(() => this.#onDataFetchSuccess(results), 100))
 					.catch(this.#onDataFetchFailed)
 				;
 			}
@@ -287,13 +297,14 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			};
 			this.layout.setTitle({ useProgress: true }, true);
 
-			Promise.allSettled([
-				this.#getTaskData({
-					withResultData: true,
-					withChecklistData: true,
-				}),
-				this.#getDiskFolderId(),
-			])
+			Promise
+				.allSettled([
+					this.#getTaskData({
+						withResultData: true,
+						withChecklistData: true,
+					}),
+					this.#getDiskFolderId(),
+				])
 				.then((results) => this.#onDataFetchSuccess(results, this.props.shouldOpenComments))
 				.catch(this.#onDataFetchFailed)
 			;
@@ -303,9 +314,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 		{
 			console.error(error);
 
-			this.analyticsLabel.forEach((label) => {
-				new AnalyticsEvent(label).setStatus('error').send();
-			});
+			new AnalyticsEvent(this.analyticsLabel).setStatus('error').send();
 		}
 
 		#onDataFetchSuccess(results, shouldOpenComments = false)
@@ -314,18 +323,18 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 			if (isForbidden)
 			{
-				this.analyticsLabel.forEach((label) => {
-					new AnalyticsEvent(label).setStatus('error').send();
-				});
+				new AnalyticsEvent(this.analyticsLabel).setStatus('error').send();
 				this.#setForbiddenState();
 			}
 			else
 			{
-				this.analyticsLabel.forEach((label) => {
-					new AnalyticsEvent(label).setStatus('success').send();
-				});
+				new AnalyticsEvent(this.analyticsLabel).setStatus('success').send();
 				this.layout.setTitle({ useProgress: false }, true);
-				this.setState({ loading: false }, () => shouldOpenComments && this.openComments());
+
+				if (this.state.loading || this.state.checklistLoading)
+				{
+					this.setState({ loading: false, checklistLoading: false }, () => shouldOpenComments && this.openComments());
+				}
 			}
 		}
 
@@ -380,7 +389,6 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						if (withChecklistData)
 						{
 							this.checklistController.setChecklistTree(response.data.checklist.tree);
-							this.setState({ checklistLoading: false });
 						}
 						this.checklistController.setGroupId(response.data.groupId);
 
@@ -666,11 +674,9 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			switch (data.fieldId)
 			{
 				case Field.TITLE:
-				case Field.CHECKLIST:
-					break;
-				case Field.PROJECT:
-					break;
 				case Field.DEADLINE:
+				case Field.PROJECT:
+				case Field.CHECKLIST:
 					break;
 
 				case Field.FILES:
@@ -734,6 +740,25 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 							}),
 						);
 					}
+
+					break;
+				}
+
+				case Field.USER_FIELDS:
+				{
+					this.updateTask(
+						data.fieldId,
+						Object.fromEntries(
+							[...data.value].map(([fieldName, value]) => (
+								[fieldName, { value, type: this.#task[fieldName].type }]
+							)),
+						),
+						Object.fromEntries(
+							[...data.value].map(([fieldName, value]) => (
+								[fieldName, { ...this.#task[fieldName], value }]
+							)),
+						),
+					);
 
 					break;
 				}
@@ -899,7 +924,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				return;
 			}
 
-			if (data.value === '')
+			if (data.value?.trim() === '')
 			{
 				void this.formRef?.resetField(data.fieldId);
 
@@ -1177,7 +1202,8 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 					.then((response) => {
 						this.#onAfterFieldUpdate(field, value, response);
 					})
-					.catch(console.error);
+					.catch(console.error)
+				;
 			}
 		}
 
@@ -1256,6 +1282,9 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				case Field.PROJECT:
 					return { groupId: value || 0 };
 
+				case Field.FLOW:
+					return { flowId: value || 0 };
+
 				case Field.PRIORITY:
 					return { priority: value };
 
@@ -1321,6 +1350,9 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				case Field.IS_RESULT_REQUIRED:
 					return { isResultRequired: value };
 
+				case Field.USER_FIELDS:
+					return { ...extendedValue };
+
 				default:
 					return {};
 			}
@@ -1338,6 +1370,9 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 				case Field.PROJECT:
 					return { GROUP_ID: (value || 0) };
+
+				case Field.FLOW:
+					return { FLOW_ID: (value || 0) };
 
 				case Field.PRIORITY:
 					return { PRIORITY: value };
@@ -1399,6 +1434,9 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 				case Field.IS_RESULT_REQUIRED:
 					return { SE_PARAMETER: [{ CODE: 3, VALUE: (value ? 'Y' : 'N') }] };
+
+				case Field.USER_FIELDS:
+					return { USER_FIELDS: value };
 
 				default:
 					return {};

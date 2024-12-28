@@ -7,6 +7,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Sign\Item;
 use Bitrix\Sign\Repository\MemberRepository;
 use Bitrix\Sign\Service\Container;
+use Bitrix\Sign\Type\Document\InitiatedByType;
 use Bitrix\Sign\Type\DocumentStatus;
 use Bitrix\Sign\Type\Member\Role;
 use Bitrix\Sign\Type\MemberStatus;
@@ -87,6 +88,11 @@ class Stage
 			&& !MemberStatus::isFinishForSigning($this->member->status)
 		)
 		{
+			if ($this->isByEmployee())
+			{
+				return $this->getStoppedLabelInfo();
+			}
+
 			return $this->hasSignedSigner() ? $this->getAssigneeDoneInfo() : $this->getStoppedLabelInfo();
 		}
 
@@ -248,5 +254,10 @@ class Stage
 		return !(self::$documentHasAllSignersStopped[$documentId] ??= $this->memberRepository
 			->isSignerExistsByDocumentIdNotInStatus($documentId, [MemberStatus::STOPPED])
 		);
+	}
+
+	private function isByEmployee(): bool
+	{
+		return $this->document->initiatedByType === InitiatedByType::EMPLOYEE;
 	}
 }

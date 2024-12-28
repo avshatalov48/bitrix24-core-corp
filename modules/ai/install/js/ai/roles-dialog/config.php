@@ -14,11 +14,11 @@ return [
 		'ui.vue3.components.hint',
 		'ui.label',
 		'ui.icon-set.animated',
+		'main.core.events',
+		'ui.vue3.pinia',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.api.core',
 		'main.core',
-		'main.core.events',
-		'ui.vue3.pinia',
 	],
 	'skip_core' => false,
 ];

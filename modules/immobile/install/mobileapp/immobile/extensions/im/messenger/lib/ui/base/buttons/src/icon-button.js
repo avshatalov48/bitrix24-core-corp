@@ -41,8 +41,9 @@ jn.define('im/messenger/lib/ui/base/buttons/icon-button', (require, exports, mod
 			const textStyle = {
 				alignSelf: 'center',
 				color: Theme.colors.accentMainPrimaryalt,
-				fontSize: 12,
-				fontWeight: 500,
+				fontSize: 13,
+				fontWeight: '400',
+				marginTop: 4,
 				marginBottom: 12,
 				...this.props.style?.text,
 			};
@@ -55,13 +56,14 @@ jn.define('im/messenger/lib/ui/base/buttons/icon-button', (require, exports, mod
 						marginHorizontal: 2,
 						width: this.props.style?.width || null,
 						backgroundColor: backgroundColorChange,
-						maxWidth: '55%',
+						maxWidth: 86,
 						borderRadius: 16,
 						flexDirection: 'column',
 						justifyContent: 'center',
 						flex: 1,
 						borderWidth: this.props.style?.border?.width || 1,
-						borderColor: borderColor || Theme.colors.accentSoftBlue2,
+						borderColor: borderColor || Theme.colors.bgSeparatorPrimary,
+						paddingHorizontal: 10,
 					},
 					clickable: !this.props.disableClick,
 					onClick: () => this.onClick(),
@@ -79,6 +81,8 @@ jn.define('im/messenger/lib/ui/base/buttons/icon-button', (require, exports, mod
 					{
 						text: this.props.text || '',
 						style: textStyle,
+						numberOfLines: 1,
+						ellipsize: 'end',
 					},
 				),
 			);

@@ -85,6 +85,7 @@ jn.define('im/messenger/lib/ui/base/avatar/avatar-base', (require, exports, modu
 						style: style.icon,
 						uri,
 						svg: this.props.svg,
+						resizeMode: 'cover',
 						onFailure: () => {
 							this.setState({ showImageAvatar: false });
 						},

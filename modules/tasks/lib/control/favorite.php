@@ -22,6 +22,22 @@ class Favorite
 				'TASK_ID' => $taskId,
 				'USER_ID' => $this->userId
 			],
+			['CHECK_EXISTENCE' => false],
+		);
+	}
+
+	/**
+	 * @param int $taskId
+	 * @return void
+	 * @throws \Exception
+	 */
+	public function delete(int $taskId): void
+	{
+		FavoriteTable::delete(
+			[
+				'TASK_ID' => $taskId,
+				'USER_ID' => $this->userId
+			],
 			['CHECK_EXISTENCE' => false]
 		);
 	}

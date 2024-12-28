@@ -6,6 +6,7 @@
 (function ()
 {
 	const { CallsCardController } = jn.require('call/calls-card');
+	const { CallController } = jn.require('call/calls/controller');
 
 	const Sound = {
 		incoming: "incoming",

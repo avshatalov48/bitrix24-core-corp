@@ -32,4 +32,8 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 		loggerConfig: <?=\Bitrix\Im\Common::objectEncode($arResult['LOGGER_CONFIG'], true)?>,
 		formatRecordDate: '<?=\Bitrix\Main\Context::getCurrent()->getCulture()->getShortDateFormat()?>',
 	});
+
+	window.addEventListener('load', () => {
+		BXDesktopWindow?.ExecuteCommand('show')
+	});
 </script>

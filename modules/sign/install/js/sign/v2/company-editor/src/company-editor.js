@@ -1,9 +1,9 @@
 import { ajax, Dom, Runtime, Tag, Type } from 'main.core';
-import { Loader } from 'main.loader';
 import { EventEmitter } from 'main.core.events';
+import { Loader } from 'main.loader';
 import { Layout } from 'ui.sidepanel.layout';
-import { CompanyEditorMode } from './types';
 import type { CompanyEditorOptions } from './types';
+import { CompanyEditorMode } from './types';
 
 const crmEditorSettings = Object.freeze({
 	params: {
@@ -58,11 +58,9 @@ export class CompanyEditor
 			width: 800,
 			cacheable: false,
 			contentCallback: () => {
-				return top.BX.Runtime.loadExtension('sign.v2.company-editor').then((exports) => {
-					return (new exports.CompanyEditor(options))
-						.getLayout()
-					;
-				});
+				return top.BX.Runtime.loadExtension('sign.v2.company-editor')
+					.then(({ CompanyEditor }) => new CompanyEditor(options).getLayout())
+				;
 			},
 			events: {
 				onClose: sliderOptions?.onCloseHandler ?? (() => {}),
@@ -141,7 +139,7 @@ export class CompanyEditor
 		return container;
 	}
 
-	getLayout(): Layout
+	getLayout(): Promise<HTMLElement>
 	{
 		// eslint-disable-next-line unicorn/no-this-assignment
 		const companyEditor = this;
@@ -182,7 +180,7 @@ export class CompanyEditor
 				EventEmitter.subscribeOnce(event, () => resolve(null));
 			});
 		});
-		BX.Crm.EntityEditor.defaultInstance.save();
+		BX.Crm.EntityEditor.getDefault().save();
 		const entityData = await promise;
 		entityEditorEvents.forEach((event) => EventEmitter.unsubscribeAll(event));
 		if (entityData)
@@ -202,7 +200,11 @@ export class CompanyEditor
 
 	#loadedHandler(): void
 	{
-		const crmEditor = BX.Crm.EntityEditor.defaultInstance;
+		const crmEditor = BX.Crm.EntityEditor.getDefault();
+		if (Type.isNil(crmEditor))
+		{
+			return;
+		}
 		const companyField = crmEditor.getControlById('MYCOMPANY_ID');
 		// eslint-disable-next-line no-underscore-dangle
 		const [searchBox] = companyField._companySearchBoxes;

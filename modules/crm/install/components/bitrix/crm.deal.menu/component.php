@@ -19,13 +19,15 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
-\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
-
 use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
 use Bitrix\Crm\Integration\Sender\Rc;
 use Bitrix\Crm\Recurring;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
+
+Container::getInstance()->getLocalization()->loadMessages();
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $CrmPerms = CCrmPerms::GetCurrentUserPermissions();
@@ -834,6 +836,13 @@ if($arParams['TYPE'] === 'list')
 	{
 		//Force start new bar after add deal button or from first button
 		array_splice($arResult['BUTTONS'], 1, 0, [['NEWBAR' => true]]);
+	}
+
+	$permissionItem = PermissionItem::createByEntity(CCrmOwnerType::Deal, $arResult['CATEGORY_ID']);
+	if ($permissionItem->canShow())
+	{
+		$arResult['BUTTONS'][] = $permissionItem->interfaceToolbarDelimiter();
+		$arResult['BUTTONS'][] = $permissionItem->toInterfaceToolbarButton();
 	}
 
 	$this->IncludeComponentTemplate();

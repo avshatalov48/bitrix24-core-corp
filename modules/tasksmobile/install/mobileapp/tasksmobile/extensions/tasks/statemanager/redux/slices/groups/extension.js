@@ -15,18 +15,20 @@ jn.define('tasks/statemanager/redux/slices/groups', (require, exports, module) =
 		selectAll: selectAllGroups,
 	} = groupsAdapter.getSelectors((state) => state[reducerName]);
 
-	const prepareGroup = ({ id, name, image, resizedImage100, additionalData, dateStart, dateFinish }) => ({
-		id: Number(id),
-		name,
-		image,
-		resizedImage100,
-		additionalData,
-		dateStart,
-		dateFinish,
+	const prepareGroup = (group) => ({
+		id: Number(group.id),
+		name: group.name,
+		image: group.image,
+		resizedImage100: group.resizedImage100,
+		dateStart: group.dateStart,
+		dateFinish: group.dateFinish,
+		isCollab: group.isCollab,
+		isExtranet: group.isExtranet,
+		additionalData: group.additionalData,
 	});
 
 	const prepareGroupFromEntitySelector = (group) => {
-		const datePlan = group?.customData?.datePlan;
+		const datePlan = group.customData?.datePlan;
 
 		return ({
 			id: Number(group.id),
@@ -34,7 +36,11 @@ jn.define('tasks/statemanager/redux/slices/groups', (require, exports, module) =
 			image: group.imageUrl,
 			dateStart: datePlan.dateStart,
 			dateFinish: datePlan.dateFinish,
-			additionalData: {},
+			isCollab: group.customData?.isCollab,
+			isExtranet: group.customData?.isExtranet,
+			additionalData: {
+				DIALOG_ID: group.customData?.dialogId,
+			},
 		});
 	};
 

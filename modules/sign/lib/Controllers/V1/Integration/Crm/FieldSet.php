@@ -3,9 +3,10 @@ namespace Bitrix\Sign\Controllers\V1\Integration\Crm;
 
 use Bitrix\Main;
 use Bitrix\Crm;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Sign\Attribute;
+use Bitrix\Main\Localization\Loc;;
 use Bitrix\Sign\Access\ActionDictionary;
+use Bitrix\Sign\Attribute\Access\LogicOr;
+use Bitrix\Sign\Attribute\ActionAccess;
 
 class FieldSet extends Main\Engine\JsonController
 {
@@ -14,8 +15,11 @@ class FieldSet extends Main\Engine\JsonController
 		return [];
 	}
 
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_ADD)]
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_DOCUMENT_ADD)]
+	#[LogicOr(
+		new ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_ADD),
+		new ActionAccess(ActionDictionary::ACTION_B2E_TEMPLATE_ADD),
+		new ActionAccess(ActionDictionary::ACTION_DOCUMENT_ADD),
+	)]
 	public function loadAction(int $entityTypeId, int $entityId, ?int $presetId = null, ?string $documentUid = null): array
 	{
 		if (!Main\Loader::includeModule('crm'))
@@ -36,7 +40,10 @@ class FieldSet extends Main\Engine\JsonController
 		return Crm\Service\Sign\Requisite::getBannerData($item, $entityId, $documentUid);
 	}
 
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_ADD)]
+	#[LogicOr(
+		new ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_ADD),
+		new ActionAccess(ActionDictionary::ACTION_B2E_TEMPLATE_ADD),
+	)]
 	public function getAction(int $id): array
 	{
 		if (!Main\Loader::includeModule('crm'))
@@ -56,7 +63,10 @@ class FieldSet extends Main\Engine\JsonController
 		];
 	}
 
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_ADD)]
+	#[LogicOr(
+		new ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_ADD),
+		new ActionAccess(ActionDictionary::ACTION_B2E_TEMPLATE_ADD),
+	)]
 	public function setAction(array $options): array
 	{
 		if (!Main\Loader::includeModule('crm'))

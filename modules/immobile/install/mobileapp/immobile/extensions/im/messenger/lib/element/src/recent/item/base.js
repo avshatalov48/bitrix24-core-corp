@@ -2,6 +2,7 @@
  * @module im/messenger/lib/element/recent/item/base
  */
 jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module) => {
+	const { Uuid } = require('utils/uuid');
 	const { Theme } = require('im/lib/theme');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
@@ -159,6 +160,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		}
 
 		/**
+		 * @deprecated use to AvatarDetail
 		 * @return RecentItem
 		 */
 		createImageUrl()
@@ -190,7 +192,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		createDate()
 		{
-			const date = DateHelper.cast(this.getModelItem().lastActivityDate, new Date());
+			const date = DateHelper.cast(this.getItemDate(), new Date());
 			this.date = Math.round(date.getTime() / 1000);
 
 			return this;
@@ -201,7 +203,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		createDisplayedDate()
 		{
-			const date = DateHelper.cast(this.getModelItem().lastActivityDate, null);
+			const date = DateHelper.cast(this.getItemDate(), null);
 			this.displayedDate = DateFormatter.getRecentFormat(date);
 
 			return this;
@@ -287,6 +289,9 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		createAvatarStyle()
 		{
+			const modelItem = this.getModelItem();
+			this.avatar = ChatAvatar.createFromDialogId(modelItem.id).getRecentItemAvatarProps();
+
 			return this;
 		}
 
@@ -303,7 +308,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		createSubtitleStyle()
 		{
-			const modelItem = this.getModelItem();
+			const message = this.getItemMessage();
 			const dialog = this.getDialogItem();
 			let subtitleStyle = {};
 
@@ -335,7 +340,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				return this;
 			}
 
-			if (modelItem.message.senderId === serviceLocator.get('core').getUserId())
+			if (message.senderId === serviceLocator.get('core').getUserId())
 			{
 				subtitleStyle = {
 					image: {
@@ -344,9 +349,9 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 					},
 				};
 
-				if (modelItem.message && modelItem.message.subTitleIcon && modelItem.message.subTitleIcon !== '')
+				if (message?.subTitleIcon && message?.subTitleIcon !== '')
 				{
-					subtitleStyle = { image: { name: modelItem.message.subTitleIcon, sizeMultiplier: 0.7 } };
+					subtitleStyle = { image: { name: message.subTitleIcon, sizeMultiplier: 0.7 } };
 				}
 
 				this.styles.subtitle = subtitleStyle;
@@ -363,7 +368,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		createDateStyle()
 		{
 			const item = this.getModelItem();
-			const message = item.message;
+			const message = this.getItemMessage();
 
 			let name = '';
 			let url = '';
@@ -449,17 +454,53 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		}
 
 		/**
+		 * @returns {Date}
+		 */
+		getItemDate()
+		{
+			const item = this.getModelItem();
+
+			return item.uploadingState?.lastActivityDate ?? item.lastActivityDate;
+		}
+
+		/**
+		 * @returns {RecentMessage}
+		 */
+		getItemMessage()
+		{
+			const item = this.getModelItem();
+
+			return item.uploadingState?.message ?? item.message;
+		}
+
+		/**
+		 * @returns {MessagesModelState|null|{}}
+		 */
+		getModelMessage()
+		{
+			const message = this.getItemMessage();
+
+			return Uuid.isV4(message?.id)
+				? serviceLocator.get('core').getStore().getters['messagesModel/getByTemplateId'](message.id)
+				: serviceLocator.get('core').getStore().getters['messagesModel/getById'](message.id)
+			;
+		}
+
+		/**
 		 * @param {RecentModelState} [item=this.getModelItem()]
 		 * @return {string}
 		 */
 		getMessageText(item = this.getModelItem())
 		{
-			const message = item.message;
-			let messageText = message.text;
-			const modelMessage = serviceLocator.get('core').getStore().getters['messagesModel/getById'](message.id);
-			if (modelMessage.id)
+			const message = this.getItemMessage();
+			const modelMessage = this.getModelMessage();
+
+			const id = modelMessage?.id || modelMessage?.templateId;
+
+			let messageText = '';
+			if (id)
 			{
-				const messageFiles = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](modelMessage.id);
+				const messageFiles = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](id);
 
 				messageText = parser.simplify({
 					text: modelMessage.text,
@@ -471,9 +512,9 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			else
 			{
 				messageText = parser.simplify({
-					text: item.message.text,
-					attach: item.message?.params?.withAttach ?? false,
-					files: item.message?.params?.withFile ?? false,
+					text: message.text,
+					attach: message?.params?.withAttach ?? false,
+					files: message?.params?.withFile ?? false,
 					showFilePrefix: false,
 				});
 			}

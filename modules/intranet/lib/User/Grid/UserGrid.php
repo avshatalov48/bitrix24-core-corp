@@ -2,12 +2,14 @@
 
 namespace Bitrix\Intranet\User\Grid;
 
+use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Intranet\User\Filter\ExtranetUserSettings;
 use Bitrix\Intranet\User\Filter\IntranetUserSettings;
 use Bitrix\Intranet\User\Filter\Provider\PhoneUserDataProvider;
 use Bitrix\Intranet\User\Filter\UserFilter;
 use Bitrix\Intranet\User\Grid\Row\Assembler\UserRowAssembler;
 use Bitrix\Intranet\User\Grid\Settings\UserSettings;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Filter\Filter;
 use Bitrix\Main\Filter\UserDataProvider;
 use Bitrix\Main\Grid\Column\Columns;
@@ -15,8 +17,8 @@ use Bitrix\Main\Grid\Grid;
 use Bitrix\Main\Grid\Pagination\PaginationFactory;
 use Bitrix\Main\Grid\Pagination\LazyLoadTotalCount;
 use Bitrix\Main\Grid\Row\Rows;
+use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
-use Bitrix\Intranet\User\Grid\Panel;
 use Bitrix\Main\UI\PageNavigation;
 
 /**
@@ -31,15 +33,21 @@ final class UserGrid extends Grid
 	protected function createColumns(): Columns
 	{
 		return new Columns(
-			new \Bitrix\Intranet\User\Grid\Column\Provider\UserDataProvider($this->getSettings())
+			new \Bitrix\Intranet\User\Grid\Column\Provider\UserDataProvider($this->getSettings()),
 		);
 	}
 
 	public function getOrmParams(): array
 	{
 		$params = parent::getOrmParams();
-		array_push($params['select'], 'ID', 'ACTIVE', 'CONFIRM_CODE');
+		array_push($params['select'], 'ID', 'ACTIVE', 'CONFIRM_CODE', 'EXTERNAL_AUTH_ID');
 		$selectedSortField = '';
+
+		// remove this after b_extranet_user migration
+		if (\Bitrix\Main\Loader::includeModule('extranet'))
+		{
+			$params['select'][] = 'EXTRANET_GROUP';
+		}
 
 		if (!empty($params['order']))
 		{
@@ -52,7 +60,7 @@ final class UserGrid extends Grid
 		)
 		{
 			$params['order'] = [
-				'STRUCTURE_SORT' => 'DESC'
+				'STRUCTURE_SORT' => 'DESC',
 			];
 		}
 
@@ -64,8 +72,8 @@ final class UserGrid extends Grid
 			if (!empty($sort))
 			{
 				$sqlHelper = \Bitrix\Main\Application::getInstance()->getConnection()->getSqlHelper();
-				$params['select'][] =
-					new \Bitrix\Main\Entity\ExpressionField(
+				$params['select'][]
+					= new \Bitrix\Main\Entity\ExpressionField(
 						'STRUCTURE_SORT',
 						$sqlHelper->getOrderByIntField('%s', $sort, false),
 						'ID');
@@ -76,6 +84,8 @@ final class UserGrid extends Grid
 			}
 		}
 
+		$params['group'] = ['ID'];
+
 		return $params;
 	}
 
@@ -83,7 +93,8 @@ final class UserGrid extends Grid
 	{
 		\Bitrix\Main\UI\Extension::load([
 			$this->getSettings()->getExtensionLoadName(),
-			'ui.common'
+			'ui.common',
+			'ui.avatar',
 		]);
 
 		$rowAssembler = new UserRowAssembler($this->getVisibleColumnsIds(), $this->getSettings());
@@ -128,7 +139,7 @@ final class UserGrid extends Grid
 					&& $ufList[$key]['SHOW_FILTER'] === 'E'
 				)
 				{
-					$result[$key] = $value.'%';
+					$result[$key] = $value . '%';
 				}
 				else
 				{
@@ -146,9 +157,11 @@ final class UserGrid extends Grid
 	{
 		$params = [
 			'ID' => $this->getId(),
-			'WHITE_LIST' => $this->getSettings()->getViewFields()
+			'WHITE_LIST' => $this->getSettings()->getViewFields(),
 		];
-		$filterSettings = new IntranetUserSettings($params);
+		$filterSettings = ModuleManager::isModuleInstalled('extranet')
+			? new ExtranetUserSettings($params)
+			: new IntranetUserSettings($params);
 
 		$extraProviders = [
 			new \Bitrix\Main\Filter\UserUFDataProvider($filterSettings),
@@ -161,8 +174,7 @@ final class UserGrid extends Grid
 
 		if (ModuleManager::isModuleInstalled('extranet'))
 		{
-			$extranetSettings = new ExtranetUserSettings($params);
-			$extraProviders[] = new \Bitrix\Intranet\User\Filter\Provider\ExtranetUserDataProvider($extranetSettings);
+			$extraProviders[] = new \Bitrix\Intranet\User\Filter\Provider\ExtranetUserDataProvider($filterSettings);
 		}
 
 		return new UserFilter(
@@ -171,8 +183,21 @@ final class UserGrid extends Grid
 			$extraProviders,
 			[
 				'FILTER_SETTINGS' => $filterSettings,
-			]
+			],
 		);
+	}
+
+	public function setRawRows(iterable $rawValue): void
+	{
+		parent::setRawRows($rawValue);
+
+		if (is_array($rawValue))
+		{
+			$userCollection = ServiceContainer::getInstance()
+				->userRepository()
+				->makeUserCollectionFromModelArray($rawValue);
+			$this->getSettings()->setUserCollection($userCollection);
+		}
 	}
 
 	protected function getFilterOptions(): \Bitrix\Main\UI\Filter\Options
@@ -195,7 +220,7 @@ final class UserGrid extends Grid
 	protected function createPanel(): \Bitrix\Main\Grid\Panel\Panel
 	{
 		return new \Bitrix\Main\Grid\Panel\Panel(
-			new Panel\Action\UserDataProvider($this->getSettings())
+			new Panel\Action\UserDataProvider($this->getSettings()),
 		);
 	}
 }

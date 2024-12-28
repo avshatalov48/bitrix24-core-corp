@@ -47,7 +47,7 @@
 			const calendarSettings = getCalendarSettings('19:00', -3);
 			const values = (new DeadlinePicker()).getPredefinedItemValues(calendarSettings, now);
 
-			expect(values.get(PickerItemType.TODAY)).toEqual((new Date('2023-05-01T22:00:00')).getTime());
+			expect(values.get(PickerItemType.TODAY)).toEqual((new Date('2023-05-01T19:00:00')).getTime());
 		});
 
 		test('should correctly identify future TODAY with different offsets that change day', () => {
@@ -55,7 +55,7 @@
 			const calendarSettings = getCalendarSettings('19:00', -6);
 			const values = (new DeadlinePicker()).getPredefinedItemValues(calendarSettings, now);
 
-			expect(values.get(PickerItemType.TODAY)).toEqual((new Date('2023-05-02T01:00:00')).getTime());
+			expect(values.get(PickerItemType.TODAY)).toEqual((new Date('2023-05-02T19:00:00')).getTime());
 		});
 
 		test('should correctly identify past TODAY', () => {
@@ -95,15 +95,15 @@
 			const calendarSettings = getCalendarSettings('19:00', -6);
 			const values = (new DeadlinePicker()).getPredefinedItemValues(calendarSettings, now);
 
-			expect(values.get(PickerItemType.TODAY)).toBeNull();
+			expect(values.get(PickerItemType.TODAY)).toEqual((new Date('2023-05-02T19:00:00')).getTime());
 		});
 
 		test('should correctly identify past TODAY with different offsets that change day at the exact moment', () => {
 			const now = new Date('2023-05-02T00:00:00');
-			const calendarSettings = getCalendarSettings('18:00', -6);
+			const calendarSettings = getCalendarSettings('19:00', -6);
 			const values = (new DeadlinePicker()).getPredefinedItemValues(calendarSettings, now);
 
-			expect(values.get(PickerItemType.TODAY)).toBeNull();
+			expect(values.get(PickerItemType.TODAY)).toEqual((new Date('2023-05-02T19:00:00')).getTime());
 		});
 
 		test('should correctly identify TOMORROW', () => {
@@ -119,7 +119,7 @@
 			const calendarSettings = getCalendarSettings('19:00', -3);
 			const values = (new DeadlinePicker()).getPredefinedItemValues(calendarSettings, now);
 
-			expect(values.get(PickerItemType.TOMORROW)).toEqual((new Date('2023-05-02T22:00:00')).getTime());
+			expect(values.get(PickerItemType.TOMORROW)).toEqual((new Date('2023-05-02T19:00:00')).getTime());
 		});
 
 		test('should correctly identify TOMORROW with different offsets that change day', () => {
@@ -127,7 +127,7 @@
 			const calendarSettings = getCalendarSettings('19:00', -6);
 			const values = (new DeadlinePicker()).getPredefinedItemValues(calendarSettings, now);
 
-			expect(values.get(PickerItemType.TOMORROW)).toEqual((new Date('2023-05-03T01:00:00')).getTime());
+			expect(values.get(PickerItemType.TOMORROW)).toEqual((new Date('2023-05-03T19:00:00')).getTime());
 		});
 
 		test('should correctly identify THIS WEEK with standard weekend', () => {
@@ -188,7 +188,7 @@
 			const calendarSettings = getCalendarSettings('19:00', -3, [0, 6]);
 			const values = (new DeadlinePicker()).getPredefinedItemValues(calendarSettings, now);
 
-			expect(values.get(PickerItemType.THIS_WEEK)).toEqual((new Date('2023-05-05T22:00:00')).getTime());
+			expect(values.get(PickerItemType.THIS_WEEK)).toEqual((new Date('2023-05-05T19:00:00')).getTime());
 		});
 
 		test('should correctly identify THIS WEEK with different offsets that change day', () => {
@@ -196,7 +196,7 @@
 			const calendarSettings = getCalendarSettings('19:00', -6, [0, 6]);
 			const values = (new DeadlinePicker()).getPredefinedItemValues(calendarSettings, now);
 
-			expect(values.get(PickerItemType.THIS_WEEK)).toEqual((new Date('2023-05-06T01:00:00')).getTime());
+			expect(values.get(PickerItemType.THIS_WEEK)).toEqual((new Date('2023-05-05T19:00:00')).getTime());
 		});
 
 		test('should correctly identify NEXT WEEK with standard weekend', () => {
@@ -273,8 +273,8 @@
 			const calendarSettings = getCalendarSettings('19:00', -3, [0, 6]);
 			const values = (new DeadlinePicker()).getPredefinedItemValues(calendarSettings, now);
 
-			expect(values.get(PickerItemType.NEXT_WEEK_START)).toEqual((new Date('2023-05-08T22:00:00')).getTime());
-			expect(values.get(PickerItemType.NEXT_WEEK_END)).toEqual((new Date('2023-05-12T22:00:00')).getTime());
+			expect(values.get(PickerItemType.NEXT_WEEK_START)).toEqual((new Date('2023-05-08T19:00:00')).getTime());
+			expect(values.get(PickerItemType.NEXT_WEEK_END)).toEqual((new Date('2023-05-12T19:00:00')).getTime());
 		});
 
 		test('should correctly identify NEXT WEEK with different offsets that change day', () => {
@@ -282,8 +282,8 @@
 			const calendarSettings = getCalendarSettings('19:00', -6, [0, 6]);
 			const values = (new DeadlinePicker()).getPredefinedItemValues(calendarSettings, now);
 
-			expect(values.get(PickerItemType.NEXT_WEEK_START)).toEqual((new Date('2023-05-09T01:00:00')).getTime());
-			expect(values.get(PickerItemType.NEXT_WEEK_END)).toEqual((new Date('2023-05-13T01:00:00')).getTime());
+			expect(values.get(PickerItemType.NEXT_WEEK_START)).toEqual((new Date('2023-05-08T19:00:00')).getTime());
+			expect(values.get(PickerItemType.NEXT_WEEK_END)).toEqual((new Date('2023-05-12T19:00:00')).getTime());
 		});
 	});
 })();

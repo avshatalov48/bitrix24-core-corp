@@ -7,10 +7,14 @@ use Bitrix\Sign\Integration\CRM\Model\EventData;
 use Bitrix\Sign\Operation\DocumentChat\AddMemberByDocument;
 use Bitrix\Sign\Operation\Kanban\B2e\SendUpdateEntityPullEvent;
 use Bitrix\Sign\Repository\MemberRepository;
+use Bitrix\Sign\Result\Result;
+use Bitrix\Sign\Service\Analytic\AnalyticService;
+use Bitrix\Sign\Service\B2e\MyDocumentsGrid;
 use Bitrix\Sign\Service\HrBotMessageService;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Service\Sign\Document\ProviderCodeService;
 use Bitrix\Sign\Service\Sign\LegalLogService;
+use Bitrix\Sign\Service\Sign\MemberService;
 use Bitrix\Sign\Type;
 use Bitrix\Sign\Contract;
 use Bitrix\Sign\Item;
@@ -26,8 +30,11 @@ final class ChangeMemberStatus implements Contract\Operation
 	private HrBotMessageService $hrBotMessageService;
 	private LegalLogService $legalLogService;
 	private MemberRepository $memberRepository;
+	private MemberService $memberService;
 	private ?MemberStatusChanged $message = null;
-	private  readonly ProviderCodeService $providerCodeService;
+	private readonly ProviderCodeService $providerCodeService;
+	private readonly MyDocumentsGrid\EventService $myDocumentGridService;
+	private readonly AnalyticService $analyticService;
 
 	public function __construct(
 		private readonly Item\Member $member,
@@ -40,8 +47,11 @@ final class ChangeMemberStatus implements Contract\Operation
 		$this->pullService = Container::instance()->getPullService();
 		$this->hrBotMessageService = Container::instance()->getHrBotMessageService();
 		$this->memberRepository = Container::instance()->getMemberRepository();
+		$this->memberService = Container::instance()->getMemberService();
 		$this->legalLogService = Container::instance()->getLegalLogService();
 		$this->providerCodeService = $providerService ?? Container::instance()->getProviderCodeService();
+		$this->myDocumentGridService = Container::instance()->getMyDocumentGridEventService();
+		$this->analyticService = Container::instance()->getAnalyticService();
 	}
 
 	public function setMessage(MemberStatusChanged $message): self
@@ -79,10 +89,14 @@ final class ChangeMemberStatus implements Contract\Operation
 				new Main\Error(
 					'Member status is already set.',
 					self::MEMBER_STATUS_ALREADY_SET_ERROR_CODE,
-				)
+				),
 			);
 		}
 
+		if ($this->member->status !== $this->status)
+		{
+			$this->member->dateStatusChanged =  new Main\Type\DateTime();
+		}
 		$this->member->status = $this->status;
 		if ($this->member->dateSigned === null && $this->status === Type\MemberStatus::DONE)
 		{
@@ -129,24 +143,33 @@ final class ChangeMemberStatus implements Contract\Operation
 				$this->onStatusChangedMessageTimelineEvent();
 			}
 
-			$memberCollection = $this->memberRepository->listByDocumentId($this->document->id);
-			$this->pullService->sendMemberStatusChanged($this->document, $this->member, $memberCollection);
+			$this->pullService->sendMemberStatusChanged($this->document, $this->member);
 		}
 
-		$updateReminderSettingsResult = $this->updateReminderSettings($this->document, $this->member);
-		$result->addErrors($updateReminderSettingsResult->getErrors());
+		$result = Result::createByMainResult($result);
+
+		$result
+			->addErrorsFromResult($this->updateReminderSettings($this->document, $this->member))
+			->addErrorsFromResult($this->myDocumentGridService->onMemberStatusChanged($this->document, $this->member))
+		;
+		$this->saveAnalytics();
 
 		return $result;
 	}
 
 	private function onStatusChangedMessageTimelineEvent(): void
 	{
-		$isSignerDone = $this->member->role === Type\Member\Role::SIGNER
-			&& $this->member->status === Type\MemberStatus::DONE
-		;
+		$isSignerDone
+			= !$this->document->isInitiatedByEmployee()
+			&& $this->member->role === Type\Member\Role::SIGNER
+			&& $this->member->status === Type\MemberStatus::DONE;
+		$byEmployeeAssigneeDone
+			= $this->document->isInitiatedByEmployee()
+			&& $this->member->role === Type\Member\Role::ASSIGNEE
+			&& $this->member->status === Type\MemberStatus::DONE;
 		switch (true)
 		{
-			case $isSignerDone:
+			case $isSignerDone || $byEmployeeAssigneeDone:
 			{
 				/**
 				 * A signed copy of the document was received by the employee
@@ -154,13 +177,24 @@ final class ChangeMemberStatus implements Contract\Operation
 				 */
 				$eventType = EventData::TYPE_ON_MEMBER_SIGNED_DELIVERED;
 				$eventData = new EventData();
-				$eventData->setEventType($eventType)
+				$eventData
+					->setEventType($eventType)
 					->setDocumentItem($this->document)
-					->setMemberItem($this->member);
+					->setMemberItem($this->getMemberForDeliveredTimilineEvent())
+				;
 				$this->eventHandlerService->createTimelineEvent($eventData);
+
 				break;
 			}
 		}
+	}
+
+	private function getMemberForDeliveredTimilineEvent(): Item\Member
+	{
+		return $this->document->isInitiatedByEmployee()
+			? $this->memberService->getSigner($this->document) // signer, on assignee done (by employee)
+			: $this->member // signer, on signer done (by company)
+		;
 	}
 
 	private function updateAssigneeReminderSettings(Item\Member $currentMember, Item\Document $document, Main\Type\DateTime $now): Main\Result
@@ -285,5 +319,39 @@ final class ChangeMemberStatus implements Contract\Operation
 	{
 		$kanbanPullEventOperation = new SendUpdateEntityPullEvent($this->document);
 		$kanbanPullEventOperation->launch();
+	}
+
+	private function saveAnalytics(): void
+	{
+		if (!Type\DocumentScenario::isB2eScenarioByDocument($this->document))
+		{
+			return;
+		}
+		if ($this->member->party !== $this->document->parties || $this->member->status !== Type\MemberStatus::DONE)
+		{
+			return;
+		}
+		$this->providerCodeService->loadByDocument($this->document);
+
+		$p1AnalyticsValue = match ($this->document->providerCode)
+		{
+			Type\ProviderCode::SES_RU, Type\ProviderCode::SES_COM => 'integration_bitrix24KEDO',
+			Type\ProviderCode::GOS_KEY => 'integration_Goskluch',
+			Type\ProviderCode::EXTERNAL => 'integration_external',
+			default => 'integration_N',
+		};
+
+		$event = (new Main\Analytics\AnalyticsEvent(
+			'document_signed',
+			'sign',
+			'documents',
+		))
+			->setType($this->document->isInitiatedByEmployee() ? 'from_employee' : 'from_company')
+			->setStatus('success')
+			->setP1($p1AnalyticsValue)
+			->setP5("docId_{$this->member->documentId}")
+		;
+
+		$this->analyticService->sendEventWithSigningContext($event, $this->member);
 	}
 }

@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'alert',
 		'apptheme',
+		'im:messenger/api/dialog-opener',
 		'layout/socialnetwork/project/edit',
 		'layout/socialnetwork/project/fields/*',
 		'layout/ui/buttons/cancel',

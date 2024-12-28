@@ -282,6 +282,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            _this4.sendSuccessEvent(response.data);
 	          }
 	        }
+	        main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'SidePanel.Slider:onClose', function () {
+	          BX.SidePanel.Instance.postMessageTop(window, 'BX.Bitrix24.EmailConfirmation:showPopup');
+	        });
 	      }, function (response) {
 	        _this4.disableSubmitButton(false);
 	        if (response.data == "user_limit") {
@@ -483,8 +486,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }
 	      var changeCallback = function changeCallback(i, inputNode) {
 	        return function (e) {
-	          inputNode.parentNode.querySelector('#phone_number_' + i).value = e.value;
-	          inputNode.parentNode.querySelector('#phone_country_' + i).value = e.country;
+	          if (main_core.Type.isDomNode(inputNode.parentNode)) {
+	            inputNode.parentNode.querySelector('#phone_number_' + i).value = e.value;
+	            inputNode.parentNode.querySelector('#phone_country_' + i).value = e.country;
+	          }
 	        };
 	      };
 	      this.inputStack[num] = new BX.PhoneNumber.Input({
@@ -559,6 +564,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      var phoneExp = /^[\d+][\d\(\)\ -]{2,14}\d$/;
 	      if (element.value && phoneExp.test(String(element.value).toLowerCase())) {
 	        this.phoneObj.renderPhoneRow(element);
+	      } else if (element.value.length === 0) {
+	        var _this$renderDefaultRo;
+	        (_this$renderDefaultRo = this.renderDefaultRow(element)) === null || _this$renderDefaultRo === void 0 ? void 0 : _this$renderDefaultRo.focus();
 	      }
 	    }
 	  }, {
@@ -577,6 +585,24 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }
 	    }
 	  }, {
+	    key: "renderDefaultRow",
+	    value: function renderDefaultRow(node) {
+	      var phoneFlagBlock = node.parentNode.querySelector('[data-role="phone-block"]');
+	      if (main_core.Type.isDomNode(phoneFlagBlock)) {
+	        main_core.Dom.remove(phoneFlagBlock);
+	      }
+	      var phoneBlock = node.parentNode.querySelector('input.ui-ctl-element');
+	      if (main_core.Type.isDomNode(phoneBlock)) {
+	        var newInput = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\tname=\"", "\"\n\t\t\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\t\tdata-num=\"", "\"\n\t\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\"\n\t\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t\t/>"])), phoneBlock.name, node.getAttribute('data-num'), phoneBlock.placeholder);
+	        main_core.Dom.replace(phoneBlock, newInput);
+	        this.bindCloseIcons(newInput.parentNode);
+	        this.bindPhoneChecker(newInput.parentNode);
+	        main_core.Dom.remove(phoneBlock);
+	        return newInput;
+	      }
+	      return phoneBlock;
+	    }
+	  }, {
 	    key: "bindCloseIcons",
 	    value: function bindCloseIcons(container) {
 	      var _this3 = this;
@@ -589,14 +615,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        main_core.Event.bind(closeIcon, 'click', function (event) {
 	          event.preventDefault();
 	          if (main_core.Type.isDomNode(node.parentNode)) {
-	            var phoneBlock = node.parentNode.querySelector('input.ui-ctl-element');
-	            if (main_core.Type.isDomNode(phoneBlock)) {
-	              var newInput = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\tname=\"", "\"\n\t\t\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\t\tdata-num=\"", "\"\n\t\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\"\n\t\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t\t/>"])), phoneBlock.name, node.getAttribute('data-num'), phoneBlock.placeholder);
-	              main_core.Dom.replace(phoneBlock, newInput);
-	              _this3.bindCloseIcons(newInput.parentNode);
-	              _this3.bindPhoneChecker(newInput.parentNode);
-	              main_core.Dom.remove(phoneBlock);
-	            }
+	            _this3.renderDefaultRow(node);
 	          }
 	          main_core.Dom.style(closeIcon, 'display', "none");
 	        });
@@ -673,8 +692,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          });
 	        }
 	        if (type === "project" && !!this.options[type]) {
+	          var _this$options$showCre;
 	          var options = {
-	            fillRecentTab: true
+	            fillRecentTab: true,
+	            '!type': ['collab'],
+	            createProjectLink: (_this$options$showCre = this.options.showCreateButton) !== null && _this$options$showCre !== void 0 ? _this$options$showCre : true
 	          };
 	          if (Object.prototype.hasOwnProperty.call(this.options, 'projectLimitExceeded') && Object.prototype.hasOwnProperty.call(this.options, 'projectLimitFeatureId')) {
 	            options.lockProjectLink = this.options.projectLimitExceeded;
@@ -697,6 +719,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      var preselectedItems = [];
 	      if (this.options.hasOwnProperty('projectId') && this.options.projectId > 0) {
 	        preselectedItems.push(['project', this.options.projectId]);
+	      }
+	      if (this.options.hasOwnProperty('departmentsId') && Array.isArray(this.options.departmentsId)) {
+	        this.options.departmentsId.forEach(function (departmentId) {
+	          preselectedItems.push(['department', departmentId]);
+	        });
 	      }
 	      this.tagSelector = new ui_entitySelector.TagSelector({
 	        dialogOptions: {
@@ -806,6 +833,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        c_sub_section: subSection
 	      });
 	    }
+	  }, {
+	    key: "sendOpenSliderData",
+	    value: function sendOpenSliderData(section) {
+	      ui_analytics.sendData({
+	        tool: Analytics.TOOLS,
+	        category: Analytics.CATEGORY_INVITATION,
+	        event: Analytics.EVENT_OPEN_SLIDER_INVITATION,
+	        c_section: section
+	      });
+	    }
 	  }]);
 	  return Analytics;
 	}();
@@ -819,6 +856,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return babelHelpers.classPrivateFieldGet(this, _cSection).source;
 	}
 	babelHelpers.defineProperty(Analytics, "TOOLS", 'Invitation');
+	babelHelpers.defineProperty(Analytics, "TOOLS_HEADER", 'headerPopup');
+	babelHelpers.defineProperty(Analytics, "EVENT_OPEN_SLIDER_INVITATION", 'drawer_open');
 	babelHelpers.defineProperty(Analytics, "CATEGORY_INVITATION", 'invitation');
 	babelHelpers.defineProperty(Analytics, "EVENT_COPY", 'copy_invitation_link');
 	babelHelpers.defineProperty(Analytics, "ADMIN_ALLOW_MODE_Y", 'askAdminToAllow_Y');
@@ -832,6 +871,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	babelHelpers.defineProperty(Analytics, "TAB_INTEGRATOR", 'tab_integrator');
 	babelHelpers.defineProperty(Analytics, "TAB_LINK", 'by_link');
 	babelHelpers.defineProperty(Analytics, "TAB_REGISTRATION", 'registration');
+	babelHelpers.defineProperty(Analytics, "TAB_EXTRANET", 'extranet');
 	babelHelpers.defineProperty(Analytics, "TAB_AD", 'AD');
 
 	var Form = /*#__PURE__*/function (_EventEmitter) {
@@ -858,6 +898,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    _this.analyticsLabel = params.analyticsLabel;
 	    _this.projectLimitExceeded = main_core.Type.isBoolean(params.projectLimitExceeded) ? params.projectLimitExceeded : true;
 	    _this.projectLimitFeatureId = main_core.Type.isString(params.projectLimitFeatureId) ? params.projectLimitFeatureId : '';
+	    _this.isCollabEnabled = params.isCollabEnabled === 'Y';
 	    if (main_core.Type.isDomNode(_this.contentContainer)) {
 	      var blocks = Array.prototype.slice.call(_this.contentContainer.querySelectorAll(".js-intranet-invitation-block"));
 	      (blocks || []).forEach(function (block) {
@@ -886,6 +927,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      _this.showErrorMessage(event.data.error);
 	    });
 	    _this.analytics = new Analytics(_this.analyticsLabel, _this.isAdmin);
+	    _this.analytics.sendOpenSliderData(_this.analyticsLabel.source);
 	    if (_this.isCloud) {
 	      _this.selfRegister = new SelfRegister(babelHelpers.assertThisInitialized(_this));
 	    }
@@ -926,10 +968,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            this.activeDirectory = new ActiveDirectory(this);
 	          }
 	          this.activeDirectory.showForm();
-	          this.analytics.sendTabData(Analytics.TAB_AD);
+	          this.analytics.sendTabData(section, Analytics.TAB_AD);
 	          return;
 	        }
 	        var projectId = this.userOptions.hasOwnProperty('groupId') ? parseInt(this.userOptions.groupId, 10) : 0;
+	        var departmentsId = this.userOptions.hasOwnProperty('departmentsId') && Array.isArray(this.userOptions.departmentsId) ? this.userOptions.departmentsId.map(function (id) {
+	          return parseInt(id, 10);
+	        }) : [];
 	        for (var type in this.contentBlocks) {
 	          var block = this.contentBlocks[type];
 	          if (type === action) {
@@ -951,6 +996,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	                  department: true,
 	                  project: true,
 	                  projectId: projectId,
+	                  departmentsId: departmentsId,
 	                  isAdmin: this.isAdmin,
 	                  projectLimitExceeded: this.projectLimitExceeded,
 	                  projectLimitFeatureId: this.projectLimitFeatureId
@@ -958,6 +1004,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	              };
 	              this.renderSelector(selectorParams);
 	            } else if (action === 'extranet') {
+	              subSection = Analytics.TAB_EXTRANET;
 	              row.renderInviteInputs(3);
 	              var _selectorParams = {
 	                contentBlock: this.contentBlocks[action].querySelector("[data-role='entity-selector-container']"),
@@ -967,7 +1014,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	                  projectId: projectId,
 	                  isAdmin: this.isAdmin,
 	                  projectLimitExceeded: this.projectLimitExceeded,
-	                  projectLimitFeatureId: this.projectLimitFeatureId
+	                  projectLimitFeatureId: this.projectLimitFeatureId,
+	                  showCreateButton: !this.isCollabEnabled
 	                }
 	              };
 	              this.renderSelector(_selectorParams);
@@ -999,7 +1047,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            main_core.Dom.addClass(block, 'invite-block-hidden');
 	          }
 	        }
-	        if (this.analytics) {
+	        if (this.analytics && section && subSection) {
 	          this.analytics.sendTabData(section, subSection);
 	        }
 	        this.changeButton(action);

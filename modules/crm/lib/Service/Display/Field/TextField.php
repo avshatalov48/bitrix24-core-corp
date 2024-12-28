@@ -74,13 +74,7 @@ class TextField extends BaseLinkedEntitiesField
 		$contentTypeId = $this->getContentTypeId($itemId);
 		$result['config']['contentTypeId'] = $contentTypeId;
 
-		if (
-			$this->getId() === 'COMMENTS'
-			&& (
-				$contentTypeId === \CCrmContentType::Html
-				|| $contentTypeId === \CCrmContentType::BBCode // Temporarily removes [p] for mobile compatibility
-			)
-		)
+		if ($this->getId() === 'COMMENTS' && $contentTypeId === \CCrmContentType::Html)
 		{
 			$contentTypeId = \CCrmContentType::BBCode;
 			if (is_array($result['value']))
@@ -94,6 +88,22 @@ class TextField extends BaseLinkedEntitiesField
 			else
 			{
 				$result['value'] = $this->convertHtmlToBbCode($result['value']);
+			}
+		}
+		// Temporarily removes [p] for mobile compatibility
+		else if ($this->getId() === 'COMMENTS' && $contentTypeId === \CCrmContentType::BBCode)
+		{
+			if (is_array($result['value']))
+			{
+				foreach ($result['value'] as &$item)
+				{
+					$item = TextHelper::removeParagraphs($item);
+				}
+				unset($item);
+			}
+			else
+			{
+				$result['value'] = TextHelper::removeParagraphs($result['value']);
 			}
 		}
 

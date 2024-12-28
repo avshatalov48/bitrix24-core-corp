@@ -4,6 +4,7 @@
 jn.define('utils/phone', (require, exports, module) => {
 	// eslint-disable-next-line no-undef
 	include('SharedBundle');
+
 	const { phoneUtils } = require('native/phonenumber');
 	const { stringify } = require('utils/string');
 	const storageKey = 'PhoneDefaultCountryCode';
@@ -36,7 +37,7 @@ jn.define('utils/phone', (require, exports, module) => {
 	 * Getting the default country code from storage
 	 * @returns {any}
 	 */
-	const getMainDefaultCountryCode = () => storage.get(storageKey);
+	const getMainDefaultCountryCode = () => storage?.get(storageKey);
 
 	/**
 	 * Determining the country code by phone number
@@ -84,7 +85,7 @@ jn.define('utils/phone', (require, exports, module) => {
 	 */
 	const fetchDefaultCountryCode = () => {
 		return new Promise((resolve, reject) => {
-			const defaultCountryCode = storage.get(storageKey);
+			const defaultCountryCode = storage?.get(storageKey);
 
 			if (defaultCountryCode)
 			{
@@ -96,7 +97,7 @@ jn.define('utils/phone', (require, exports, module) => {
 			BX.ajax.runAction('mobile.main.phone.getDefaultCountry', {})
 				.then(({ data }) => {
 					const countryCode = data || Application.getLang().toUpperCase();
-					storage.set(storageKey, countryCode);
+					storage?.set(storageKey, countryCode);
 					resolve(countryCode);
 				})
 				.catch((response) => {

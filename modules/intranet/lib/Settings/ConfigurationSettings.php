@@ -443,7 +443,7 @@ class ConfigurationSettings extends AbstractSettings
 			false
 		);
 
-		if ($this->isBitrix24 && Option::get('bitrix24', 'is_delete_portal_feature_enabled', 'N') === 'Y')
+		if ($this->isBitrix24 && Option::get('bitrix24', 'is_delete_portal_feature_enabled') === 'Y')
 		{
 			$validator = new Portal\Remove\RemoveValidator();
 

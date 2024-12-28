@@ -209,12 +209,12 @@ $arBasketItems = CSalePaySystemAction::GetParamValue("BASKET_ITEMS", false);
 if(!is_array($arBasketItems))
 	$arBasketItems = array();
 
+$arCells = array();
+$arProps = array();
+
 if (!empty($arBasketItems))
 {
 	$arBasketItems = getMeasures($arBasketItems);
-
-	$arCells = array();
-	$arProps = array();
 
 	$columnList = array('NUMBER', 'NAME', 'QUANTITY', 'MEASURE', 'PRICE', 'VAT_RATE', 'DISCOUNT', 'SUM');
 	$vatRateColumn = 0;

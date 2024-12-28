@@ -38,6 +38,8 @@ export class Selector
 			{
 				const options = {
 					fillRecentTab: true,
+					'!type': ['collab'],
+					createProjectLink: this.options.showCreateButton ?? true,
 				};
 				if (
 					Object.prototype.hasOwnProperty.call(this.options, 'projectLimitExceeded')
@@ -74,12 +76,22 @@ export class Selector
 			preselectedItems.push(['project', this.options.projectId])
 		}
 
+		if (
+			this.options.hasOwnProperty('departmentsId')
+			&& Array.isArray(this.options.departmentsId)
+		)
+		{
+			this.options.departmentsId.forEach((departmentId) => {
+				preselectedItems.push(['department', departmentId])
+			});
+		}
+
 		this.tagSelector = new TagSelector({
 			dialogOptions: {
 				preselectedItems: preselectedItems,
 				entities: this.entities,
-				context: 'INTRANET_INVITATION'
-			}
+				context: 'INTRANET_INVITATION',
+			},
 		});
 
 		if (Type.isDomNode(this.contentBlock))

@@ -40,7 +40,7 @@ $APPLICATION->IncludeComponent(
 		'PATH_TO_LOCATIONS_ADD' => $arResult['PATH_TO_LOCATIONS_ADD'],
 		'PATH_TO_LOCATIONS_EDIT' => $arResult['PATH_TO_LOCATIONS_EDIT'],
 		'PATH_TO_LOCATIONS_IMPORT' => $arResult['PATH_TO_LOCATIONS_IMPORT'],
-		'LOC_ID' => $arResult['VARIABLES']['loc_id'],
+		'LOC_ID' => $arResult['VARIABLES']['loc_id'] ?? null,
 		'TYPE' => 'edit'
 	),
 	$component

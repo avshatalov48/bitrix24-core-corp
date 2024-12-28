@@ -15,6 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var array $arResult
  */
 
+use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 
@@ -521,6 +522,16 @@ if($arParams['TYPE'] === 'list')
 				'TITLE' => GetMessage('COMPANY_VERTICAL_CRM_TITLE'),
 				'ONCLICK' => 'BX.SidePanel.Instance.open(\''.$url.'\');'
 			];
+		}
+	}
+
+	if (!$isMyCompanyMode)
+	{
+		$permissionItem = PermissionItem::createByEntity(CCrmOwnerType::Company, $category?->getId());
+		if ($permissionItem->canShow())
+		{
+			$arResult['BUTTONS'][] = $permissionItem->interfaceToolbarDelimiter();
+			$arResult['BUTTONS'][] = $permissionItem->toInterfaceToolbarButton();
 		}
 	}
 

@@ -40,7 +40,7 @@ class ThemePicker
 		self::BEHAVIOUR_RETURN,
 	];
 
-	public const DEFAULT_THEME_ID = 'light:video-orion';
+	public const DEFAULT_THEME_ID = 'light:gravity';
 
 	private static $instance = null;
 	private static $config = null;
@@ -804,24 +804,24 @@ class ThemePicker
 
 	public function getInitialDefaultThemeId(): string
 	{
-		$eastReleaseDate = \DateTime::createFromFormat('d.m.Y H:i', '15.05.2024 10:00', new \DateTimeZone('Europe/Moscow'));
+		$eastReleaseDate = \DateTime::createFromFormat('d.m.Y H:i', '27.11.2024 10:00', new \DateTimeZone('Europe/Moscow'));
 		if (in_array($this->getZoneId(), ['ru', 'kz', 'by']))
 		{
 			if (time() > $eastReleaseDate->getTimestamp())
 			{
-				return 'light:video-orion'; // New Default East Theme
+				return 'light:gravity'; // New Default East Theme
 			}
 
-			return 'light:video-jupiter'; // Old Default East Theme
+			return 'light:video-orion'; // Old Default East Theme
 		}
 
-		$westernReleaseDate = \DateTime::createFromFormat('d.m.Y H:i', '30.05.2024 10:00', new \DateTimeZone('Europe/Moscow'));
+		$westernReleaseDate = \DateTime::createFromFormat('d.m.Y H:i', '12.12.2024 10:00', new \DateTimeZone('Europe/Moscow'));
 		if (time() > $westernReleaseDate->getTimestamp())
 		{
-			return 'light:contrast-horizon'; // New Default West Theme
+			return 'light:dark-silk'; // New Default West Theme
 		}
 
-		return 'light:orbital-symphony'; // Old Default West Theme
+		return 'light:contrast-horizon'; // Old Default West Theme
 	}
 
 	public function setDefaultTheme($themeId, $currentUserId = 0): bool

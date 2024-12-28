@@ -2,6 +2,8 @@
 
 namespace Bitrix\HumanResources\Type;
 
+use Bitrix\HumanResources\Trait\ValuesTrait;
+
 enum AccessibleItemType: string
 {
 	case NODE = 'NODE';

@@ -7,6 +7,7 @@ return [
 		'bbcode/parser',
 		'loc',
 		'sign:dialog/banners/template',
+		'sign:type/initiated-by-type',
 		'notify-manager',
 	],
 ];

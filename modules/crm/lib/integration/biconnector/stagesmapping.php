@@ -89,7 +89,8 @@ class StagesMapping
     END',
 					'FIELD_TYPE' => 'string',
 					'TABLE_ALIAS' => 'multiple_join',
-					'JOIN' => 'LEFT JOIN b_crm_deal_category CDC ON CDC.ID = S.CATEGORY_ID'. "\n  " . 'LEFT JOIN b_crm_item_category CIC ON CIC.ID = S.CATEGORY_ID'
+					'JOIN' => 'INNER JOIN b_crm_deal_category CDC ON CDC.ID = S.CATEGORY_ID'. "\n  " . 'INNER JOIN b_crm_item_category CIC ON CIC.ID = S.CATEGORY_ID',
+					'LEFT_JOIN' => 'LEFT JOIN b_crm_deal_category CDC ON CDC.ID = S.CATEGORY_ID'. "\n  " . 'LEFT JOIN b_crm_item_category CIC ON CIC.ID = S.CATEGORY_ID'
 				],
 				//  NAME_INIT varchar(100) DEFAULT NULL,
 				//  SORT int NOT NULL,

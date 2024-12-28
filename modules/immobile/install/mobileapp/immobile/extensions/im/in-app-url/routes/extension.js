@@ -235,6 +235,7 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 				title,
 				hintText,
 				redirectUrl,
+				analyticsSection: 'chat',
 			});
 		}
 		catch (error)

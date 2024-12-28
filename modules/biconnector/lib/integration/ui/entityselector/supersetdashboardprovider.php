@@ -4,6 +4,7 @@ namespace Bitrix\BIConnector\Integration\UI\EntitySelector;
 
 use Bitrix\BIConnector\Access\AccessController;
 use Bitrix\BIConnector\Access\ActionDictionary;
+use Bitrix\BIConnector\Configuration\DashboardTariffConfigurator;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
 use Bitrix\BIConnector\Integration\Superset\Model\Dashboard;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
@@ -84,7 +85,10 @@ class SupersetDashboardProvider extends BaseProvider
 		$elements = $superset->getDashboardRepository()->getList($ormParams, true);
 		foreach ($elements as $element)
 		{
-			if ($element->isSupersetDashboardDataLoaded())
+			if (
+				$element->isSupersetDashboardDataLoaded()
+				&& DashboardTariffConfigurator::isAvailableDashboard($element->getAppId())
+			)
 			{
 				$result[] = $this->makeItem($element);
 			}

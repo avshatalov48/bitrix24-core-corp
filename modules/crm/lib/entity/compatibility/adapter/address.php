@@ -56,12 +56,23 @@ class Address extends Adapter
 		return $this;
 	}
 
-	final protected function doCheckRequiredFields(array $fields, array $compatibleOptions, array $requiredFields): Result
+	final protected function doCheckRequiredFields(
+		array $fields,
+		array $compatibleOptions,
+		array $requiredFields,
+		?int $id = null,
+		bool $enrichCurrentFieldsWithPrevious = false
+	): Result
 	{
 		$result = new Result();
 
 		if (in_array('ADDRESS', $requiredFields, true))
 		{
+			if ($id > 0 && $enrichCurrentFieldsWithPrevious)
+			{
+				$fields = $this->enrichCurrentFieldsWithPrevious($id, $fields);
+			}
+
 			$validator = new AddressValidator($this->entityTypeId, 0, $fields);
 
 			$isSuccess = $validator->checkPresence();
@@ -76,6 +87,17 @@ class Address extends Adapter
 		return $result;
 	}
 
+	private function enrichCurrentFieldsWithPrevious(int $id, array $currentFields): array
+	{
+		$previousFields = $this->entityAddress::getByOwner($this->addressType, $this->entityTypeId, $id);
+		if (!is_array($previousFields))
+		{
+			return $currentFields;
+		}
+
+		return array_merge($this->mapAddressToCompatibleFields($previousFields), $currentFields);
+	}
+
 	final protected function doPerformAdd(array &$fields, array $compatibleOptions): Result
 	{
 		$id = (int)($fields[Item::FIELD_NAME_ID] ?? 0);
@@ -87,7 +109,7 @@ class Address extends Adapter
 			return $result;
 		}
 
-		$addressFields = $this->mapAddressFields($fields);
+		$addressFields = $this->mapCompatibleToAddressFields($fields);
 
 		if (!$this->isAddressEmpty($addressFields))
 		{
@@ -102,14 +124,31 @@ class Address extends Adapter
 		return new Result();
 	}
 
-	private function mapAddressFields(array $compatibleFields): array
+	private function mapCompatibleToAddressFields(array $compatibleFields): array
 	{
-		$addressFields = array_keys(self::ADDRESS_TO_COMPATIBLE_MAP);
+		$addressFieldNames = array_keys(self::ADDRESS_TO_COMPATIBLE_MAP);
 
 		$result = [];
-		foreach ($addressFields as $addressField)
+		foreach ($addressFieldNames as $addressFieldName)
 		{
-			$result[$addressField] = $compatibleFields[$this->getCompatibleFieldName($addressField)] ?? null;
+			$result[$addressFieldName] = $compatibleFields[$this->getCompatibleFieldName($addressFieldName)] ?? null;
+		}
+
+		return $result;
+	}
+
+	private function mapAddressToCompatibleFields(array $addressFields): array
+	{
+		$result = [];
+		foreach ($addressFields as $fieldName => $value)
+		{
+			$compatibleFieldName = $this->getCompatibleFieldName($fieldName);
+			if (empty($compatibleFieldName))
+			{
+				continue;
+			}
+
+			$result[$fieldName] = $value;
 		}
 
 		return $result;
@@ -147,7 +186,7 @@ class Address extends Adapter
 
 	final protected function doPerformUpdate(int $id, array &$fields, array $compatibleOptions): Result
 	{
-		$addressFields = $this->mapAddressFields($fields);
+		$addressFields = $this->mapCompatibleToAddressFields($fields);
 
 		if (isset($fields['ADDRESS_DELETE']) && $fields['ADDRESS_DELETE'] === 'Y')
 		{

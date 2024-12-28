@@ -159,7 +159,7 @@ class TypeDataProvider extends EntityDataProvider
 		}
 		elseif ($fieldID === 'AUTOMATED_SOLUTION')
 		{
-			$solutions = $this->automatedSolutionManager->getExistingAutomatedSolutions();
+			$solutions = $this->automatedSolutionManager->getAutomatedSolutionsFilteredByPermissions();
 
 			$items = [];
 			foreach ($solutions as $solution)

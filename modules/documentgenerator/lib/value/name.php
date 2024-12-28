@@ -1,15 +1,10 @@
 <?php
 namespace Bitrix\DocumentGenerator\Value;
 
-use Bitrix\DocumentGenerator\Controller\Template;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\DocumentGenerator\Value;
-use Bitrix\Main\Application;
-use Bitrix\Main\IO\File;
-use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Text\Encoding;
 
 class Name extends Value implements Nameable
 {
@@ -117,7 +112,7 @@ class Name extends Value implements Nameable
 			$petrovich = new \Petrovich($gender);
 			foreach($this->getLanguageFieldNames() as $name => $method)
 			{
-				$fields[$name] = $this->fromUtf($petrovich->$method($this->toUtf($fields[$name]), $case));
+				$fields[$name] = $petrovich->$method(trim($fields[$name]), $case);
 			}
 		}
 
@@ -174,24 +169,7 @@ class Name extends Value implements Nameable
 	 */
 	protected function getRussianLettersRegEx($count)
 	{
-		static $reg = null;
-		if($reg === null)
-		{
-			$reg = false;
-			$file = new File(Path::combine(Application::getDocumentRoot(), Template::DEFAULT_DATA_PATH, 'ru', 'letters.php'));
-			if($file->isExists())
-			{
-				$reg = $file->getContents();
-			}
-		}
-
-		if($reg)
-		{
-			$reg .= BX_UTF_PCRE_MODIFIER;
-			return str_replace('#COUNT#', $count, $reg);
-		}
-
-		return false;
+		return "#([ёЁа-яА-Я -]{" . $count . "})$#u";
 	}
 
 	protected function getGender()
@@ -214,42 +192,13 @@ class Name extends Value implements Nameable
 			return false;
 		}
 
-		$gender = \Petrovich::detectGender($this->toUtf($this->value['SECOND_NAME']));
+		$gender = \Petrovich::detectGender(trim($this->value['SECOND_NAME']));
 		if($gender != \Petrovich::GENDER_ANDROGYNOUS)
 		{
 			return $gender;
 		}
 
 		return false;
-	}
-
-	/**
-	 * @param $string
-	 * @return string
-	 */
-	protected function toUtf($string)
-	{
-		$string = trim($string);
-		if(ToUpper(SITE_CHARSET) !== 'UTF-8')
-		{
-			$string = Encoding::convertEncoding($string, SITE_CHARSET, 'UTF-8');
-		}
-
-		return $string;
-	}
-
-	/**
-	 * @param $string
-	 * @return string
-	 */
-	protected function fromUtf($string)
-	{
-		if(ToUpper(SITE_CHARSET) !== 'UTF-8')
-		{
-			$string = Encoding::convertEncoding($string, 'UTF-8', SITE_CHARSET);
-		}
-
-		return $string;
 	}
 
 	/**

@@ -1,0 +1,25 @@
+.ai__copilot-chat_messages-author-group {
+	margin-top: 11px;
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: flex-end;
+}
+
+.ai__copilot-chat_messages-author-group__avatar {
+	min-width: 42px;
+	width: 42px;
+	height: 42px;
+	position: sticky;
+	bottom: 0;
+	margin-right: 8px;
+	margin-bottom: -2px;
+	animation: ease-in copilot-chat-message-fade-in 0.15s;
+}
+
+.ai__copilot-chat_messages-author-group__avatar img {
+	width: 42px;
+	height: 42px;
+	border-radius: var(--ui-border-radius-circle);
+	background-color: var(--ui-color-base-70);
+}

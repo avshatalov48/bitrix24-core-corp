@@ -26,17 +26,23 @@ elseif(!(\CCrmPerms::IsAccessEnabled() && check_bitrix_sessid()))
 }
 else
 {
-	$action = isset($_REQUEST['action']) ? $_REQUEST['action'] : '';
+	$action = $_REQUEST['action'] ?? '';
 	if($action === '')
 	{
 		$action = 'list';
 	}
 
-	$filterID = isset($_REQUEST['filter_id']) ? $_REQUEST['filter_id'] : 'timeline';
+	$filterID = $_REQUEST['filter_id'] ?? 'timeline';
+	$entityId = $_REQUEST['entity_type_id'] ?? 0;
+	$entityTypeId = $_REQUEST['entity_id'] ?? 0;
 	$filter = new Crm\Filter\Filter(
 		$filterID,
 		new Crm\Filter\TimelineDataProvider(
-			new Crm\Filter\TimelineSettings(array('ID' => $filterID))
+			new Crm\Filter\TimelineSettings([
+				'ID' => $filterID,
+				'entityId' => $entityId,
+				'entityTypeId' => $entityTypeId,
+			])
 		)
 	);
 

@@ -38,8 +38,7 @@ CREATE TABLE IF NOT EXISTS b_ai_history
 	PRIMARY KEY (ID)
 );
 CREATE INDEX IF NOT EXISTS ix_b_ai_history_created_by_id ON b_ai_history (created_by_id);
-CREATE INDEX IF NOT EXISTS ix_b_ai_history_context_id ON b_ai_history (context_id);
-CREATE INDEX IF NOT EXISTS ix_b_ai_history_context_module_user_group ON b_ai_history (context_module, context_id, created_by_id, group_id);
+CREATE INDEX IF NOT EXISTS ix_b_ai_history_perf_01 ON b_ai_history (context_id, created_by_id, context_module, group_id);
 
 CREATE TABLE IF NOT EXISTS b_ai_engine
 (
@@ -95,12 +94,19 @@ CREATE TABLE IF NOT EXISTS b_ai_role
 	INDUSTRY_CODE varchar(100) default null,
 	NAME_TRANSLATES text null,
 	DESCRIPTION_TRANSLATES text null,
+	DEFAULT_NAME varchar(255) default '',
+	DEFAULT_DESCRIPTION varchar(255) default '',
+	AUTHOR_ID int NOT NULL DEFAULT 0,
+	EDITOR_ID int NOT NULL DEFAULT 0,
 	HASH char(32) NOT NULL,
 	INSTRUCTION text NOT NULL,
 	AVATAR text NOT NULL,
 	IS_RECOMMENDED smallint default 0,
+	IS_ACTIVE smallint DEFAULT 1,
 	IS_NEW smallint default 0,
+	IS_SYSTEM char(1) DEFAULT  'N',
 	SORT int DEFAULT null,
+	DATE_CREATE timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	DATE_MODIFY timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY (ID)
 );
@@ -305,3 +311,53 @@ create table if not exists b_ai_image_style_prompt
 	PRIMARY KEY (ID)
 	);
 CREATE INDEX IF NOT EXISTS ix_b_ai_image_style_prompt_code ON b_ai_image_style_prompt (CODE);
+
+create table if not exists b_ai_role_owner
+(
+	ID int not null generated always as identity,
+	USER_ID int not null,
+	ROLE_ID int not null,
+	IS_DELETED smallint default 0,
+	PRIMARY KEY (ID)
+);
+CREATE INDEX IF NOT EXISTS ix_b_ai_role_owner_user_id ON b_ai_role_owner (USER_ID);
+CREATE INDEX IF NOT EXISTS ix_b_ai_role_owner_role_id ON b_ai_role_owner (ROLE_ID);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_b_owner_role ON b_ai_role_owner (USER_ID, ROLE_ID);
+
+create table if not exists b_ai_role_share
+(
+	ID int not null generated always as identity,
+	ROLE_ID int not null,
+	ACCESS_CODE varchar(100) not null,
+	DATE_CREATE timestamp not null default current_timestamp,
+	CREATED_BY int not null,
+	PRIMARY KEY (ID)
+);
+CREATE INDEX IF NOT EXISTS ix_b_ai_role_share_access_code ON b_ai_role_share (ACCESS_CODE);
+CREATE INDEX IF NOT EXISTS ix_b_ai_role_share_role_id ON b_ai_role_share (ROLE_ID);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_b_share_role_access ON b_ai_role_share (ROLE_ID, ACCESS_CODE);
+
+
+create table if not exists b_ai_role_translate_name
+(
+	ID int not null generated always as identity,
+	ROLE_ID int not null,
+	LANG varchar(5) not null,
+	TEXT varchar(255) not null,
+
+	PRIMARY KEY (ID)
+);
+CREATE INDEX IF NOT EXISTS b_ai_role_translate_role_id ON b_ai_role_translate_name (ROLE_ID);
+CREATE UNIQUE INDEX IF NOT EXISTS b_ai_role_translate_role_lang ON b_ai_role_translate_name (ROLE_ID, LANG);
+
+create table if not exists b_ai_role_translate_description
+(
+	ID int not null generated always as identity,
+	ROLE_ID int not null,
+	LANG varchar(5) not null,
+	TEXT varchar(255) not null,
+
+	PRIMARY KEY (ID)
+);
+CREATE INDEX IF NOT EXISTS b_ai_role_translate_role_id ON b_ai_role_translate_name (ROLE_ID);
+CREATE UNIQUE INDEX IF NOT EXISTS b_ai_role_translate_role_lang ON b_ai_role_translate_name (ROLE_ID, LANG);

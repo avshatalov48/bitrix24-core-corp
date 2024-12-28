@@ -55,3 +55,5 @@ $MESS['TASKS_LINK_CREATE_PROJECT'] = 'Создать проект';
 
 $MESS['TASKS_BTN_ADD_SCRUM_TASK']='Создать задачу';
 $MESS['TASKS_BTN_KANBAN_POPUP_TITLE_CONFIGURE_VIEW']='Настроить карточку просмотра';
+
+$MESS['TASKS_BTN_REPORTS']='Отчеты';

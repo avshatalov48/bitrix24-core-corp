@@ -1,0 +1,24 @@
+<?php
+$MESS["M_DISK_COLLAB_FILES_EMPTY_DESCRIPTION"] = "This view will show the files sent to the collab's chat, tasks and calendar.";
+$MESS["M_DISK_COLLAB_FILES_EMPTY_TITLE"] = "Collab files";
+$MESS["M_DISK_COMMON_ERROR_OK"] = "OK";
+$MESS["M_DISK_COMMON_READ_MORE"] = "Learn more";
+$MESS["M_DISK_EMPTY_FOLDER_TITLE"] = "No files here";
+$MESS["M_DISK_EMPTY_SEARCH_RESULT_DESCRIPTION_MSGVER_2"] = "Change search query or try searching everywhere.";
+$MESS["M_DISK_EMPTY_SEARCH_RESULT_GLOBAL_DESCRIPTION"] = "Check your input for errors. Also, file access may be denied.";
+$MESS["M_DISK_EMPTY_SEARCH_RESULT_GLOBAL_TITLE"] = "File not found";
+$MESS["M_DISK_EMPTY_SEARCH_RESULT_SEARCH_EVERYWHERE"] = "Search everywhere";
+$MESS["M_DISK_EMPTY_SEARCH_RESULT_TITLE_MSGVER_2"] = "File not found in this folder";
+$MESS["M_DISK_FILE_GRID_TRASHCAN_TITLE"] = "Recycle bin";
+$MESS["M_DISK_GROUP_FILES_EMPTY_DESCRIPTION_MSGVER_1"] = "This screen will show the files you uploaded.";
+$MESS["M_DISK_GROUP_FILES_EMPTY_TITLE"] = "Project files";
+$MESS["M_DISK_MY_FILES_EMPTY_DESCRIPTION"] = "This screen will show your files you use in your Bitrix24.";
+$MESS["M_DISK_MY_FILES_EMPTY_TITLE"] = "My files";
+$MESS["M_DISK_RECENT_FILES_EMPTY_DESCRIPTION"] = "This view will show your recent files.";
+$MESS["M_DISK_RECENT_FILES_EMPTY_TITLE"] = "Recent files";
+$MESS["M_DISK_SHARED_FILES_EMPTY_DESCRIPTION"] = "This view will show company files you have access to.";
+$MESS["M_DISK_SHARED_FILES_EMPTY_TITLE"] = "Company files";
+$MESS["M_DISK_STORAGE_LOAD_ERROR_TEXT"] = "Please try again later. If the problem persists, contact your Bitrix24 administrator.";
+$MESS["M_DISK_STORAGE_LOAD_ERROR_TITLE"] = "Storage is temporarily unavailable";
+$MESS["M_DISK_UPLOAD_BUTTON_FOR_COLLABER_AHA_MOMENT"] = "Add files and discuss them \nwith collab members";
+$MESS["M_DISK_UPLOAD_IS_POSSIBLE_ONLY_TO_COLLAB_DIR"] = "Open the collab folder to add files.";

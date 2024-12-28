@@ -78,7 +78,8 @@ this.BX = this.BX || {};
 	      editing: false,
 	      savingReview: false,
 	      newReviewText: '',
-	      newReviewRating: 0
+	      newReviewRating: 0,
+	      MarketLinks: market_marketLinks.MarketLinks
 	    };
 	  },
 	  computed: {
@@ -91,6 +92,18 @@ this.BX = this.BX || {};
 	    editReviewNotAllowedText: function () {
 	      var _this$review$EDIT_REV;
 	      return (_this$review$EDIT_REV = this.review.EDIT_REVIEW_NOT_ALLOWED_TEXT) != null ? _this$review$EDIT_REV : '';
+	    },
+	    isSiteTemplate: function () {
+	      return this.review.IS_SITE_TEMPLATE === 'Y';
+	    },
+	    getBackgroundPath: function () {
+	      if (this.isSiteTemplate) {
+	        return this.review.SITE_PREVIEW;
+	      }
+	      return "/bitrix/js/market/images/backgrounds/" + this.getIndex + ".png";
+	    },
+	    getIndex: function () {
+	      return parseInt(this.reviewIndex, 10) % 30 + 1;
 	    }
 	  },
 	  mounted: function () {
@@ -143,16 +156,19 @@ this.BX = this.BX || {};
 	    },
 	    saveReview: function () {
 	      this.savingReview = true;
+	      const isSiteTemplate = this.isSiteTemplate === true ? 'Y' : 'N';
 	      BX.ajax.runAction('market.Application.editReview', {
 	        data: {
 	          reviewId: this.review.ID,
 	          appCode: this.review.APP_CODE,
 	          reviewText: this.newReviewText,
-	          currentRating: this.newReviewRating
+	          currentRating: this.newReviewRating,
+	          isSite: isSiteTemplate
 	        },
 	        analyticsLabel: {
 	          appCode: this.review.APP_CODE,
-	          currentRating: this.newReviewRating
+	          currentRating: this.newReviewRating,
+	          isSite: isSiteTemplate
 	        }
 	      }).then(response => {
 	        this.savingReview = false;
@@ -235,14 +251,19 @@ this.BX = this.BX || {};
 				</template>
 			</div>
 			<div class="market-reviews__item-content">
-				<a class="market-reviews__item-logo"
-				   :href="getDetailLink(review)"
-				>
-					<img class="market-reviews__item-logo-img"
-						 :src="review.APP_LOGO"
-						 alt="img"
+				<div class="market-reviews__item-content-logo">
+					<a class="market-reviews__item-content-logo-link"
+					   :style="{'background-image': 'url(\\'' + getBackgroundPath + '\\')'}"
+					   :href="getDetailLink(review)"
+					   @click="MarketLinks.openSiteTemplate($event, this.isSiteTemplate)"
 					>
-				</a>
+						<img class="market-reviews__item-content-logo-img"
+							 :src="review.APP_LOGO"
+							 v-if="!isSiteTemplate"
+							 alt="img"
+						>
+					</a>
+				</div>
 				<div class="market-reviews__item-main-content">
 					<div class="market-reviews__item-title-wrapper">
 						<a class="market-reviews__item-title"

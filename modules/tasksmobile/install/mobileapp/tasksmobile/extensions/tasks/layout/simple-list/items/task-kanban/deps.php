@@ -6,6 +6,7 @@ return [
 		'layout/ui/counter-view',
 		'layout/ui/fields/file',
 		'layout/ui/safe-image',
+		'ui-system/blocks/avatar',
 		'layout/ui/simple-list/items/extended',
 		'statemanager/redux/connect',
 		'statemanager/redux/slices/users',

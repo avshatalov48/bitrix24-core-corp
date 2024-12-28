@@ -7,6 +7,7 @@ namespace Bitrix\TasksMobile\Dto;
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Mobile\Dto\Dto;
 use Bitrix\Mobile\Dto\Type;
+use Bitrix\TasksMobile\UserField\Dto\UserFieldDto;
 
 final class TaskDto extends Dto
 {
@@ -86,6 +87,11 @@ final class TaskDto extends Dto
 	/** @var array<string, boolean> */
 	public array $actionsOld = [];
 
+	public bool $areUserFieldsLoaded;
+	/** @var UserFieldDto[] */
+	public array $userFields;
+	public array $userFieldNames;
+
 	public function getCasts(): array
 	{
 		return [
@@ -94,6 +100,7 @@ final class TaskDto extends Dto
 			'crm' => Type::collection(RelatedCrmItemDto::class),
 			'dodTypes' => Type::collection(DodTypesDto::class),
 			'checklistDetails' => Type::collection(ChecklistDetailsDto::class),
+			'userFields' => Type::collection(UserFieldDto::class),
 		];
 	}
 

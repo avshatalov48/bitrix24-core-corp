@@ -1,9 +1,12 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,crm_timeline_tools,main_core,main_core_events,main_date,main_popup,ui_notification) {
 	'use strict';
 
 	var _templateObject;
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -119,14 +122,19 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodGet(this, _assertValidParams, _assertValidParams2).call(this, _params);
 	    babelHelpers.classPrivateFieldSet(this, _id, _params.id || "ping-selector-".concat(main_core.Text.getRandom()));
 	    babelHelpers.classPrivateFieldSet(this, _target, main_core.Type.isDomNode(_params.target) ? _params.target : null);
-	    babelHelpers.classPrivateFieldSet(this, _valuesList, main_core.Type.isArrayFilled(_params.valuesList) ? _params.valuesList : []);
+	    babelHelpers.classPrivateFieldSet(this, _valuesList, main_core.Type.isArrayFilled(_params.valuesList) ? _params.valuesList.map(function (item) {
+	      return _objectSpread(_objectSpread({}, item), {}, {
+	        id: item.id.toString()
+	      });
+	    }) : []);
 	    if (main_core.Type.isArrayFilled(_params.selectedValues)) {
 	      _params.selectedValues.forEach(function (selectedValue) {
-	        return babelHelpers.classPrivateFieldGet(_this, _selectedValues).add(selectedValue);
+	        return babelHelpers.classPrivateFieldGet(_this, _selectedValues).add(selectedValue.toString());
 	      });
 	    }
 	    babelHelpers.classPrivateFieldSet(this, _readonlyMode, _params.readonlyMode === true);
 	    babelHelpers.classPrivateFieldSet(this, _deadline, main_core.Type.isDate(_params === null || _params === void 0 ? void 0 : _params.deadline) ? _params.deadline : new Date());
+	    babelHelpers.classPrivateFieldGet(this, _deadline).setSeconds(0);
 	    if (main_core.Type.isStringFilled(_params.icon) && Object.values(CompactIcons).includes(_params.icon)) {
 	      babelHelpers.classPrivateFieldSet(this, _icon, _params.icon);
 	    }
@@ -292,7 +300,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    return;
 	  }
-	  var offset = (babelHelpers.classPrivateFieldGet(this, _deadline).getTime() - date.getTime()) / 1000 / 60;
+	  var offset = Math.floor((babelHelpers.classPrivateFieldGet(this, _deadline).getTime() - date.getTime()) / 1000 / 60);
 	  babelHelpers.classPrivateFieldGet(this, _selectedValues).add(offset.toString());
 	  var customValue = {
 	    id: offset.toString(),

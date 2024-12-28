@@ -130,7 +130,7 @@ export class AiPage extends BaseSettingsPage
 
 	#buildItem(item: AiSettingsItem): SettingsRow
 	{
-		const {code, type, title, header, value, options} = item;
+		const { code, type, title, header, value, options, recommended } = item;
 		const withOnSave = item.onSave && item.onSave.switcher;
 
 		const row = new SettingsRow({
@@ -155,13 +155,13 @@ export class AiPage extends BaseSettingsPage
 		{
 			if (options && value)
 			{
-				const selectorItems = [];
-				const additionalOptions = [];
+				const items = [];
+				const additionalItems = [];
 				for (const option in options)
 				{
 					if (Type.isString(options[option]))
 					{
-						selectorItems.push({
+						items.push({
 							name: options[option],
 							value: option,
 							selected: option === value,
@@ -169,18 +169,19 @@ export class AiPage extends BaseSettingsPage
 					}
 					else if (Type.isPlainObject(options[option]))
 					{
-						additionalOptions.push(options[option]);
+						additionalItems.push(options[option]);
 					}
 				}
 
-				if (selectorItems.length > 0)
+				if (items.length > 0)
 				{
 					field = new SelectorField({
 						inputName: code,
 						label: title,
 						name: code,
-						items: selectorItems,
-						additionalItems: additionalOptions,
+						items,
+						additionalItems,
+						recommendedItems: recommended,
 						current: value,
 					});
 				}

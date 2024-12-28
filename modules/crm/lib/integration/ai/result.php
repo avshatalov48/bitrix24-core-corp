@@ -47,7 +47,8 @@ final class Result extends \Bitrix\Main\Result implements \JsonSerializable
 		private ?int $parentJobId = null,
 		private ?int $retryCount = null,
 		private bool $isManualLaunch = true,
-		private ?string $languageId = null
+		private ?string $languageId = null,
+		private ?int $nextTypeId = null,
 	)
 	{
 		parent::__construct();
@@ -153,6 +154,11 @@ final class Result extends \Bitrix\Main\Result implements \JsonSerializable
 		return $this->languageId;
 	}
 
+	public function getNextTypeId(): ?int
+	{
+		return $this->nextTypeId;
+	}
+
 	public function jsonSerialize(): array
 	{
 		return [
@@ -169,6 +175,7 @@ final class Result extends \Bitrix\Main\Result implements \JsonSerializable
 			'errors' => $this->getErrors(),
 			'isManualLaunch' => $this->isManualLaunch,
 			'languageId' => $this->languageId,
+			'nextTypeId' => $this->nextTypeId,
 		];
 	}
 

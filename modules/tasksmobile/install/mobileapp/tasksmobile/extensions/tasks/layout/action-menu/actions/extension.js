@@ -2,7 +2,6 @@
  * @module tasks/layout/action-menu/actions
  */
 jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
-	const { AnalyticsEvent } = require('analytics');
 	const { confirmDestructiveAction } = require('alert');
 	const { Icon } = require('ui-system/blocks/icon');
 	const { downloadImages } = require('asset-manager');
@@ -17,6 +16,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 	const { ExtraSettings } = require('tasks/layout/task/view-new/ui/extra-settings');
 	const { FeatureId } = require('tasks/enum');
 	const { Alert } = require('alert');
+	const { AnalyticsEvent } = require('analytics');
 
 	const store = require('statemanager/redux/store');
 	const { dispatch } = store;
@@ -34,6 +34,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 		startTimer,
 		pauseTimer,
 		start,
+		take,
 		pause,
 		complete,
 		renew,
@@ -60,6 +61,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 		START_TIMER: 'startTimer',
 		PAUSE_TIMER: 'pauseTimer',
 		START: 'start',
+		TAKE: 'take',
 		PAUSE: 'pause',
 		COMPLETE: 'complete',
 		RENEW: 'renew',
@@ -189,6 +191,21 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 				layoutWidget,
 			),
 		},
+		[ActionId.TAKE]: {
+			id: ActionId.TAKE,
+			title: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_TAKE'),
+			successToastPhrase: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_TAKE_SUCCESS'),
+			handleAction: (task, layoutWidget) => executeIfOnline(
+				() => {
+					dispatch(
+						take({
+							taskId: task.id,
+						}),
+					);
+				},
+				layoutWidget,
+			),
+		},
 		[ActionId.PAUSE]: {
 			id: ActionId.PAUSE,
 			title: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_PAUSE'),
@@ -212,7 +229,12 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 			handleAction: (task, layoutWidget, options, analyticsLabel = {}) => executeIfOnline(
 				() => {
 					const completeAction = () => {
-						if (task.isResultRequired && !task.isOpenResultExists && !selectIsCreator(task))
+						if (
+							task.isResultRequired
+							&& !task.isOpenResultExists
+							&& !selectIsCreator(task)
+							&& !env.isAdmin
+						)
 						{
 							// todo show button to attach instant result
 							showSafeToast(
@@ -379,11 +401,21 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 						initSelectedIds: [task.responsible],
 						createOptions: {
 							enableCreation: true,
-							analytics: new AnalyticsEvent().setSection('task'),
+							analytics: new AnalyticsEvent().setSection('tasks'),
 							getParentLayout: () => layout,
 						},
 						selectOptions: {
-							nonSelectableErrorText: Loc.getMessage('M_TASKS_ACTIONS_MENU_DELEGATE_NON_SELECTABLE'),
+							getNonSelectableErrorText: (item) => {
+								const isCollaber = item.params.entityType === 'collaber';
+								const isCollab = selectGroupById(store.getState(), task.groupId)?.isCollab;
+
+								if (isCollaber && !isCollab)
+								{
+									return Loc.getMessage('M_TASKS_DENIED_SELECT_COLLABER_WITHOUT_COLLAB');
+								}
+
+								return Loc.getMessage('M_TASKS_ACTIONS_MENU_DELEGATE_NON_SELECTABLE');
+							},
 						},
 						provider: {
 							context: 'TASKS_MEMBER_SELECTOR_EDIT_responsible',
@@ -709,6 +741,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 		[ActionId.START_TIMER]: Icon.PLAY,
 		[ActionId.PAUSE_TIMER]: Icon.PAUSE,
 		[ActionId.START]: Icon.PLAY,
+		[ActionId.TAKE]: Icon.PLAY,
 		[ActionId.PAUSE]: Icon.PAUSE,
 		[ActionId.DEFER]: Icon.DELAY,
 		[ActionId.RENEW]: Icon.REFRESH,

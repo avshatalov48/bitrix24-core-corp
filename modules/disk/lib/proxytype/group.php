@@ -3,6 +3,7 @@
 namespace Bitrix\Disk\ProxyType;
 
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\Integration\Collab\CollabService;
 use Bitrix\Disk\Storage;
 use Bitrix\Disk\Ui\Avatar;
 use Bitrix\Main\Loader;
@@ -15,6 +16,8 @@ class Group extends Disk
 	private $group;
 	private $photoCache = array();
 	private string $sefUrl = '';
+
+	private bool $isCollab;
 
 	/**
 	 * Potential opportunity to attach object to external entity
@@ -82,9 +85,27 @@ class Group extends Disk
 	 * Return name of storage.
 	 * @return string
 	 */
-	public function getTitle()
+	public function getTitle(): string
 	{
-		return Loc::getMessage('DISK_PROXY_TYPE_GROUP_TITLE');
+		if ($this->isCollab())
+		{
+			return Loc::getMessage('DISK_PROXY_TYPE_COLLAB_GROUP_TITLE');
+		}
+		else
+		{
+			return Loc::getMessage('DISK_PROXY_TYPE_GROUP_TITLE');
+		}
+	}
+
+	public function isCollab(): bool
+	{
+		if (!isset($this->isCollab))
+		{
+			$collabService = new CollabService();
+			$this->isCollab = $collabService->isCollabStorage($this->storage);
+		}
+
+		return $this->isCollab;
 	}
 
 	/**

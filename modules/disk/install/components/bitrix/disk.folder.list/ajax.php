@@ -1,5 +1,6 @@
 <?php
 use Bitrix\Disk\Configuration;
+use Bitrix\Disk\Document\OnlyOffice\Service\SessionTerminationService;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\ExternalLink;
 use Bitrix\Disk\File;
@@ -21,6 +22,7 @@ use Bitrix\Disk\Sharing;
 use Bitrix\Disk\Storage;
 use Bitrix\Disk\User;
 use Bitrix\Disk\Ui;
+use Bitrix\Main\Application;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\EventResult;
@@ -40,7 +42,7 @@ if(!empty($siteId) && is_string($siteId))
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
-if (!CModule::IncludeModule('disk') || !\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getQuery('action'))
+if (!CModule::IncludeModule('disk') || !Application::getInstance()->getContext()->getRequest()->getQuery('action'))
 {
 	return;
 }
@@ -1243,7 +1245,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 					'PARENT_ID' => null,
 				),
 			));
-			$needToOverwrite = $needToDelete = $needToAdd = array();
+			$needToOverwrite = $needToDelete = $needToAdd = $deletedOrChangedSharingItems = array();
 			while($sharingRow = $query->fetch())
 			{
 				if(isset($newExtendedRightsReformat[$sharingRow['TO_ENTITY']]))
@@ -1325,9 +1327,16 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 					}
 					else
 					{
-						SharingTable::update($sharingRow['ID'], array(
+						$sharingUpdateResult = SharingTable::update($sharingRow['ID'], array(
 							'TASK_NAME' => $newExtendedRightsReformat[$sharingRow['TO_ENTITY']],
 						));
+
+						$isSharingTypeToUser = (int)$sharingRow['TYPE'] === SharingTable::TYPE_TO_USER;
+						$isChangedAccessToRead = $newExtendedRightsReformat[$sharingRow['TO_ENTITY']] === $rightsManager::TASK_READ;
+						if ($isChangedAccessToRead && $isSharingTypeToUser && $sharingUpdateResult->isSuccess())
+						{
+							$deletedOrChangedSharingItems[] = Sharing::buildFromRow($sharingRow);
+						}
 					}
 				}
 
@@ -1346,23 +1355,61 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 				foreach(Sharing::getModelList(array('filter' => array('ID' => $ids))) as $sharing)
 				{
-					$sharing->delete($currentUserId);
+					if($sharing->delete($currentUserId))
+					{
+						$deletedOrChangedSharingItems[] = $sharing;
+					}
 				}
 			}
+
+			Application::getInstance()->addBackgroundJob(
+				function () use ($object, $deletedOrChangedSharingItems) {
+					$this->terminateAllSessionsForChangedOrDeletedSharingItems($object->getId(), $deletedOrChangedSharingItems);
+				}
+			);
 
 			$this->sendJsonSuccessResponse();
 		}
 		else
 		{
 			//user delete all sharing
+			$deletedSharingItems = [];
 			foreach($object->getRealObject()->getSharingsAsReal() as $sharing)
 			{
-				$sharing->delete($currentUserId);
+				if ($sharing->delete($currentUserId))
+				{
+					$deletedSharingItems[] = $sharing;
+				}
 			}
+
+			Application::getInstance()->addBackgroundJob(
+				function () use ($object, $deletedSharingItems) {
+					$this->terminateAllSessionsForChangedOrDeletedSharingItems($object->getId(), $deletedSharingItems);
+				}
+			);
 
 			$this->sendJsonSuccessResponse();
 		}
+	}
 
+	/**
+	 * @param int $objectId
+	 * @param Sharing[] $sharingItems
+	 * @return void
+	 */
+	private function terminateAllSessionsForChangedOrDeletedSharingItems(int $objectId, array $sharingItems): void
+	{
+		$userIds = [];
+		foreach ($sharingItems as $deletedSharing)
+		{
+			if ($deletedSharing->isToUser())
+			{
+				[,$userId] = Sharing::parseEntityValue($deletedSharing->getToEntity());
+				$userIds[] = $userId;
+			}
+		}
+		$sessionTerminationService = new SessionTerminationService($objectId, $userIds);
+		$sessionTerminationService->terminateAllSessions();
 	}
 
 	protected function processActionCopyTo($objectId, $targetObjectId)
@@ -2299,6 +2346,6 @@ final class DataSetOfRights extends \Bitrix\Disk\Type\DataSet
 
 $controller = new DiskFolderListAjaxController();
 $controller
-	->setActionName(\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getQuery('action'))
+	->setActionName(Application::getInstance()->getContext()->getRequest()->getQuery('action'))
 	->exec()
 ;

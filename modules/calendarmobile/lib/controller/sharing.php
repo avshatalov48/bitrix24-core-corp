@@ -2,21 +2,33 @@
 
 namespace Bitrix\CalendarMobile\Controller;
 
+use Bitrix\Calendar\Controller\SharingGroupAjax;
 use Bitrix\Calendar\Integration\Bitrix24\FeatureDictionary;
 use Bitrix\Calendar\Integration\Bitrix24Manager;
+use Bitrix\Calendar\Sharing\SharingGroup;
 use Bitrix\CalendarMobile\Dto;
+use Bitrix\CalendarMobile\Integration\IM\ChatService;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
-
-Loader::requireModule('calendar');
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\SystemException;
 
 class Sharing extends Controller
 {
+	private int $userId;
+
+	protected function init(): void
+	{
+		parent::init();
+
+		$this->userId = \CCalendar::GetUserId();
+	}
+
 	public function enableAction(): ?Dto\Sharing
 	{
-		$sharing = new \Bitrix\Calendar\Sharing\Sharing(\CCalendar::GetCurUserId());
+		$sharing = new \Bitrix\Calendar\Sharing\Sharing($this->userId);
 
 		$result = $sharing->enable();
 
@@ -48,7 +60,7 @@ class Sharing extends Controller
 
 	public function disableAction(): ?Dto\Sharing
 	{
-		$sharing = new \Bitrix\Calendar\Sharing\Sharing(\CCalendar::GetCurUserId());
+		$sharing = new \Bitrix\Calendar\Sharing\Sharing($this->userId);
 		$result = $sharing->disable();
 
 		$errors = [];
@@ -70,6 +82,7 @@ class Sharing extends Controller
 			'isEnabled' => false,
 			'isRestriction' => $this->isRestriction(),
 			'isPromo' => $this->isPromo(),
+			'userInfo' => $sharing->getUserInfo(),
 			'settings' => $this->getSettings($sharing->getLinkInfo()),
 		]);
 	}
@@ -81,7 +94,7 @@ class Sharing extends Controller
 			return false;
 		}
 
-		$sharing = new \Bitrix\Calendar\Sharing\Sharing(\CCalendar::GetUserId());
+		$sharing = new \Bitrix\Calendar\Sharing\Sharing($this->userId);
 		$result = $sharing->deactivateUserLink($hash);
 		if (!$result->isSuccess())
 		{
@@ -95,7 +108,7 @@ class Sharing extends Controller
 
 	public function isEnabledAction(): ?Dto\Sharing
 	{
-		$sharing = new \Bitrix\Calendar\Sharing\Sharing(\CCalendar::GetCurUserId());
+		$sharing = new \Bitrix\Calendar\Sharing\Sharing($this->userId);
 		$activeLinkShortUrl = $sharing->getActiveLinkShortUrl();
 
 		return Dto\Sharing::make([
@@ -103,13 +116,14 @@ class Sharing extends Controller
 			'isRestriction' => $this->isRestriction(),
 			'isPromo' => $this->isPromo(),
 			'shortUrl' => $activeLinkShortUrl,
+			'userInfo' => $sharing->getUserInfo(),
 			'settings' => $this->getSettings($sharing->getLinkInfo()),
 		]);
 	}
 
 	public function getPublicUserLinkAction(): ?array
 	{
-		$sharing = new \Bitrix\Calendar\Sharing\Sharing(\CCalendar::GetCurUserId());
+		$sharing = new \Bitrix\Calendar\Sharing\Sharing($this->userId);
 		$activeLinkShortUrl = $sharing->getActiveLinkShortUrl();
 
 		if(empty($activeLinkShortUrl))
@@ -119,7 +133,7 @@ class Sharing extends Controller
 		}
 
 		return [
-			'shortUrl'=> $activeLinkShortUrl
+			'shortUrl'=> $activeLinkShortUrl,
 		];
 	}
 
@@ -130,8 +144,7 @@ class Sharing extends Controller
 			return null;
 		}
 
-		$userId = \CCalendar::GetCurUserId();
-		$result = (new \Bitrix\Calendar\Sharing\Sharing($userId))->generateUserJointLink($memberIds);
+		$result = (new \Bitrix\Calendar\Sharing\Sharing($this->userId))->generateUserJointLink($memberIds);
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($this->getErrors());
@@ -149,10 +162,8 @@ class Sharing extends Controller
 			return null;
 		}
 
-		$userId = \CCalendar::GetCurUserId();
-
 		return [
-			'userLinks' => (new \Bitrix\Calendar\Sharing\Sharing($userId))->getAllUserLinkInfo(),
+			'userLinks' => (new \Bitrix\Calendar\Sharing\Sharing($this->userId))->getAllUserLinkInfo(),
 			'pathToUser' => Option::get('intranet', 'path_user', '/company/personal/user/#USER_ID#/', '-'),
 		];
 	}
@@ -164,7 +175,7 @@ class Sharing extends Controller
 			return false;
 		}
 
-		$sharing = new \Bitrix\Calendar\Sharing\Sharing(\CCalendar::GetUserId());
+		$sharing = new \Bitrix\Calendar\Sharing\Sharing($this->userId);
 		$result = $sharing->increaseFrequentUse($hash);
 		if (!$result->isSuccess())
 		{
@@ -239,6 +250,57 @@ class Sharing extends Controller
 		]);
 	}
 
+	/**
+	 * @param array $memberIds
+	 * @param int $groupId
+	 * @param string $dialogId
+	 *
+	 * @return array|null
+	 * @throws LoaderException
+	 * @throws SystemException
+	 */
+	public function generateGroupJointSharingLinkAction(array $memberIds, int $groupId, string $dialogId = ''): ?array
+	{
+		if (!empty($dialogId) && !Loader::includeModule('im'))
+		{
+			$this->addError(new Error('Module im not installed'));
+
+			return null;
+		}
+
+		$sharing = new SharingGroup($groupId, $this->userId);
+		if (!$sharing->isEnabled())
+		{
+			$sharing->enable();
+		}
+
+		$result = $this->forward(
+			SharingGroupAjax::class,
+			'generateJointSharingLink',
+			[
+				'memberIds' => $memberIds,
+				'groupId' => $groupId,
+			],
+		);
+
+		if ($result === null)
+		{
+			return null;
+		}
+
+		if (!empty($dialogId) && !empty($result['url']))
+		{
+			$messageResult = (new ChatService($this->userId))->sendMessage($dialogId, $result['url']);
+
+			if (!$messageResult->isSuccess())
+			{
+				$this->addError($messageResult->getError());
+			}
+		}
+
+		return $result;
+	}
+
 	private function getLinkInfoCrm(int $entityId, int $ownerId): array
 	{
 		$linkFactory = new \Bitrix\Calendar\Sharing\Link\Factory();
@@ -296,7 +358,7 @@ class Sharing extends Controller
 
 	public function setSortJointLinksByFrequentUseAction(string $sortByFrequentUse): void
 	{
-		$sharing = new \Bitrix\Calendar\Sharing\Sharing(\CCalendar::GetUserId());
+		$sharing = new \Bitrix\Calendar\Sharing\Sharing($this->userId);
 		$sharing->setSortJointLinksByFrequentUse($sortByFrequentUse === 'Y');
 	}
 }

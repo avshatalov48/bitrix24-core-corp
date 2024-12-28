@@ -6,8 +6,12 @@ use Bitrix\Crm\Activity\Provider\Base;
 use Bitrix\Crm\Activity\Provider\EventRegistrarInterface;
 use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
+use Bitrix\Crm\Badge\SourceIdentifier;
+use Bitrix\Crm\Badge\Type\TodoStatus;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Model\ActivityPingOffsetsTable;
 use Bitrix\Crm\Service\Communication\Channel\Event\ChannelEventRegistrar;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
@@ -137,7 +141,7 @@ class ToDo extends Base implements EventRegistrarInterface
 	protected static function getPreparedDescription(array $arFields): string
 	{
 		$description = $arFields['DESCRIPTION'] ?? '';
-		$description = \Bitrix\Crm\Entity\CommentsHelper::normalizeComment($description);
+		$description = \Bitrix\Crm\Format\TextHelper::removeParagraphs($description);
 		$additionalDescriptionData = $arFields['CALENDAR_ADDITIONAL_DESCRIPTION_DATA'] ?? null;
 
 		$descriptionItemsStr = '';
@@ -287,7 +291,7 @@ class ToDo extends Base implements EventRegistrarInterface
 
 	public static function getActivityTitle(array $activity): string
 	{
-		if (!empty($activity['SUBJECT']))
+		if (!empty($activity['SUBJECT']) && $activity['SUBJECT'] !== '')
 		{
 			return parent::getActivityTitle($activity);
 		}
@@ -319,5 +323,33 @@ class ToDo extends Base implements EventRegistrarInterface
 	{
 		// @todo support event creating from channel event
 		return new Result();
+	}
+
+	public static function syncBadges(int $activityId, array $activityFields, array $bindings): void
+	{
+		$badge = Container::getInstance()->getBadge(
+			TodoStatus::TODO_STATUS_TYPE,
+			TodoStatus::OVERLAP_EVENT_VALUE,
+		);
+
+		$itemIdentifier = new ItemIdentifier(
+			$activityFields['OWNER_TYPE_ID'],
+			$activityFields['OWNER_ID']
+		);
+
+		$sourceIdentifier = new SourceIdentifier(
+			SourceIdentifier::CRM_OWNER_TYPE_PROVIDER,
+			\CCrmOwnerType::Activity,
+			$activityId,
+		);
+
+		if (isset($activityFields['SETTINGS']['TAGS']['OVERLAP_EVENT']))
+		{
+			$badge->bind($itemIdentifier, $sourceIdentifier);
+		}
+		elseif ($badge->isBound($itemIdentifier, $sourceIdentifier))
+		{
+			$badge->unbind($itemIdentifier, $sourceIdentifier);
+		}
 	}
 }

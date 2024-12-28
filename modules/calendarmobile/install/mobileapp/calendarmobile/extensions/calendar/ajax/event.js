@@ -8,8 +8,14 @@ jn.define('calendar/ajax/event', (require, exports, module) => {
 		LOAD_MAIN: 'loadMain',
 		GET_LIST: 'getList',
 		GET_FILTERED_LIST: 'getFilteredList',
+		GET_EVENT_FOR_CONTEXT: 'getEventForContext',
 		SET_AHA_VIEWED: 'setAhaViewed',
-		GET_SECTION_LIST: 'getSectionList'
+		GET_SECTION_LIST: 'getSectionList',
+		GET_VIEW_FORM_CONFIG: 'getViewFormConfig',
+		GET_EDIT_FORM_CONFIG: 'getEditFormConfig',
+		GET_EVENT_CHAT_ID: 'getEventChatId',
+		GET_ICS_LINK: 'getIcsLink',
+		GET_FILES_FOR_VIEW_FORM: 'getFilesForViewForm',
 	};
 
 	class EventAjax extends BaseAjax
@@ -20,44 +26,55 @@ jn.define('calendar/ajax/event', (require, exports, module) => {
 		}
 
 		/**
-		 *
 		 * Returns init config for calendar
 		 * @returns {Promise<Object, void>}
 		 */
-		loadMain()
+		loadMain({ ownerId, calType })
 		{
-			return this.fetch(EventActions.LOAD_MAIN);
+			return this.fetch(EventActions.LOAD_MAIN, { ownerId, calType });
 		}
 
 		/**
 		 * Returns events
-		 * @param {{yearFrom, yearTo, monthFrom, monthTo, sectionIdList}} params
+		 * @param yearFrom {number}
+		 * @param yearTo {number}
+		 * @param monthFrom {number}
+		 * @param monthTo {number}
+		 * @param sectionIdList {array}
 		 * @returns {Promise<Object, void>}
 		 */
-		getList(params)
+		getList({ yearFrom, yearTo, monthFrom, monthTo, sectionIdList })
 		{
 			return this.fetch(EventActions.GET_LIST, {
-				yearFrom: params.yearFrom,
-				yearTo: params.yearTo,
-				monthFrom: params.monthFrom,
-				monthTo: params.monthTo,
-				sectionIdList: params.sectionIdList,
+				yearFrom,
+				yearTo,
+				monthFrom,
+				monthTo,
+				sectionIdList,
 			});
 		}
 
 		/**
 		 * Returns events by filter
-		 * @param {{search, preset}} params
+		 * @param search {any}
+		 * @param preset {any}
+		 * @param ownerId {number}
+		 * @param calType {string}
 		 * @returns {Promise<Object, void>}
 		 */
-		getFilteredList(params)
+		getFilteredList({ search, preset, ownerId, calType })
 		{
-			const { search, preset } = params;
+			return this.fetch(EventActions.GET_FILTERED_LIST, { search, preset, ownerId, calType });
+		}
 
-			return this.fetch(EventActions.GET_FILTERED_LIST, {
-				search,
-				preset,
-			});
+		/**
+		 * @param parentId {number}
+		 * @param ownerId {number}
+		 * @param calType {string}
+		 */
+		getEventForContext({ parentId, ownerId, calType })
+		{
+			return this.fetch(EventActions.GET_EVENT_FOR_CONTEXT, { parentId, ownerId, calType });
 		}
 
 		/**
@@ -66,24 +83,92 @@ jn.define('calendar/ajax/event', (require, exports, module) => {
 		 */
 		setAhaViewed(name)
 		{
-			return this.fetch(EventActions.SET_AHA_VIEWED, {
-				name,
+			return this.fetch(EventActions.SET_AHA_VIEWED, { name });
+		}
+
+		/**
+		 * Return list of sections
+		 * @param ownerId
+		 * @param calType
+		 * @returns {Promise<Object, void>}
+		 */
+		getSectionList({ ownerId, calType })
+		{
+			return this.fetch(EventActions.GET_SECTION_LIST, { ownerId, calType });
+		}
+
+		/**
+		 * @param eventId {number}
+		 * @param eventDate {string}
+		 * @param timezoneOffset {number}
+		 * @param userIds {array}
+		 * @param requestUsers {Y|N}
+		 * @param requestCollabs {Y|N}
+		 * @param getEventById {Y|N}
+		 * @returns {Promise<Object, void>}
+		 */
+		getViewFormConfig({
+			eventId,
+			eventDate,
+			timezoneOffset = 0,
+			userIds,
+			requestUsers,
+			requestCollabs,
+			getEventById,
+		})
+		{
+			return this.fetch(EventActions.GET_VIEW_FORM_CONFIG, {
+				eventId,
+				eventDate,
+				timezoneOffset,
+				userIds,
+				requestUsers,
+				requestCollabs,
+				getEventById,
 			});
 		}
 
 		/**
-		 *
-		 * Return list of sections
+		 * @param eventId {number}
+		 * @param parentId {number}
 		 * @returns {Promise<Object, void>}
 		 */
-		getSectionList()
+		getFilesForViewForm({ eventId, parentId })
 		{
-			return this.fetch(EventActions.GET_SECTION_LIST);
+			return this.fetch(EventActions.GET_FILES_FOR_VIEW_FORM, { eventId, parentId });
+		}
+
+		/**
+		 * @param ownerId {number}
+		 * @param calType {string}
+		 * @param userIds {array}
+		 * @returns {Promise<Object, void>}
+		 */
+		getEditFormConfig({ ownerId, calType, userIds })
+		{
+			return this.fetch(EventActions.GET_EDIT_FORM_CONFIG, { ownerId, calType, userIds });
+		}
+
+		/**
+		 * @param eventId {number}
+		 * @returns {Promise<Object, void>}
+		 */
+		getEventChatId(eventId)
+		{
+			return this.fetch(EventActions.GET_EVENT_CHAT_ID, { eventId });
+		}
+
+		/**
+		 * @param eventId {number}
+		 * @returns {Promise<Object, void>}
+		 */
+		getIcsLink({ eventId })
+		{
+			return this.fetch(EventActions.GET_ICS_LINK, { eventId });
 		}
 	}
 
 	module.exports = {
 		EventAjax: new EventAjax(),
-		EventActions,
 	};
 });

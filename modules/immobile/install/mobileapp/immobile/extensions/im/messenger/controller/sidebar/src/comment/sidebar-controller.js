@@ -45,8 +45,8 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 		get styleBtn()
 		{
 			return {
-				border: { color: Theme.colors.bgSeparatorSecondary },
-				text: { color: Theme.colors.base2 },
+				border: { color: Theme.colors.bgSeparatorPrimary },
+				text: { color: Theme.colors.base1 },
 			};
 		}
 
@@ -61,7 +61,10 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 			PageManager.openWidget(
 				'layout',
 				{
-					title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_WIDGET_TITLE_COMMENT'),
+					titleParams: {
+						text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_WIDGET_TITLE_COMMENT'),
+						type: 'entity',
+					},
 				},
 			)
 				.then(
@@ -81,7 +84,7 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 			this.sidebarService.subscribeInitTabsData();
 			this.sidebarService.initTabsData();
 			this.sidebarService.setStore();
-			this.bindListener();
+			this.bindMethods();
 			this.setUserService();
 			this.setPermissions();
 			this.createView();
@@ -95,7 +98,7 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 		 * @desc Method binding this for use in handlers
 		 * @void
 		 */
-		bindListener()
+		bindMethods()
 		{
 			this.onUpdateStore = this.onUpdateStore.bind(this);
 			this.onCloseWidget = this.onCloseWidget.bind(this);
@@ -137,7 +140,7 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 		subscribeBXCustomEvents()
 		{
 			logger.log(`${this.constructor.name}.subscribeBXCustomEvents`);
-			BX.addCustomEvent('onDestroySidebar', this.onDestroySidebar);
+			BX.addCustomEvent(EventType.sidebar.destroy, this.onDestroySidebar);
 			BX.addCustomEvent(EventType.dialog.external.delete, this.onDeleteChat);
 		}
 
@@ -151,7 +154,7 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 		unsubscribeBXCustomEvents()
 		{
 			logger.log(`${this.constructor.name}.unsubscribeBXCustomEvents`);
-			BX.removeCustomEvent('onDestroySidebar', this.onDestroySidebar);
+			BX.removeCustomEvent(EventType.sidebar.destroy, this.onDestroySidebar);
 			BX.removeCustomEvent(EventType.dialog.external.delete, this.onDeleteChat);
 		}
 
@@ -188,7 +191,7 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 					{
 						icon: buttonIcons.search(Theme.colors.base7),
 						text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_BTN_SEARCH'),
-						callback: () => this.onClickSearchBtn(),
+						callback: () => this.onClickSearchButton(),
 						disable: true,
 						style: this.styleBtn,
 					},
@@ -214,20 +217,20 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 				{
 					icon: buttonIcons.eyeOnInline(),
 					text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_BTN_SUBSCRIBED'),
-					callback: () => this.onClickSubscribeBtn(),
+					callback: () => this.onClickSubscribeButton(),
 					style: this.styleBtn,
 				},
 			) : ButtonFactory.createIconButton(
 				{
 					icon: buttonIcons.eyeOffInline(),
 					text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_BTN_SUBSCRIBE'),
-					callback: () => this.onClickSubscribeBtn(),
+					callback: () => this.onClickSubscribeButton(),
 					style: this.styleBtn,
 				},
 			);
 		}
 
-		onClickSearchBtn()
+		onClickSearchButton()
 		{
 			const locValue = Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_NOTICE_COMING_SOON');
 			InAppNotifier.showNotification(
@@ -238,7 +241,7 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 			);
 		}
 
-		onClickSubscribeBtn()
+		onClickSubscribeButton()
 		{
 			if (!isOnline())
 			{
@@ -269,7 +272,7 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 
 			if (payload.actionName === 'unmute' || payload.actionName === 'mute')
 			{
-				this.changeMuteBtn();
+				this.changeMuteButton();
 			}
 		}
 
@@ -282,7 +285,7 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 		{
 			this.unsubscribeStoreEvents();
 			this.unsubscribeBXCustomEvents();
-			BX.onCustomEvent('onCloseSidebarWidget');
+			BX.onCustomEvent(EventType.sidebar.closeWidget);
 		}
 
 		onDeleteChat({ dialogId })
@@ -299,16 +302,16 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 		 * @desc Changed icon in btn subscribe ( eyeOn or eyeOff icon )
 		 * @void
 		 */
-		changeMuteBtn()
+		changeMuteButton()
 		{
-			const res = this.createSubscribeBtn();
-			BX.onCustomEvent('onChangeMuteBtn', res);
+			const subscribeButton = this.createSubscribeBtn();
+			BX.onCustomEvent(EventType.sidebar.changeMuteButton, subscribeButton);
 		}
 
-		updateBtn()
+		updateAllButton()
 		{
-			const newStateBtn = this.createButtons();
-			BX.onCustomEvent('onUpdateBtn', newStateBtn);
+			const newStateButton = this.createButtons();
+			BX.onCustomEvent(EventType.sidebar.updateAllButton, newStateButton);
 		}
 
 		isSuperEllipseAvatar()

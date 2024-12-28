@@ -3,6 +3,7 @@
  */
 jn.define('crm/selector/entity/company', (require, exports, module) => {
 	const { get } = require('utils/object');
+	const { BaseSelectorEntity } = require('selector/widget/entity');
 	const { SelectorProcessing } = require('crm/selector/utils/processing');
 
 	/**

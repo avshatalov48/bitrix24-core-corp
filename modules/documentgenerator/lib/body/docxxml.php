@@ -9,7 +9,6 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
-use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\DOM;
 
 class DocxXml extends Xml
@@ -838,18 +837,6 @@ class DocxXml extends Xml
 			else
 			{
 				$value = $this->prepareTextValue($value);
-			}
-		}
-
-		if (mb_strtoupper(SITE_CHARSET) !== 'UTF-8')
-		{
-			if (is_array($value) || is_object($value))
-			{
-				$value = '';
-			}
-			elseif (!Encoding::detectUtf8($value))
-			{
-				$value = Encoding::convertEncoding($value, SITE_CHARSET, 'UTF-8');
 			}
 		}
 

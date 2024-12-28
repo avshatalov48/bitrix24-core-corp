@@ -42,6 +42,7 @@ use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Helper\Analytics;
+use Bitrix\Tasks\Integration\Extranet;
 
 Loc::loadMessages(__FILE__);
 
@@ -567,10 +568,20 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 			if (!$canViewGroup)
 			{
-				$errors->add(
-					'ACCESS_TO_GROUP_DENIED',
-					Loc::getMessage('TASKS_TL_ACCESS_TO_GROUP_DENIED')
-				);
+				if (isset($arParams['CONTEXT']) && $arParams['CONTEXT'] === Context::getCollab())
+				{
+					$errors->add(
+						'ACCESS_TO_GROUP_DENIED',
+						Loc::getMessage('TASKS_TL_ACCESS_TO_COLLAB_DENIED')
+					);
+				}
+				else
+				{
+					$errors->add(
+						'ACCESS_TO_GROUP_DENIED',
+						Loc::getMessage('TASKS_TL_ACCESS_TO_GROUP_DENIED')
+					);
+				}
 			}
 		}
 
@@ -781,8 +792,6 @@ class TasksTaskListComponent extends TasksBaseComponent
 			: $this->filter->process()
 		; //TODO!
 
-		$this->processGroupActions();
-
 		if ($this->needGroupBySubTasks())
 		{
 			//TODO!!!
@@ -856,196 +865,16 @@ class TasksTaskListComponent extends TasksBaseComponent
 			$this->arResult['LAST_GROUP_ID'] = (int)($this->request->get('lastGroupId') ?: 0);
 		}
 
+		$this->arResult["IS_COLLAB"] = isset($this->arResult['CONTEXT']) && $this->arResult['CONTEXT'] === Context::getCollab();
+		if ($this->arResult["IS_COLLAB"])
+		{
+			$group = SocialNetwork\Group::getGroupData((int) $this->arParams['GROUP_ID']);
+			$this->arResult["COLLAB_NAME"] = $group["NAME"] ?? '';
+			$this->arResult["COLLAB_IMAGE"] = $group["IMAGE"] ?? '';
+		}
+
 		return true;
 	}
-
-	protected function processGroupActions()
-	{
-		if (!Bitrix\Main\Grid\Context::isInternalRequest() || !check_bitrix_sessid())
-		{
-			return false;
-		}
-
-		$request = static::getRequest();
-		$controls = $request->get('controls');
-		if (!$controls || !is_array($controls))
-		{
-			return false;
-		}
-
-		$rows = $request->get('rows');
-		Main\Type\Collection::normalizeArrayValuesByInt($rows, false);
-
-		$action = $controls['action_button_'.$this->arParams['GRID_ID']];
-
-		$allTasks = array_key_exists('action_all_rows_'.$this->arParams['GRID_ID'], $controls) &&
-					$controls['action_all_rows_'.$this->arParams['GRID_ID']] == 'Y';
-
-		if ($allTasks)
-		{
-			$parameters = array('ERRORS' => $this->errors);
-
-			$getListParameters = array(
-				'select'       => array('ID'),
-				'legacyFilter' => array_merge($this->listParameters['filter'], array('ONLY_ROOT_TASKS' => 'N'))
-			);
-			$mgrResult = Manager\Task::getList($this->arParams['USER_ID'], $getListParameters, $parameters);
-			$rows = array();
-			foreach ($mgrResult['DATA'] as $item)
-			{
-				$rows[] = $item['ID'];
-			}
-		}
-
-		$auxParams = array(
-			'QUERY_TYPE' => static::QUERY_TYPE_AJAX,
-			'CLASS_NAME' => static::getComponentClassName(),
-			'REQUEST'    => $request
-		);
-
-		$arParams = array();
-		$errors = new Collection();
-
-		$plan = new \Bitrix\Tasks\Dispatcher\ToDo\Plan();
-		$todo = array();
-
-		$arguments = array();
-
-		switch ($action)
-		{
-			case 'setgroup':
-				$arguments['groupId'] = (int)$controls['groupId'];
-				break;
-			case 'setoriginator':
-				$arguments['originatorId'] = (int)$controls['originatorId'];
-				break;
-			case 'setresponsible':
-				$arguments['responsibleId'] = (int)$controls['responsibleId'];
-				break;
-			case 'addaccomplice':
-				$arguments['accompliceId'] = (int)$controls['accompliceId'];
-				break;
-			case 'addauditor':
-				$arguments['auditorId'] = (int)$controls['auditorId'];
-				break;
-			case 'setdeadline':
-				$arguments['newDeadline'] = $controls['ACTION_SET_DEADLINE_from'];
-				break;
-			case 'substractdeadline':
-			case 'adjustdeadline':
-				$arguments['type'] = $controls['type'];
-				$arguments['num'] = (int)$controls['num'];
-
-				if(!$arguments['num'])
-				{
-					$this->arResult['MESSAGES'] = array(
-						"TYPE" => \Bitrix\Main\Grid\MessageType::ERROR,
-						"TITLE" => GetMessage('TASKS_GROUP_ACTION_DAYS_NUM_INVALID_TITLE'),
-						"TEXT" => GetMessage('TASKS_GROUP_ACTION_DAYS_NUM_INVALID_TEXT')
-					);
-
-					return;
-				}
-				break;
-			case 'settaskcontrol':
-				$arguments['value'] = $controls['value'];
-				break;
-		}
-
-		$errorsList = array();
-
-		$ignoreIds = [];
-		if ($action === 'complete')
-		{
-			$taskIdToComplete = [];
-			foreach ($rows as $rowId)
-			{
-				$taskIdToComplete[] = $rowId;
-			}
-
-			if ($taskIdToComplete)
-			{
-				$queryObject = TaskTable::getList([
-					'filter' => [
-						'ID' => $taskIdToComplete,
-					],
-					'select' => ['ID', 'GROUP_ID'],
-				]);
-				while ($taskData = $queryObject->fetch())
-				{
-					$group = Workgroup::getById($taskData['GROUP_ID']);
-
-					if ($group && $group->isScrumProject())
-					{
-						$ignoreIds[] = $taskData['ID'];
-
-						$errorsList[GetMessage('TASKS_GROUP_ACTION_COMPLETE_SCRUM_TASK')][] = $taskData['ID'];
-					}
-				}
-			}
-		}
-
-		foreach ($rows as $rowId)
-		{
-			if (!in_array($rowId, $ignoreIds))
-			{
-				$arguments['id'] = $rowId;
-
-				$todo[] = array(
-					'OPERATION'  => 'task.'.$action,
-					'ARGUMENTS'  => $arguments,
-					'PARAMETERS' => $arParams
-				);
-			}
-		}
-		$plan->import($todo);
-
-		static::dispatch($plan, $errors, $auxParams, $arParams);
-
-		/** @var Bitrix\Tasks\Dispatcher\ToDo $item */
-		foreach ($plan as $item)
-		{
-			$result = $item->getResult();
-
-			if (!$result)
-			{
-				continue;
-			}
-
-			$errors = $result->getErrors();
-			$args = $item->getArguments();
-
-			if ($errors->count() > 0)
-			{
-				/** @var Bitrix\Tasks\Util\Error $err */
-				foreach ($errors as $err)
-				{
-					$errorsList[$err->getMessage()][] = $args['id'];
-				}
-			}
-		}
-
-		if (!empty($errorsList))
-		{
-			foreach ($errorsList as $error => $taskIds)
-			{
-				$this->arResult['MESSAGES'][] = array(
-					"TYPE" => \Bitrix\Main\Grid\MessageType::MESSAGE,
-					"TITLE" => GetMessage('TASKS_GROUP_ACTION_ERROR_TITLE'),
-					"TEXT" => GetMessage(
-						'TASKS_GROUP_ACTION_ERROR_MESSAGE',
-						array(
-							'#MESSAGE#' => $error,
-							'#TASK_IDS#' => join(', ', $taskIds)
-						)
-					)
-				);
-			}
-		}
-
-		return $errors->checkNoFatals();
-	}
-
 
 	protected function doPostAction()
 	{
@@ -1547,6 +1376,23 @@ class TasksTaskListComponent extends TasksBaseComponent
 			];
 		}
 
+		if ($this->arResult['CONTEXT'] === Context::getCollab())
+		{
+			return '
+				<div class="tasks-list-create">
+					<div class="tasks-list-collab-empty-state-title">' . Loc::getMessage('TASKS_GRID_STUB_PROJECT_CREATE_COLLAB') . '</div>
+					<div class="tasks-list-collab-empty-state-subtitle">'
+						. Loc::getMessage(
+							'TASKS_GRID_STUB_PROJECT_CREATE_COLLAB_SUBTITLE',
+							[
+								'[helpdesklink]' => '<a href="javascript:top.BX.Helper.show(\'redirect=detail&code=22707810\');" class="tasks-list-collab-empty-state-subtitle-link">',
+								'[/helpdesklink]' => '</a>'
+							]) .
+						'</div>
+				</div>
+			';
+		}
+
 		if ($this->arParams['GROUP_ID'] > 0)
 		{
 			return '
@@ -1558,6 +1404,14 @@ class TasksTaskListComponent extends TasksBaseComponent
 					<div class="tasks-list-create-subtitle">' . Loc::getMessage('TASKS_GRID_STUB_PROJECT_CREATE_TASK_SUBTITLE') . '</div>
 				</div>
 			';
+		}
+		$isCollaber = Extranet\User::isCollaber($this->arResult['USER_ID']);
+
+		if ($isCollaber)
+		{
+			return [
+				'title' => Loc::getMessage('TASKS_GRID_STUB_DESCRIPTION_COLLAB'),
+			];
 		}
 
 		return [

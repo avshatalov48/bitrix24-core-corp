@@ -32,6 +32,7 @@ declare type MessengerItemPropsData = {
     title: string,
     subtitle: string,
     description: string,
+    avatar: AvatarProps,
     avatarUri: string | undefined,
     avatarColor: string,
     isYouTitle: string,

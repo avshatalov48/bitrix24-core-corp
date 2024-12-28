@@ -6,6 +6,9 @@ return [
 		'apptheme',
 		'im:messenger/api/dialog-opener',
 		'require-lazy',
+		'haptics',
+		'alert',
+		'loc',
 	],
 	'components' => [
 		'user.profile',

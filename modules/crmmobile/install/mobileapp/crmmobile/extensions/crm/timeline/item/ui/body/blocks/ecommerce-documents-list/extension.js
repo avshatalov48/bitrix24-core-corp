@@ -229,6 +229,7 @@ jn.define('crm/timeline/item/ui/body/blocks/ecommerce-documents-list', (require,
 							title: documentDescription,
 							redirectUrl: `/crm/deal/details/${this.props.ownerId}/`,
 							hintText: Loc.getMessage('CRM_TIMELINE_DOCUMENT_LIST_SHIPMENT_QRAUTH_HINT_MSGVER_1'),
+							analyticsSection: 'crm',
 						});
 					};
 				}

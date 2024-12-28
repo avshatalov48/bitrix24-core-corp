@@ -215,7 +215,8 @@ export class TagSearcher extends EventEmitter
 					label: Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_EPIC_ADD'),
 				},
 			},
-			hideOnDeselect: true,
+			hideOnSelect: false,
+			hideOnDeselect: false,
 			events: {
 				'Search:onItemCreateAsync': (event) => {
 					return new Promise((resolve) => {
@@ -242,6 +243,7 @@ export class TagSearcher extends EventEmitter
 					this.getEpic(selectedItem.getId())
 						.then((epic: EpicType) => {
 							this.emit('updateItemEpic', epic);
+							this.epicDialog.hide();
 						})
 					;
 				},
@@ -251,6 +253,7 @@ export class TagSearcher extends EventEmitter
 						if (this.epicDialog.getSelectedItems().length === 0)
 						{
 							this.emit('updateItemEpic', null);
+							this.epicDialog.hide();
 						}
 					}, 50);
 				},

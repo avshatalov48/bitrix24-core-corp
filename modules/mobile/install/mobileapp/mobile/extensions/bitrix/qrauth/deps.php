@@ -17,6 +17,8 @@ return [
 		'ui-system/layout/card',
 		'ui-system/blocks/icon',
 		'ui-system/blocks/link',
+		'ui-system/layout/area',
+		'ui-system/layout/area-list',
 		'layout/ui/buttons/action',
 		'layout/ui/buttons/cancel',
 		'layout/ui/buttons/primary',

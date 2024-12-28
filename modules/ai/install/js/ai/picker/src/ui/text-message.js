@@ -1,9 +1,8 @@
 import { Base } from './base';
-import { Tag, bind, Dom } from 'main.core';
+import { Tag, Dom } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Button, ButtonIcon } from 'ui.buttons';
 import { TextField } from './text-field';
-import { Icon, Main } from 'ui.icon-set.api.core';
 import { Popup } from 'main.popup';
 import 'ui.icon-set.main';
 import 'ui.icon-set.actions';
@@ -33,7 +32,6 @@ export class TextMessage extends Base
 {
 	#submitBtn: Button | null;
 	#textField: TextField | null;
-	#hintInfo: TextMessageHint | null;
 	#hintPopup: Popup | null;
 	#buttonIcon: 'pencil' | 'brush';
 	#container: HTMLElement | null;
@@ -46,7 +44,6 @@ export class TextMessage extends Base
 
 		this.setEventNamespace('AI:Picker:TextMessage');
 
-		this.#hintInfo = props.hint;
 		this.#hintPopup = null;
 		this.#container = null;
 		this.#buttonIcon = this.#isValidButtonIcon(props.submitButtonIcon) ? props.submitButtonIcon : 'pencil';
@@ -160,7 +157,6 @@ export class TextMessage extends Base
 			<div class="ai__picker_text-message">
 				<div class="ai__picker_text-message_text-field-wrapper">
 					${this.#getTextArea().render()}
-					${this.#renderHint()}
 				</div>
 				${this.#submitBtnContainer}
 			</div>
@@ -211,99 +207,5 @@ export class TextMessage extends Base
 			this.#submitBtn.getContainer().blur();
 			this.#submitBtn.setState(state);
 		}
-	}
-
-	#renderHint(): HTMLElement
-	{
-		if (!this.#hintInfo)
-		{
-			return null;
-		}
-
-		const title = this.#hintInfo.title;
-		const text = this.#hintInfo.text;
-
-		const icon = new Icon({
-			icon: Main.INFO_1,
-			color: getComputedStyle(document.body).getPropertyValue('--ui-color-base-40'),
-			size: 16,
-		});
-
-		const hintIcon = Tag.render`<div class="ai__picker_text-message-hint-icon">${icon.render()}</div>`;
-
-		const hintContainer = Tag.render`
-			<div class="ai__picker_text-message-hint">
-				${hintIcon}
-				<div class="ai__picker_text-message-hint-title">${title}</div>
-			</div>
-		`;
-
-		const hintContent = Tag.render`
-			<div class="ai__picker_text-message-hint-text">${text}</div>
-		`;
-
-		let isNeedToShowHint = false;
-		const popupWidth = 294;
-
-		bind(hintContainer, 'mouseenter', () => {
-			if (!this.#hintPopup)
-			{
-				this.#hintPopup = this.#createHintPopup({
-					width: popupWidth,
-					content: hintContent,
-					targetContainer: hintIcon.closest('body'),
-				});
-			}
-
-			isNeedToShowHint = true;
-			const showPopupDelay = 500;
-
-			setTimeout(() => {
-				if (isNeedToShowHint)
-				{
-					this.#showHintPopup(hintIcon, popupWidth);
-				}
-			}, showPopupDelay);
-		});
-
-		bind(hintContainer, 'mouseleave', () => {
-			this.#hintPopup.close();
-			isNeedToShowHint = false;
-		});
-
-		return hintContainer;
-	}
-
-	#createHintPopup(options: {width: number, content: HTMLElement, targetContainer: HTMLElement}): Popup
-	{
-		return new Popup({
-			angle: {
-				position: 'top',
-				offset: options.width / 2 - 17,
-			},
-			animation: 'fading-slide',
-			content: options.content,
-			maxWidth: options.width,
-			padding: 10,
-			targetContainer: options.targetContainer,
-			darkMode: true,
-			closeByEsc: true,
-			autoHide: true,
-		});
-	}
-
-	#showHintPopup(bindElement: HTMLElement, hintWidth: number): void
-	{
-		const iconPosition = bindElement.getBoundingClientRect();
-
-		const popupPosition = {
-			left: iconPosition.left + (iconPosition.width / 2) - (hintWidth / 2) + 40,
-			top: iconPosition.bottom,
-		};
-
-		this.#hintPopup.setToFrontOnShow();
-		this.#hintPopup.setBindElement(popupPosition);
-		this.#hintPopup.adjustPosition();
-		this.#hintPopup.show();
 	}
 }

@@ -7,10 +7,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 	const { Type } = require('type');
 	const { PureComponent } = require('layout/pure-component');
 	const { CounterView } = require('layout/ui/counter-view');
-	const { ReduxAvatar } = require('layout/ui/user/avatar');
-
 	const { openTaskCreateForm } = require('tasks/layout/task/create/opener');
-
 	const { Color, Component, Indent } = require('tokens');
 	const { Card, CardDesign } = require('ui-system/layout/card');
 	const { ChipStatus, ChipStatusDesign, ChipStatusMode } = require('ui-system/blocks/chips/chip-status');
@@ -21,6 +18,10 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 	const { Entry } = require('tasks/entry');
 	const { FeatureId } = require('tasks/enum');
 	const { getFeatureRestriction } = require('tariff-plan-restriction');
+	const { AvatarStack } = require('ui-system/blocks/avatar-stack');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
+	const { FlowAiAdvice } = require('tasks/flow-list/simple-list/items/flow-redux/src/flow-ai-advice');
+	const { showToast } = require('toast');
 
 	class FlowContent extends PureComponent
 	{
@@ -109,6 +110,11 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 			return this.flow?.efficiency ?? 0;
 		}
 
+		get tasksTotal()
+		{
+			return this.flow?.tasksTotal ?? 0;
+		}
+
 		get myTasksCounter()
 		{
 			return this.flow?.myTasksCounter ?? {};
@@ -127,6 +133,19 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 		get enableFlowUrl()
 		{
 			return this.flow?.enableFlowUrl ?? '';
+		}
+
+		/**
+		 * @return {FlowAiAdviceDTO}
+		 */
+		get aiAdvice()
+		{
+			return this.flow?.aiAdvice;
+		}
+
+		get shouldShowAiAdviceFooter()
+		{
+			return Boolean(this.aiAdvice);
 		}
 
 		get testId()
@@ -151,19 +170,114 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 				return null;
 			}
 
-			return this.renderCard();
+			return View(
+				{
+					testId: this.testId,
+				},
+				this.renderCard(),
+				this.shouldShowAiAdviceFooter && this.renderAiAdviceFooter(),
+			);
+		}
+
+		renderAiAdviceFooter()
+		{
+			const isEnoughTasksForAdvice = this.tasksTotal >= this.aiAdvice.minTasksCountForAdvice;
+			const isEfficiencyLow = this.efficiency <= this.aiAdvice.efficiencyThreshold;
+			const isLowEfficiencyFooter = isEnoughTasksForAdvice && isEfficiencyLow;
+
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+						justifyContent: 'space-between',
+						alignItems: 'center',
+						marginHorizontal: Component.paddingLr.toNumber(),
+						paddingHorizontal: Indent.XL2.toNumber(),
+						marginTop: -Indent.L.toNumber(),
+						marginBottom: this.isLast ? Indent.XL2.toNumber() : 0,
+						paddingTop: Indent.XL3.toNumber(),
+						paddingBottom: Indent.XL.toNumber(),
+						backgroundColor: (
+							isLowEfficiencyFooter
+								? Color.copilotBgContent1.toHex()
+								: Color.bgContentTertiary.toHex()
+						),
+						borderBottomLeftRadius: 12,
+						borderBottomRightRadius: 12,
+						zIndex: 0,
+					},
+					testId: `${this.testId}-ai-advice-footer`,
+					onClick: () => {
+						if (this.aiAdvice.advices.length > 0)
+						{
+							FlowAiAdvice.show(this.flow, this.props.layout);
+						}
+						else
+						{
+							showToast(
+								{
+									message: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_TOAST'),
+								},
+								this.props.layout,
+							);
+						}
+					},
+				},
+				BBCodeText({
+					style: {
+						flex: 1,
+						color: (isLowEfficiencyFooter ? Color.base2.toHex() : Color.base4.toHex()),
+						fontWeight: '400',
+						fontSize: 13,
+					},
+					testId: `${this.testId}-ai-advice-footer-field`,
+					numberOfLines: 2,
+					ellipsize: 'end',
+					value: this.getAiAdviceFooterText(),
+				}),
+				IconView({
+					style: {
+						marginLeft: Indent.L.toNumber(),
+					},
+					icon: Icon.CHEVRON_TO_THE_RIGHT,
+					color: (isLowEfficiencyFooter ? Color.copilotAccentLess2 : Color.base4),
+					size: 20,
+				}),
+			);
+		}
+
+		getAiAdviceFooterText()
+		{
+			if (this.tasksTotal < this.aiAdvice.minTasksCountForAdvice)
+			{
+				return Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_NO_DATA');
+			}
+
+			if (this.efficiency <= this.aiAdvice.efficiencyThreshold)
+			{
+				return Loc.getMessage(
+					'TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_LOW',
+					{
+						'#ANCHOR_START#': `[b][color=${Color.copilotAccentLess2}]`,
+						'#ANCHOR_END#': '[/color][/b]',
+					},
+				);
+			}
+
+			return Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_HIGH');
 		}
 
 		renderCard()
 		{
 			return Card(
 				{
-					testId: this.testId,
+					testId: `${this.testId}-card`,
 					border: true,
 					style: {
 						marginHorizontal: Component.paddingLr.toNumber(),
-						marginBottom: this.isLast ? Indent.XL2.toNumber() : 0,
+						marginBottom: !this.shouldShowAiAdviceFooter && this.isLast ? Indent.XL2.toNumber() : 0,
 						marginTop: Indent.XL2.toNumber(),
+						zIndex: 1,
 					},
 					onClick: this.cardClickHandler,
 					design: this.getCardDesign(),
@@ -329,13 +443,13 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 				{
 					style: {
 						backgroundColor: backgroundColor.toHex(),
-						width: 30,
-						height: 30,
-						borderRadius: 14,
+						width: 32,
+						height: 32,
+						borderRadius: 16,
 						alignItems: 'center',
 						justifyContent: 'center',
 						marginLeft,
-						borderWidth: 1,
+						borderWidth: 2,
 						borderColor: Color.base8.toHex(),
 					},
 				},
@@ -431,9 +545,20 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 			);
 		}
 
+		renderAvatarStackRestView(count)
+		{
+			return this.renderUsersCountCircle({
+				count,
+				testId: `${this.testId}-pending-avatar-stack-rest-count`,
+				color: Color.base4,
+				backgroundColor: Color.base7,
+				showPlusInCounter: count !== 0,
+			});
+		}
+
 		renderPendingStack()
 		{
-			const size = 30;
+			const visibleEntityCount = this.pending.length === 2 ? 2 : 1;
 
 			return View(
 				{
@@ -442,52 +567,14 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 						justifyContent: 'flex-start',
 					},
 				},
-				this.pending.length === 0 && this.renderUsersCountCircle({
-					testId: `${this.testId}-pending-no-tasks-count`,
-					count: 0,
-					backgroundColor: Color.base7,
-					color: Color.base4,
-				}),
-				this.pending.length > 0 && ReduxAvatar({
-					id: this.pending[0],
-					size,
-					testId: `${this.testId}-flow-pending-first-avatar`,
-					additionalStyles: {
-						wrapper: {
-							backgroundColor: Color.bgContentPrimary.toHex(),
-							borderRadius: size / 2,
-						},
-						image: {
-							borderWidth: 1,
-							borderColor: Color.base8.toHex(),
-							opacity: this.getUserAvatarOpacity(),
-						},
-					},
-				}),
-				this.pending.length === 2 && ReduxAvatar({
-					id: this.pending[1],
-					size,
-					testId: `${this.testId}-flow-pending-first-avatar`,
-					additionalStyles: {
-						wrapper: {
-							marginLeft: -1 * (size / 2),
-							backgroundColor: Color.bgContentPrimary.toHex(),
-							borderRadius: size / 2,
-						},
-						image: {
-							borderWidth: 1,
-							borderColor: Color.base8.toHex(),
-							opacity: this.getUserAvatarOpacity(),
-						},
-					},
-				}),
-				this.pending.length > 2 && this.renderUsersCountCircle({
-					testId: `${this.testId}-pending-tasks-count`,
-					count: this.pending.length - 1,
-					backgroundColor: Color.base7,
-					color: Color.base4,
-					marginLeft: -1 * (size / 2),
-					showPlusInCounter: true,
+				this.pending.length === 0 && this.renderAvatarStackRestView(0),
+				this.pending.length > 0 && AvatarStack({
+					testId: `${this.testId}-pending-avatar-stack`,
+					withRedux: true,
+					size: 28,
+					entities: this.pending,
+					restView: this.renderAvatarStackRestView.bind(this),
+					visibleEntityCount,
 				}),
 			);
 		}

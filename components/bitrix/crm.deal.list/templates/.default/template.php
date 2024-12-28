@@ -388,6 +388,8 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 
 			if ($arResult['IS_BIZPROC_AVAILABLE'])
 			{
+				\Bitrix\Main\UI\Extension::load(['bp_starter']);
+
 				$arActions[] = array('SEPARATOR' => true);
 				if (isset($arContact['PATH_TO_BIZPROC_LIST']) && $arContact['PATH_TO_BIZPROC_LIST'] !== '')
 					$arActions[] = array(
@@ -395,7 +397,20 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 						'TEXT' => GetMessage('CRM_DEAL_BIZPROC'),
 						'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arDeal['PATH_TO_BIZPROC_LIST'])."');"
 					);
-				if (!empty($arDeal['BIZPROC_LIST']))
+
+				if (class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
+				{
+					$starterConfig = \Bitrix\Main\Web\Json::encode(
+						CCrmBizProcHelper::getBpStarterConfig(CCrmOwnerType::Deal, $arDeal['ID'])
+					);
+					$reloadGridAction = 'function(){BX.Main.gridManager.reload(\'' . CUtil::JSEscape($arResult['GRID_ID']) . '\');}';
+					$arActions[] = [
+						'TITLE' => Loc::getMessage('CRM_DEAL_BIZPROC_LIST_TITLE'),
+						'TEXT' => Loc::getMessage('CRM_DEAL_BIZPROC_LIST'),
+						'ONCLICK' => 'BX.Bizproc.Starter.showTemplates(' . $starterConfig . ', { callback:' . $reloadGridAction . '})',
+					];
+				}
+				elseif (!empty($arDeal['BIZPROC_LIST']))
 				{
 					$arBizprocList = [];
 					foreach ($arDeal['BIZPROC_LIST'] as $arBizproc)

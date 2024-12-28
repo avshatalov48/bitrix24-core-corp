@@ -24,6 +24,8 @@ class CrmItemDetailsComponent extends FactoryBased
 
 		$this->executeBaseLogic();
 
+		$this->setBizprocStarterConfig();
+
 		$this->includeComponentTemplate();
 	}
 

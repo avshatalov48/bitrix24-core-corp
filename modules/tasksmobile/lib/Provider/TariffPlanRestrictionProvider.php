@@ -10,6 +10,8 @@ use Bitrix\Tasks\Flow\FlowFeature;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\FilterLimit;
+use Bitrix\Tasks\Util\UserField\Restriction;
+use Bitrix\Tasks\Util\UserField\Task;
 
 final class TariffPlanRestrictionProvider
 {
@@ -78,6 +80,12 @@ final class TariffPlanRestrictionProvider
 						'isRestricted' => self::isWorkTimeMatchRestricted(),
 						'isPromo' => self::isWorkTimeMatchPromo(),
 					],
+					FeatureDictionary::TASK_CUSTOM_FIELDS => [
+						'code' => FeatureDictionary::TASK_CUSTOM_FIELDS,
+						'title' => Loc::getMessage('TASKSMOBILE_TARIFF_PLAN_RESTRICTION_USER_FIELDS'),
+						'isRestricted' => self::isUserFieldRestricted(),
+						'isPromo' => self::isUserFieldPromo(),
+					],
 					'tasks_search' => [
 						'code' => 'tasks_search',
 						'title' => Loc::getMessage('TASKSMOBILE_TARIFF_PLAN_RESTRICTION_SEARCH'),
@@ -135,6 +143,11 @@ final class TariffPlanRestrictionProvider
 		return !Bitrix24::checkFeatureEnabled(FeatureDictionary::TASK_SKIP_WEEKENDS);
 	}
 
+	public static function isUserFieldRestricted(): bool
+	{
+		return !Restriction::canUse(Task::getEntityCode());
+	}
+
 	public static function isSearchRestricted(): bool
 	{
 		return FilterLimit::isLimitExceeded();
@@ -183,6 +196,11 @@ final class TariffPlanRestrictionProvider
 	public static function isWorkTimeMatchPromo(): bool
 	{
 		return self::isFeaturePromo(FeatureDictionary::TASK_SKIP_WEEKENDS);
+	}
+
+	public static function isUserFieldPromo(): bool
+	{
+		return self::isFeaturePromo(FeatureDictionary::TASK_CUSTOM_FIELDS);
 	}
 
 	private static function isFeaturePromo(string $featureId): bool

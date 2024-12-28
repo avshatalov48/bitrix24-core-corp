@@ -19,7 +19,7 @@ Loc::loadLanguageFile(__DIR__ . '/template.php');
 	'ui.forms',
 	'crm.entity-editor',
 	'sign.v2.ui.tokens',
-	'sign.tour',
+	'sign.onboarding',
 ]);
 
 $currentRegion = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
@@ -122,19 +122,9 @@ else
 
 <script>
 	BX.ready(() => {
-		const guide = new BX.Sign.Tour.Guide({
-			id: "sign-tour-guide-sign-start-kanban",
-			autoSave: true,
-			simpleMode: true,
-			steps: [
-				{
-					target: '.ui-toolbar-after-title-buttons > a.ui-btn',
-					title: '<?= CUtil::JSescape(Loc::getMessage('SIGN_CMP_START_TPL_TOUR_SIGN_BTN_TITLE')) ?>',
-					text: '<?= CUtil::JSescape(Loc::getMessage('SIGN_CMP_START_TPL_TOUR_SIGN_BTN_TEXT')) ?>',
-					article: <?= $openSignHelpdeskCode ?>,
-				},
-			],
-		});
-		guide.startOnce();
+		(new BX.Sign.Onboarding())
+			.getB2bGuide('.ui-toolbar-after-title-buttons > a.ui-btn')
+			.startOnce()
+		;
 	});
 </script>

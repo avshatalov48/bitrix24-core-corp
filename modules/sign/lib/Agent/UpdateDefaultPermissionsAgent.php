@@ -71,7 +71,7 @@ final class UpdateDefaultPermissionsAgent
 
 	private static function isAllPermissionsHasDefaultValues(RolePermissionService $rolePermissionService): bool
 	{
-		$flatAccessRightsFromAllRoles = self::getFlatAccessRightsFromAllRoles($rolePermissionService);
+		$flatAccessRightsFromAllRoles = $rolePermissionService->getFlatAccessRightsFromAllRoles();
 
 		$permissionIds = [...self::B2E_CRM_PERMISSION_IDS, ...self::B2E_SIGN_PERMISSION_IDS];
 		$previousDefaultPermissionValues = [\CCrmPerms::PERM_NONE, '0'];
@@ -93,24 +93,6 @@ final class UpdateDefaultPermissionsAgent
 		return true;
 	}
 
-	private static function getFlatAccessRightsFromAllRoles(RolePermissionService $rolePermissionService): array
-	{
-		$userGroups = $rolePermissionService->getUserGroups();
-		$roleIdToAccessRightsMap = [];
-		foreach ($userGroups as $userGroup)
-		{
-			$roleIdToAccessRightsMap[(int)$userGroup['id']] = $userGroup['accessRights'];
-		}
-		$accessRights = array_column($userGroups, 'accessRights');
-		$flatAccessRightsFromAllRoles = [];
-		foreach ($accessRights as $accessRight)
-		{
-			$flatAccessRightsFromAllRoles = array_merge($flatAccessRightsFromAllRoles, $accessRight);
-		}
-
-		return $flatAccessRightsFromAllRoles;
-	}
-
 	private static function updateDefaultPermissions(RolePermissionService $rolePermissionService): void
 	{
 		$rolesToInstall = self::getInstallingRoles($rolePermissionService);
@@ -119,11 +101,9 @@ final class UpdateDefaultPermissionsAgent
 			return;
 		}
 
-		$roles = \CCrmRole::GetList(
-			['ID' => 'DESC'], ['=GROUP_CODE' => RolePermissionService::ROLE_GROUP_CODE]
-		);
+		$roles = $rolePermissionService->getRoleList();
 
-		while ($role = $roles->Fetch())
+		foreach ($roles as $role)
 		{
 			foreach ($rolesToInstall as $roleToInstall => $permission)
 			{

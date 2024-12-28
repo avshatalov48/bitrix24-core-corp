@@ -440,6 +440,10 @@
 	mask-image: url('../../../images/timeline-card-logos/ai/additions/crm-timeline__circle-check.svg');
 }
 
+.crm-timeline__card-logo_add-icon.--icon-ai-scoring > i {
+	mask-image: url('../../../images/timeline-card-logos/ai/additions/crm-timeline__ai-scoring.svg');
+}
+
 .crm-timeline__card-logo_add-icon.--type-failure > i {
 	background-color: var(--ui-color-background-on-alert, #e92f2a);
 }
@@ -484,4 +488,24 @@
 	background-color: transparent;
 	mask-image: none;
 	background-image: url('../../../images/timeline-card-logos/tasks/crm-timeline__task-activity.svg');
+}
+
+.crm-timeline__card-logo_icon.--bizproc > i {
+	background-color: transparent;
+	mask-image: none;
+	background-image: url('../../../images/timeline-card-logos/bizproc/crm-timeline__bizproc.svg');
+}
+
+.crm-timeline__card-logo_icon.--bizproc-task > i {
+	background-color: transparent;
+	mask-image: none;
+	background-image: url('../../../images/timeline-card-logos/bizproc/crm-timeline__bizproc-task.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-clock > i {
+	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__clock.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-comment > i {
+	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__comment.svg');
 }

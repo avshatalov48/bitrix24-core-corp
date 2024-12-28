@@ -6,22 +6,30 @@ use Bitrix\Sign\Compatibility\Role;
 use Bitrix\Sign\Exception\SignException;
 use Bitrix\Sign\Repository\MemberRepository;
 use Bitrix\Sign\Service\Container;
+use Bitrix\Sign\Service\Integration\HumanResources\HcmLinkFieldService;
 use Bitrix\Sign\Type;
 use Bitrix\Sign\Item;
 use Bitrix\Sign\Service;
+use Bitrix\Sign\Service\Providers\LegalInfoProvider;
 
 class Factory
 {
 	private MemberRepository $memberRepository;
 	private Service\Sign\BlockService $blockService;
+	private readonly HcmLinkFieldService $hcmLinkFieldService;
+	private readonly LegalInfoProvider $legalInfoProvider;
 
 	public function __construct(
 		?MemberRepository $memberRepository = null,
 		?Service\Sign\BlockService $blockService = null,
+		?HcmLinkFieldService $hcmLinkFieldService = null,
+		?LegalInfoProvider $legalInfoProvider = null,
 	)
 	{
 		$this->memberRepository = $memberRepository ?? Container::instance()->getMemberRepository();
 		$this->blockService = $blockService ?? Container::instance()->getSignBlockService();
+		$this->hcmLinkFieldService = $hcmLinkFieldService ?? Container::instance()->getHcmLinkFieldService();
+		$this->legalInfoProvider = $legalInfoProvider ?? Container::instance()->getLegalInfoProvider();
 	}
 
 	/**
@@ -52,6 +60,8 @@ class Factory
 
 			Type\BlockCode::B2E_MY_REFERENCE => new Configuration\B2e\MyB2eReference($skipSecurity),
 			Type\BlockCode::B2E_REFERENCE => new Configuration\B2e\B2eReference($skipSecurity),
+			Type\BlockCode::EMPLOYEE_DYNAMIC => new Configuration\B2e\EmployeeDynamic(),
+			Type\BlockCode::B2E_HCMLINK_REFERENCE => new Configuration\B2e\HcmLinkReference(),
 		};
 	}
 
@@ -123,5 +133,44 @@ class Factory
 			Type\BlockCode::MY_REQUISITES, Type\BlockCode::REQUISITES => Type\BlockType::MULTILINE_TEXT,
 			default => Type\BlockType::TEXT
 		};
+	}
+
+	public function makeStubBlockByRequiredField(
+		Item\Document $document,
+		Item\B2e\RequiredField $requiredField,
+		int $party,
+	): ?Item\Block
+	{
+		$name = null;
+		$code = null;
+		if ($document->hcmLinkCompanyId && $this->hcmLinkFieldService->isAvailable())
+		{
+			$name = $this->hcmLinkFieldService->getHcmRequiredFieldSelectorNameByType(
+				integrationId: $document->hcmLinkCompanyId,
+				fieldType: $requiredField->type,
+				party: $party,
+			);
+			$code = Type\BlockCode::B2E_HCMLINK_REFERENCE;
+		}
+
+		if (!$name)
+		{
+			$name = $this->legalInfoProvider->getFirstFieldNameByType($requiredField->type);
+			$code = Type\BlockCode::getB2eReferenceCodeByRole($requiredField->role);
+		}
+
+		if (!$name)
+		{
+			return null;
+		}
+
+		return $this->makeItem(
+			document: $document,
+			code: $code,
+			party: $party,
+			data: ['field' => $name],
+			skipSecurity: true,
+			role: $requiredField->role,
+		);
 	}
 }

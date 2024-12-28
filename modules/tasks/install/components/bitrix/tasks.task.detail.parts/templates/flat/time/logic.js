@@ -282,6 +282,8 @@ BX.namespace("Tasks.Component");
 			"Y"
 		);
 
+		const userTypeClass = `task-log-author-${data.USER_TYPE}`;
+
 		var id = data["ID"];
 		var date = data["CREATED_DATE"];
 		var comment = data["COMMENT_TEXT"];
@@ -299,7 +301,8 @@ BX.namespace("Tasks.Component");
 			date: date,
 			timeFormatted: BX.Tasks.Util.formatTimeAmount(time.time),
 			comment: comment,
-			pathToUserProfile: pathToUserProfile
+			pathToUserProfile: pathToUserProfile,
+			userTypeClass,
 		});
 
 		var oldRecord = this.getRecordById(id);

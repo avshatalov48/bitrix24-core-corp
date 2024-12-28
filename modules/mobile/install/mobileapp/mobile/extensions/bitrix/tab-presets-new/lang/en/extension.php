@@ -1,0 +1,23 @@
+<?php
+$MESS["PRESET_INFO_CANCEL"] = "Cancel";
+$MESS["PRESET_INFO_SELECT"] = "Select";
+$MESS["PRESET_INFO_SELECTED"] = "Selected";
+$MESS["PRESET_MANUAL_SETTINGS_BANNER_DESCRIPTION"] = "Select and rearrange menu items that will be displayed in the Bottom menu. The remaining items will be available under the \"More\" icon.";
+$MESS["PRESET_MANUAL_SETTINGS_BANNER_TITLE"] = "Create your own menu";
+$MESS["PRESET_MANUAL_SETTINGS_BUTTON_HIDE"] = "Hide";
+$MESS["PRESET_MANUAL_SETTINGS_BUTTON_SAVE"] = "Done";
+$MESS["PRESET_MANUAL_SETTINGS_BUTTON_SHOW"] = "Add";
+$MESS["PRESET_MANUAL_SETTINGS_SECTION_MENU_TITLE"] = "Bottom menu items";
+$MESS["PRESET_MANUAL_SETTINGS_SECTION_MORE_TITLE"] = "More menu items";
+$MESS["PRESET_MANUAL_SETTINGS_TITLE"] = "Custom menu";
+$MESS["TAB_PRESETS_NEW_APPLY_ERROR"] = "Cannot apply changes";
+$MESS["TAB_PRESETS_NEW_BANNER_DESCRIPTION"] = "Pick the layout preset for the bottom menu, or select \"Custom menu\" to create your own layout.";
+$MESS["TAB_PRESETS_NEW_BANNER_TITLE"] = "Select bottom menu";
+$MESS["TAB_PRESETS_NEW_CONFIRM_ACCEPT"] = "OK";
+$MESS["TAB_PRESETS_NEW_CONFIRM_CLOSE"] = "Cancel";
+$MESS["TAB_PRESETS_NEW_CONFIRM_DESCRIPTION"] = "Do you want to change the bottom menu? You can select a different option at any time.";
+$MESS["TAB_PRESETS_NEW_CONFIRM_TITLE"] = "Bottom menu";
+$MESS["TAB_PRESETS_NEW_EDIT"] = "Edit";
+$MESS["TAB_PRESETS_NEW_ERROR"] = "Cannot open the settings page. If the issue persists, contact your Bitrix24 administrator.";
+$MESS["TAB_PRESETS_NEW_SELECT"] = "Select";
+$MESS["TAB_PRESETS_NEW_SELECTED"] = "Selected";

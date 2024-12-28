@@ -1,48 +1,31 @@
 import { Dom, Event, Loc, Tag, Text as TextFormat, Type, Uri } from 'main.core';
+import { MemoryCache } from 'main.core.cache';
+import { EventEmitter } from 'main.core.events';
 import { DateTimeFormat } from 'main.date';
 import { Loader } from 'main.loader';
 import { Menu } from 'main.popup';
 import { Guide } from 'sign.tour';
+import type { B2eCompanyList, Company, Provider, ProviderCodeType } from 'sign.v2.api';
 import { Api } from 'sign.v2.api';
+import { HcmLinkCompanySelector } from 'sign.v2.b2e.hcm-link-company-selector';
 import { type Scheme, SchemeType } from 'sign.v2.b2e.scheme-selector';
 import { CompanyEditor, CompanyEditorMode, DocumentEntityTypeId, EditorTypeGuid } from 'sign.v2.company-editor';
-import { DocumentInitiated } from 'sign.v2.document-setup';
 import type { DocumentInitiatedType } from 'sign.v2.document-setup';
+import { DocumentInitiated } from 'sign.v2.document-setup';
 import { Helpdesk, Link } from 'sign.v2.helper';
-import { Alert, AlertColor } from 'ui.alerts';
+import { Alert, AlertColor, AlertSize } from 'ui.alerts';
 import { Dialog } from 'ui.entity-selector';
 import { Label, LabelColor } from 'ui.label';
 
 import './style.css';
 
-type CompanyInfo = {
-	id: ?Number,
-	title: ?String,
-	rqInn: ?Number,
-	registerUrl: ?String,
-	providers: ?Array<Provider>,
-};
-
-export type ProviderCodeType = 'goskey' | 'ses-com' | 'ses-ru' | 'external';
-export const ProviderCode: $ReadOnly<{ [key: string]: ProviderCodeType }> = Object.freeze({
+export type { ProviderCodeType };
+export const ProviderCode: Readonly<Record<string, ProviderCodeType>> = Object.freeze({
 	goskey: 'goskey',
 	sesCom: 'ses-com',
 	sesRu: 'ses-ru',
 	external: 'external',
 });
-
-export type Provider = {
-	code: ProviderCodeType,
-	uid: ?string,
-	timestamp: ?number,
-	virtual: boolean,
-	autoRegister: boolean,
-	name: ?string;
-	description: ?string,
-	iconUrl: ?string,
-	expires: ?number,
-	externalProviderId: ?string,
-};
 
 type CompanyData = {
 	id: ?number,
@@ -54,6 +37,12 @@ export type CompanySelectorOptions = {
 	entityId: number;
 	region: string;
 	documentInitiatedType?: DocumentInitiatedType;
+	loadCompanyPromise?: Promise<B2eCompanyList>;
+	canCreateCompany?: boolean;
+	canEditCompany?: boolean;
+	isCompaniesDeselectable?: boolean,
+	hcmLinkAvailable: boolean,
+	needOpenCrmSaveAndEditCompanySliders?: boolean,
 };
 
 const allowedSignatureProviders: Array<ProviderCodeType> = ['goskey', 'external', 'ses-ru', 'ses-com'];
@@ -68,10 +57,16 @@ export const HelpdeskCodes: $ReadOnly<{ [key: string]: string }> = Object.freeze
 	GoskeyApiKey: '19740816',
 });
 
-export class CompanySelector
+export class CompanySelector extends EventEmitter
 {
+	events = {
+		onCompaniesLoad: 'onCompaniesLoad',
+		onSelect: 'onSelect',
+	};
+
 	#api: Api;
-	#companyList: Array<CompanyInfo> = [];
+	#layoutCache: MemoryCache<HTMLElement> = new MemoryCache();
+	#companyList: Array<Company> = [];
 
 	#reloadDelayForHide: Number = 1000;
 
@@ -88,6 +83,7 @@ export class CompanySelector
 	#providerMenu: Dialog = null;
 	#dialog: Dialog = null;
 	#showTaxId: boolean = true;
+	#integrationSelector: HcmLinkCompanySelector;
 
 	#ui = {
 		container: HTMLDivElement = null,
@@ -145,7 +141,11 @@ export class CompanySelector
 
 	constructor(options: CompanySelectorOptions = {})
 	{
+		super();
+		this.setEventNamespace('BX.Sign.V2.B2e.CompanySelector');
 		this.#api = new Api();
+		this.#integrationSelector = new HcmLinkCompanySelector();
+		this.#integrationSelector.setAvailability(options.hcmLinkAvailable);
 		this.#options = options;
 		this.#ui.provider.container = this.getProviderLayout();
 		this.#ui.container = this.getLayout();
@@ -175,7 +175,12 @@ export class CompanySelector
 				return provider.uid === companyUid;
 			});
 		});
+		if (Type.isUndefined(company))
+		{
+			return;
+		}
 		this.#company.id = company.id;
+		this.#integrationSelector.setCompanyId(this.#company.id);
 		this.#updateDialogItems();
 		this.#selectProvider(companyUid);
 	}
@@ -303,18 +308,22 @@ export class CompanySelector
 			<div class="sign-document-b2e-company-info-name"></div>
 		`;
 
-		this.#ui.info.editButton = Tag.render`
-			<div class="sign-document-b2e-company-info-edit"></div>
-		`;
-		this.#ui.info.setRqInnButton = Tag.render`
-			<button class="ui-btn ui-btn-xs ui-btn-round ui-btn-success">
-				${Loc.getMessage('SIGN_B2E_COMPANIES_CHANGE_INN')}
-			</button>
-		`;
+		if (this.#options.canEditCompany ?? true)
+		{
+			this.#ui.info.editButton = Tag.render`
+				<div class="sign-document-b2e-company-info-edit"></div>
+			`;
+			this.#ui.info.setRqInnButton = Tag.render`
+				<button class="ui-btn ui-btn-xs ui-btn-round ui-btn-success">
+					${Loc.getMessage('SIGN_B2E_COMPANIES_CHANGE_INN_1')}
+				</button>
+			`;
+		}
 
 		this.#ui.info.title.header.container = Tag.render`
 			<div class="sign-document-b2e-company-info-header">
 				${this.#ui.info.title.header.name}
+				${this.#getCompanyInfoLabelLayout()}
 				${this.#ui.info.title.header.dropdownButton}
 			</div>
 		`;
@@ -358,12 +367,24 @@ export class CompanySelector
 				${this.#ui.select.button}
 			</div>
 		`;
+		const requireCrmPermissionLayout = this.#options.needOpenCrmSaveAndEditCompanySliders
+			? this.#getCompanySaveAndEditRequireCrmPermissionLayout()
+			: ''
+		;
 		this.#ui.container = Tag.render`
-			<div class="sign-document-b2e-company">
-				${this.#ui.select.container}
-				${this.#ui.info.container}
+			<div>
+				<div class="sign-document-b2e-company">
+					${this.#ui.select.container}
+					${this.#ui.info.container}
+				</div>
+				${requireCrmPermissionLayout}
 			</div>
 		`;
+
+		if (this.#options.hcmLinkAvailable)
+		{
+			Dom.append(this.#integrationSelector.render(), this.#ui.container);
+		}
 
 		return this.#ui.container;
 	}
@@ -425,6 +446,7 @@ export class CompanySelector
 	{
 		BX.hide(this.#ui.info.container);
 		BX.hide(this.#ui.provider.container);
+		this.#integrationSelector.hide();
 		this.#ui.select.container.style.display = 'flex';
 	}
 
@@ -434,23 +456,34 @@ export class CompanySelector
 		BX.hide(this.#ui.select.container);
 	}
 
-	#load(): Promise<void>
+	async #load(): Promise<void>
 	{
 		this.#showLoader();
+		const loadCompanyPromise = this.#options.loadCompanyPromise
+			?? this.#api.loadB2eCompanyList(this.#options.documentInitiatedType ?? DocumentInitiated.company)
+		;
 
-		return this.#api.loadB2eCompanyList()
-			.then((data) => {
-				this.#hideLoader();
-				if (Type.isObject(data.companies) && Type.isArray(data.companies))
-				{
-					this.#companyList = data.companies;
-					this.#showTaxId = Boolean(data?.showTaxId);
-					this.#updateDialogItems();
-				}
-			}).catch((response) => {
-				this.#hideLoader();
-				console.log(response);
-			});
+		let data = null;
+		try
+		{
+			data = await loadCompanyPromise;
+		}
+		catch (error)
+		{
+			this.#hideLoader();
+			console.log(error);
+
+			return;
+		}
+
+		this.#hideLoader();
+		if (Type.isObject(data.companies) && Type.isArray(data.companies))
+		{
+			this.#companyList = data.companies;
+			this.#showTaxId = Boolean(data?.showTaxId);
+			this.#updateDialogItems();
+			this.emit(this.events.onCompaniesLoad, { companies: this.#companyList });
+		}
 	}
 
 	#getLoader(): Loader
@@ -476,7 +509,20 @@ export class CompanySelector
 			return this.#dialog;
 		}
 
+		let footer = null;
+		if (this.#options.canCreateCompany ?? true)
+		{
+			footer = Tag.render`
+				<span
+					class="ui-selector-footer-link ui-selector-footer-link-add"
+					onclick="${() => this.#createCompany()}"
+				>
+					${Loc.getMessage('SIGN_B2E_ADD_COMPANY')}
+				</span>
+			`;
+		}
 		this.#dialog = new Dialog({
+			targetNode: this.#ui.container,
 			width: 425,
 			height: 363,
 			items: this.#companyList.map((company) => {
@@ -485,6 +531,7 @@ export class CompanySelector
 					entityId: 'b2e-company',
 					title: company.title,
 					tabs: 'b2e-companies',
+					deselectable: this.#options.isCompaniesDeselectable ?? true,
 				};
 			}),
 			tabs: [
@@ -504,14 +551,7 @@ export class CompanySelector
 					this.#dialog.hide();
 				},
 			},
-			footer: Tag.render`
-				<span
-					class="ui-selector-footer-link ui-selector-footer-link-add"
-					onclick="${() => this.#createCompany()}"
-				>
-					${Loc.getMessage('SIGN_B2E_ADD_COMPANY')}
-				</span>
-			`,
+			footer,
 		});
 
 		return this.#dialog;
@@ -574,7 +614,7 @@ export class CompanySelector
 		const providerMenu = this.#getProviderMenu();
 		const providers = providerMenu.getItems();
 		const currentProvider = providers.find((provider) => provider.id === id);
-		currentProvider.select();
+		currentProvider?.select();
 	}
 
 	#onProviderDeselect(): void
@@ -616,7 +656,6 @@ export class CompanySelector
 		const menu = this.#getProviderMenu();
 		const company = this.#getCompanyById(this.#company.id);
 
-
 		company.providers.forEach((provider: Provider) => {
 			const { providerName, description } = this.#getConnectedName(provider, company.rqInn);
 
@@ -632,8 +671,12 @@ export class CompanySelector
 		});
 		const [firstItem] = menu.getItems();
 		firstItem.select();
+
 		const nothingToSelect = !company?.registerUrl && company?.providers?.length < 2;
-		this.#ui.provider.connected.selectDropdownButton.style.display = nothingToSelect ? 'none' : 'block';
+		this.#ui.provider.connected.selectDropdownButton.style.display = nothingToSelect
+			? 'none'
+			: 'block'
+		;
 	}
 
 	#renderProviderInfo(provider: Provider | null = null): void
@@ -654,7 +697,10 @@ export class CompanySelector
 			`;
 			const thirdParagraph = Tag.render`
 				<p>
-					${Helpdesk.replaceLink(Loc.getMessage('SIGN_B2E_COMPANIES_UNSET_PROVIDER_MORE'), HelpdeskCodes.HowToChooseProvider)}
+					${Helpdesk.replaceLink(
+				Loc.getMessage('SIGN_B2E_COMPANIES_UNSET_PROVIDER_MORE'),
+				HelpdeskCodes.HowToChooseProvider,
+			)}
 				</p>
 			`;
 			Dom.append(firstParagraph, this.#ui.provider.info);
@@ -704,7 +750,10 @@ export class CompanySelector
 			'ses-ru': HelpdeskCodes.SesRuDetails,
 		};
 
-		const text = Tag.render`<span>${Helpdesk.replaceLink(providerCodeToProviderInfoTextMap[code] ?? '', providerCodeToHelpdeskCodeMap[code] ?? '')}</span>`;
+		const text = Tag.render`<span>${Helpdesk.replaceLink(
+			providerCodeToProviderInfoTextMap[code] ?? '',
+			providerCodeToHelpdeskCodeMap[code] ?? '',
+		)}</span>`;
 		Dom.append(text, this.#ui.provider.info);
 
 		if (this.#isProviderExpiresSoon(provider) || this.#isProviderExpired(provider))
@@ -759,10 +808,10 @@ export class CompanySelector
 			return;
 		}
 
-		this.#selectCompany(selectedItem?.id);
+		this.selectCompany(selectedItem?.id);
 	}
 
-	#selectCompany(id: number): void
+	selectCompany(id: number): void
 	{
 		const company = this.#getCompanyById(id);
 		if (Type.isUndefined(company))
@@ -785,6 +834,12 @@ export class CompanySelector
 		}
 
 		this.#refreshView();
+		this.#getDialog().getItems()
+			.find((item) => item.id === this.#company.id)
+			?.select()
+		;
+		this.#integrationSelector.setCompanyId(this.#company.id);
+		this.emit(this.events.onSelect, { companyId: this.#company.id });
 	}
 
 	#refreshView(): void
@@ -801,17 +856,28 @@ export class CompanySelector
 			BX.show(this.#ui.info.editButton);
 		}
 
-		BX.show(this.#ui.info.setRqInnButton);
+		if (this.#ui.info.setRqInnButton)
+		{
+			BX.show(this.#ui.info.setRqInnButton);
+		}
 		if (Type.isStringFilled(selectedItem.rqInn))
 		{
-			this.#ui.info.title.rqInn.innerText = Loc.getMessage('SIGN_B2E_COMPANIES_INN', { '%innValue%': TextFormat.encode(selectedItem.rqInn) });
+			this.#ui.info.title.rqInn.innerText = Loc.getMessage(
+				'SIGN_B2E_COMPANIES_INN',
+				{ '%innValue%': TextFormat.encode(selectedItem.rqInn) },
+			);
 			this.#ui.info.title.rqInn.style.display = this.#showTaxId ? '' : 'none';
+			Dom.hide(this.#getCompanyInfoLabelLayout());
 
-			BX.hide(this.#ui.info.setRqInnButton);
+			if (this.#ui.info.setRqInnButton)
+			{
+				BX.hide(this.#ui.info.setRqInnButton);
+			}
 		}
 		else
 		{
-			this.#ui.info.title.rqInn.textContent = Loc.getMessage('SIGN_B2E_COMPANIES_NO_RQ_INN');
+			this.#ui.info.title.rqInn.textContent = '';
+			Dom.show(this.#getCompanyInfoLabelLayout());
 			if (this.#ui.info.editButton)
 			{
 				BX.hide(this.#ui.info.editButton);
@@ -839,7 +905,7 @@ export class CompanySelector
 		{
 			BX.hide(this.#ui.provider.disconnected.container);
 			this.#updateProviderMenu();
-			if (this.#options.region === 'ru')
+			if (this.#options.region === 'ru' && this.#options.documentInitiatedType !== DocumentInitiated.employee)
 			{
 				this.#tryStartProviderTour();
 			}
@@ -864,7 +930,7 @@ export class CompanySelector
 		item?.select();
 	}
 
-	#getCompanyById(id: number): CompanyInfo | undefined
+	#getCompanyById(id: number): Company | undefined
 	{
 		return this.#companyList.find((company) => id === company.id);
 	}
@@ -983,7 +1049,7 @@ export class CompanySelector
 			console.error(e);
 		}
 		this.#hideLoader();
-		this.#selectCompany(company.id);
+		this.selectCompany(company.id);
 	}
 
 	#bindEvents(): void
@@ -1007,6 +1073,7 @@ export class CompanySelector
 	#onCompanyDeselectedHandler(event): void
 	{
 		this.#company.id = null;
+		this.#integrationSelector.setCompanyId(this.#company.id);
 		this.#company.provider = {
 			key: null,
 			uid: null,
@@ -1043,6 +1110,32 @@ export class CompanySelector
 
 	#createCompany(): void
 	{
+		if (this.#options.needOpenCrmSaveAndEditCompanySliders)
+		{
+			const companiesIdsBeforeSliderClose: Set<number> = new Set(this.#companyList.map((company) => company.id));
+
+			BX.SidePanel.Instance.open(
+				'/crm/company/details/0/?mycompany=y',
+				{
+					cacheable: false,
+					events: {
+						onClose: async () => {
+							this.#dialog.hide();
+							await this.#load();
+							const newCompany = this.#companyList
+								.find(({ id }) => !companiesIdsBeforeSliderClose.has(id))
+							;
+							if (!Type.isUndefined(newCompany))
+							{
+								this.selectCompany(newCompany.id);
+							}
+						},
+					},
+				},
+			);
+
+			return;
+		}
 		CompanyEditor.openSlider({
 			mode: CompanyEditorMode.Create,
 			documentEntityId: this.#options.entityId,
@@ -1052,6 +1145,7 @@ export class CompanySelector
 			events: {
 				onCompanySavedHandler: (companyId: number): void => {
 					this.#company.id = companyId;
+					this.#integrationSelector.setCompanyId(this.#company.id);
 				},
 			},
 		}, {
@@ -1066,6 +1160,21 @@ export class CompanySelector
 	{
 		if (!Type.isInteger(this.#company.id))
 		{
+			return;
+		}
+
+		if (this.#options.needOpenCrmSaveAndEditCompanySliders)
+		{
+			BX.SidePanel.Instance.open(
+				`/crm/company/details/${this.#company.id}/`,
+				{
+					cacheable: false,
+					events: {
+						onClose: () => this.#load(),
+					},
+				},
+			);
+
 			return;
 		}
 
@@ -1143,28 +1252,35 @@ export class CompanySelector
 		return this.#company?.id;
 	}
 
+	getIntegrationId(): number | null
+	{
+		return this.#integrationSelector.getSelectedId();
+	}
+
+	setLastSavedIntegrationId(integrationId: number | null): void
+	{
+		this.#integrationSelector.setLastSavedId(integrationId);
+	}
+
 	validate(): boolean
 	{
 		Dom.removeClass(this.#ui.container, '--invalid');
 		Dom.removeClass(this.#ui.provider.container.firstElementChild, '--invalid');
-		const isCompanyValid = Type.isInteger(this.#company.id) && this.#company.id > 0;
 		const isProviderValid = Type.isObject(this.#company.provider)
 			&& Type.isStringFilled(this.#company.provider.uid)
 			&& !this.#isProviderExpired(this.#company.provider)
 		;
+		const company = this.#getCompanyById(this.#company.id ?? 0);
+		const isCompanyValid = Type.isObject(company) && company.id > 0 && company.rqInn > 0;
 		const isValid = isCompanyValid && isProviderValid;
-		if (isValid)
-		{
-			return true;
-		}
 
-		if (isCompanyValid)
-		{
-			Dom.addClass(this.#ui.provider.container.firstElementChild, '--invalid');
-		}
-		else
+		if (!isCompanyValid)
 		{
 			Dom.addClass(this.#ui.container, '--invalid');
+		}
+		else if (!isProviderValid)
+		{
+			Dom.addClass(this.#ui.provider.container.firstElementChild, '--invalid');
 		}
 
 		return isValid;
@@ -1174,6 +1290,11 @@ export class CompanySelector
 	{
 		await this.#registerVirtualProviderIfNeed();
 		const provider = this.#company.provider;
+
+		if (this.#options.hcmLinkAvailable)
+		{
+			await this.#api.changeIntegrationId(documentId, this.#integrationSelector?.getSelectedId());
+		}
 
 		return Promise.all([
 			this.#api.modifyB2eCompany(documentId, provider.uid),
@@ -1223,7 +1344,8 @@ export class CompanySelector
 				: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAcKSURBVHgBtVh5VFRVGP/dN8PMMIBMCOLRQswkRFHJJe1UjuVJMyvotGBFQh5KRCuKczKtzHY7ndTTaqdSOi0cLcXMylJxwX0BFxT3ccWFZZRFZuHd7r0DOPPmzWb2++cN73734/fu9333/r5LECIMyV8mEtKaTqhmAAU1E0JNoMQkBgm1QiYWClggyesodZS0VBVYQnAPEqyhIfnzbAIygU0wIxRQVDDS85qq8hcGYx6QkCH5UzOBZgEzTMR/g4WAzgpEzCchU+Ick0Ovn0kJXsJ1BPM3V3/FNstqKbAiWEKG5DmJEtUvZaMD8f/AIsM2Ui2/iBoZAn1poBB1i49A7vi+GP9gErp2McLZSlF5qBbL/j6G4t8O4+yFJlwLKQ9CPEw2g77cH5noKB3ynk5FXlY/RBh1WL/tDMorL4LKQFq/ONx7x404eaYB3y06gB+WVqGmvgU+wRJeZ7ONdA+fB6GIPl/MoVQ9ZySJ4JExvTBjymD06B6FZauO4+P5u1B5uM7DblBqF7z7yjAMv60rTp5twAdf7MTPyw7BJyeWU1cOTC7wIsTLWgJZoDZpYEos5s28GwPYs2xHNQrf3YCqY1b4w/iHeuO1yYOR0C0KG9mcvBmljGCjqq2MVha6qWv5b037y7DYcUsZO5PSeMaUIZj//khoNASF72/E9I82+w9DG/YdrMNXP1ZCq5Ew5u4ETMpKRVOzEzv2XPCyJZDMjpoV8zoIta1OttJwzpt3If+ZVCxacQSZU1Ziu4qzQFi/7SyWrDzGVjkOE59IwaUGuxopky527AlHzR8VEv9LouRFpUX6fTcj57E+mP3VTjw/vRT1l22B/jdenpiGHb89gakT+nu857n0cO7vKF5+GG8VDEV8nNFrrgxpAn9qRJkT7YdKAx4mWZaRVfAPZIqA4Pny+tQh6HyDAffccZPYBjbtrPaw2VJ+HlOz+0MiBKWbT3uM8crWxGUsZGNh6Urnep1GJPCSv44Jx/7AfGM6IzMtb5D4u7pt/3mDkSvMTfOwram/gv1srxpr7qHuC/YMicjaEcoBvulxlO+/iEAozL0Nr7aRKdt+FoPGFeOXP4+6SL0wFL0Soj3s17GciosNV/VFKBnAckhOVA7ExhjEs7bOfzXxyuObZDu6xBqRmtwZt/Z0FauV5V1zi9NjTk3dFXSK1EEXJql4pGaJZXSi8jUPGYezVYY/tLJwpj+/ArVt20ASI7Ly+3RBqqHJjtHPLOsIYTusl+3iGd1J7+2QwCR1iCs3hGldhBoaHfCHh0b1xILZ92La7E0dpMQ8RmbUUyWoOlrv/RGy6yMjwrXeDiknpArqMdkXCp4diF49ovHWi0Px8de74HTIuNxohzlziSoZ4bmtRsL1WtVxrZCdilWy211EoqP08IVpkwYhrW+c+N1ic2L56uP4e8NJGI1hOGK55HOeJLnWQHVfI7BqKSVW5ZHBv9IfobcLbscL2QOwgVXVqrJTYievvhhQbgjEROvEs1b9+LFoGZl1UMgNvr1z3GDyJvRe4XDkZ7kqi6/Ip0V7EAq6xUeisckBh9M7HahMTrBTQ65QDpyvaRblmnJLjMf70XclCDIXapvx3GtrUPRrFUIFlyeHj/tQChJdK1GqKVG+t9lbUbatGk9n3CoEWTviYlwb2sGjViz640hHaINFz5s6YUj/Lijdclp1nKVPidBD4clfMslKze6DfZM6Y/2iR7Bw8QEUflAmqoOT6941UijCxmYHQgH/mOXfjhOnwPCMxThzTpFzBBXNByaniZSnkIuUDrg+njVvGyZmpmBryeNMaEWK3NrPFGKoZG4f2BUbf31U7OCTmHLwIsP5UHpVDzmZDtHGPpCtrLatFedx4sxlPPZAb6YAk6BhJbul/ByChdEQhneYnJ375p2oY1WV9fI/WL1RNVyW5qr8nA5CHNrYMbuZcstWWnLlt5iVdUrvGNFlZIy+mYWsEUdPXvJLJjezL77/ZBTMw7rjm+L9yClcjUM+kpmlSwEXZ67fbojo8/lcqiLW2sF18rQ8JvJvjMKaTaeZRN3LSv9Ux7iRHQf3j+jBiPfDsLR4bGX6573PtgvV6As8VE0H81+6Ss4NvA2y6/Wl/hrEGJMBTz6chOfYaiWw7mPH3gus6uqFLhrcP14csCdON2D+T/vEttDkP98supbwNKslR70N4hC3G6ABG8UIdkQ8OrYXMlmjyCtHw9qkvQdrRY58U1yJIMAaRcK6jTyL+0sfrXRwpK4ZrEGUCclQkuHQqNk7a1ZYIyNHFclhGrYTkmEevmgQAtsdLJbuX81zRmcz5jQeyVUt1yCuY8S90MzrcR3DGsKc9obQF0K6sBLtUog3Imw91zIVWHTdLqy8ibmu9NhJOILIbNW4BHa70nPJGbKWktbd/JxUyxN/+BdHDte5gKLXDAAAAABJRU5ErkJggg=='
 			;
 		}
-		else if (
+
+		if (
 			provider.code === ProviderCode.external
 			&& Type.isStringFilled(provider.iconUrl)
 		)
@@ -1311,5 +1433,30 @@ export class CompanySelector
 		}
 
 		img.src = provider.iconUrl;
+	}
+
+	#getCompanyInfoLabelLayout(): HTMLElement
+	{
+		return this.#layoutCache.remember('companyInfoLabel', () => {
+			return Tag.render`
+				<div class="ui-label ui-label-orange ui-label-fill sign-document-b2e-company-info-label">
+					<div class="ui-label-inner">${Loc.getMessage('SIGN_V2_B2E_COMPANY_SELECTOR_COMPANY_RQ_WARNING_LABEL')}</div>
+				</div>
+			`;
+		});
+	}
+
+	#getCompanySaveAndEditRequireCrmPermissionLayout(): HTMLElement
+	{
+		return this.#layoutCache.remember('companySaveAndEditRequireCrmPermissionLayout', () => {
+			const alert = new Alert({
+				text: Loc.getMessage('SIGN_V2_B2E_COMPANY_SELECTOR_SAVE_AND_EDIT_REQUIRE_CRM_PERMISSION'),
+				color: AlertColor.WARNING,
+				size: AlertSize.XS,
+				customClass: 'sign-document-b2e-company__alert',
+			});
+
+			return alert.render();
+		});
 	}
 }

@@ -1,0 +1,4 @@
+<?php
+
+$MESS['CRM_LOG_MESSAGE_BIZPROC_TASK_COMPLETED'] = 'Задание бизнес-процесса';
+$MESS['CRM_LOG_MESSAGE_BIZPROC_TASK_COMPLETED_STATUS'] = 'Выполнено';

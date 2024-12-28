@@ -6,15 +6,40 @@
  * @copyright 2001-2013 Bitrix
  */
 
-use Bitrix\Main\Text\Emoji;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
+use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Socialnetwork\Item\Workgroup;
+use Bitrix\Tasks\Control\Log\Change;
+use Bitrix\Tasks\Control\Log\Command\AddCommand;
+use Bitrix\Tasks\Control\Log\Command\DeleteByTaskIdCommand;
+use Bitrix\Tasks\Control\Log\TaskLogService;
+use Bitrix\Tasks\InvalidCommandException;
 use Bitrix\Tasks\Kanban\StagesTable;
+use Bitrix\Tasks\Provider\Exception\Log\TaskLogProviderException;
+use Bitrix\Tasks\Provider\Log\TaskLogProvider;
+use Bitrix\Tasks\Provider\Log\TaskLogQuery;
 use Bitrix\Tasks\Scrum\Service\KanbanService;
 use Bitrix\Tasks\Scrum\Service\SprintService;
+use Bitrix\Tasks\Util\Db;
+use Psr\Container\NotFoundExceptionInterface;
 
+/**
+ * @deprecated
+ *
+ * @use TaskLogService for C*UD operations
+ * @use TaskLogProvider to get task history
+ */
 class CTaskLog
 {
 	// left for compatibility
-	static $arComparedFields = array(
+	static array $arComparedFields = array(
 		'TITLE' => 'string',
 		'DESCRIPTION' => 'text',
 		'STATUS' => 'integer',
@@ -51,41 +76,23 @@ class CTaskLog
 		'FLOW_ID' => 'integer',
 	);
 
-	public static function getTrackedFields()
+	/**
+	 * @use TaskLogService::getTrackedFields
+	 *
+	 * @throws ObjectNotFoundException
+	 * @throws NotFoundExceptionInterface
+	 */
+	public static function getTrackedFields(): array
 	{
-		static $fields;
+		$service = ServiceLocator::getInstance()->get('tasks.control.log.task.service');
 
-		if (!$fields) {
-			$fields = array();
-
-			foreach (static::$arComparedFields as $code => $type) {
-				$fields[$code] = array('TYPE' => $type);
-			}
-
-			// get also ufs
-			$ufs = $GLOBALS['USER_FIELD_MANAGER']->getUserFields('TASKS_TASK', 0, LANGUAGE_ID);
-			foreach ($ufs as $code => $desc) {
-				// exception for system disk files
-				$title = '';
-				if ($code != \Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode()) {
-					$title = $desc['EDIT_FORM_LABEL'];
-				}
-
-				$fields[$code] = array(
-					'TITLE' => $title,
-					'TYPE' => $desc['MULTIPLE'] == 'Y' ? 'array' : 'string'
-				);
-			}
-		}
-
-		return $fields;
+		return $service->getTrackedFields();
 	}
-
 
 	public static function CheckFields(
 		/** @noinspection PhpUnusedParameterInspection */
 		&$arFields, $ID = false
-	)
+	): bool
 	{
 		if ((string)($arFields['CREATED_DATE'] ?? null) == '')
 		{
@@ -95,66 +102,92 @@ class CTaskLog
 		return true;
 	}
 
-	public function Add($arFields)
+	/**
+	 * @use TaskLogService::add
+	 * @throws InvalidCommandException
+	 * @throws ObjectNotFoundException
+	 * @throws NotFoundExceptionInterface
+	 */
+	public function Add(array $arFields): bool|int
 	{
-		if ($this->CheckFields($arFields))
+		/** @noinspection PhpDeprecationInspection */
+		static::CheckFields($arFields);
+		$createdDate = DateTime::createFromUserTime($arFields['CREATED_DATE']);
+
+		if ($arFields['USER_ID'] === null
+			|| $arFields['TASK_ID'] === null
+			|| $arFields['FIELD'] === null
+		)
 		{
-			if ($arFields['CREATED_DATE'])
-			{
-				$createdDate = Bitrix\Main\Type\DateTime::createFromUserTime($arFields['CREATED_DATE']);
-			}
-			else
-			{
-				$createdDate = new Bitrix\Main\Type\DateTime();
-			}
-
-			$addResult = \Bitrix\Tasks\Internals\Task\LogTable::add([
-				'CREATED_DATE' => $createdDate,
-				'USER_ID' => $arFields["USER_ID"],
-				'TASK_ID' => $arFields["TASK_ID"],
-				'FIELD' => $arFields["FIELD"],
-				'FROM_VALUE' => ($arFields["FROM_VALUE"] ?? null),
-				'TO_VALUE' => ($arFields["TO_VALUE"] ?? null),
-			]);
-
-			if ($addResult->isSuccess())
-			{
-				return $addResult->getId();
-			}
+			// For compatibility
+			return false;
 		}
 
-		return false;
+		$command = (new AddCommand())
+			->setUserId($arFields['USER_ID'])
+			->setTaskId($arFields['TASK_ID'])
+			->setField($arFields['FIELD'])
+			->setChange(new Change($arFields['FROM_VALUE'] ?? null, $arFields['TO_VALUE'] ?? null))
+			->setCreatedDate($createdDate);
+
+		$service = ServiceLocator::getInstance()->get('tasks.control.log.task.service');
+
+		try
+		{
+			$log = $service->add($command);
+		} catch (Exception)
+		{
+			// For compatibility
+			return false;
+		}
+
+		return $log->getId();
 	}
 
-
-	public static function GetFilter($arFilter)
+	public static function GetFilter(array $filter): array
 	{
-		global $DB;
+		$arSqlSearch = [];
 
-		if (!is_array($arFilter))
-			$arFilter = Array();
+		foreach ($filter as $column => $value)
+		{
+			$createdFilter = CTasks::MkOperationFilter($column);
+			$column = $createdFilter["FIELD"];
+			$cOperationType = $createdFilter["OPERATION"];
 
-		$arSqlSearch = Array();
+			$column = strtoupper($column);
 
-		foreach ($arFilter as $key => $val) {
-			$res = CTasks::MkOperationFilter($key);
-			$key = $res["FIELD"];
-			$cOperationType = $res["OPERATION"];
-
-			$key = mb_strtoupper($key);
-
-			switch ($key) {
+			switch ($column)
+			{
 				case "CREATED_DATE":
-					$arSqlSearch[] = CTasks::FilterCreate("TL." . $key, \Bitrix\Tasks\Util\Db::charToDateFunction($val), "date", $bFullJoin, $cOperationType);
-					break;
+					$arSqlSearch[] = CTasks::FilterCreate(
+						"TL." . $column,
+						Db::charToDateFunction($value),
+						"date",
+						$bFullJoin,
+						$cOperationType
+					);
 
+					break;
 				case "USER_ID":
 				case "TASK_ID":
-					$arSqlSearch[] = CTasks::FilterCreate("TL." . $key, $val, "number", $bFullJoin, $cOperationType);
-					break;
+					$arSqlSearch[] = CTasks::FilterCreate(
+						"TL." . $column,
+						$value,
+						"number",
+						$bFullJoin,
+						$cOperationType
+					);
 
+					break;
 				case "FIELD":
-					$arSqlSearch[] = CTasks::FilterCreate("TL." . $key, $val, "string", $bFullJoin, $cOperationType);
+					$arSqlSearch[] = CTasks::FilterCreate(
+						"TL." . $column,
+						$value,
+						"string",
+						$bFullJoin,
+						$cOperationType
+					);
+
 					break;
 			}
 		}
@@ -162,165 +195,166 @@ class CTaskLog
 		return $arSqlSearch;
 	}
 
-
-	public static function GetList($arOrder, $arFilter)
+	/**
+	 * @use TaskLogProvider::getList
+	 * @throws TaskLogProviderException
+	 * @throws ArgumentException
+	 */
+	public static function GetList(array $orders, array $filters): CDBResult
 	{
-		global $DB;
+		$query = new TaskLogQuery();
+		$query
+			->setDistinct(false)
+			->setSelect([
+				'ID',
+				'CREATED_DATE',
+				'USER_ID',
+				'TASK_ID',
+				'FIELD',
+				'FROM_VALUE',
+				'TO_VALUE',
+				'USER_NAME' => 'USER.NAME',
+				'USER_LAST_NAME' => 'USER.LAST_NAME',
+				'USER_SECOND_NAME' => 'USER.SECOND_NAME',
+				'USER_LOGIN' => 'USER.LOGIN',
+			]);
 
-		$arSqlSearch = CTaskLog::GetFilter($arFilter);
+		$possibleColumns = ['CREATED_DATE', 'USER_ID', 'TASK_ID', 'FIELD'];
+		$possibleOperations = ['!=', '=', '>', '>=', '<', '<=', 'like', 'in'];
 
-		$strSql = "
-			SELECT
-				TL.*,
-				" . $DB->DateToCharFunction("TL.CREATED_DATE", "FULL") . " AS CREATED_DATE,
-				U.NAME AS USER_NAME,
-				U.LAST_NAME AS USER_LAST_NAME,
-				U.SECOND_NAME AS USER_SECOND_NAME,
-				U.LOGIN AS USER_LOGIN
-			FROM
-				b_tasks_log TL
-			INNER JOIN
-				b_user U
-			ON
-				U.ID = TL.USER_ID
-			" . (sizeof($arSqlSearch) ? "WHERE " . implode(" AND ", $arSqlSearch) : "") . "
-		";
-
-		if (!is_array($arOrder) || sizeof($arOrder) == 0)
-			$arOrder = array("CREATED_DATE" => "ASC");
-
-		foreach ($arOrder as $by => $order) {
-			$by = mb_strtolower($by);
-			$order = mb_strtolower($order);
-			if ($order != "asc")
-				$order = "desc";
-
-			if ($by == "user" || $by == "user_id")
-				$arSqlOrder[] = " TL.USER_ID " . $order . " ";
-			elseif ($by == "field")
-				$arSqlOrder[] = " TL.FIELD " . $order . " ";
-			elseif ($by == "task_id")
-				$arSqlOrder[] = " TL.TASK_ID " . $order . " ";
-			elseif ($by == "rand")
-				$arSqlOrder[] = CTasksTools::getRandFunction();
-			else
-				$arSqlOrder[] = " TL.CREATED_DATE " . $order . " ";
-		}
-
-		$strSqlOrder = "";
-		DelDuplicateSort($arSqlOrder);
-		for ($i = 0, $arSqlOrderCnt = count($arSqlOrder); $i < $arSqlOrderCnt; $i++) {
-			if ($i == 0)
-				$strSqlOrder = " ORDER BY ";
-			else
-				$strSqlOrder .= ",";
-
-			$strSqlOrder .= $arSqlOrder[$i];
-		}
-
-		$strSql .= $strSqlOrder;
-
-		return $DB->Query($strSql);
-	}
-
-
-	public static function GetChanges($currentFields, $newFields)
-	{
-		$changes = [];
-
-		array_walk($currentFields, ['CTaskLog', 'UnifyFields']);
-		array_walk($newFields, ['CTaskLog', 'UnifyFields']);
-
-		if (array_key_exists('REAL_STATUS', $currentFields))
+		$preparedFilters = [];
+		foreach ($filters as $column => $value)
 		{
-			$currentFields['STATUS'] = $currentFields['REAL_STATUS'];
-		}
+			$createdFilter = CTasks::MkOperationFilter($column);
 
-		if (array_key_exists('TITLE', $currentFields))
-		{
-			$currentFields['TITLE'] = Emoji::encode($currentFields['TITLE']);
-		}
-		if (array_key_exists('DESCRIPTION', $currentFields))
-		{
-			$currentFields['DESCRIPTION'] = Emoji::encode($currentFields['DESCRIPTION']);
-		}
-		if (array_key_exists('TITLE', $newFields))
-		{
-			$newFields['TITLE'] = Emoji::encode($newFields['TITLE']);
-		}
-		if (array_key_exists('DESCRIPTION', $newFields))
-		{
-			$newFields['DESCRIPTION'] = Emoji::encode($newFields['DESCRIPTION']);
-		}
+			$column = $createdFilter['FIELD'];
+			$column = mb_strtoupper($column);
 
-		$comparedFields = static::getTrackedFields();
-
-		foreach ($newFields as $key => $value)
-		{
-			if (array_key_exists($key, $comparedFields) && ($currentFields[$key] ?? null) != ($newFields[$key] ?? null))
+			if (!in_array($column, $possibleColumns, true))
 			{
-				if (!array_key_exists($key, $currentFields) || !array_key_exists($key, $newFields))
+				continue;
+			}
+
+			if ($column === 'CREATED_DATE')
+			{
+				if (!is_string($value))
 				{
 					continue;
 				}
 
-				if ($key === 'FILES')
+				try
 				{
-					$filesChanges = static::getFilesChanges($currentFields[$key], $value);
+					$value = new DateTime($value);
+				}
+				catch (\Bitrix\Main\ObjectException)
+				{
+					return (new CDBResult());
+				}
+			}
 
-					if (array_key_exists('DELETED_FILES', $filesChanges))
-					{
-						$changes['DELETED_FILES'] = $filesChanges['DELETED_FILES'];
-					}
-					if (array_key_exists('NEW_FILES', $filesChanges))
-					{
-						$changes['NEW_FILES'] = $filesChanges['NEW_FILES'];
-					}
-				}
-				elseif ($key === 'STAGE_ID')
+			$operator = array_search($createdFilter['OPERATION'], CSQLWhere::$operations, true);
+			if ($column === 'FIELD')
+			{
+				if ($operator === '%')
 				{
-					$oldGroupId = $currentFields['GROUP_ID'];
-					$newGroupId = (array_key_exists('GROUP_ID', $newFields) ? $newFields['GROUP_ID'] : $oldGroupId);
-					$stageChanges = static::getStageChanges($currentFields[$key], $value, $oldGroupId, $newGroupId);
-					if (!empty($stageChanges))
-					{
-						$changes['STAGE'] = $stageChanges;
-					}
+					$value = "%{$value}%";
 				}
-				elseif ($key === 'UF_CRM_TASK')
-				{
-					if (!empty($added = implode(',', array_diff($value, $currentFields[$key]))))
-					{
-						$changes['UF_CRM_TASK_ADDED'] = [
-							'FROM_VALUE' => false,
-							'TO_VALUE' => $added,
-						];
-					}
-					if (!empty($deleted = implode(',', array_diff($currentFields[$key], $value))))
-					{
-						$changes['UF_CRM_TASK_DELETED'] = [
-							'FROM_VALUE' => $deleted,
-							'TO_VALUE' => false,
-						];
-					}
-				}
-				else
-				{
-					if ($comparedFields[$key]['TYPE'] === 'text')
-					{
-						$currentFields[$key] = false;
-						$newFields[$key] = false;
-					}
-					elseif ($comparedFields[$key]['TYPE'] === 'array')
-					{
-						$currentFields[$key] = implode(',', $currentFields[$key]);
-						$newFields[$key] = implode(',', $value);
-					}
 
-					$changes[$key] = [
-						'FROM_VALUE' => ($currentFields[$key] || $key === 'PRIORITY' ? $currentFields[$key] : false),
-						'TO_VALUE' => ($newFields[$key] || $key === 'PRIORITY' ? $newFields[$key] : false),
-					];
+				$operator = 'like';
+			}
+
+			if (is_array($value))
+			{
+				$operator = 'in';
+			}
+
+			if (!in_array($operator, $possibleOperations, true))
+			{
+				$operator = '=';
+			}
+
+			$preparedFilters[] = [
+				'COLUMN' => $column,
+				'OPERATOR' => $operator,
+				'VALUE' => $value,
+			];
+		}
+
+		$whereCondition = new ConditionTree();
+		foreach ($preparedFilters as $filter)
+		{
+			$whereCondition->where($filter['COLUMN'], $filter['OPERATOR'], $filter['VALUE']);
+		}
+		$query->setWhere($whereCondition);
+
+		$possibleOrders = ['USER', 'USER_ID', 'FIELD', 'TASK_ID', 'CREATED_DATE'];
+
+		$preparedOrders = [];
+		foreach ($orders as $by => $order)
+		{
+			$by = mb_strtoupper($by);
+			if (!in_array($by, $possibleOrders, true))
+			{
+				continue;
+			}
+
+			if ($by === 'USER')
+			{
+				$by = 'USER_ID';
+			}
+
+			$order = mb_strtoupper($order);
+			if ($order !== 'ASC')
+			{
+				$order = 'DESC';
+			}
+
+			$preparedOrders[$by] = $order;
+		}
+
+		if (empty($preparedOrders))
+		{
+			$preparedOrders['CREATED_DATE'] = 'ASC';
+		}
+		$query->setOrderBy($preparedOrders);
+
+		$collection = (new TaskLogProvider)->getList($query);
+
+		$res = (new CDBResult());
+		$res->InitFromArray($collection->toArray());
+
+		return $res;
+	}
+
+	/**
+	 * @use TaskLogService::getChanges
+	 *
+	 * @param $currentFields
+	 * @param $newFields
+	 * @return array
+	 * @throws NotFoundExceptionInterface
+	 * @throws ObjectNotFoundException
+	 * @throws ArgumentException
+	 * @throws LoaderException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public static function GetChanges($currentFields, $newFields): array
+	{
+		$service = ServiceLocator::getInstance()->get('tasks.control.log.task.service');
+
+		$changes = $service->getChanges($currentFields, $newFields);
+
+		// For compatibility
+		foreach ($changes as $key => $change)
+		{
+			$changes[$key] = $change->toArray();
+
+			foreach ($changes[$key] as $field => $value)
+			{
+				if ($value === null)
+				{
+					$changes[$key][$field] = false;
 				}
 			}
 		}
@@ -328,49 +362,12 @@ class CTaskLog
 		return $changes;
 	}
 
-	private static function getFilesChanges(array $currentFiles, array $newFiles): array
-	{
-		$filesChanges = [];
-
-		$deleted = array_diff($currentFiles, $newFiles);
-		if (count($deleted) > 0)
-		{
-			$fileNames = [];
-			$res = CFile::GetList([], ['@ID' => implode(',', $deleted)]);
-			while ($file = $res->Fetch())
-			{
-				$fileNames[] = $file['ORIGINAL_NAME'];
-			}
-			if (count($fileNames))
-			{
-				$filesChanges['DELETED_FILES'] = [
-					'FROM_VALUE' => implode(', ', $fileNames),
-					'TO_VALUE' => false,
-				];
-			}
-		}
-
-		$added = array_diff($newFiles, $currentFiles);
-		if (count($added) > 0)
-		{
-			$fileNames = [];
-			$res = CFile::GetList([], ['@ID' => implode(',', $added)]);
-			while ($file = $res->Fetch())
-			{
-				$fileNames[] = $file['ORIGINAL_NAME'];
-			}
-			if (count($fileNames))
-			{
-				$filesChanges['NEW_FILES'] = [
-					'FROM_VALUE' => false,
-					'TO_VALUE' => implode(', ', $fileNames)
-				];
-			}
-		}
-
-		return $filesChanges;
-	}
-
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws LoaderException
+	 * @throws ArgumentException
+	 * @throws SystemException
+	 */
 	public static function getStageChanges(int $oldStageId, int $newStageId, int $oldGroupId, int $newGroupId): array
 	{
 		if ($newGroupId !== $oldGroupId)
@@ -379,9 +376,9 @@ class CTaskLog
 		}
 
 		$isScrum = false;
-		if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
+		if (Loader::includeModule('socialnetwork'))
 		{
-			$group = \Bitrix\Socialnetwork\Item\Workgroup::getById($newGroupId);
+			$group = Workgroup::getById($newGroupId);
 			$isScrum = ($group && $group->isScrumProject());
 		}
 
@@ -395,7 +392,7 @@ class CTaskLog
 
 				$sprint = $sprintService->getActiveSprintByGroupId($newGroupId);
 
-				$oldStageId = (int) $kanbanService->getDefaultStageId($sprint->getId());
+				$oldStageId = $kanbanService->getDefaultStageId($sprint->getId());
 			}
 
 			$stageTitles = $kanbanService->getStageTitles([$newStageId, $oldStageId]);
@@ -408,7 +405,7 @@ class CTaskLog
 
 		if (!$oldStageId && $oldGroupId)
 		{
-			$oldStageId = (int)StagesTable::getDefaultStageId($oldGroupId);
+			$oldStageId = StagesTable::getDefaultStageId($oldGroupId);
 		}
 
 		$stageFrom = false;
@@ -436,83 +433,35 @@ class CTaskLog
 		];
 	}
 
-	public static function UnifyFields(&$value, $key)
+	/**
+	 * @use TaskLogService::castValueTypeByKeyInTrackedFields
+	 *
+	 * @throws ObjectNotFoundException
+	 * @throws NotFoundExceptionInterface
+	 */
+	public static function UnifyFields(&$value, $key): void
 	{
-		$comparedFields = static::getTrackedFields();
+		$service = ServiceLocator::getInstance()->get('tasks.control.log.task.service');
 
-		if (array_key_exists($key, $comparedFields)) {
-			switch ($comparedFields[$key]['TYPE']) {
-				case "integer":
-					$value = intval((string)$value);
-					break;
-
-				case "string":
-					$value = trim((string)$value);
-					break;
-
-				case "array":
-					if (!is_array($value))
-						$value = explode(",", $value);
-
-					$value = array_unique(array_filter(array_map("trim", $value)));
-					sort($value);
-					break;
-
-				case "date":
-					$value = MakeTimeStamp($value);
-
-					if (!$value) {
-						$value = strtotime($value);        // There is correct Unix timestamp in return value
-						// CTimeZone::getOffset() substraction here???
-					} else {
-						// It can be other date on server (relative to client), ...
-						$bTzWasDisabled = !CTimeZone::enabled();
-
-						if ($bTzWasDisabled)
-							CTimeZone::enable();
-
-						$value -= CTimeZone::getOffset();        // get correct UnixTimestamp
-
-						if ($bTzWasDisabled)
-							CTimeZone::disable();
-
-						// We mustn't store result of MakeTimestamp() in DB,
-						// because it is shifted for time zone offset already,
-						// which can't be restored.
-					}
-					break;
-
-				case "bool":
-					if ($value != "Y")
-						$value = "N";
-					break;
-			}
-		}
+		$service->castValueTypeByKeyInTrackedFields($value, $key);
 	}
 
 
 	/**
-	 * Remove all log data for given task_id
+	 * @use TaskLogService::deleteByTaskId
+	 *
 	 * @param int $in_taskId
 	 *
 	 * @throws Exception on any error
+	 * @throws NotFoundExceptionInterface
+	 *
 	 */
-	public static function DeleteByTaskId($in_taskId)
+	public static function DeleteByTaskId(int $in_taskId): void
 	{
-		$taskId = (int)$in_taskId;
+		$command = (new DeleteByTaskIdCommand())->setTaskId($in_taskId);
 
-		if ((!is_numeric($in_taskId)) || ($taskId < 1))
-			throw new Exception('EA_PARAMS');
+		$service = ServiceLocator::getInstance()->get('tasks.control.log.task.service');
 
-		$list = \Bitrix\Tasks\Internals\Task\LogTable::getList(array(
-			"select" => array("ID"),
-			"filter" => array(
-				"=TASK_ID" => $taskId,
-			),
-		));
-
-		while ($item = $list->fetch()) {
-			$result = \Bitrix\Tasks\Internals\Task\LogTable::delete($item);
-		}
+		$service->deleteByTaskId($command);
 	}
 }

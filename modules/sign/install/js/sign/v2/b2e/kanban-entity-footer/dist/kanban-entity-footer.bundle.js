@@ -250,7 +250,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  signCancellation.cancelWithConfirm(documentUid);
 	}
 	function _modifyDocument2(entityId) {
-	  return crm_router.Router.openSlider(`/sign/b2e/doc/0/?docId=${entityId}&stepId=changePartner&noRedirect=Y`);
+	  return crm_router.Router.openSlider(`/sign/b2e/doc/0/?docId=${entityId}&stepId=changePartner&noRedirect=Y`, {
+	    width: 1250
+	  });
 	}
 	function _previewDocument2(entityId) {
 	  return crm_router.Router.openSlider(`/sign/b2e/preview/0/?docId=${entityId}&noRedirect=Y`);

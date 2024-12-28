@@ -1,0 +1,81 @@
+.dataset-save-progress-popup {
+	height: 100%;
+	padding: 50px 10px 20px 10px;
+	box-sizing: border-box;
+}
+
+.dataset-save-progress-popup__content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 19px;
+}
+
+.dataset-save-progress-loader {
+	display: flex;
+	height: 105px;
+	width: 105px;
+	align-items: center;
+	justify-content: center;
+}
+
+.dataset-save-progress-popup__success-logo {
+	width: 105px;
+	height: 105px;
+}
+
+.dataset-save-progress-popup__success-logo:before {
+	content: "";
+	position: absolute;
+	width: 135px;
+	height: 109px;
+	background-image: url('../images/popup-success.svg');
+	background-size: 135px 109px;
+	background-repeat: no-repeat;
+	margin: 0 auto;
+	right: 0;
+	left: 0;
+}
+
+.dataset-save-progress-popup__failure-logo {
+	width: 105px;
+	height: 106px;
+	background-image: url('../images/popup-failure.svg');
+	background-size: 105px 106px;
+	background-repeat: no-repeat;
+}
+
+.dataset-save-progress-popup__texts {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-height: 45px;
+	justify-content: space-around;
+}
+
+.dataset-save-progress-popup__header {
+	margin: 0;
+	font-weight: var(--ui-font-weight-medium);
+	font-size: var(--ui-font-size-2xl);
+	line-height: var(--ui-font-line-height-3xs);
+	color: var(--ui-typography-heading-h3-color);
+	text-align: center;
+}
+
+.dataset-save-progress-popup__description {
+	margin: 0;
+	color: var(--ui-color-text-secondary);
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-3xs);
+	text-align: center;
+}
+
+.dataset-save-progress-popup__buttons {
+	display: flex;
+	flex-direction: row;
+	gap: 8px;
+}
+
+.dataset-save-progress-popup__buttons .ui-btn + .ui-btn {
+	margin-left: 0;
+}

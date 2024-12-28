@@ -46,4 +46,14 @@ class Field implements Contract\Item
 
 		return $value->text !== '' && $value->text !== null;
 	}
+
+	public function replaceValueIfPresent(?Item\Field\Value $fieldValue): static
+	{
+		if ($fieldValue)
+		{
+			$this->values = new Item\Field\ValueCollection($fieldValue);
+		}
+
+		return $this;
+	}
 }

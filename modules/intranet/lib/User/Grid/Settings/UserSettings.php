@@ -4,6 +4,7 @@ namespace Bitrix\Intranet\User\Grid\Settings;
 
 use Bitrix\Intranet\Component\UserList;
 use Bitrix\Intranet\CurrentUser;
+use Bitrix\Intranet\Entity\Collection\UserCollection;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -19,6 +20,7 @@ class UserSettings extends \Bitrix\Main\Grid\Settings
 	private ?array $filterFields = null;
 	private ?bool $isInvitationAvailable = null;
 	private int $userId;
+	private ?UserCollection $userCollection = null;
 
 	public function __construct(array $params)
 	{
@@ -108,6 +110,22 @@ class UserSettings extends \Bitrix\Main\Grid\Settings
 		}
 
 		return $this->isInvitationAvailable;
+	}
+
+	/**
+	 * @return UserCollection|null
+	 */
+	public function getUserCollection(): ?UserCollection
+	{
+		return $this->userCollection;
+	}
+
+	/**
+	 * @param UserCollection $userCollection
+	 */
+	public function setUserCollection(UserCollection $userCollection): void
+	{
+		$this->userCollection = $userCollection;
 	}
 
 	private function initViewFields(): void

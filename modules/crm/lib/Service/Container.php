@@ -9,6 +9,7 @@ use Bitrix\Crm\Conversion;
 use Bitrix\Crm\FieldContext\ContextManager;
 use Bitrix\Crm\Filter;
 use Bitrix\Crm\Integration;
+use Bitrix\Crm\Integration\Im\ImService;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Model\Dynamic\Type;
 use Bitrix\Crm\Model\Dynamic\TypeTable;
@@ -31,6 +32,8 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Loader;
+use Bitrix\Crm\Service\Logger\LoggerFactory;
+use Psr\Log\LoggerInterface;
 
 class Container
 {
@@ -630,6 +633,11 @@ class Container
 		return ServiceLocator::getInstance()->get('crm.service.integration.sign.kanban.pull');
 	}
 
+	public function getSignB2eIntegrationTypeService(): \Bitrix\Crm\Service\Integration\Sign\B2e\TypeService
+	{
+		return ServiceLocator::getInstance()->get('crm.service.integration.sign.b2e.type');
+	}
+
 	public function getClientBinder(): ClientBinder
 	{
 		return ServiceLocator::getInstance()->get('crm.binding.clientBinder');
@@ -638,5 +646,28 @@ class Container
 	public function getCommunicationRankingFactory(): RankingFactory
 	{
 		return ServiceLocator::getInstance()->get('crm.service.communication.rankingFactory');
+	}
+
+	public function getImService(): ImService
+	{
+		return ServiceLocator::getInstance()->get('crm.service.integration.im');
+	}
+
+	public function getLogger(string $loggerId): LoggerInterface
+	{
+		$identifier = 'crm.service.logger.' . $loggerId;
+		if (!ServiceLocator::getInstance()->has($identifier))
+		{
+			$logger = LoggerFactory::create($loggerId);
+
+			ServiceLocator::getInstance()->addInstance(
+				$identifier,
+				$logger
+			);
+
+			return $logger;
+		}
+
+		return ServiceLocator::getInstance()->get($identifier);
 	}
 }

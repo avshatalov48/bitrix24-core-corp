@@ -1,15 +1,25 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
+use Bitrix\Crm\Security\Role\Manage\Manager\WebFormSelection;
 use Bitrix\Main;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 use Bitrix\UI;
 
-/** @var CBitrixComponentTemplate $this */
-/** @var array $arParams */
-/** @var array $arResult */
+/**
+ * @var CBitrixComponentTemplate $this
+ * @var array $arParams
+ * @var array $arResult
+ * @var CMain $APPLICATION
+ * @var CBitrixComponent $component
+ */
 
 Main\UI\Extension::load([
 	"ui.buttons",
@@ -296,23 +306,45 @@ foreach ($arResult["ITEMS"] as $index => $data)
 
 
 // TOOLBAR
+
+$interfaceToolbarButtons = [];
+
+$permissionButton = new PermissionItem(new WebFormSelection());
+if ($permissionButton->canShow())
+{
+	$interfaceToolbarButtons[] = $permissionButton->toInterfaceToolbarButton();
+}
+
 if ($arResult['PERM_CAN_EDIT'])
 {
-	$connectButton = new UI\Buttons\AddButton([
-		"link" => $arResult['AVAILABLE'] ? CUtil::JSEscape($arResult['PATH_TO_WEB_FORM_NEW'])
-			: '#'
-	]);
-	$connectButton->addAttribute('target', '_top');
+	$attributes = [
+		'target' => '_top',
+	];
 	if (!$arResult['AVAILABLE'])
 	{
-		$connectButton->addAttribute('onclick', "BX.UI.InfoHelper.show('limit_crm_webform_edit')");
+		$attributes['onclick'] = "BX.UI.InfoHelper.show('limit_crm_webform_edit')";
 	}
 
-	UI\Toolbar\Facade\Toolbar::addButton(
-		$connectButton,
-		UI\Toolbar\ButtonLocation::AFTER_TITLE
-	);
+	$interfaceToolbarButtons[] = [
+		'LINK' => $arResult['AVAILABLE'] ? CUtil::JSEscape($arResult['PATH_TO_WEB_FORM_NEW']) : '#',
+		'ATTRIBUTES' => $attributes,
+		'LOCATION' => UI\Toolbar\ButtonLocation::AFTER_TITLE,
+	];
 }
+
+$APPLICATION->IncludeComponent(
+	'bitrix:crm.interface.toolbar',
+	SITE_TEMPLATE_ID === 'bitrix24' ? 'title' : '',
+	[
+		'TOOLBAR_ID' => 'crm_webform_toolbar',
+		'BUTTONS' => $interfaceToolbarButtons,
+		'TOOLBAR_PARAMS' => [],
+	],
+	$component,
+	[
+		'HIDE_ICONS' => 'Y',
+	],
+);
 
 UI\Toolbar\Facade\Toolbar::addFilter([
 	"GRID_ID" => $arResult["GRID_ID"],

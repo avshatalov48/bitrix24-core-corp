@@ -81,7 +81,7 @@ class Agreement
 	 */
 	public function isAcceptedByContext(Context $context): bool
 	{
-		if ($this->code === 'AI_BOX_AGREEMENT' && Option::get('ai', 'AI_BOX_AGREEMENT_SKIP_USER_ACCEPT') === 'Y')
+		if ($this->code === 'AI_BOX_AGREEMENT')
 		{
 			return true;
 		}
@@ -113,7 +113,7 @@ class Agreement
 	 */
 	public function isAcceptedByUser(int $userId): bool
 	{
-		if ($this->code === 'AI_BOX_AGREEMENT' && Option::get('ai', 'AI_BOX_AGREEMENT_SKIP_USER_ACCEPT') === 'Y')
+		if ($this->code === 'AI_BOX_AGREEMENT')
 		{
 			return true;
 		}

@@ -4,9 +4,11 @@ namespace Bitrix\Tasks\Flow\Control\Command;
 
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Flow\Attribute\AccessCodes;
+use Bitrix\Tasks\Flow\Attribute\DistributionType;
 use Bitrix\Tasks\Flow\Attribute\Instantiable;
 use Bitrix\Tasks\AbstractCommand;
 use Bitrix\Tasks\Flow\Configuration;
+use Bitrix\Tasks\Internals\Attribute\NotEmpty;
 use Bitrix\Tasks\InvalidCommandException;
 use Bitrix\Tasks\Flow\Flow;
 use Bitrix\Tasks\Internals\Attribute\Department;
@@ -37,13 +39,13 @@ use Bitrix\Tasks\Internals\Attribute\User;
  * @method self setName(string $name)
  * @method self setDescription(string $description)
  * @method self setDistributionType(string $distributionType)
- * @method self setManualDistributorId(int $manualDistributorId)
- * @method self setResponsibleQueue(array $responsibleQueue)
+ * @method self setResponsibleList(array $responsibleList)
  * @method self setTaskCreators(array $taskCreators)
  * @method bool hasId()
  * @method bool hasOwnerId()
  * @method bool hasValidOwnerId()
  * @method bool hasValidCreatorId()
+ * @method bool isOwnerIdFilled()
  */
 final class UpdateCommand extends AbstractCommand
 {
@@ -96,16 +98,23 @@ final class UpdateCommand extends AbstractCommand
 	public ?string $description = null;
 
 	#[Nullable]
-	#[InArray([Flow::DISTRIBUTION_TYPE_QUEUE, Flow::DISTRIBUTION_TYPE_MANUALLY])]
+	#[DistributionType]
 	public ?string $distributionType = null;
 
-	#[Nullable]
-	public ?int $manualDistributorId = null;
+	#[Required]
+	#[AccessCodes]
+	#[NotEmpty]
+	public array $responsibleList;
 
 	#[Nullable]
-	#[ExpectedNumeric]
 	#[User]
-	public ?array $responsibleQueue = null;
+	#[Parse(new UserFromAccess(), 'responsibleList')]
+	public ?array $userResponsibleList = null;
+
+	#[Nullable]
+	#[Department]
+	#[Parse(new Parse\DepartmentFromAccess(), 'responsibleList')]
+	public ?array $departmentResponsibleList = null;
 
 	#[Nullable]
 	public ?bool $responsibleCanChangeDeadline = null;
@@ -114,7 +123,13 @@ final class UpdateCommand extends AbstractCommand
 	public ?bool $matchWorkTime = null;
 
 	#[Nullable]
+	public ?bool $matchSchedule = null;
+
+	#[Nullable]
 	public ?bool $notifyAtHalfTime = null;
+
+	#[Nullable]
+	public ?bool $notifyWhenTaskNotTaken = true;
 
 	#[Nullable]
 	public ?bool $taskControl = null;

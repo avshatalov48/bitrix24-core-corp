@@ -3,6 +3,7 @@
 namespace Bitrix\HumanResources\Service\Access;
 
 use Bitrix\HumanResources\Access\Role\RoleUtil;
+use Bitrix\HumanResources\Contract\Repository\NodeRepository;
 use Bitrix\HumanResources\Service\Container;
 use Bitrix\Main\Access\Exception\RoleRelationSaveException;
 use Bitrix\Main\DB\SqlQueryException;
@@ -24,6 +25,8 @@ class RoleRelationService implements \Bitrix\HumanResources\Contract\Service\Acc
 
 			(new RoleUtil($roleId))->updateRoleRelations($setting['accessCodes'] ?? []);
 		}
+
+		Container::getCacheManager()->clean(NodeRepository::NODE_ENTITY_RESTRICTION_CACHE);
 	}
 
 	/**

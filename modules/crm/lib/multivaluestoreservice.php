@@ -4,7 +4,8 @@ namespace Bitrix\Crm;
 
 use Bitrix\Crm\Traits\Singleton;
 use Bitrix\Main\Application;
-use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Type\DateTime;
 
 /**
@@ -15,22 +16,16 @@ class MultiValueStoreService
 {
 	use Singleton;
 
+	private const MAX_SIZE = 255;
+
 	/**
-	 * @param string $key max size 30
+	 * @param string $key max size 255
 	 * @param string $value max size 255
 	 * @return void
 	 */
 	public function add(string $key, string $value): void
 	{
-		if (mb_strlen($key) > 30)
-		{
-			throw new ArgumentException("Invalid key size");
-		}
-
-		if (mb_strlen($value) > 255)
-		{
-			throw new ArgumentException("Invalid value size");
-		}
+		$this->validateKeyValue($key, $value);
 
 		$connection = Application::getConnection();
 		$sqlHelper = Application::getConnection()->getSqlHelper();
@@ -42,6 +37,14 @@ class MultiValueStoreService
 		);
 
 		$connection->query($sql);
+	}
+
+	public function set(string $key, string $value): void
+	{
+		$this->validateKeyValue($key, $value);
+
+		$this->deleteAll($key);
+		$this->add($key, $value);
 	}
 
 	public function get(string $key, ?int $limit = null): array
@@ -60,6 +63,13 @@ class MultiValueStoreService
 		}
 
 		return array_column($connection->query($sql)->fetchAll(), 'VALUE');
+	}
+
+	public function getFirstValue(string $key): ?string
+	{
+		$values = $this->get($key);
+
+		return array_shift($values);
 	}
 
 	/**
@@ -110,5 +120,39 @@ class MultiValueStoreService
 		);
 
 		$connection->query($sql);
+	}
+
+	/**
+	 * @throws SqlQueryException
+	 */
+	public function deleteAllByValue(string $value): void
+	{
+		$connection = Application::getConnection();
+		$sqlHelper = $connection->getSqlHelper();
+
+		$value = $sqlHelper->convertToDbString($value);
+
+		$sql = "
+			DELETE FROM b_crm_multi_value_store
+			WHERE VALUE = {$value}
+		";
+
+		$connection->query($sql);
+	}
+
+	/**
+	 * @throws ArgumentOutOfRangeException
+	 */
+	private function validateKeyValue(string $key, string $value): void
+	{
+		if (mb_strlen($key) > self::MAX_SIZE)
+		{
+			throw new ArgumentOutOfRangeException('key', null, self::MAX_SIZE);
+		}
+
+		if (mb_strlen($value) > self::MAX_SIZE)
+		{
+			throw new ArgumentOutOfRangeException('value', null, self::MAX_SIZE);
+		}
 	}
 }

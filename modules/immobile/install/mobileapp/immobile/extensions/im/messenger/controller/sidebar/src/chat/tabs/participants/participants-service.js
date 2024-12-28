@@ -68,10 +68,11 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-s
 				return [];
 			}
 
-			if (dialogState.participants.length !== dialogState.userCounter)
-			{
-				return [];
-			}
+			// @see bugfix 0202206
+			// if (dialogState.participants.length !== dialogState.userCounter)
+			// {
+			// 	return [];
+			// }
 
 			let usersData = [];
 			if (this.isGroupDialog)
@@ -163,7 +164,8 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-s
 			const userAvatar = this.sidebarUserService.getAvatarDataById(user.id);
 			const statusSvg = this.sidebarUserService.getUserStatus(user.id);
 			const isAdmin = this.isGroupDialog ? ownerId === user.id : false;
-			const crownStatus = isAdmin ? this.sidebarUserService.getStatusCrown(true) : null;
+			const isManager = dialogData?.managerList.includes(user.id);
+			const crownStatus = (isAdmin || isManager) ? this.sidebarUserService.getStatusCrown(isAdmin) : null;
 			let userId = user.id;
 			if (Type.isUndefined(userId) && user.type === DialogType.user)
 			{
@@ -182,6 +184,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-s
 				isAdmin,
 				isYou,
 				isCopilot,
+				isManager,
 				isSuperEllipseAvatar: this.isSuperEllipseAvatar(),
 			};
 		}
@@ -262,11 +265,11 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-s
 
 		/**
 		 * @desc Handler on click leave chat from participants menu
-		 * @return void
+		 * @return Promise
 		 */
 		onClickLeaveChat()
 		{
-			this.sidebarRestService.leaveChat()
+			return this.sidebarRestService.leaveChat()
 				.then(
 					(result) => {
 						if (result)
@@ -277,20 +280,19 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-s
 									// eslint-disable-next-line promise/no-nesting
 									.catch((err) => {
 										logger.error(`${this.constructor.name}.onClickLeaveChat.popTo.catch error`, err);
-										BX.onCustomEvent('onDestroySidebar');
+										BX.onCustomEvent(EventType.sidebar.destroy);
 										MessengerEmitter.emit(EventType.messenger.destroyDialog);
 									});
 							}
 							catch (e)
 							{
 								logger.error(`${this.constructor.name}.onClickLeaveChat.getNavigator()`, e);
-								BX.onCustomEvent('onDestroySidebar');
+								BX.onCustomEvent(EventType.sidebar.destroy);
 								MessengerEmitter.emit(EventType.messenger.destroyDialog);
 							}
 						}
 					},
-				)
-				.catch((err) => logger.error(`${this.constructor.name}.onClickLeaveChat.sidebarRestService.leaveChat`, err));
+				);
 		}
 
 		/**
@@ -310,23 +312,22 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-s
 		 */
 		onClickPingUser(userId)
 		{
-			// try
-			// {
-				// PageManager.getNavigator().popTo('im.dialog')
-				// 	// eslint-disable-next-line promise/no-nesting
-				// 	.catch((err) => {
-				// 		logger.error('ParticipantsService.onClickPingUser.popTo.catch error', err);
-				// 		BX.onCustomEvent('onDestroySidebar');
-				// 	}); TODO uncomment when the popTo method will work over the entire stack code
-			// }
-			// catch (e)
-			// {
-			// 	logger.error(`${this.constructor.name}.onClickPingUser.getNavigator()`, e);
-			// 	BX.onCustomEvent('onDestroySidebar');
-			// }
-
-			BX.onCustomEvent('onDestroySidebar');
-			BX.onCustomEvent(EventType.dialog.external.mention, [userId, BBCode.user, this.dialogId]);
+			const dialogCode = serviceLocator.get(this.dialogId)?.dialogCode;
+			try
+			{
+				PageManager.getNavigator().popTo(dialogCode)
+					.then(() => {
+						BX.onCustomEvent('onDestroySidebar');
+						BX.onCustomEvent(EventType.dialog.external.mention, [userId, BBCode.user, this.dialogId]);
+					})
+					.catch((err) => {
+						logger.error('ParticipantsService.onClickPingUser.popTo.catch error', err);
+					});
+			}
+			catch (e)
+			{
+				logger.error(`${this.constructor.name}.onClickPingUser.getNavigator()`, e);
+			}
 		}
 
 		isSuperEllipseAvatar()
@@ -334,14 +335,30 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-s
 			return false;
 		}
 
-		onClickAddManager()
+		/**
+		 * @desc Handler add manager
+		 * @param {number} userId
+		 * @void
+		 * @private
+		 */
+		onClickAddManager(userId)
 		{
-			logger.log(`${this.constructor.name}.onClickAddManager`);
+			logger.log(`${this.constructor.name}.onClickAddManager.userId:`, userId);
+			this.sidebarRestService.addManager(userId)
+				.catch((error) => logger.log(`${this.constructor.name}.sidebarRestService.addManager.catch:`, error));
 		}
 
-		onClickRemoveManager()
+		/**
+		 * @desc Handler remove manager
+		 * @param {number} userId
+		 * @void
+		 * @private
+		 */
+		onClickRemoveManager(userId)
 		{
-			logger.log(`${this.constructor.name}.onClickRemoveManager`);
+			logger.log(`${this.constructor.name}.onClickRemoveManager.userId:`, userId);
+			this.sidebarRestService.removeManager(userId)
+				.catch((error) => logger.log(`${this.constructor.name}.sidebarRestService.removeManager.catch:`, error));
 		}
 	}
 

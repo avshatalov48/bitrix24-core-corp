@@ -116,6 +116,7 @@ class CrmControlPanel extends CBitrixComponent
 					['ID' => 'QUOTE'],
 					['ID' => 'SALES_CENTER', 'SLIDER_MODE' => true],
 					['ID' => 'TERMINAL'],
+					['ID' => 'CALL_ASSESSMENT'],
 				],
 			],
 			['ID' => 'BIC_DASHBOARDS'],
@@ -521,6 +522,19 @@ class CrmControlPanel extends CBitrixComponent
 				$subItems = $this->createMenuItems($mapItem['SUB_ITEMS'] ?? $item['SUB_ITEMS'], $standardItems);
 				if (!empty($subItems))
 				{
+					$isNew = (bool) ($item['IS_NEW'] ?? false);
+					if ($isNew === false)
+					{
+						foreach ($subItems as $subItem)
+						{
+							if ((bool) ($subItem['IS_NEW'] ?? false) === true)
+							{
+								$isNew = true;
+								break;
+							}
+						}
+					}
+
 					//$firstSubItem = $subItems[0];
 					$result[] = [
 						'IS_ACTIVE' => $this->arParams["ACTIVE_ITEM_ID"] === $item['ID'],
@@ -528,6 +542,7 @@ class CrmControlPanel extends CBitrixComponent
 						'TEXT' => $item['TEXT'] ?? $item['NAME'],
 						'ITEMS' => $subItems,
 						'IS_DISABLED' => $item['IS_DISABLED'] ?? false,
+						'IS_NEW' => $isNew,
 						// 'URL' => $item['URL'] ?? $firstSubItem['URL'],
 						// 'ON_CLICK' => $item['ON_CLICK'] ?? $firstSubItem['ON_CLICK'],
 					];

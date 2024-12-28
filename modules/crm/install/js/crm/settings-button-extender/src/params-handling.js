@@ -20,6 +20,23 @@ export function requireClass(param: any, constructor: Function, paramName: strin
 	throw new Error(`Expected ${paramName} be an instance of ${constructor.name}, got ${getType(param)} instead`);
 }
 
+export function requireArrayOfString(param: any, paramName: string): Array<string>
+{
+	if (!Type.isArray(param))
+	{
+		throw new TypeError(`Expected ${paramName} should be an array of strings, got ${getType(param)} instead`);
+	}
+
+	param.forEach((value, index) => {
+		if (!Type.isString(value))
+		{
+			throw new TypeError(`Expected ${paramName} should be an array of strings, instead the element at index ${index} is ${getType(value)}`);
+		}
+	});
+
+	return param;
+}
+
 export function requireStringOrNull(param: any, paramName: string): ?string
 {
 	if (Type.isStringFilled(param) || Type.isNil(param))

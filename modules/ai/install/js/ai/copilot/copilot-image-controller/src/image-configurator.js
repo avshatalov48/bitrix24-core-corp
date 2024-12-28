@@ -38,6 +38,22 @@ export class ImageConfigurator extends EventEmitter
 			formats: options?.formats ?? [],
 			engines: options?.engines ?? [],
 		});
+
+		this.#imageConfiguratorParams.subscribe('change-parameter', (event) => {
+			const data = event.getData();
+
+			this.emit('change-parameter', data);
+		});
+	}
+
+	setFormats(formats: ImageCopilotFormat[]): void
+	{
+		this.#imageConfiguratorParams.setFormats(formats);
+	}
+
+	setSelectedEngine(engineCode: string): void
+	{
+		this.#imageConfiguratorParams.setSelectedEngine(engineCode);
 	}
 
 	getParams(): getParamsResult

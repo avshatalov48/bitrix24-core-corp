@@ -41,6 +41,9 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 			return this;
 		}
 
+		/**
+		 * @deprecated use to AvatarDetail
+		 */
 		setSuperEllipseIcon()
 		{
 			this.isSuperEllipseIcon = true;

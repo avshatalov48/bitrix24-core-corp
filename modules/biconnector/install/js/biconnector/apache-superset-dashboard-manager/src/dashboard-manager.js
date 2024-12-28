@@ -318,6 +318,18 @@ export class DashboardManager
 		);
 	}
 
+	static openDatasetListSlider()
+	{
+		BX.SidePanel.Instance.open(
+			'/bi/dataset',
+			{
+				cacheable: false,
+				allowChangeHistory: true,
+				allowChangeTitle: true,
+			},
+		);
+	}
+
 	openCreationSlider(): void
 	{
 		const componentLink = '/bitrix/components/bitrix/biconnector.apachesuperset.dashboard.create/slider.php';

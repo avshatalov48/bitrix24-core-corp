@@ -21,6 +21,7 @@ export type AiSettingsItem = {
 	header: string,
 	value: any,
 	options: ?{[string]: string},
+	recommended: ?[string],
 	onSave: ?{
 		title: string,
 		callback: string,

@@ -2,7 +2,7 @@
 
 namespace Bitrix\Sign\Contract\Access;
 
-interface AccessibleItemWithOwner extends \Bitrix\Main\Access\AccessibleItem
+interface AccessibleItemWithOwner extends AccessibleItem
 {
 	public function getOwnerId(): int;
 }

@@ -7,6 +7,7 @@ use Bitrix\Disk\Internals\Engine;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\SystemException;
 
@@ -37,10 +38,19 @@ final class Storage extends Engine\Controller
 	/**
 	 * Returns basic storage info.
 	 * @param Disk\Storage $storage Storage, loaded by primary auto wired parameter.
-	 * @return Disk\Storage[]
+	 * @param CurrentUser $currentUser Current user injected by param autowiring.
+	 * @return Disk\Storage[]|null
 	 */
-	public function getAction(Disk\Storage $storage): array
+	public function getAction(Disk\Storage $storage, CurrentUser $currentUser): ?array
 	{
+		$securityContext = $storage->getSecurityContext($currentUser->getId());
+		if (!$storage->canRead($securityContext))
+		{
+			$this->addError(new Error('No permission to read storage.'));
+
+			return null;
+		}
+
 		return [
 			'storage' => $storage,
 		];
@@ -48,18 +58,19 @@ final class Storage extends Engine\Controller
 
 	/**
 	 * Returns personal storage of current user.
-	 * @return array
+	 * @param CurrentUser $currentUser Current user injected by param autowiring.
+	 * @return array|null
 	 * @throws ArgumentException
 	 * @throws SystemException
 	 */
-	public function getPersonalStorageAction(): array
+	public function getPersonalStorageAction(CurrentUser $currentUser): ?array
 	{
-		$userId = $this->getCurrentUser()?->getId();
+		$userId = $currentUser->getId();
 		if (!$userId)
 		{
 			$this->addError(new Error('Could not find current user.'));
 
-			return [];
+			return null;
 		}
 
 		$storage = Disk\Driver::getInstance()->getStorageByUserId($userId);
@@ -67,18 +78,19 @@ final class Storage extends Engine\Controller
 		{
 			$this->addError(new Error('Could not find personal storage.'));
 
-			return [];
+			return null;
 		}
 
-		return $this->getAction($storage);
+		return $this->getAction($storage, $currentUser);
 	}
 
 	/**
 	 * Returns common storage of current site.
+	 * @param CurrentUser $currentUser Current user injected by param autowiring.
 	 * Use id "shared_files_{siteId}" for determine common storage.
-	 * @return array
+	 * @return array|null
 	 */
-	public function getCommonStorageAction(): array
+	public function getCommonStorageAction(CurrentUser $currentUser): ?array
 	{
 		$siteId = Application::getInstance()->getContext()->getSite();
 		$commonStorageId = 'shared_files_' . $siteId;
@@ -88,35 +100,36 @@ final class Storage extends Engine\Controller
 		{
 			$this->addError(new Error("Could not find common storage. Site: {$siteId}"));
 
-			return [];
+			return null;
 		}
 
-		return $this->getAction($storage);
+		return $this->getAction($storage, $currentUser);
 	}
 
 	/**
 	 * Returns storage by social group.
 	 * @param int $groupId Social group id.
-	 * @return array
+	 * @param CurrentUser $currentUser Current user injected by param autowiring.
+	 * @return array|null
 	 */
-	public function getBySocialGroupAction(int $groupId): array
+	public function getBySocialGroupAction(int $groupId, CurrentUser $currentUser): ?array
 	{
 		$storage = Disk\Driver::getInstance()->getStorageByGroupId($groupId);
 		if (!$storage)
 		{
 			$this->addError(new Error('Could not find storage by social group.'));
 
-			return [];
+			return null;
 		}
 
-		$securityContext = $storage->getSecurityContext($this->getCurrentUser()?->getId());
+		$securityContext = $storage->getSecurityContext($currentUser->getId());
 		if (!$storage->canRead($securityContext))
 		{
 			$this->addError(new Error('Could not find storage by social group.'));
 
-			return [];
+			return null;
 		}
 
-		return $this->getAction($storage);
+		return $this->getAction($storage, $currentUser);
 	}
 }

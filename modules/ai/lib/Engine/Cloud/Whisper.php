@@ -12,7 +12,7 @@ final class Whisper extends CloudEngine implements IQueueOptional
 {
 	protected const CATEGORY_CODE = Engine::CATEGORIES['audio'];
 	protected const ENGINE_NAME = 'Whisper';
-	protected const ENGINE_CODE = 'Audio';
+	public const ENGINE_CODE = 'Audio';
 	protected const DEFAULT_MODEL = 'large-v3';
 	protected const URL_COMPLETIONS = 'https://api.openai.com/v1/audio/transcriptions';
 

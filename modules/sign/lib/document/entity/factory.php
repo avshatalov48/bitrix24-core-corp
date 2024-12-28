@@ -3,6 +3,8 @@
 namespace Bitrix\Sign\Document\Entity;
 
 use Bitrix\Main;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Error;
 use Bitrix\Sign\Document\Result\Entity\Factory\SaveNewEntityResult;
 use Bitrix\Sign\Item;
 use Bitrix\Sign\Type;
@@ -49,19 +51,26 @@ class Factory
 	final public function createNewEntity(Item\Document $document, bool $checkPermission = true): SaveNewEntityResult
 	{
 		$result = new SaveNewEntityResult();
+		if (!Loader::includeModule('crm'))
+		{
+			return $result->addError(new Error('CRM module is not installed'));
+		}
+
 		$entityType = $document->entityType;
+
 		if ($entityType === null)
 		{
 			return $result->addError(new Main\Error("Document doesnt contains entity type"));
 		}
 
 		$entityClass = self::ENTITY_TYPE_TO_ENTITY_CLASS[$entityType] ?? null;
+
 		if ($entityClass === null)
 		{
 			return $result->addError(new Main\Error("Entity type: `$entityType` is not exist"));
 		}
 
-		$resultEntityId = $entityClass::create($checkPermission);
+		$resultEntityId = $entityClass::create($document, $checkPermission);
 		if ($resultEntityId === null)
 		{
 			return $result->addError(new Main\Error("Can't create new crm entity"));

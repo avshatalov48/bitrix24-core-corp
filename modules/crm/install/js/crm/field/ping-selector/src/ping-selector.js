@@ -59,15 +59,21 @@ export class PingSelector
 
 		this.#id = params.id || `ping-selector-${Text.getRandom()}`;
 		this.#target = Type.isDomNode(params.target) ? params.target : null;
-		this.#valuesList = Type.isArrayFilled(params.valuesList) ? params.valuesList : [];
+		this.#valuesList = Type.isArrayFilled(params.valuesList) ? params.valuesList.map((item) => {
+			return {
+				...item,
+				id: item.id.toString(),
+			};
+		}) : [];
 
 		if (Type.isArrayFilled(params.selectedValues))
 		{
-			params.selectedValues.forEach((selectedValue) => this.#selectedValues.add(selectedValue));
+			params.selectedValues.forEach((selectedValue) => this.#selectedValues.add(selectedValue.toString()));
 		}
 
 		this.#readonlyMode = params.readonlyMode === true;
 		this.#deadline = (Type.isDate(params?.deadline) ? params.deadline : new Date());
+		this.#deadline.setSeconds(0);
 
 		if (Type.isStringFilled(params.icon) && Object.values(CompactIcons).includes(params.icon))
 		{
@@ -282,7 +288,7 @@ export class PingSelector
 			return;
 		}
 
-		const offset = (this.#deadline.getTime() - date.getTime()) / 1000 / 60;
+		const offset = Math.floor((this.#deadline.getTime() - date.getTime()) / 1000 / 60);
 		this.#selectedValues.add(offset.toString());
 
 		const customValue = {

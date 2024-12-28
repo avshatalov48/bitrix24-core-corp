@@ -2,19 +2,12 @@
 
 namespace Bitrix\Tasks\Flow\Provider\Query;
 
-use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Tasks\Provider\Query\AbstractTaskQuery;
 use Bitrix\Tasks\Provider\TaskQueryInterface;
 
-class FlowQuery implements TaskQueryInterface
+class FlowQuery extends AbstractTaskQuery implements TaskQueryInterface
 {
-	protected array $select = ['ID'];
-	protected ?ConditionTree $where = null;
-	protected int $limit = 0;
-	protected int $offset = 0;
-	protected array $groupBy = [];
-	protected array $orderBy = [];
-	protected bool $distinct = true;
 	protected bool $countTotal = false;
 	protected bool $accessCheck = true;
 	protected bool $onlyPrimaries = false;
@@ -28,40 +21,6 @@ class FlowQuery implements TaskQueryInterface
 		$this->init();
 	}
 
-	public function setSelect(array $select): static
-	{
-		$this->select = $select;
-		return $this;
-	}
-
-	public function setWhere(ConditionTree $where): static
-	{
-		if (isset($this->where))
-		{
-			$this->where->where($where); // :D
-		}
-		else
-		{
-			$this->where = $where;
-		}
-
-		return $this;
-	}
-
-	public function setLimit(int $limit): static
-	{
-		$this->limit = $limit;
-
-		return $this;
-	}
-
-	public function setOffset(int $offset): static
-	{
-		$this->offset = $offset;
-
-		return $this;
-	}
-
 	public function setPageNavigation(PageNavigation $pageNavigation): static
 	{
 		return $this
@@ -69,17 +28,9 @@ class FlowQuery implements TaskQueryInterface
 			->setOffset($pageNavigation->getOffset());
 	}
 
-	public function setGroupBy(array $groupBy): static
+	public function setOnlyPrimaries(bool $onlyPrimaries = true): static
 	{
-		$this->groupBy = $groupBy;
-
-		return $this;
-	}
-
-	public function setOrderBy(array $orderBy): static
-	{
-		$this->orderBy = $orderBy;
-
+		$this->onlyPrimaries = $onlyPrimaries;
 		return $this;
 	}
 
@@ -87,18 +38,6 @@ class FlowQuery implements TaskQueryInterface
 	{
 		$this->countTotal = $countTotal;
 
-		return $this;
-	}
-
-	public function setDistinct(bool $distinct = true): static
-	{
-		$this->distinct = $distinct;
-		return $this;
-	}
-
-	public function setOnlyPrimaries(bool $onlyPrimaries = true): static
-	{
-		$this->onlyPrimaries = $onlyPrimaries;
 		return $this;
 	}
 
@@ -111,41 +50,6 @@ class FlowQuery implements TaskQueryInterface
 	public function getId(): string
 	{
 		return 0;
-	}
-
-	public function getWhere(): ?ConditionTree
-	{
-		return $this->where;
-	}
-
-	public function getOrderBy(): array
-	{
-		return $this->orderBy;
-	}
-
-	public function getSelect(): array
-	{
-		return $this->select;
-	}
-
-	public function getLimit(): int
-	{
-		return $this->limit;
-	}
-
-	public function getOffset(): int
-	{
-		return $this->offset;
-	}
-
-	public function getGroupBy(): array
-	{
-		return $this->groupBy;
-	}
-
-	public function getDistinct(): bool
-	{
-		return $this->distinct;
 	}
 
 	public function getCountTotal(): int

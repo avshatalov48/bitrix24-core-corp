@@ -64,7 +64,7 @@ jn.define('tasks/layout/task/fields/creator', (require, exports, module) => {
 					style: (this.props.style || {}),
 				},
 				UserField({
-					analytics: new AnalyticsEvent().setSection('task'),
+					analytics: new AnalyticsEvent().setSection('tasks'),
 					readOnly: this.state.readOnly,
 					showEditIcon: !this.state.readOnly,
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_CREATOR'),
@@ -72,6 +72,7 @@ jn.define('tasks/layout/task/fields/creator', (require, exports, module) => {
 					value: this.state.creator.id,
 					titlePosition: 'left',
 					config: {
+						enableCreation: !(env.isCollaber || env.extranet),
 						deepMergeStyles: this.props.deepMergeStyles,
 						useLettersForEmptyAvatar: true,
 						provider: {

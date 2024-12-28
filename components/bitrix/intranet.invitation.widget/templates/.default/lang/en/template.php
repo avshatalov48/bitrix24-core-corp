@@ -1,4 +1,7 @@
 <?php
+$MESS["INTRANET_INVITATION_WIDGET_COLLAB"] = "Invite to collabs";
+$MESS["INTRANET_INVITATION_WIDGET_COLLAB_CREATE"] = "Create a collab";
+$MESS["INTRANET_INVITATION_WIDGET_COLLAB_DESC"] = "what's this?";
 $MESS["INTRANET_INVITATION_WIDGET_DESC"] = "why invite?";
 $MESS["INTRANET_INVITATION_WIDGET_DISABLED_TEXT"] = "Only your Bitrix24 administrator can invite new users to your Bitrix24. Please contact them to invite a person or get invite permission so you could do it on your own.";
 $MESS["INTRANET_INVITATION_WIDGET_EDIT"] = "Edit";

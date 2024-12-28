@@ -222,7 +222,10 @@ final class SignB2eDocument extends Activity
 		{
 			if (!$this->isCompanyDone())
 			{
-				$blocks['signersWait'] = $this->getSignersWaitBlock();
+				$blocks['signersWait'] = $this->isFromEmployeeDocument()
+					? $this->getFromEmployeeSignersWaitBlock()
+					: $this->getSignersWaitBlock()
+				;
 			}
 			$blocks['signersReady'] = $this->getSignersReadyBlock();
 			$blocks['signersCanceled'] = $this->getSignersCanceledBlock();
@@ -660,6 +663,15 @@ final class SignB2eDocument extends Activity
 		return $this->getUsersBlockWithCount($title, $userIds, $count, self::WAIT_DOCUMENT_CHAT);
 	}
 
+	private function getFromEmployeeSignersWaitBlock(): ?Layout\Body\ContentBlock\ContentBlockWithTitle
+	{
+		[$userIds, $count] = $this->getSignersUserIdsAndCountForBlock([MemberStatus::DONE]);
+
+		$title = Loc::getMessage('CRM_SIGN_B2E_ACTIVITY_FIELD_SIGNER_WAIT');
+
+		return $this->getUsersBlockWithCount($title, $userIds, $count, self::WAIT_DOCUMENT_CHAT);
+	}
+
 	private function getSignersReadyBlock(): ?Layout\Body\ContentBlock\ContentBlockWithTitle
 	{
 		$statuses = method_exists(MemberStatus::class, 'getReadyForSigning')
@@ -821,5 +833,15 @@ final class SignB2eDocument extends Activity
 	private function isCompanyDone(): bool
 	{
 		return $this->getCompanyMember()?->status === MemberStatus::DONE;
+	}
+
+	private function isFromEmployeeDocument(): bool
+	{
+		if (!class_exists(\Bitrix\Sign\Type\Document\InitiatedByType::class))
+		{
+			return false;
+		}
+
+		return $this->getSignDocument()?->initiatedByType === \Bitrix\Sign\Type\Document\InitiatedByType::EMPLOYEE;
 	}
 }

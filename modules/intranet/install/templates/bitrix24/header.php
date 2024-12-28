@@ -162,8 +162,9 @@ if ($isCompositeMode):
 endif;
 
 $isExtranet =
-	ModuleManager::isModuleInstalled('extranet') &&
+	Loader::includeModule('extranet') &&
 	COption::GetOptionString('extranet', 'extranet_site') === SITE_ID;
+$isCollaber = $isExtranet && \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById((int)$USER->getId());
 
 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 $uri = new \Bitrix\Main\Web\Uri($request->getRequestUri());
@@ -193,11 +194,6 @@ if (CUserOptions::GetOption('intranet', 'left_menu_collapsed') === 'Y')
 
 if ($isBitrix24Cloud)
 {
-	if (Option::get('bitrix24', 'creator_confirmed', 'N') !== 'Y')
-	{
-		$APPLICATION->IncludeComponent('bitrix:bitrix24.creatorconfirmed', '', [], null, ['HIDE_ICONS' => 'Y']);
-	}
-
 	if (
 		Option::get("bitrix24", "domain_changed", 'N') === 'N' ||
 		is_array(\CUserOptions::GetOption('bitrix24', 'domain_changed', false))
@@ -348,8 +344,17 @@ if ($isBitrix24Cloud)
 							{
 								$APPLICATION->IncludeComponent("bitrix:bitrix24.license.widget", '');
 							}
-							$APPLICATION->IncludeComponent("bitrix:intranet.invitation.widget", "", []);
-						?></div>
+
+							if ($isCollaber)
+							{
+								$APPLICATION->IncludeComponent("bitrix:intranet.create.portal.button", "", []);
+							}
+							else
+							{
+								$APPLICATION->IncludeComponent("bitrix:intranet.invitation.widget", "", []);
+							}
+						?>
+						</div>
 					</div>
 				</div>
 			</div>

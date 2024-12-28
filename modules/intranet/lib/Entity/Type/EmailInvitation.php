@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bitrix\Intranet\Entity\Type;
 
-class EmailInvitation
+class EmailInvitation extends BaseInvitation
 {
 	public function __construct(
-		private string $email,
-		private ?string $name,
-		private ?string $lastName)
+		private readonly string $email,
+		private readonly ?string $name,
+		private readonly ?string $lastName
+	)
 	{}
 
 	public function toArray(): array

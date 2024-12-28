@@ -97,31 +97,60 @@ final class SubscriberManager
 			WHERE
 				path." . ($direction === self::DIRECTION_PARENTS? 'OBJECT_ID' : 'PARENT_ID') . " = {$objectId} AND sharing.STATUS <> {$sharingStatus}							
 		";
+		$pathSearchField = $direction === self::DIRECTION_PARENTS ? 'PARENT_ID' : 'OBJECT_ID';
 
 		$sliceHashes = [];
 		while ($currentDepth < $maxInnerJoinDepth && !$emptySelect)
 		{
-			$aliasTable = "sharing" . ($currentDepth-1 >= 0 ? $currentDepth-1: '');
+			$sharingTableAlias = "sharing" . ($currentDepth - 1 >= 0 ? $currentDepth - 1 : '');
+
 			$query = "
-				SELECT DISTINCT {$aliasTable}.ID, {$aliasTable}.TO_ENTITY, {$aliasTable}.LINK_STORAGE_ID, {$aliasTable}.REAL_STORAGE_ID 
-				FROM b_disk_object_path path
-					INNER JOIN b_disk_sharing sharing ON sharing.REAL_OBJECT_ID = path." . ($direction === self::DIRECTION_PARENTS? 'PARENT_ID' : 'OBJECT_ID') . "
+				SELECT DISTINCT {$sharingTableAlias}.ID, {$sharingTableAlias}.TO_ENTITY, {$sharingTableAlias}.LINK_STORAGE_ID, {$sharingTableAlias}.REAL_STORAGE_ID 
+				FROM b_disk_sharing {$sharingTableAlias}
 			";
 
-			$emptySelect = true;
-			$finalQuery = $query;
-			for ($i = 0; $i < $currentDepth; $i++)
+			if ($currentDepth === 0)
 			{
-				$prevI = ($i-1 >= 0)? ($i-1): '';
-				$finalQuery .= " 
-					 INNER JOIN b_disk_object_path path{$i} ON path{$i}.OBJECT_ID = sharing{$prevI}.LINK_OBJECT_ID
-					 INNER JOIN b_disk_sharing sharing{$i} ON sharing{$i}.REAL_OBJECT_ID = path{$i}.PARENT_ID
+				$query .= "
+					INNER JOIN b_disk_object_path path ON sharing.REAL_OBJECT_ID = path.{$pathSearchField}
 				";
+				$query .= $where;
+			}
+			else
+			{
+				$pathTableAlias = "path" . ($currentDepth - 1 >= 0 ? $currentDepth - 1 : '');
+
+				$inner = '';
+				for ($i = 0; $i < $currentDepth; $i++)
+				{
+					$prevI = ($i - 1 >= 0) ? ($i - 1) : '';
+
+					$prevPathField = 'PARENT_ID';
+					if ($prevI === '')
+					{
+						$prevPathField = $pathSearchField;
+					}
+
+					$inner .= " 
+						INNER JOIN b_disk_sharing sharing{$prevI} ON sharing{$prevI}.REAL_OBJECT_ID = path{$prevI}.{$prevPathField}
+       					INNER JOIN b_disk_object_path path{$i} ON path{$i}.OBJECT_ID = sharing{$prevI}.LINK_OBJECT_ID
+					";
+				}
+
+				$whereWithSubQuery = "
+					WHERE {$sharingTableAlias}.REAL_OBJECT_ID IN (
+						SELECT {$pathTableAlias}.PARENT_ID
+						FROM b_disk_object_path path
+						{$inner}
+						{$where}
+				)";
+
+				$query .= $whereWithSubQuery;
 			}
 
-			$finalQuery .= $where;
+			$emptySelect = true;
 
-			$rows = $connection->query($finalQuery)->fetchAll();
+			$rows = $connection->query($query)->fetchAll();
 			Collection::sortByColumn($rows, 'ID');
 
 			$ids = [];

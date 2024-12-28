@@ -56,7 +56,20 @@ class extranet extends CModule
 
 	function InstallDB($arParams = array())
 	{
-		$this->errors = array();
+		global $DB, $APPLICATION;
+		$this->errors = [];
+		$connection = \Bitrix\Main\Application::getConnection();
+
+		if (!$DB->TableExists('b_extranet_user'))
+		{
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/extranet/install/db/' . $connection->getType() . '/install.sql');
+		}
+
+		if (!empty($this->errors))
+		{
+			$APPLICATION->ThrowException(implode("", $this->errors));
+			return false;
+		}
 
 		RegisterModule("extranet");
 
@@ -74,38 +87,47 @@ class extranet extends CModule
 		RegisterModuleDependences('main', 'OnUserDelete', 'extranet', 'CExtranet', 'ClearPublicUserCacheOnDelete');
 		RegisterModuleDependences('main', 'OnUserLogout', 'extranet', 'CExtranet', 'OnUserLogout');
 		RegisterModuleDependences('socialnetwork', 'OnGetProfileView', 'extranet', 'CExtranet', 'OnGetProfileView');
+		RegisterModuleDependences('main', 'OnAfterUserAdd', 'extranet', \Bitrix\Extranet\EventHandler\User::class, 'onAfterUserAdd');
+		RegisterModuleDependences('main', 'OnAfterUserUpdate', 'extranet', \Bitrix\Extranet\EventHandler\User::class, 'onAfterUserUpdate');
+		RegisterModuleDependences('main', 'OnAfterUserDelete', 'extranet', \Bitrix\Extranet\EventHandler\User::class, 'onAfterUserDelete');
+		RegisterModuleDependences('intranet', 'OnAfterTransferEMailUser', 'extranet', \Bitrix\Extranet\EventHandler\User::class, 'OnAfterTransferEmailUser');
 
-/*
-		// there is UF_PUBLIC user field creation in the bitrix:extranet wizard
+		\Bitrix\Main\Update\Stepper::bindClass(
+			\Bitrix\Extranet\Update\UserSynchronizer::class,
+			'extranet',
+			100
+		);
+		/*
+				// there is UF_PUBLIC user field creation in the bitrix:extranet wizard
 
-		$rsUserTypeEntity = CUserTypeEntity::GetList(array(), array("ENTITY_ID"=>"USER", "FIELD_NAME"=>"UF_PUBLIC"));
-		$arUserTypeEntity = $rsUserTypeEntity->Fetch();
-		if (!$arUserTypeEntity)
-		{
-			$ob = new CUserTypeEntity();
-			$arFields = array(
-				'ENTITY_ID' => 'USER',
-				'FIELD_NAME' => 'UF_PUBLIC',
-				'USER_TYPE_ID' => 'boolean',
-				'XML_ID' => '',
-				'SORT' => 100,
-				'MULTIPLE' => 'N',
-				'MANDATORY' => 'N',
-				'SHOW_FILTER' => 'I',
-				'SHOW_IN_LIST' => 'Y',
-				'EDIT_IN_LIST' => 'Y',
-				'IS_SEARCHABLE' => 'N',
-				'SETTINGS' => array(
-					'DISPLAY' => 'CHECKBOX',
-				),
-			);
+				$rsUserTypeEntity = CUserTypeEntity::GetList(array(), array("ENTITY_ID"=>"USER", "FIELD_NAME"=>"UF_PUBLIC"));
+				$arUserTypeEntity = $rsUserTypeEntity->Fetch();
+				if (!$arUserTypeEntity)
+				{
+					$ob = new CUserTypeEntity();
+					$arFields = array(
+						'ENTITY_ID' => 'USER',
+						'FIELD_NAME' => 'UF_PUBLIC',
+						'USER_TYPE_ID' => 'boolean',
+						'XML_ID' => '',
+						'SORT' => 100,
+						'MULTIPLE' => 'N',
+						'MANDATORY' => 'N',
+						'SHOW_FILTER' => 'I',
+						'SHOW_IN_LIST' => 'Y',
+						'EDIT_IN_LIST' => 'Y',
+						'IS_SEARCHABLE' => 'N',
+						'SETTINGS' => array(
+							'DISPLAY' => 'CHECKBOX',
+						),
+					);
 
-			$FIELD_ID = $ob->Add($arFields);
-			if (!$FIELD_ID)
-				return false;
-		}
+					$FIELD_ID = $ob->Add($arFields);
+					if (!$FIELD_ID)
+						return false;
+				}
 
-*/
+		*/
 
 		return true;
 	}
@@ -212,6 +234,10 @@ class extranet extends CModule
 		UnRegisterModuleDependences('main', 'OnUserDelete', 'extranet', 'CExtranet', 'ClearPublicUserCacheOnDelete');
 		UnRegisterModuleDependences('main', 'OnUserLogout', 'extranet', 'CExtranet', 'OnUserLogout');
 		UnRegisterModuleDependences('socialnetwork', 'OnGetProfileView', 'extranet', 'CExtranet', 'OnGetProfileView');
+		UnRegisterModuleDependences('main', 'OnAfterUserAdd', 'extranet', \Bitrix\Extranet\EventHandler\User::class, 'onAfterUserAdd');
+		UnRegisterModuleDependences('main', 'OnAfterUserUpdate', 'extranet', \Bitrix\Extranet\EventHandler\User::class, 'onAfterUserUpdate');
+		UnRegisterModuleDependences('main', 'OnAfterUserDelete', 'extranet', \Bitrix\Extranet\EventHandler\User::class, 'onAfterUserDelete');
+		UnRegisterModuleDependences('intranet', 'OnAfterTransferEMailUser', 'extranet', \Bitrix\Extranet\EventHandler\User::class, 'OnAfterTransferEmailUser');
 
 		UnRegisterModule('extranet');
 

@@ -41,7 +41,8 @@ jn.define('im/messenger/lib/element/dialog/message/copilot-prompt', (require, ex
 				.setCopilotButtons()
 				.setCopilotPromptText()
 				.setShowAvatarForce(false)
-				.setCanBeQuoted(false);
+				.setCanBeQuoted(false)
+				.setCanBeChecked(false);
 			this.setCopilotPromptAvatar(copilotRoleData);
 		}
 

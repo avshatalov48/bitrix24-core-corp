@@ -21,6 +21,7 @@ use Bitrix\Socialnetwork\Component\WorkgroupList;
 use Bitrix\Socialnetwork\Component\WorkgroupList\RuntimeFieldsManager;
 use Bitrix\Socialnetwork\Component\WorkgroupList\TasksCounter;
 use Bitrix\Socialnetwork\Helper\Workgroup;
+use Bitrix\Socialnetwork\Item\Workgroup\Type;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Socialnetwork\WorkgroupFavoritesTable;
 use Bitrix\Socialnetwork\WorkgroupPinTable;
@@ -256,6 +257,8 @@ class Provider
 				);
 			}
 		}
+
+		$query->where('TYPE', '!=', Type::Collab->value);
 
 		return $this->addQueryFilter($query, $filterValues);
 	}
@@ -605,7 +608,7 @@ class Provider
 		$extranetSiteId = \CExtranet::GetExtranetSiteID();
 		foreach ($projectIds as $id)
 		{
-			$projects[$id]['IS_EXTRANET'] = isset($sites[$id][$extranetSiteId]);
+			$projects[$id]['IS_EXTRANET'] = (isset($sites[$id][$extranetSiteId]) ? 'Y' : 'N');
 		}
 
 		return $projects;

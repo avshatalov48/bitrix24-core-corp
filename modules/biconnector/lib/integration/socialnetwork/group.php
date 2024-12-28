@@ -26,6 +26,11 @@ class Group
 		$result = &$params[1];
 		$languageId = $params[2];
 
+		$rolesMember = \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember();
+		$rolesMembersString = implode("', '", $rolesMember);
+
+		$moderatorRole = \Bitrix\Socialnetwork\UserToGroupTable::ROLE_MODERATOR;
+
 		//CREATE TABLE b_sonet_group
 		$result['socialnetwork_group'] = [
 			'TABLE_NAME' => 'b_sonet_group',
@@ -125,6 +130,55 @@ class Group
 				],
 				//TODO:IMAGE_ID int null,
 				//TODO:AVATAR_TYPE varchar(50) null,
+				'MODERATORS_IDS' => [
+					'GROUP_CONCAT' => ', ',
+					'GROUP_KEY' => 'MODERATORS_IDS',
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'UM.ID',
+					'FIELD_TYPE' => 'string',
+					'TABLE_ALIAS' => 'UGM',
+					'JOIN' => [
+						"INNER JOIN b_sonet_user2group UGM ON G.ID = UGM.GROUP_ID AND UGM.ROLE = '{$moderatorRole}'",
+						"INNER JOIN b_user UM ON UGM.USER_ID = UM.ID AND UM.ACTIVE = 'Y'",
+					],
+					'LEFT_JOIN' => [
+						"LEFT JOIN b_sonet_user2group UGM ON G.ID = UGM.GROUP_ID AND UGM.ROLE = '{$moderatorRole}'",
+						"LEFT JOIN b_user UM ON UGM.USER_ID = UM.ID AND UM.ACTIVE = 'Y'",
+					],
+				],
+				'MEMBERS_IDS' => [
+					'GROUP_CONCAT' => ', ',
+					'GROUP_KEY' => 'MEMBERS_IDS',
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'U.ID',
+					'FIELD_TYPE' => 'string',
+					'TABLE_ALIAS' => 'UG',
+					'JOIN' => [
+						"INNER JOIN b_sonet_user2group UG ON G.ID = UG.GROUP_ID AND UG.ROLE IN ('{$rolesMembersString}')",
+						"INNER JOIN b_user U ON UG.USER_ID = U.ID AND U.ACTIVE = 'Y'",
+					],
+					'LEFT_JOIN' => [
+						"LEFT JOIN b_sonet_user2group UG ON G.ID = UG.GROUP_ID AND UG.ROLE IN ('{$rolesMembersString}')",
+						"LEFT JOIN b_user U ON UG.USER_ID = U.ID AND U.ACTIVE = 'Y'",
+					],
+				],
+				'TYPE' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' =>
+						'if(
+							G.TYPE is null,
+							if(
+								G.SCRUM_MASTER_ID is null,
+								if(
+									G.PROJECT = \'Y\',
+									\'project\',
+									\'group\'
+								),
+								\'scrum\'
+							),
+							G.TYPE)',
+					'FIELD_TYPE' => 'string',
+				],
 				//NUMBER_OF_MEMBERS int not null default 0,
 				'NUMBER_OF_MEMBERS' => [
 					'IS_METRIC' => 'Y',
@@ -152,14 +206,51 @@ class Group
 					'FIELD_NAME' => 'G.PROJECT',
 					'FIELD_TYPE' => 'string',
 				],
-				//TODO:PROJECT_DATE_START datetime null,
-				//TODO:PROJECT_DATE_FINISH datetime null,
+				'PROJECT_DATE_START' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'G.PROJECT_DATE_START',
+					'FIELD_TYPE' => 'datetime',
+				],
+				'PROJECT_DATE_FINISH' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'G.PROJECT_DATE_FINISH',
+					'FIELD_TYPE' => 'datetime',
+				],
+				'SCRUM_MASTER_ID' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'G.SCRUM_MASTER_ID',
+					'FIELD_TYPE' => 'int',
+				],
+				'SCRUM_MASTER_NAME' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'if(G.SCRUM_MASTER_ID is null, null, concat_ws(\' \', nullif(USM.NAME, \'\'), nullif(USM.LAST_NAME, \'\')))',
+					'FIELD_TYPE' => 'string',
+					'TABLE_ALIAS' => 'USM',
+					'JOIN' => 'INNER JOIN b_user USM ON USM.ID = G.SCRUM_MASTER_ID',
+					'LEFT_JOIN' => 'LEFT JOIN b_user USM ON USM.ID = G.SCRUM_MASTER_ID',
+				],
+				'SCRUM_MASTER' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'if(G.SCRUM_MASTER_ID is null, null, concat_ws(\' \', concat(\'[\', G.SCRUM_MASTER_ID, \']\'), nullif(USM.NAME, \'\'), nullif(USM.LAST_NAME, \'\')))',
+					'FIELD_TYPE' => 'string',
+					'TABLE_ALIAS' => 'USM',
+					'JOIN' => 'INNER JOIN b_user USM ON USM.ID = G.SCRUM_MASTER_ID',
+					'LEFT_JOIN' => 'LEFT JOIN b_user USM ON USM.ID = G.SCRUM_MASTER_ID',
+				],
+				'SCRUM_SPRINT_DURATION' => [
+					'IS_METRIC' => 'Y',
+					'FIELD_NAME' => 'G.SCRUM_SPRINT_DURATION',
+					'FIELD_TYPE' => 'int',
+				],
+				//SCRUM_TASK_RESPONSIBLE char(1) null,
+				'SCRUM_TASK_RESPONSIBLE' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'G.SCRUM_TASK_RESPONSIBLE',
+					'FIELD_TYPE' => 'string',
+				],
 				//TODO:SEARCH_INDEX mediumtext null,
 				//TODO:LANDING char(1) null,
 				//TODO:SCRUM_OWNER_ID int null,
-				//TODO:SCRUM_MASTER_ID int null,
-				//TODO:SCRUM_SPRINT_DURATION int null,
-				//TODO:SCRUM_TASK_RESPONSIBLE char(1) null,
 			],
 		];
 
@@ -169,7 +260,26 @@ class Group
 		{
 			if ($fieldCode === 'OPENED')
 			{
-				$fieldCode = 'OPENED_MSGVER_1';
+				$fieldCode = 'OPENED_MSGVER_2';
+			}
+
+			$fieldsWithFirstVersionedMessages = [
+				'ID',
+				'PROJECT',
+				'DATE_CREATE',
+				'DATE_MODIFY',
+				'CLOSED',
+				'SUBJECT',
+				'OWNER',
+				'OWNER_ID',
+				'OWNER_NAME',
+				'KEYWORDS',
+				'NUMBER_OF_MEMBERS',
+				'DATE_ACTIVITY',
+			];
+			if (in_array($fieldCode, $fieldsWithFirstVersionedMessages))
+			{
+				$fieldCode = $fieldCode . '_MSGVER_1';
 			}
 
 			$fieldInfo['FIELD_DESCRIPTION'] = $messages['SN_BIC_GROUP_FIELD_' . $fieldCode];

@@ -31,4 +31,7 @@ $MESS ['PROXY_TAB_SET'] = "Прокси";
 $MESS ['PROXY_TAB_TITLE_SET'] = "Настройка прокси";
 
 $MESS ['DAV_EXCHANGE_MAILBOX_PATH'] = "Путь к Outlook Web App";
+$MESS['DAV_PASS_SET'] = '(установлен)';
+$MESS['DAV_PASS_DELETE'] = 'Удалить';
+$MESS['DAV_PASS_DELETE_TITLE'] = 'Удалить сохраненный пароль';
 ?>

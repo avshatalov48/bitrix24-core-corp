@@ -5,6 +5,11 @@
 
 BX.addCustomEvent("onRegisterProvider", (addProviderHandler) =>
 {
+	if (env.isCollaber)
+	{
+		return;
+	}
+
 	class TabSettingsProvider extends SettingsProvider
 	{
 		constructor(id, title, subtitle = "")

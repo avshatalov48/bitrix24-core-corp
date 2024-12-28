@@ -4,7 +4,6 @@ namespace Bitrix\HumanResources\Access\Role\System;
 
 abstract class Base
 {
-	abstract public function getTitle(): string;
 	abstract public function getPermissions(): array;
 
 	public function getMap(): array

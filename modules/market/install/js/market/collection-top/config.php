@@ -11,6 +11,7 @@ return [
 		'market.rating-stars',
 		'market.market-links',
 		'main.core',
+		'ui.ears',
 	],
 	'skip_core' => false,
 ];

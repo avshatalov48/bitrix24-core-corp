@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/sign-dropdown.bundle.js',
 	'rel' => [
 		'main.core',
+		'main.core.events',
 		'ui.entity-selector',
 	],
 	'skip_core' => false,

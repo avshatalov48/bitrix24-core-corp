@@ -11,10 +11,25 @@ use Bitrix\Tasks\Replication\RepositoryInterface;
 
 class TemplateRepository implements RepositoryInterface
 {
+	private static array $cache = [];
+
 	private ?TemplateObject $template = null;
 
-	public function __construct(private int $templateId)
+	private int $templateId;
+
+	public static function getInstance(int $templateId): static
 	{
+		if (!isset(static::$cache[$templateId]))
+		{
+			static::$cache[$templateId] = new static($templateId);
+		}
+
+		return static::$cache[$templateId];
+	}
+
+	public function __construct(int $templateId)
+	{
+		$this->templateId = $templateId;
 	}
 
 	public function getEntity(): ?TemplateObject

@@ -24,7 +24,7 @@ import type {
 	SpeechConverterResultEventData,
 } from 'ai.speech-converter';
 
-type CopilotInputOptions =  {
+type CopilotInputOptions = {
 	readonly: boolean;
 	useForImages: boolean;
 }
@@ -201,6 +201,11 @@ export class CopilotInput extends EventEmitter
 		requestAnimationFrame(() => {
 			this.#adjustTextareaHeight();
 		});
+	}
+
+	adjustHeight(): void
+	{
+		this.#adjustTextareaHeight();
 	}
 
 	#setErrorIcon(): void
@@ -702,6 +707,7 @@ export class CopilotInput extends EventEmitter
 		this.#textarea.setStyle('height', 'auto');
 		const textAreaPaddingBottom = parseInt(this.#textarea.getComputedStyle().getPropertyValue('padding-bottom'), 10);
 		const errorFieldHeight = Dom.getPosition(this.#errorContainer).height;
+		const placeholderHeight = Dom.getPosition(this.#placeholder.getContainer()).height;
 		const textAreaHeight = this.#textarea.scrollHeight;
 		const hasTextAreaMoreThanOneRow = textAreaHeight - textAreaPaddingBottom > 40;
 
@@ -722,9 +728,14 @@ export class CopilotInput extends EventEmitter
 		}
 		else
 		{
-			const newTextAreaHeight = this.#inputError && this.#inputError.getErrors().length > 0
+			let newTextAreaHeight = this.#inputError && this.#inputError.getErrors().length > 0
 				? errorFieldHeight
 				: this.#textarea.scrollHeight;
+
+			if (placeholderHeight > newTextAreaHeight && !this.#textarea.value)
+			{
+				newTextAreaHeight = placeholderHeight;
+			}
 
 			this.#textarea.setStyle('height', `${newTextAreaHeight}px`);
 		}

@@ -505,6 +505,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
 			analyticsLabel: <?= CUtil::phpToJsObject(\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('analyticsLabel')) ?>,
 			projectLimitExceeded: <?= \Bitrix\Main\Web\Json::encode($isProjectLimitExceeded); ?>,
 			projectLimitFeatureId: '<?= $projectLimitFeatureId ?>',
+			isCollabEnabled: '<?= $arResult["IS_COLLAB_ENABLED"] ? "Y" : "N" ?>',
 		});
 
 		var imageMail = document.getElementById("invite-wrap-decal");

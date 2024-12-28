@@ -11,6 +11,11 @@ use Bitrix\Main\EO_User;
 class UserCache
 {
 	/**
+	 * @var list<string>
+	 */
+	private array $cachedFields = [];
+
+	/**
 	 * @var array<int, EO_User>
 	 */
 	private array $usersById = [];
@@ -36,5 +41,25 @@ class UserCache
 	public function getLoadedModel(int $userId): ?EO_User
 	{
 		return $this->usersById[$userId] ?? null;
+	}
+
+	/**
+	 * @param list<string> $fields
+	 *
+	 * @return $this
+	 */
+	public function setCachedFields(array $fields): static
+	{
+		$this->cachedFields = $fields;
+
+		return $this;
+	}
+
+	/**
+	 * @return list<string>
+	 */
+	public function getCachedFields(): array
+	{
+		return $this->cachedFields;
 	}
 }

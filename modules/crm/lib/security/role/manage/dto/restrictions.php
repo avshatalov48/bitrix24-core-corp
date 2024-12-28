@@ -7,6 +7,7 @@ class Restrictions
 	public function __construct(
 		private bool $hasPermission,
 		private ?string $restrictionScript,
+		private ?string $sliderCode,
 	)
 	{
 	}
@@ -21,4 +22,8 @@ class Restrictions
 		return $this->restrictionScript;
 	}
 
+	public function sliderCode(): ?string
+	{
+		return $this->sliderCode;
+	}
 }

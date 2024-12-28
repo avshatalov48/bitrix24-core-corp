@@ -107,6 +107,8 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				this.preparedUnreadMessages = await this.contextCreator
 					.createMessageDoublyLinkedListForDialog(this.getDialog(), this.preparedUnreadMessages)
 				;
+				this.preparedUnreadMessages = this.addUploadingMessagesToMessageList(this.preparedUnreadMessages);
+
 				this.reactions = {
 					reactions: result.reactions,
 					usersShort: result.usersShort,
@@ -183,6 +185,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				this.preparedHistoryMessages = await this.contextCreator
 					.createMessageDoublyLinkedListForDialog({ ...this.getDialog(), hasPrevPage }, this.preparedHistoryMessages)
 				;
+				this.preparedHistoryMessages = this.addUploadingMessagesToMessageList(this.preparedHistoryMessages);
 				this.reactions = {
 					reactions: result.reactions,
 					usersShort: result.usersShort,
@@ -443,6 +446,9 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 
 			if (Type.isArrayFilled(result.messageList))
 			{
+				// eslint-disable-next-line no-param-reassign
+				result.messageList = this.addUploadingMessagesToMessageList(result.messageList);
+
 				await this.store.dispatch('messagesModel/setChatCollection', {
 					messages: result.messageList,
 					clearCollection: true,
@@ -507,9 +513,10 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				return Promise.resolve();
 			}
 
-			const messages = await this.contextCreator
+			let messages = await this.contextCreator
 				.createMessageDoublyLinkedListForDialog(this.getDialog(), result.messages)
 			;
+			messages = this.addUploadingMessagesToMessageList(messages);
 
 			const reactions = {
 				reactions: result.reactions,
@@ -807,6 +814,50 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 					isForceUpdate: true,
 				},
 			);
+		}
+
+		/**
+		 * @param {Array<MessagesModelState | RawMessage>} messageList
+		 * @returns {Array<MessagesModelState | RawMessage>}
+		 */
+		addUploadingMessagesToMessageList(messageList)
+		{
+			/** @type {Map<number, Array<MessagesModelState>>} */
+			const uploadingCollection = new Map();
+			const uploadingMessageList = this.store.getters['messagesModel/getUploadingMessages'](this.chatId);
+			if (!Type.isArrayFilled(uploadingMessageList))
+			{
+				return messageList;
+			}
+
+			for (const uploadingMessage of uploadingMessageList)
+			{
+				if (!uploadingCollection.has(uploadingMessage.previousId))
+				{
+					uploadingCollection.set(uploadingMessage.previousId, []);
+				}
+				uploadingCollection.get(uploadingMessage.previousId).push(uploadingMessage);
+			}
+
+			for (const [messageId, uploadingMessages] of uploadingCollection.entries())
+			{
+				const messageIndex = messageList.findIndex((message) => message.id === messageId);
+				if (messageIndex === -1)
+				{
+					continue;
+				}
+
+				if (messageIndex === messageList.length - 1)
+				{
+					messageList.push(...uploadingMessages);
+				}
+				else
+				{
+					messageList.splice(messageIndex + 1, 0, ...uploadingMessages);
+				}
+			}
+
+			return messageList;
 		}
 	}
 

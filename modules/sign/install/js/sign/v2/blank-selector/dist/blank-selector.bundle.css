@@ -155,11 +155,12 @@
 	min-height: 0;
 	margin-bottom: 7px;
 	overflow: hidden;
+	filter: brightness(95%);
 }
 
 .sign-blank-selector__list_item-preview img {
 	width: 100%;
-	border-radius: var(--ui-border-radius-xs);
+	border-radius: var(--ui-border-radius-3xs);
 }
 
 .sign-blank-selector__list_item-info-avatar {

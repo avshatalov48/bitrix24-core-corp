@@ -4,14 +4,18 @@ namespace Bitrix\Crm\Security\Role\Model;
 
 use Bitrix\Crm\Security\Role\Manage\DTO\PermissionModel;
 use Bitrix\Main\Application;
-use Bitrix\Main\Error;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\ArrayField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
+use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Query\Query;
-use Bitrix\Main\Result;
+use Bitrix\Main\SystemException;
+use Bitrix\Main\ORM\Event;
+use Bitrix\Crm\Security\Role\Utils\RolePermissionLogContext;
 
 /**
  * Class RolePermissionTable
@@ -31,28 +35,70 @@ use Bitrix\Main\Result;
  */
 class RolePermissionTable extends DataManager
 {
-	public static function getTableName()
+	public static function getTableName(): string
 	{
 		return 'b_crm_role_perms';
 	}
 
-	public static function getMap()
+	/**
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
+	public static function getMap(): array
 	{
 		return [
-			(new IntegerField("ID", ["primary" => true, "autocomplete" => true])),
-			(new IntegerField("ROLE_ID", ["required" => true])),
-			(new StringField("ENTITY", ["required" => true, "size" => 20])),
-			(new StringField("FIELD", ["size" => 30, "default" => "-"])),
-			(new StringField("FIELD_VALUE", ["size" => 255])),
-			(new StringField("PERM_TYPE", ["required" => true, "size" => 20])),
-			(new StringField("ATTR", ["size" => 1, "default" => ""])),
-			(new ArrayField('SETTINGS', ["default_value" => ""]))->configureSerializationJson(),
+			(new IntegerField('ID'))
+				->configurePrimary()
+				->configureAutocomplete()
+			,
+
+			(new IntegerField('ROLE_ID'))
+				->configureRequired()
+			,
+
+			(new StringField('ENTITY'))
+				->configureRequired()
+				->configureSize(20)
+			,
+
+			(new StringField('FIELD'))
+				->configureDefaultValue('-')
+				->configureSize(30)
+			,
+
+			(new StringField('FIELD_VALUE'))
+				->configureNullable()
+				->configureSize(255)
+			,
+
+			(new StringField('PERM_TYPE'))
+				->configureRequired()
+				->configureSize(20)
+			,
+
+			(new StringField('ATTR'))
+				->configureDefaultValue('')
+				->configureSize(1)
+			,
+
+			(new ArrayField('SETTINGS'))
+				->configureNullable()
+				->configureDefaultValue('')
+				->configureSerializationJson()
+			,
+
+			new ReferenceField(
+				'ROLE',
+				RoleTable::class,
+				Join::on('this.ROLE_ID', 'ref.ID'),
+			),
 		];
 	}
 
 	/**
 	 * @param int $roleId
 	 * @param PermissionModel[] $permissionModels
+	 * @throws Exception
 	 */
 	public static function appendPermissions(int $roleId, array $permissionModels): void
 	{
@@ -66,6 +112,10 @@ class RolePermissionTable extends DataManager
 		foreach ($permissionModels as $model)
 		{
 			if (!$model->isValidIdentifier())
+			{
+				continue;
+			}
+			if (\Bitrix\Crm\Security\Role\Utils\RolePermissionChecker::isPermissionEmpty($model))
 			{
 				continue;
 			}
@@ -98,6 +148,7 @@ class RolePermissionTable extends DataManager
 		$connection = Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
 
+		$logger = \Bitrix\Crm\Service\Container::getInstance()->getLogger('Permissions');
 		foreach ($permissionModels as $model)
 		{
 			if (!$model->isValidIdentifier())
@@ -121,7 +172,89 @@ class RolePermissionTable extends DataManager
 
 			static::cleanCache();
 
-			$connection->queryExecute($sql);
+			$somethingExists = self::query()
+				->where($ct)
+				->setLimit(1)
+				->setSelect(['ID'])
+				->fetch()
+			;
+
+			if ($somethingExists)
+			{
+				$connection->queryExecute($sql);
+				if (RolePermissionLogContext::getInstance()->isOrmEventsLogEnabled())
+				{
+					$logger->info(
+						"Deleted permissions in role #{ROLE_ID}",
+						RolePermissionLogContext::getInstance()->appendTo([
+							'ROLE_ID' => $roleId,
+							'ENTITY' => $model->entity(),
+							'PERM_TYPE' => $model->permissionCode(),
+							'FIELD' => $model->field(),
+							'FIELD_VALUE' => $model->filedValue(),
+						])
+					);
+				}
+			}
 		}
+	}
+
+	public static function onAfterAdd(Event $event)
+	{
+		parent::onAfterAdd($event);
+
+		if (!RolePermissionLogContext::getInstance()->isOrmEventsLogEnabled())
+		{
+			return;
+		}
+
+		$fields = $event->getParameters()['fields'] ?? [];
+
+		\Bitrix\Crm\Service\Container::getInstance()->getLogger('Permissions')->info(
+			"Added permissions in role #{ROLE_ID}",
+			RolePermissionLogContext::getInstance()->appendTo($fields)
+		);
+	}
+
+	public static function onAfterUpdate(Event $event)
+	{
+		parent::onAfterUpdate($event);
+
+		if (!RolePermissionLogContext::getInstance()->isOrmEventsLogEnabled())
+		{
+			return;
+		}
+
+		$fields = $event->getParameters()['fields'] ?? [];
+		foreach ($fields as $fieldId => $fieldValue)
+		{
+			$fields[$fieldId . '_OLD'] = $event->getParameters()['object']?->remindActual($fieldId);
+		}
+
+		\Bitrix\Crm\Service\Container::getInstance()->getLogger('Permissions')->info(
+			"Updated permissions in role #{ROLE_ID}",
+			RolePermissionLogContext::getInstance()->appendTo($fields)
+		);
+	}
+
+	public static function onAfterDelete(Event $event)
+	{
+		parent::onAfterDelete($event);
+
+		if (!RolePermissionLogContext::getInstance()->isOrmEventsLogEnabled())
+		{
+			return;
+		}
+
+		$fields = $event->getParameters()['fields'] ?? [];
+		if (empty($fields) && ($event->getParameters()['object'] ?? null) && $event->getParameters()['object'] instanceof EO_RolePermission)
+		{
+			$fields = $event->getParameters()['object']->collectValues();
+		}
+
+		\Bitrix\Crm\Service\Container::getInstance()->getLogger('Permissions')->info(
+			"Deleted permissions in role #{ROLE_ID}",
+			RolePermissionLogContext::getInstance()->appendTo($fields)
+		);
 	}
 }

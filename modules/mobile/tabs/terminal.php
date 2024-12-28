@@ -34,8 +34,7 @@ class Terminal implements Tabable {
 		return [
 			'id' => 'terminal',
 			'sort' => $this->defaultSortValue(),
-			'imageName' => 'terminal',
-			// 'imageUrl' => '/bitrix/mobileapp/mobile/components/bitrix/more/images/terminal/img.png',
+			'imageName' => $this->getIconId(),
 			'badgeCode' => 'terminal',
 			'component' => $this->getComponentParams(),
 		];
@@ -49,6 +48,7 @@ class Terminal implements Tabable {
 			'min_api_version' => self::MINIMAL_API_VERSION,
 			'color' => '#0169B3',
 			'imageUrl' => 'terminal/terminal.png',
+			'imageName' => $this->getIconId(),
 			'params' => [
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
 			],
@@ -118,6 +118,6 @@ class Terminal implements Tabable {
 
 	public function getIconId(): string
 	{
-		return $this->getId();
+		return Mobile::getApiVersion() < 56 ?  $this->getId() : 'payment_terminal';
 	}
 }

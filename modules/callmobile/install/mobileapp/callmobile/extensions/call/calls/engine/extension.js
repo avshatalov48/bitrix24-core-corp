@@ -10,6 +10,8 @@
 		createChildCall: 'im.call.createChildCall',
 		getPublicChannels: 'pull.channel.public.list',
 		getCall: 'im.call.get',
+		startTrack: 'call.Track.start',
+		stopTrack: 'call.Track.stop',
 	};
 
 	const pingTTLWebsocket = 10;
@@ -99,6 +101,7 @@
 		onHangup: 'onHangup',
 		onPullEventUserInviteTimeout: 'onPullEventUserInviteTimeout',
 		onReconnected: 'onReconnected',
+		onSwitchTrackRecordStatus: 'onSwitchTrackRecordStatus',
 	};
 
 	class CallEngine
@@ -419,6 +422,7 @@
 						debug: config.debug === true,
 						logToken: createCallResponse.logToken,
 						connectionData: createCallResponse.connectionData,
+						isCopilotActive: callFields.RECORD_AUDIO,
 					});
 
 					this.calls[callFields.ID] = call;
@@ -547,6 +551,11 @@
 			return BX.componentParameters.get('callBetaIosEnabled', false);
 		}
 
+		isAIServiceEnabled()
+		{
+			return BX.componentParameters.get('isAIServiceEnabled', false);
+		}
+
 		// previous method to detect new call, kept in case of reverting
 		// use isBitrixCallServerEnabled instead
 		// isBitrixCallDevEnabled()
@@ -615,7 +624,6 @@
 		{
 			if (command.startsWith('Call::') && params.callId)
 			{
-				console.warn('CallEngine._onPullClientEvent', command, params, extra);
 				const callId = params.callId;
 				if (this.calls[callId])
 				{
@@ -681,6 +689,7 @@
 						[BX.Call.Event.onActive]: this._onCallActiveHandler,
 					},
 					connectionData: params.connectionData,
+					isCopilotActive: callFields.RECORD_AUDIO,
 				});
 
 				this.calls[callId] = call;
@@ -768,6 +777,7 @@
 					[BX.Call.Event.onActive]: this._onCallActiveHandler,
 				},
 				connectionData: connectionData,
+				isCopilotActive: callFields.RECORD_AUDIO,
 			});
 			this.calls[callFields.ID] = call;
 
@@ -1388,6 +1398,11 @@
 			}
 
 			return JNVIAudioManager;
+		}
+
+		isAIServiceEnabled(isConference = false)
+		{
+			return BX.componentParameters.get('isAIServiceEnabled', false) && !isConference;
 		}
 	}
 

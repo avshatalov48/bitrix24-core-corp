@@ -8,6 +8,7 @@
 	const role = BX.componentParameters.get('role');
 	const isGoskey = BX.componentParameters.get('isGoskey');
 	const isExternal = BX.componentParameters.get('isExternal');
+	const initiatedByType = BX.componentParameters.get('initiatedByType');
 
 	if (role === 'reviewer')
 	{
@@ -18,6 +19,7 @@
 			memberId,
 			role,
 			url,
+			initiatedByType,
 		});
 	}
 
@@ -32,6 +34,7 @@
 			url,
 			isGoskey,
 			isExternal,
+			initiatedByType,
 		});
 	}
 })();

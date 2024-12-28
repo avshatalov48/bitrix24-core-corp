@@ -8,25 +8,31 @@ import { Analytics } from 'im.v2.lib.analytics';
 
 import { CallMenu } from './classes/call-menu';
 import { CallTypes } from './types/call-types';
+import { CallButtonTitle } from './components/call-button-title';
 
 import { hint } from 'ui.vue3.directives.hint';
 
 import './css/call-button.css';
 
+import type { JsonObject } from 'main.core';
 import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
 export const CallButton = {
 	directives: { hint },
+	components: { CallButtonTitle },
 	props:
 	{
 		dialogId: {
 			type: String,
 			required: true,
 		},
+		compactMode: {
+			type: Boolean,
+			default: false,
+		},
 	},
-	emits: [],
-	data()
+	data(): JsonObject
 	{
 		return {
 			lastCallType: '',
@@ -54,21 +60,15 @@ export const CallButton = {
 		},
 		hasActiveCurrentCall(): boolean
 		{
-			return CallManager
-				.getInstance()
-				.hasActiveCurrentCall(this.dialogId);
+			return CallManager.getInstance().hasActiveCurrentCall(this.dialogId);
 		},
 		hasActiveAnotherCall(): boolean
 		{
-			return CallManager
-				.getInstance()
-				.hasActiveAnotherCall(this.dialogId);
+			return CallManager.getInstance().hasActiveAnotherCall(this.dialogId);
 		},
 		isActive(): boolean
 		{
-			if (
-				this.hasActiveCurrentCall
-			)
+			if (this.hasActiveCurrentCall)
 			{
 				return true;
 			}
@@ -78,41 +78,39 @@ export const CallButton = {
 				return false;
 			}
 
-			return CallManager
-				.getInstance()
-				.chatCanBeCalled(this.dialogId);
+			return CallManager.getInstance().chatCanBeCalled(this.dialogId);
 		},
 		userLimit(): number
 		{
-			return CallManager
-				.getInstance()
-				.getCallUserLimit();
+			return CallManager.getInstance().getCallUserLimit();
 		},
 		isChatUserLimitExceeded(): boolean
 		{
-			return CallManager
-				.getInstance()
-				.isChatUserLimitExceeded(this.dialogId);
+			return CallManager.getInstance().isChatUserLimitExceeded(this.dialogId);
+		},
+		shouldShowMenu(): boolean
+		{
+			return this.isActive;
 		},
 		hintContent(): Object | null
 		{
-			if (this.isChatUserLimitExceeded)
+			if (!this.isChatUserLimitExceeded)
 			{
-				return {
-					text: this.loc('IM_LIB_CALL_USER_LIMIT_EXCEEDED_TOOLTIP', { '#USER_LIMIT#': this.userLimit }),
-					popupOptions: {
-						bindOptions: {
-							position: 'bottom',
-						},
-						angle: { position: 'top' },
-						targetContainer: document.body,
-						offsetLeft: 63,
-						offsetTop: 0,
-					},
-				};
+				return null;
 			}
 
-			return null;
+			return {
+				text: this.loc('IM_LIB_CALL_USER_LIMIT_EXCEEDED_TOOLTIP', { '#USER_LIMIT#': this.userLimit }),
+				popupOptions: {
+					bindOptions: {
+						position: 'bottom',
+					},
+					angle: { position: 'top' },
+					targetContainer: document.body,
+					offsetLeft: 63,
+					offsetTop: 0,
+				},
+			};
 		},
 	},
 	created()
@@ -141,15 +139,6 @@ export const CallButton = {
 				},
 			);
 		},
-		getCallMenu(): CallMenu
-		{
-			if (!this.callMenu)
-			{
-				this.callMenu = new CallMenu();
-			}
-
-			return this.callMenu;
-		},
 		onButtonClick()
 		{
 			if (!this.isActive)
@@ -173,7 +162,7 @@ export const CallButton = {
 		},
 		onMenuClick()
 		{
-			if (!this.shouldShowMenu())
+			if (!this.shouldShowMenu)
 			{
 				return;
 			}
@@ -208,9 +197,14 @@ export const CallButton = {
 			this.lastCallType = callTypeId;
 			LocalStorageManager.getInstance().set(LocalStorageKey.lastCallType, callTypeId);
 		},
-		shouldShowMenu(): boolean
+		getCallMenu(): CallMenu
 		{
-			return this.isActive;
+			if (!this.callMenu)
+			{
+				this.callMenu = new CallMenu();
+			}
+
+			return this.callMenu;
 		},
 		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{
@@ -224,9 +218,7 @@ export const CallButton = {
 			:class="{'--disabled': !isActive}"
 			@click="onStartConferenceClick"
 		>
-			<div class="bx-im-chat-header-call-button__text">
-				{{ loc('IM_CONTENT_CHAT_HEADER_START_CONFERENCE') }}
-			</div>
+			<CallButtonTitle :compactMode="compactMode" :text="loc('IM_CONTENT_CHAT_HEADER_START_CONFERENCE')" />
 		</div>
 		<div
 			v-else
@@ -235,9 +227,7 @@ export const CallButton = {
 			v-hint="hintContent"
 			@click="onButtonClick"
 		>
-			<div class="bx-im-chat-header-call-button__text">
-				{{ callButtonText }}
-			</div>
+			<CallButtonTitle :compactMode="compactMode" :text="callButtonText" />
 			<div class="bx-im-chat-header-call-button__separator"></div>
 			<div class="bx-im-chat-header-call-button__chevron_container" @click.stop="onMenuClick">
 				<div class="bx-im-chat-header-call-button__chevron" ref="menu"></div>

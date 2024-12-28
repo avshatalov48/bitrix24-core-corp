@@ -2,8 +2,6 @@
 
 namespace Bitrix\ImMobile\Controller\Tab;
 
-use Bitrix\Im\Promotion;
-use Bitrix\Im\V2\Message\CounterService;
 use Bitrix\ImMobile\Controller\Tab;
 use Bitrix\Main\Engine\CurrentUser;
 

@@ -109,6 +109,20 @@ final class AutomatedSolutionManager
 		}
 
 		$overallResult = new Result();
+		$userPermissions = Container::getInstance()->getUserPermissions();
+		if (!empty($typesToBind) && !$userPermissions->canEditAutomatedSolutions())
+		{
+			$overallResult->addError(ErrorCode::getAccessDeniedError());
+
+			return $overallResult;
+		}
+		if (!empty($typesToUnbind) && !$userPermissions->isCrmAdmin())
+		{
+			$overallResult->addError(ErrorCode::getAccessDeniedError());
+
+			return $overallResult;
+		}
+
 		foreach ($typesToBind as $type)
 		{
 			$bindResult = (new BindTypeToAutomatedSolution($type, $automatedSolutionId))->execute();
@@ -285,6 +299,21 @@ final class AutomatedSolutionManager
 		}
 
 		return $this->automatedSolutions;
+	}
+
+	public function getAutomatedSolutionsFilteredByPermissions(?int $userId = null): array
+	{
+		$userPermissions = Container::getInstance()->getUserPermissions($userId);
+		$result = [];
+		foreach ($this->getExistingAutomatedSolutions() as $intranetCustomSectionId => $existingAutomatedSolution)
+		{
+			if ($userPermissions->isAutomatedSolutionAdmin($existingAutomatedSolution['ID']))
+			{
+				$result[$intranetCustomSectionId] = $existingAutomatedSolution;
+			}
+		}
+
+		return $result;
 	}
 
 	private function cleanRuntimeCache(): void

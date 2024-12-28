@@ -2,6 +2,7 @@ import {Type} from 'main.core'
 import {CallEngine, Provider} from './engine/engine';
 import { MediaStreamsKinds } from './call_api';
 import { View } from './view/view';
+import { CallAI } from './call_ai';
 
 const blankAvatar = '/bitrix/js/im/images/blank.gif';
 
@@ -57,11 +58,11 @@ function updateUserData(callId, users)
 	return result;
 }
 
-function setUserData(userData)
+function setUserData(users)
 {
-	for (let userId in userData)
+	for (let userId in users)
 	{
-		userData[userId] = userData[userId];
+		userData[userId] = users[userId];
 	}
 }
 
@@ -778,7 +779,6 @@ const isConferenceChatEnabled = () =>
 	return BX.message('conference_chat_enabled');
 }
 
-
 function startSelfTest()
 {
 	const link = BX.Call.Util.getClientSelfTestUrl();
@@ -790,6 +790,24 @@ function startSelfTest()
 
 	window.open(link, '_blank');
 }
+
+const useTcpSdp = () =>
+{
+	return BX.message('call_use_tcp_sdp') === 'Y';
+}
+
+function openArticle(articleCode)
+{
+	const infoHelper = BX.UI.InfoHelper;
+
+	if (infoHelper.isOpen())
+	{
+		infoHelper.close()
+	}
+
+	infoHelper.show(articleCode);
+}
+
 
 export default {
 	updateUserData,
@@ -846,4 +864,6 @@ export default {
 	getTimeInSeconds,
 	isConferenceChatEnabled,
 	startSelfTest,
+	useTcpSdp,
+	openArticle,
 }

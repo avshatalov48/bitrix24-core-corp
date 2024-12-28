@@ -2,14 +2,11 @@
  * @module layout/ui/user/avatar/src/base-avatar
  */
 jn.define('layout/ui/user/avatar/src/base-avatar', (require, exports, module) => {
-	const { SafeImage } = require('layout/ui/safe-image');
-	const { EmptyAvatar } = require('layout/ui/user/empty-avatar');
-	const { withCurrentDomain } = require('utils/url');
-	const { Type } = require('type');
-
-	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/user/avatar/icons/default.svg';
+	const { Avatar: UIAvatar } = require('ui-system/blocks/avatar');
 
 	/**
+	 * @deprecated
+	 * @see ui-system/blocks/avatar
 	 * @function Avatar
 	 * @param {number} id - user id
 	 * @param {string} name - user full name or login
@@ -20,7 +17,8 @@ jn.define('layout/ui/user/avatar/src/base-avatar', (require, exports, module) =>
 	 * @param {object} [additionalStyles.image]
 	 * @param {object} [additionalStyles.wrapper]
 	 * @param {function} [onClick]
-	 * @return {SafeImage}
+	 * @param restProps
+	 * @return {UIAvatar}
 	 */
 	const Avatar = ({
 		id,
@@ -30,35 +28,19 @@ jn.define('layout/ui/user/avatar/src/base-avatar', (require, exports, module) =>
 		size = 24,
 		additionalStyles = {},
 		onClick,
-	}) => SafeImage({
-		testId,
-		onClick,
-		style: {
-			width: size,
-			height: size,
-			borderRadius: size / 2,
-			...additionalStyles.image,
-		},
-		wrapperStyle: additionalStyles.wrapper,
-		renderPlaceholder: () => {
-			if (!Type.isNumber(id))
-			{
-				return null;
-			}
-
-			return EmptyAvatar({
-				id,
-				name,
-				size,
-				additionalStyles: additionalStyles.image,
-				onClick,
-			});
-		},
-		placeholder: {
-			uri: withCurrentDomain(DEFAULT_AVATAR),
-		},
-		uri: image ? encodeURI(withCurrentDomain(image)) : undefined,
-	});
+		...restProps
+	}) => {
+		return UIAvatar({
+			id,
+			name,
+			testId,
+			size,
+			onClick,
+			uri: image,
+			style: additionalStyles.wrapper,
+			...restProps,
+		});
+	};
 
 	module.exports = { Avatar };
 });

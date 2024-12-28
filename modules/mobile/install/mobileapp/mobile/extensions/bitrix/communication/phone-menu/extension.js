@@ -54,7 +54,7 @@ jn.define('communication/phone-menu', (require, exports, module) => {
 
 	function getMenuActions(params)
 	{
-		const { number, canUseTelephony, isNumberHidden } = params;
+		const { number, canUseTelephony, isNumberHidden, analyticsSection } = params;
 
 		return [
 			{
@@ -82,7 +82,7 @@ jn.define('communication/phone-menu', (require, exports, module) => {
 						return Promise.resolve({ closeCallback });
 					}
 
-					showTelephonyBanner(parentWidget);
+					showTelephonyBanner(parentWidget, analyticsSection);
 
 					return Promise.resolve({ closeMenu: false });
 				},
@@ -101,7 +101,7 @@ jn.define('communication/phone-menu', (require, exports, module) => {
 		];
 	}
 
-	function showTelephonyBanner(parentWidget)
+	function showTelephonyBanner(parentWidget, analyticsSection = '')
 	{
 		const banner = new ContextMenu({
 			banner: {
@@ -112,7 +112,8 @@ jn.define('communication/phone-menu', (require, exports, module) => {
 				],
 				imagePath,
 				qrauth: {
-					redirectUrl: currentDomain + '/telephony/',
+					redirectUrl: '/telephony/',
+					analyticsSection,
 				},
 				positioning: 'vertical',
 				title: Loc.getMessage('PHONE_CALL_B24_BANNER_TITLE'),

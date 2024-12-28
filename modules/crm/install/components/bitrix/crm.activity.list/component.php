@@ -1147,11 +1147,8 @@ while($arRes = $dbRes->GetNext())
 
 	if($descriptionType === CCrmContentType::BBCode)
 	{
-		$arRes['DESCRIPTION_RAW'] = strip_tags(
-			preg_replace(
-				'/(<br[^>]*>)+/isu', "\n",
-				$bbCodeParser->convertText($description)
-			)
+		$arRes['DESCRIPTION_RAW'] = \Bitrix\Crm\Format\TextHelper::convertHtmlToText(
+			$bbCodeParser->convertText($description),
 		);
 	}
 	elseif($descriptionType === CCrmContentType::Html)

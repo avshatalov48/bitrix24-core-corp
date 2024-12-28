@@ -11,6 +11,8 @@ class SpaceService
 {
 	public function addEvent(string $type, array $data): void
 	{
+		// TODO: spaces stub
+		return;
 		if (!\Bitrix\Main\Loader::includeModule('socialnetwork'))
 		{
 			return;

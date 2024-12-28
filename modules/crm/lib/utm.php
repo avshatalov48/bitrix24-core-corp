@@ -84,6 +84,8 @@ class UtmTable extends Entity\DataManager
 	protected static function upsertEntityUtmFromFields($isAdd, $entityTypeId, $entityId, $fields)
 	{
 		$codeList = self::getCodeList();
+		$codesToDelete = [];
+
 		foreach ($codeList as $code)
 		{
 			if (!isset($fields[$code]))
@@ -93,7 +95,19 @@ class UtmTable extends Entity\DataManager
 
 			if (!$fields[$code])
 			{
-				static::deleteEntityUtm($entityTypeId, $entityId, $code);
+				$codesToDelete[] = $code;
+			}
+		}
+
+		if (!empty($codesToDelete) && !$isAdd)
+		{
+			static::deleteEntityUtmCodes($entityTypeId, $entityId, $codesToDelete);
+		}
+
+		foreach ($codeList as $code)
+		{
+			if (!isset($fields[$code]))
+			{
 				continue;
 			}
 
@@ -210,6 +224,33 @@ class UtmTable extends Entity\DataManager
 
 		return $isSuccess;
 	}
+
+	public static function deleteEntityUtmCodes($entityTypeId, $entityId, $codes = []): bool
+	{
+		if (empty($codes))
+		{
+			return true;
+		}
+
+		$filter = [
+			'=ENTITY_TYPE_ID' => $entityTypeId,
+			'=ENTITY_ID' => $entityId,
+			'@CODE' => $codes
+		];
+
+		$list = static::getList([
+			'select' => ['ENTITY_TYPE_ID', 'ENTITY_ID', 'CODE'],
+			'filter' => $filter
+		]);
+		$isSuccess = true;
+		foreach ($list as $item)
+		{
+			$isSuccess = static::delete($item)->isSuccess();
+		}
+
+		return $isSuccess;
+	}
+
 	public static function rebind($oldEntityTypeID, $oldEntityID, $newEntityTypeID, $newEntityID)
 	{
 		if($oldEntityTypeID <= 0)

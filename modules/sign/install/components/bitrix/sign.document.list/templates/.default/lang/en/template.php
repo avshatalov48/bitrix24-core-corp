@@ -1,5 +1,5 @@
 <?php
-$MESS["SIGN_DOCUMENT_COUNTER_ITEMS_TITLE"] = "Document";
+$MESS["SIGN_DOCUMENT_COUNTER_ITEMS_TITLE_MSG_1"] = "Document:";
 $MESS["SIGN_DOCUMENT_DOWNLOAD_ARCHIVE"] = "All signed document files";
 $MESS["SIGN_DOCUMENT_DOWNLOAD_PRINTED"] = "Print version";
 $MESS["SIGN_DOCUMENT_GRID_BANNER_TITLE"] = "Download documents";

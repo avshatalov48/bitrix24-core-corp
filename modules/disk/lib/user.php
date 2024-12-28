@@ -2,7 +2,9 @@
 
 namespace Bitrix\Disk;
 
+use Bitrix\Bxtest\Codeception\Randomizer\PhoneFactory;
 use Bitrix\Disk\Document\OnlyOffice\Models\GuestUser;
+use Bitrix\Disk\Integration\Collab\CollabService;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Entity\Result;
 use Bitrix\Main\Loader;
@@ -108,7 +110,14 @@ class User extends Internals\Model
 		}
 		else
 		{
-			self::$loadedUsers[$id] = parent::buildFromArray($attributes, $aliases);
+			$userModel = parent::buildFromArray($attributes, $aliases);
+
+			if (isset($attributes['UF_DEPARTMENT']))
+			{
+				$userModel->setIsIntranetUser($attributes);
+			}
+
+			self::$loadedUsers[$id] = $userModel;
 		}
 
 		return self::$loadedUsers[$id];
@@ -312,7 +321,7 @@ class User extends Internals\Model
 		);
 		if ($user = $queryUser->fetch())
 		{
-			$this->isIntranetUser = !empty($user['UF_DEPARTMENT'][0]);
+			$this->setIsIntranetUser($user);
 
 			if (!empty($user["UF_USER_CRM_ENTITY"]))
 			{
@@ -328,6 +337,34 @@ class User extends Internals\Model
 		}
 
 		return $this->isIntranetUser;
+	}
+
+	public function isCollaber(): bool
+	{
+		$userId = $this->getId();
+		if (empty($userId))
+		{
+			return false;
+		}
+
+		return (new CollabService())->isCollaberUserById($userId);
+	}
+
+	/**
+	 * @param array $userFields Array of user fields, must contain 'UF_DEPARTMENT' key
+	 * @return void
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	private function setIsIntranetUser(array $userFields): void
+	{
+		$isIntranetUser = false;
+		if (Loader::includeModule('intranet'))
+		{
+			$intranetUser = \Bitrix\Intranet\Entity\User::initByArray($userFields);
+			$isIntranetUser = $intranetUser->isIntranet();
+		}
+
+		$this->isIntranetUser = $isIntranetUser;
 	}
 
 	/**
@@ -360,6 +397,16 @@ class User extends Internals\Model
 	public function getAvatarSrc($width = 58, $height = 58)
 	{
 		return Ui\Avatar::getPerson($this->personalPhoto, $width, $height);
+	}
+
+	public function renderAvatar(int $width = 58, int $height = 58): string
+	{
+		if ($this->isCollaber())
+		{
+			return Ui\Avatar::renderCollaber($this->personalPhoto, $width, $height);
+		}
+
+		return Ui\Avatar::renderMember($this->personalPhoto, $width, $height);
 	}
 
 	/**
@@ -456,7 +503,7 @@ class User extends Internals\Model
 	{
 		if ($user instanceof CurrentUser)
 		{
-			return $user->getId();
+			return self::resolveUserId($user->getId());
 		}
 		if($user instanceof User)
 		{

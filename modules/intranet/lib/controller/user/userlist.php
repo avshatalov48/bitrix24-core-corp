@@ -381,6 +381,11 @@ class UserList extends Controller
 			$filter = $fields['filter'];
 		}
 
+		if (ModuleManager::isModuleInstalled('extranet'))
+		{
+			$select[] = 'EXTRANET_GROUP';
+		}
+
 		return \Bitrix\Intranet\UserTable::getList([
 			'select' => array_merge($select, self::DEFAULT_SELECT),
 			'filter' => $filter

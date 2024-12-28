@@ -43,6 +43,7 @@
 		selectMarkedAsRemoved,
 		selectWithCreationError,
 		remove,
+		taskRemoved,
 		mapStateToTaskModel,
 		readAllForRole,
 		readAllForProject,
@@ -60,6 +61,7 @@
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 	const { Alert, makeButton, makeDestructiveButton } = require('alert');
 	const { AnalyticsEvent } = require('analytics');
+	const { Link4, LinkMode, LinkDesign } = require('ui-system/blocks/link');
 
 	const AIR_STYLE_SUPPORTED = Feature.isAirStyleSupported();
 
@@ -107,6 +109,8 @@
 				this.props.tabsGuid,
 				this.getInitialPresetId(),
 				this.getInitialRole(),
+				this.props.isRootComponent,
+				this.props.siteId,
 			);
 			this.tasksDashboardFilter.updateCounters().then(() => this.updateMoreMenuButton()).catch(console.error);
 
@@ -119,6 +123,9 @@
 							.then(() => this.updateMoreMenuButton())
 							.catch(console.error)
 						;
+					},
+					[Pull.events.TASK_REMOVE]: (params) => {
+						dispatch(taskRemoved({ taskId: params.TASK_ID }));
 					},
 				},
 				isTabsMode: this.props.isTabsMode,
@@ -137,7 +144,7 @@
 				view,
 			});
 
-			const { currentUserId, ownerId, projectId, analyticsLabel = {} } = this.props;
+			const { currentUserId, ownerId, projectId } = this.props;
 
 			this.moreMenu = new TasksDashboardMoreMenu(
 				this.tasksDashboardFilter.getCountersByRole(),
@@ -156,7 +163,7 @@
 					onDeadlineClick: () => this.setView(Views.DEADLINE),
 					getOwnerId: () => ownerId || currentUserId,
 				},
-				analyticsLabel,
+				this.getAnalyticsLabel(),
 			);
 
 			this.search = new SearchLayout({
@@ -204,13 +211,11 @@
 
 		getInitialRole()
 		{
-			return this.props.flowId > 0 ? TasksDashboardFilter.roleType.originator : TasksDashboardFilter.roleType.all;
+			return TasksDashboardFilter.roleType.all;
 		}
 
 		getInitialPresetId = () => {
-			return this.props.flowId > 0
-				? TasksDashboardFilter.presetType.originator
-				: TasksDashboardFilter.presetType.default;
+			return TasksDashboardFilter.presetType.default;
 		};
 
 		getDefaultPresetId = () => {
@@ -219,20 +224,41 @@
 
 		getNavigationTitleParams()
 		{
+			const { flowId, flowName, flowEfficiency, projectId, isCollab, isRootComponent } = this.props;
 			const navigationTitleParams = {
 				layout,
 			};
-			if (this.props.flowId > 0)
+
+			if (flowId > 0)
+			{
+				const flowSubtitleEfficiencyText = Loc.getMessage(
+					'M_TASKS_VIEW_FLOW_EFFICIENCY_NAVIGATION_SUBTITLE',
+					{
+						'#EFFICIENCY#': flowEfficiency ?? '',
+					},
+				);
+
+				navigationTitleParams.statusTitleParamsMap = {
+					[NavigationTitle.ConnectionStatus.NONE]: {
+						largeMode: false,
+						text: flowName ?? Loc.getMessage('M_TASKS_VIEW_FLOW_DEFAULT_NAVIGATION_TITLE'),
+						detailText: (Type.isNil(flowEfficiency) ? '' : flowSubtitleEfficiencyText),
+					},
+				};
+			}
+			else if (projectId > 0 && isCollab)
 			{
 				navigationTitleParams.statusTitleParamsMap = {
 					[NavigationTitle.ConnectionStatus.NONE]: {
-						text: this.props.flowName ?? Loc.getMessage('M_TASKS_VIEW_FLOW_DEFAULT_NAVIGATION_TITLE'),
-						detailText: Type.isNil(this.props.flowEfficiency)
-							? ''
-							: Loc.getMessage('M_TASKS_VIEW_FLOW_EFFICIENCY_NAVIGATION_SUBTITLE', {
-								'#EFFICIENCY#': this.props.flowEfficiency,
-							}),
-						largeMode: false,
+						text: Loc.getMessage('M_TASKS_DASHBOARD_COLLAB_TITLE'),
+					},
+				};
+			}
+			else if (isRootComponent)
+			{
+				navigationTitleParams.statusTitleParamsMap = {
+					[NavigationTitle.ConnectionStatus.NONE]: {
+						text: Loc.getMessage('M_TASKS_DASHBOARD_COLLABER_TITLE'),
 					},
 				};
 			}
@@ -266,10 +292,19 @@
 			this.unsubscribeTasksObserver = observeListChange(store, this.onVisibleTasksChange);
 			this.unsubscribeCreationErrorObserver = observeCreationError(store, this.onCreationErrorChange);
 
-			if (this.props.isTabsMode && this.isMyDashboard())
+			if (this.isMyDashboard())
 			{
-				BX.addCustomEvent('tasks.tabs:onAppPaused', (eventData) => this.onAppPaused(eventData));
-				BX.addCustomEvent('tasks.tabs:onAppActive', (eventData) => this.onAppActive(eventData));
+				if (this.props.isTabsMode)
+				{
+					BX.addCustomEvent('tasks.tabs:onTabSelected', (eventData) => this.onTabSelected(eventData));
+					BX.addCustomEvent('tasks.tabs:onAppPaused', (eventData) => this.onAppPaused(eventData));
+					BX.addCustomEvent('tasks.tabs:onAppActive', (eventData) => this.onAppActive(eventData));
+				}
+				else if (this.props.isRootComponent)
+				{
+					BX.addCustomEvent('onAppPaused', () => this.onAppPaused({ tabId: this.getTabName() }));
+					BX.addCustomEvent('onAppActive', () => this.onAppActive({ tabId: this.getTabName() }));
+				}
 			}
 		}
 
@@ -777,9 +812,9 @@
 				oldTaskModel.setData(mapStateToTaskModel(task));
 				oldTaskModel.open(layout, 'tasks.dashboard', {
 					analyticsLabel: {
-						...this.props.analyticsLabel,
-						c_element: this.props.analyticsLabel?.c_element ?? 'title_click',
-						c_sub_section: this.props.analyticsLabel?.c_sub_section ?? params.view?.toLowerCase(),
+						...this.getAnalyticsLabel(),
+						c_element: this.getAnalyticsLabel()?.c_element ?? 'title_click',
+						c_sub_section: this.getAnalyticsLabel()?.c_sub_section ?? params.view?.toLowerCase(),
 					},
 					view: this.state.view,
 					kanbanOwnerId: params.ownerId,
@@ -826,12 +861,12 @@
 				layoutWidget: layout,
 				engine: AIR_STYLE_SUPPORTED ? new TopMenuEngine() : null,
 				analyticsLabel: {
-					...this.props.analyticsLabel,
+					...this.getAnalyticsLabel(),
 					module: 'tasks',
 					currentView: this.state.view,
 					isCurrentUser: this.props.ownerId === this.props.currentUserId ? 'Y' : 'N',
 					isProject: Type.isNumber(this.props.projectId) ? 'Y' : 'N',
-					c_sub_section: this.props.analyticsLabel?.c_sub_section ?? this.state.view?.toLowerCase(),
+					c_sub_section: this.getAnalyticsLabel()?.c_sub_section ?? this.state.view?.toLowerCase(),
 				},
 			});
 			const target = this.currentView.getItemMenuViewRef(itemId);
@@ -858,9 +893,9 @@
 
 			const stage = this.currentView.getActiveStage();
 			const analyticsEvent = new AnalyticsEvent({
-				c_section: this.props.analyticsLabel.c_section,
-				c_sub_section: this.props.analyticsLabel.c_sub_section ?? this.state.view?.toLowerCase(),
-				c_element: this.props.analyticsLabel.c_element ?? 'floating_button',
+				...this.getAnalyticsLabel(),
+				c_sub_section: this.getAnalyticsLabel().c_sub_section ?? this.state.view?.toLowerCase(),
+				c_element: this.getAnalyticsLabel().c_element ?? 'floating_button',
 			});
 			const taskCreateParameters = {
 				stage,
@@ -915,13 +950,35 @@
 			this.search.close();
 		}
 
-		onAppPaused()
+		onTabSelected(data)
 		{
+			if (data.tabId === this.getTabName())
+			{
+				this.onAppActive(data);
+			}
+			else
+			{
+				this.onAppPaused(data, true);
+			}
+		}
+
+		onAppPaused(data, forced = false)
+		{
+			if (!forced && data.tabId !== this.getTabName())
+			{
+				return;
+			}
+
 			this.pauseTime = Date.now();
 		}
 
-		onAppActive()
+		onAppActive(data)
 		{
+			if (data.tabId !== this.getTabName())
+			{
+				return;
+			}
+
 			if (this.pauseTime)
 			{
 				const minutesPassed = Math.round((Date.now() - this.pauseTime) / 60000);
@@ -931,6 +988,11 @@
 					this.reload(false);
 				}
 			}
+		}
+
+		getTabName()
+		{
+			return 'tasks.dashboard';
 		}
 
 		// endregion
@@ -988,6 +1050,7 @@
 			return {
 				ownerId: this.props.ownerId,
 				flowId: this.props.flowId,
+				creatorId: this.props.flowId > 0 ? env.userId : 0,
 				presetId: this.tasksDashboardFilter.getPresetId(),
 				counterId: this.tasksDashboardFilter.getCounterType(),
 				searchString: this.tasksDashboardFilter.getSearchString(),
@@ -1095,6 +1158,23 @@
 		isAnotherUserDashboard()
 		{
 			return (this.props.currentUserId !== this.props.ownerId);
+		}
+
+		getAnalyticsLabel()
+		{
+			const { analyticsLabel, isCollab, projectId } = this.props;
+			const analyticsEvent = new AnalyticsEvent(analyticsLabel);
+
+			if (isCollab)
+			{
+				analyticsEvent.setSection('collab');
+				analyticsEvent.setP2(
+					env.isCollaber ? 'user_collaber' : (env.extranet ? 'user_extranet' : 'user_intranet'),
+				);
+				analyticsEvent.setP4(`collabId_${projectId}`);
+			}
+
+			return analyticsEvent.exportToObject();
 		}
 
 		// endregion
@@ -1432,6 +1512,7 @@
 					actionToDispatch({
 						ownerId: this.props.ownerId,
 						projectId: this.props.projectId,
+						flowId: this.props.flowId,
 						view: this.state.view,
 						stageId: newTaskStageId,
 					}),
@@ -1487,7 +1568,7 @@
 
 		getEmptyListComponent()
 		{
-			const { title, description, uri } = this.getEmptyListProps();
+			const { title, description, uri, buttons } = this.getEmptyListProps();
 
 			const imageParams = {
 				resizeMode: 'contain',
@@ -1502,6 +1583,7 @@
 				? StatusBlock({
 					title,
 					description,
+					buttons,
 					emptyScreen: true,
 					image: Image(imageParams),
 					onRefresh: this.onPullToRefreshForEmptyScreen,
@@ -1525,6 +1607,7 @@
 			let title = '';
 			let description = '';
 			let uri = '';
+			let buttons = [];
 
 			const isEmptySearchExceptPresets = (
 				this.tasksDashboardFilter.isSearchStringEmpty()
@@ -1563,7 +1646,24 @@
 				}
 				else if (this.tasksDashboardFilter.isDefaultPreset())
 				{
-					title = Loc.getMessage('M_TASKS_VIEW_ROUTER_EMPTY_IN_PROGRESS');
+					if (this.props.isCollab)
+					{
+						title = Loc.getMessage('M_TASKS_DASHBOARD_EMPTY_SEARCH_DEFAULT_PRESET_TITLE');
+						description = Loc.getMessage('M_TASKS_DASHBOARD_EMPTY_SEARCH_DEFAULT_PRESET_DESCRIPTION');
+						buttons = [
+							Link4({
+								text: Loc.getMessage('M_TASKS_DASHBOARD_EMPTY_SEARCH_DEFAULT_PRESET_BUTTON_MORE'),
+								mode: LinkMode.SOLID,
+								design: LinkDesign.LIGHT_GREY,
+								onClick: () => helpdesk.openHelpArticle('23369568', 'helpdesk'),
+							}),
+						];
+					}
+					else
+					{
+						title = Loc.getMessage('M_TASKS_VIEW_ROUTER_EMPTY_IN_PROGRESS');
+					}
+
 					uri = this.getEmptyListImage(listOrKanban, false);
 				}
 				else if (this.tasksDashboardFilter.getPresetName())
@@ -1580,9 +1680,10 @@
 				title = Loc.getMessage('M_TASKS_VIEW_ROUTER_EMPTY_LIST_SEARCH_TITLE_MSGVER_1');
 				description = Loc.getMessage('M_TASKS_VIEW_ROUTER_EMPTY_LIST_SEARCH_DESCRIPTION_MSGVER_1');
 				uri = this.getEmptyListImage(listOrKanban, true);
+				buttons = [];
 			}
 
-			return { title, description, uri };
+			return { title, description, uri, buttons };
 		}
 
 		// endregion
@@ -1598,22 +1699,39 @@
 		readAll: `${pathToIcons}/read-all.svg`,
 	};
 
+	const isRootComponent = BX.componentParameters.get('IS_ROOT_COMPONENT', false);
+	if (isRootComponent)
+	{
+		void requireLazy('tasks:navigator').then(({ TasksNavigator }) => {
+			const tasksNavigator = new TasksNavigator();
+
+			tasksNavigator.unsubscribeFromPushNotifications();
+			tasksNavigator.subscribeToPushNotifications();
+		});
+	}
+
 	Promise.allSettled([
 		fetchDisabledTools(),
 		tariffPlanRestrictionsReady(),
 	])
 		.then(() => {
+			const groupId = Number(BX.componentParameters.get('GROUP_ID', 0));
+			const collabId = Number(BX.componentParameters.get('COLLAB_ID', 0));
+
 			const component = new TasksDashboard({
+				isRootComponent,
 				currentUserId: Number(env.userId),
 				ownerId: Number(BX.componentParameters.get('USER_ID', 0) || env.userId),
-				projectId: Number(BX.componentParameters.get('GROUP_ID', 0)) || null,
+				projectId: collabId || groupId || null,
+				isCollab: collabId > 0,
 				flowId: Number(BX.componentParameters.get('FLOW_ID', 0)),
 				flowName: BX.componentParameters.get('FLOW_NAME', null),
 				flowEfficiency: BX.componentParameters.get('FLOW_EFFICIENCY', null),
 				canCreateTask: BX.componentParameters.get('CAN_CREATE_TASK', true),
 				isTabsMode: BX.componentParameters.get('IS_TABS_MODE', false),
 				tabsGuid: BX.componentParameters.get('TABS_GUID', ''),
-				analyticsLabel: BX.componentParameters.get('analyticsLabel', { c_section: 'tasks' }),
+				analyticsLabel: BX.componentParameters.get('ANALYTICS_LABEL', { c_section: 'tasks' }),
+				siteId: BX.componentParameters.get('SITE_ID', ''),
 			});
 
 			BX.onViewLoaded(() => {

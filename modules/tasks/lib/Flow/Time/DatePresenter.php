@@ -5,7 +5,8 @@ namespace Bitrix\Tasks\Flow\Time;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Contract\Arrayable;
 use Bitrix\Main\Type\DateTime;
-use RuntimeException;
+use Bitrix\Tasks\Util\UI;
+use CTimeZone;
 
 class DatePresenter implements Arrayable
 {
@@ -25,33 +26,73 @@ class DatePresenter implements Arrayable
 	private int $secondTotal;
 	private string $formatted;
 
+	private self $raw;
+
+	public static function beautify(DateTime $date, int $userId = 0): string
+	{
+		$timezoneOffset = $userId > 0 ? CTimeZone::GetOffset($userId) : 0;
+
+		$beautifierCallbacks = [
+			function (DateTime $date) use ($timezoneOffset): ?string
+			{
+				$today = new DateTime();
+				if ($date->format('Y-m-d') === $today->format('Y-m-d'))
+				{
+					$timestamp = $date->getTimestamp() + $timezoneOffset;
+					$format = UI::getHumanTimeFormat($timestamp);
+
+					return Loc::getMessage('TASKS_DATE_PRESENTER_TODAY', [
+						'#TIME#' => UI::formatDateTime($timestamp, $format)
+					]);
+				}
+
+				return null;
+			},
+
+			function (DateTime $date) use ($timezoneOffset): ?string
+			{
+				$yesterday = (new DateTime())->add('-1 day');
+				if ($date->format('Y-m-d') === $yesterday->format('Y-m-d'))
+				{
+					$timestamp = $date->getTimestamp() + $timezoneOffset;
+					$format = UI::getHumanTimeFormat($timestamp);
+
+					return Loc::getMessage('TASKS_DATE_PRESENTER_YESTERDAY', [
+						'#TIME#' => UI::formatDateTime($timestamp, $format)
+					]);
+				}
+
+				return null;
+			},
+		];
+
+		foreach ($beautifierCallbacks as $callback)
+		{
+			$beautifiedDate = $callback($date);
+			if ($beautifiedDate !== null)
+			{
+				return $beautifiedDate;
+			}
+		}
+
+		$timestamp = $date->getTimestamp() + $timezoneOffset;
+		$format = UI::getHumanDateTimeFormat($timestamp);
+
+		return UI::formatDateTime($timestamp, $format);
+	}
+
 	public static function get(DateTime $a, DateTime $b): static
 	{
 		$diff = $a->getDiff($b);
-		$days = $diff->days;
-		if ($days === 0)
-		{
-			return $diff->h > 0 ? new static(hours: $diff->h) : new static(minutes: $diff->i);
-		}
 
-		if ($days < static::DAYS_IN_MONTH)
-		{
-			return new static(days: $days);
-		}
-
-		if ($days < static::DAYS_IN_YEAR)
-		{
-			$months = (int)floor($days / static::DAYS_IN_MONTH);
-			$days = (int)floor($days % static::DAYS_IN_MONTH);
-
-			return new static(months: $months, days: $days);
-		}
-
-		$years = (int)floor($days / static::DAYS_IN_YEAR);
-		$months = (int)floor(($days % static::DAYS_IN_YEAR) / static::DAYS_IN_MONTH);
-		$days = (int)floor(($days % static::DAYS_IN_YEAR) % static::DAYS_IN_MONTH);
-
-		return new static(years: $years, months: $months, days: $days);
+		return new static (
+			years: $diff->y,
+			months: $diff->m,
+			days: $diff->d,
+			hours: $diff->h,
+			minutes: $diff->i,
+			seconds: $diff->s
+		);
 	}
 
 	public static function createFromSeconds(int $seconds): static
@@ -114,6 +155,64 @@ class DatePresenter implements Arrayable
 		$this->seconds = $seconds;
 		$this->buildFormatted();
 		$this->buildSecondsTotal();
+
+		$this->raw = clone $this;
+
+		$this->round();
+	}
+
+	public function round(): static
+	{
+		if ($this->years >= 1)
+		{
+			$this->years = $this->getRoundedValue($this->years, $this->months, static::MONTHS_IN_YEAR);
+
+			return $this->reset(years: false);
+		}
+
+		if ($this->months >= 1)
+		{
+			$this->months = $this->getRoundedValue($this->months, $this->days, static::DAYS_IN_MONTH);
+
+			if ($this->months === static::MONTHS_IN_YEAR)
+			{
+				$this->years = 1;
+
+				return $this->reset(years: false);
+			}
+
+			return $this->reset(months: false);
+		}
+
+		if ($this->days >= 1)
+		{
+			$this->days = $this->getRoundedValue($this->days, $this->hours, static::HOURS_IN_DAY);
+
+			if ($this->days === static::DAYS_IN_MONTH)
+			{
+				$this->months = 1;
+
+				return $this->reset(months: false);
+			}
+
+			return $this->reset(days: false);
+		}
+
+		if ($this->hours >= 1)
+		{
+			$this->hours = $this->getRoundedValue($this->hours, $this->minutes, static::MINUTES_IN_HOUR);
+
+			if ($this->hours === static::HOURS_IN_DAY)
+			{
+				$this->days = 1;
+
+				return $this->reset(days: false);
+			}
+
+			return $this->reset(hours: false);
+		}
+
+		return $this->reset(minutes: false);
 	}
 
 	public function getFormatted(): string
@@ -124,6 +223,11 @@ class DatePresenter implements Arrayable
 	public function getSecondTotal(): int
 	{
 		return $this->secondTotal;
+	}
+
+	public function getRaw(): static
+	{
+		return $this->raw;
 	}
 
 	public function toArray(): array
@@ -139,17 +243,37 @@ class DatePresenter implements Arrayable
 		];
 	}
 
-	/**
-	 * @throws RuntimeException
-	 */
-	public function __wakeup()
+	private function reset(bool $years = true, bool $months = true, bool $days = true, bool $hours = true, bool $minutes = true): static
 	{
-		throw new RuntimeException('Cannot unserialize singleton');
-	}
+		if ($years)
+		{
+			$this->years = 0;
+		}
 
-	private function __clone()
-	{
+		if ($months)
+		{
+			$this->months = 0;
+		}
 
+		if ($days)
+		{
+			$this->days = 0;
+		}
+
+		if ($hours)
+		{
+			$this->hours = 0;
+		}
+
+		if ($minutes)
+		{
+			$this->minutes = 0;
+		}
+
+		$this->buildFormatted();
+		$this->buildSecondsTotal();
+
+		return $this;
 	}
 
 	private function buildFormatted(): void
@@ -203,7 +327,7 @@ class DatePresenter implements Arrayable
 
 		if (empty($parts))
 		{
-			$parts[] = Loc::getMessage('TASKS_DATE_DIFFERENCE_JUST_NOW');
+			$parts[] = Loc::getMessage('TASKS_DATE_DIFFERENCE_LESS_THAN_MINUTE');
 		}
 
 		$this->formatted = implode(' ', $parts);
@@ -218,5 +342,15 @@ class DatePresenter implements Arrayable
 		$inMinutes = $this->minutes * static::SECONDS_IN_MINUTE;
 
 		$this->secondTotal = $inYears + $inMonth + $inDays + $inHours + $inMinutes + $this->seconds;
+	}
+
+	private function getRoundedValue(int $value, int $remainder, int $divisor): int
+	{
+		if ($remainder >= $divisor / 2)
+		{
+			++$value;
+		}
+
+		return $value;
 	}
 }

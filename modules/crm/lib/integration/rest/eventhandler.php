@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Integration\Rest;
 
 use Bitrix\Crm\Timeline\Entity\Repository\RestAppLayoutBlocksRepository;
+use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Rest\AppTable;
 use Bitrix\Rest\EO_App;
@@ -41,5 +42,29 @@ class EventHandler
 	private static function deleteRestAppLayoutBlocks(string $clientId): void
 	{
 		(new RestAppLayoutBlocksRepository())->deleteByClientId($clientId);
+	}
+
+	public static function onUserFieldPlacementPrepareParams(Event $event): void
+	{
+		$params = $event->getParameters();
+		$arUserField = $params[0];
+		$placementOptions = &$params[1];
+
+		if (!str_starts_with($arUserField['ENTITY_ID'], 'CRM_'))
+		{
+			return;
+		}
+
+		$entityTypeId = \CCrmOwnerType::ResolveIDByUFEntityID($arUserField['ENTITY_ID']);
+		if ($entityTypeId === \CCrmOwnerType::Undefined)
+		{
+			return;
+		}
+
+		$placementOptions['ENTITY_DATA'] = [
+			'entityTypeId' => $entityTypeId,
+			'entityId' => $arUserField['ENTITY_VALUE_ID'],
+			'module' => 'crm',
+		];
 	}
 }

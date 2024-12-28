@@ -9,6 +9,7 @@ export const Dictionary = Object.freeze({
 	CATEGORY_CRM_OPERATIONS: 'crm_operations',
 	CATEGORY_AI_OPERATIONS: 'ai_operations',
 	CATEGORY_AUTOMATION_OPERATIONS: 'automation_operations',
+	CATEGORY_KANBAN_OPERATIONS: 'kanban_operations',
 
 	// region Event const
 	EVENT_ENTITY_ADD_OPEN: 'entity_add_open',
@@ -30,6 +31,10 @@ export const Dictionary = Object.freeze({
 	EVENT_AUTOMATION_CREATE: 'automation_create',
 	EVENT_AUTOMATION_EDIT: 'automation_edit',
 	EVENT_AUTOMATION_DELETE: 'automation_delete',
+
+	EVENT_BLOCK_CLOSE: 'block_close',
+	EVENT_BLOCK_ENABLE: 'block_enable',
+	EVENT_BLOCK_LINK: 'block_link',
 	// endregion
 
 	// region Type const
@@ -37,6 +42,8 @@ export const Dictionary = Object.freeze({
 	TYPE_AUTO: 'auto',
 	TYPE_AUTOMATED_SOLUTION: 'automated_solution',
 	TYPE_DYNAMIC: 'dynamic',
+	TYPE_CONTACT_CENTER: 'contact_center',
+	TYPE_ITEM_INDUSTRY: 'item_industry',
 	// endregion
 
 	// region Section const
@@ -72,6 +79,7 @@ export const Dictionary = Object.freeze({
 	SUB_SECTION_CALENDAR: 'calendar',
 	SUB_SECTION_DEADLINES: 'deadlines',
 	SUB_SECTION_DETAILS: 'details',
+	SUB_SECTION_GRID_ROW_MENU: 'grid_row_menu',
 
 	SUB_SECTION_KANBAN_DROPZONE: 'kanban_dropzone',
 	SUB_SECTION_ACTION_BUTTON: 'action_button',
@@ -111,6 +119,13 @@ export const Dictionary = Object.freeze({
 	ELEMENT_WON_TOP_ACTIONS: 'won_top_actions',
 	ELEMENT_DETAILS_PROGRESS_BAR: 'details_progress_bar',
 	ELEMENT_SAVE_IS_REQUIRED_TO_PROCEED_POPUP: 'save_is_required_to_proceed_popup',
+	ELEMENT_CLOSE_BUTTON: 'close_button',
+	ELEMENT_HIDE_CONTACT_CENTER: 'hide_contact_center',
+	ELEMENT_ENABLE_CONTACT_CENTER: 'enable_contact_center',
+	ELEMENT_CONTACT_CENTER_MARKETPLACE: 'contact_center_marketplace',
+	ELEMENT_CONTACT_CENTER_IMPORTEXCEL: 'contact_center_importexcel',
+	ELEMENT_ITEM_CONTACT_CENTER: 'item_contact_center',
+	ELEMENT_ITEM_INDUSTRY_BUTTON: 'item_industry_button',
 	// endregion
 
 	// region Status const
@@ -127,5 +142,6 @@ export const Dictionary = Object.freeze({
 	STATUS_ERROR_LIMIT_MONTHLY: 'error_limit_monthly',
 	STATUS_ERROR_PROVIDER: 'error_provider',
 	STATUS_ERROR_B24: 'error_b24',
+	STATUS_ERROR_PERMISSIONS: 'error_permissions',
 	// endregion
 });

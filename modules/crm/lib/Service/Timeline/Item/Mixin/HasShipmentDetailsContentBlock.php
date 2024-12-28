@@ -100,9 +100,8 @@ trait HasShipmentDetailsContentBlock
 			return null;
 		}
 
-		$detailLink = EntityLinkBuilder::getInstance()->getShipmentDetailsLink(
-			$this->getAssociatedEntityModel()->get('ID')
-		);
+		$shipmentId = (int)$this->getAssociatedEntityModel()->get('ID');
+		$detailLink = EntityLinkBuilder::getInstance()->getShipmentDetailsLink($shipmentId);
 		if ($detailLink && !$this->isItemAboutCurrentEntity())
 		{
 			return new Action\Redirect(new Uri($detailLink));

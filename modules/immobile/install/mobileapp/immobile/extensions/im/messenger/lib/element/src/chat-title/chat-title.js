@@ -3,13 +3,17 @@
  */
 jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 
+	const { Feature } = require('im/messenger/lib/feature');
+	const { DeveloperSettings } = require('im/messenger/lib/dev/settings');
 	const { Theme } = require('im/lib/theme');
 	const {
 		DialogType,
 		BotType,
+		UserType,
 	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogHelper } = require('im/messenger/lib/helper');
@@ -131,9 +135,14 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 					return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_OPEN_CHANNEL');
 				}
 
+				case DialogType.collab:
+				{
+					return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_COLLAB');
+				}
+
 				default:
 				{
-					return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_GROUP');
+					return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_GROUP_MSGVER_1');
 				}
 			}
 		}
@@ -169,6 +178,10 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			{
 				this.description = user.workPosition;
 			}
+			else if (user.type === UserType.collaber)
+			{
+				this.description = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_USER_COLLABER');
+			}
 			else if (user.extranet)
 			{
 				this.description = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_USER_EXTRANET');
@@ -187,6 +200,13 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		 */
 		createDialogNameColor(dialog)
 		{
+			if (dialog.type === DialogType.collab)
+			{
+				this.nameColor = Theme.colors.base1;
+
+				return;
+			}
+
 			if (dialog.extranet === true)
 			{
 				this.nameColor = Theme.colors.accentExtraBrown;
@@ -213,6 +233,13 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		 */
 		createUserNameColor(user)
 		{
+			if (user.type === UserType.collaber)
+			{
+				this.nameColor = Theme.colors.collabAccentPrimaryAlt;
+
+				return;
+			}
+
 			if (user.extranet === true)
 			{
 				this.nameColor = Theme.colors.accentExtraBrown;
@@ -273,7 +300,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 			if (this.name)
 			{
-				titleParams.text = this.name;
+				titleParams.text = this.getTitle();
 			}
 
 			if (useTextColor)
@@ -283,7 +310,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 			if (this.description)
 			{
-				titleParams.detailText = this.description;
+				titleParams.detailText = this.getDescription();
 			}
 
 			if (this.writingList.length > 0)
@@ -308,7 +335,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 			if (this.name)
 			{
-				titleParams.text = this.name;
+				titleParams.text = this.getTitle();
 			}
 
 			if (useTextColor)
@@ -318,7 +345,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 			if (this.description)
 			{
-				titleParams.detailText = this.description;
+				titleParams.detailText = this.getDescription();
 			}
 
 			if (this.userCounter)
@@ -342,6 +369,23 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 							'#COUNT#': this.userCounter,
 						},
 					);
+
+					if (this.dialogType === DialogType.collab)
+					{
+						const guestCount = this.store.getters['dialoguesModel/collabModel/getGuestCountByDialogId'](this.dialogId);
+						if (guestCount > 0)
+						{
+							const questText = Loc.getMessagePlural(
+								'IMMOBILE_ELEMENT_CHAT_TITLE_COLLAB_GUEST_COUNT',
+								guestCount,
+								{
+									'#COUNT#': guestCount,
+								},
+							);
+
+							titleParams.detailText += ` [color=${Color.collabAccentPrimaryAlt.toHex()}]${questText}[/color]`;
+						}
+					}
 				}
 			}
 
@@ -373,6 +417,15 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		 */
 		getTitle()
 		{
+			if (
+				Feature.isDevelopmentEnvironment
+				&& DeveloperSettings.getSettingValue('showDialogIds')
+				&& this.dialogId
+			)
+			{
+				return `[${this.dialogId}] ${this.name}`;
+			}
+
 			return this.name;
 		}
 

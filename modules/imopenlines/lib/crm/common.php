@@ -288,62 +288,53 @@ class Common
 	 * @param bool $withMultiFields
 	 * @return array|bool|false|mixed|null
 	 */
-	public static function get($type, $id, $withMultiFields = false)
+	public static function get($type, $id, $withMultiFields = false, $fields = [])
 	{
-		$data = false;
-		$entity = null;
-
-		if (Loader::includeModule('crm'))
+		if (!Loader::includeModule('crm'))
 		{
-			if ($type === Crm::ENTITY_LEAD)
+			return false;
+		}
+
+		if (!empty($fields))
+		{
+			$fields = array_merge($fields, ['ID', 'ASSIGNED_BY_ID']);
+		}
+
+		$data = self::getEntityById(
+			(int)$id,
+			$type,
+			$fields
+		);
+
+		if (!$data)
+		{
+			return false;
+		}
+
+		if ($withMultiFields && $type != Crm::ENTITY_DEAL)
+		{
+			$multiFields = new \CCrmFieldMulti();
+			$res = $multiFields->GetList([], [
+				'ENTITY_ID' => $type,
+				'ELEMENT_ID' => $id
+			]);
+			while ($row = $res->Fetch())
 			{
-				$entity = new \CCrmLead(false);
+				$data['FM'][$row['TYPE_ID']][$row['VALUE_TYPE']][] = $row['VALUE'];
 			}
-			elseif ($type === Crm::ENTITY_COMPANY)
-			{
-				$entity = new \CCrmCompany(false);
-			}
-			elseif ($type === Crm::ENTITY_CONTACT)
-			{
-				$entity = new \CCrmContact(false);
-			}
-			elseif ($type === Crm::ENTITY_DEAL)
-			{
-				$entity = new \CCrmDeal(false);
-			}
+		}
 
-			if (!empty($entity))
-			{
-				$data = $entity->GetByID($id, false);
+		$assignedId = (int)$data['ASSIGNED_BY_ID'];
 
-				if ($withMultiFields && $type != Crm::ENTITY_DEAL)
-				{
-					$multiFields = new \CCrmFieldMulti();
-					$res = $multiFields->GetList([], [
-						'ENTITY_ID' => $type,
-						'ELEMENT_ID' => $id
-					]);
-					while ($row = $res->Fetch())
-					{
-						$data['FM'][$row['TYPE_ID']][$row['VALUE_TYPE']][] = $row['VALUE'];
-					}
-
-
-				}
-
-				$assignedId = (int)$data['ASSIGNED_BY_ID'];
-
-				if (
-					Loader::includeModule('im')
-					&& (
-						!Im\User::getInstance($assignedId)->isActive()
-						|| Im\User::getInstance($assignedId)->isAbsent()
-					)
-				)
-				{
-					$data['ASSIGNED_BY_ID'] = 0;
-				}
-			}
+		if (
+			Loader::includeModule('im')
+			&& (
+				!Im\User::getInstance($assignedId)->isActive()
+				|| Im\User::getInstance($assignedId)->isAbsent()
+			)
+		)
+		{
+			$data['ASSIGNED_BY_ID'] = 0;
 		}
 
 		return $data;
@@ -718,7 +709,7 @@ class Common
 		return $result;
 	}
 
-	public static function getChatsByCrmEntity($crmEntityType, $crmEntityId): array
+	public static function getChatsByCrmEntity($crmEntityType, $crmEntityId, $activeOnly = true): array
 	{
 		$result = [];
 
@@ -728,6 +719,13 @@ class Common
 			return $result;
 		}
 
+		$statusCheck = '';
+		if ($activeOnly)
+		{
+			$statusCheck = " AND session.STATUS >= " . Session::STATUS_ANSWER;
+			$statusCheck .= " AND session.STATUS < " . Session::STATUS_WAIT_CLIENT;
+		}
+
 		$query = "
 			SELECT session.CHAT_ID, act.RESULT_SOURCE_ID
 			FROM b_crm_act act
@@ -735,8 +733,7 @@ class Common
 			LEFT JOIN b_imopenlines_session session ON session.ID = act.ASSOCIATED_ENTITY_ID
 			WHERE
 				act.PROVIDER_ID = '" . \Bitrix\Crm\Activity\Provider\OpenLine::ACTIVITY_PROVIDER_ID . "'
-				AND session.STATUS >= " . Session::STATUS_ANSWER . "
-				AND session.STATUS < " . Session::STATUS_WAIT_CLIENT . "
+				" . $statusCheck . "
 				AND bind.OWNER_TYPE_ID = " . $crmEntityIdByTypeCode . "
 				AND bind.OWNER_ID = " . $crmEntityId . "
 			ORDER BY
@@ -747,13 +744,16 @@ class Common
 
 		$connectors = Connector::getListActiveConnectorReal();
 
+		$uniqueActions = [];
 		foreach ($actions as $action)
 		{
-			if (!isset($connectors[$action['RESULT_SOURCE_ID']]))
+			$uniqueActionName = $action['CHAT_ID'] . '-' . $action['RESULT_SOURCE_ID'];
+			if (!isset($connectors[$action['RESULT_SOURCE_ID']]) || in_array($uniqueActionName, $uniqueActions, true))
 			{
 				continue;
 			}
 
+			$uniqueActions[] = $uniqueActionName;
 			$result[] = [
 				'CHAT_ID' => $action['CHAT_ID'],
 				'CONNECTOR_ID' => $action['RESULT_SOURCE_ID'],
@@ -807,5 +807,32 @@ class Common
 		}
 
 		return $result;
+	}
+
+	private static function getEntityById(int $id, string $type, array $select = [])
+	{
+		$entityClasses = [
+			Crm::ENTITY_LEAD => \CCrmLead::class,
+			Crm::ENTITY_COMPANY => \CCrmCompany::class,
+			Crm::ENTITY_CONTACT => \CCrmContact::class,
+			Crm::ENTITY_DEAL => \CCrmDeal::class,
+		];
+
+		if (!isset($entityClasses[$type]))
+		{
+			return false;
+		}
+
+		$entityClass = $entityClasses[$type];
+		$entity = new $entityClass(false);
+
+		$filter = [
+			'=ID' => $id,
+			'CHECK_PERMISSIONS' => 'N'
+		];
+
+		$result = $entity::GetListEx([], $filter, false, false, $select);
+
+		return $result->Fetch();
 	}
 }

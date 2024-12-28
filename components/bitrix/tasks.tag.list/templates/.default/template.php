@@ -39,7 +39,11 @@ if ((int)$arResult['GROUP_ID'] > 0 && !$arResult['CAN_SEE_GROUP_TAGS'])
 
 if ((int)$arResult['GROUP_ID'] > 0)
 {
-	$APPLICATION->setTitle(Loc::getMessage('TASKS_TAG_LIST_GROUP_TAGS_GRID_APP_TITLE', [
+	$title = $arResult['IS_COLLAB']
+		? 'TASKS_TAG_LIST_GROUP_TAGS_COLLAB_APP_TITLE'
+		: 'TASKS_TAG_LIST_GROUP_TAGS_GRID_APP_TITLE';
+
+	$APPLICATION->setTitle(Loc::getMessage($title, [
 		'#PROJECT#' => $arResult['GROUP_NAME'],
 	]));
 }

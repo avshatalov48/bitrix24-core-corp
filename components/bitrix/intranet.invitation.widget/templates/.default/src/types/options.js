@@ -2,21 +2,25 @@ export type InvitationWidgetOptions = {
 	button?: HTMLElement,
 	isCurrentUserAdmin?: boolean,
 	isExtranetAvailable?: boolean,
+	isCollabAvailable?: boolean,
 	isInvitationAvailable?: boolean,
 	structureLink?: string,
 	invitationLink?: string,
 	invitationCounter?: number,
 	counterId?: string,
+	shouldShowStructureCounter?: boolean,
 }
 
 export type InvitationPopupOptions = {
 	isAdmin?: boolean,
 	target?: HTMLElement,
 	isExtranetAvailable?: boolean,
+	isCollabAvailable?: boolean,
 	isInvitationAvailable?: boolean,
 	params?: {
 		structureLink?: string,
 		invitationLink?: string,
+		shouldShowStructureCounter?: boolean,
 	}
 }
 
@@ -29,6 +33,7 @@ export type InvitationContentOptions = {
 
 export type StructureContentOptions = {
 	link?: string,
+	shouldShowStructureCounter?: boolean,
 }
 
 export type EmployeesContentOptions = {
@@ -41,4 +46,9 @@ export type ExtranetContentOptions = {
 	awaitData?: Promise,
 	invitationLink?: string,
 	isInvitationAvailable?: boolean,
+}
+
+export type CollabContentOptions = {
+	isAdmin?: boolean,
+	awaitData?: Promise,
 }

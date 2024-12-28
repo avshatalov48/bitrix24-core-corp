@@ -11,6 +11,7 @@
 
 namespace Bitrix\Tasks\Item\Task\Template\Field;
 
+use Bitrix\Main\ObjectException;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util\Type\StructureChecker;
@@ -85,7 +86,16 @@ class ReplicateParams extends \Bitrix\Tasks\Item\Field\Scalar
 				{
 					return '';
 				}
-				$value = \Bitrix\Main\Type\DateTime::createFromUserTime($value)->toString();
+
+				try
+				{
+					$value = \Bitrix\Main\Type\DateTime::createFromUserTime($value)->toString();
+				}
+				catch (ObjectException)
+				{
+					$value = '';
+				}
+
 				return UI::checkDateTime($value);
 			}),
 			"END_DATE" => array('VALUE' => function($value)
@@ -94,7 +104,15 @@ class ReplicateParams extends \Bitrix\Tasks\Item\Field\Scalar
 				{
 					return '';
 				}
-				$value = \Bitrix\Main\Type\DateTime::createFromUserTime($value)->toString();
+				try
+				{
+					$value = \Bitrix\Main\Type\DateTime::createFromUserTime($value)->toString();
+				}
+				catch (ObjectException)
+				{
+					$value = '';
+				}
+
 				return UI::checkDateTime($value);
 			}),
 			"NEXT_EXECUTION_TIME" => array('VALUE' => StructureChecker::TYPE_STRING, 'DEFAULT' => ''),

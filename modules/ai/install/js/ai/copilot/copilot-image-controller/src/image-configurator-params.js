@@ -30,10 +30,7 @@ export class ImageConfiguratorParams extends EventEmitter
 	{
 		super(options);
 
-		this.#params = getParams({
-			formats: Object.values(options.formats),
-			engines: options.engines,
-		});
+		this.#params = this.#initParams(options);
 
 		const data = {
 			format: this.#params.format.options[0].value,
@@ -44,7 +41,7 @@ export class ImageConfiguratorParams extends EventEmitter
 			set: (target: ImageConfiguratorParamsCurrentValues, property, value) => {
 				Reflect.set(target, property, value);
 
-				if (this.#container)
+				if (this.#container && (property === 'format' || property === 'engine'))
 				{
 					const option = this.#params[property].options.find((currentOption) => currentOption.value === value);
 
@@ -83,6 +80,19 @@ export class ImageConfiguratorParams extends EventEmitter
 	{
 		return this.#container?.contains(target)
 			|| this.#openOptionsMenu?.getPopupWindow()?.getPopupContainer()?.contains(target);
+	}
+
+	setFormats(formats: ImageCopilotFormat[]): void
+	{
+		this.#params.format = getParams({
+			formats,
+			engines: [],
+		}).format;
+	}
+
+	setSelectedEngine(engineCode: string): void
+	{
+		this.#currentValues.engine = engineCode;
 	}
 
 	render(): HTMLElement
@@ -153,7 +163,7 @@ export class ImageConfiguratorParams extends EventEmitter
 			}
 			else
 			{
-				this.#showOptionsMenu(param.value, options.options, parameterName);
+				this.#showOptionsMenu(param.value, this.#params[parameterName].options, parameterName);
 			}
 		});
 
@@ -226,10 +236,38 @@ export class ImageConfiguratorParams extends EventEmitter
 	#handleMenuItemClick(parameterName: string, parameterValue): Function
 	{
 		return (e: PointerEvent, menuItem: MenuItem): void => {
+			if (this.#currentValues[parameterName] !== parameterValue)
+			{
+				this.emit('change-parameter', { parameter: parameterName, value: parameterValue });
+			}
+
 			this.#currentValues[parameterName] = parameterValue;
 
 			menuItem.getMenuWindow().close();
 			this.#openOptionsMenu = null;
 		};
+	}
+
+	#initParams(options: ImageConfiguratorParamsOptions): Proxy
+	{
+		const params = getParams({
+			formats: Object.values(options.formats),
+			engines: options.engines,
+		});
+
+		const changeParamsHandler = {
+			set: (target, property, value) => {
+				Reflect.set(target, property, value);
+
+				if (property === 'format')
+				{
+					this.#currentValues.format = this.#params.format.options[0].value;
+				}
+
+				return true;
+			},
+		};
+
+		return new Proxy(params, changeParamsHandler);
 	}
 }

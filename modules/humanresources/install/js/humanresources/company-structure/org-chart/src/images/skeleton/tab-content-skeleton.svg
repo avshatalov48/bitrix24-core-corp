@@ -1,0 +1,78 @@
+<svg width="356" height="100%" viewBox="0 0 382 1135" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<svg height="100%" id="animated-elements">
+
+		<g id="hr-user-item">
+			<rect x="20" y="210" width="32" height="32" rx="16" fill="#EDEEF0"/>
+			<rect x="62" y="215" width="104" height="6" rx="2" fill="#EDEEF0"/>
+			<rect x="62" y="232" width="200" height="6" rx="2" fill="#EDEEF0"/>
+		</g>
+
+		<g id="hr-detail-header">
+			<rect x="20" y="26" width="97" height="12" rx="2" fill="#EDEEF0"/>
+			<circle cx="308" cy="31" r="7" fill="#EDEEF0"/>
+			<circle cx="350" cy="31" r="7" fill="#EDEEF0"/>
+			<rect x="20" y="58" width="301" height="8" rx="2" fill="#EDEEF0"/>
+			<rect x="20" y="86" width="106" height="20" rx="10" fill="#EDEEF0"/>
+			<rect x="134" y="86" width="111" height="20" rx="10" fill="#EDEEF0"/>
+			<rect x="20" y="140" width="66" height="8" rx="4" fill="#EDEEF0"/>
+			<rect x="20" y="180" width="91" height="9" rx="2" fill="#EDEEF0"/>
+		</g>
+
+		<g id="hr-detail-head-list">
+			<use xlink:href="#hr-user-item"/>
+			<use xlink:href="#hr-user-item" y="59"/>
+		</g>
+
+		<g id="hr-detail-employee-list">
+			<rect x="20" y="328" width="71" height="9" rx="2" fill="#EDEEF0"/>
+			<use xlink:href="#hr-user-item" y="152"/>
+			<use xlink:href="#hr-user-item" y="211"/>
+			<use xlink:href="#hr-user-item" y="270"/>
+			<use xlink:href="#hr-user-item" y="329"/>
+			<use xlink:href="#hr-user-item" y="388"/>
+			<use xlink:href="#hr-user-item" y="447"/>
+			<use xlink:href="#hr-user-item" y="506"/>
+			<use xlink:href="#hr-user-item" y="565"/>
+			<use xlink:href="#hr-user-item" y="624"/>
+			<use xlink:href="#hr-user-item" y="683"/>
+			<use xlink:href="#hr-user-item" y="742"/>
+			<use xlink:href="#hr-user-item" y="801"/>
+			<use xlink:href="#hr-user-item" y="860"/>
+		</g>
+	</svg>
+
+	<use xlink:href="#hr-detail-header"/>
+	<use xlink:href="#hr-detail-head-list"/>
+	<use xlink:href="#hr-detail-employee-list"/>
+	<defs>
+		<filter id="filter0_d_3935_148950" x="0" y="0" width="382" height="1135" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+			<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+			<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+			<feOffset dy="8"/>
+			<feGaussianBlur stdDeviation="6.5"/>
+			<feComposite in2="hardAlpha" operator="out"/>
+			<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.09 0"/>
+			<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_3935_148950"/>
+			<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_3935_148950" result="shape"/>
+		</filter>
+		<linearGradient id="paint0_linear_3935_148950" x1="191" y1="5" x2="191" y2="187.369" gradientUnits="userSpaceOnUse">
+			<stop stop-opacity="0.2"/>
+			<stop offset="1" stop-opacity="0"/>
+		</linearGradient>
+	</defs>
+
+	<rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="1270"/>
+
+	<mask id="headerMsk" fill="white">
+		<use xlink:href="#animated-elements"/>
+	</mask>
+
+	<linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+		<stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+		<stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+		<stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+	</linearGradient>
+
+	<animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+
+</svg>

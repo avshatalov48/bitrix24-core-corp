@@ -27,10 +27,7 @@ jn.define('layout/ui/fields/user/theme/air/src/empty-content', (require, exports
 			IconView({
 				testId: `${testId}_ICON`,
 				icon,
-				iconSize: {
-					width: IMAGE_SIZE,
-					height: IMAGE_SIZE,
-				},
+				size: IMAGE_SIZE,
 				color: Color.accentMainPrimaryalt,
 			}),
 			Text4({

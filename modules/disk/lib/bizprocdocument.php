@@ -2370,4 +2370,10 @@ class BizProcDocument
 	{
 		return 'UF:';
 	}
+
+	public static function getBizprocEditorUrl($documentType): ?string
+	{
+
+		return '/docs/bp_edit/#ID#/';
+	}
 }

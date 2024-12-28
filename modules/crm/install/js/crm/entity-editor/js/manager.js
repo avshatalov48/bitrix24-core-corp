@@ -175,7 +175,9 @@ if(typeof BX.Crm.EntityBizprocManager === "undefined")
 					this._starter = new BX.Bizproc.Starter({
 						moduleId: this._moduleId,
 						entity: this._entity,
-						documentType: this._documentType
+						documentType: this._documentType,
+						signedDocumentType: BX.prop.getString(this._settings, 'signedDocumentType', ''),
+						signedDocumentId: BX.prop.getString(this._settings, 'signedDocumentId', ''),
 					});
 				}
 			},

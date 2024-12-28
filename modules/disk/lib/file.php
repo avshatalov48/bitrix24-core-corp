@@ -17,6 +17,7 @@ use Bitrix\Disk\Internals\SharingTable;
 use Bitrix\Disk\Internals\SimpleRightTable;
 use Bitrix\Disk\Internals\TrackedObjectTable;
 use Bitrix\Disk\Internals\VersionTable;
+use Bitrix\Disk\Realtime\Events\UserRecentsEvent;
 use Bitrix\Disk\Security\ParameterSigner;
 use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Disk\Uf\FileUserType;
@@ -73,6 +74,8 @@ class File extends BaseObject
 	protected $extension;
 	/** @var int */
 	protected $currentState = self::STATE_DO_NOTHING;
+	/** @var ?Preview */
+	protected ?Preview $preview;
 	/** @var  int */
 	protected $previewId;
 	/** @var  int */
@@ -686,7 +689,7 @@ class File extends BaseObject
 			);
 		}
 
-		if ($this->getGlobalContentVersion() <= 1)
+		if ($this->isFirstVersion())
 		{
 			//initial full index
 			$driver->getIndexManager()->indexFile($this);
@@ -703,6 +706,7 @@ class File extends BaseObject
 				'object' => [
 					'id' => (int)$this->getId(),
 					'name' => $this->getName(),
+					'parentId' => (int)$this->getParentId(),
 					'updatedBy' => (int)$this->getUpdatedBy(),
 				],
 				'updatedBy' => [
@@ -809,7 +813,7 @@ class File extends BaseObject
 		}
 		$this->resetHeadVersionToAttachedObject($versionModel);
 
-		if ($this->getGlobalContentVersion() == 1)
+		if ($this->isFirstVersion())
 		{
 			$this->tryToRunBizProcAfterCreate();
 		}
@@ -923,7 +927,7 @@ class File extends BaseObject
 			return;
 		}
 
-		if ($this->getGlobalContentVersion() <= 1)
+		if ($this->isFirstVersion())
 		{
 			return;
 		}
@@ -1015,6 +1019,11 @@ class File extends BaseObject
 				'!=VERSION_ID' => null,
 			)
 		);
+	}
+
+	public function isFirstVersion(): bool
+	{
+		return (int)$this->getGlobalContentVersion() === 1;
 	}
 
 	private function getTextForComment(User $createUser)
@@ -1297,6 +1306,20 @@ class File extends BaseObject
 			return null;
 		}
 
+		$event = new UserRecentsEvent(
+			(int)$movedBy,
+			'recentFileMoved',
+			[
+				'file' => [
+					'id' => (int)$this->getId(),
+					'realObjectId' => (int)$this->getRealObjectId(),
+					'storageId' => (int)$folder->getStorageId(),
+					'parentId' => (int)$this->getParentId(),
+				],
+			],
+		);
+		$event->sendToUser();
+
 		return $this;
 	}
 
@@ -1537,6 +1560,24 @@ class File extends BaseObject
 		return $this->currentState;
 	}
 
+	/**
+	 * Returns object preview model.
+	 *
+	 * @return Preview|null
+	 */
+	public function getPreview(): ?Preview
+	{
+		if ($this->isLoadedAttribute('preview'))
+		{
+			return $this->preview ?? null;
+		}
+
+		$this->preview = Preview::load(['FILE_ID' => $this->getFileId()]);
+		$this->setAsLoadedAttribute('preview');
+
+		return $this->preview;
+	}
+
 	protected function getHistoricalData()
 	{
 		return array(
@@ -1683,9 +1724,21 @@ class File extends BaseObject
 			'PREVIEW_ID' => 'previewId',
 			'VIEW_ID' => 'viewId',
 			'ETAG' => 'etag',
+			'PREVIEW' => 'preview',
 		));
 
 		return $shelve;
+	}
+
+	/**
+	 * Returns the list attributes which is connected with another models.
+	 * @return array
+	 */
+	public static function getMapReferenceAttributes(): array
+	{
+		return array_merge(parent::getMapReferenceAttributes(), [
+			'PREVIEW' => Preview::class,
+		]);
 	}
 
 	/**
@@ -1697,28 +1750,21 @@ class File extends BaseObject
 	{
 		if (!$this->view)
 		{
-			$isTransformationEnabledInStorage = true;
-			$storage = $this->getStorage();
-			if ($storage)
-			{
-				$isTransformationEnabledInStorage = $storage->isEnabledTransformation();
-			}
-
-			$previewData = FilePreviewTable::getList(['filter' => ['FILE_ID' => $this->getFileId(),],])->fetch();
-			$viewId = isset($previewData['PREVIEW_ID'])? $previewData['PREVIEW_ID'] : null;
-			$imageId = isset($previewData['PREVIEW_IMAGE_ID'])? $previewData['PREVIEW_IMAGE_ID'] : null;
+			$previewData = $this->getPreview();
+			$viewId = $previewData?->getPreviewId();
+			$imageId = $previewData?->getPreviewImageId();
 
 			if (TypeFile::isDocument($this))
 			{
-				$this->view = new View\Document($this->getName(), $this->getFileId(), $viewId, $imageId, $isTransformationEnabledInStorage);
+				$this->view = new View\Document($this->getName(), $this->getFileId(), $viewId, $imageId);
 			}
 			elseif (TypeFile::isVideo($this))
 			{
-				$this->view = new View\Video($this->getName(), $this->getFileId(), $viewId, $imageId, $isTransformationEnabledInStorage);
+				$this->view = new View\Video($this->getName(), $this->getFileId(), $viewId, $imageId);
 			}
 			else
 			{
-				$this->view = new View\Base($this->getName(), $this->getFileId(), $viewId, $imageId, $isTransformationEnabledInStorage);
+				$this->view = new View\Base($this->getName(), $this->getFileId(), $viewId, $imageId);
 			}
 		}
 

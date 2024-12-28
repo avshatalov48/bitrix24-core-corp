@@ -157,42 +157,33 @@ class Defaults
 		$items = [];
 		foreach (Engine::getCategories() as $category)
 		{
-			$engines = Engine::getListAvailable($category);
-			if (empty($engines))
+			$params = self::getProviderSelectFieldParams($category);
+			if (empty($params))
 			{
 				continue;
 			}
 
 			$langCode = self::INTERNAL_LANG_PREFIX . mb_strtoupper($category) . '_';
-
-			$options = [];
-			$default = null;
-			foreach ($engines as $engine)
-			{
-				$default = $default ?: $engine->getCode();
-				$options[$engine->getCode()] = $engine->getName();
-			}
-
-			$code = Engine::getConfigCode($category);
-			$item = Item::create($code, [
+			$params = array_merge($params, [
 				'title' => Loc::getMessage($langCode . 'TITLE'),
 				'header' => Loc::getMessage($langCode . 'HEADER') ?? null,
-				'type' => Type::LIST,
-				'options' => $options,
 				'onSave' => [
-					'callback' => function () use ($category){
+					'callback' => function () use ($category) {
 						User::clearLastUsedEngineCodeForAll($category);
 					},
 					'switcher' => Loc::getMessage('AI_SETTINGS_INTERNAL_ON_SAVE_TITLE'),
 				],
 			]);
 
+			$code = Engine::getConfigCode($category);
+			$item = Item::create($code, $params);
+
 			if ($item)
 			{
 				$groupConst = 'self::GROUP_' . mb_strtoupper($category);
-				if (defined($groupConst) && !empty($options))
+				if (defined($groupConst) && !empty($params['options']))
 				{
-					$item->setValue($default ?? null);
+					$item->setValue($params['default'] ?? null);
 					$items[constant($groupConst)][$code] = $item;
 				}
 			}
@@ -216,17 +207,23 @@ class Defaults
 
 		$engines = Engine::getListAvailable($category, $quality);
 		$options = [];
+		$recommended = [];
 		$default = null;
 		foreach ($engines as $engine)
 		{
 			$default = $default ?: $engine->getCode();
 			$options[$engine->getCode()] = $engine->getName();
+			if ($engine->isPreferredForQuality($quality))
+			{
+				$recommended[] = $engine->getCode();
+			}
 		}
 
 		return 	[
 			'type' => Type::LIST,
 			'options' => $options,
 			'default' => $default,
+			'recommended' => $recommended,
 			'additional' => [
 				'isProviderSelector' => true,
 			],

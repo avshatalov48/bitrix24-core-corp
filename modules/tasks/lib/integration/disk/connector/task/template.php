@@ -5,6 +5,8 @@ namespace Bitrix\Tasks\Integration\Disk\Connector\Task;
 use Bitrix\Main\Localization\Loc;
 
 use Bitrix\Disk\Ui;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TemplateAccessController;
 use Bitrix\Tasks\Integration\Disk\Connector\Task;
 
 Loc::loadMessages(__FILE__);
@@ -35,6 +37,23 @@ final class Template extends Task
 			}
 		}
 		return $this->taskPostData;
+	}
+
+	public function canRead($userId): bool
+	{
+		if($this->canRead !== null)
+		{
+			return $this->canRead;
+		}
+
+		$this->canRead = TemplateAccessController::can($userId, ActionDictionary::ACTION_TEMPLATE_READ, $this->entityId);
+
+		return $this->canRead;
+	}
+
+	public function canUpdate($userId): bool
+	{
+		return $this->canRead($userId);
 	}
 
 	/**

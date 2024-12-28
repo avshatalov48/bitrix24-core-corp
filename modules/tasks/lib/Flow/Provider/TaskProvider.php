@@ -42,6 +42,25 @@ final class TaskProvider
 		return $tasksDirector;
 	}
 
+	public function getTotalTasks(array $flowIds): array
+	{
+		$result = array_fill_keys($flowIds, 0);
+
+		$rows = (
+			FlowTaskTable::query()
+				->setSelect(['FLOW_ID', Query::expr('CNT')->count('ID')])
+				->whereIn('FLOW_ID', $flowIds)
+				->exec()
+				->fetchAll()
+		);
+		foreach ($rows as $row)
+		{
+			$result[$row['FLOW_ID']] = (int)$row['CNT'];
+		}
+
+		return $result;
+	}
+
 	/**
 	 * The method returns task identifiers with a specific task status in flows.
 	 *

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Market\Subscription;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Market\Subscription;
 use Bitrix\Rest\Marketplace\Client;
@@ -61,7 +62,11 @@ class Status
 		{
 			$slider = 'limit_benefit_market_trial_active';
 		}
-		elseif (Loader::includeModule('bitrix24') && \CBitrix24::isLicenseNeverPayed())
+		elseif (
+			Loader::includeModule('bitrix24')
+			&& \CBitrix24::isLicenseNeverPayed()
+			&& Application::getInstance()->getLicense()->getRegion() === 'ru'
+		)
 		{
 			$slider = 'limit_market_trial_demo';
 		}

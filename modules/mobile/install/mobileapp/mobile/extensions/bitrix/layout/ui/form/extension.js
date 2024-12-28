@@ -1176,6 +1176,11 @@ jn.define('layout/ui/form', (require, exports, module) => {
 				return false;
 			}
 
+			if (this.props.hideEmptyReadonlyFields && field.isEmpty() && field.isReadOnly())
+			{
+				return false;
+			}
+
 			const showWhenFilledOnly = (
 				mode === CompactMode.FILL_COMPACT_AND_HIDE
 				|| mode === CompactMode.FILL_COMPACT_AND_KEEP

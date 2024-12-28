@@ -50,7 +50,6 @@ $APPLICATION->IncludeComponent(
 		'MYCOMPANY_MODE' => $isMyCompany ? 'Y' : 'N',
 		'MULTIFIELD_DATA' => $arResult['ENTITY_DATA']['MULTIFIELD_DATA'] ?? [],
 		'OWNER_INFO' => $arResult['ENTITY_INFO'],
-		'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'] ?? [],
 		'TYPE' => 'details',
 		'SCRIPTS' => [
 			'DELETE' => 'BX.Crm.EntityDetailManager.items["'.CUtil::JSEscape($guid).'"].processRemoval();'
@@ -102,6 +101,7 @@ $APPLICATION->IncludeComponent(
 			'CATEGORY_ID' => $arResult['CATEGORY_ID'],
 			'ANALYTICS' => $arResult['ANALYTICS'] ?? [],
 		],
+		'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'] ?? [],
 	]
 );
 

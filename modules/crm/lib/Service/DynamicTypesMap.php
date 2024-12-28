@@ -46,6 +46,7 @@ class DynamicTypesMap
 	protected $stageFieldNames = [];
 	protected $isAutomationEnabled = [];
 	protected $isStagesEnabled = [];
+	protected $isCategoriesEnabled = [];
 
 	private ?EO_Type_Collection $typesCollection = null;
 
@@ -110,6 +111,7 @@ class DynamicTypesMap
 				$this->stageFieldNames[$entityTypeId] = $stagesFieldName;
 				$this->isAutomationEnabled[$entityTypeId] = $factory->isAutomationEnabled();
 				$this->isStagesEnabled[$entityTypeId] = $factory->isStagesEnabled();
+				$this->isCategoriesEnabled[$entityTypeId] = $factory->isCategoriesEnabled();
 			}
 		}
 		$entityTypeIds = array_keys($this->types);
@@ -297,6 +299,11 @@ class DynamicTypesMap
 	public function isStagesEnabled(int $entityTypeId): bool
 	{
 		return $this->isStagesEnabled[$entityTypeId] ?? false;
+	}
+
+	public function isCategoriesEnabled(int $entityTypeId): bool
+	{
+		return $this->isCategoriesEnabled[$entityTypeId] ?? false;
 	}
 
 	/**

@@ -188,6 +188,22 @@ class MemberTable extends Entity\DataManager
 				->configureTitle('Configured')
 				->configureNullable()
 			,
+			'EMPLOYEE_ID' => (new IntegerField('EMPLOYEE_ID'))
+				->configureTitle('Employee ID')
+				->configureNullable()
+			,
+			'HCMLINK_JOB_ID' => (new IntegerField('HCMLINK_JOB_ID'))
+				->configureTitle('HcmLink Job Id')
+				->configureNullable()
+			,
+			'DATE_SEND' => (new Entity\DatetimeField('DATE_SEND'))
+				->configureTitle('Send on')
+				->configureNullable()
+			,
+			'DATE_STATUS_CHANGED' => (new Entity\DatetimeField('DATE_STATUS_CHANGED'))
+				->configureTitle('Status change date')
+				->configureNullable()
+			,
 		];
 	}
 

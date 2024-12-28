@@ -2,12 +2,16 @@
 
 namespace Bitrix\Crm\Integration\AI;
 
+use Bitrix\Crm\Integration\AI\Dto\ExtractScoringCriteriaPayload;
 use Bitrix\Crm\Integration\AI\Dto\FillItemFieldsFromCallTranscriptionPayload;
+use Bitrix\Crm\Integration\AI\Dto\ScoreCallPayload;
 use Bitrix\Crm\Integration\AI\Dto\SummarizeCallTranscriptionPayload;
 use Bitrix\Crm\Integration\AI\Dto\TranscribeCallRecordingPayload;
 use Bitrix\Crm\Integration\AI\Model\EO_Queue;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
+use Bitrix\Crm\Integration\AI\Operation\ExtractScoringCriteria;
 use Bitrix\Crm\Integration\AI\Operation\FillItemFieldsFromCallTranscription;
+use Bitrix\Crm\Integration\AI\Operation\ScoreCall;
 use Bitrix\Crm\Integration\AI\Operation\SummarizeCallTranscription;
 use Bitrix\Crm\Integration\AI\Operation\TranscribeCallRecording;
 use Bitrix\Crm\ItemIdentifier;
@@ -15,6 +19,7 @@ use Bitrix\Crm\Traits\Singleton;
 use Bitrix\Main\Error;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\Web\Json;
+use CCrmOwnerType;
 
 final class JobRepository
 {
@@ -28,6 +33,10 @@ final class JobRepository
 	private array $fillCache = [];
 	/** @var Array<int, Result|null> */
 	private array $fillByIdCache = [];
+	/** @var Array<int, Result|null> */
+	private array $callScoringCache = [];
+	/** @var Array<int, Result|null> */
+	private array $extractScoringCriteriaCache = [];
 
 	private \Bitrix\Main\ORM\EventManager $ormEventManager;
 	private array $eventKeys = [
@@ -65,6 +74,7 @@ final class JobRepository
 		}
 	}
 
+	// region Payload result
 	/**
 	 * @param int $activityId
 	 *
@@ -74,14 +84,17 @@ final class JobRepository
 	{
 		if (array_key_exists($activityId, $this->transcribeCache))
 		{
-			return is_object($this->transcribeCache[$activityId]) ? clone $this->transcribeCache[$activityId] : null;
+			return is_object($this->transcribeCache[$activityId])
+				? clone $this->transcribeCache[$activityId]
+				: null
+			;
 		}
 
 		if ($activityId > 0)
 		{
 			$job = QueueTable::query()
 				->setSelect(['*'])
-				->where('ENTITY_TYPE_ID', \CCrmOwnerType::Activity)
+				->where('ENTITY_TYPE_ID', CCrmOwnerType::Activity)
 				->where('ENTITY_ID', $activityId)
 				->where('TYPE_ID', TranscribeCallRecording::TYPE_ID)
 				->setLimit(1)
@@ -114,7 +127,7 @@ final class JobRepository
 		{
 			$job = QueueTable::query()
 				->setSelect(['*'])
-				->where('ENTITY_TYPE_ID', \CCrmOwnerType::Activity)
+				->where('ENTITY_TYPE_ID', CCrmOwnerType::Activity)
 				->where('ENTITY_ID', $activityId)
 				->where('TYPE_ID', SummarizeCallTranscription::TYPE_ID)
 				->setLimit(1)
@@ -165,7 +178,7 @@ final class JobRepository
 		{
 			$parentSubQuery = QueueTable::query()
 				->setSelect(['ID'])
-				->where('ENTITY_TYPE_ID', \CCrmOwnerType::Activity)
+				->where('ENTITY_TYPE_ID', CCrmOwnerType::Activity)
 				->where('ENTITY_ID', $activityId)
 				->where('TYPE_ID', SummarizeCallTranscription::TYPE_ID)
 			;
@@ -222,6 +235,87 @@ final class JobRepository
 
 		return $result;
 	}
+
+	/**
+	 * @return Result<ScoreCallPayload>|null
+	 */
+	public function getCallScoringResult(int $activityId, ?int $jobId = null): ?Result
+	{
+		$cacheKey = sprintf('%d-%d', $activityId, $jobId ?? 0);
+		if (array_key_exists($cacheKey, $this->callScoringCache))
+		{
+			return is_object($this->callScoringCache[$cacheKey])
+				? clone $this->callScoringCache[$cacheKey]
+				: null
+			;
+		}
+
+		if ($activityId > 0)
+		{
+			$query = QueueTable::query()
+				->setSelect(['*'])
+				->where('ENTITY_TYPE_ID', CCrmOwnerType::Activity)
+				->where('ENTITY_ID', $activityId)
+				->where('TYPE_ID', ScoreCall::TYPE_ID)
+				// select last job
+				->addOrder('ID', 'DESC')
+			;
+
+			if (isset($jobId))
+			{
+				$query->where('ID', $jobId);
+			}
+
+			$job = $query
+				->setLimit(1)
+				->fetchObject()
+			;
+		}
+		else
+		{
+			$job = null;
+		}
+
+		$result = $job ? ScoreCall::constructResult($job) : null;
+
+		$this->callScoringCache[$cacheKey] = is_object($result) ? clone $result : null;
+
+		return $result;
+	}
+
+	/**
+	 * @return Result<ExtractScoringCriteriaPayload>|null
+	 */
+	public function getExtractScoringCriteriaResultById(int $id): ?Result
+	{
+		if (array_key_exists($id, $this->extractScoringCriteriaCache))
+		{
+			return is_object($this->extractScoringCriteriaCache[$id]) ? clone $this->extractScoringCriteriaCache[$id] : null;
+		}
+
+		if ($id > 0)
+		{
+			$job = QueueTable::query()
+				->setSelect(['*'])
+				->where('ENTITY_TYPE_ID', CCrmOwnerType::CopilotCallAssessment)
+				->where('ENTITY_ID', $id)
+				->where('TYPE_ID', ExtractScoringCriteria::TYPE_ID)
+				->setLimit(1)
+				->fetchObject()
+			;
+		}
+		else
+		{
+			$job = null;
+		}
+
+		$result = $job ? ExtractScoringCriteria::constructResult($job) : null;
+
+		$this->extractScoringCriteriaCache[$id] = is_object($result) ? clone $result : null;
+
+		return $result;
+	}
+	// endregion
 
 	/**
 	 * @param Result<FillItemFieldsFromCallTranscriptionPayload> $result
@@ -348,5 +442,6 @@ final class JobRepository
 		$this->summarizeCache = [];
 		$this->fillCache = [];
 		$this->fillByIdCache = [];
+		$this->callScoringCache = [];
 	}
 }

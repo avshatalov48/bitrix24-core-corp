@@ -11,6 +11,8 @@ return [
 		'ui-system/typography/heading',
 		'ui-system/typography/text',
 		'ui-system/form/buttons/button',
+		'analytics',
+		'type',
 	],
 	'bundle' => [
 		'./src/direction-enum',

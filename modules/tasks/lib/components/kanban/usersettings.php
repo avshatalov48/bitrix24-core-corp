@@ -2,8 +2,10 @@
 
 namespace Bitrix\Tasks\Components\Kanban;
 
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Flow\FlowFeature;
+use Bitrix\Tasks\Integration\Extranet\User;
 
 class UserSettings
 {
@@ -266,9 +268,12 @@ class UserSettings
 
 	public function getProject(): ItemField
 	{
+		$isCollaber = User::isCollaber((int) CurrentUser::get()->getId());
+		$itemName = $isCollaber ? 'TASK_KANBAN_USER_SETTINGS_FIELD_COLLAB' : 'TASK_KANBAN_USER_SETTINGS_FIELD_PROJECT';
+
 		return new ItemField(
 			'PROJECT',
-			Loc::getMessage('TASK_KANBAN_USER_SETTINGS_FIELD_PROJECT'),
+			Loc::getMessage($itemName),
 			'task',
 			$this->isFieldSelected('PROJECT'),
 			$this->isFieldDefault('PROJECT'),

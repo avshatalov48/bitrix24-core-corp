@@ -41,11 +41,11 @@ export default class FileUploader extends Event
 		super();
 		this.#identification = options.identification;
 
-		const serverOptions = window.b24form.common.properties.uploader || {};
+		const serverOptions = window?.b24form?.common?.properties?.uploader || {};
 		this.#chunkOptions = {
 			minSize: serverOptions.chunkMinSize || 1024 * 1024,
 			defaultSize: serverOptions.chunkDefaultSize || 5 * 1024 * 1024,
-		}
+		};
 	}
 
 	upload(fileData: FileData): Promise

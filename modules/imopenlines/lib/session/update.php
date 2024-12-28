@@ -367,7 +367,7 @@ class Update
 			!empty($this->newData['STATUS'])
 			&& $this->session->getSessionField('STATUS') != $this->newData['STATUS'])
 		{
-			$this->session->chat->updateSessionStatus($this->newData['STATUS']);
+			$this->session->chat->updateSessionStatus($this->newData['STATUS'], $this->session->getSession()['ID']);
 
 			if (
 				(int)$this->session->getSessionField('STATUS') !== Session::STATUS_OPERATOR

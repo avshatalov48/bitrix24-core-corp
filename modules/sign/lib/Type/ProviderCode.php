@@ -64,7 +64,19 @@ final class ProviderCode
 			self::TAXCOM => 'taxcom',
 			self::SES_RU => 'ses-ru',
 			self::SES_COM => 'ses-com',
+			self::EXTERNAL => 'external',
 			default => '',
 		};
 	}
+
+	public static function toAnalyticString(string $providerCode): string
+		{
+		return match ($providerCode)
+		{
+			self::SES_RU, self::SES_COM => 'integration_bitrix24KEDO',
+			self::GOS_KEY => 'integration_Goskluch',
+			self::EXTERNAL => 'integration_external',
+			default => 'integration_N',
+		};
+		}
 }

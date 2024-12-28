@@ -2,6 +2,7 @@
 
 namespace Bitrix\Recyclebin\Internals;
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 
 class User
@@ -132,6 +133,27 @@ class User
 		$result[$userID] = !(isset($user['UF_DEPARTMENT'][0]) && is_array($user) && $user['UF_DEPARTMENT'][0] > 0);
 
 		return $result[$userID];
+	}
+
+	public static function isCollaber(int $userId): bool
+	{
+		if (!Loader::includeModule('extranet'))
+		{
+			return false;
+		}
+
+		if (
+			!class_exists('\Bitrix\Extranet\Service\ServiceContainer')
+			|| !method_exists('\Bitrix\Extranet\Service\ServiceContainer', 'getInstance')
+			|| !method_exists(\Bitrix\Extranet\Service\ServiceContainer::getInstance(), 'getCollaberService')
+		)
+		{
+			return false;
+		}
+
+		$collaberService = \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService();
+
+		return $collaberService->isCollaberById($userId);
 	}
 
 	public static function formatName($data, $siteId = false, $format = null)

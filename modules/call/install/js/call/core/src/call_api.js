@@ -144,6 +144,7 @@ export class Call {
 		packetLostThreshold: 7,
 		statsTimeout: 3000,
 		videoQueue: VIDEO_QUEUE.INITIAL,
+		videoStreamSetupErrorList: {},
 	}
 
 	constructor() {
@@ -304,7 +305,15 @@ export class Call {
 			this.#privateProperties.offersStack--;
 
 			try {
-				const offer = await this.sender.createOffer()
+				let offer = await this.sender.createOffer();
+				if (Util.useTcpSdp())
+				{
+					offer = {
+						type: offer.type,
+						sdp: this.#removeUdpFromSdp(offer.sdp),
+					};
+				}
+
 				await this.sender.setLocalDescription(offer);
 				this.#sendSignal({ offer });
 				this.setLog('Sending an offer succeeded', LOG_LEVEL.INFO);
@@ -312,8 +321,8 @@ export class Call {
 			catch (e)
 			{
 				this.setLog(`Sending an offer failed: ${e}`, LOG_LEVEL.ERROR);
-				this.#privateProperties.isWaitAnswer = false;
-				await this.sendOffer();
+				this.#beforeDisconnect();
+				this.#reconnect();
 			}
 		}
 	}
@@ -677,8 +686,6 @@ export class Call {
 				});
 			});
 			this.triggerEvents('ConnectionQualityChanged', [participants]);
-		} else if (data.pong) {
-			this.#resetPingTimeout()
 		} else if (data.pongResp) {
 			this.#privateProperties.rtt = Date.now() - data.pongResp.lastPingTimestamp
 			this.#resetPingTimeout()
@@ -726,6 +733,12 @@ export class Call {
 	};
 	async onIceCandidate(target, event) {
 		if (!event.candidate) return;
+
+		if (Util.useTcpSdp() && event.candidate.protocol !== 'tcp')
+		{
+			return;
+		}
+
 		const trickle = {
 			candidateInit: JSON.stringify({
 				candidate: event.candidate.candidate,
@@ -801,7 +814,6 @@ export class Call {
 	}
 
 	#sendPing() {
-		this.#sendSignal({ ping: Date.now() });
 		this.#sendSignal({
 			pingReq: {
 				timestamp: Date.now(),
@@ -1411,8 +1423,27 @@ export class Call {
 		return this.#privateProperties.callState === CALL_STATE.CONNECTED
 	}
 
-	setMainStream(userId, kind) {
-		if (!userId && this.#privateProperties.remoteParticipants[userId]) return;
+	setVideoStreamSetupErrorList(userId, kind)
+	{
+		const errorInVideoStreamSetupErrorList = this.#privateProperties.videoStreamSetupErrorList[userId];
+		const kindInListKinds = !!errorInVideoStreamSetupErrorList && errorInVideoStreamSetupErrorList.includes(kind);
+		const kindsArray = errorInVideoStreamSetupErrorList || [];
+
+		if (!kindInListKinds)
+		{
+			this.#privateProperties.videoStreamSetupErrorList[userId] = [kind, ...kindsArray];
+		}
+	}
+
+	setMainStream(userId, kind)
+	{
+		// userId always exists, check in bitrix_call
+		if (!this.#privateProperties.remoteParticipants[userId])
+		{
+			this.setVideoStreamSetupErrorList(userId, kind);
+			this.setLog(`Setting main stream error (No remoteParticipant with ID - ${userId} in list)`, LOG_LEVEL.ERROR);
+			return;
+		}
 
 		this.setLog(`Setting main stream for a participant width id ${userId} (sid: ${this.#privateProperties.remoteParticipants[userId].sid})`, LOG_LEVEL.INFO);
 		this.#changeRoomStreamsQuality(userId, kind);
@@ -2140,11 +2171,31 @@ export class Call {
 		this.#privateProperties.isloggingEnable = enable;
 	}
 
+	#removeUdpFromSdp(sdp)
+	{
+		const updatedSdp = [];
+		sdp.split(/(\r\n|\r|\n)/).filter(RegExp.prototype.test.bind(/^([a-z])=(.*)/)).forEach((el) =>
+		{
+			if (!el.startsWith('a=candidate') || el.includes('tcp'))
+			{
+				updatedSdp.push(el);
+			}
+		});
+
+		sdp = updatedSdp.join('\r\n') + '\r\n';
+
+		return sdp;
+	}
+
 	async #answerHandler(data) {
 		this.setLog('Start handling a remote answer', LOG_LEVEL.INFO);
 		let hasError = false;
 		try
 		{
+			if (Util.useTcpSdp())
+			{
+				data.answer.sdp = this.#removeUdpFromSdp(data.answer.sdp);
+			}
 			await this.sender.setRemoteDescription(data.answer);
 			this.#privateProperties.pendingCandidates.sender.forEach((candidate) =>
 			{
@@ -2157,15 +2208,17 @@ export class Call {
 		{
 			this.setLog(`Handling a remote answer failed: ${e}`, LOG_LEVEL.ERROR);
 			hasError = true;
+			this.#beforeDisconnect();
+			this.#reconnect();
 		}
 		finally
 		{
 			if (!hasError)
 			{
 				this.setLog('Handling a remote answer succeeded', LOG_LEVEL.INFO);
+				this.#privateProperties.isWaitAnswer = false;
+				await this.sendOffer();
 			}
-			this.#privateProperties.isWaitAnswer = false;
-			await this.sendOffer();
 		}
 	}
 
@@ -2173,6 +2226,10 @@ export class Call {
 		this.setLog('Handling a remote offer', LOG_LEVEL.INFO);
 		try
 		{
+			if (Util.useTcpSdp())
+			{
+				data.offer.sdp = this.#removeUdpFromSdp(data.offer.sdp);
+			}
 			await this.recipient.setRemoteDescription(data.offer);
 			this.#privateProperties.pendingCandidates.recipient.forEach((candidate) =>
 			{
@@ -2180,7 +2237,15 @@ export class Call {
 				this.setLog('Added a deferred ICE candidate', LOG_LEVEL.INFO);
 			});
 			this.#privateProperties.pendingCandidates.recipient = [];
-			const answer = await this.recipient.createAnswer();
+			let answer = await this.recipient.createAnswer();
+			if (Util.useTcpSdp())
+			{
+				answer = {
+					type: answer.type,
+					sdp: this.#removeUdpFromSdp(answer.sdp),
+				};
+			}
+
 			await this.recipient.setLocalDescription(answer);
 			this.#sendSignal({ answer });
 			this.setLog('Handling a remote offer succeeded', LOG_LEVEL.INFO);
@@ -2188,6 +2253,8 @@ export class Call {
 		catch (e)
 		{
 			this.setLog(`Handling a remote offer failed: ${e}`, LOG_LEVEL.ERROR);
+			this.#beforeDisconnect();
+			this.#reconnect();
 		}
 	}
 
@@ -2196,6 +2263,11 @@ export class Call {
 		try
 		{
 			const candidate = JSON.parse(trickle.candidateInit);
+
+			if (Util.useTcpSdp() && !candidate.candidate.includes('tcp'))
+			{
+				return;
+			}
 
 			if (trickle.target)
 			{
@@ -2278,7 +2350,17 @@ export class Call {
 				}
 			})
 		}
-	}
+
+		if (this.#privateProperties.videoStreamSetupErrorList[userId]) {
+			const kindArray = [...this.#privateProperties.videoStreamSetupErrorList[userId]];
+			delete this.#privateProperties.videoStreamSetupErrorList[userId];
+
+			kindArray.forEach((kind) =>
+			{
+				this.setMainStream(userId, kind);
+			});
+		}
+	};
 
 	#createRemoteTrack(trackId, ontrackData)
 	{

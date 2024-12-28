@@ -1157,6 +1157,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 		}
 
 		/**
+		 * @public
 		 * @returns {Object[]}
 		 */
 		getItems()
@@ -1164,9 +1165,28 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			return this.state.items;
 		}
 
+		/**
+		 * @public
+		 * @return {boolean}
+		 */
 		isEmptyList()
 		{
 			return this.getItems().length === 0;
+		}
+
+		isFloatingButtonAccent()
+		{
+			if (typeof this.props.isFloatingButtonAccent === 'undefined')
+			{
+				return this.state.isRefreshing ? false : this.isEmptyList();
+			}
+
+			if (typeof this.props.isFloatingButtonAccent === 'function')
+			{
+				return Boolean(this.props.isFloatingButtonAccent());
+			}
+
+			return Boolean(this.props.isFloatingButtonAccent);
 		}
 
 		initFloatingButton()
@@ -1180,18 +1200,22 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 			this.floatingButton = FloatingActionButton({
 				testId: `${this.getTestId()}_ADD_BTN`,
+				accentByDefault: this.isFloatingButtonAccent(),
 				parentLayout: this.layout,
 				onClick: onFloatingButtonClick,
 				onLongClick: onFloatingButtonLongClick,
 			});
 		}
 
+		/**
+		 * @public
+		 * @param {boolean} [params.accentByDefault]
+		 * @param {boolean} [params.hide]
+		 */
 		updateFloatingButton(params)
 		{
-			const { isRefreshing } = this.state;
-
 			const floatingButtonParams = params || {
-				accent: isRefreshing ? false : this.isEmptyList(),
+				accentByDefault: this.isFloatingButtonAccent(),
 				hide: !this.isShowFloatingButton(),
 			};
 
@@ -1755,7 +1779,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			}
 			else
 			{
-				NavigationLoader.show();
+				NavigationLoader.show(this.layout);
 			}
 		}
 
@@ -1767,7 +1791,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			}
 			else if (!isCache)
 			{
-				NavigationLoader.hide();
+				NavigationLoader.hide(this.layout);
 			}
 		}
 

@@ -2,13 +2,24 @@
  * @module im/messenger/controller/sidebar/chat/sidebar-profile-info
  */
 jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require, exports, module) => {
+	const { Type } = require('type');
+	const { Feature: MobileFeature } = require('feature');
+
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sidebar--sidebar-profile-info');
-	const { Type } = require('type');
-	const { Avatar, AvatarSafe } = require('im/messenger/lib/ui/base/avatar');
-	const { ChatTitle } = require('im/messenger/lib/element');
+	const {
+		Avatar: MessengerAvatarLegacy,
+		AvatarSafe,
+	} = require('im/messenger/lib/ui/base/avatar');
+	const {
+		ChatTitle,
+		ChatAvatar,
+	} = require('im/messenger/lib/element');
+	const { EventType } = require('im/messenger/const');
 	const { Theme } = require('im/lib/theme');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { SidebarProfileUserCounter } = require('im/messenger/controller/sidebar/chat/sidebar-profile-user-counter');
+	const { SidebarFriendlyDate } = require('im/messenger/controller/sidebar/chat/friendly-date');
 
 	/**
 	 * @class SidebarProfileInfo
@@ -28,6 +39,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 			this.storeManager = serviceLocator.get('core').getStoreManager();
 			this.state = {
 				userData: props.userData,
+				title: props.headData.title,
 				desc: props.headData.desc,
 				imageUrl: props.headData.imageUrl,
 			};
@@ -46,49 +58,76 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 			return View(
 				{
 					style: {
-						justifyContent: 'center',
 						alignItems: 'center',
-						flexDirection: 'column',
+						width: '100%',
+						flexDirection: 'row',
+						justifyContent: 'space-between',
+						paddingBottom: 12,
 					},
 				},
 				this.renderAvatar(),
-				this.renderTitle(),
-				this.renderDescription(),
-				this.renderDepartment(),
+				View(
+					{
+						style: {
+							flex: 1,
+							flexGrow: 1,
+						},
+					},
+					this.renderTitle(),
+					this.renderDescription(),
+					this.renderDepartment(),
+					this.renderCountersOrLastActivity(),
+				),
 			);
+		}
+
+		renderCountersOrLastActivity()
+		{
+			return this.props.isGroupDialog ? this.renderDialogUserCounter() : this.renderUserLastTime();
 		}
 
 		renderAvatar()
 		{
+			let avatar = null;
+			if (this.props.isCopilot)
+			{
+				avatar = new AvatarSafe({
+					text: this.state.title,
+					uri: this.state.imageUrl,
+					svg: this.props.headData.svg,
+					color: this.props.headData.imageColor,
+					size: 'XL',
+					isSuperEllipse: this.props.isSuperEllipseAvatar,
+				});
+			}
+			else if (MobileFeature.isNativeAvatarSupported())
+			{
+				const avatarProps = ChatAvatar.createFromDialogId(this.props.dialogId).getSidebarTitleAvatarProps();
+				avatar = Avatar(avatarProps);
+			}
+			else
+			{
+				avatar = new MessengerAvatarLegacy({
+					text: this.state.title,
+					uri: this.state.imageUrl,
+					svg: this.props.headData.svg,
+					color: this.props.headData.imageColor,
+					size: 'XL',
+					isSuperEllipse: this.props.isSuperEllipseAvatar,
+				});
+			}
+
 			return View(
 				{
 					style: {
-						marginTop: 12,
-						marginBottom: 12,
-						paddingHorizontal: 2,
-						paddingVertical: 2,
+						paddingLeft: 12,
 						position: 'relative',
 						zIndex: 1,
-						flexDirection: 'column',
-						justifyContent: 'flex-end',
+						marginRight: 24,
 					},
 					onClick: () => this.props.callbacks.onClickInfoBLock(),
 				},
-				this.props.isCopilot ? new AvatarSafe({
-					text: this.props.headData.title,
-					uri: this.state.imageUrl,
-					svg: this.props.headData.svg,
-					color: this.props.headData.imageColor,
-					size: 'XL',
-					isSuperEllipse: this.props.isSuperEllipseAvatar,
-				}) : new Avatar({
-					text: this.props.headData.title,
-					uri: this.state.imageUrl,
-					svg: this.props.headData.svg,
-					color: this.props.headData.imageColor,
-					size: 'XL',
-					isSuperEllipse: this.props.isSuperEllipseAvatar,
-				}),
+				avatar,
 				this.renderStatusImage(),
 			);
 		}
@@ -124,25 +163,21 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 		{
 			return View(
 				{
-					onClick: () => this.props.callbacks.onClickInfoBLock(),
-					flexDirection: 'row',
-					style: {
-						marginHorizontal: 70,
-					},
+					onClick: () => this.props?.callbacks?.onClickInfoBLock(),
 				},
 				Text({
 					style: {
 						color: ChatTitle.createFromDialogId(this.props.dialogId).getTitleColor(),
-						fontSize: 18,
-						fontWeight: 500,
+						fontSize: 17,
+						fontWeight: '500',
 						textStyle: 'normal',
 						align: 'baseline',
 						marginBottom: 5,
-						textAlign: 'center',
+						textAlign: 'start',
 					},
 					numberOfLines: 2,
 					ellipsize: 'end',
-					text: this.props.headData.title,
+					text: this.state.title,
 					testId: 'SIDEBAR_TITLE',
 				}),
 			);
@@ -158,13 +193,18 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 			return View(
 				{
 					style: {
-						marginHorizontal: 42.5,
 						flexDirection: 'row',
 					},
 					onClick: () => this.props.callbacks.onClickInfoBLock(),
 				},
 				Text({
-					style: this.getStyleDescText(),
+					style: {
+						color: Theme.colors.base1,
+						fontSize: 14,
+						fontWeight: '400',
+						textStyle: 'normal',
+						textAlign: 'start',
+					},
 					numberOfLines: 1,
 					ellipsize: 'end',
 					text: this.state.desc,
@@ -172,19 +212,6 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 				}),
 				this.renderShevronImage(),
 			);
-		}
-
-		getStyleDescText()
-		{
-			const styleText = {
-				color: Theme.colors.base1,
-				fontSize: 14,
-				fontWeight: 400,
-				textStyle: 'normal',
-				textAlign: 'center',
-			};
-
-			return this.props.isGroupDialog ? styleText : { ...styleText, marginLeft: 24 };
 		}
 
 		renderShevronImage()
@@ -216,17 +243,15 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 
 			const departmentName = this.getUserDepartmentName(this.state.userData.departmentName);
 
-			const styleText = {
-				color: Theme.colors.base3,
-				fontSize: 14,
-				fontWeight: 400,
-				textStyle: 'normal',
-				textAlign: 'center',
-			};
-
 			const departmentView = departmentName
 				? Text({
-					style: styleText,
+					style: {
+						color: Theme.colors.base3,
+						fontSize: 14,
+						fontWeight: '400',
+						textStyle: 'normal',
+						textAlign: 'start',
+					},
 					numberOfLines: 1,
 					ellipsize: 'end',
 					text: departmentName,
@@ -259,6 +284,46 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 			);
 		}
 
+		renderDialogUserCounter()
+		{
+			return new SidebarProfileUserCounter({ dialogId: this.props.dialogId, isCopilot: this.props.isCopilot });
+		}
+
+		renderUserLastTime()
+		{
+			const { userData } = this.state;
+
+			const textStyle = {
+				color: Theme.colors.base3,
+				fontSize: 14,
+				fontWeight: '400',
+				textStyle: 'normal',
+				textAlign: 'center',
+			};
+
+			if (Type.isUndefined(userData?.lastActivityDate) || Type.isNull(userData?.lastActivityDate))
+			{
+				return null;
+			}
+
+			return View(
+				{
+					style: {
+						marginTop: 5,
+						flexDirection: 'row',
+					},
+				},
+				new SidebarFriendlyDate({
+					moment: userData.lastActivityDate,
+					style: textStyle,
+					showTime: true,
+					useTimeAgo: true,
+					futureAllowed: true,
+					userData: userData.userModelData,
+				}),
+			);
+		}
+
 		/**
 		 * @desc Get users department name
 		 * @param {string} departmentName
@@ -284,7 +349,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 		componentDidMount()
 		{
 			logger.log('SidebarProfileBtn.view.componentDidMount');
-			this.bindListener();
+			this.bindMethods();
 			this.subscribeEvents();
 		}
 
@@ -292,10 +357,11 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 		 * @desc Method binding this for use in handlers
 		 * @void
 		 */
-		bindListener()
+		bindMethods()
 		{
-			this.unsubscribeEvents = this.unsubscribeEvents.bind(this);
+			this.onClose = this.onClose.bind(this);
 			this.onUpdateCopilotState = this.onUpdateCopilotState.bind(this);
+			this.onUpdateDialogState = this.onUpdateDialogState.bind(this);
 		}
 
 		subscribeEvents()
@@ -307,14 +373,23 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 			}
 
 			BX.addCustomEvent('onCloseSidebarWidget', this.unsubscribeEvents);
+			this.storeManager.on('dialoguesModel/update', this.onUpdateDialogState);
+			BX.addCustomEvent(EventType.sidebar.closeWidget, this.onClose);
 		}
 
 		unsubscribeEvents()
 		{
 			logger.log(`${this.constructor.name}.view.unsubscribeEvents`);
 			this.storeManager.off('dialoguesModel/copilotModel/update', this.onUpdateCopilotState);
+			this.storeManager.off('dialoguesModel/update', this.onUpdateDialogState);
 
-			BX.removeCustomEvent('onCloseSidebarWidget', this.unsubscribeEvents);
+			BX.removeCustomEvent(EventType.sidebar.closeWidget, this.onClose);
+		}
+
+		onClose()
+		{
+			logger.log(`${this.constructor.name}.onClose`);
+			this.unsubscribeEvents();
 		}
 
 		/**
@@ -340,6 +415,37 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 				{
 					logger.error(`${this.constructor.name}.onUpdateCopilotState.catch:`, error);
 				}
+			}
+		}
+
+		/**
+		 * @param {Object} mutation
+		 * @param {MutationPayload<DialoguesUpdateData, DialoguesUpdateActions>} mutation.payload
+		 */
+		onUpdateDialogState(mutation)
+		{
+			const { dialogId, fields } = mutation.payload.data;
+			if (dialogId !== this.props.dialogId)
+			{
+				return;
+			}
+
+			logger.info(`${this.constructor.name}.onUpdateDialogState---------->`, mutation);
+
+			const newState = Object.create(null);
+			if (Type.isString(fields?.name) && fields?.name !== this.state.title)
+			{
+				newState.title = fields.name;
+			}
+
+			if (Type.isString(fields?.avatar) && fields?.avatar !== this.state.imageUrl)
+			{
+				newState.imageUrl = fields.avatar;
+			}
+
+			if (Object.keys(newState).length > 0)
+			{
+				this.setState(newState);
 			}
 		}
 	}

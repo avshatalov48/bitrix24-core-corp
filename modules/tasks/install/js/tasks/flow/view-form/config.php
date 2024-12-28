@@ -8,6 +8,7 @@ return [
 	'css' => 'dist/view-form.bundle.css',
 	'js' => 'dist/view-form.bundle.js',
 	'rel' => [
+		'main.core.events',
 		'main.popup',
 		'tasks.flow.team-popup',
 		'tasks.side-panel-integration',
@@ -16,6 +17,7 @@ return [
 		'main.loader',
 		'ui.buttons',
 		'ui.info-helper',
+		'ui.notification',
 	],
 	'skip_core' => false,
 ];

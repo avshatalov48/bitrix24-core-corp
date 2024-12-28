@@ -63,7 +63,6 @@ $APPLICATION->IncludeComponent(
 		'MULTIFIELD_DATA' => $arResult['ENTITY_DATA']['MULTIFIELD_DATA'] ?? [],
 		'OWNER_INFO' => $arResult['ENTITY_INFO'],
 		'CONVERSION_PERMITTED' => $arResult['CONVERSION_PERMITTED'] ?? true,
-		'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'] ?? [],
 		'CANCELED' => $arResult['ENTITY_DATA']['CANCELED'],
 		'TYPE' => 'details',
 		'SCRIPTS' => [
@@ -135,6 +134,7 @@ $APPLICATION->IncludeComponent(
 		'ENABLE_PROGRESS_CHANGE' => $arResult['ENABLE_PROGRESS_CHANGE'],
 		'ACTIVITY_EDITOR_ID' => $activityEditorID,
 		'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE'],
+		'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'] ?? [],
 		//'CAN_CONVERT' => isset($arResult['CAN_CONVERT']) ? $arResult['CAN_CONVERT'] : false,
 		//'CONVERSION_SCHEME' => isset($arResult['CONVERSION_SCHEME']) ? $arResult['CONVERSION_SCHEME'] : null
 	)

@@ -82,9 +82,6 @@ $APPLICATION->IncludeComponent(
 //endregion
 				$arResult['justCounter'] = $arResult['justCounter'] + 1;
 
-				$createdByAvatar = Uri::urnEncode($row['CREATED_BY']['AVATAR']);
-				$updatedByAvatar = Uri::urnEncode($row['UPDATED_BY']['AVATAR']);
-
 				return [
 					'id' => $row['ID'],
 					'data' => [
@@ -118,14 +115,14 @@ HTML
 						'FILE_SIZE' => \CFile::formatSize($row['FILE_SIZE']),
 						'CREATED_BY' => <<<HTML
 <div class="bx-disk-user-link disk-documents-grid-user">
-	<span class="bx-disk-fileinfo-owner-avatar disk-documents-grid-user-avatar" style="background-image: url('{$createdByAvatar}');"></span>
+	{$row['CREATED_BY']['AVATAR_HTML']}
 	<a class="disk-documents-grid-user-link" target='_blank' href="{$row['CREATED_BY']['URL']}">{$row['CREATED_BY']['NAME']}</a>
 </div>
 HTML
 					,
 						'UPDATED_BY' => <<<HTML
 <div class="bx-disk-user-link disk-documents-grid-user">
-	<span class="bx-disk-fileinfo-owner-avatar disk-documents-grid-user-avatar" style="background-image: url('{$updatedByAvatar}');"></span>
+	{$row['UPDATED_BY']['AVATAR_HTML']}
 	<a class="disk-documents-grid-user-link" target='_blank' href="{$row['UPDATED_BY']['URL']}">{$row['UPDATED_BY']['NAME']}</a>
 </div>
 HTML

@@ -230,14 +230,14 @@ class QuoteMapping
 				'OPPORTUNITY' => [
 					'IS_METRIC' => 'N',
 					'FIELD_NAME' => 'Q.OPPORTUNITY',
-					'FIELD_TYPE' => 'float',
+					'FIELD_TYPE' => 'double',
 				],
 				//    IS_MANUAL_OPPORTUNITY char           default 'N'               null,
 				//    TAX_VALUE decimal(18, 2) null,
 				'TAX_VALUE' => [
 					'IS_METRIC' => 'N',
 					'FIELD_NAME' => 'Q.TAX_VALUE',
-					'FIELD_TYPE' => 'float',
+					'FIELD_TYPE' => 'double',
 				],
 				//    CURRENCY_ID varchar(50) null,
 				'CURRENCY_ID' => [

@@ -5923,9 +5923,11 @@ class EntityRequisite
 		}
 		if ($languageId == '')
 		{
+			/** @todo Use SiteTable::getDefaultLanguageId() */
 			$siteIterator = \Bitrix\Main\SiteTable::getList(array(
 				'select' => array('LID', 'LANGUAGE_ID'),
-				'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y')
+				'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y'),
+				'cache' => ['ttl' => 86400],
 			));
 			if ($site = $siteIterator->fetch())
 				$languageId = (string)$site['LANGUAGE_ID'];
@@ -8535,6 +8537,8 @@ class EntityRequisite
 				$requisite->saveSettings($entityTypeId, $entityId, $settings);
 				EntityAddress::setDef(CCrmOwnerType::Requisite, $requisiteId);
 				$result = true;
+
+				CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByEntity($entityTypeId, $entityId);
 			}
 		}
 

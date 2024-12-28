@@ -49,7 +49,10 @@ if ($isSigningEnabledInCurrentTariff)
 	]);
 }
 
-$APPLICATION->IncludeComponent("bitrix:bitrix24.limit.lock", "", array());
+if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+{
+	$APPLICATION->IncludeComponent("bitrix:bitrix24.limit.lock", "", array());
+}
 
 $renderRequisiteSection = function(?string $entityName, array $data): void {
 	?>

@@ -59,7 +59,7 @@ class TypeDetail
 	isExternal: boolean = false;
 	isSaveFromTypeDetail: boolean = true;
 	isCreateSectionsViaAutomatedSolutionDetails: boolean = false;
-	isCrmAdmin: boolean = false;
+	canEditAutomatedSolution: boolean = false;
 
 	#isCancelEventRegistered: boolean = false;
 
@@ -78,7 +78,7 @@ class TypeDetail
 		isRestricted: boolean,
 		restrictionErrorMessage: string,
 		restrictionSliderCode: ?string,
-		isCrmAdmin: boolean,
+		canEditAutomatedSolution: boolean,
     })
 	{
 		if (Type.isPlainObject(params))
@@ -98,7 +98,7 @@ class TypeDetail
 			;
 			this.isExternal = Boolean(params.isExternal);
 			this.isCreateSectionsViaAutomatedSolutionDetails = Boolean(params.isCreateSectionsViaAutomatedSolutionDetails);
-			this.isCrmAdmin = Boolean(params.isCrmAdmin);
+			this.canEditAutomatedSolution = Boolean(params.canEditAutomatedSolution);
 		}
 
 		this.buttonsPanel = document.getElementById('ui-button-panel');
@@ -810,7 +810,7 @@ class TypeDetail
 			selectorContainer: this.container.querySelector('[data-role="crm-type-custom-section-selector"]'),
 			customSections: this.type.getCustomSections() || [],
 			isCreateSectionsViaAutomatedSolutionDetails: this.isCreateSectionsViaAutomatedSolutionDetails,
-			isCrmAdmin: this.isCrmAdmin,
+			canEditAutomatedSolution: this.canEditAutomatedSolution,
 		});
 	}
 
@@ -1069,7 +1069,7 @@ class CustomSectionsController
 	cancelButton: Element;
 	addSectionItemButton: Element;
 	isCreateSectionsViaAutomatedSolutionDetails: false;
-	isCrmAdmin: false;
+	canEditAutomatedSolution: false;
 
 	constructor(options: {
 		switcher: {},
@@ -1077,7 +1077,7 @@ class CustomSectionsController
 		selectorContainer: Element,
 		customSections?: CustomSection[],
 		isCreateSectionsViaAutomatedSolutionDetails: boolean,
-		isCrmAdmin: boolean,
+		canEditAutomatedSolution: boolean,
 	})
 	{
 		this.switcher = options.switcher;
@@ -1097,9 +1097,9 @@ class CustomSectionsController
 			this.isCreateSectionsViaAutomatedSolutionDetails = options.isCreateSectionsViaAutomatedSolutionDetails;
 		}
 
-		if (Type.isBoolean(options.isCrmAdmin))
+		if (Type.isBoolean(options.canEditAutomatedSolution))
 		{
-			this.isCrmAdmin = options.isCrmAdmin;
+			this.canEditAutomatedSolution = options.canEditAutomatedSolution;
 		}
 
 		this.initSelector();
@@ -1175,7 +1175,7 @@ class CustomSectionsController
 			};
 		}
 
-		if (!this.isCrmAdmin)
+		if (!this.canEditAutomatedSolution)
 		{
 			tagSelectorOptions.locked = true;
 		}

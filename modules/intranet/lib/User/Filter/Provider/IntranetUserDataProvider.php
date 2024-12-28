@@ -103,7 +103,6 @@ class IntranetUserDataProvider extends EntityDataProvider
 
 		// compatibility with old filters
 		$this->checkFiredField($filterValue);
-		$this->checkExtranetField($filterValue);
 		$this->checkAdminField($filterValue);
 		$this->checkIntegratorField($filterValue);
 		$this->checkOnlineField($filterValue);
@@ -193,57 +192,41 @@ class IntranetUserDataProvider extends EntityDataProvider
 		}
 	}
 
-	private function checkExtranetField(array &$filterValue): void
-	{
-		if (
-			!empty($filterValue[IntranetUserSettings::EXTRANET_FIELD])
-			&& $this->getSettings()->isFilterAvailable(IntranetUserSettings::EXTRANET_FIELD)
-		)
-		{
-			if ($filterValue[IntranetUserSettings::EXTRANET_FIELD] === 'Y')
-			{
-				$filterValue['UF_DEPARTMENT'] = false;
-				if (
-					Loader::includeModule('extranet')
-					&& ($extranetGroupId = \CExtranet::getExtranetUserGroupId())
-				)
-				{
-					$filterValue['=GROUPS.GROUP_ID'] = $extranetGroupId;
-				}
-			}
-			elseif ($filterValue[IntranetUserSettings::EXTRANET_FIELD] === 'N')
-			{
-				$filterValue['!UF_DEPARTMENT'] = false;
-			}
-		}
-	}
-
 	private function checkVisitorField(array &$filterValue): void
 	{
 		if (
 			!empty($filterValue[IntranetUserSettings::VISITOR_FIELD])
+			&& $filterValue[IntranetUserSettings::VISITOR_FIELD] === 'Y'
 			&& $this->getSettings()->isFilterAvailable(IntranetUserSettings::VISITOR_FIELD)
 		)
 		{
 			$extranetGroupId = Loader::includeModule('extranet') ? \CExtranet::getExtranetUserGroupId() : 0;
+			$filterValue['UF_DEPARTMENT'] = false;
 
-			if ($filterValue[IntranetUserSettings::VISITOR_FIELD] === 'Y')
+			if ($extranetGroupId)
 			{
-				$filterValue['UF_DEPARTMENT'] = false;
-
-				if ($extranetGroupId)
-				{
-					$filterValue['!=GROUPS.GROUP_ID'] = $extranetGroupId;
-				}
+				$filterValue['INTRANET_USER_EXTRANET_GROUP_GROUP_ID'] = false;
 			}
-			elseif ($filterValue[IntranetUserSettings::VISITOR_FIELD] === 'N')
+		}
+		elseif (
+			!$this->getSettings()->isFilterAvailable(IntranetUserSettings::VISITOR_FIELD)
+			|| (
+				!empty($filterValue[IntranetUserSettings::VISITOR_FIELD])
+				&& $filterValue[IntranetUserSettings::VISITOR_FIELD] === 'N'
+			)
+		)
+		{
+			if (Loader::includeModule('extranet') && \CExtranet::getExtranetUserGroupId())
+			{
+				$filterValue[] = [
+					'LOGIC' => 'OR',
+					['!UF_DEPARTMENT' => false],
+					['!INTRANET_USER_EXTRANET_GROUP_GROUP_ID' => false],
+				];
+			}
+			else
 			{
 				$filterValue['!UF_DEPARTMENT'] = false;
-
-				if ($extranetGroupId)
-				{
-					$filterValue['=GROUPS.GROUP_ID'] = $extranetGroupId;
-				}
 			}
 		}
 	}
@@ -360,7 +343,7 @@ class IntranetUserDataProvider extends EntityDataProvider
 		}
 	}
 
-	private function checkAppField(&$filterValue): void
+	private function checkAppField(array &$filterValue): void
 	{
 		if (!empty($filterValue[self::PHONE_APPS_FIELD]))
 		{
@@ -471,10 +454,20 @@ class IntranetUserDataProvider extends EntityDataProvider
 
 		while ($option = $result->Fetch())
 		{
-			if ($option['VALUE'] && $option['VALUE'] > time() - $appActivityTimeout)
+			if ($option['VALUE'])
 			{
-				$userIds[] = $option['USER_ID'];
+				$value = unserialize($option['VALUE'], ['allowed_classes' => false]);
+
+				if (is_int($value) && $value > time() - $appActivityTimeout)
+				{
+					$userIds[] = $option['USER_ID'];
+				}
 			}
+		}
+
+		if (empty($userIds))
+		{
+			return [0];
 		}
 
 		return $userIds;

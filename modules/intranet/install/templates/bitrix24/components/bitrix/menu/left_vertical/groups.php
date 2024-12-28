@@ -51,7 +51,8 @@ $getGroups = function($siteId, $limit, $ids = array()) use($userId, $extranetSit
 			"=ACTIVE" => "Y",
 			"!=CLOSED" => "Y",
 			"=GS.SITE_ID" => $siteId,
-			"<=UG.ROLE" => UserToGroupTable::ROLE_USER
+			"<=UG.ROLE" => UserToGroupTable::ROLE_USER,
+			'!=TYPE' => \Bitrix\Socialnetwork\Item\Workgroup\Type::Collab->value,
 		) + (empty($ids) ? array() : array("!@ID" => $ids)),
 		"order" => array(
 			"NAME" => "ASC"

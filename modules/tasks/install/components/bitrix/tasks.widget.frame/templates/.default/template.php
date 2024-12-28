@@ -72,6 +72,11 @@ $inputPrefix = $arParams['INPUT_PREFIX'];
 						$pinableClass = $block['IS_PINABLE'] ? 'pinable-block' : '';
 						$invisibleClass = $state['BLOCKS'][$blockName]['OPENED'] ? '' : 'invisible';
 						$pinnedClass = $state['BLOCKS'][$blockName]['PINNED'] ? 'pinned' : '';
+						$titleId = '';
+						if ($block['TITLE_ID'] ?? null)
+						{
+							$titleId = 'id="' . $block['TITLE_ID'] . '"';
+						}
 						?>
 
 						<div data-block-name="<?=htmlspecialcharsbx($blockName)?>"
@@ -87,7 +92,7 @@ $inputPrefix = $arParams['INPUT_PREFIX'];
 									<span data-target="<?=htmlspecialcharsbx($blockNameJs)?>" class="js-id-wfr-edit-form-pinner task-option-fixedbtn" title="<?=Loc::getMessage('TASKS_TWF_T_PINNER_HINT')?>"></span>
 								<?endif?>
 
-								<span class="task-options-item-param"><?=htmlspecialcharsbx($block['TITLE'])?></span>
+								<span class="task-options-item-param" <?= $titleId ?>><?=htmlspecialcharsbx($block['TITLE'])?></span>
 								<div class="task-options-item-open-inner <?= ($block['RESTRICTED'] ?? null) ? '--tariff-lock' : ''?>">
 									<?php if (($block['RESTRICTED'] ?? null) && isset($block['RESTRICTED_FEATURE_ID'])):?>
 										<?= Limit::getLimitLock($block['RESTRICTED_FEATURE_ID'])?>
@@ -153,6 +158,11 @@ $inputPrefix = $arParams['INPUT_PREFIX'];
 
 						$invisibleClass = $state['BLOCKS'][$blockName]['OPENED'] ? '' : 'invisible';
 						$pinnedClass = 'pinned';
+						$titleId = '';
+						if ($block['TITLE_ID'] ?? null)
+						{
+							$titleId = 'id="' . $block['TITLE_ID'] . '"';
+						}
 						?>
 
 						<div class="js-id-wfr-edit-form-<?=$blockNameJs?>-block-place wfr-edit-form-block-place">
@@ -160,7 +170,7 @@ $inputPrefix = $arParams['INPUT_PREFIX'];
 								<div data-block-name="<?=$blockName?>" class="js-id-wfr-edit-form-<?=$blockNameJs?>-block pinable-block task-openable-block task-options-item-<?=$blockNameJs?> <?=$pinableClass?> <?=$invisibleClass?> <?=$pinnedClass?>">
 									<div class="task-options-item">
 										<span data-target="<?=$blockNameJs?>-block" class="js-id-wfr-edit-form-pinner task-option-fixedbtn" title="<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_PINNER_HINT')?>"></span>
-										<span class="task-options-item-param"><?=htmlspecialcharsbx($block['TITLE'])?></span>
+										<span class="task-options-item-param" <?= $titleId ?>><?=htmlspecialcharsbx($block['TITLE'])?></span>
 										<div class="task-options-item-open-inner">
 											<?=$block['HTML']?>
 										</div>
@@ -217,6 +227,11 @@ $inputPrefix = $arParams['INPUT_PREFIX'];
 						$invisibleClass = $state['BLOCKS'][$blockName]['OPENED'] ? '' : 'invisible';
 						$pinnedClass = '';
 						$pinableClass = $block['IS_PINABLE'] ? 'pinable-block' : '';
+						$titleId = '';
+						if ($block['TITLE_ID'] ?? null)
+						{
+							$titleId = 'id="' . $block['TITLE_ID'] . '"';
+						}
 						?>
 
 						<div class="js-id-wfr-edit-form-<?=$blockNameJs?>-block-place wfr-edit-form-block-place">
@@ -224,7 +239,7 @@ $inputPrefix = $arParams['INPUT_PREFIX'];
 								<div data-block-name="<?=$blockName?>" class="js-id-wfr-edit-form-<?=$blockNameJs?>-block task-openable-block task-options-item-<?=$blockNameJs?> <?=$pinableClass?> <?=$invisibleClass?> <?=$pinnedClass?>">
 									<div class="task-options-item">
 										<span data-target="<?=$blockNameJs?>-block" class="js-id-wfr-edit-form-pinner task-option-fixedbtn" title="<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_PINNER_HINT')?>"></span>
-										<span class="task-options-item-param"><?=htmlspecialcharsbx($block['TITLE'])?></span>
+										<span class="task-options-item-param" <?= $titleId ?>><?=htmlspecialcharsbx($block['TITLE'])?></span>
 										<div class="task-options-item-open-inner">
 											<?=$block['HTML']?>
 										</div>

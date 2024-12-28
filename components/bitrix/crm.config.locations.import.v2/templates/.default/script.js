@@ -301,7 +301,7 @@ BX.merge(BX.Crm.component.config.locations.import.prototype, {
 		BX.bindDelegate(this.getControl('mode-switch'), 'change', {tag: 'input'}, function(){
 			setState(this.value);
 		});
-		setState('remote', true);
+		setState(so.defaultState, true);
 	},
 
 	askRemove: function(){

@@ -2,6 +2,7 @@
 namespace Bitrix\Sign\Internal;
 
 use Bitrix\Main\Entity;
+use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\Security\Random;
 use Bitrix\Sign\File;
@@ -26,6 +27,8 @@ use Bitrix\Sign\Type\DocumentStatus;
  */
 class DocumentTable extends Entity\DataManager
 {
+	use DeleteByFilterTrait;
+
 	public static function getObjectClass()
 	{
 		return Document::class;
@@ -180,6 +183,10 @@ class DocumentTable extends Entity\DataManager
 				->configureTitle('Template ID')
 				->configureNullable()
 			,
+			(new IntegerField('CHAT_ID'))
+				->configureTitle('Chat ID')
+				->configureNullable()
+			,
 			(new IntegerField('CREATED_FROM_DOCUMENT_ID'))
 				->configureTitle('Created from document ID')
 				->configureNullable()
@@ -188,6 +195,14 @@ class DocumentTable extends Entity\DataManager
 				->configureTitle('Initiated by type')
 				->configureRequired()
 				->configureDefaultValue(InitiatedByType::COMPANY->toInt())
+			,
+			(new IntegerField('HCMLINK_COMPANY_ID'))
+				->configureTitle('HcmLink Company ID')
+				->configureNullable()
+			,
+			(new Entity\DatetimeField('DATE_STATUS_CHANGED'))
+				->configureTitle('Status changed date')
+				->configureNullable()
 			,
 		];
 	}

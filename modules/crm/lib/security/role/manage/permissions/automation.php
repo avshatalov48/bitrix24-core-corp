@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Security\Role\Manage\Permissions;
 
+use Bitrix\Main\Localization\Loc;
+
 class Automation extends Permission
 {
 	public function code(): string
@@ -22,5 +24,10 @@ class Automation extends Permission
 	public function sortOrder(): int
 	{
 		return 7;
+	}
+
+	public function explanation(): ?string
+	{
+		return Loc::getMessage('CRM_SECURITY_ROLE_PERMS_EXPLANATION_AUTOMATION');
 	}
 }

@@ -10,6 +10,8 @@ use Bitrix\Main\Localization\Loc;
 
 use Bitrix\Disk\Ui;
 use Bitrix\Disk\Uf\StubConnector;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
 
 Loc::loadMessages(__FILE__);
 
@@ -19,15 +21,14 @@ class Task extends StubConnector
 	protected $canRead = null;
 	protected $taskPostData;
 
-	public function canRead($userId)
+	public function canRead($userId): bool
 	{
 		if($this->canRead !== null)
 		{
 			return $this->canRead;
 		}
 
-		$data = $this->loadTaskData($userId);
-		$this->canRead = !empty($data);
+		$this->canRead = TaskAccessController::can($userId, ActionDictionary::ACTION_TASK_READ, $this->entityId);
 
 		return $this->canRead;
 	}

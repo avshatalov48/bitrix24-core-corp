@@ -91,4 +91,14 @@ final class DocumentScenario
 
 		return in_array($scenario, self::getB2EScenarios(), true);
 	}
+
+	public static function isB2BScenario(?string $scenario): bool
+	{
+		if ($scenario === null)
+		{
+			return false;
+		}
+
+		return in_array($scenario, self::getB2BScenarios(), true);
+	}
 }

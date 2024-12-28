@@ -129,6 +129,9 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	const ACTION_TOGGLE_FAVORITE     = 0x15;
 
 	const ACTION_READ                = 0x17;
+
+	// for task in flow with himself distribution type. means "delegate to user who pressed the button + start action"
+	const ACTION_TAKE				 = 0x18;
 	const ACTION_RATE			 	 = 0x666;
 
 	// Roles implemented for managers of users too.
@@ -1474,7 +1477,8 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			self::ACTION_START_TIME_TRACKING    	=> 'ACTION_START_TIME_TRACKING',
 			self::ACTION_ADD_FAVORITE           	=> 'ACTION_ADD_FAVORITE',
 			self::ACTION_DELETE_FAVORITE        	=> 'ACTION_DELETE_FAVORITE',
-			self::ACTION_RATE						=> 'ACTION_RATE'
+			self::ACTION_RATE						=> 'ACTION_RATE',
+			self::ACTION_TAKE						=> 'ACTION_TAKE',
 		);
 
 		return $arStringsMap;
@@ -1617,6 +1621,23 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	public function startExecution(array $params=array())
 	{
 		$this->proceedAction(self::ACTION_START, ['PARAMETERS' => $params]);
+	}
+
+	/**
+	 * @param array $params
+	 *
+	 * @throws TasksException
+	 */
+	public function takeExecution(array $params = []): void
+	{
+		$this->proceedAction(self::ACTION_TAKE, ['PARAMETERS' => $params]);
+
+		$taskData = $this->getData(false);
+		if (($taskData['ALLOW_TIME_TRACKING'] ?? '') === 'Y')
+		{
+			$timer = CTaskTimerManager::getInstance($this->getExecutiveUserId());
+			$timer->start($this->taskId);
+		}
 	}
 
 	/**
@@ -2470,6 +2491,11 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 			case ActionDictionary::ACTION_TASK_START:
 				$arNewFields['STATUS'] = Status::IN_PROGRESS;
+			break;
+
+			case ActionDictionary::ACTION_TASK_TAKE:
+				$arNewFields['STATUS'] = Status::IN_PROGRESS;
+				$arNewFields['HIMSELF_FLOW_TAKE_USER_ID'] = $this->getExecutiveUserId();
 			break;
 
 			case ActionDictionary::ACTION_TASK_PAUSE:

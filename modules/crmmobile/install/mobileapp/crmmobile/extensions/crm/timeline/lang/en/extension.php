@@ -63,6 +63,7 @@ $MESS["M_CRM_TIMELINE_ITEM_ACTIVITY_COMPLETE_CONF_CANCEL_TEXT"] = "Cancel";
 $MESS["M_CRM_TIMELINE_ITEM_ACTIVITY_COMPLETE_CONF_OK_TEXT"] = "Yes, complete";
 $MESS["M_CRM_TIMELINE_ITEM_ACTIVITY_COMPLETE_CONF_TITLE"] = "Are you sure you want to complete activity?";
 $MESS["M_CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF_DESCRIPTION"] = "Customer conversation will automatically close if you complete the activity.";
+$MESS["M_CRM_TIMELINE_ITEM_BIZPROC_TASK_DO_ACTION_ACCESS_DENIED"] = "Assignment can be competed only by person assigned as responsible for the activity.";
 $MESS["M_CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_RANGE"] = "#WEEKDAYS#; availability: #FROM_TIME# to #TO_TIME#; duration: #DURATION#";
 $MESS["M_CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_RANGE_V2"] = "#WEEKDAYS#, #FROM_TIME# to #TO_TIME#, #DURATION#";
 $MESS["M_CRM_TIMELINE_LIST_COLLAPSE"] = "Collapse";

@@ -69,7 +69,7 @@ class GoToChat extends Base
 		$senderChannelId = (string)($params['senderId'] ?? '');
 		$from = (string)($params['from'] ?? '');
 		$to = (int)($params['to'] ?? '');
-		$lineId = (string)($params['lineId'] ?? '');
+		$lineId = (int)($params['lineId'] ?? 0);
 		$connectorId = (string)($params['connectorId'] ?? '');
 
 		$owner = new ItemIdentifier($ownerTypeId, $ownerId);

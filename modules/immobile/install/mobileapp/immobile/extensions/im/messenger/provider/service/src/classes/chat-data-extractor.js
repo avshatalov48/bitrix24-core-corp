@@ -140,6 +140,14 @@ jn.define('im/messenger/provider/service/classes/chat-data-extractor', (require,
 			return this.restResult.commentInfo ?? [];
 		}
 
+		getCollabInfo()
+		{
+			return {
+				dialogId: this.getMainChat()?.dialogId ?? 0,
+				...this.restResult.collabInfo,
+			};
+		}
+
 		getReactions()
 		{
 			return this.restResult.reactions ?? [];

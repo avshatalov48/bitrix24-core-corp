@@ -11,8 +11,9 @@ use Bitrix\Mobile;
 use Bitrix\MobileApp;
 use Bitrix\Im\V2\Chat\GeneralChat;
 use Bitrix\ImMobile\Settings;
+use Bitrix\ImMobile\User;
 use Bitrix\Im\Integration\Imopenlines\Localize;
-use Bitrix\Im\Integration\Imopenlines\User;
+use Bitrix\Im\Integration\Imopenlines;
 use Bitrix\Intranet\Invitation;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -31,6 +32,7 @@ class Manager
 	private Tab\Notifications $notifications;
 	private Tab\OpenLines $openLines;
 	private Tab\Channel $channel;
+	private Tab\Collab $collab;
 
 	public function __construct(Mobile\Context $context)
 	{
@@ -41,7 +43,7 @@ class Manager
 		$this->openLines = new Tab\OpenLines($context);
 		$this->notifications = new Tab\Notifications($context);
 		$this->channel = new Tab\Channel();
-		// $this->collab = new Tab\Collab();
+		$this->collab = new Tab\Collab();
 	}
 
 	public static function getShortTitle()
@@ -162,8 +164,8 @@ class Manager
 			$this->messenger,
 			$this->notifications,
 			$this->copilot,
-			// $this->collab,
 			$this->channel,
+			$this->collab,
 		];
 	}
 
@@ -174,8 +176,8 @@ class Manager
 			$this->openLines,
 			$this->notifications,
 			$this->copilot,
-			// $this->collab,
 			$this->channel,
+			$this->collab,
 		];
 	}
 
@@ -184,9 +186,9 @@ class Manager
 		return [
 			$this->messenger,
 			$this->copilot,
-			// $this->collab,
 			$this->notifications,
 			$this->channel,
+			$this->collab,
 			$this->openLines,
 		];
 	}
@@ -198,6 +200,18 @@ class Manager
 	 */
 	private function getSharedParams(array $tabs): array
 	{
+		$permissions = [];
+		if (Loader::includeModule('im'))
+		{
+			$permissionManager = new \Bitrix\Im\V2\Permission(true);
+			$permissions = [
+				'byChatType' => $permissionManager->getByChatTypes(),
+				'byUserType' => $permissionManager->getByUserTypes(),
+				'actionGroups' => $permissionManager->getActionGroupDefinitions(),
+				'actionGroupsDefaults' => $permissionManager->getDefaultPermissionForGroupActions(),
+			];
+		}
+
 		$isCloud = ModuleManager::isModuleInstalled('bitrix24') && defined('BX24_HOST_NAME');
 
 		$hasActiveBucket = false;
@@ -273,14 +287,19 @@ class Manager
 				'IS_CHAT_LOCAL_STORAGE_AVAILABLE' => Settings::isChatLocalStorageAvailable(),
 				'SHOULD_SHOW_CHAT_V2_UPDATE_HINT' => Settings::shouldShowChatV2UpdateHint(),
 				'SMILE_LAST_UPDATE_DATE' => CSmile::getLastUpdate()->format(DateTimeInterface::ATOM),
-				'IS_COPILOT_AVAILABLE' => Settings::isCopilotAvailable(),
 				'CAN_USE_TELEPHONY' => Loader::includeModule('voximplant') && \Bitrix\Voximplant\Security\Helper::canCurrentUserPerformCalls(),
 				'FIRST_TAB_ID' => $firstTabId,
 				'HUMAN_RESOURCES_STRUCTURE_AVAILABLE' => $humanResourcesStructureAvailable ? 'Y' : 'N',
 				'ENABLE_DEV_WORKSPACE' => $enableDevWorkspace ? 'Y' : 'N',
 				'PLAN_LIMITS' => Settings::planLimits(),
-				'IS_LINKS_MIGRATED' => Option::get('im', 'im_link_url_migration', 'N') === 'Y',
-				'IS_FILES_MIGRATED' => Option::get('im', 'im_link_file_migration', 'N') === 'Y',
+				'IM_FEATURES' => Settings::getImFeatures(),
+				'USER_INFO' => [
+					'id' => User::getCurrent()?->getId() ?? 0,
+					'type' => User::getCurrent()?->getType()?->value ?? 'user',
+				],
+				'INSTALLED_MODULES' => ModuleManager::getInstalledModules(),
+				'PERMISSIONS' => $permissions,
+				'MULTIPLE_ACTION_MESSAGE_LIMIT' => Settings::getMultipleActionMessageLimit(),
 			],
 			$this->getInvitationParams(),
 		);
@@ -356,6 +375,6 @@ class Manager
 			return false;
 		}
 
-		return User::isOperator();
+		return Imopenlines\User::isOperator();
 	}
 }

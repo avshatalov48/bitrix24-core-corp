@@ -137,6 +137,16 @@ final class UserProvider
 		return $this->userManager ? $this->convertUsers($this->userManager->getList($params)) : [];
 	}
 
+	public function getAllUsersCount(): int
+	{
+		$users = $this->userManager ? $this->userManager->getList([
+			'select' => ['ID'],
+			'limit' => 2,
+		]) : [];
+
+		return count($users);
+	}
+
 	private function getSelect(): array
 	{
 		return [

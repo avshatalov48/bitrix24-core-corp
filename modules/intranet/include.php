@@ -29,6 +29,7 @@ define('SONET_INTRANET_NEW_USER_COMMENT_EVENT_ID', 'intranet_new_user_comment');
 CModule::AddAutoloadClasses(
 	"intranet",
 	array(
+		"CIntranetTime" => "classes/general/time.php",
 		"CIntranetUtils" => "classes/general/utils.php",
 		"CIntranetSearch" => "tools/search.php",
 		"CIntranetSearchConverter" => "tools/search.php",

@@ -56,6 +56,7 @@ jn.define('crm/receive-payment/steps/send-message/sms-service-selector', (requir
 						qrauth.open({
 							title: Loc.getMessage('M_RP_SM_SMS_SERVICE_SETTINGS_TITLE'),
 							redirectUrl: '/saleshub/',
+							analyticsSection: 'crm',
 						});
 					});
 				},

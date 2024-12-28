@@ -25,6 +25,14 @@
 	background-image: url(../../images/ai-roles-dialog-empty-favourite-group-stub.svg);
 }
 
+.ai__roles-dialog_empty-group-stub-image.--customs {
+	background-image: url(../../images/ai-roles-dialog-empty-custom-group-stub.svg);
+}
+.ai__roles-dialog_empty-group-stub-text-link
+{
+	color: var(--ui-color-copilot-soft, #B095DC);
+	text-decoration: underline;
+}
 .ai__roles-dialog_empty-group-stub-title {
 	margin: 0;
 	padding: 0;
@@ -43,4 +51,15 @@
 	letter-spacing: 0;
 	text-align: center;
 	color: var(--ui-color-base-50);
+}
+
+.ai__roles-dialog_empty-group-stub-text a {
+	color: var(--ui-color-copilot-secondary);
+	text-decoration: underline;
+	text-underline-position: under;
+}
+
+.ai__roles-dialog_empty-group-stub-text a:hover {
+	color: var(--ui-color-copilot-primary);
+	text-decoration: underline;
 }

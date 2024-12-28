@@ -1,0 +1,3 @@
+<?php
+
+$MESS['M_DISK_OPENER_COLLAB_FILES_DEFAULT_COMPONENT_TITLE'] = 'Файлы коллабы';

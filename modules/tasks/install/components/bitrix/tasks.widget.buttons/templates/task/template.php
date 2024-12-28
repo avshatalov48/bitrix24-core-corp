@@ -82,6 +82,10 @@ $taskData = $arParams["TASK"];
 			<?=Loc::getMessage("TASKS_START_TASK")?>
 		</span><?
 
+		?><span data-bx-id="task-view-b-button" data-action="TAKE" class="task-view-button take ui-btn ui-btn-success">
+			<?=Loc::getMessage("TASKS_TAKE_TASK")?>
+		</span><?
+
 		?><span data-bx-id="task-view-b-button" data-action="PAUSE" class="task-view-button pause ui-btn ui-btn-success">
 			<?=Loc::getMessage("TASKS_PAUSE_TASK")?>
 		</span><?

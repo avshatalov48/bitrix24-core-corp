@@ -21,6 +21,21 @@ class Library
 
 		return $url;
 	}
+
+	public static function getChatMessageUrl(int $chatId, int $messageId): string
+	{
+		return "/online/?IM_DIALOG=chat{$chatId}&IM_MESSAGE={$messageId}";
+	}
+
+	public static function getCallSliderUrl(int $callId): string
+	{
+		return "/call/?callId={$callId}";
+	}
+
+	public static function getCallAiFeedbackUrl(int $callId): string
+	{
+		return \Bitrix\Call\Integration\AI\CallAISettings::getFeedBackLink() ?? '';
+	}
 }
 
 

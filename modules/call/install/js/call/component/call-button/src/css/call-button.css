@@ -1,0 +1,156 @@
+.bx-call-chat-header-call-button__scope {
+	--call-chat-header-call-button__font-color_phone-number: var(--ui-color-palette-gray-90, #525c69);
+	--call-chat-header-call-button__background-color_container: #00ace3;
+	--call-chat-header-call-button__background-color_container-hover: #34bbe5;
+	--call-chat-header-call-button__background-copilot-color_container: #8E52EC;
+	--call-chat-header-call-button__background-copilot-color_container-hover: #9963EE;
+	--call-chat-header-call-button__background-color_separator: rgba(var(--ui-color-palette-white-base-rgb), 0.3);
+
+	--call-chat-header-call-button__font-color: var(--ui-color-palette-white-base, #fff);
+	--call-chat-header-call-button__font-color_phone-title: var(--ui-color-palette-gray-50, #a8adb4);
+	--call-chat-header-call-button__promo-title-color: #000000;
+	--call-chat-header-call-button__promo-text-color: #525C69;
+}
+
+.bx-call-chat-header-call-button__container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 26px;
+	padding-left: 13px;
+	background-color: var(--call-chat-header-call-button__background-color_container);
+	border-radius: 56px;
+	margin-right: 22px;
+	cursor: pointer;
+	transition: background-color 0.2s;
+}
+
+.bx-call-chat-header-call-button__container.--copilot {
+	background-color: var(--call-chat-header-call-button__background-copilot-color_container);
+}
+
+.bx-call-chat-header-call-button__container:hover {
+	background-color: var(--call-chat-header-call-button__background-color_container-hover);
+}
+
+.bx-call-chat-header-call-button__container:hover.--copilot {
+	background-color: var(--call-chat-header-call-button__background-copilot-color_container-hover);
+}
+
+.bx-call-chat-header-call-button__container.--disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+.bx-call-chat-header-call-button__container.--conference {
+	padding-right: 13px;
+}
+
+.bx-call-chat-header-call-button__container.--conference .bx-call-chat-header-call-button__text {
+	margin-right: 0;
+}
+
+.bx-call-chat-header-call-button__text {
+	font: var(--ui-font-size-xs, 12px)/var(--ui-font-line-height-2xs, 1.3) var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-medium, 500);
+	color: var(--call-chat-header-call-button__font-color);
+}
+
+.bx-call-chat-header-call-button__icon {
+	width: 19px;
+	height: 19px;
+	margin-right: 3px;
+	background-image: url('images/call.svg');
+	background-position: center;
+	background-repeat: no-repeat;
+	opacity: 0.75;
+	transition: opacity 0.5s;
+}
+
+.bx-call-chat-header-call-button__icon.--copilot {
+	background-image: url('images/copilotCall.svg');
+}
+
+.bx-call-chat-header-call-button__icon.--compact {
+	opacity: 1;
+}
+
+.bx-call-chat-header-call-button__separator {
+	width: 1px;
+	height: 12px;
+	margin-left: 5px;
+	background-color: var(--call-chat-header-call-button__background-color_separator);
+}
+
+.bx-call-chat-header-call-button__chevron_container {
+	display: flex;
+	align-items: center;
+	width: 29px;
+	height: 100%;
+	padding-left: 8px;
+}
+
+.bx-call-chat-header-call-button__chevron {
+	width: 8px;
+	height: 5px;
+	background-image: url('images/chevron-down.svg');
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
+.menu-popup-item.bx-call-chat-header-call-button-menu__item {
+	height: auto;
+}
+
+.menu-popup-item.bx-call-chat-header-call-button-menu__item .menu-popup-item-text {
+	line-height: initial;
+}
+
+.bx-call-chat-header-call-button-menu__phone_container {
+	display: inline-flex;
+	flex-direction: column;
+	padding: 6px 0;
+}
+
+.bx-call-chat-header-call-button-menu__phone_title {
+	height: auto;
+	line-height: initial;
+	margin-bottom: 2px;
+	font: var(--ui-font-size-3xs, 11px) var(--ui-font-family-system);
+	color: var(--call-chat-header-call-button__font-color_phone-title);
+}
+
+.bx-call-chat-header-call-button-menu__phone_number {
+	height: auto;
+	line-height: initial;
+	font: var(--ui-font-size-sm, 13px) var(--ui-font-family-system);
+	color: var(--call-chat-header-call-button__font-color_phone-number);
+}
+
+.bx-call-chat-header-call-button-menu__zoom.--disabled {
+	opacity: 0.4;
+}
+
+.bx-call-chat-header-call-button__promo-container {
+	--call-chat-header-call-button__promo-borer-color: #B095DC;
+
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 16px 12px 20px 18px;
+	border-bottom: 3px solid var(--call-chat-header-call-button__promo-borer-color);
+}
+
+.bx-call-chat-header-call-button__promo-title {
+	font: var(--ui-font-size-3xl, 22px)/var(--ui-font-line-height-2xs, 1.3) var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--call-chat-header-call-button__promo-title-color);
+}
+
+.bx-call-chat-header-call-button__promo-text {
+	font: var(--ui-font-size-lg, 15px)/var(--ui-font-line-height-md, 1.4) var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--call-chat-header-call-button__promo-text-color);
+}

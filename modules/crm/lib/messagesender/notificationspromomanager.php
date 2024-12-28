@@ -4,6 +4,7 @@ namespace Bitrix\Crm\MessageSender;
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Application;
+use Bitrix\Main\Session\SessionInterface;
 
 /**
  * Class NotificationsPromoManager
@@ -20,7 +21,7 @@ final class NotificationsPromoManager
 	 */
 	public static function isPromoSession(): bool
 	{
-		$landingId = (int)Application::getInstance()->getSession()->get(static::PROMO_SESSION_KEY);
+		$landingId = (int)self::getSession()?->get(static::PROMO_SESSION_KEY);
 		if ($landingId)
 		{
 			$optionValue = Option::get('crm', static::getPromoOptionName($landingId), 'N');
@@ -38,16 +39,27 @@ final class NotificationsPromoManager
 	 */
 	public static function enablePromoSession(int $landingId): void
 	{
-		Application::getInstance()->getSession()->set(static::PROMO_SESSION_KEY, $landingId);
+		self::getSession()?->set(static::PROMO_SESSION_KEY, $landingId);
 	}
 
 	public static function usePromo(): void
 	{
-		$landingId = (int)Application::getInstance()->getSession()->get(static::PROMO_SESSION_KEY);
+		$landingId = (int)self::getSession()?->get(static::PROMO_SESSION_KEY);
 		if ($landingId)
 		{
 			Option::set('crm', static::getPromoOptionName($landingId), 'Y');
 		}
+	}
+
+	private static function getSession(): ?SessionInterface
+	{
+		$session = Application::getInstance()->getSession();
+		if (!$session->isAccessible())
+		{
+			return null;
+		}
+
+		return $session;
 	}
 
 	/**

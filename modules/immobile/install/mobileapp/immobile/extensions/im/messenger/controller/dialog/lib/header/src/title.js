@@ -50,9 +50,9 @@ jn.define('im/messenger/controller/dialog/lib/header/title', (require, exports, 
 		{
 			const avatar = ChatAvatar.createFromDialogId(dialogId);
 			const title = ChatTitle.createFromDialogId(dialogId);
-
 			const result = {
 				...avatar.getTitleParams(),
+				avatar: avatar.getDialogHeaderAvatarProps(),
 				...title.getTitleParams(),
 			};
 

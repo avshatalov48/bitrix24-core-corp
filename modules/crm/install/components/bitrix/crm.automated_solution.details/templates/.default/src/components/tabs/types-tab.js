@@ -40,10 +40,10 @@ export const TypesTab = {
 
 		// these selectors contain types only if there were added here in the app lifetime by user interaction
 		// selector states are not synced reactively in the app lifetime
-		this.crmTypesTagSelector = this.initFilteredTagSelector(true, false);
+		this.crmTypesTagSelector = this.initFilteredTagSelector(true, false, !this.$store.state.permissions.canMoveSmartProcessFromCrm);
 		this.crmTypesTagSelector.renderTo(this.$refs.crmTypesTagSelectorContainer);
 
-		this.externalTypesTagSelector = this.initFilteredTagSelector(false, true);
+		this.externalTypesTagSelector = this.initFilteredTagSelector(false, true, !this.$store.state.permissions.canMoveSmartProcessFromAnotherAutomatedSolution);
 		this.externalTypesTagSelector.renderTo(this.$refs.externalTypesTagSelectorContainer);
 	},
 
@@ -51,9 +51,10 @@ export const TypesTab = {
 		initFilteredTagSelector(
 			isOnlyCrmTypes,
 			isOnlyExternalTypes,
+			locked,
 		): TagSelector
 		{
-			return new TagSelector({
+			const tagSlector = new TagSelector({
 				multiple: true,
 				addButtonCaption: this.$Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_TAG_SELECTOR_ADD_BUTTON_CAPTION'),
 				addButtonCaptionMore: this.$Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_TAG_SELECTOR_ADD_BUTTON_CAPTION'),
@@ -82,6 +83,12 @@ export const TypesTab = {
 				},
 
 			});
+			if (locked)
+			{
+				tagSlector.setLocked(true);
+			}
+
+			return tagSlector;
 		},
 
 		addTypeIdByTagAddEvent(event: BaseEvent): void

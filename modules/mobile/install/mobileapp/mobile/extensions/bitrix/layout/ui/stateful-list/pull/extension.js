@@ -65,8 +65,8 @@ jn.define('layout/ui/stateful-list/pull', (require, exports, module) => {
 					{
 						this.processPullItems(response.params.eventName, response.params.items);
 					}
-				}, () => {
-					console.log('processPullEvent callback rejected');
+				}, (reason) => {
+					console.log('processPullEvent callback rejected', reason);
 				})
 				.catch((err) => {
 					console.error(err);

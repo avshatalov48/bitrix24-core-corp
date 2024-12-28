@@ -16,19 +16,6 @@ Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/public_b
 $GLOBALS['APPLICATION']->setPageProperty('topMenuSectionDir', '/company/');
 $aMenuLinks = [];
 
-if (ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_company'))
-{
-	$aMenuLinks[] = [
-		Loc::getMessage('MENU_STRUCTURE'),
-		'/company/vis_structure.php',
-		[],
-		[
-			'menu_item_id' => 'menu_company',
-		],
-		'',
-	];
-}
-
 if (ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_employee'))
 {
 	$aMenuLinks[] = [
@@ -39,6 +26,19 @@ if (ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_employee'))
 			'menu_item_id' => 'menu_employee',
 			'counter_num' => (new \Bitrix\Intranet\User())->getTotalInvitationCounterValue(),
 			'counter_id' => \Bitrix\Intranet\Invitation::getTotalInvitationCounterId()
+		],
+		'',
+	];
+}
+
+if (ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_company'))
+{
+	$aMenuLinks[] = [
+		Loc::getMessage('MENU_STRUCTURE'),
+		'/hr/structure/',
+		[],
+		[
+			'menu_item_id' => 'menu_company',
 		],
 		'',
 	];

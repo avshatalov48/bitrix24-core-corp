@@ -181,7 +181,7 @@ class RoleRepository implements \Bitrix\HumanResources\Contract\Repository\RoleR
 	{
 		$model = Model\RoleTable::getList([
 			'filter' => ['=XML_ID' => $xmlId],
-			'cache' => ['ttl' => 3600],
+			'cache' => ['ttl' => 86400],
 			'limit' => 1
 		])->fetchObject();
 

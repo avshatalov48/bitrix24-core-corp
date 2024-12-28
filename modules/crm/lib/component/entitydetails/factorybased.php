@@ -538,6 +538,14 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 		];
 	}
 
+	protected function setBizprocStarterConfig()
+	{
+		if (\Bitrix\Crm\Automation\Factory::isBizprocDesignerEnabled($this->item->getEntityTypeId()))
+		{
+			$this->arResult['bizprocStarterConfig'] = $this->getBizprocStarterConfig();
+		}
+	}
+
 	protected function getEntityDetailsParams(): array
 	{
 		$entityId = $this->item->getId();
@@ -792,7 +800,10 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 
 		$tabs[static::TAB_NAME_EVENT] = [];
 
-		if (\Bitrix\Crm\Automation\Factory::isBizprocDesignerEnabled($this->factory->getEntityTypeId()))
+		if (
+			\CCrmBizProcHelper::needShowBPTab()
+			&& \Bitrix\Crm\Automation\Factory::isBizprocDesignerEnabled($this->factory->getEntityTypeId())
+		)
 		{
 			$tabs[static::TAB_NAME_BIZPROC] = [];
 		}
@@ -953,14 +964,6 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 			{
 				$buttons[ButtonLocation::AFTER_TITLE][] = $this->getDocumentToolbarButton();
 			}
-
-			if (
-				\Bitrix\Crm\Automation\Factory::isBizprocDesignerEnabled($this->item->getEntityTypeId())
-				&& $this->getBizprocStarterConfig()
-			)
-			{
-				$buttons[ButtonLocation::AFTER_TITLE][] = $this->getBizprocToolbarButton();
-			}
 		}
 
 		return array_merge(parent::getToolbarParameters(), [
@@ -1019,7 +1022,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 	protected function getBizprocStarterConfig(): array
 	{
 		$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
-		if (!$toolsManager->checkBizprocAvailability())
+		if (!$toolsManager->checkBizprocAvailability() && $this->item->getId() > 0)
 		{
 			return [
 				'availabilityLock' => \Bitrix\Crm\Restriction\AvailabilityManager::getInstance()
@@ -1031,25 +1034,14 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 		$documentId = \CCrmBizProcHelper::ResolveDocumentId($this->item->getEntityTypeId(), $this->item->getId());
 
 		$config = [];
-		if (Loader::includeModule('bizproc'))
+		if (Loader::includeModule('bizproc') && $this->item->getId() > 0)
 		{
-			$templates = \CBPDocument::getTemplatesForStart(
-				$this->userID,
-				$documentType,
-				$documentId,
-				['DocumentStates' => []]
-			);
-
-			if ($templates)
-			{
-				$config = [
-					'templates' => $templates,
-					'moduleId' => 'crm',
-					'entity' => $documentType[1],
-					'documentType' => $documentType[2],
-					'documentId' => $documentId[2],
-				];
-			}
+			$config = [
+				'moduleId' => 'crm',
+				'entity' => $documentType[1],
+				'documentType' => $documentType[2],
+				'documentId' => $documentId[2],
+			];
 		}
 
 		return $config;

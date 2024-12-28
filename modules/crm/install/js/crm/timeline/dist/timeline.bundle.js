@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,rest_client,ui_analytics,main_date,ui_buttons,ui_vue3,main_loader,crm_field_colorSelector,main_core_events,ui_vue3_directives_hint,main_popup,ui_label,ui_hint,ui_cnt,ui_notification,crm_timeline_item,main_core,crm_timeline_tools) {
+(function (exports,rest_client,ui_analytics,main_date,ui_buttons,ui_vue3,main_loader,crm_field_colorSelector,ui_vue3_directives_hint,main_popup,ui_label,ui_hint,ui_cnt,ui_notification,crm_timeline_item,main_core,crm_timeline_tools,main_core_events) {
 	'use strict';
 
 	let _ = t => t,
@@ -1731,6 +1731,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  pinned: 2
 	};
 
+	let ButtonState = function ButtonState() {
+	  babelHelpers.classCallCheck(this, ButtonState);
+	};
+	babelHelpers.defineProperty(ButtonState, "DEFAULT", '');
+	babelHelpers.defineProperty(ButtonState, "LOADING", 'loading');
+	babelHelpers.defineProperty(ButtonState, "DISABLED", 'disabled');
+	babelHelpers.defineProperty(ButtonState, "HIDDEN", 'hidden');
+	babelHelpers.defineProperty(ButtonState, "AI_LOADING", 'ai-loading');
+	babelHelpers.defineProperty(ButtonState, "AI_SUCCESS", 'ai-success');
+
 	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _menuOptions = /*#__PURE__*/new WeakMap();
@@ -1766,7 +1776,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "createMenuItem",
 	    value: function createMenuItem(item) {
-	      if (item.hasOwnProperty('delimiter') && item.delimiter) {
+	      if (Object.prototype.hasOwnProperty.call(item, 'delimiter') && item.delimiter) {
 	        return {
 	          text: item.title || '',
 	          delimiter: true
@@ -1776,8 +1786,23 @@ this.BX.Crm = this.BX.Crm || {};
 	        text: item.title,
 	        value: item.title
 	      };
+	      if (main_core.Type.isStringFilled(item.state)) {
+	        switch (item.state) {
+	          case ButtonState.AI_LOADING:
+	            result.className = 'menu-popup-item-add-to-tm menu-popup-item-disabled';
+	            break;
+	          case ButtonState.AI_SUCCESS:
+	            result.className = 'menu-popup-item-accept menu-popup-item-disabled';
+	            break;
+	          case ButtonState.DISABLED:
+	            result.className = 'menu-popup-no-icon menu-popup-item-disabled';
+	            break;
+	          default:
+	            result.className = '';
+	        }
+	      }
 	      if (item.icon) {
-	        result.className = 'menu-popup-item-' + item.icon;
+	        result.className = `menu-popup-item-${item.icon}`;
 	      }
 	      if (item.menu) {
 	        result.items = [];
@@ -1791,7 +1816,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          result.onclick = item.action.value;
 	        } else {
 	          result.onclick = () => {
-	            this.onMenuItemClick(item);
+	            void this.onMenuItemClick(item);
 	          };
 	        }
 	      }
@@ -1804,7 +1829,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (menu) {
 	        menu.close();
 	      }
-	      new Action(item.action).execute(babelHelpers.classPrivateFieldGet(this, _vueComponent));
+	      void new Action(item.action).execute(babelHelpers.classPrivateFieldGet(this, _vueComponent));
 	    }
 	  }], [{
 	    key: "showMenu",
@@ -2467,15 +2492,6 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 	babelHelpers.defineProperty(ButtonScope, "MOBILE", 'mobile');
 
-	let ButtonState = function ButtonState() {
-	  babelHelpers.classCallCheck(this, ButtonState);
-	};
-	babelHelpers.defineProperty(ButtonState, "DEFAULT", '');
-	babelHelpers.defineProperty(ButtonState, "LOADING", 'loading');
-	babelHelpers.defineProperty(ButtonState, "DISABLED", 'disabled');
-	babelHelpers.defineProperty(ButtonState, "HIDDEN", 'hidden');
-	babelHelpers.defineProperty(ButtonState, "AI_LOADING", 'ai-loading');
-
 	let ButtonType = function ButtonType() {
 	  babelHelpers.classCallCheck(this, ButtonType);
 	};
@@ -2579,6 +2595,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      type: String,
 	      required: false,
 	      default: 'extra_small'
+	    },
+	    menuItems: {
+	      type: Object,
+	      required: false,
+	      default: null
 	    }
 	  },
 	  data() {
@@ -2656,12 +2677,31 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.parentSetButtonState(state);
 	      (_this$getUiButton = this.getUiButton()) === null || _this$getUiButton === void 0 ? void 0 : _this$getUiButton.setState((_this$itemStateToButt = this.itemStateToButtonStateDict[this.currentState]) !== null && _this$itemStateToButt !== void 0 ? _this$itemStateToButt : null);
 	    },
+	    createSplitButton() {
+	      const menuItems = Object.keys(this.menuItems).map(key => this.menuItems[key]);
+	      const options = this.getButtonOptions();
+	      options.menuButton = {
+	        onclick: (element, event) => {
+	          event.stopPropagation();
+	          Menu.showMenu(this, menuItems, {
+	            id: `split-button-menu-${this.id}`,
+	            className: 'crm-timeline__split-button-menu',
+	            width: 230,
+	            angle: true,
+	            cacheable: false,
+	            offsetLeft: 13,
+	            bindElement: this.$el.querySelector('.ui-btn-menu')
+	          });
+	        }
+	      };
+	      return new ui_buttons.SplitButton(options);
+	    },
 	    renderButton() {
 	      if (!this.buttonContainerRef) {
 	        return;
 	      }
 	      this.buttonContainerRef.innerHTML = '';
-	      const button = new ui_buttons.Button(this.getButtonOptions());
+	      const button = this.menuItems ? this.createSplitButton() : new ui_buttons.Button(this.getButtonOptions());
 	      button.renderTo(this.buttonContainerRef);
 	      this.uiButton = button;
 	    },
@@ -16267,6 +16307,138 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 	babelHelpers.defineProperty(Manager, "instances", {});
 
+	/** @memberof BX.Crm.Timeline.Tools */
+	let WorkflowEventManager = /*#__PURE__*/function () {
+	  function WorkflowEventManager(settings) {
+	    babelHelpers.classCallCheck(this, WorkflowEventManager);
+	    this.hasRunningWorkflow = settings.hasRunningWorkflow;
+	    this.hasWaitingWorkflowTask = settings.hasWaitingWorkflowTask;
+	    this.workflowTaskActivityId = settings.workflowTaskActivityId;
+	    this.workflowFirstTourClosed = settings.workflowFirstTourClosed;
+	    this.workflowTaskStatusTitle = settings.workflowTaskStatusTitle;
+	    this.init();
+	  }
+	  babelHelpers.createClass(WorkflowEventManager, [{
+	    key: "init",
+	    value: function init() {
+	      this.handleRunningWorkflow();
+	      this.handleWaitingWorkflowTask();
+	      this.subscribeToTimelineEvents();
+	      this.subscribeToPullEvents();
+	    }
+	  }, {
+	    key: "handleRunningWorkflow",
+	    value: function handleRunningWorkflow() {
+	      if (!this.hasRunningWorkflow) {
+	        return;
+	      }
+	      this.runFirstAutomationTour();
+	    }
+	  }, {
+	    key: "runFirstAutomationTour",
+	    value: function runFirstAutomationTour() {
+	      if (!document.querySelector('.bp_starter')) {
+	        return;
+	      }
+	      main_core_events.EventEmitter.emit('BX.Crm.Timeline.Bizproc::onAfterWorkflowStarted', {
+	        stepId: 'on-after-started-workflow',
+	        target: '.bp_starter'
+	      });
+	    }
+	  }, {
+	    key: "handleWaitingWorkflowTask",
+	    value: function handleWaitingWorkflowTask() {
+	      if (!this.hasWaitingWorkflowTask) {
+	        return;
+	      }
+	      if (this.workflowFirstTourClosed) {
+	        this.runSecondAutomationTour(`ACTIVITY_${this.workflowTaskActivityId}`);
+	      } else {
+	        main_core_events.EventEmitter.subscribe('UI.Tour.Guide:onFinish', event => {
+	          var _eventData$guide, _eventData$guide$step, _eventData$guide$step2;
+	          const eventData = event.data;
+	          const stepId = eventData === null || eventData === void 0 ? void 0 : (_eventData$guide = eventData.guide) === null || _eventData$guide === void 0 ? void 0 : (_eventData$guide$step = _eventData$guide.steps) === null || _eventData$guide$step === void 0 ? void 0 : (_eventData$guide$step2 = _eventData$guide$step[0]) === null || _eventData$guide$step2 === void 0 ? void 0 : _eventData$guide$step2.id;
+	          if (stepId === 'on-after-started-workflow') {
+	            this.runSecondAutomationTour(`ACTIVITY_${this.workflowTaskActivityId}`);
+	          }
+	        });
+	      }
+	    }
+	  }, {
+	    key: "runSecondAutomationTour",
+	    value: function runSecondAutomationTour(activityId = null) {
+	      if (!activityId) {
+	        return;
+	      }
+	      const task = document.querySelector(`div[data-id="${activityId}"]`);
+	      if (task && this.isElementInViewport(task)) {
+	        main_core_events.EventEmitter.emit('BX.Crm.Timeline.Bizproc::onAfterCreatedTask', {
+	          stepId: 'on-after-created-task',
+	          target: task.querySelector('.crm-timeline__card-status')
+	        });
+	      }
+	    }
+	  }, {
+	    key: "subscribeToTimelineEvents",
+	    value: function subscribeToTimelineEvents() {
+	      main_core_events.EventEmitter.subscribe('BX.Crm.Timeline.Items.Bizproc:onAfterItemLayout', event => {
+	        var _eventData$options;
+	        const eventData = event.data;
+	        if ((eventData === null || eventData === void 0 ? void 0 : (_eventData$options = eventData.options) === null || _eventData$options === void 0 ? void 0 : _eventData$options.add) === false) {
+	          return;
+	        }
+	        const isWorkflowStarted = (eventData === null || eventData === void 0 ? void 0 : eventData.type) === 'BizprocWorkflowStarted';
+	        if (isWorkflowStarted) {
+	          this.runFirstAutomationTour();
+	        }
+	        const isBizprocTask = (eventData === null || eventData === void 0 ? void 0 : eventData.type) === 'Activity:BizprocTask';
+	        if (eventData !== null && eventData !== void 0 && eventData.target && this.isElementInViewport(eventData === null || eventData === void 0 ? void 0 : eventData.target) && isBizprocTask) {
+	          main_core_events.EventEmitter.subscribe('UI.Tour.Guide:onFinish', params => {
+	            var _paramsData$guide, _paramsData$guide$ste, _paramsData$guide$ste2;
+	            const paramsData = params.data;
+	            const stepId = paramsData === null || paramsData === void 0 ? void 0 : (_paramsData$guide = paramsData.guide) === null || _paramsData$guide === void 0 ? void 0 : (_paramsData$guide$ste = _paramsData$guide.steps) === null || _paramsData$guide$ste === void 0 ? void 0 : (_paramsData$guide$ste2 = _paramsData$guide$ste[0]) === null || _paramsData$guide$ste2 === void 0 ? void 0 : _paramsData$guide$ste2.id;
+	            const card = eventData === null || eventData === void 0 ? void 0 : eventData.target.querySelector('.crm-timeline__card');
+	            const activityId = card.getAttribute('data-id');
+	            if (stepId === 'on-after-started-workflow' && activityId) {
+	              this.runSecondAutomationTour(activityId);
+	            }
+	          });
+	        }
+	      });
+	    }
+	  }, {
+	    key: "subscribeToPullEvents",
+	    value: function subscribeToPullEvents() {
+	      main_core_events.EventEmitter.subscribe('onPullEvent-crm', event => {
+	        var _event$data, _eventData$item, _eventData$item2;
+	        const eventData = (_event$data = event.data) === null || _event$data === void 0 ? void 0 : _event$data[1];
+	        const isUpdateAction = (eventData === null || eventData === void 0 ? void 0 : eventData.action) === 'update';
+	        const itemLayout = eventData === null || eventData === void 0 ? void 0 : (_eventData$item = eventData.item) === null || _eventData$item === void 0 ? void 0 : _eventData$item.layout;
+	        const itemTypeTask = (eventData === null || eventData === void 0 ? void 0 : (_eventData$item2 = eventData.item) === null || _eventData$item2 === void 0 ? void 0 : _eventData$item2.type) === 'Activity:BizprocTask';
+	        const itemId = eventData === null || eventData === void 0 ? void 0 : eventData.id;
+	        if (isUpdateAction && itemLayout && itemId && itemTypeTask) {
+	          var _itemLayout$header, _itemLayout$header$ta, _itemLayout$header$ta2;
+	          const card = document.querySelector(`div[data-id="${itemId}"]`);
+	          const isSecondaryStatus = (itemLayout === null || itemLayout === void 0 ? void 0 : (_itemLayout$header = itemLayout.header) === null || _itemLayout$header === void 0 ? void 0 : (_itemLayout$header$ta = _itemLayout$header.tags) === null || _itemLayout$header$ta === void 0 ? void 0 : (_itemLayout$header$ta2 = _itemLayout$header$ta.status) === null || _itemLayout$header$ta2 === void 0 ? void 0 : _itemLayout$header$ta2.title) === this.workflowTaskStatusTitle;
+	          if (isSecondaryStatus && card) {
+	            main_core_events.EventEmitter.emit('BX.Crm.Timeline.Bizproc::onAfterCompletedTask', {
+	              stepId: 'on-after-completed-task',
+	              target: card.querySelector('.crm-timeline__card-top_checkbox')
+	            });
+	          }
+	        }
+	      });
+	    }
+	  }, {
+	    key: "isElementInViewport",
+	    value: function isElementInViewport(element) {
+	      const rect = element.getBoundingClientRect();
+	      return rect.bottom > 0 && rect.top < (window.innerHeight || document.documentElement.clientHeight);
+	    }
+	  }]);
+	  return WorkflowEventManager;
+	}();
+
 	/** @memberof BX.Crm.Timeline.Actions */
 	let SchedulePostpone = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(SchedulePostpone, _Activity);
@@ -16514,7 +16686,8 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 	const Tools = {
 	  SchedulePostponeController,
-	  AudioPlaybackRateSelector
+	  AudioPlaybackRateSelector,
+	  WorkflowEventManager
 	};
 	const Actions = {
 	  Activity,
@@ -16593,5 +16766,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Animations = Animations;
 	exports.CompatibleItem = CompatibleItem;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Main,BX.UI,BX.Vue3,BX,BX.Crm.Field,BX.Event,BX.Vue3.Directives,BX.Main,BX.UI,BX,BX.UI,BX,BX.Crm.Timeline,BX,BX.Crm.Timeline));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Main,BX.UI,BX.Vue3,BX,BX.Crm.Field,BX.Vue3.Directives,BX.Main,BX.UI,BX,BX.UI,BX,BX.Crm.Timeline,BX,BX.Crm.Timeline,BX.Event));
 //# sourceMappingURL=timeline.bundle.js.map

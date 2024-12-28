@@ -22,6 +22,7 @@ $MESS["TASKS_MESSAGE_END_DATE_PLAN_MSGVER_1"] = 'Планируемая дата
 $MESS["TASKS_MESSAGE_TAGS"] = "Теги";
 $MESS["TASKS_MESSAGE_PRIORITY"] = "Приоритет";
 $MESS["TASKS_MESSAGE_GROUP_ID"] = "Группа";
+$MESS['TASKS_MESSAGE_COLLAB_ID'] = 'Коллаба';
 $MESS["TASKS_MESSAGE_PARENT_ID"] = "Базовая задача";
 $MESS["TASKS_MESSAGE_DEPENDS_ON"] = "Предыдущие задачи";
 $MESS["TASKS_MESSAGE_MARK"] = "Оценка";

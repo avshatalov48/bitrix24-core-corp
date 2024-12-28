@@ -3,23 +3,32 @@
 namespace Bitrix\SignMobile\Controller;
 
 use Bitrix\Intranet\ActionFilter\IntranetUser;
+use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Mobile\Provider\UserRepository;
 use Bitrix\Sign;
+use Bitrix\Sign\Type\MyDocumentsGrid\ActorRole;
+use Bitrix\SignMobile\Config\Feature;
 use Bitrix\SignMobile\Response\Document\MemberDocumentResourceCollection;
+use Bitrix\Sign\Type\MyDocumentsGrid\FilterStatus;
+use Bitrix\Sign\Item\MyDocumentsGrid\MyDocumentsFilter;
+use Bitrix\Sign\Service\Container;
 
 class Document extends Controller
 {
+	private const FILTER_PRESET_IN_WORK = 'preset_in_progress';
+	private const FILTER_PRESET_SEND = 'preset_send';
+	private const FILTER_PRESET_SIGNED = 'preset_signed';
+	private const FILTER_PRESET_PROCESSED_BY_ME = 'preset_processed_by_me';
+
 	private function includeRequiredModules(): bool
 	{
-		$result = (
-			Loader::includeModule('mobile') &&
-			Loader::includeModule('sign') &&
-			Loader::includeModule('intranet')
-		);
+		$result = (Loader::includeModule('intranet'));
 
 		if (!$result)
 		{
@@ -30,6 +39,113 @@ class Document extends Controller
 		}
 
 		return $result;
+	}
+
+	public function configureActions(): array
+	{
+		if (!$this->includeRequiredModules())
+		{
+			return [];
+		}
+
+		return [
+			'getDocumentList' => [
+				'+prefilters' => [
+					new CloseSession(),
+					new IntranetUser(),
+				],
+			],
+			'list' => [
+				'+prefilters' => [
+					new IntranetUser(),
+				],
+			],
+		];
+	}
+
+	private function getRequestFilters($filterParams): MyDocumentsFilter
+	{
+		$searchString = (string)($filterParams['searchString'] ?? '');
+
+		return match ($filterParams['tabId'] ?? null)
+		{
+			self::FILTER_PRESET_IN_WORK => new MyDocumentsFilter(
+				statuses: [FilterStatus::IN_PROGRESS],
+				text: $searchString,
+			),
+			self::FILTER_PRESET_SEND => new MyDocumentsFilter(
+				role: ActorRole::INITIATOR,
+				text: $searchString,
+			),
+			self::FILTER_PRESET_SIGNED => new MyDocumentsFilter(
+				statuses: [FilterStatus::SIGNED],
+				text: $searchString,
+			),
+			self::FILTER_PRESET_PROCESSED_BY_ME => new MyDocumentsFilter(
+				statuses: [FilterStatus::MY_ACTION_DONE],
+				text: $searchString,
+			),
+			default => new MyDocumentsFilter(text: $searchString),
+		};
+	}
+
+	public function isE2bAvailableAction(): array
+	{
+		return [
+			'isE2bAvailable' =>
+				class_exists(Feature::class)
+				&& Feature::instance()->isSendDocumentByEmployeeEnabled()
+		];
+	}
+
+	public function getNeedCountAction(CurrentUser $user): int
+	{
+		$userId = (int)$user->getId();
+
+		return Container::instance()
+			->getMyDocumentService()
+			->getTotalCountNeedAction($userId)
+		;
+	}
+
+	public function getNeedCountForSendPresetAction(CurrentUser $user): int
+		{
+		$userId = (int)$user->getId();
+
+		return Container::instance()
+			->getMyDocumentService()
+			->getCountNeedActionForSentDocumentsByEmployee($userId)
+			;
+		}
+
+	public function getDocumentListAction(PageNavigation $nav, CurrentUser $user, array $filterParams): array
+	{
+		if (!$this->includeRequiredModules())
+		{
+			return [];
+		}
+
+		$currentUserId = CurrentUser::get()->getId();
+		if ($currentUserId === null)
+		{
+			$this->addError(new Error('Access denied', 'ACCESS_DENIED'));
+
+			return [];
+		}
+
+		$dataService = Container::instance()->getMyDocumentService();
+		$userId = (int)$user->getId();
+		$limit = (int)$nav->getLimit();
+		$offset = (int)$nav->getOffset();
+		$gridFilter = $this->getRequestFilters($filterParams);
+		$data = $dataService->getGridData($limit, $offset, $userId, $gridFilter);
+
+		return [
+			'items' => $data['rows'],
+			'users' => UserRepository::getByIds($data['userIds']),
+			'needActionCount' => $this->getNeedCountAction($user),
+			'needCountForSendPreset' => $this->getNeedCountForSendPresetAction($user),
+		];
 	}
 
 	public function getSigningLinkAction(int $memberId): ?array
@@ -84,6 +200,7 @@ class Document extends Controller
 				'state' => $link->getDocumentSigningState(),
 				'url' => $link->url,
 				'isExternal' => $link->isExternal(),
+				'initiatedByType' => $link->getInitiatedByType(),
 			];
 		}
 
@@ -276,23 +393,8 @@ class Document extends Controller
 		return [
 			'signingList' => MemberDocumentResourceCollection::fromItemCollection($signingMemberDocumentList)->toArray(),
 			'signedList' => MemberDocumentResourceCollection::fromItemCollection($signedMemberDocumentList)->toArray(),
-			'reviewList' =>MemberDocumentResourceCollection::fromItemCollection($reviewMemberDocumentList)->toArray()
+			'reviewList' =>MemberDocumentResourceCollection::fromItemCollection($reviewMemberDocumentList)->toArray(),
 		];
-	}
-
-	public function configureActions(): array
-	{
-		if (!$this->includeRequiredModules())
-		{
-			return [];
-		}
-
-		$actionsConfiguration = parent::configureActions();
-		$actionsConfiguration['list']['+prefilters'] = [
-			IntranetUser::class
-		];
-
-		return $actionsConfiguration;
 	}
 
 	public function getExternalUrlAction(int $memberId): array

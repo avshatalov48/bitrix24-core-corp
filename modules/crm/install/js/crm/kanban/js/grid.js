@@ -94,6 +94,8 @@ BX.CRM.Kanban.Grid.prototype = {
 	hintForNotVisibleItems: null,
 	handleHideHintForNotVisibleItems: null,
 	canUpdateItemAtItsPosition: false,
+	_analyticsDictionary: BX.Crm.Integration.Analytics.Dictionary,
+	_analyticsBuilder: BX.Crm.Integration.Analytics.Builder,
 
 	/**
 	 * Get current checkeds items.
@@ -1392,9 +1394,9 @@ BX.CRM.Kanban.Grid.prototype = {
 		const ids = this.itemMoving.groupIds ? this.itemMoving.groupIds.toString() : item.getId();
 
 		const analyticsData = this.getDefaultAnalyticsCloseEvent(item, column.getData().type, ids);
-		analyticsData.c_sub_section = BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN_DROPZONE;
-		analyticsData.c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_CANCEL_BUTTON;
-		this.registerAnalyticsCloseEvent(analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_CANCEL);
+		analyticsData.c_sub_section = this._analyticsDictionary.SUB_SECTION_KANBAN_DROPZONE;
+		analyticsData.c_element = this._analyticsDictionary.ELEMENT_CANCEL_BUTTON;
+		this.registerAnalyticsCloseEvent(analyticsData, this._analyticsDictionary.STATUS_CANCEL);
 
 		this.onItemMoved(item, column);
 	},
@@ -1680,14 +1682,14 @@ BX.CRM.Kanban.Grid.prototype = {
 
 		const analyticsData = this.getDefaultAnalyticsCloseEvent(item, targetColumn.getData().type, ids);
 
-		this.registerAnalyticsCloseEvent(analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT);
+		this.registerAnalyticsCloseEvent(analyticsData, this._analyticsDictionary.STATUS_ATTEMPT);
 
 		this.ajax(
 			params,
 			(data) => {
 				if (!data)
 				{
-					this.registerAnalyticsCloseEvent(analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+					this.registerAnalyticsCloseEvent(analyticsData, this._analyticsDictionary.STATUS_ERROR);
 
 					return;
 				}
@@ -1698,12 +1700,12 @@ BX.CRM.Kanban.Grid.prototype = {
 
 					this.showResponseError(data);
 
-					this.registerAnalyticsCloseEvent(analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+					this.registerAnalyticsCloseEvent(analyticsData, this._analyticsDictionary.STATUS_ERROR);
 
 					return;
 				}
 
-				this.registerAnalyticsCloseEvent(analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
+				this.registerAnalyticsCloseEvent(analyticsData, this._analyticsDictionary.STATUS_SUCCESS);
 
 				if (
 					this.getData().useItemPlanner
@@ -1747,7 +1749,7 @@ BX.CRM.Kanban.Grid.prototype = {
 				}
 			},
 			(error) => {
-				this.registerAnalyticsCloseEvent(analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+				this.registerAnalyticsCloseEvent(analyticsData, this._analyticsDictionary.STATUS_ERROR);
 
 				BX.Kanban.Utils.showErrorDialog(`Error: ${error}`, true);
 			},
@@ -1775,13 +1777,13 @@ BX.CRM.Kanban.Grid.prototype = {
 			element = 'progress';
 		}
 
-		let subSection = BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN;
+		let subSection = this._analyticsDictionary.SUB_SECTION_KANBAN;
 
 		if (this.dropZonesShow) {
-			subSection = BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN_DROPZONE;
+			subSection = this._analyticsDictionary.SUB_SECTION_KANBAN_DROPZONE;
 		}
 
-		return BX.Crm.Integration.Analytics.Builder.Entity.CloseEvent.createDefault(item.getGridData().entityType, ids)
+		return this._analyticsBuilder.Entity.CloseEvent.createDefault(item.getGridData().entityType, ids)
 			.setSubSection(subSection)
 			.setElement(element)
 			.buildData();
@@ -1789,7 +1791,7 @@ BX.CRM.Kanban.Grid.prototype = {
 
 	registerAnalyticsCloseEvent(analyticsData, status)
 	{
-		if (!analyticsData || (analyticsData.c_element === 'progress' && status !== BX.Crm.Integration.Analytics.Dictionary.STATUS_CANCEL))
+		if (!analyticsData || (analyticsData.c_element === 'progress' && status !== this._analyticsDictionary.STATUS_CANCEL))
 		{
 			return;
 		}
@@ -1797,6 +1799,74 @@ BX.CRM.Kanban.Grid.prototype = {
 		analyticsData.status = status;
 
 		BX.UI.Analytics.sendData(analyticsData);
+	},
+
+	registerAnalyticsSpecialItemLinkClick(item, linkPath)
+	{
+		const pathParts = {
+			REST_DEMO: 'rest_demo',
+			CONTACT_CENTER: 'contact_center',
+			MARKETPLACE: 'marketplace'
+		}
+
+		if (!(linkPath.toUpperCase() in pathParts))
+		{
+			return;
+		}
+
+		let element = this._analyticsDictionary.ELEMENT_ITEM_CONTACT_CENTER;
+		if (linkPath === pathParts.REST_DEMO)
+		{
+			element = this._analyticsDictionary.ELEMENT_ITEM_INDUSTRY_BUTTON;
+		}
+
+		if (linkPath === pathParts.MARKETPLACE)
+		{
+			element = this._analyticsDictionary.ELEMENT_CONTACT_CENTER_MARKETPLACE;
+		}
+
+		const analyticsEvent = this._analyticsBuilder.Block.LinkEvent.createDefault(item.getGridData().entityType)
+			.setElement(element);
+
+		if (linkPath === pathParts.REST_DEMO)
+		{
+			analyticsEvent.setType(this._analyticsDictionary.TYPE_ITEM_INDUSTRY);
+		}
+
+		this.sendAnalyticsEvent(analyticsEvent);
+	},
+
+	registerAnalyticsSpecialItemCloseEvent(item, subSection, element, type = null)
+	{
+		const analyticsEvent = this._analyticsBuilder.Block.CloseEvent.createDefault(item.getGridData().entityType)
+			.setSubSection(subSection)
+			.setElement(element);
+
+		if (type === this._analyticsDictionary.TYPE_ITEM_INDUSTRY)
+		{
+			analyticsEvent.setType(type);
+		}
+
+		this.sendAnalyticsEvent(analyticsEvent);
+	},
+
+	registerAnalyticsSpecialItemEnableEvent(item, subSection, element, type = null)
+	{
+		const analyticsEvent = this._analyticsBuilder.Block.EnableEvent.createDefault(item.getGridData().entityType)
+			.setSubSection(subSection)
+			.setElement(element);
+
+		if (type === 'industry_block')
+		{
+			analyticsEvent.setType(this._analyticsDictionary.TYPE_ITEM_INDUSTRY);
+		}
+
+		this.sendAnalyticsEvent(analyticsEvent);
+	},
+
+	sendAnalyticsEvent(analyticsEvent)
+	{
+		BX.UI.Analytics.sendData(analyticsEvent.buildData());
 	},
 
 	/**
@@ -2243,9 +2313,15 @@ BX.CRM.Kanban.Grid.prototype = {
 	 */
 	toggleCC: function(menu)
 	{
+		let subSection = this._analyticsDictionary.SUB_SECTION_GRID_ROW_MENU;
+		let element = this._analyticsDictionary.ELEMENT_HIDE_CONTACT_CENTER;
+
 		if (menu === undefined)
 		{
 			menu = BX.PopupMenu.getCurrentMenu();
+
+			subSection = this._analyticsDictionary.SUB_SECTION_KANBAN;
+			element = this._analyticsDictionary.ELEMENT_CLOSE_BUTTON;
 		}
 
 		if (menu)
@@ -2259,10 +2335,18 @@ BX.CRM.Kanban.Grid.prototype = {
 			if (gridData.contactCenterShow)
 			{
 				this.hideItem(this.ccItem);
+
+				this.registerAnalyticsSpecialItemCloseEvent(this.ccItem, subSection, element);
 			}
 			else
 			{
 				this.unhideItem(this.ccItem);
+
+				this.registerAnalyticsSpecialItemEnableEvent(
+					this.ccItem,
+					this._analyticsDictionary.SUB_SECTION_GRID_ROW_MENU,
+					this._analyticsDictionary.ELEMENT_ENABLE_CONTACT_CENTER,
+				);
 			}
 			gridData.contactCenterShow = !gridData.contactCenterShow;
 

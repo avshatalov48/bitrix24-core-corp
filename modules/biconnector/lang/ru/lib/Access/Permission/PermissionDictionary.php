@@ -7,6 +7,7 @@ $MESS['BIC_SETTINGS_ACCESS'] = 'Общие настройки';
 $MESS['BIC_SETTINGS_EDIT_RIGHTS'] = 'Управление правами доступа';
 $MESS['BIC_DASHBOARD_TAG_MODIFY'] = 'Создание и изменение тегов для отчётов';
 $MESS['BIC_DASHBOARD_EDIT_SCOPE'] = 'Настройка зон видимости отчётов';
+$MESS['BIC_EXTERNAL_DASHBOARD_CONFIG'] = 'Доступ к рабочему месту аналитика';
 $MESS['BIC_DASHBOARD_VIEW'] = 'Просмотр';
 $MESS['BIC_DASHBOARD_COPY'] = 'Копирование';
 $MESS['BIC_DASHBOARD_EDIT'] = 'Редактирование';

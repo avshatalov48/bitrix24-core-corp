@@ -33,8 +33,15 @@ export class PortalDeleteFormCheckword extends PortalDeleteForm
 			this.getConfirmButton().setWaiting(true);
 
 			ajax.runAction('bitrix24.portal.deletePortal', { data: { checkWord: this.getInputNode().value } })
-				.then(() => {
-					top.window.location.reload();
+				.then((response) => {
+					if (response.data.redirectUrl)
+					{
+						top.window.location.href = response.data.redirectUrl
+					}
+					else
+					{
+						top.window.location.reload();
+					}
 				})
 				.catch((reject) => {
 					reject.errors.forEach((error) => {
@@ -73,12 +80,12 @@ export class PortalDeleteFormCheckword extends PortalDeleteForm
 		if (!this.#inputNode)
 		{
 			this.#inputNode = Tag.render`
-				<input 
+				<input
 					data-bx-role="delete-portal-checkword"
 					onchange="event.stopPropagation()"
-					name="deletePortalCheckWord" 
-					type="text" 
-					class="ui-ctl-element" 
+					name="deletePortalCheckWord"
+					type="text"
+					class="ui-ctl-element"
 					placeholder="${Loc.getMessage('INTRANET_SETTINGS_FIELD_DELETE_PORTAL_CHECKWORD_PLACEHOLDER', {'#CHECKWORD#': this.#checkWord})}"
 				>
 			`;

@@ -17,6 +17,7 @@ jn.define('crm/timeline/controllers', (require, exports, module) => {
 	const { TimelineTaskController } = require('crm/timeline/controllers/task');
 	const { TimelineClipboardController } = require('crm/timeline/controllers/clipboard');
 	const { TimelineVisitController } = require('crm/timeline/controllers/visit');
+	const { TimelineBizprocController } = require('crm/timeline/controllers/bizproc');
 
 	module.exports = {
 		TimelineEmailController,
@@ -34,5 +35,6 @@ jn.define('crm/timeline/controllers', (require, exports, module) => {
 		TimelineTaskController,
 		TimelineClipboardController,
 		TimelineVisitController,
+		TimelineBizprocController,
 	};
 });

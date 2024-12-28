@@ -1,9 +1,10 @@
 <?php
-$MESS['CRM_TIMELINE_POSTPONE'] = 'Postpone';
-$MESS['CRM_TIMELINE_POSTPONE_1D'] = '1 day';
-$MESS['CRM_TIMELINE_POSTPONE_1H'] = '1 hour';
-$MESS['CRM_TIMELINE_POSTPONE_2D'] = '2 days';
-$MESS['CRM_TIMELINE_POSTPONE_2H'] = '2 hours';
-$MESS['CRM_TIMELINE_POSTPONE_3D'] = '3 days';
-$MESS['CRM_TIMELINE_POSTPONE_3H'] = '3 hours';
-$MESS['CRM_TIMELINE_ACTIVITY_DELETION_CONFIRM'] = 'Are you sure you want to delete this event?';
+$MESS["CRM_TIMELINE_ACTIVITY_DELETE_TAG_CONFIRM"] = "Do you want to delete the status?";
+$MESS["CRM_TIMELINE_ACTIVITY_DELETION_CONFIRM"] = 'Are you sure you want to delete this event?';
+$MESS["CRM_TIMELINE_POSTPONE"] = 'Postpone';
+$MESS["CRM_TIMELINE_POSTPONE_1D"] = '1 day';
+$MESS["CRM_TIMELINE_POSTPONE_1H"] = '1 hour';
+$MESS["CRM_TIMELINE_POSTPONE_2D"] = '2 days';
+$MESS["CRM_TIMELINE_POSTPONE_2H"] = '2 hours';
+$MESS["CRM_TIMELINE_POSTPONE_3D"] = '3 days';
+$MESS["CRM_TIMELINE_POSTPONE_3H"] = '3 hours';

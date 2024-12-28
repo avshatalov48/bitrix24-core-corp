@@ -7,11 +7,12 @@ use Bitrix\Sign\Contract;
 use Bitrix\Sign\Item;
 use Bitrix\Sign\Repository\MemberRepository;
 use Bitrix\Sign\Service\Container;
-use Bitrix\Sign\Service\HrBotMessageService;
 use Bitrix\Sign\Service\Integration\Im\NotificationService;
+use Bitrix\Sign\Service\Integration\Imbot\HrBot;
 use Bitrix\Sign\Service\Sign\DocumentService;
 use Bitrix\Sign\Service\Sign\MemberService;
 use Bitrix\Sign\Service\Sign\UrlGeneratorService;
+use Bitrix\Sign\Service\UserService;
 use Bitrix\Sign\Type\DateTime;
 use Bitrix\Sign\Type\DocumentStatus;
 use Bitrix\Sign\Type\Im\Notification\NotificationType;
@@ -23,7 +24,7 @@ final class Send implements Contract\Operation
 	private readonly NotificationService $imNotificationService;
 	private readonly MemberService $memberService;
 	private readonly DocumentService $documentService;
-	private readonly HrBotMessageService $hrBotMessageService;
+	private readonly UserService $userService;
 	private readonly UrlGeneratorService $urlgeneratorService;
 
 	public function __construct(
@@ -38,7 +39,7 @@ final class Send implements Contract\Operation
 		$this->imNotificationService = $imNotificationService ?? Container::instance()->getImNotificationService();
 		$this->memberService = Container::instance()->getMemberService();
 		$this->documentService = Container::instance()->getDocumentService();
-		$this->hrBotMessageService = Container::instance()->getHrBotMessageService();
+		$this->userService = Container::instance()->getUserService();
 		$this->urlgeneratorService = Container::instance()->getUrlGeneratorService();
 	}
 
@@ -76,14 +77,14 @@ final class Send implements Contract\Operation
 		{
 			return (new Main\Result())->addError(new Main\Error('Member user ID is not set'));
 		}
-		$botUserId = $this->hrBotMessageService->getBotUserId() ?? 0;
+		$botUserId = (new HrBot())->getBotUserId() ?? 0;
 
 		$signingLink = $this->urlgeneratorService->makeSigningUrl($member);
 		$documentTitle = $this->documentService->getComposedTitleByDocument($document);
 		$message = Main\Localization\Loc::getMessage(
 			'SIGN_OPERATION_MEMBER_REMINDER_SEND_MESSAGE_TEXT',
 			['#DOCUMENT_TITLE_WITH_LINK#' => "<a href=\"$signingLink\">$documentTitle</a>"],
-			$this->hrBotMessageService::getUserLanguage($memberUserId)
+			$this->userService->getUserLanguage($memberUserId)
 		);
 		if ($message === null)
 		{

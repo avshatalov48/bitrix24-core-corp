@@ -1,0 +1,6 @@
+<?php
+$MESS['SUPERSET_INTEGRATION_CREATE_DATASET_ERROR'] = 'Ошибка создания датасета';
+$MESS['SUPERSET_INTEGRATION_DELETE_DATASET_ERROR'] = 'Ошибка удаления датасета';
+$MESS['SUPERSET_INTEGRATION_DELETE_DATASET_PERMISSION_ERROR'] = 'Недостаточно прав для удаления датасета';
+$MESS['SUPERSET_INTEGRATION_DATASET_NOT_FOUND_ERROR'] = 'Датасет не найден';
+$MESS['SUPERSET_INTEGRATION_DATASET_GET_URL_ERROR'] = 'Ссылка не найдена';

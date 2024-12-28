@@ -30,41 +30,41 @@ if ($postRight >= 'R'):
 		['text', 50]
 	];
 
-	$allOptions[] = [
-		'use_proxy_local',
-		Loc::getMessage('SIGN_PROXY_OPT_USE_PROXY_LOCAL') . ':',
-		['checkbox']
-	];
+	// $allOptions[] = [
+	// 	'use_proxy_local',
+	// 	Loc::getMessage('SIGN_PROXY_OPT_USE_PROXY_LOCAL') . ':',
+	// 	['checkbox']
+	// ];
+	//
+	// $allOptions[] = [
+	// 	'proxy_local',
+	// 	Loc::getMessage('SIGN_PROXY_OPT_PROXY_LOCAL') . ':',
+	// 	['text', 50]
+	// ];
 
-	$allOptions[] = [
-		'proxy_local',
-		Loc::getMessage('SIGN_PROXY_OPT_PROXY_LOCAL') . ':',
-		['text', 50]
-	];
-
-	$allOptions[] = [
-		'max_upload_total_size_kb',
-		Loc::getMessage('SIGN_OPT_MAX_UPLOAD_TOTAL_SIZE_KB') . ':',
-		['text', 5]
-	];
-
-	$allOptions[] = [
-		'max_upload_doc_size_kb',
-		Loc::getMessage('SIGN_OPT_MAX_UPLOAD_DOC_SIZE_KB') . ':',
-		['text', 5]
-	];
-
-	$allOptions[] = [
-		'max_upload_image_size_kb',
-		Loc::getMessage('SIGN_OPT_MAX_UPLOAD_IMAGE_SIZE_KB') . ':',
-		['text', 5]
-	];
-
-	$allOptions[] = [
-		'max_count_pages_img',
-		Loc::getMessage('SIGN_OPT_MAX_COUNT_PAGES_IMG') . ':',
-		['text', 5]
-	];
+	// $allOptions[] = [
+	// 	'max_upload_total_size_kb',
+	// 	Loc::getMessage('SIGN_OPT_MAX_UPLOAD_TOTAL_SIZE_KB') . ':',
+	// 	['text', 5]
+	// ];
+	//
+	// $allOptions[] = [
+	// 	'max_upload_doc_size_kb',
+	// 	Loc::getMessage('SIGN_OPT_MAX_UPLOAD_DOC_SIZE_KB') . ':',
+	// 	['text', 5]
+	// ];
+	//
+	// $allOptions[] = [
+	// 	'max_upload_image_size_kb',
+	// 	Loc::getMessage('SIGN_OPT_MAX_UPLOAD_IMAGE_SIZE_KB') . ':',
+	// 	['text', 5]
+	// ];
+	//
+	// $allOptions[] = [
+	// 	'max_count_pages_img',
+	// 	Loc::getMessage('SIGN_OPT_MAX_COUNT_PAGES_IMG') . ':',
+	// 	['text', 5]
+	// ];
 
 	// tabs
 	$tabControl = new CAdmintabControl('tabControl', [

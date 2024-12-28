@@ -45,6 +45,22 @@ abstract class Collection implements Contract\Item, Contract\ItemCollection, Ite
 	}
 
 	/**
+	 * @return T $item
+	 */
+	final public function getFirst(): ?Contract\Item
+	{
+		return $this->items[0] ?? null;
+	}
+
+	/**
+	 * @param T[] $items
+	 */
+	final public static function fromArray(array $items): static
+	{
+		return new static(...$items);
+	}
+
+	/**
 	 * @return T[]
 	 */
 	final public function toArray(): array
@@ -65,6 +81,11 @@ abstract class Collection implements Contract\Item, Contract\ItemCollection, Ite
 	final public function isEmpty(): bool
 	{
 		return empty($this->items);
+	}
+
+	public static function emptyList(): static
+	{
+		return static::fromArray([]);
 	}
 
 	private function checkItemClass(Contract\Item $item): void
@@ -105,5 +126,26 @@ abstract class Collection implements Contract\Item, Contract\ItemCollection, Ite
 		}
 
 		return null;
+	}
+
+	public function filter(callable $condition): static
+	{
+		$items = array_filter(
+			$this->items,
+			$condition,
+		);
+
+		return self::fromArray($items);
+	}
+
+	/**
+	 * @param Closure(T, T): bool $rule
+	 */
+	public function sortByRule(Closure $rule): static
+	{
+		$items = $this->items;
+		usort($items, $rule);
+
+		return self::fromArray($items);
 	}
 }

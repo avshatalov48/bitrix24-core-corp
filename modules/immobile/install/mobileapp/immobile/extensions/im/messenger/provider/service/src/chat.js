@@ -8,19 +8,81 @@ jn.define('im/messenger/provider/service/chat', (require, exports, module) => {
 	const { MuteService } = require('im/messenger/provider/service/classes/chat/mute');
 	const { UserService } = require('im/messenger/provider/service/classes/chat/user');
 	const { CommentsService } = require('im/messenger/provider/service/classes/chat/comments');
+	const { UpdateService } = require('im/messenger/provider/service/classes/chat/update');
+	const { CreateService } = require('im/messenger/provider/service/classes/chat/create');
 
 	/**
 	 * @class ChatService
 	 */
 	class ChatService
 	{
-		/**
-		 * @param {DialogLocator} locator
-		 */
-		constructor(locator)
+		/** @type {LoadService} */
+		#loadService;
+		/** @type {ReadService} */
+		#readService;
+		/** @type {MuteService} */
+		#muteService;
+		/** @type {UserService} */
+		#userService;
+		/** @type {CommentsService} */
+		#commentService;
+		/** @type {UpdateService} */
+		#updateService;
+		/** @type {CreateService} */
+		#createService;
+
+		constructor()
 		{
 			this.store = serviceLocator.get('core').getStore();
-			this.initServices(locator);
+		}
+
+		get loadService()
+		{
+			this.#loadService = this.#loadService ?? new LoadService();
+
+			return this.#loadService;
+		}
+
+		get readService()
+		{
+			this.#readService = this.#readService ?? new ReadService();
+
+			return this.#readService;
+		}
+
+		get muteService()
+		{
+			this.#muteService = this.#muteService ?? new MuteService();
+
+			return this.#muteService;
+		}
+
+		get userService()
+		{
+			this.#userService = this.#userService ?? new UserService();
+
+			return this.#userService;
+		}
+
+		get commentsService()
+		{
+			this.#commentService = this.#commentService ?? new CommentsService();
+
+			return this.#commentService;
+		}
+
+		get updateService()
+		{
+			this.#updateService = this.#updateService ?? new UpdateService();
+
+			return this.#updateService;
+		}
+
+		get createService()
+		{
+			this.#createService = this.#createService ?? new CreateService();
+
+			return this.#createService;
 		}
 
 		loadChatWithMessages(dialogId)
@@ -71,6 +133,49 @@ jn.define('im/messenger/provider/service/chat', (require, exports, module) => {
 			return this.userService.joinChat(dialogId);
 		}
 
+		/**
+		 * @param {number} chatId
+		 * @param {Array<number>} members
+		 * @param {boolean} showHistory
+		 *
+		 * @return {Promise<*|T>}
+		 */
+		addToChat(chatId, members, showHistory)
+		{
+			return this.userService.addToChat(chatId, members, showHistory);
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {number} userId
+		 *
+		 * @return {Promise<*|T>}
+		 */
+		kickUserFromChat(dialogId, userId)
+		{
+			return this.userService.kickUserFromChat(dialogId, userId);
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 *
+		 * @return {Promise<*|T>}
+		 */
+		leaveFromChat(dialogId)
+		{
+			return this.userService.leaveFromChat(dialogId);
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 *
+		 * @return {Promise<*|T>}
+		 */
+		deleteChat(dialogId)
+		{
+			return this.userService.deleteChat(dialogId);
+		}
+
 		subscribeToComments(dialogId)
 		{
 			return this.commentsService.subscribe(dialogId);
@@ -97,15 +202,13 @@ jn.define('im/messenger/provider/service/chat', (require, exports, module) => {
 		}
 
 		/**
-		 * @private
+		 *
+		 * @param {CreateChatParams} params
+		 * @return {Promise<{chatId: number}>}
 		 */
-		initServices(locator)
+		createChat(params)
 		{
-			this.commentsService = new CommentsService(locator);
-			this.loadService = new LoadService(locator);
-			this.readService = new ReadService(locator);
-			this.muteService = new MuteService(locator);
-			this.userService = new UserService(locator);
+			return this.createService.createChat(params);
 		}
 	}
 

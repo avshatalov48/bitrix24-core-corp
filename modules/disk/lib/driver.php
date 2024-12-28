@@ -143,6 +143,33 @@ final class Driver implements IErrorable
 	 * Creates storage for user and sets default rights.
 	 * If storage already exists returns its.
 	 *
+	 * @param User $user Object representation of user.
+	 * @return Storage|null
+	 * @throws ArgumentException
+	 * @throws SystemException
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public function addUserStorageByObject(User $user): ?Storage
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			throw new SystemException('Could not create user storage without module "socialnetwork"');
+		}
+
+		$userId = $user->getId();
+
+		$userName = $user->getFormattedName();
+		$data = $this->getUserStorageParams($userId, $userName);
+
+		$rights = $this->getUserStorageRights($userId, $user->isIntranetUser());
+
+		return $this->addStorageIfNotExist($data, $rights);
+	}
+
+	/**
+	 * Creates storage for user and sets default rights.
+	 * If storage already exists returns its.
+	 *
 	 * @param integer $userId Id of user.
 	 * @return Storage|null
 	 * @throws ArgumentException
@@ -151,60 +178,55 @@ final class Driver implements IErrorable
 	 */
 	public function addUserStorage($userId)
 	{
-		if(!Loader::includeModule('socialnetwork'))
+		if (!Loader::includeModule('socialnetwork'))
 		{
 			throw new SystemException('Could not create user storage without module "socialnetwork"');
 		}
 
 		$userId = (int)$userId;
 
-		$data = array(
-			'NAME' => "user {$userId}",
-		);
 		/** @var User $userModel */
 		$userModel = User::loadById($userId);
-		if($userModel instanceof User)// && !$userModel->isEmptyName())
-		{
-			$userName = $userModel->getFormattedName();
-			if (!empty($userName))
-			{
-				$data['NAME'] = $userName;
-			}
+
+		if ($userModel === null) {
+			$userModel = User::buildFromArray(['ID' => $userId]);
 		}
 
-		$data['USE_INTERNAL_RIGHTS'] = 1;
-		$data['MODULE_ID'] = self::INTERNAL_MODULE_ID;
-		$data['ENTITY_TYPE'] = ProxyType\User::className();
-		$data['ENTITY_ID'] = $userId;
+		return $this->addUserStorageByObject($userModel);
+	}
 
+	private function getUserStorageParams(int $userId, string $userName): array
+	{
+		return [
+			'NAME' => $userName ?: "user {$userId}",
+			'USE_INTERNAL_RIGHTS' => 1,
+			'MODULE_ID' => self::INTERNAL_MODULE_ID,
+			'ENTITY_TYPE' => ProxyType\User::className(),
+			'ENTITY_ID' => $userId,
+		];
+	}
+
+	private function getUserStorageRights(int $userId, bool $isIntranetUser): array
+	{
 		$rightsManager = $this->getRightsManager();
 		$fullAccessTaskId = $rightsManager->getTaskIdByName($rightsManager::TASK_FULL);
 
-		if($userModel && $userModel->isIntranetUser())
+		$rights = [
+			[
+				'ACCESS_CODE' => 'U' . $userId,
+				'TASK_ID' => $fullAccessTaskId,
+			],
+		];
+
+		if ($isIntranetUser)
 		{
-			$rights = array(
-				array(
-					'ACCESS_CODE' => 'IU' . $userId,
-					'TASK_ID' => $fullAccessTaskId,
-				),
-				array(
-					'ACCESS_CODE' => 'U' . $userId,
-					'TASK_ID' => $fullAccessTaskId,
-				),
-			);
-		}
-		else
-		{
-			//for extranet user we don't have IU.
-			$rights = array(
-				array(
-					'ACCESS_CODE' => 'U' . $userId,
-					'TASK_ID' => $fullAccessTaskId,
-				),
-			);
+			$rights[] = [
+				'ACCESS_CODE' => 'IU' . $userId,
+				'TASK_ID' => $fullAccessTaskId,
+			];
 		}
 
-		return self::addStorageIfNotExist($data, $rights);
+		return $rights;
 	}
 
 	/**

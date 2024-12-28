@@ -26,11 +26,14 @@ use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Entity;
 use Bitrix\Main\ORM\Objectify\EntityObject;
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\UserField;
 
 abstract class Factory
@@ -2083,14 +2086,16 @@ abstract class Factory
 
 	public function checkIfTotalItemsCountExceeded(int $limit, array $filter = []): bool
 	{
-		$count = $this->getDataClass()::query()
+		$query = $this->getDataClass()::query()
 			->setSelect(['ID'])
 			->setFilter($filter)
 			->setLimit($limit + 1)
-			->countTotal(true)
-			->exec()
-			->getCount()
 		;
+
+		$newQuery = (new Query(Entity::getInstanceByQuery($query)));
+		$newQuery->registerRuntimeField('', new ExpressionField('QTY', 'COUNT(%s)', 'ID'));
+		$newQuery->addSelect('QTY');
+		$count = $newQuery->fetch()['QTY'];
 
 		return $count > $limit;
 	}

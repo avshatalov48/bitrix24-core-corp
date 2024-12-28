@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Crm\Feature;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -8,7 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
-	
+
 	return;
 }
 
@@ -17,7 +19,7 @@ if (!CAllCrmInvoice::installExternalEntities())
 	return;
 }
 
-if (!CCrmQuote::LocalComponentCausedUpdater()) 
+if (!CCrmQuote::LocalComponentCausedUpdater())
 {
 	return;
 }
@@ -25,21 +27,21 @@ if (!CCrmQuote::LocalComponentCausedUpdater())
 if (!CModule::IncludeModule('currency'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED_CURRENCY'));
-	
+
 	return;
 }
 
 if (!CModule::IncludeModule('catalog'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED_CATALOG'));
-	
+
 	return;
 }
 
 if (!CModule::IncludeModule('sale'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED_SALE'));
-	
+
 	return;
 }
 
@@ -47,7 +49,7 @@ $CrmPerms = CCrmPerms::GetCurrentUserPermissions();
 if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
-	
+
 	return;
 }
 
@@ -56,7 +58,6 @@ global $APPLICATION;
 $arDefaultUrlTemplates404 = [
 	'perms_list' => '',
 	'role_edit' => '#role_id#/edit/',
-	'permsv2' => 'v2/',
 ];
 $arDefaultVariableAliases404 = [];
 $arDefaultVariableAliases = [];
@@ -140,6 +141,21 @@ else
 		'VARIABLES' => $arVariables,
 		'ALIASES' => $arVariableAliases
 	);
+}
+
+$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+if (
+	Feature::enabled(Feature\PermissionsLayoutV2::class)
+	&& $request->getRequestMethod() === 'GET'
+	&& !isset($_GET['nr'])
+)
+{
+	$oldUri = new \Bitrix\Main\Web\Uri($request->getRequestUri());
+
+	$newUri = (new \Bitrix\Crm\Security\Role\Manage\Manager\AllSelection())->getUrl();
+	$newUri = $newUri->withQuery($oldUri->getQuery());
+
+	LocalRedirect((string)$newUri);
 }
 
 $arResult['NEED_FOR_REBUILD_COMPANY_ATTRS'] = false;

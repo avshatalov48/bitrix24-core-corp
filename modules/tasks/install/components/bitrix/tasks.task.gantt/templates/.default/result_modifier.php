@@ -1,9 +1,20 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 use Bitrix\Tasks\Util;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\Main\Text\HtmlFilter;
+
+\Bitrix\Main\UI\Extension::load([
+	"ui.notification",
+	"ui.avatar",
+]);
 
 //region TITLE
-if ($arParams['PROJECT_VIEW'] === 'Y')
+if ($arResult['IS_COLLAB'])
+{
+	$sTitle = $sTitleShort = GetMessage("TASKS_TITLE");
+}
+elseif ($arParams['PROJECT_VIEW'] === 'Y')
 {
 	$sTitle = $sTitleShort = GetMessage("TASKS_TITLE_PROJECT");
 }
@@ -25,11 +36,24 @@ else
 }
 $APPLICATION->SetPageProperty("title", $sTitle);
 $APPLICATION->SetTitle($sTitleShort);
-//endregion TITLE
 
-$APPLICATION->SetPageProperty("title", $sTitle);
-$APPLICATION->SetTitle($sTitleShort);
-\Bitrix\Main\UI\Extension::load("ui.notification");
+if ($arResult['IS_COLLAB'])
+{
+	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+	$APPLICATION->SetPageProperty(
+		'BodyClass',
+		"{$bodyClass} sn-collab-tasks__wrapper"
+	);
+	Toolbar::deleteFavoriteStar();
+
+	$this->SetViewTarget('in_pagetitle') ?>
+	<div class="sn-collab-icon__wrapper">
+		<div id="sn-collab-icon-<?=HtmlFilter::encode($arResult["OWNER_ID"])?>" class="sn-collab-icon__hexagon-bg"></div>
+	</div>
+	<div class="sn-collab__subtitle"><?=HtmlFilter::encode($arResult["COLLAB_NAME"])?></div>
+	<?php $this->EndViewTarget();
+}
+//endregion TITLE
 
 $arResult["GROUPS"] = array();
 
@@ -69,3 +93,19 @@ if (isset($arParams[ "SET_NAVCHAIN" ]) && $arParams[ "SET_NAVCHAIN" ] != "N")
 	$APPLICATION->AddChainItem(GetMessage("TASKS_TITLE"));
 }
 /** END:TITLE */
+if ($arResult['IS_COLLAB']): ?>
+<script>
+	BX.ready(() => {
+		const collabImagePath = "<?=$arResult["COLLAB_IMAGE"]?>" || null;
+		const collabName = "<?=HtmlFilter::encode($arResult["COLLAB_NAME"])?>";
+		const ownerId = "<?=HtmlFilter::encode($arResult["OWNER_ID"])?>";
+		const avatar = new BX.UI.AvatarHexagonGuest({
+			size: 42,
+			userName: collabName.toUpperCase(),
+			baseColor: '#19CC45',
+			userpicPath: collabImagePath,
+		});
+		avatar.renderTo(BX('sn-collab-icon-' + ownerId));
+	});
+</script>
+<?php endif;

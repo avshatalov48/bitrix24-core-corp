@@ -8,11 +8,13 @@
 	const { AnalyticsEvent } = require('analytics');
 	const { Analytics, EventType, ComponentCode, NavigationTab } = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const tabIdCollection = {
 		[ComponentCode.imMessenger]: NavigationTab.imMessenger,
 		[ComponentCode.imChannelMessenger]: NavigationTab.imChannelMessenger,
 		[ComponentCode.imCopilotMessenger]: NavigationTab.imCopilotMessenger,
+		[ComponentCode.imCollabMessenger]: NavigationTab.imCollabMessenger,
 		[ComponentCode.imNotify]: NavigationTab.imNotify,
 		[ComponentCode.imOpenlinesRecent]: NavigationTab.imOpenlinesRecent,
 	};
@@ -41,6 +43,7 @@
 				chats: ComponentCode.imMessenger,
 				channel: ComponentCode.imChannelMessenger,
 				copilot: ComponentCode.imCopilotMessenger,
+				collab: ComponentCode.imCollabMessenger,
 				notifications: ComponentCode.imNotify,
 				openlines: ComponentCode.imOpenlinesRecent,
 			};
@@ -133,6 +136,21 @@
 				return;
 			}
 
+			if (
+				componentCode === ComponentCode.imCollabMessenger
+				&& !Feature.isCollabSupported
+			)
+			{
+				this.handleCollabsAreNotSupported();
+
+				BX.postComponentEvent(EventType.navigation.changeTabResult, [{
+					componentCode,
+					errorText: `im.navigation: Error changing tab, tab ${componentCode} is disabled.`,
+				}]);
+
+				return;
+			}
+
 			tabs.setActiveItem(tabIdCollection[componentCode]);
 
 			PageManager.getNavigator().makeTabActive();
@@ -156,6 +174,16 @@
 				console.log(`${this.constructor.name}.onTabSelected selected tab is equal current, this.currentTab:`, this.currentTab, item.id);
 
 				return true;
+			}
+
+			if (
+				item.id === NavigationTab.imCollabMessenger
+				&& !Feature.isCollabSupported
+			)
+			{
+				this.handleCollabsAreNotSupported();
+
+				return;
 			}
 
 			this.previousTab = this.currentTab;
@@ -307,6 +335,7 @@
 				NavigationTab.imOpenlinesRecent,
 				NavigationTab.imNotify,
 				NavigationTab.imCopilotMessenger,
+				NavigationTab.imCollabMessenger,
 			].forEach((tab) => {
 				const counter = this.counters[tab] ? this.counters[tab] : 0;
 				tabs.updateItem(tab, {
@@ -332,9 +361,28 @@
 			}
 			console.info(`${this.constructor.name}.onBroadcastEvent params:`, params);
 
-			tabs.setActiveItem(tabIdCollection[params.toTab]);
+			if (
+				params.toTab === ComponentCode.imCollabMessenger
+				&& !Feature.isCollabSupported
+			)
+			{
+				this.handleCollabsAreNotSupported();
+			}
+			else
+			{
+				tabs.setActiveItem(tabIdCollection[params.toTab]);
+			}
 
 			MessengerEmitter.emit(params.broadCastEvent, params.data, params.toTab);
+		}
+
+		handleCollabsAreNotSupported()
+		{
+			console.log(`${this.constructor.name}.handleCollabsAreNotSupported`);
+
+			tabs.setActiveItem(tabIdCollection[ComponentCode.imMessenger]);
+			Feature.showUnsupportedWidget();
+			this.currentTab = NavigationTab.imMessenger;
 		}
 	}
 

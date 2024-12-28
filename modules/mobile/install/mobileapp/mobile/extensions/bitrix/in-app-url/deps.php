@@ -10,6 +10,7 @@ return [
 		'stafftrack:in-app-url/routes',
 		'lists:in-app-url/routes',
 		'bizproc:in-app-url/routes',
+		'disk:in-app-url/routes',
 		'utils/url',
 		'utils/string',
 		'in-app-url/url',

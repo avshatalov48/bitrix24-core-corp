@@ -56,3 +56,11 @@ $MESS['CRM_TIMELINE_ITEM_ACTIVITY_WHATSAPP_RESEND_CONFIRM_DIALOG_TITLE'] = 'Пе
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_WHATSAPP_RESEND_CONFIRM_DIALOG_MESSAGE'] = 'Изменения в новом сообщении WhatsApp не сохранятся, если вы начнёте редактировать другое сообщение';
 
 $MESS['CRM_TIMELINE_ITEM_LINK_IS_COPIED_SHORT'] = 'Ссылка скопирована';
+
+$MESS['CRM_TIMELINE_ITEM_ACTIVITY_TODO_DELETE_TAG_CONFIRM_YES_CAPTION'] = 'Да, удалить';
+
+$MESS['CRM_TIMELINE_ITEM_BIZPROC_TASK_DO_ACTION_ACCESS_DENIED'] = 'Выполнить задание может только ответственный за дело';
+
+$MESS['CRM_TIMELINE_ITEM_CALL_SCORING_RESPONSIBLE_TITLE'] = 'Ответственный';
+$MESS['CRM_TIMELINE_ITEM_CALL_SCORING_SCRIPT_TITLE'] = 'Соответствие скрипту';
+$MESS['CRM_TIMELINE_ITEM_CALL_SCORING_EDIT_PROMPT_HINT'] = 'Эта возможность скоро будет доступна. Вы можете отредактировать скрипт в разделе Скрипты и Речевая аналитика с AI';

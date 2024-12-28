@@ -113,10 +113,12 @@
 						features: this.features,
 						mandatoryFeatures: this.mandatoryFeatures,
 						mode: 'mobile',
+						shouldSelectDialogId: 'Y',
 					},
 					filter: {
 						ACTIVE: 'Y',
 						'!CLOSED': 'Y',
+						'!=TYPE': 'collab',
 					},
 					select: [
 						'ID',
@@ -125,6 +127,7 @@
 						'AVATAR',
 						'AVATAR_TYPE',
 						'NUMBER_OF_MEMBERS',
+						'TYPE',
 					],
 					order: {
 						NAME: 'ASC',
@@ -347,6 +350,8 @@
 							? 0
 							: parseInt(item.numberOfMembers, 10)
 					),
+					isCollab: item.type === 'collab',
+					dialogId: item.dialogId,
 				},
 			};
 

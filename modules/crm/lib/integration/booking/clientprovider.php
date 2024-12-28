@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bitrix\Crm\Integration\Booking;
 
 use Bitrix\Booking\Entity\Booking\Client;
@@ -9,64 +11,69 @@ use Bitrix\Booking\Entity\Booking\ClientTypeCollection;
 use Bitrix\Booking\Integration\Booking\ClientProviderInterface;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
-use Bitrix\Main\Error;
-use Bitrix\Main\Result;
-use Bitrix\Crm\ItemIdentifier;
 use CCrmOwnerType;
-use Bitrix\Crm\MessageSender\Channel\ChannelRepository;
-use Bitrix\Crm\Integration\SmsManager;
-use Bitrix\Crm\MessageSender\SendFacilitator\Sms;
 use DateTimeImmutable;
 
 class ClientProvider implements ClientProviderInterface
 {
 	private const MODULE_ID = 'crm';
 
-	public function getModuleId(): string
-	{
-		return self::MODULE_ID;
-	}
-
 	public function getClientTypeCollection(): ClientTypeCollection
 	{
 		return new ClientTypeCollection(
 			(new ClientType())
-				->setModuleId($this->getModuleId())
+				->setModuleId(self::MODULE_ID)
 				->setCode(CCrmOwnerType::ContactName),
 			(new ClientType())
-				->setModuleId($this->getModuleId())
+				->setModuleId(self::MODULE_ID)
 				->setCode(CCrmOwnerType::CompanyName),
 		);
 	}
 
-	public function sendMessage(ClientCollection $clientCollection, string $message): Result
+	public function getClientName(Client $client): string
 	{
-		$primaryClient = $this->pickPrimaryClient($clientCollection);
-		if (!$primaryClient)
+		$clientId = $client->getId();
+		if (!$clientId)
 		{
-			return (new Result())->addError(new Error('Primary client has not been found'));
+			return '';
 		}
 
-		$entityTypeId = $this->getEntityTypeIdByCode($primaryClient->getType()?->getCode());
-		if (!$entityTypeId)
+		$factory = $this->getFactoryByClient($client);
+		if (!$factory)
 		{
-			return (new Result())->addError(new Error('Unexpected entity type'));
+			return '';
 		}
 
-		$channel = ChannelRepository
-			::create(
-				new ItemIdentifier($entityTypeId, $primaryClient->getId())
-			)
-			->getBestUsableBySender(SmsManager::getSenderCode());
-
-		if (is_null($channel))
+		if ($client->getType()?->getCode() === CCrmOwnerType::ContactName)
 		{
-			return (new Result())->addError(new Error('Channel has not been found'));
+			$contact = $factory->getItem($clientId, ['NAME']);
+			if (!$contact)
+			{
+				return '';
+			}
+
+			return $contact->getName() ?? '';
 		}
 
-		return (new Sms($channel))
-			->setMessageBody($message)
-			->send();
+		if ($client->getType()?->getCode() === CCrmOwnerType::CompanyName)
+		{
+			$company = $factory->getItem($clientId, ['TITLE']);
+			if (!$company)
+			{
+				return '';
+			}
+
+			return $company->getTitle() ?? '';
+		}
+
+		return '';
+	}
+
+	public function getMessageSenders(): array
+	{
+		return [
+			new MessageSender(),
+		];
 	}
 
 	public function pickPrimaryClient(ClientCollection $clientCollection): Client|null

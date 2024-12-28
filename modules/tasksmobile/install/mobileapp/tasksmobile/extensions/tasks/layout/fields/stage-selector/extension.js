@@ -41,6 +41,11 @@ jn.define('tasks/layout/fields/stage-selector', (require, exports, module) => {
 			return BX.prop.getInteger(this.props, 'taskId', null);
 		}
 
+		get initiallyHidden()
+		{
+			return BX.prop.getBoolean(this.getConfig(), 'initiallyHidden', false);
+		}
+
 		renderEditableContent()
 		{
 			return TasksStageSlider({
@@ -52,6 +57,7 @@ jn.define('tasks/layout/fields/stage-selector', (require, exports, module) => {
 
 				onStageClick: this.onStageClick,
 				onStageLongClick: this.onStageLongClick,
+				showLoadingAnimation: this.state.showLoadingAnimation,
 
 				view: this.view,
 				projectId: this.projectId,

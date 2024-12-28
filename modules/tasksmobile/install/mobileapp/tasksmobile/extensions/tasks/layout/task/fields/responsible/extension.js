@@ -89,7 +89,7 @@ jn.define('tasks/layout/task/fields/responsible', (require, exports, module) => 
 					style: (style || {}),
 				},
 				UserField({
-					analytics: new AnalyticsEvent().setSection('task'),
+					analytics: new AnalyticsEvent().setSection('tasks'),
 					readOnly,
 					showEditIcon: !readOnly,
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_RESPONSIBLE_MSGVER_1'),
@@ -97,6 +97,7 @@ jn.define('tasks/layout/task/fields/responsible', (require, exports, module) => 
 					value: responsible.id,
 					titlePosition: 'left',
 					config: {
+						enableCreation: !(env.isCollaber || env.extranet),
 						deepMergeStyles,
 						useLettersForEmptyAvatar: true,
 						provider: {

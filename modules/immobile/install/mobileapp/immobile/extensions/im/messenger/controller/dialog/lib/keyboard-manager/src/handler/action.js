@@ -84,6 +84,7 @@ jn.define('im/messenger/controller/dialog/lib/keyboard-manager/handler/action', 
 			openPhoneMenu({
 				number: actionValue,
 				canUseTelephony: MessengerParams.canUseTelephony(),
+				analyticsSection: 'chat',
 			});
 		}
 

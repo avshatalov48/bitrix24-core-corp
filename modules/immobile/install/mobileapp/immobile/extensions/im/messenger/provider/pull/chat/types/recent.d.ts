@@ -1,4 +1,4 @@
-import {RawChat, RawFile, RawMessage, RawUser} from "../../../service/src/types/sync-list-result";
+import { RawChat, RawFile, RawMessage, RawUser } from '../../../service/src/types/sync-list-result';
 
 declare type RecentUpdateParams = {
 	additionalMessages: RawMessage[],
@@ -8,4 +8,13 @@ declare type RecentUpdateParams = {
 	lastActivityDate: string,
 	messages: RawMessage[],
 	users: RawUser[],
+};
+
+declare type UserShowInRecentParams = {
+	items: UserShowInRecentItem[],
+};
+
+type UserShowInRecentItem = {
+	user: RawUser,
+	date: string,
 };

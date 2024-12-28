@@ -4,9 +4,11 @@ namespace Bitrix\Sign\Service\Sign;
 
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Sign\Callback\Messages\Member\MemberStatusChanged;
+use Bitrix\Sign\Repository\MemberRepository;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Repository\LegalLogRepository;
 use Bitrix\Sign\Service\UserService;
+use Bitrix\Sign\Type\Document\InitiatedByType;
 use Bitrix\Sign\Type\DocumentScenario;
 use Bitrix\Sign\Type\DocumentStatus;
 use Bitrix\Sign\Type\LegalLogCode;
@@ -24,18 +26,21 @@ class LegalLogService
 	private readonly UserService $userService;
 	private readonly MemberService $memberService;
 	private readonly LoggerInterface $logger;
+	private readonly MemberRepository $memberRepository;
 
 	public function __construct(
 		?LegalLogRepository $logRepository = null,
 		?UserService $userService = null,
 		?MemberService $memberService = null,
 		?LoggerInterface $logger = null,
+		?MemberRepository $memberRepository = null,
 	)
 	{
 		$this->logRepository = $logRepository ?? Container::instance()->getLegalLogRepository();
 		$this->userService = $userService ?? Container::instance()->getUserService();
 		$this->memberService = $memberService ?? Container::instance()->getMemberService();
 		$this->logger = $logger ?? Logger::getInstance();
+		$this->memberRepository = $memberRepository ?? Container::instance()->getMemberRepository();
 	}
 
 	public function registerDocumentStart(Document $document): void
@@ -91,6 +96,7 @@ class LegalLogService
 			Role::SIGNER => $this->registerSignerChangedStatus($document, $member, $message),
 			Role::REVIEWER => $this->registerReviewerChangedStatus($document, $member),
 			Role::EDITOR => $this->registerEditorChangedStatus($document, $member),
+			Role::ASSIGNEE => $this->registerAssigneeChangedStatus($document, $member),
 			default => null,
 		};
 	}
@@ -127,6 +133,11 @@ class LegalLogService
 
 	protected function registerAssigneeSignedMember(Document $document, Member $member): void
 	{
+		if ($document->initiatedByType === InitiatedByType::EMPLOYEE)
+		{
+			return;
+		}
+
 		$additionalInfo = "Assignee: $document->representativeId, name: "
 			. $this->getUserName($document->representativeId);
 		$this->register(LegalLogCode::ASSIGNEE_SIGNED_MEMBER, $document, $member, $additionalInfo);
@@ -299,5 +310,36 @@ class LegalLogService
 	private function registerSignerProcessing(Document $document, Member $member): void
 	{
 		$this->register(LegalLogCode::SIGNER_PROCESSING, $document, $member);
+	}
+
+	private function registerAssigneeChangedStatus(Document $document, Member $member): void
+	{
+		match ($member->status)
+		{
+			MemberStatus::DONE => $this->registerAssigneeDone($document),
+			default => null,
+		};
+	}
+
+	private function registerAssigneeDone(Document $document): void
+	{
+		if (
+			$document->initiatedByType !== InitiatedByType::EMPLOYEE
+			|| $document->id === null
+			|| $document->representativeId === null
+		)
+		{
+			return;
+		}
+
+		$signer = $this->memberRepository->getByDocumentIdWithRole($document->id, Role::SIGNER);
+		if (!$signer)
+		{
+			return;
+		}
+
+		$additionalInfo = "Assignee: $document->representativeId, name: "
+			. $this->getUserName($document->representativeId);
+		$this->register(LegalLogCode::ASSIGNEE_SIGNED_MEMBER, $document, $signer, $additionalInfo);
 	}
 }

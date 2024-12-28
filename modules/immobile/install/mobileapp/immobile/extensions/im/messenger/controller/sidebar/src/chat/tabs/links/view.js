@@ -228,9 +228,9 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/links/view', (require, expo
 		 * @desc Method binding this for use in handlers
 		 * @void
 		 */
-		bindListener()
+		bindMethods()
 		{
-			super.bindListener();
+			super.bindMethods();
 			this.onSetHistoryLimitExceeded = this.#onSetHistoryLimitExceeded.bind(this);
 			this.onSetSidebarLinksStore = this.#onSetSidebarLinksStore.bind(this);
 			this.onDeleteSidebarLinksStore = this.#onDeleteSidebarLinksStore.bind(this);

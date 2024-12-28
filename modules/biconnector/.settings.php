@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\BIConnector\Integration\UI\EntitySelector\ExternalConnectionProvider;
+use Bitrix\BIConnector\Integration\UI\EntitySelector\ExternalTableProvider;
 use Bitrix\BIConnector\Integration\UI\EntitySelector\SupersetDashboardProvider;
 use Bitrix\BIConnector\Integration\UI\EntitySelector\SupersetDashboardTagProvider;
 use Bitrix\BIConnector\Integration\UI\EntitySelector\SupersetScopeProvider;
@@ -11,6 +13,12 @@ return [
 			'restIntegration' => [
 				'enabled' => true,
 			],
+		],
+		'readonly' => true,
+	],
+	'ui.uploader' => [
+		'value' => [
+			'allowUseControllers' => true,
 		],
 		'readonly' => true,
 	],
@@ -36,6 +44,20 @@ return [
 					'provider' => [
 						'moduleId' => 'biconnector',
 						'className' => SupersetScopeProvider::class,
+					],
+				],
+				[
+					'entityId' => 'biconnector-external-connection',
+					'provider' => [
+						'moduleId' => 'biconnector',
+						'className' => ExternalConnectionProvider::class,
+					],
+				],
+				[
+					'entityId' => 'biconnector-external-table',
+					'provider' => [
+						'moduleId' => 'biconnector',
+						'className' => ExternalTableProvider::class,
 					],
 				],
 			],

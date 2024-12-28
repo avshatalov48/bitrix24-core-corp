@@ -12,14 +12,14 @@ jn.define('im/messenger/controller/sidebar/channel/profile-btn-view', (require, 
 	{
 		/**
 		 * @desc Handler update mute btn
-		 * @param {LayoutComponent} btn
+		 * @param {LayoutComponent} button
 		 * @void
 		 */
-		onChangeMuteBtn(btn)
+		onChangeMuteButton(button)
 		{
 			const oldState = this.state.buttonElements;
 			const newState = [...oldState];
-			newState[0] = btn;
+			newState[0] = button;
 			this.updateStateView({ buttonElements: newState });
 		}
 	}

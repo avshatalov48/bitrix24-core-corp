@@ -39,7 +39,7 @@ class CatalogStore implements Tabable {
 		return [
 			'id' => 'catalog_store',
 			'sort' => $this->defaultSortValue(),
-			'imageName' => 'catalog_store',
+			'imageName' => $this->getIconId(),
 			'badgeCode' => 'catalog_store',
 			'component' => $this->getComponentParams(),
 		];
@@ -52,6 +52,7 @@ class CatalogStore implements Tabable {
 			'sectionCode' => 'catalog_store',
 			'color' => '#05b5ab',
 			'imageUrl' => 'catalog/icon-catalog-store.png',
+			'imageName' => $this->getIconId(),
 			'params' => [
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
 			],
@@ -118,6 +119,6 @@ class CatalogStore implements Tabable {
 
 	public function getIconId(): string
 	{
-		return $this->getId();
+		return Mobile::getApiVersion() < 56 ? $this->getId() : 'stock';
 	}
 }

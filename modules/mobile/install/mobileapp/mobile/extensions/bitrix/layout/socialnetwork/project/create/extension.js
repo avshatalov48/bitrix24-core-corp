@@ -374,11 +374,13 @@
 				return;
 			}
 
-			this.layoutWidget.openWidget('selector', {
+			void this.layoutWidget.openWidget('selector', {
 				title: BX.message('MOBILE_LAYOUT_PROJECT_CREATE_HEADER_TITLE_ADD_MEMBERS'),
 			}).then((selector) => {
 				let items = [];
-				selector.on('onSelectedChanged', (data) => items = data.items);
+				selector.on('onSelectedChanged', (data) => {
+					items = data.items;
+				});
 				selector.setRightButtons([
 					{
 						name: BX.message('MOBILE_LAYOUT_PROJECT_CREATE_HEADER_BUTTON_CREATE'),
@@ -415,7 +417,28 @@
 						},
 					},
 				]);
-				void (new RecipientSelector('GROUP_INVITE', ['user', 'department'], selector)).open();
+				void new RecipientSelector('GROUP_INVITE', ['user', 'department'], selector)
+					.setEntitiesOptions({
+						user: {
+							options: {
+								intranetUsersOnly: true,
+							},
+							searchable: true,
+							dynamicLoad: true,
+							dynamicSearch: true,
+						},
+						department: {
+							options: {
+								selectMode: 'departmentsOnly',
+								allowFlatDepartments: true,
+							},
+							searchable: true,
+							dynamicLoad: true,
+							dynamicSearch: true,
+						},
+					})
+					.open()
+				;
 			});
 		}
 

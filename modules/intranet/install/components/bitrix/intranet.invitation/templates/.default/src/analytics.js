@@ -4,6 +4,8 @@ import { sendData } from 'ui.analytics';
 export class Analytics
 {
 	static TOOLS = 'Invitation';
+	static TOOLS_HEADER = 'headerPopup';
+	static EVENT_OPEN_SLIDER_INVITATION = 'drawer_open';
 	static CATEGORY_INVITATION = 'invitation';
 	static EVENT_COPY = 'copy_invitation_link';
 	static ADMIN_ALLOW_MODE_Y = 'askAdminToAllow_Y';
@@ -18,6 +20,7 @@ export class Analytics
 	static TAB_INTEGRATOR = 'tab_integrator';
 	static TAB_LINK = 'by_link';
 	static TAB_REGISTRATION = 'registration';
+	static TAB_EXTRANET = 'extranet';
 	static TAB_AD = 'AD';
 
 	#cSection: Object;
@@ -71,6 +74,16 @@ export class Analytics
 			event: Analytics.EVENT_TAB_VIEW,
 			c_section: section,
 			c_sub_section: subSection
+		});
+	}
+
+	sendOpenSliderData(section): void
+	{
+		sendData({
+			tool: Analytics.TOOLS,
+			category: Analytics.CATEGORY_INVITATION,
+			event: Analytics.EVENT_OPEN_SLIDER_INVITATION,
+			c_section: section,
 		});
 	}
 }

@@ -47,9 +47,7 @@ $component = new class {
 			return $this->showErrors();
 		}
 
-		return [
-			'testData' => 1,
-		];
+		return [];
 	}
 };
 

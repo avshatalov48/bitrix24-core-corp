@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_BADGE_TODO_STATUS_FIELD_NAME"] = "Activity";
+$MESS["CRM_BADGE_TODO_STATUS_TEXT_VALUE_OVERLAP_EVENT"] = "Overlapping events";

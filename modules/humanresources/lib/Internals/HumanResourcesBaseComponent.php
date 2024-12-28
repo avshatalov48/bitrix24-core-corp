@@ -25,6 +25,7 @@ abstract class HumanResourcesBaseComponent extends \CBitrixComponent
 	{
 		if (!$this->isAvailable())
 		{
+			LocalRedirect('/company/vis_structure.php');
 			ShowError('Feature not available.');
 
 			return;
@@ -49,7 +50,7 @@ abstract class HumanResourcesBaseComponent extends \CBitrixComponent
 		$this->templatePage = $templatePage;
 	}
 
-	protected function setTemplateTitle(string $templateName): void
+	protected function setTemplateTitle(?string $templateName): void
 	{
 		$this->application->SetTitle($templateName);
 	}

@@ -217,6 +217,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 		$this->prepareHistoryItems();
 		$this->prepareHistoryFixedItems();
 
+		$this->prepareAutomationTourData();
 		$this->prepareChatData();
 
 		//region  Push&Pull
@@ -247,14 +248,16 @@ class CCrmTimelineComponent extends CBitrixComponent
 
 	public function getHistoryFilter()
 	{
-		$filter = new Crm\Filter\Filter(
+		return new Crm\Filter\Filter(
 			$this->historyFilterID,
 			new Crm\Filter\TimelineDataProvider(
-				new Crm\Filter\TimelineSettings(array('ID' => $this->historyFilterID))
+				new Crm\Filter\TimelineSettings([
+					'ID' => $this->historyFilterID,
+					'entityId' => $this->entityID,
+					'entityTypeId' => $this->getEntityTypeID(),
+				])
 			)
 		);
-
-		return $filter;
 	}
 
 	public function prepareHistoryFilter()
@@ -348,6 +351,12 @@ class CCrmTimelineComponent extends CBitrixComponent
 			$effectiveFilterFieldIDs = $filter->getDefaultFieldIDs();
 		}
 
+		//Adding the ability to filter by a previously unselected field ACTIVITY
+		if (!in_array('ACTIVITY', $effectiveFilterFieldIDs))
+		{
+			$effectiveFilterFieldIDs[] = 'ACTIVITY';
+		}
+
 		foreach($effectiveFilterFieldIDs as $filterFieldID)
 		{
 			$filterField = $filter->getField($filterFieldID);
@@ -402,6 +411,72 @@ class CCrmTimelineComponent extends CBitrixComponent
 		);
 
 		$this->arResult['FIXED_ITEMS'] = $result->getItems();
+	}
+
+	private function prepareAutomationTourData()
+	{
+		$isAvailable = (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024', 0);
+		$this->arResult['BIZPROC_AVAILABLE'] = false;
+
+		if (
+			Main\Loader::includeModule('bizproc')
+			&& \CCrmBizProcHelper::ResolveDocumentType($this->entityTypeID)
+			&& CBPRuntime::isFeatureEnabled()
+			&& $isAvailable
+		)
+		{
+			$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+			if ($toolsManager->checkBizprocAvailability())
+			{
+				$this->arResult['BIZPROC_AVAILABLE'] = true;
+				$documentId = \CCrmBizProcHelper::ResolveDocumentId($this->entityTypeID, $this->entityID);
+				$runningIds = \Bitrix\Bizproc\Workflow\Entity\WorkflowInstanceTable::getIdsByDocument($documentId);
+
+				if (!empty($runningIds))
+				{
+					$this->arResult['DOCUMENT_HAS_RUNNING_WORKFLOW'] = true;
+
+					$taskIterator = CBPTaskService::GetList(
+						['ID' => 'ASC'],
+						[
+							'WORKFLOW_ID' => $runningIds,
+							'USER_ID' => $this->arResult['USER_ID'],
+							'USER_STATUS' => \CBPTaskUserStatus::Waiting
+						],
+						false,
+						['nTopCount' => 1],
+						['ID', 'WORKFLOW_ID'],
+					);
+					if ($task = $taskIterator->getNext())
+					{
+						$this->arResult['DOCUMENT_HAS_WAITING_WORKFLOW_TASK'] = true;
+
+						$result = \Bitrix\Crm\ActivityTable::getList([
+							'filter' => [
+								'=ORIGIN_ID' => $task['WORKFLOW_ID'],
+								'=PROVIDER_ID' => 'CRM_BIZPROC_TASK',
+								'=ASSOCIATED_ENTITY_ID' => $task['ID']
+							],
+							'select' => ['ID'],
+						]);
+						if ($activity = $result->fetch())
+						{
+							$this->arResult['WORKFLOW_FIRST_TOUR_WAS_CLOSED'] = false;
+							$option = CUserOptions::getOption(
+								'crm.tour',
+								\Bitrix\Crm\Tour\Bizproc\WorkflowStarted::OPTION_NAME,
+							);
+							if (!empty($option))
+							{
+								$this->arResult['WORKFLOW_FIRST_TOUR_WAS_CLOSED'] = $option['closed'] === 'Y';
+							}
+
+							$this->arResult['WORKFLOW_TASK_ACTIVITY_ID'] = $activity['ID'];
+						}
+					}
+				}
+			}
+		}
 	}
 
 	public function prepareChatData()

@@ -32,3 +32,12 @@ $MESS["INTRANET_INVITE_ERROR_OK_BUTTON_TEXT"] = "Понятно";
 $MESS["INTRANET_INVITE_EQUAL_PHONE_NUMBERS_ALERT_TITLE"] = "Выбраны контакты с одинаковыми номерами";
 $MESS["INTRANET_INVITE_EQUAL_PHONE_NUMBERS_ALERT_DESCRIPTION"] = "Номера этих контактов совпадают: #phonesNumbersString#";
 $MESS["INTRANET_INVITE_EQUAL_PHONE_NUMBERS_ALERT_OK_BUTTON_TEXT"] = "Понятно";
+
+$MESS['INTRANET_INVITE_NAME_CHECKER_CLOSE_ALERT_TITLE'] = 'Пригласить сотрудников позже?';
+$MESS['INTRANET_INVITE_NAME_CHECKER_CLOSE_ALERT_DESCRIPTION'] = 'Приглашения ещё не отправлены. Вы в любой момент можете пригласить этих и других сотрудников в ваш Битрикс24';
+$MESS['INTRANET_INVITE_NAME_CHECKER_CLOSE_ALERT_DESTRUCTIVE_BUTTON'] = 'Пригласить позже';
+$MESS['INTRANET_INVITE_NAME_CHECKER_CLOSE_ALERT_CONTINUE_BUTTON'] = 'Продолжить приглашение';
+
+$MESS['INTRANET_INVITE_BY_PHONE_TEXT_MSGVER_1'] = 'По СМС';
+$MESS['INTRANET_OPEN_CONTACTS_LIST_BUTTON_TEXT_MSGVER_1'] = 'Пригласить по СМС';
+$MESS["INTRANET_INVITE_BY_LINK_TEXT_MSGVER_1"] = "По ссылке";

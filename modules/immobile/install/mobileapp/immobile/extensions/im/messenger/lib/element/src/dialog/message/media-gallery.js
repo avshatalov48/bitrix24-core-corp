@@ -28,6 +28,7 @@ jn.define('im/messenger/lib/element/dialog/message/media-gallery', (require, exp
 
 			this.setMessage(modelMessage.text);
 			this.setShowTail(true);
+			this.setLoadText();
 
 			this.mediaList = this.createMediaList(fileList);
 		}

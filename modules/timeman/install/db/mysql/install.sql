@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS b_timeman_report_full (
 	APPROVER int(11) NULL,
 	FORUM_TOPIC_ID int NOT NULL DEFAULT 0,
 	PRIMARY KEY (ID),
-	KEY ix_b_timeman_report_full_1 (USER_ID),
+	KEY ix_b_timeman_report_full_1 (USER_ID, ACTIVE),
 	KEY ix_b_timeman_report_full_2 (ACTIVE, DATE_FROM),
 	KEY ix_b_timeman_report_full_3 (USER_ID, DATE_TO)
 );

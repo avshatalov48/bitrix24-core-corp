@@ -6,5 +6,5 @@ use Bitrix\Tasks\Flow\Flow;
 
 interface DistributorStrategyInterface
 {
-	public function distribute(Flow $flow): int;
+	public function distribute(Flow $flow, array $fields, array $taskData): int;
 }

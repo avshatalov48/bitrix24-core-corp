@@ -2,74 +2,75 @@
 
 namespace Bitrix\Sign\Operation\SigningService;
 
-use Bitrix\Fileman\UserField\Types\AddressType;
-use Bitrix\Location\Entity\Address;
-use Bitrix\Location\Service\FormatService;
+use Bitrix\HumanResources\Result\Service\HcmLink\GetFieldValueResult;
 use Bitrix\Main;
-use Bitrix\Main\Result;
 use Bitrix\Sign\Config\Storage;
-use Bitrix\Sign\Connector;
 use Bitrix\Sign\Contract;
 use Bitrix\Sign\Factory;
-use Bitrix\Sign\Factory\Field;
 use Bitrix\Sign\Helper\Field\NameHelper;
-use Bitrix\Sign\Integration\CRM;
 use Bitrix\Sign\Item;
-use Bitrix\Sign\Item\B2e\Provider\ProfileFieldData;
+use Bitrix\Sign\Operation\GetRequiredFieldsWithCache;
 use Bitrix\Sign\Operation\Result\FillFieldsResult;
 use Bitrix\Sign\Repository\BlockRepository;
-use Bitrix\Sign\Repository\DocumentRepository;
+use Bitrix\Sign\Repository\FieldValueRepository;
 use Bitrix\Sign\Repository\MemberRepository;
-use Bitrix\Sign\Repository\RequiredFieldRepository;
+use Bitrix\Sign\Result\Operation\SigningService\HcmLinkFieldLoadResult;
+use Bitrix\Sign\Result\Service\Integration\HumanResources\HcmLinkFieldRequestResult;
+use Bitrix\Sign\Result\Service\Integration\HumanResources\HcmLinkJobsCheckResult;
 use Bitrix\Sign\Service\Api\Document\FieldService;
 use Bitrix\Sign\Service\Cache\Memory\Sign\UserCache;
 use Bitrix\Sign\Service\Container;
+use Bitrix\Sign\Service\Integration\HumanResources\HcmLinkFieldService;
+use Bitrix\Sign\Service\Integration\HumanResources\HcmLinkService;
 use Bitrix\Sign\Service\Providers\LegalInfoProvider;
 use Bitrix\Sign\Service\Providers\ProfileProvider;
 use Bitrix\Sign\Service\Result\Sign\Block\B2eRequiredFieldsResult;
 use Bitrix\Sign\Service\Sign\MemberService;
-use Bitrix\Sign\Type\BlockCode;
 use Bitrix\Sign\Type;
-use Bitrix\Sign\Type\FieldType;
-use Bitrix\Sign\Type\Member\Role;
-use CCrmOwnerType;
+use Bitrix\Main\Localization\Loc;
 
 final class FillFields implements Contract\Operation
 {
 	private Factory\Field $fieldFactory;
-	private DocumentRepository $documentRepository;
 	private Factory\Api\Property\Request\Field\Fill\Value $fieldFillRequestValueFactory;
-	/**
-	 * @var array<int, <string, array>>
-	 */
-	private array $fieldSetMemoryCacheByMemberId = [];
+	private Factory\FieldValue $fieldValueFactory;
 	private MemberRepository $memberRepository;
 	private BlockRepository $blockRepository;
 	private FieldService $apiDocumentFieldService;
 	private ProfileProvider $profileProvider;
-	private array $legalFieldsByType;
+	private readonly HcmLinkFieldService $hcmLinkFieldService;
 	private UserCache $userCache;
-	private MemberService $memberService;
 	private readonly int $limit;
-	private readonly RequiredFieldRepository $requiredFieldRepository;
+	private readonly FieldValueRepository $fieldValueRepository;
+	private ?Item\Field\FieldValueCollection $fieldValues = null;
+	private Item\Field\HcmLink\HcmLinkFieldDelayedValueReferenceMap $hcmLinkValueReferenceMap;
+	private Item\B2e\RequiredFieldsCollection $requiredFieldsCollection;
+	private readonly \Bitrix\Sign\Blanks\Block\Factory $blockFactory;
+	private readonly LegalInfoProvider $legalInfoProvider;
+	private readonly MemberService $memberService;
+	private readonly HcmLinkService $hcmLinkService;
 
 	public function __construct(
-		private Item\Document $document,
+		private readonly Item\Document $document,
 	)
 	{
 		$this->fieldFactory = new Factory\Field();
-		$this->documentRepository = Container::instance()->getDocumentRepository();
 		$this->fieldFillRequestValueFactory = new Factory\Api\Property\Request\Field\Fill\Value();
 		$this->memberRepository = Container::instance()->getMemberRepository();
 		$this->blockRepository = Container::instance()->getBlockRepository();
 		$this->apiDocumentFieldService = Container::instance()->getApiDocumentFieldService();
 		$this->profileProvider = Container::instance()->getServiceProfileProvider();
-		$this->memberService = Container::instance()->getMemberService();
 		$this->userCache = new UserCache();
 		$this->memberRepository->setUserCache($this->userCache);
 		$this->profileProvider->setCache($this->userCache);
 		$this->limit = Storage::instance()->getFieldsFillMembersLimit();
-		$this->requiredFieldRepository = Container::instance()->getRequiredFieldRepository();
+		$this->fieldValueFactory = new Factory\FieldValue($this->profileProvider);
+		$this->fieldValueRepository = Container::instance()->getFieldValueRepository();
+		$this->hcmLinkFieldService = Container::instance()->getHcmLinkFieldService();
+		$this->blockFactory = new \Bitrix\Sign\Blanks\Block\Factory();
+		$this->legalInfoProvider = Container::instance()->getLegalInfoProvider();
+		$this->memberService = Container::instance()->getMemberService();
+		$this->hcmLinkService = Container::instance()->getHcmLinkService();
 	}
 
 	public function launch(): FillFieldsResult|Main\Result
@@ -96,8 +97,9 @@ final class FillFields implements Contract\Operation
 		$members = $this->memberRepository->listNotConfiguredByDocumentId($this->document->id, $this->limit);
 		if ($members->isEmpty())
 		{
-			return new FillFieldsResult(true, 100);
+			return new FillFieldsResult(true);
 		}
+		$this->loadSignFields($members);
 
 		$blocks = $this->blockRepository->getCollectionByBlankId($this->document->blankId);
 		if (
@@ -110,7 +112,8 @@ final class FillFields implements Contract\Operation
 
 		$blocks = $blocks->filterExcludeParty(0);
 
-		$memberFields = new Item\Api\Property\Request\Field\Fill\MemberFieldsCollection();
+		$membersFields = new Item\Api\Property\Request\Field\Fill\MemberFieldsCollection();
+		$this->hcmLinkValueReferenceMap = new Item\Field\HcmLink\HcmLinkFieldDelayedValueReferenceMap();
 
 		foreach ($members as $member)
 		{
@@ -125,36 +128,38 @@ final class FillFields implements Contract\Operation
 					$this->addFieldValueToRequest($block, $field, $member, $requestFields);
 				}
 			}
+			$this->appendB2eRequiredFields($member, $requestFields);
 
 			if (!$requestFields->isEmpty())
 			{
-				$memberFields->addItem(
-					new Item\Api\Property\Request\Field\Fill\MemberFields(
-						$member->uid,
-						$requestFields,
-					),
-				);
+				$memberFields = new Item\Api\Property\Request\Field\Fill\MemberFields($member->uid, $requestFields);
+				$this->checkAndSetTrusted($memberFields);
+				$membersFields->addItem($memberFields);
 			}
 		}
 
-		$this->appendRequiredFieldsWithoutBlocks($memberFields, $members);
-
-		foreach ($memberFields->toArray() as $memberField)
-		{
-			$this->checkAndSetTrusted($memberField);
-		}
-
-		if (empty($memberFields->toArray()))
+		if (empty($membersFields->toArray()))
 		{
 			$this->memberRepository->markAsConfigured($members);
 
 			return $this->makeResult($members->count());
 		}
 
+		$result = $this->bunchLoadHcmFieldValues($members, $membersFields, $blocks);
+		if (!$result instanceof HcmLinkFieldLoadResult)
+		{
+			return $result;
+		}
+
+		if ($result->shouldWait)
+		{
+			return new FillFieldsResult(false);
+		}
+
 		$response = $this->apiDocumentFieldService->fill(
 			new Item\Api\Document\Field\FillRequest(
 				$this->document->uid,
-				$memberFields,
+				$membersFields,
 			),
 		);
 
@@ -196,6 +201,11 @@ final class FillFields implements Contract\Operation
 			return;
 		}
 
+		if ($fieldValue instanceof Item\Field\HcmLink\HcmLinkDelayedValue)
+		{
+			$this->hcmLinkValueReferenceMap->add($fieldValue);
+		}
+
 		$requestFields->addItem(
 			new Item\Api\Property\Request\Field\Fill\Field(
 				$field->name,
@@ -209,296 +219,9 @@ final class FillFields implements Contract\Operation
 
 	private function loadFieldValue(Item\Block $block, Item\Field $field, Item\Member $member): ?Item\Field\Value
 	{
-		if (BlockCode::isSignature($block->code) || BlockCode::isStamp($block->code))
-		{
-			$valueFileId = $block->data['fileId'] ?? null;
-
-			return is_int($valueFileId) ? new Item\Field\Value(0, fileId: $valueFileId) : null;
-		}
-		if (BlockCode::isCommon($block->code))
-		{
-			$valueString = $block->data['text'] ?? null;
-
-			return is_string($valueString) ? new Item\Field\Value(0, text: $valueString) : null;
-		}
-
-		$this->correctBlockCodeByFieldCode($block, $this->document);
-
-		return match (true)
-		{
-			BlockCode::isReference($block->code) => $this->getCrmReferenceFieldValue($field, $member, $this->document),
-			BlockCode::isRequisites($block->code) => $this->getRequisitesFieldValue($field, $member),
-			BlockCode::isB2eReference($block->code) => $this->getB2eReferenceFieldValue($block, $field, $member, $this->document),
-			default => null,
-		};
-	}
-
-	private function getCrmReferenceFieldValue(Item\Field $field, Item\Member $member, Item\Document $document): ?Item\Field\Value
-	{
-		$entityType = \CCrmOwnerType::ResolveName($document->entityTypeId);
-
-		[
-			'fieldCode' => $fieldCode,
-			'fieldType' => $fieldType,
-			'subfieldCode' => $subfieldCode,
-		] = NameHelper::parse($field->name);
-
-		[$entityFieldType, $fieldName] = NameHelper::parseFieldCode($fieldCode, $entityType);
-
-		if (
-			$fieldType !== FieldType::ADDRESS
-			&& $fieldType !== FieldType::LIST
-			&& $fieldType !== FieldType::ENUMERATION
-		)
-		{
-			$crmEntityId = $this->getCrmEntityId($member, $document, $entityFieldType);
-			if ($crmEntityId !== null)
-			{
-				$value = CRM::getEntityFieldValue(
-					$crmEntityId,
-					$fieldCode,
-					$document->id,
-					$member->presetId,
-				);
-				if ($value !== null && isset($value['text']))
-				{
-					return new Item\Field\Value(0, text: $value['text']);
-				}
-			}
-		}
-
-		if (str_starts_with($fieldName, 'UF_CRM_' . $entityType))
-		{
-			return $this->getDocumentFieldValue($document, $fieldName, $fieldType, $subfieldCode);
-		}
-		elseif (str_starts_with($fieldName, 'RQ_'))
-		{
-			return $this->getRequisitesFieldValue($field, $member);
-		}
-		elseif (
-			!empty($subfieldCode)
-			&& !empty($fieldType)
-			&& $fieldType === FieldType::ADDRESS
-		)
-		{
-			$value = Field::getUserFieldValue($member->entityId, [
-				'entityId' => 'CRM_' . $entityFieldType,
-				'sourceName' => $fieldName,
-				'type' => $fieldType,
-				'userFieldId' => $fieldType,
-			], $subfieldCode);
-
-			if ($value !== null)
-			{
-				return new Item\Field\Value(0, text: (string)$value);
-			}
-		}
-		else
-		{
-			$connector = new Connector\Field\CrmEntity($field, $member);
-			$fetchedFieldValue = $connector->fetchFields()->getFirst();
-
-			if ($fetchedFieldValue === null)
-			{
-				return null;
-			}
-
-			if (
-				(($fetchedFieldValue->data instanceof Main\Type\DateTime) === true)
-				|| is_string($fetchedFieldValue->data)
-				|| is_int($fetchedFieldValue->data)
-				|| is_float($fetchedFieldValue->data)
-			)
-			{
-				return new Item\Field\Value(0, text: (string)$fetchedFieldValue->data);
-			}
-		}
-
-		return null;
-	}
-
-	private function getRequisitesFieldValue(Item\Field $field, Item\Member $member): ?Item\Field\Value
-	{
-		[
-			'fieldCode' => $fieldCode,
-			'subfieldCode' => $subFieldCode,
-		] = NameHelper::parse($field->name);
-
-		$fieldsSetValue = $this->getFieldSetValues($member)[$fieldCode] ?? null;
-		if ($subFieldCode !== '')
-		{
-			$value = $this->getFieldSetValues($member)[$fieldCode][$subFieldCode] ?? null;
-			if (is_string($value))
-			{
-				return new Item\Field\Value(fieldId: 0, text: $value);
-			}
-
-			return null;
-		}
-
-		if (is_string($fieldsSetValue))
-		{
-			return new Item\Field\Value(fieldId: 0, text: $fieldsSetValue);
-		}
-
-		return null;
-	}
-
-	/**
-	 * @param Item\Member $member
-	 *
-	 * @return array<string, array>
-	 */
-	private function getFieldSetValues(Item\Member $member): array
-	{
-		if (!Main\Loader::includeModule('crm'))
-		{
-			return [];
-		}
-		if (!isset($this->fieldSetMemoryCacheByMemberId[$member->id]))
-		{
-			$this->fieldSetMemoryCacheByMemberId[$member->id] = \Bitrix\Crm\Integration\Sign\Form::getFieldSetValues(
-				match ($member->entityType)
-				{
-					\Bitrix\Sign\Type\Member\EntityType::CONTACT => \CCrmOwnerType::Contact,
-					\Bitrix\Sign\Type\Member\EntityType::COMPANY => \CCrmOwnerType::Company,
-					default => 0,
-				},
-				$member->entityId,
-				requisitePresetId: $member->presetId,
-			);;
-		}
-
-		return $this->fieldSetMemoryCacheByMemberId[$member->id];
-	}
-
-	private function getB2eReferenceFieldValue(Item\Block $block, Item\Field $field, Item\Member $member, Item\Document $document): ?Item\Field\Value
-	{
-		['fieldCode' => $fieldCode, 'subfieldCode' => $subfieldCode] = NameHelper::parse($field->name);
-		if (str_starts_with($fieldCode, Factory\Field::USER_FIELD_CODE_PREFIX))
-		{
-			$fieldCode = mb_substr($fieldCode, mb_strlen(Factory\Field::USER_FIELD_CODE_PREFIX));
-		}
-
-		if (!$this->profileProvider->isProfileField($fieldCode))
-		{
-			return $this->getCrmReferenceFieldValue($field, $member, $document);
-		}
-
-		$entityId = $block->role === Role::ASSIGNEE
-			? $document->representativeId
-			: $member->entityId
+		return $this->getFieldValueFromLocalFields($member, $field)
+			?? $this->fieldValueFactory->createByBlock($block, $field, $member, $this->document)
 		;
-
-		$originalValue = $field->type === FieldType::LIST;
-
-		$profileFieldData = $this->profileProvider->loadFieldData(
-			userId: $entityId,
-			fieldName: $fieldCode,
-			subFieldName: $subfieldCode,
-			originalValue: $originalValue,
-		);
-		if ($profileFieldData->value === '')
-		{
-			return null;
-		}
-
-		return new Item\Field\Value(0, text: $profileFieldData->value, trusted: $profileFieldData->isLegal);
-	}
-
-	private function correctBlockCodeByFieldCode(Item\Block $block, Item\Document $document): void
-	{
-		if (isset($block->data['field']))
-		{
-			[,$fieldName] = NameHelper::parseFieldCode(
-				$block->data['field'],
-				\CCrmOwnerType::ResolveName($document->entityTypeId),
-			);
-
-			if (str_starts_with($fieldName, 'RQ_'))
-			{
-				$block->code = match($block->code) {
-					\Bitrix\Sign\Type\BlockCode::B2E_MY_REFERENCE => \Bitrix\Sign\Type\BlockCode::MY_REQUISITES,
-					default => $block->code,
-				};
-			}
-		}
-	}
-
-	public function getDocumentFieldValue(
-		Item\Document $document,
-		string $fieldName,
-		string $fieldType,
-		string $subfieldCode,
-	): Item\Field\Value
-	{
-		$factory = \Bitrix\Crm\Service\Container::getInstance()?->getFactory($document->entityTypeId);
-		$value = $factory->getItem($document->entityId)?->get($fieldName);
-
-		if (
-			$fieldType === FieldType::ADDRESS
-			&& Main\Loader::includeModule('fileman')
-			&& Main\Loader::includeModule('location')
-		)
-		{
-			$value = $this->parseAddressSubfieldValue($value, $subfieldCode);
-		}
-
-		return new Item\Field\Value(0, text: (string)$value);
-	}
-
-	public function parseAddressSubfieldValue(mixed $value, string $subfieldCode): string
-	{
-		[,,$addressId] = AddressType::parseValue($value);
-		if (!$addressId)
-		{
-			return '';
-		}
-
-		/** @var Address $address */
-		$address = Address::load($addressId);
-		if (!$address)
-		{
-			return '';
-		}
-
-		if (!empty($subfieldCode))
-		{
-			$value = $address->getFieldValue(FieldType::ADDRESS_SUBFIELD_MAP[$subfieldCode]);
-		}
-		else
-		{
-			$value = $address->toString(
-				FormatService::getInstance()->findDefault(LANGUAGE_ID),
-				\Bitrix\Location\Entity\Address\Converter\StringConverter::STRATEGY_TYPE_TEMPLATE_COMMA,
-			);
-		}
-
-		return (string)$value;
-	}
-
-	private function getCrmEntityId(Item\Member $member, Item\Document $document, string $entityTypeName): ?int
-	{
-		if (
-			$entityTypeName === CCrmOwnerType::CompanyName
-			&& $member->entityType === \Bitrix\Sign\Type\Member\EntityType::COMPANY
-		)
-		{
-			return $member->entityId;
-		}
-		elseif (
-			$entityTypeName === CCrmOwnerType::ContactName
-			&& $member->entityType === \Bitrix\Sign\Type\Member\EntityType::CONTACT
-		)
-		{
-			return $member->entityId;
-		}
-		elseif (in_array($entityTypeName, [CCrmOwnerType::SmartB2eDocumentName, CCrmOwnerType::SmartDocumentName], true))
-		{
-			return $document->id;
-		}
-
-		return null;
 	}
 
 	private function checkAndSetTrusted(Item\Api\Property\Request\Field\Fill\MemberFields $memberFields): void
@@ -514,154 +237,23 @@ final class FillFields implements Contract\Operation
 		$memberFields->trusted = true;
 	}
 
-	private function appendRequiredFieldsWithoutBlocks(
-		Item\Api\Property\Request\Field\Fill\MemberFieldsCollection $memberFieldsCollection,
-		Item\MemberCollection $members,
-	): void
+	private function getRequiredFields(): Item\B2e\RequiredFieldsCollection
 	{
-		if (!Type\DocumentScenario::isB2EScenario($this->document->scenario))
+		if (!isset($this->requiredFieldsCollection))
 		{
-			return;
+			$operation = new GetRequiredFieldsWithCache(
+				documentId: $this->document->id,
+				companyUid: $this->document->companyUid,
+			);
+			$result = $operation->launch();
+
+			$this->requiredFieldsCollection = $result instanceof B2eRequiredFieldsResult
+				? $result->collection :
+				new Item\B2e\RequiredFieldsCollection()
+			;
 		}
 
-		$requiredFields = $this->getRequiredFields();
-		if ($requiredFields === null)
-		{
-			return;
-		}
-
-		$blockFieldNames = $this->getFieldNames($memberFieldsCollection);
-		foreach ($requiredFields as $requiredField)
-		{
-			$field = $this->fieldFactory->createByRequired($this->document, $members, $requiredField);
-			if ($field instanceof Item\Field && !isset($blockFieldNames[$field->name]))
-			{
-				$this->appendFieldsWithoutBlocksValues($field, $requiredField, $members, $memberFieldsCollection);
-			}
-		}
-	}
-
-	private function getRequiredFields(): ?Item\B2e\RequiredFieldsCollection
-	{
-		$collection = $this->getRequiredFieldsFromDb();
-
-		return $collection->isEmpty() ? $this->getRequiredFieldsFromApi() : $collection;
-	}
-
-	private function getRequiredFieldsFromDb(): Item\B2e\RequiredFieldsCollection
-	{
-		return $this->requiredFieldRepository
-			->listByDocumentId($this->document->id)
-			->convertToRequiredFieldCollection();
-	}
-
-	private function getRequiredFieldsFromApi(): ?Item\B2e\RequiredFieldsCollection
-	{
-		$apiResult = Container::instance()
-							  ->getApiB2eProviderFieldsService()
-							  ->loadRequiredFields($this->document->companyUid)
-		;
-
-		return $apiResult instanceof B2eRequiredFieldsResult ? $apiResult->collection : null;
-	}
-
-	/**
-	 * Get all field names in blocks as key map
-	 *
-	 * @param Item\Api\Property\Request\Field\Fill\MemberFieldsCollection $memberFieldsCollection
-	 *
-	 * @return array<string, string>
-	 */
-	private function getFieldNames(Item\Api\Property\Request\Field\Fill\MemberFieldsCollection $memberFieldsCollection): array
-	{
-		$fieldNames = [];
-		foreach ($memberFieldsCollection->toArray() as $item)
-		{
-			foreach ($item->fields->toArray() as $field)
-			{
-				$name = $field->name;
-				$fieldNames[$name] = $name;
-			}
-		}
-
-		return $fieldNames;
-	}
-
-	private function appendFieldsWithoutBlocksValues(
-		Item\Field $field,
-		Item\B2e\RequiredField $requiredField,
-		Item\MemberCollection $members,
-		Item\Api\Property\Request\Field\Fill\MemberFieldsCollection $memberFieldsCollection,
-	): void
-	{
-		$legalField = $this->getLegalInfoFieldByType($requiredField->type);
-		if (!$legalField)
-		{
-			return;
-		}
-
-		foreach ($members->filterByRole($requiredField->role) as $member)
-		{
-			$userId = $this->memberService->getUserIdForMember($member, $this->document);
-			$profileFieldData = $this->profileProvider->loadFieldData($userId, $legalField->name);
-			if (!$profileFieldData->value)
-			{
-				continue;
-			}
-			$requestField = $this->makeRequestFieldByValue($field, $profileFieldData);
-			$existedMemberFields = $this->getExistedMemberFields($memberFieldsCollection, $member->uid);
-			if ($existedMemberFields)
-			{
-				$existedMemberFields->fields->addItem($requestField);
-			}
-			else
-			{
-				$requestFields = new Item\Api\Property\Request\Field\Fill\FieldCollection($requestField);
-				$memberFields = new Item\Api\Property\Request\Field\Fill\MemberFields($member->uid, $requestFields);
-				$memberFieldsCollection->addItem($memberFields);
-			}
-		}
-	}
-
-	private function makeRequestFieldByValue(
-		Item\Field $field,
-		ProfileFieldData $profileFieldData,
-	): Item\Api\Property\Request\Field\Fill\Field
-	{
-		$fieldValue = new Item\Api\Property\Request\Field\Fill\Value\StringFieldValue($profileFieldData->value);
-		$requestValues = new Item\Api\Property\Request\Field\Fill\FieldValuesCollection($fieldValue);
-
-		return new Item\Api\Property\Request\Field\Fill\Field($field->name, $requestValues, $profileFieldData->isLegal);
-	}
-
-	private function getExistedMemberFields(
-		Item\Api\Property\Request\Field\Fill\MemberFieldsCollection $memberFieldsCollection,
-		string $memberUid,
-	): ?Item\Api\Property\Request\Field\Fill\MemberFields
-	{
-		foreach ($memberFieldsCollection->toArray() as $memberFields)
-		{
-			if ($memberFields->memberId === $memberUid)
-			{
-				return $memberFields;
-			}
-		}
-
-		return null;
-	}
-
-	private function getLegalInfoFieldByType(string $type): ?Item\B2e\LegalInfoField
-	{
-		if (!isset($this->legalFieldsByType))
-		{
-			$this->legalFieldsByType = [];
-			foreach ((new LegalInfoProvider())->getFieldsItems() as $field)
-			{
-				$this->legalFieldsByType[$field->type] = $field;
-			}
-		}
-
-		return $this->legalFieldsByType[$type] ?? null;
+		return $this->requiredFieldsCollection;
 	}
 
 	private function getLock(): bool
@@ -694,4 +286,358 @@ final class FillFields implements Contract\Operation
 
 		return new FillFieldsResult(!$notConfigured);
 	}
+
+	private function loadSignFields(Item\MemberCollection $members): void
+	{
+		if ($this->canDocumentContainLocalFieldValues())
+		{
+			$this->fieldValues = $this->fieldValueRepository->listByMemberIds($members->getIds());
+		}
+	}
+
+	private function canDocumentContainLocalFieldValues(): bool
+	{
+		return Type\DocumentScenario::isB2EScenario($this->document->scenario)
+			&& $this->document->initiatedByType === Type\Document\InitiatedByType::EMPLOYEE;
+	}
+
+	private function getFieldValueFromLocalFields(
+		Item\Member $member,
+		Item\Field $field,
+	): ?Item\Field\Value
+	{
+		if ($this->fieldValues === null)
+		{
+			return null;
+		}
+
+		foreach ($this->fieldValues as $fieldValue)
+		{
+			if (
+				$fieldValue instanceof Item\Field\FieldValue
+				&& $fieldValue->memberId === $member->id
+				&& $fieldValue->fieldName === $field->name
+			)
+			{
+				return new Item\Field\Value(0, text: $fieldValue->value);
+			}
+		}
+
+		return null;
+	}
+
+	private function bunchLoadHcmFieldValues(
+		Item\MemberCollection $members,
+		Item\Api\Property\Request\Field\Fill\MemberFieldsCollection $membersFields,
+		Item\BlockCollection $blocks,
+	): Main\Result|HcmLinkFieldLoadResult
+	{
+		if (!$this->document->hcmLinkCompanyId)
+		{
+			return new HcmLinkFieldLoadResult(false);
+		}
+
+		$fieldIds = $this->hcmLinkValueReferenceMap->getFieldIds();
+		$employeeIds = $this->hcmLinkValueReferenceMap->getEmployeeIds();
+		if (empty($fieldIds) || empty($employeeIds))
+		{
+			return new HcmLinkFieldLoadResult(false);
+		}
+
+		$result = $this->requestFieldsIfNeed($members, $employeeIds, $fieldIds);
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
+
+		$result = $this->hcmLinkService->isAllJobsDone($this->getMemberJobIds($members));
+		if (!$result instanceof HcmLinkJobsCheckResult)
+		{
+			return (new Main\Result())
+				->addError(new Main\Error(Loc::getMessage('SIGN_OPERATION_SIGNING_SERVICE_FILL_FIELDS_HCM_JOB_ERROR')))
+			;
+		}
+
+		if (!$result->isDone)
+		{
+			return new HcmLinkFieldLoadResult(true);
+		}
+
+		$result = $this->fillDelayedValuesByReference($employeeIds, $fieldIds);
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
+
+		$result = $this->updateLegalInfo($membersFields, $members, $blocks);
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
+
+		return new HcmLinkFieldLoadResult(false);
+	}
+
+	private function requestFieldsIfNeed(
+		Item\MemberCollection $members,
+		array $employeeIds,
+		array $fieldIds,
+	): Main\Result
+	{
+		$notRequested = $members->filter(
+			fn(Item\Member $member) => !$member->hcmLinkJobId && in_array($member->employeeId, $employeeIds, true),
+		);
+
+		if ($notRequested->isEmpty())
+		{
+			return new Main\Result();
+		}
+
+		$notRequestedEmployeeIds = [];
+		foreach ($notRequested as $member)
+		{
+			$notRequestedEmployeeIds[] = $member->employeeId;
+		}
+		$result = $this->hcmLinkFieldService
+			->requestFieldValues($this->document->hcmLinkCompanyId, $notRequestedEmployeeIds, $fieldIds)
+		;
+
+		if (!$result instanceof HcmLinkFieldRequestResult)
+		{
+			return $result;
+		}
+
+		$jobId = $result->jobId;
+
+		foreach ($notRequested as $member)
+		{
+			$member->hcmLinkJobId = $jobId;
+			$updateResult = $this->memberRepository->update($member);
+			if (!$updateResult->isSuccess())
+			{
+				return $updateResult;
+			}
+		}
+
+		return new Main\Result();
+	}
+
+	private function getMemberJobIds(Item\MemberCollection $members): array
+	{
+		$ids = [];
+		foreach ($members as $member)
+		{
+			if ($member->hcmLinkJobId)
+			{
+				$ids[$member->hcmLinkJobId] = $member->hcmLinkJobId;
+			}
+		}
+
+		return array_values($ids);
+	}
+
+	private function fillDelayedValuesByReference(array $employeeIds, array $fieldIds): Main\Result
+	{
+		$result = $this->hcmLinkFieldService->getFieldValue($employeeIds, $fieldIds);
+		if (!$result instanceof GetFieldValueResult)
+		{
+			return $result;
+		}
+
+		foreach ($result->collection as $valueItem)
+		{
+			foreach ($this->hcmLinkValueReferenceMap->get($valueItem->employeeId, $valueItem->fieldId) as $requestValue)
+			{
+				$requestValue->value = $valueItem->value;
+			}
+		}
+
+		return new Main\Result();
+	}
+
+	private function appendB2eRequiredFields(
+		Item\Member $member,
+		Item\Api\Property\Request\Field\Fill\FieldCollection $requestFields,
+	): void
+	{
+		if (!Type\DocumentScenario::isB2EScenario($this->document->scenario))
+		{
+			return;
+		}
+
+		foreach ($this->getRequiredFields() as $requiredField)
+		{
+			if ($requiredField->role !== $member->role)
+			{
+				continue;
+			}
+
+			$block = $this->blockFactory->makeStubBlockByRequiredField($this->document, $requiredField, $member->party);
+			if (!$block)
+			{
+				continue;
+			}
+
+			$fields = $this->fieldFactory->createByBlocks(new Item\BlockCollection($block), $member, $this->document);
+			foreach ($fields as $field)
+			{
+				if (!in_array($field->name, $requestFields->getNames(), true))
+				{
+					$this->addFieldValueToRequest($block, $field, $member, $requestFields);
+				}
+			}
+		}
+	}
+
+	private function updateLegalInfo(
+		Item\Api\Property\Request\Field\Fill\MemberFieldsCollection $membersFields,
+		Item\MemberCollection $members,
+		Item\BlockCollection $blocks,
+	): Main\Result
+	{
+		$membersByUidMap = $this->getMemberByUidMap($members);
+
+		foreach ($membersFields->items as $memberFields)
+		{
+			$member = $membersByUidMap[$memberFields->memberId];
+			if (!$member instanceof Item\Member)
+			{
+				continue;
+			}
+
+			foreach ($memberFields->fields->toArray() as $field)
+			{
+				if ($field->trusted && $this->isHcmLinkField($field->name))
+				{
+					$result = $this->updateLegalInfoByField($field, $member);
+					if (!$result->isSuccess())
+					{
+						return $result;
+					}
+				}
+			}
+
+			$this->updateMemberRequestProfileFields($member, $blocks, $memberFields->fields);
+			$this->checkAndSetTrusted($memberFields);
+		}
+
+		return new Main\Result();
+	}
+
+	private function isHcmLinkField(string $fieldCode): bool
+	{
+		return str_starts_with($fieldCode, $this->hcmLinkFieldService::FIELD_PREFIX);
+	}
+
+	private function updateLegalInfoByField(
+		Item\Api\Property\Request\Field\Fill\Field $requestField,
+		Item\Member $member,
+	): Main\Result
+	{
+
+		$item = $requestField->value->getFirst();
+		if (!$item instanceof Item\Field\HcmLink\HcmLinkDelayedValue || $item->value === '')
+		{
+			return new Main\Result();
+		}
+
+		['fieldCode' => $fieldCode] = NameHelper::parse($requestField->name);
+		$parsedName = $this->hcmLinkFieldService->parseName($fieldCode);
+		if ($parsedName === null)
+		{
+			return new Main\Result();
+		}
+
+		$legalType = $this->hcmLinkFieldService->convertHcmLinkIntTypeToLegalInfoType($parsedName->type);
+		if (!$legalType)
+		{
+			return new Main\Result();
+		}
+
+		$field = $this->legalInfoProvider->getLegalInfoFieldByType($legalType);
+		if (!$field)
+		{
+			return new Main\Result();
+		}
+
+		$userId = $this->memberService->getUserIdForMember($member, $this->document);
+		if ($userId === null)
+		{
+			return new Main\Result();
+		}
+
+		return $this->profileProvider->updateFieldData($userId, $field->name, $item->value);
+	}
+
+	/**
+	 * @param Item\MemberCollection $members
+	 *
+	 * @return array<string, Item\Member>
+	 */
+	private function getMemberByUidMap(Item\MemberCollection $members): array
+	{
+		$map = [];
+		foreach ($members as $member)
+		{
+			$map[$member->uid] = $member;
+		}
+
+		return $map;
+	}
+
+	private function updateMemberRequestProfileFields(
+		Item\Member $member,
+		Item\BlockCollection $blocks,
+		Item\Api\Property\Request\Field\Fill\FieldCollection $requestFields,
+	): void
+	{
+		$roleBlocks = $blocks->filterByRole($member->role);
+		foreach ($roleBlocks as $block)
+		{
+			$fields = $this->fieldFactory->createByBlocks(new Item\BlockCollection($block), $member, $this->document);
+			foreach ($fields as $field)
+			{
+				['fieldCode' => $fieldCode, 'fieldType' => $fieldType] = NameHelper::parse($field->name);
+				if (
+					$this->profileProvider->isFieldCodeUserProfileField($fieldCode)
+					&& $this->hcmLinkFieldService->getSpecialHcmFieldTypeBySignFieldType($fieldType)
+				)
+				{
+					$this->replaceValueInRequestField($block, $field, $member, $requestFields);
+				}
+			}
+		}
+	}
+
+	private function replaceValueInRequestField(
+		Item\Block $block,
+		Item\Field $field,
+		Item\Member $member,
+		Item\Api\Property\Request\Field\Fill\FieldCollection $requestFields
+	): void
+	{
+		$value = $this->loadFieldValue($block, $field, $member);
+		if ($value === null)
+		{
+			return;
+		}
+
+		$fieldValue = $this->fieldFillRequestValueFactory->createByValueItem($value);
+		if ($fieldValue === null)
+		{
+			return;
+		}
+
+		foreach ($requestFields->toArray() as $requestField)
+		{
+			if ($requestField->name === $field->name)
+			{
+				$requestField->value = new Item\Api\Property\Request\Field\Fill\FieldValuesCollection($fieldValue);
+				$requestField->trusted = $value->trusted ?? false;
+
+				break;
+			}
+		}
+	}
+
 }

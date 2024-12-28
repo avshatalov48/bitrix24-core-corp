@@ -4,6 +4,7 @@
 	const AppTheme = require('apptheme');
 	const colorUtils = require('utils/color');
 	const { ContextMenu } = require('layout/ui/context-menu');
+	const { RequestExecutor } = require('rest');
 	const platform = Application.getPlatform();
 	const caches = new Map();
 
@@ -412,24 +413,43 @@
 			contextMenu.show(this.list.list);
 		}
 
-		onAddMembersClick()
+		async onAddMembersClick()
 		{
-			(new RecipientSelector('GROUP_INVITE', ['user', 'department']))
-				.setTitle(BX.message('MOBILE_PROJECT_MEMBER_LIST_FILTER_ADD_MEMBERS'))
-				.open()
-				.then((recipients) => {
-					if (recipients.user && recipients.user.length > 0)
-					{
-						(new RequestExecutor('sonet_group.user.invite', {
-							GROUP_ID: this.list.projectId,
-							USER_ID: recipients.user.map((user) => user.id),
-						}))
-							.call()
-							.then(() => this.list.reload())
-						;
-					}
+			const recipients = (
+				await new RecipientSelector('GROUP_INVITE', ['user', 'department'])
+					.setEntitiesOptions({
+						user: {
+							options: {
+								intranetUsersOnly: !this.list.isExtranet,
+							},
+							searchable: true,
+							dynamicLoad: true,
+							dynamicSearch: true,
+						},
+						department: {
+							options: {
+								selectMode: 'departmentsOnly',
+								allowFlatDepartments: true,
+							},
+							searchable: true,
+							dynamicLoad: true,
+							dynamicSearch: true,
+						},
+					})
+					.setTitle(BX.message('MOBILE_PROJECT_MEMBER_LIST_FILTER_ADD_MEMBERS'))
+					.open()
+			);
+			if (recipients.user && recipients.user.length > 0)
+			{
+				new RequestExecutor('sonet_group.user.invite', {
+					GROUP_ID: this.list.projectId,
+					USER_ID: recipients.user.map((user) => user.id),
 				})
-			;
+					.call()
+					.then(() => this.list.reload())
+					.catch(console.error)
+				;
+			}
 		}
 
 		onWaitingClick()
@@ -1055,6 +1075,7 @@
 			this.userId = userId;
 			this.projectId = projectId;
 			this.isOwner = params.isOwner;
+			this.isExtranet = params.isExtranet;
 			this.canInvite = params.canInvite;
 			this.minSearchSize = params.minSearchSize;
 

@@ -130,6 +130,15 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 		{ condition },
 	);
 
+	const take = createAsyncThunk(
+		'tasks:tasks/take',
+		({ taskId }) => runActionPromise({
+			action: 'tasksmobile.Task.take',
+			options: { taskId },
+		}),
+		{ condition },
+	);
+
 	const pause = createAsyncThunk(
 		'tasks:tasks/pause',
 		({ taskId }) => runActionPromise({
@@ -311,6 +320,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 		startTimer,
 		pauseTimer,
 		start,
+		take,
 		pause,
 		complete,
 		renew,

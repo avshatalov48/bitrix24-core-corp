@@ -219,8 +219,8 @@ class CheckListItemFields
 		this.members.clear();
 
 		Object.keys(members).forEach((id) => {
-			const {NAME, TYPE} = members[id];
-			this.members.set(id, {id, nameFormatted: Text.encode(NAME), type: types[TYPE]});
+			const { NAME, TYPE, IS_COLLABER } = members[id];
+			this.members.set(id, { id, nameFormatted: Text.encode(NAME), type: types[TYPE], isCollaber: IS_COLLABER });
 		});
 	}
 

@@ -5,7 +5,7 @@ jn.define('ui-system/form/inputs/input/src/visual-decorator', (require, exports,
 	const { Type } = require('type');
 	const { isNil } = require('utils/type');
 	const { isEmpty, isEqual } = require('utils/object');
-	const { refSubstitution } = require('utils/function');
+	const { refSubstitution, debounce } = require('utils/function');
 	const { PureComponent } = require('layout/pure-component');
 
 	/**
@@ -22,9 +22,9 @@ jn.define('ui-system/form/inputs/input/src/visual-decorator', (require, exports,
 			super(props);
 
 			this.componentRef = null;
-
 			this.currentValue = null;
 			this.initState(props, true);
+			this.handleOnChange = debounce(this.handleOnChange, 50, this);
 		}
 
 		shouldComponentUpdate(nextProps, nextState)
@@ -75,23 +75,13 @@ jn.define('ui-system/form/inputs/input/src/visual-decorator', (require, exports,
 			this.initState(nextProps);
 		}
 
-		componentDidUpdate()
-		{
-			const { valid } = this.state;
-
-			if (!valid)
-			{
-				this.handleOnError({ valid });
-			}
-		}
-
-		initState(props, initialState)
+		initState(props, initialState = false)
 		{
 			const isFocused = props.focus || props.isFocused;
 			const value = props.value ?? props.text ?? (this.state.value || '');
 			const error = Type.isBoolean(props.error) && Boolean(props.error);
 			const focus = Type.isBoolean(isFocused) ? Boolean(isFocused) : this.#isFocused();
-			const valid = this.isValidValue({ value, focus, initialState });
+			const valid = initialState ? true : this.isValidValue({ value, focus });
 
 			this.state = { value, error, valid, focus };
 		}
@@ -185,7 +175,7 @@ jn.define('ui-system/form/inputs/input/src/visual-decorator', (require, exports,
 				value: this.getValue(),
 			});
 
-			this.setState(
+			this.updateState(
 				{ value, valid },
 				() => {
 					this.currentValue = value;
@@ -212,22 +202,15 @@ jn.define('ui-system/form/inputs/input/src/visual-decorator', (require, exports,
 			onError?.(error, testId);
 		};
 
-		isValidValue = ({ focus, value, initialState }) => {
-			let isValid = this.handleOnValid(value);
-
-			if (!focus && !initialState)
-			{
-				isValid = this.isValid(value);
-			}
-
-			return isValid;
+		isValidValue = ({ focus, value }) => {
+			return focus ? this.handleOnValid(value) : this.isValid(value);
 		};
 
 		setFocused(focus, callback)
 		{
 			return new Promise((resolve) => {
 				const valid = this.isValidValue({ focus, value: this.getValue() });
-				this.setState({
+				this.updateState({
 					valid,
 					focus,
 				}, () => {
@@ -235,6 +218,22 @@ jn.define('ui-system/form/inputs/input/src/visual-decorator', (require, exports,
 					resolve();
 				});
 			});
+		}
+
+		updateState(state, callback)
+		{
+			this.setState(
+				state,
+				() => {
+					const valid = state.valid;
+					if (!valid)
+					{
+						this.handleOnError({ valid });
+					}
+
+					callback();
+				},
+			);
 		}
 
 		getValue()

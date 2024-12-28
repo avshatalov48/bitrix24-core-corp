@@ -1,62 +1,91 @@
-import { Tag, Loc, Runtime } from 'main.core';
+import { Loc, Runtime, Tag } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { BaseCache, MemoryCache } from 'main.core.cache';
+import { type AnalyticsOptions } from 'sign.v2.analytics';
+import type { B2EEmployeeSignSettings } from 'sign.v2.b2e.sign-settings-employee';
 
 import 'ui.hint';
+import { HcmLinkSalaryVacation } from './hcmlink-salary-vacation';
+
+const analyticsContext: Partial<AnalyticsOptions> = {
+	category: 'documents',
+	c_section: 'ava_menu',
+	type: 'from_employee',
+};
 
 export class SignDocument
 {
 	static events: Record<string, string> = {
-		onDocumentCreateSidePanelOpen: 'onDocumentCreateSidePanelOpen',
+		onDocumentCreateBtnClick: 'onDocumentCreateBtnClick',
 	};
 
-	static B2EEmployeeSignSettingsClass: any;
+	static #b2eEmployeeSignSettings: B2EEmployeeSignSettings;
 
+	static #container = Tag.render`<div id="sign-b2e-employee-settings-container"></div>`;
 	static #cache: BaseCache<any> = new MemoryCache();
 
-	static async getPromise(): Promise<HTMLElement>
+	static async getPromise(isLocked: boolean): Promise<HTMLElement>
 	{
 		const { B2EEmployeeSignSettings } = await Runtime.loadExtension('sign.v2.b2e.sign-settings-employee');
-		SignDocument.B2EEmployeeSignSettingsClass = B2EEmployeeSignSettings;
+		SignDocument.#b2eEmployeeSignSettings = new B2EEmployeeSignSettings(SignDocument.#container.id, analyticsContext);
 
-		return SignDocument.#getLayout();
+		try
+		{
+			await HcmLinkSalaryVacation.load();
+		}
+		catch (e) {}
+
+		return SignDocument.#getLayout(isLocked);
 	}
 
-	static #getLayout(): HTMLElement
+	static #getLayout(isLocked: boolean): HTMLElement
 	{
+		const lockedClass = isLocked ? ' --lock' : '';
+
 		return this.#cache.remember('layout', () => {
 			const layout = Tag.render`
-				<div class="system-auth-form__scope system-auth-form__sign">
-					<div class="system-auth-form__item-container --flex --border" style="flex-direction:row;">
-						<div class="system-auth-form__item-logo">
-							<div class="system-auth-form__item-logo--image --sign">
-								<i></i>
+				<div>
+					<div class="system-auth-form__scope system-auth-form__sign">
+						<div class="system-auth-form__item-container --flex" style="flex-direction:row;">
+							<div class="system-auth-form__item-logo">
+								<div class="system-auth-form__item-logo--image --sign">
+									<i></i>
+								</div>
+							</div>
+							<div class="system-auth-form__item-title">
+								<span>${Loc.getMessage('INTRANET_USER_PROFILE_SIGNDOCUMENT_TITLE')}</span>
+								<span class="system-auth-form__item-title --link-light --margin-s">
+									${Loc.getMessage('INTRANET_USER_PROFILE_SIGNDOCUMENT_TITLE_HINT')}
+								</span>
+							</div>
+							<div class="system-auth-form__btn--sign ui-popupcomponentmaker__btn --medium --border${lockedClass}" onclick="${() => SignDocument.#onCreateDocumentBtnClick(isLocked)}">
+								${Loc.getMessage('INTRANET_USER_PROFILE_SIGNDOCUMENT_CREATE_DOCUMENT')}
 							</div>
 						</div>
-						<div class="system-auth-form__item-title">
-							<span>${Loc.getMessage('INTRANET_USER_PROFILE_SIGNDOCUMENT_TITLE')}</span>
-							<span data-hint-center data-hint="${Loc.getMessage('INTRANET_USER_PROFILE_SIGNDOCUMENT_TITLE_HINT')}"></span>
-						</div>
-						<div class="system-auth-form__btn--sign ui-popupcomponentmaker__btn --medium --border" onclick="${() => SignDocument.#onCreateDocumentBtnClick()}">
-							${Loc.getMessage('INTRANET_USER_PROFILE_SIGNDOCUMENT_CREATE_DOCUMENT')}
-						</div>
 					</div>
-					<div class="system-auth-form__item-block --flex --center">
-						<div class="system-auth-form__item-title --link-dotted">${Loc.getMessage('INTRANET_USER_PROFILE_SIGNDOCUMENT_TRACK_SIGNING')}</div>
-						<span data-hint-center data-hint="${Loc.getMessage('INTRANET_USER_PROFILE_SIGNDOCUMENT_TRACK_SIGNING_HINT')}"></span>
-					</div>
+					${HcmLinkSalaryVacation.getLayout()}
 				</div>
 			`;
-			BX.UI.Hint.init(layout);
+
+			if (BX.UI.Hint)
+			{
+				BX.UI.Hint.init(layout);
+			}
 
 			return layout;
 		});
 	}
 
-	static #onCreateDocumentBtnClick(): void
+	static #onCreateDocumentBtnClick(isLocked: boolean): void
 	{
-		EventEmitter.emit(SignDocument, SignDocument.events.onDocumentCreateSidePanelOpen);
-		const container = Tag.render`<div id="sign-b2e-employee-settings-container"></div>`;
+		EventEmitter.emit(SignDocument, SignDocument.events.onDocumentCreateBtnClick);
+		if (isLocked)
+		{
+			top.BX.UI.InfoHelper.show('limit_office_e_signature');
+
+			return;
+		}
+		const container = SignDocument.#container;
 
 		BX.SidePanel.Instance.open('sign-b2e-settings-init-by-employee', {
 			width: 750,
@@ -68,8 +97,8 @@ export class SignDocument
 			},
 			events: {
 				onLoad: () => {
-					const employeeSignSettings = new SignDocument.B2EEmployeeSignSettingsClass(container.id);
-					employeeSignSettings.render();
+					SignDocument.#b2eEmployeeSignSettings.clearCache();
+					SignDocument.#b2eEmployeeSignSettings.render();
 				},
 			},
 		});

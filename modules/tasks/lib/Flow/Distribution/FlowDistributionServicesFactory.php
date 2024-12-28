@@ -2,42 +2,41 @@
 
 namespace Bitrix\Tasks\Flow\Distribution;
 
-use Bitrix\Tasks\Flow\Provider\FlowTeam\FlowTeamProviderInterface;
-use Bitrix\Tasks\Flow\Provider\FlowTeam\ManuallyFlowTeamProvider;
-use Bitrix\Tasks\Flow\Provider\FlowTeam\NullFlowTeamProvider;
-use Bitrix\Tasks\Flow\Provider\FlowTeam\QueueFlowTeamProvider;
-use Bitrix\Tasks\Flow\Flow;
+use Bitrix\Tasks\Flow\Provider\Member\AbstractFlowMemberProvider;
+use Bitrix\Tasks\Flow\Provider\Member\HimselfFlowMemberProvider;
+use Bitrix\Tasks\Flow\Provider\Member\ManuallyFlowMemberProvider;
+use Bitrix\Tasks\Flow\Provider\Member\QueueFlowMemberProvider;
 use Bitrix\Tasks\Flow\Responsible\Distributor\DistributorStrategyInterface;
+use Bitrix\Tasks\Flow\Responsible\Distributor\HimselfDistributorStrategy;
 use Bitrix\Tasks\Flow\Responsible\Distributor\ManualDistributorStrategy;
-use Bitrix\Tasks\Flow\Responsible\Distributor\NullDistributorStrategy;
 use Bitrix\Tasks\Flow\Responsible\Distributor\QueueDistributorStrategy;
 
 class FlowDistributionServicesFactory
 {
-	private string $flowType;
+	private FlowDistributionType $distributionType;
 
-	public function __construct(string $flowType)
+	public function __construct(FlowDistributionType $distributionType)
 	{
-		$this->flowType = $flowType;
+		$this->distributionType = $distributionType;
 	}
-
+	
 	public function getDistributorStrategy(): DistributorStrategyInterface
 	{
-		return match ($this->flowType)
+		return match ($this->distributionType)
 		{
-			Flow::DISTRIBUTION_TYPE_MANUALLY => new ManualDistributorStrategy(),
-			Flow::DISTRIBUTION_TYPE_QUEUE => new QueueDistributorStrategy(),
-			default => new NullDistributorStrategy(),
+			FlowDistributionType::MANUALLY => new ManualDistributorStrategy(),
+			FlowDistributionType::QUEUE => new QueueDistributorStrategy(),
+			FlowDistributionType::HIMSELF => new HimselfDistributorStrategy(),
 		};
 	}
 
-	public function getFlowTeamProvider(): FlowTeamProviderInterface
+	public function getMemberProvider(): AbstractFlowMemberProvider
 	{
-		return match ($this->flowType)
+		return match ($this->distributionType)
 		{
-			Flow::DISTRIBUTION_TYPE_MANUALLY => new ManuallyFlowTeamProvider(),
-			Flow::DISTRIBUTION_TYPE_QUEUE => new QueueFlowTeamProvider(),
-			default => new NullFlowTeamProvider(),
+			FlowDistributionType::MANUALLY => new ManuallyFlowMemberProvider(),
+			FlowDistributionType::QUEUE => new QueueFlowMemberProvider(),
+			FlowDistributionType::HIMSELF => new HimselfFlowMemberProvider(),
 		};
 	}
 }

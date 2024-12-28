@@ -34,4 +34,12 @@ class FieldCollection implements Contract\ItemCollection, Contract\Item, \Counta
 	{
 		return empty($this->items);
 	}
+
+	/**
+	 * @return array<string>
+	 */
+	public function getNames(): array
+	{
+		return array_map(static fn(Field $field): string => $field->name, $this->toArray());
+	}
 }

@@ -41,6 +41,12 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 			paddingRight: withPaddingRight || withPaddingHorizontal ? Component.paddingLr.toNumber() : 0,
 		};
 
+		const safeArea = restProps.safeArea || {};
+		if (withScroll)
+		{
+			safeArea.bottom = true;
+		}
+
 		if (backgroundColor && (backgroundColor.equal(Color.bgPrimary) || backgroundColor.equal(Color.bgSecondary)))
 		{
 			style.backgroundColor = backgroundColor.toHex();
@@ -52,16 +58,15 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 
 		let boxFooter = null;
 		let stubFooter = null;
+		const bottomSafeArea = safeArea?.bottom;
 
 		if (footer)
 		{
 			let stubRef = null;
 			let stubHeight = 0;
 
-			boxFooter = footer({
-				style: {
-					backgroundColor,
-				},
+			const footerParams = {
+				safeArea: bottomSafeArea,
 				onLayoutFooterHeight: ({ height }) => {
 					if (stubHeight !== height)
 					{
@@ -72,7 +77,16 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 						});
 					}
 				},
-			});
+			};
+
+			if (style.backgroundColor)
+			{
+				footerParams.style = {
+					backgroundColor: style.backgroundColor,
+				};
+			}
+
+			boxFooter = footer(footerParams);
 
 			stubFooter = View({
 				ref: (ref) => {
@@ -88,7 +102,10 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 		const resizableByKeyboard = Boolean(restProps.resizableByKeyboard || !isEmpty(boxFooter?.props?.keyboardButton));
 
 		const render = View(
-			mergeImmutable(restProps, { style }),
+			mergeImmutable(
+				restProps,
+				{ style },
+			),
 			...children,
 			withScroll ? null : stubFooter,
 			withScroll ? null : boxFooter,
@@ -98,8 +115,8 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 		{
 			return View(
 				{
+					safeArea,
 					resizableByKeyboard,
-					safeArea: restProps.safeArea,
 				},
 				ScrollView(
 					mergeImmutable(scrollProps, {

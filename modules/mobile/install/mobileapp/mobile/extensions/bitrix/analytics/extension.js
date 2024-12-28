@@ -34,8 +34,18 @@ jn.define('analytics', (require, exports, module) => {
 				p3: null,
 				p4: null,
 				p5: null,
+				...this.getDefaults(),
 			};
 			this.merge(analyticsData);
+		}
+
+		/**
+		 * @protected
+		 * @return {object}
+		 */
+		getDefaults()
+		{
+			return {};
 		}
 
 		/**

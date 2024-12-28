@@ -38,6 +38,7 @@ jn.define('layout/ui/fields/base/theme/air-compact', (require, exports, module) 
 	const AirCompactThemeField = (FieldComponentClass) => withTheme(FieldComponentClass, AirCompactThemeWrapper);
 
 	module.exports = {
+		AirCompactThemeWrapper,
 		AirCompactThemeField,
 		AirCompactThemeView,
 		ColorScheme,

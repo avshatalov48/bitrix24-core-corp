@@ -25,6 +25,7 @@ global $USER;
  * @var  $USER CUser
  * @var  $this \Bitrix\MobileApp\Janative\Entity\Component
  * @var  $isExtranetUser bool
+ * @var  $isCollaber bool
  */
 
 $allowedFeatures = [];
@@ -83,10 +84,45 @@ if (Mobile::getApiVersion() < 41)
 		"title" => Loc::getMessage("MB_BP_MAIN_MENU_ITEM"),
 		"imageUrl" => $imageDir . "favorite/icon-bp.png",
 		"color" => "#33c3bd",
+		'imageName' => 'business_process',
 		"attrs" => [
 			"url" => $siteDir . "mobile/bp/?USER_STATUS=0",
 			"id" => "bp_list",
 			"counter" => "bp_tasks",
+		],
+	];
+}
+
+if (Loader::includeModule('signmobile')
+	&& class_exists(\Bitrix\SignMobile\Config\Feature::class)
+	&& method_exists(\Bitrix\SignMobile\Config\Feature::class, 'isMyDocumentsGridAvailable')
+	&& \Bitrix\SignMobile\Config\Feature::instance()->isMyDocumentsGridAvailable()
+)
+{
+	$counterId = 'sign_b2e_current';
+	if (enum_exists(\Bitrix\Sign\Type\CounterType::class))
+	{
+		$counterId = \Bitrix\Sign\Type\CounterType::SIGN_B2E_MY_DOCUMENTS->value;
+	}
+
+	$favoriteItems[] = [
+		"title" => Loc::getMessage("MENU_MY_DOCUMENTS"),
+		"imageUrl" => $imageDir . "sign/my-documents.png",
+		'imageName' => 'sign',
+		"color" => '#1F86FF',
+		"hidden" => false,
+		"attrs" => [
+			"id" => "signmobile",
+			"counter" => $counterId,
+			"onclick" => <<<JS
+				ComponentHelper.openLayout({
+					name: 'sign:sign.b2e.grid',
+					object: 'layout',
+					widgetParams: {
+						titleParams: {text: "{$hereDocGetMessage("MENU_MY_DOCUMENTS")}", type: "section"},
+					}
+				});
+			JS,
 		],
 	];
 }
@@ -121,107 +157,12 @@ JS
 	];
 }
 
-if (
-	IsModuleInstalled('intranetmobile')
-	&& Bitrix\Main\Loader::includeModule('intranetmobile')
-	&& Mobile::getInstance()::getApiVersion() >= 54
-)
-{
-
-	$componentPath = Manager::getComponentPath('intranet:user.list');
-
-	$canUseTelephony = (
-		Bitrix\Main\Loader::includeModule('voximplant')
-		&& \Bitrix\Voximplant\Security\Helper::canCurrentUserPerformCalls()
-	) ? "Y" : "N";
-
-	$favoriteItems[] = [
-		'imageUrl' => $imageDir . 'favorite/icon-users.png',
-		'color' => '#AF22AF',
-		'title' => Loc::getMessage($isExtranetUser ? 'MB_CONTACTS' : 'MB_COMPANY'),
-		'attrs' => [
-			"counter" => "total_invitation",
-			'onclick' =>
-				<<<JS
-			let inviteParams = {};
-			try
-			{
-				inviteParams = JSON.parse(Application.sharedStorage('menuComponentSettings').get("invite"));
-			}
-			catch (e)
-			{
-				//do nothing
-			}
-			PageManager.openComponent('JSStackComponent', {
-				scriptPath: "{$componentPath}",
-				componentCode: "intranet.user.list",
-				params: {
-					canInvite: (inviteParams.canInviteUsers ? inviteParams.canInviteUsers : false),
-					canUseTelephony: "{$canUseTelephony}",
-				},
-				rootWidget: {
-					name: 'layout',
-					componentCode: 'users',
-					settings: {
-						objectName: "layout",
-						titleParams: {text: "{$hereDocGetMessage($isExtranetUser ? "MB_CONTACTS" : "MB_COMPANY")}", type: "section"},
-					},
-				},
-			});
-JS
-			,
-		],
-		"id" => "users",
-	];
-}
-else
-{
-	$favoriteItems[] = [
-		"imageUrl" => $imageDir . "favorite/icon-users.png",
-		"color" => "#AF9245",
-		"title" => Loc::getMessage($isExtranetUser ? "MB_CONTACTS" : "MB_COMPANY"),
-		"attrs" => [
-			"onclick" =>
-				<<<JS
-			var inviteParams = {};
-			try
-			{
-				inviteParams = JSON.parse(Application.sharedStorage('menuComponentSettings').get("invite"));
-			}
-			catch (e)
-			{
-				//do nothing
-			}
-
-			PageManager.openComponent(
-			"JSComponentList",
-			{
-				settings: {useSearch: true, titleParams:{ text: "{$hereDocGetMessage($isExtranetUser ? "MB_CONTACTS" : "MB_COMPANY")}", type: "section" }},
-				componentCode: "users",
-				scriptPath: availableComponents["users"]["publicUrl"],
-				params:{
-					COMPONENT_CODE: "users",
-					canInvite: (inviteParams.canInviteUsers ? inviteParams.canInviteUsers : false),
-					rootStructureSectionId: (inviteParams.rootStructureSectionId ? inviteParams.rootStructureSectionId : 1),
-					registerUrl: (inviteParams.registerUrl ? inviteParams.registerUrl : ''),
-					registerAdminConfirm: (inviteParams.registerAdminConfirm ? inviteParams.registerAdminConfirm : false),
-					disableRegisterAdminConfirm: (inviteParams.disableRegisterAdminConfirm ? inviteParams.disableRegisterAdminConfirm : false),
-					sharingMessage: (inviteParams.registerSharingMessage ? inviteParams.registerSharingMessage : ''),
-					userId: {$userId}
-				}
-			})
-JS
-			,
-		],
-		"id" => "users",
-	];
-}
-
 
 $favoriteItems[] = [
 	"imageUrl" => $imageDir . "favorite/icon-disk.png",
 	"color" => "#3CD162",
 	"title" => Loc::getMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW"),
+	'imageName' => 'folder_24',
 	"attrs" => [
 		"onclick" => <<<JS
 
@@ -244,6 +185,7 @@ $favoriteItems[] = [
 	"title" => Loc::getMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW"),
 	"imageUrl" => $imageDir . "favorite/icon-disk.png",
 	"color" => "#b9bdc3",
+	'imageName' => 'folder_24',
 	"attrs" => [
 		"onclick" => <<<JS
 
@@ -265,7 +207,7 @@ JS
 
 
 $favorite = [
-	"title" => Loc::getMessage("MB_SEC_FAVORITE_MSGVER_1"),
+	"title" => Loc::getMessage("MB_SEC_FAVORITE_MSGVER_2"),
 	"hidden" => false,
 	"_code" => "favorite",
 	"sort" => 100,
@@ -388,6 +330,7 @@ if (
 			[
 				'title' => Loc::getMessage('MB_CRM_ACTIVITY'),
 				'imageUrl' => $imageDir . 'crm/icon-crm-mydeals.png',
+				'imageName' => 'my_deals',
 				'color' => '#8590a2',
 				'hidden' => false,
 				'attrs' => [
@@ -445,6 +388,7 @@ if (
 				'title' => $customSectionTitle,
 				'imageUrl' => $imageDir . 'crm/icon-crm-dynamic.png',
 				'color' => '#3BA7EF',
+				'imageName' => 'activity',
 				'hidden' => false,
 				'attrs' => [
 					'id' => 'dynamic_custom_section_' . $customSectionId,
@@ -541,6 +485,9 @@ if (!$isExtranetUser && $projectsEnabled)
 	$menuName = Loc::getMessage('MENU_INTRANET');
 	$groupSection["items"][] = [
 		"title" => $menuName,
+		'imageName' => 'intranet',
+		'imageUrl' => $imageDir . 'favorite/intranet.png',
+		'color' => '#0075FF',
 		"attrs" => [
 			"onclick" => <<<JS
 				ComponentHelper.openList({
@@ -576,6 +523,9 @@ if (
 	$menuName = Loc::getMessage('MENU_EXTRANET');
 	$groupSection["items"][] = [
 		"title" => $menuName,
+		'imageName' => 'globe_extranet',
+		'color' => '#FAA72C',
+		'imageUrl' => $imageDir . 'favorite/extranet.png',
 		"attrs" => [
 			"onclick" => <<<JS
 				ComponentHelper.openList({
@@ -633,6 +583,173 @@ if (!$isAvaMenuAvailable)
 	];
 }
 
+if (
+	!$isExtranetUser && !$isCollaber
+)
+{
+	$myBitrix24Items = [];
+
+	if (
+		(
+			\CModule::IncludeModule('bitrix24')
+			|| $USER->isAdmin()
+		)
+		&& Loader::includeModule('intranet')
+		&& Loader::includeModule('intranetmobile')
+	)
+	{
+		$myBitrix24Items[] = [
+			'id' => 'invite',
+			'title' => Loc::getMessage('MENU_BITRIX24_INVITE'),
+			'imageName' => 'add_person',
+			'color' => '#FB6DBA',
+			'imageUrl' => $imageDir . 'favorite/add_person.png',
+			'attrs' => [
+				'showHighlighted' => true,
+				'highlightWithCounter' => true,
+				'counter' => 'menu_invite',
+				'onclick' => <<<JS
+						requireLazy('intranet:invite-opener-new')
+							.then(({ openIntranetInviteWidget }) => {
+								if (openIntranetInviteWidget)
+								{
+									openIntranetInviteWidget({});
+								}
+							});
+				JS,
+			],
+		];
+	}
+
+	if (
+		IsModuleInstalled('intranetmobile')
+		&& Bitrix\Main\Loader::includeModule('intranetmobile')
+		&& Mobile::getInstance()::getApiVersion() >= 54
+	)
+	{
+		$componentPath = Manager::getComponentPath('intranet:user.list');
+
+		$canUseTelephony = (
+			Bitrix\Main\Loader::includeModule('voximplant')
+			&& \Bitrix\Voximplant\Security\Helper::canCurrentUserPerformCalls()
+		) ? "Y" : "N";
+
+		$myBitrix24Items[] = [
+			'id' => 'users',
+			'title' => Loc::getMessage($isExtranetUser ? 'MB_CONTACTS' : 'MB_COMPANY'),
+			'imageUrl' => $imageDir . 'favorite/icon-users.png',
+			'color' => '#AF22AF',
+			'imageName' => 'three_persons',
+			'attrs' => [
+				"counter" => "total_invitation",
+				'onclick' =>
+					<<<JS
+			let inviteParams = {};
+			try
+			{
+				inviteParams = JSON.parse(Application.sharedStorage('menuComponentSettings').get("invite"));
+			}
+			catch (e)
+			{
+				//do nothing
+			}
+			PageManager.openComponent('JSStackComponent', {
+				scriptPath: "{$componentPath}",
+				componentCode: "intranet.user.list",
+				params: {
+					canInvite: (inviteParams.canInviteUsers ? inviteParams.canInviteUsers : false),
+					canUseTelephony: "{$canUseTelephony}",
+				},
+				rootWidget: {
+					name: 'layout',
+					componentCode: 'users',
+					settings: {
+						objectName: "layout",
+						titleParams: {text: "{$hereDocGetMessage($isExtranetUser ? "MB_CONTACTS" : "MB_COMPANY")}", type: "section"},
+					},
+				},
+			});
+JS,
+			],
+		];
+	}
+	else
+	{
+		$myBitrix24Items[] = [
+			'id' => 'users',
+			'title' => Loc::getMessage($isExtranetUser ? 'MB_CONTACTS' : 'MB_COMPANY'),
+			'imageName' => 'three_persons',
+			'imageUrl' => $imageDir . 'favorite/icon-users.png',
+			'color' => '#AF9245',
+			'attrs' => [
+				'onclick' =>
+					<<<JS
+			var inviteParams = {};
+			try
+			{
+				inviteParams = JSON.parse(Application.sharedStorage('menuComponentSettings').get("invite"));
+			}
+			catch (e)
+			{
+				//do nothing
+			}
+
+			PageManager.openComponent(
+			"JSComponentList",
+			{
+				settings: {useSearch: true, titleParams:{ text: "{$hereDocGetMessage($isExtranetUser ? "MB_CONTACTS" : "MB_COMPANY")}", type: "section" }},
+				componentCode: "users",
+				scriptPath: availableComponents["users"]["publicUrl"],
+				params:{
+					COMPONENT_CODE: "users",
+					canInvite: (inviteParams.canInviteUsers ? inviteParams.canInviteUsers : false),
+					rootStructureSectionId: (inviteParams.rootStructureSectionId ? inviteParams.rootStructureSectionId : 1),
+					registerUrl: (inviteParams.registerUrl ? inviteParams.registerUrl : ''),
+					registerAdminConfirm: (inviteParams.registerAdminConfirm ? inviteParams.registerAdminConfirm : false),
+					disableRegisterAdminConfirm: (inviteParams.disableRegisterAdminConfirm ? inviteParams.disableRegisterAdminConfirm : false),
+					sharingMessage: (inviteParams.registerSharingMessage ? inviteParams.registerSharingMessage : ''),
+					userId: {$userId}
+				}
+			})
+JS,
+			],
+		];
+	}
+
+	$tabPresetsTitle = Loc::getMessage('MENU_BITRIX24_MENU_BOTTOM');
+	$myBitrix24Items[] = [
+		'id' => 'tab_presets',
+		'title' => $tabPresetsTitle,
+		'imageName' => 'bottom_menu',
+		'color' => '#1E8EC2',
+		'imageUrl' => $imageDir . 'favorite/bottom_menu.png',
+		'attrs' => [
+			'showHighlighted' => true,
+			'highlightWithCounter' => true,
+			'counter' => 'menu_tab_presets',
+			'onclick' => <<<JS
+				PageManager.openComponent('JSStackComponent',{
+					scriptPath: availableComponents['tab.presets'].publicUrl,
+					rootWidget:{
+					name: 'layout',
+					settings:{
+						objectName: 'layout',
+						titleParams: { text: "{$tabPresetsTitle}", useLargeTitleMode: true}
+					}
+				}
+			});
+			JS,
+		],
+	];
+
+	$menuStructure[] = [
+		'title' => Loc::getMessage('MB_SEC_B24_MSGVER_1'),
+		'sort' => 1,
+		'hidden' => false,
+		'items' => $myBitrix24Items,
+	];
+}
+
 $voximplantInstalled = false;
 if ($voximplantInstalled = Loader::includeModule('voximplant'))
 {
@@ -643,6 +760,7 @@ if ($voximplantInstalled = Loader::includeModule('voximplant'))
 		"sort" => 3,
 		"items" => [
 			[
+				'imageName' => 'phone_up',
 				"title" => Loc::getMessage("MENU_TELEPHONY_CALL"),
 				"color" => "#9ACB00",
 				"unselectable" => true,
@@ -928,27 +1046,6 @@ $popupMenuItems = [
 		"iconUrl" => !$useAssets ? $imageDir . "settings/change_account_popup.png?5" : null,
 		"onclick" => <<<JS
 				Application.exit();
-JS
-		,
-	],
-	[
-		"title" => Loc::getMessage("MENU_PRESET_TAB"),
-		"sectionCode" => "menu",
-		"id" => "tab.settings",
-		"iconName" => "bottom_menu",
-		"iconUrl" => !$useAssets ? $imageDir . "settings/tab_settings.png?9" : null,
-		"onclick" => <<<JS
-				PageManager.openComponent("JSStackComponent",{
-						scriptPath: availableComponents["tab.presets"].publicUrl,
-						rootWidget:{
-							name: "layout",
-							settings:{
-									// backdrop:{},
-									objectName: "layout",
-									titleParams: { text: this.title, useLargeTitleMode: true}
-								}
-						}
-					});
 JS
 		,
 	],

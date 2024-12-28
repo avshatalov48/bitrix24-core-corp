@@ -59,6 +59,12 @@ final class EntityService
 
 	public function getSigningWaitUserListByDocumentId(int $documentId): ?MemberCollection
 	{
+		$assignee = $this->memberRepository->getAssigneeByDocumentId($documentId);
+		if ($assignee?->status === MemberStatus::DONE)
+		{
+			return new MemberCollection();
+		}
+
 		return $this->memberRepository?->listB2eSigningByDocumentIdAndStatuses(
 			$documentId,
 			[

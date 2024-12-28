@@ -270,7 +270,7 @@ ChatCreate.event.onChatCreate = function(event)
 				console.info('ChatCreate.event.onChatCreate: chat id:\n', result.data());
 				this.base.openDialog(`chat${result.data()}`, {
 					name: event.title,
-					description: event.type == 'public' ? BX.message('IM_CHAT_TYPE_OPEN_NEW') : BX.message('IM_CHAT_TYPE_CHAT_NEW'),
+					description: event.type == 'public' ? BX.message('IM_CHAT_TYPE_OPEN_NEW_MSGVER_1') : BX.message('IM_CHAT_TYPE_CHAT_NEW_MSGVER_1'),
 					avatar: '',
 				});
 			}

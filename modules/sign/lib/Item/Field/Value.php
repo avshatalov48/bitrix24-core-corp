@@ -3,6 +3,7 @@
 namespace Bitrix\Sign\Item\Field;
 
 use Bitrix\Sign\Contract;
+use Bitrix\Sign\Item\Field\HcmLink\HcmLinkFieldValueId;
 
 class Value implements Contract\Item
 {
@@ -13,6 +14,7 @@ class Value implements Contract\Item
 		public ?string $text = null,
 		public ?int $fileId = null,
 		public ?bool $trusted = null,
+		public ?HcmLinkFieldValueId $hcmLinkFieldValueId = null,
 	)
 	{
 	}

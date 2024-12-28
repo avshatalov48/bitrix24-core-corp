@@ -1,6 +1,7 @@
-import { ajax, Event, Loc, Tag, Type } from 'main.core';
+import { ajax, Event, Loc, Extension, Tag, Text, Type } from 'main.core';
+import { BaseEvent } from 'main.core.events';
 import { TextInput, TextArea, UserSelector } from 'ui.form-elements.view';
-import { IntervalSelector } from 'tasks.interval-selector';
+import { Interval, IntervalSelector } from 'tasks.interval-selector';
 import { FormPage } from './form-page';
 import { ValueChecker } from '../value-checker';
 import { bindFilterNumberInput } from '../bind-filter-number-input';
@@ -68,6 +69,7 @@ export class AboutPage extends FormPage
 			this.#layout.plannedCompletionTime.setErrors(
 				[Loc.getMessage('TASKS_FLOW_EDIT_FORM_PLANNED_COMPLETION_TIME_ERROR')],
 			);
+			this.#layout.plannedCompletionTime.emit('onSetErrors');
 		}
 
 		if (incorrectData.includes('taskCreators'))
@@ -83,21 +85,22 @@ export class AboutPage extends FormPage
 		this.#layout.flowName.cleanError();
 		this.#layout.plannedCompletionTime.cleanError();
 		this.#layout.taskCreatorsSelector.cleanError();
+
+		this.#layout.plannedCompletionTime.emit('onCleanErrors');
 	}
 
 	getFields(flowData: Flow = {}): Flow
 	{
 		const plannedCompletionTimeValue = parseInt(this.#layout.plannedCompletionTime?.getValue(), 10);
 		const intervalDuration = this.#layout.plannedCompletionTimeIntervalSelector?.getDuration();
+		const interval = this.#layout.plannedCompletionTimeIntervalSelector?.getInterval();
 
 		return {
 			name: flowData.name ?? this.#layout.flowName?.getValue().trim(),
 			description: flowData.description ?? this.#layout.flowDescription?.getValue(),
-			taskCreators: (flowData.taskCreators ?? this.#getTasksCreatorsFromSelector()),
-			plannedCompletionTime: (
-				flowData.plannedCompletionTime
-					?? (plannedCompletionTimeValue * intervalDuration || 0)
-			),
+			taskCreators: flowData.taskCreators ?? this.#getTasksCreatorsFromSelector(),
+			plannedCompletionTime: flowData.plannedCompletionTime ?? (plannedCompletionTimeValue * intervalDuration || 0),
+			matchSchedule: flowData.matchSchedule ?? this.#isShortInterval(interval),
 			matchWorkTime: flowData.matchWorkTime ?? (this.#layout.skipWeekends?.isChecked() ?? true),
 		};
 	}
@@ -120,6 +123,13 @@ export class AboutPage extends FormPage
 		}
 
 		return taskCreators;
+	}
+
+	#isShortInterval(interval: Interval): boolean
+	{
+		const shortIntervals = ['minutes', 'hours'];
+
+		return shortIntervals.includes(interval);
 	}
 
 	render(): HTMLElement
@@ -176,6 +186,18 @@ export class AboutPage extends FormPage
 	{
 		const value = this.#flow.plannedCompletionTime;
 		this.#layout.plannedCompletionTimeIntervalSelector = new IntervalSelector({ value });
+
+		const needUseSchedule = this.#needUseSchedule;
+		if (needUseSchedule)
+		{
+			this.#layout.plannedCompletionTimeIntervalSelector.subscribe('intervalChanged', (event) => {
+				const interval = event.getData().interval;
+				const isSkipWeekendsDisabled = this.#isShortInterval(interval);
+
+				this.#layout.skipWeekends.disable(isSkipWeekendsDisabled);
+			});
+		}
+
 		const duration = this.#layout.plannedCompletionTimeIntervalSelector.getDuration();
 
 		const plannedCompletionTimeLabel = `
@@ -207,10 +229,29 @@ export class AboutPage extends FormPage
 			max: Math.floor(maxInt / monthDuration),
 		});
 
+		const interval = this.#layout.plannedCompletionTimeIntervalSelector.getInterval();
+		const isSkipWeekendsDisabled = needUseSchedule && this.#isShortInterval(interval);
+
 		this.#layout.skipWeekends = new ValueChecker({
+			id: 'planned-completion-time-skip-weekends',
 			title: Loc.getMessage('TASKS_FLOW_EDIT_FORM_SKIP_WEEKENDS'),
-			value: this.#flow.id === 0 || this.#flow.matchWorkTime,
+			value: isSkipWeekendsDisabled ? true : this.#flow.id === 0 || this.#flow.matchWorkTime,
 			size: 'extra-small',
+			isFieldDisabled: isSkipWeekendsDisabled,
+			hintText: Loc.getMessage('TASKS_FLOW_EDIT_FORM_DISABLED_SKIP_WEEKENDS_HINT'),
+			hintOnDisabled: true,
+		});
+		this.#layout.skipWeekends.subscribe('lock', (baseEvent: BaseEvent) => {
+			requestAnimationFrame(() => {
+				const hintManager = top.BX.UI.Hint.createInstance({
+					id: `tasks-flow-edit-form-about-page-${Text.getRandom()}`,
+					className: 'skipInitByClassName',
+					popupParameters: {
+						targetContainer: this.#layout.aboutPageForm.closest('.tasks-wizard__step'),
+					},
+				});
+				hintManager.initNode(baseEvent.getData());
+			});
 		});
 
 		const root = Tag.render`
@@ -226,6 +267,13 @@ export class AboutPage extends FormPage
 		`;
 
 		return root;
+	}
+
+	get #needUseSchedule(): boolean
+	{
+		const settings = Extension.getSettings('tasks.flow.edit-form');
+
+		return settings.get('needUseSchedule');
 	}
 
 	async onContinueClick(flowData: Flow = {}): Promise<boolean>

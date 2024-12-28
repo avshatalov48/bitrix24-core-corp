@@ -10,6 +10,7 @@ use Bitrix\Crm;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Main;
+use Bitrix\Main\Web\Json;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -47,7 +48,7 @@ if(!function_exists('__CrmCompanyDetailsEndJsonResonse'))
 		Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 		if(!empty($result))
 		{
-			echo CUtil::PhpToJSObject($result);
+			echo Json::encode(\Bitrix\Crm\Component\Utils\JsonCompatibleConverter::convert((array)$result));
 		}
 		if(!defined('PUBLIC_AJAX_MODE'))
 		{

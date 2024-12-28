@@ -116,6 +116,7 @@ jn.define('crm/timeline/services/activity-viewer', (require, exports, module) =>
 			qrauth.open({
 				title: Loc.getMessage('CRM_TIMELINE_DESKTOP_VERSION'),
 				redirectUrl: this.entity.detailPageUrl,
+				analyticsSection: 'crm',
 			});
 		}
 

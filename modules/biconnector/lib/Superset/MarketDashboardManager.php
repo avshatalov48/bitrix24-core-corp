@@ -2,7 +2,9 @@
 
 namespace Bitrix\BIConnector\Superset;
 
+use Bitrix\BIConnector\Configuration\Feature;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
+use Bitrix\BIConnector\Integration\Superset\Integrator\Request\IntegratorResponse;
 use Bitrix\BIConnector\Integration\Superset\Model;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
 use Bitrix\BIConnector;
@@ -10,7 +12,7 @@ use Bitrix\BIConnector\Superset\Dashboard\EmbeddedFilter;
 use Bitrix\BIConnector\Superset\Logger\MarketDashboardLogger;
 use Bitrix\BIConnector\Superset\Scope\ScopeService;
 use Bitrix\BIConnector\Superset\UI\DashboardManager;
-use \Bitrix\BIConnector\Superset\Dashboard\UrlParameter;
+use Bitrix\BIConnector\Superset\Dashboard\UrlParameter;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
@@ -21,7 +23,6 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Rest;
 use Bitrix\Rest\AppTable;
-use Bitrix\Bitrix24\Feature;
 use Bitrix\Rest\Marketplace\Application;
 
 final class MarketDashboardManager
@@ -29,7 +30,6 @@ final class MarketDashboardManager
 	private const SYSTEM_DASHBOARDS_TAG = 'bi_system_dashboard';
 	public const MARKET_COLLECTION_ID = 'bi_constructor_dashboards';
 	private const DASHBOARD_EXPORT_ENABLED_OPTION_NAME = 'bi_constructor_dashboard_export_enabled';
-	private const DASHBOARD_EXPORT_FEATURE_NAME = 'bi_constructor_export';
 	private const EVENT_ON_AFTER_DASHBOARD_INSTALL = 'onAfterDashboardInstall';
 
 	private static ?MarketDashboardManager $instance = null;
@@ -323,12 +323,12 @@ final class MarketDashboardManager
 
 	public static function isSystemAppByAppCode(string $appCode): bool
 	{
-		return preg_match('/^bitrix\.bic_/', $appCode);
+		return preg_match('/^(bitrix|alaio)\.bic_/', $appCode);
 	}
 
 	public static function isDatasetAppByAppCode(string $appCode): bool
 	{
-		return preg_match('/^bitrix\.bic_datasets_/', $appCode);
+		return preg_match('/^(bitrix|alaio)\.bic_datasets_/', $appCode);
 	}
 
 	public function handleDeleteApp(int $appId): Result
@@ -396,6 +396,13 @@ final class MarketDashboardManager
 			$response = $this->integrator->deleteDashboard([$originalDashboard->getExternalId()]);
 			if ($response->hasErrors())
 			{
+				if ($response->getStatus() === IntegratorResponse::STATUS_NOT_FOUND)
+				{
+					$originalDashboard->delete();
+
+					return $result;
+				}
+
 				$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_ERROR_DELETE_PROXY')));
 
 				return $result;
@@ -571,10 +578,7 @@ final class MarketDashboardManager
 			return true;
 		}
 
-		if (
-			Loader::includeModule('bitrix24')
-			&& !Feature::isFeatureEnabled(self::DASHBOARD_EXPORT_FEATURE_NAME)
-		)
+		if (!Feature::isBiBuilderExportEnabled())
 		{
 			return false;
 		}

@@ -68,3 +68,5 @@ $APPLICATION->IncludeComponent(
 	],
 	$component
 );
+
+$APPLICATION->SetTitle(\Bitrix\Main\Localization\Loc::getMessage('CRM_COMPANY_NAV_TITLE_LIST'));

@@ -2,14 +2,15 @@
 
 namespace Bitrix\Sign\Engine;
 
+use Bitrix\Intranet;
 use Bitrix\Main;
+use Bitrix\Main\SystemException;
+use Bitrix\Sign\Access\AccessController;
+use Bitrix\Sign\Attribute;
 use Bitrix\Sign\Integration\Bitrix24\B2eTariff;
 use Bitrix\Sign\Service\Container;
 use ReflectionClass;
 use ReflectionMethod;
-use Bitrix\Sign\Attribute;
-use Bitrix\Sign\Engine\ActionFilter;
-use Bitrix\Intranet;
 
 class Controller extends \Bitrix\Main\Engine\Controller
 {
@@ -32,9 +33,9 @@ class Controller extends \Bitrix\Main\Engine\Controller
 				new Main\Engine\ActionFilter\ContentType([Main\Engine\ActionFilter\ContentType::JSON]),
 				new Main\Engine\ActionFilter\Authentication(),
 				new Main\Engine\ActionFilter\HttpMethod(
-					[Main\Engine\ActionFilter\HttpMethod::METHOD_GET, Main\Engine\ActionFilter\HttpMethod::METHOD_POST]
+					[Main\Engine\ActionFilter\HttpMethod::METHOD_GET, Main\Engine\ActionFilter\HttpMethod::METHOD_POST],
 				),
-				new Intranet\ActionFilter\IntranetUser()
+				new Intranet\ActionFilter\IntranetUser(),
 			];
 	}
 
@@ -64,13 +65,12 @@ class Controller extends \Bitrix\Main\Engine\Controller
 			foreach ($method->getAttributes() as $attr)
 			{
 				$attr = $attr->newInstance();
-				if ($attr instanceof Attribute\ActionAccess)
+				if ($attr instanceof Attribute\ActionAccess
+					|| $attr instanceof Attribute\Access\LogicOr
+					|| $attr instanceof Attribute\Access\LogicAnd
+				)
 				{
-					$prefilters[ActionFilter\AccessCheck::PREFILTER_KEY] = $accessCheck->addRule(
-						accessPermission: $attr->permission,
-						itemType: $attr->itemType,
-						itemIdRequestKey: $attr->itemIdRequestKey
-					);
+					$prefilters[ActionFilter\AccessCheck::PREFILTER_KEY] = $accessCheck->addRuleFromAttribute($attr);
 				}
 			}
 
@@ -90,12 +90,14 @@ class Controller extends \Bitrix\Main\Engine\Controller
 	protected function addErrorByMessage(string $message): static
 	{
 		$this->addError(new Main\Error($message));
+
 		return $this;
 	}
 
 	protected function addErrorsFromResult(Main\Result $result): static
 	{
 		$this->addErrors($result->getErrors());
+
 		return $this;
 	}
 
@@ -104,5 +106,19 @@ class Controller extends \Bitrix\Main\Engine\Controller
 		$this->addError(B2eTariff::instance()->getCommonAccessError());
 
 		return $this;
+	}
+
+	/**
+	 * @throws SystemException
+	 */
+	protected function getAccessController(): AccessController
+	{
+		$userId = $this->getCurrentUser()?->getId();
+		if (!is_numeric($userId))
+		{
+			throw new Main\SystemException('Cant get current user');
+		}
+
+		return new AccessController($userId);
 	}
 }

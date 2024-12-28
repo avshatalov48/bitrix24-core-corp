@@ -32,8 +32,8 @@ class ListFilter
 		$this->fieldStageSemantic = $fieldStageSemantic;
 
 		$factory = Container::getInstance()->getFactory($entityTypeId);
-		$this->isStagesEnabled = $factory->isStagesEnabled();
-		$this->isCrmTrackingEnabled = $factory->isCrmTrackingEnabled();
+		$this->isStagesEnabled = $factory?->isStagesEnabled() ?? false;
+		$this->isCrmTrackingEnabled = $factory?->isCrmTrackingEnabled() ?? false;
 	}
 
 	protected function getFieldsToFilter(array $fields): array
@@ -115,7 +115,8 @@ class ListFilter
 			{
 				$filter['!' . $fieldName] = $requestFilter['!' . $fieldName];
 			}
-			if (!empty($requestFilter[$fieldName]))
+
+			if ((string)($requestFilter[$fieldName] ?? '') !== '')
 			{
 				$filter['%' . $fieldName] = $requestFilter[$fieldName];
 			}

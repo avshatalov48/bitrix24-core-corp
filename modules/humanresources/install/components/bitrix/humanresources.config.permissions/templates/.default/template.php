@@ -21,12 +21,15 @@ Bitrix\Main\UI\Extension::load(
 		'ui.info-helper',
 		'ui.actionpanel',
 		'ui.design-tokens',
+		'ui.analytics',
 		'loader',
 	]
 );
 $componentId = 'bx-access-group';
 $initPopupEvent = 'humanresources:onComponentLoad';
 $openPopupEvent = 'humanresources:onComponentOpen';
+$cantUse = isset($arResult['CANT_USE']);
+
 \Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 
 ?>
@@ -34,6 +37,7 @@ $openPopupEvent = 'humanresources:onComponentOpen';
 <div id="bx-humanresources-role-main"></div>
 
 <?php
+$APPLICATION->SetPageProperty('BodyClass', 'ui-page-slider-wrapper-hr --premissions');
 $APPLICATION->IncludeComponent(
 	"bitrix:main.ui.selector",
 	".default",
@@ -84,16 +88,29 @@ $APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 	'BUTTONS' => [
 		[
 			'TYPE' => 'save',
-			'ONCLICK' => "window.AccessRights.sendActionRequest()",
-
+			'ONCLICK' => $cantUse? "(function (button) { BX.UI.InfoHelper.show('limit_office_company_structure'); setTimeout(()=>{button.classList.remove('ui-btn-wait')}, 0)})(this)":
+				"window.AccessRights.sendActionRequest(); BX.UI.Analytics.sendData({tool: 'structure',category: 'structure',event: 'save_changes',})",
 		],
 		[
 			'TYPE' => 'cancel',
-			'ONCLICK' => "window.AccessRights.fireEventReset()",
+			'ONCLICK' => "window.AccessRights.fireEventReset(); BX.UI.Analytics.sendData({tool: 'structure',category: 'structure',event: 'cancel_changes',})",
 		],
 	],
 ]);
+
+if($cantUse)
+{
+	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
+	?>
+	<script>
+		BX.ready(function (){
+			BX.UI.InfoHelper.show('limit_office_company_structure');
+		});
+	</script>
+<?php
+}
 ?>
+
 
 <script>
 	BX.ready(function() {

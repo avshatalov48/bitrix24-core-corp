@@ -2,10 +2,11 @@
 
 return [
 	'extensions' => [
+		'layout/ui/context-menu',
+		'layout/ui/fields/menu-select',
 		'notify',
 		'project/member',
-		'layout/ui/fields/menu-select',
+		'rest',
 		'utils/color',
-		'layout/ui/context-menu'
 	],
 ];

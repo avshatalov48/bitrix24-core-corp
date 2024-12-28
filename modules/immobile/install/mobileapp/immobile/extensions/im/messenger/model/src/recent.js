@@ -43,8 +43,10 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			canResend: false,
 		},
 		options: {},
+		uploadingState: null,
 	});
 
+	/** @type {RecentMessengerModel} */
 	const recentModel = {
 		namespaced: true,
 		state: () => ({
@@ -445,7 +447,6 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 				return true;
 			},
 
-
 			/** @function recentModel/clearAllCounters */
 			clearAllCounters: (store, payload) => {
 				const updatedItems = [];
@@ -617,6 +618,11 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 		return 0;
 	}
 
+	/**
+	 * @param {RecentModelState} a
+	 * @param {RecentModelState} b
+	 * @returns {number}
+	 */
 	function sortListByLastActivityDateWithPinned(a, b)
 	{
 		if (!a.pinned && b.pinned)
@@ -629,10 +635,19 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			return -1;
 		}
 
-		if (a.lastActivityDate && b.lastActivityDate)
+		const aLastActivityDate = a.uploadingState?.lastActivityDate > a.lastActivityDate
+			? a.uploadingState.lastActivityDate
+			: a.lastActivityDate
+		;
+		const bLastActivityDate = b.uploadingState?.lastActivityDate > b.lastActivityDate
+			? b.uploadingState.lastActivityDate
+			: b.lastActivityDate
+		;
+
+		if (aLastActivityDate && bLastActivityDate)
 		{
-			const timestampA = new Date(a.lastActivityDate).getTime();
-			const timestampB = new Date(b.lastActivityDate).getTime();
+			const timestampA = new Date(aLastActivityDate).getTime();
+			const timestampB = new Date(bLastActivityDate).getTime();
 
 			return timestampB - timestampA;
 		}

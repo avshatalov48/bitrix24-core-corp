@@ -1,4 +1,4 @@
-import { Type, ajax as Ajax, type JsonObject } from 'main.core';
+import { Type, ajax as Ajax, type JsonObject, Reflection } from 'main.core';
 import { type BaseEvent, EventEmitter } from 'main.core.events';
 
 import ReleaseSlider from './release-slider';
@@ -55,7 +55,23 @@ export default class Release
 	{
 		if (mode === 'slider')
 		{
-			this.getSlider().show();
+			const BannerDispatcher = Reflection.getClass('BX.UI.BannerDispatcher');
+			if (BannerDispatcher)
+			{
+				BannerDispatcher.critical.toQueue(
+					() => {
+						this.getSlider().show();
+					},
+					{
+						id: this.#id,
+					},
+				);
+			}
+			else
+			{
+				this.getSlider().show();
+			}
+
 			void this.#runAction('show', { context: 'auto' });
 		}
 		else
@@ -96,6 +112,14 @@ export default class Release
 		if (BX.SidePanel.Instance.getOpenSlidersCount() === 0)
 		{
 			this.getEar().show(true);
+		}
+
+		const AutoLauncher = Reflection.getClass('BX.UI.AutoLaunch.AutoLauncher');
+		if (AutoLauncher)
+		{
+			setTimeout(() => {
+				AutoLauncher.unregister(this.#id);
+			}, 1000);
 		}
 
 		void this.#runAction('close');

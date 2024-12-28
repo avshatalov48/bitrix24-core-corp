@@ -1,0 +1,15 @@
+.dataset-import-field.data-import-field--invalid {
+	border-color: var(--ui-color-palette-red-50);
+}
+
+.dataset-import-control .ui-ctl-after {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+textarea.ui-ctl-element.dataset-import-textarea-element,
+.ui-ctl-textarea.dataset-import-textarea {
+	height: 78px;
+	min-height: 78px;
+}

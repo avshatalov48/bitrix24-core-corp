@@ -47,6 +47,7 @@ jn.define('crm/timeline/controllers/order-check', (require, exports, module) => 
 				title: `${actionParams.entityName} ${actionParams.shortTitle}`,
 				redirectUrl: actionParams.checkUrl,
 				hintText: Loc.getMessage('M_CRM_TIMELINE_ORDER_CHECK_QRAUTH_HINT'),
+				analyticsSection: 'crm',
 			});
 		}
 

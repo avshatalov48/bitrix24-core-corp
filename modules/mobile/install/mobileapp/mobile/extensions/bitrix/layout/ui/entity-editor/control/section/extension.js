@@ -381,6 +381,7 @@ jn.define('layout/ui/entity-editor/control/section', (require, exports, module) 
 					imagePath,
 					qrauth: {
 						redirectUrl: this.editor.getEntityDetailsUrl(),
+						analyticsSection: this.editor.getAnalytics()?.analyticsSection || '',
 					},
 				},
 				params: {

@@ -87,7 +87,7 @@ jn.define('bizproc/workflow/details/content', (require, exports, module) => {
 					marginBottom: 12,
 				},
 				onLinkClick: ({ url }) => {
-					inAppUrl.open(url);
+					inAppUrl.open(url, { parentWidget: this.layout });
 				},
 			}));
 

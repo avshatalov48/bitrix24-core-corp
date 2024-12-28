@@ -1,0 +1,44 @@
+.humanresources-title-panel {
+	position: absolute;
+	left: 8px;
+	background: var(--ui-color-palette-white-base);
+	box-shadow: 0px 2px 20.4px 0px #01388114;
+	border-radius: 222px;
+	display: flex;
+	top: 8px;
+	z-index: 2;
+	padding: 10px 24px;
+	align-items: center;
+	gap: 12px;
+}
+
+.humanresources-title-panel__title {
+	font: var(--ui-font-weight-medium) 20px/24px var(--ui-font-family-system);
+	color: var(--ui-color-palette-black-solid);
+	margin: 0;
+}
+
+.humanresources-title-panel__separator {
+	width: 1px;
+	height: 28px;
+	background: var(--ui-color-palette-gray-05);
+}
+
+.humanresources-title-panel__icon {
+	min-width: 24px;
+	width: 24px;
+	min-height: 24px;
+	height: 24px;
+	background-repeat: no-repeat;
+	background-position: center;
+	cursor: pointer;
+}
+
+.humanresources-title-panel__icon:hover path,
+.humanresources-title-panel__icon.--selected path {
+	fill: var(--ui-color-palette-blue-60);
+}
+.humanresources-title-panel__star {
+	cursor: pointer;
+	margin-top: 3px;
+}

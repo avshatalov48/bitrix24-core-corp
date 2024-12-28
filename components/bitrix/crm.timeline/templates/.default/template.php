@@ -8,7 +8,7 @@ use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\MenuIdResolver;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\AI\AIManager;
-use Bitrix\Crm\Integration\AI\Operation\AutostartSettings;
+use Bitrix\Crm\Integration\AI\Operation\Autostart\FillFieldsSettings;
 use Bitrix\Crm\Integration\AI\Operation\TranscribeCallRecording;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\DI\ServiceLocator;
@@ -105,7 +105,17 @@ if (
 		->build()
 	;
 
-	$autostartSettings = AutostartSettings::get($arResult['ENTITY_TYPE_ID'], $categoryId);
+	echo (\Bitrix\Crm\Tour\CopilotRunAutomatically::getInstance())
+		->setEntityTypeId($arResult['ENTITY_TYPE_ID'])
+		->build()
+	;
+
+	echo (\Bitrix\Crm\Tour\CopilotRunManually::getInstance())
+		->setEntityTypeId($arResult['ENTITY_TYPE_ID'])
+		->build()
+	;
+
+	$autostartSettings = FillFieldsSettings::get($arResult['ENTITY_TYPE_ID'], $categoryId);
 	if (
 		$autostartSettings->isAutostartTranscriptionOnlyOnFirstCallWithRecording()
 		|| !$autostartSettings->shouldAutostart(TranscribeCallRecording::TYPE_ID, CCrmActivityDirection::Incoming)
@@ -137,6 +147,14 @@ if (ServiceLocator::getInstance()->get('crm.integration.sign')::isEnabled())
 		->build();
 }
 
+$isAvailable = (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024', 0);
+if ($arResult['BIZPROC_AVAILABLE'] && $isAvailable)
+{
+	echo \Bitrix\Crm\Tour\Bizproc\WorkflowStarted::getInstance()->build();
+	echo \Bitrix\Crm\Tour\Bizproc\WorkflowTaskAddInTimeline::getInstance()->build();
+	echo \Bitrix\Crm\Tour\Bizproc\WorkflowTaskCompletedInTimeline::getInstance()->build();
+}
+
 $guid = $arResult['GUID'];
 $prefix = mb_strtolower($guid);
 $listContainerID = "{$prefix}_list";
@@ -146,6 +164,14 @@ $activityEditorID = "{$prefix}_editor";
 $scheduleItems = $arResult['SCHEDULE_ITEMS'];
 $historyItems = $arResult['HISTORY_ITEMS'];
 $fixedItems = $arResult['FIXED_ITEMS'];
+
+foreach ($scheduleItems as $scheduleItem)
+{
+	if ($scheduleItem instanceof \Bitrix\Crm\Service\Timeline\Item\Activity\ToDo)
+	{
+		echo (\Bitrix\Crm\Tour\TodoOverlapEvents::getInstance())->setTodo($scheduleItem)->build();
+	}
+}
 
 if (!empty($arResult['ERRORS']))
 {
@@ -217,7 +243,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 						'RESET_TO_DEFAULT_MODE' => false,
 						'CONFIG' => array('AUTOFOCUS' => false),
 						'LAZY_LOAD' => array(
-							'GET_LIST' => '/bitrix/components/bitrix/crm.timeline/filter.ajax.php?action=list&filter_id='.urlencode($arResult['HISTORY_FILTER_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
+							'GET_LIST' => '/bitrix/components/bitrix/crm.timeline/filter.ajax.php?action=list&filter_id='.urlencode($arResult['HISTORY_FILTER_ID']).'&entity_type_id='.$arResult['ENTITY_TYPE_ID'].'&entity_id='.$arResult['ENTITY_ID'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 							'GET_FIELD' => '/bitrix/components/bitrix/crm.timeline/filter.ajax.php?action=field&filter_id='.urlencode($arResult['HISTORY_FILTER_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 						)
 					)
@@ -483,6 +509,14 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				"CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_TEXT": '<?=GetMessageJS("CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_TEXT")?>',
 				"DISK_TMPLT_THUMB": '',
 				"DISK_TMPLT_THUMB2": '',
+				"CRM_TIMELINE_WORKFLOW_EFFICIENCY_AVERAGE_PROCESS_TIME": '<?=GetMessageJS("CRM_TIMELINE_WORKFLOW_EFFICIENCY_AVERAGE_PROCESS_TIME")?>',
+				"CRM_TIMELINE_WORKFLOW_EFFICIENCY_PERFORMED_QUICKLY": '<?=GetMessageJS("CRM_TIMELINE_WORKFLOW_EFFICIENCY_PERFORMED_QUICKLY")?>',
+				"CRM_TIMELINE_WORKFLOW_EFFICIENCY_PERFORMED_SLOWLY": '<?=GetMessageJS("CRM_TIMELINE_WORKFLOW_EFFICIENCY_PERFORMED_SLOWLY")?>',
+				"CRM_TIMELINE_WORKFLOW_EFFICIENCY_PERFORMED_NO_PROGRESS": '<?=GetMessageJS("CRM_TIMELINE_WORKFLOW_EFFICIENCY_PERFORMED_NO_PROGRESS")?>',
+				"CRM_TIMELINE_WORKFLOW_RESULT_NO_RIGHTS_VIEW": '<?=GetMessageJS("CRM_TIMELINE_WORKFLOW_RESULT_NO_RIGHTS_VIEW")?>',
+				"CRM_TIMELINE_WORKFLOW_RESULT_NO_RIGHTS_TOOLTIP": '<?=GetMessageJS("CRM_TIMELINE_WORKFLOW_RESULT_NO_RIGHTS_TOOLTIP")?>',
+				"CRM_TIMELINE_WORKFLOW_NO_RESULT": '<?=GetMessageJS("CRM_TIMELINE_WORKFLOW_NO_RESULT")?>',
+				"CRM_TIMELINE_WORKFLOW_RESULT_TITLE": '<?=GetMessageJS("CRM_TIMELINE_WORKFLOW_RESULT_TITLE")?>',
 			});
 
 			var timeline = BX.CrmTimelineManager.create(
@@ -520,4 +554,20 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 		}
 	);
 </script>
-<?
+<?php
+if ($arResult['BIZPROC_AVAILABLE'] && $isAvailable): ?>
+	<script>
+		BX.ready(
+			function ()
+			{
+				new BX.CrmTimelineWorkflowEventManager({
+					hasRunningWorkflow: <?= ($arResult['DOCUMENT_HAS_RUNNING_WORKFLOW'] ?? false) ? 'true' : 'false' ?>,
+					hasWaitingWorkflowTask: <?= ($arResult['DOCUMENT_HAS_WAITING_WORKFLOW_TASK'] ?? false) ? 'true' : 'false' ?>,
+					workflowTaskActivityId: <?= (int)($arResult['WORKFLOW_TASK_ACTIVITY_ID'] ?? 0) ?>,
+					workflowFirstTourClosed: <?= ($arResult['WORKFLOW_FIRST_TOUR_WAS_CLOSED'] ?? false) ? 'true' : 'false' ?>,
+					workflowTaskStatusTitle: '<?=GetMessageJS('CRM_TIMELINE_AUTOMATION_WORKFLOW_TASK_STATUS')?>',
+				})
+			}
+		);
+	</script>
+<?php endif;

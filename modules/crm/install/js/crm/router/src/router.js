@@ -292,6 +292,9 @@ class Router
 	{
 		return Router.openSlider(
 			`/sign/doc/0/?docId=${documentId}&stepId=changePartner&noRedirect=Y`,
+			{
+				width: 1250,
+			},
 		);
 	}
 

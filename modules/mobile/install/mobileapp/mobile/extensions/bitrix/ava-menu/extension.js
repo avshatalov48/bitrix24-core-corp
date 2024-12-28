@@ -2,21 +2,26 @@
  * @module ava-menu
  */
 jn.define('ava-menu', (require, exports, module) => {
+	const { Loc } = require('loc');
 	const { menu } = require('native/avamenu') || {};
 	const { AnalyticsEvent } = require('analytics');
 	const { qrauth } = require('qrauth/utils');
-	const { showAhaMoment } = require('ava-menu/aha-moment');
 	const { CheckIn } = require('ava-menu/check-in');
+	const { Sign } = require('ava-menu/sign');
+	const { Calendar } = require('ava-menu/calendar');
 
 	const entryTypes = {
 		component: 'component',
 		page: 'page',
 		list: 'list',
 		qrauth: 'qrauth',
+		switch_account: 'switch_account',
 	};
 
 	const menuItemsIds = {
+		calendar: 'calendar',
 		checkIn: 'check_in',
+		startSigning: 'start_signing',
 	};
 
 	class AvaMenu
@@ -58,23 +63,19 @@ jn.define('ava-menu', (require, exports, module) => {
 			Application.setBadges({ user_avatar: String(newTotalCounter) });
 		}
 
-		static setUserInfo({ title, imageUrl })
+		static setUserInfo(params = {})
 		{
 			if (!this.isMenuExists())
 			{
 				return;
 			}
 
-			const userInfo = menu.getUserInfo();
+			const userInfoParams = {
+				...menu.getUserInfo(),
+				...params,
+			};
 
-			if (!userInfo)
-			{
-				console.error('Ava-menu elements are not loaded');
-
-				return;
-			}
-
-			menu.setUserInfo({ ...userInfo, title, imageUrl });
+			menu.setUserInfo(userInfoParams);
 		}
 
 		static isMenuExists()
@@ -102,28 +103,22 @@ jn.define('ava-menu', (require, exports, module) => {
 			avaMenu.onAppStarted();
 		}
 
+		static getCollabStyles()
+		{
+			return {};
+		}
+
+		static isCollaber()
+		{
+			return Boolean(env.isCollaber);
+		}
+
 		onAppStarted()
 		{
 			BX.onAppStarted(() => {
-				const info = menu.getUserInfo();
-
-				if (info?.customData?.ahaMoment?.shouldShow === 'Y')
-				{
-					try
-					{
-						// eslint-disable-next-line no-unused-vars
-						const { IntranetBackground } = require('intranet/background');
-						BX.addCustomEvent('userMiniProfileClosed', () => {
-							showAhaMoment();
-						});
-					}
-					catch
-					{
-						showAhaMoment();
-					}
-				}
-
+				AvaMenu.setUserInfo();
 				CheckIn.handleItemColor();
+				Sign.handleItemColor();
 			});
 		}
 
@@ -149,9 +144,19 @@ jn.define('ava-menu', (require, exports, module) => {
 					hasCounter: Number(event.counter) > 0,
 				});
 
+				if (event.id === menuItemsIds.calendar && Calendar.open(event.customData))
+				{
+					return;
+				}
+
 				if (this.handleOnMenuItemTap(event.customData))
 				{
 					return;
+				}
+
+				if (event.id === menuItemsIds.startSigning)
+				{
+					Sign.open();
 				}
 
 				if (event.id === menuItemsIds.checkIn)
@@ -194,7 +199,18 @@ jn.define('ava-menu', (require, exports, module) => {
 					return true;
 
 				case entryTypes.qrauth:
-					qrauth.open(customData);
+					void qrauth.open({
+						...customData,
+						showHint: true,
+						title: Loc.getMessage('MOBILE_AVA_MENU_GO_TO_WEB_TITLE'),
+						hintText: Loc.getMessage('MOBILE_AVA_MENU_GO_TO_WEB_HINT_TEXT'),
+						analyticsSection: 'ava_menu',
+					});
+
+					return true;
+
+				case entryTypes.switch_account:
+					Application.exit();
 
 					return true;
 

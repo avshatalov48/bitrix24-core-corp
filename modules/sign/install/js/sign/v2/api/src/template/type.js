@@ -4,6 +4,7 @@ export type GeneralField = {
 	type: 'date' | 'number' | 'string';
 	name: string;
 	uid: string;
+	value: string;
 }
 
 export type ListField = GeneralField & {
@@ -14,15 +15,26 @@ export type ListField = GeneralField & {
 	}>;
 }
 
-export type TemplateField = GeneralField | ListField;
+export type AddressField = GeneralField & {
+	type: 'address';
+	subfields?: GeneralField[];
+};
+
+export type TemplateField = GeneralField | ListField | AddressField;
 
 export type Template = {
 	uid: string,
 	title: string,
 	company: {
+		id: number,
 		name: string,
-		rqInn: string,
+		taxId: string,
 	},
 	providerCode: ProviderCodeType,
-	fields: Array<TemplateField>
+	isLastUsed: boolean,
+};
+
+export type FieldValue = {
+	name: string,
+	value: string,
 };

@@ -11,7 +11,7 @@ jn.define('layout/ui/scroll-view', (require, exports, module) => {
 	 * @param {boolean} [props.bounces]
 	 * @param {function} [props.onScroll]
 	 * @param {Array<View>} [props.children]
-	 * @param {Array<View>} [restChildren]
+	 * @param {...*} [restChildren]
 	 * @returns {ScrollViewMethods}
 	 */
 	const UIScrollView = (props, ...restChildren) => {

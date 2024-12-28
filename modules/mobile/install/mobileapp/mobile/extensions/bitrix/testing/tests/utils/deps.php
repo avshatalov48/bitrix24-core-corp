@@ -6,5 +6,6 @@ return [
 		'utils',
 		'utils/object',
 		'utils/type',
+		'utils/file',
 	],
 ];

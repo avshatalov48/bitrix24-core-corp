@@ -39,6 +39,10 @@
 	padding: 15px 0;
 }
 
+.sn-collab-tasks__wrapper.ui-page-slider-wrapper .task-interface-toolbar {
+	padding: 5px 0 10px;
+}
+
 .task-interface-toolbar--item {
 	display: inline-flex;
 	overflow: hidden;
@@ -136,6 +140,10 @@
 	border-top: 1px solid #dce2e6;
 	-webkit-box-align: center;
 	align-items: center;
+}
+
+.sn-collab-tasks__wrapper.tasks-pagetitle-view .ui-side-panel-wrap-below {
+	border-color: transparent;
 }
 
 .tasks-pagetitle-view .pagetitle-below {

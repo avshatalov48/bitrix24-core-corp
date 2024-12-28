@@ -2,6 +2,7 @@
  * @module crm/timeline
  */
 jn.define('crm/timeline', (require, exports, module) => {
+	const { qrauth } = require('qrauth/utils');
 	const { FadeView } = require('animation/components/fade-view');
 	const { StickyDate } = require('crm/timeline/ui/sticky-date');
 	const { Divider } = require('layout/ui/timeline/components/divider');
@@ -10,6 +11,8 @@ jn.define('crm/timeline', (require, exports, module) => {
 	const { Banner, BannerStack } = require('crm/timeline/ui/banner');
 	const { TimelinePushProcessor } = require('crm/timeline/services/push-processor');
 	const { TimelineDataProvider } = require('crm/timeline/services/data-provider');
+	const { dispatch } = require('statemanager/redux/store');
+	const { usersUpserted } = require('statemanager/redux/slices/users');
 	const {
 		TimelineStreamPinned,
 		TimelineStreamHistory,
@@ -24,6 +27,7 @@ jn.define('crm/timeline', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { Type } = require('crm/type');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @class Timeline
@@ -86,6 +90,8 @@ jn.define('crm/timeline', (require, exports, module) => {
 			this.pinnedStream.setItems(get(props, 'pinned', []));
 			this.scheduledStream.setItems(get(props, 'scheduled', []));
 			this.historyStream.setItems(get(props, 'history.items', []));
+
+			dispatch(usersUpserted(props.users));
 
 			return {
 				refreshing: false,
@@ -327,6 +333,7 @@ jn.define('crm/timeline', (require, exports, module) => {
 			qrauth.open({
 				title: Loc.getMessage('CRM_TIMELINE_DESKTOP_VERSION'),
 				redirectUrl: this.props.entity.detailPageUrl,
+				analyticsSection: 'crm',
 			});
 		}
 

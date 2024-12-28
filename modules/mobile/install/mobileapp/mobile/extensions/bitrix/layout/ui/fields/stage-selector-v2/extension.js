@@ -23,6 +23,7 @@ jn.define('layout/ui/fields/stage-selector-v2', (require, exports, module) => {
 			this.onStageClick = this.onStageClick.bind(this);
 			this.onStageLongClick = this.onStageLongClick.bind(this);
 			this.onChangeStageHandler = throttle(this.onChangeStage.bind(this), 500);
+			this.state.showLoadingAnimation = !this.initiallyHidden;
 		}
 
 		get isReversed()
@@ -54,6 +55,10 @@ jn.define('layout/ui/fields/stage-selector-v2', (require, exports, module) => {
 				opacity: 1,
 				height: 54,
 				duration: 200,
+			}, () => {
+				this.setState({
+					showLoadingAnimation: true,
+				});
 			});
 		}
 
@@ -66,6 +71,10 @@ jn.define('layout/ui/fields/stage-selector-v2', (require, exports, module) => {
 				opacity: 0,
 				height: 0,
 				duration: 200,
+			}, () => {
+				this.setState({
+					showLoadingAnimation: false,
+				});
 			});
 		}
 

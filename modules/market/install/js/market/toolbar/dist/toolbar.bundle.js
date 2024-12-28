@@ -726,7 +726,6 @@ this.BX = this.BX || {};
 												</div>
 												<div class="market-rating__container">
 													<RatingStars
-														v-if="appItem.IS_SITE_TEMPLATE !== 'Y'"
 														:rating="appItem.RATING"
 														:reviewsNumber="appItem.REVIEWS_NUMBER"
 													/>

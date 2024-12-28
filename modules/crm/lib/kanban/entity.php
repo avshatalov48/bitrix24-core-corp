@@ -753,6 +753,11 @@ abstract class Entity
 		return 'STATUS_ID';
 	}
 
+	public function getDbStageFieldName(): string
+	{
+		return $this->getStageFieldName();
+	}
+
 	public function getCurrency(): ?string
 	{
 		return \CCrmCurrency::GetAccountCurrencyID();
@@ -1160,8 +1165,7 @@ abstract class Entity
 
 		$userPermissions = Container::getInstance()->getUserPermissions()->getCrmPermissions();
 
-		$code = (new HideSum())->code();
-		$isDefaultPermissionsApplied = (new ApproveCustomPermsToExistRole())->hasWaitingPermission($code);
+		$isDefaultPermissionsApplied = (new ApproveCustomPermsToExistRole())->hasWaitingPermission(new HideSum());
 
 		foreach ($stages as &$stage)
 		{
@@ -1463,14 +1467,32 @@ abstract class Entity
 	 * @param int $id
 	 * @return array|null
 	 */
-	public function getItem(int $id): ?array
+	public function getItem(int $id, array $fieldsToSelect = []): ?array
 	{
-		$provider = $this->getItemsProvider();
-		$item = $provider::getById($id);
+		$data = null;
+		$entityTypeId = $this->getTypeId();
+		$factory = Container::getInstance()->getFactory($entityTypeId);
 
-		$this->loadedItems[$id] = $item;
+		if (empty($fieldsToSelect) || !$factory)
+		{
+			$provider = $this->getItemsProvider();
+			$data = $provider::getById($id);
 
-		return is_array($item) ? $item : null;
+			$this->loadedItems[$id] = $data;
+		}
+		else
+		{
+			$item = $factory->getItem($id, $fieldsToSelect);
+
+			if (!$item || !Container::getInstance()->getUserPermissions()->canReadItem($item))
+			{
+				return null;
+			}
+
+			$data = $item->getCompatibleData();
+		}
+
+		return is_array($data) ? $data : null;
 	}
 
 	/**

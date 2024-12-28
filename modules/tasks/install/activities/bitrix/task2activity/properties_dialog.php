@@ -4,7 +4,13 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Tasks\Flow\Control\Task\Field\FlowFieldHandler;
+
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
+
+\Bitrix\Main\Page\Asset::getInstance()->addJs(getLocalPath('activities/bitrix/task2activity/script.js'));
+
+\Bitrix\Main\UI\Extension::load(['ui.entity-selector', 'tasks.entity-selector']);
 
 $currentValues = $dialog->getCurrentValues();
 $map = $dialog->getMap();
@@ -147,3 +153,16 @@ foreach ($taskFieldsMap as $fieldId => $fieldValue)
 $renderField($map['CheckListItems']);
 
 echo $GLOBALS["APPLICATION"]->GetCSS();
+?>
+<script>
+	BX.message({
+		TASKS_BP_FLOW_CONTROLLED_VALUE: '<?=GetMessageJS('TASKS_BP_FLOW_CONTROLLED_VALUE')?>',
+	})
+	BX.Event.ready(function()
+	{
+		new BX.Tasks.Automation.Activity.Task2Activity({
+			isRobot: false,
+			controlledByFlowFields: <?=\Bitrix\Main\Web\Json::encode((new FlowFieldHandler(0))->getModifiedFields())?>
+		});
+	});
+</script>

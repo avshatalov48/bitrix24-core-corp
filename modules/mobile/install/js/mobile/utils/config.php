@@ -14,7 +14,7 @@ $langAdditional = array(
 		Loader::includeModule('disk')
 		&& $USER->isAuthorized()
 		&& ($userStorage = Driver::getInstance()->getStorageByUserId($USER->getId()))
-		&& ($folder = $userStorage->getFolderForSavedFiles())
+		&& ($folder = $userStorage->getFolderForUploadedFiles())
 			? $folder->getId()
 			: 0
 	),

@@ -10,10 +10,9 @@ use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\Commands\DTO\AccessCodeDTO;
 use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\Commands\DTO\AccessRightDTO;
 use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\Commands\DTO\UserGroupsData;
 use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\Utils\PermCodeTransformer;
-use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\Utils\ValueNormalizer;
 use Bitrix\Crm\Security\Role\Utils\RoleManagerUtils;
+use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Crm\Traits\Singleton;
-use Bitrix\Main\Access\Permission\PermissionDictionary;
 use Bitrix\Main\Result;
 
 class UpdateRoleCommand
@@ -22,14 +21,12 @@ class UpdateRoleCommand
 
 	private PermissionRepository $permissionRepository;
 
-	private ValueNormalizer $valueNormalizer;
 
 	private RoleManagerUtils $utils;
 
 	private function __construct()
 	{
 		$this->permissionRepository = PermissionRepository::getInstance();
-		$this->valueNormalizer = ValueNormalizer::getInstance();
 		$this->utils = RoleManagerUtils::getInstance();
 	}
 
@@ -39,24 +36,20 @@ class UpdateRoleCommand
 	 */
 	public function execute(array $userGroups): Result
 	{
-		$relationSaveData = [];
 
 		$result = new Result();
 
 		foreach ($userGroups as $userGroup)
 		{
-			$roleId = $this->saveRoleName($userGroup);
+			$roleId = $this->saveRoleNameAndCode($userGroup);
 
 			$saveRes = $this->saveRolePerms($roleId, $userGroup->accessRights);
 			if (!$saveRes->isSuccess())
 			{
 				$result->addErrors($saveRes->getErrors());
 			}
-
-			$this->collectRelationToSave($userGroup->accessCodes, $roleId, $relationSaveData);
+			$this->permissionRepository->saveRoleRelations($roleId, $this->getAccessCodeIds($userGroup->accessCodes));
 		}
-
-		$this->permissionRepository->saveRolesRelations($relationSaveData);
 
 		$this->utils->saleUpdateShopAccess();
 		$this->utils->clearRolesCache();
@@ -81,32 +74,29 @@ class UpdateRoleCommand
 	 * @param UserGroupsData $userGroup
 	 * @return int role id
 	 */
-	private function saveRoleName(UserGroupsData $userGroup): int
+	private function saveRoleNameAndCode(UserGroupsData $userGroup): int
 	{
-		return $this->permissionRepository->updateOrCreateRole($userGroup->id, $userGroup->title);
+		return $this->permissionRepository->updateOrCreateRole($userGroup->id, $userGroup->title, $userGroup->groupCode);
 	}
 
 	/**
 	 * @param AccessCodeDTO[] $accessCodes
-	 * @param int $roleId
-	 * @param $result array<string, int[]> member code as a key and array of role id as a value
+	 * @param $result array<string>
 	 */
-	private function collectRelationToSave(array $accessCodes, int $roleId, array &$result): void
+	private function getAccessCodeIds(array $accessCodes): array
 	{
+		$result = [];
 		foreach ($accessCodes as $code)
 		{
-			if(!isset($relations[$code->id]))
-			{
-				$relations[$code->id] = [];
-			}
-
-			$result[$code->id][] = $roleId;
+			$result[] = $code->id;
 		}
+
+		return $result;
 	}
 
 	/**
 	 * @param AccessRightDTO[] $accessRights
-	 * @return PermissionModel[]
+	 * @return array[]
 	 */
 	private function uiAccessRightsToPermissionsModel(array $accessRights): array
 	{
@@ -118,37 +108,40 @@ class UpdateRoleCommand
 
 			$codeDTO = PermCodeTransformer::getInstance()->decodeAccessRightCode($uiRightId);
 
-			$controlType = RoleManagementModelBuilder::getControlTypeByPermType($codeDTO->permCode);
-			$value = $this->valueNormalizer->fromUIToPerms($right->value, $controlType);
-
-			if (
-				isset($permissions[$uiRightId])
-				&& is_array($permissions[$uiRightId]['settings'])
-			)
+			if (!isset($permissions[$uiRightId]))
 			{
-				$permissions[$uiRightId]['settings'][] = $value;
-				continue;
+				$permissions[$uiRightId] = [
+					'permissionCode' => $codeDTO->permCode,
+					'entityCode' => $codeDTO->entityCode,
+					'stageField' => $codeDTO->field,
+					'stageCode' => $codeDTO->fieldValue,
+					'value' => [],
+					'settings' => []
+				];
 			}
-
-			$permissions[$uiRightId] = [
-				'permissionCode' => $codeDTO->permCode,
-				'entityCode' => $codeDTO->entityCode,
-				'stageField' => $codeDTO->field,
-				'stageCode' => $codeDTO->fieldValue,
-				'value' => null,
-				'settings' => []
-			];
-
-			if ($controlType === PermissionDictionary::TYPE_MULTIVARIABLES)
+			if (is_array($right->value))
 			{
-				if ($value !== null)
-				{
-					$permissions[$uiRightId]['settings'][] = $value;
-				}
+				$permissions[$uiRightId]['value'] = $right->value;
+			}
+			elseif ($right->value !== null)
+			{
+				$permissions[$uiRightId]['value'][] = $right->value;
+			}
+		}
+
+		$roleModelBuilder = RoleManagementModelBuilder::getInstance();
+		foreach ($permissions as $uiRightId => $permission)
+		{
+			$controlType = $roleModelBuilder->getPermissionByCode($permission['entityCode'], $permission['permissionCode'])?->getControlType();
+			if ($controlType)
+			{
+				$permissionValue = $permission['value'];
+				$permissions[$uiRightId]['value'] = $controlType->getAttrFromUiValue($permissionValue);
+				$permissions[$uiRightId]['settings'] = $controlType->getSettingsFromUiValue($permissionValue);
 			}
 			else
 			{
-				$permissions[$uiRightId]['value'] = $value;
+				unset($permissions[$uiRightId]);
 			}
 		}
 
@@ -156,15 +149,15 @@ class UpdateRoleCommand
 	}
 
 	/**
-	 * @param PermissionModel[] $permissions
+	 * @param array[] $permissions
 	 * @return array{PermissionModel[], PermissionModel[]}
 	 */
 	private function dividePermissionModels(array $permissions): array
 	{
 		$toRemove = [];
 		$toChange = [];
-		foreach ($permissions as $permission) {
-
+		foreach ($permissions as $permission)
+		{
 			$model = new PermissionModel(
 				$permission['entityCode'],
 				$permission['permissionCode'],
@@ -174,7 +167,7 @@ class UpdateRoleCommand
 				$permission['settings'],
 			);
 
-			if (empty($permission['settings']) && empty($permission['value']))
+			if ($this->shouldRemovePermissionModel($model))
 			{
 				$toRemove[] = $model;
 			}
@@ -185,5 +178,16 @@ class UpdateRoleCommand
 		}
 
 		return [$toChange, $toRemove];
+	}
+
+	private function shouldRemovePermissionModel(PermissionModel $model): bool
+	{
+		// stage permission should be able to override its parent
+		if (!empty($model->field()) && $model->attribute() === UserPermissions::PERMISSION_NONE)
+		{
+			return false;
+		}
+
+		return empty($model->attribute()) && empty($model->settings());
 	}
 }

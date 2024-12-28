@@ -1,10 +1,12 @@
 <?php
 
+use Bitrix\Extranet\Service\ServiceContainer;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Socialnetwork\UserToGroupTable;
 
 class CExtranet
@@ -226,6 +228,7 @@ class CExtranet
 		global $USER, $APPLICATION;
 
 		$curPage = $APPLICATION->GetCurPageParam();
+		$scriptFile = \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getScriptFile();
 
 		if(
 			(!defined("ADMIN_SECTION") || ADMIN_SECTION !== true)
@@ -242,19 +245,19 @@ class CExtranet
 			&& (mb_strpos($curPage, "/mobileapp/") !== 0)
 			&& (mb_strpos($curPage, "/pub/") !== 0)
 			&& (mb_strpos($curPage, "/rest/") !== 0)
-			&& !preg_match("/^\\/online\\/([\\.\\-0-9a-zA-Z]+)(\\/?)([^\\/]*)$/i", $curPage)
 			&& (!self::IsExtranetSite())
 			&& self::GetExtranetSiteID() <> ''
 			&& $USER->IsAuthorized()
 			&& !$USER->IsAdmin()
 			&& !self::IsIntranetUser()
-			&& !$USER->CanDoFileOperation(
+			&& self::isExtranetUser()
+			&& !($USER->CanDoFileOperation(
 				'fm_view_file',
 				[
 					SITE_ID,
-					\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getScriptFile()
+					$scriptFile
 				]
-			)
+			) && ($scriptFile !== '/desktop_app/router.php'))
 		)
 		{
 			$rsSites = CSite::GetByID(self::GetExtranetSiteID());
@@ -264,20 +267,23 @@ class CExtranet
 			)
 			{
 				$URLToRedirect = false;
+				$userId = (int)$USER->GetID();
+				$isCollaber = ServiceContainer::getInstance()->getCollaberService()->isCollaberById($userId);
 
-				$userSEFFolder = COption::GetOptionString("socialnetwork", "user_page", false, SITE_ID);
-				$workgroupSEFFolder = COption::GetOptionString("socialnetwork", "workgroups_page", false, SITE_ID);
-				if (mb_strpos($curPage, $userSEFFolder) === 0)
+				$userSEFFolder = COption::GetOptionString("socialnetwork", "user_page", SITE_DIR . 'company/personal/', SITE_ID);
+				$workgroupSEFFolder = COption::GetOptionString("socialnetwork", "workgroups_page", SITE_DIR . 'workgroups/', SITE_ID);
+
+				if ($userSEFFolder && str_starts_with($curPage, $userSEFFolder))
 				{
-					$userSEFFolderExtranet = COption::GetOptionString("socialnetwork", "user_page", false, $arExtranetSite['LID']);
+					$userSEFFolderExtranet = COption::GetOptionString("socialnetwork", "user_page", $arExtranetSite["DIR"] . "contacts/personal/", $arExtranetSite['LID']);
 					if ($userSEFFolderExtranet)
 					{
 						$URLToRedirect = $userSEFFolderExtranet.mb_substr($curPage, mb_strlen($userSEFFolder));
 					}
 				}
-				elseif (mb_strpos($curPage, $workgroupSEFFolder) === 0)
+				elseif ($workgroupSEFFolder && str_starts_with($curPage, $workgroupSEFFolder))
 				{
-					$workgroupSEFFolderExtranet = COption::GetOptionString("socialnetwork", "workgroups_page", false, $arExtranetSite['LID']);
+					$workgroupSEFFolderExtranet = COption::GetOptionString("socialnetwork", "workgroups_page", $arExtranetSite["DIR"] . "workgroups/", $arExtranetSite['LID']);
 					if ($workgroupSEFFolderExtranet)
 					{
 						$URLToRedirect = $workgroupSEFFolderExtranet.mb_substr($curPage, mb_strlen($workgroupSEFFolder));
@@ -287,6 +293,23 @@ class CExtranet
 				if (!$URLToRedirect)
 				{
 					$URLToRedirect = ($arExtranetSite["SERVER_NAME"] <> '' ? (CMain::IsHTTPS() ? "https" : "http") . "://" . $arExtranetSite["SERVER_NAME"] : "") . $arExtranetSite["DIR"];
+
+					if ($isCollaber && str_ends_with($URLToRedirect, '/'))
+					{
+						$uri = (new Uri($URLToRedirect . 'online/'));
+
+						if (preg_match("/^\\/online\\/([\\.\\-0-9a-zA-Z]+)(\\/?)([^\\/]*)$/i", $curPage, $matches))
+						{
+							$alias = $matches[1] ?? null;
+
+							if ($alias)
+							{
+								$uri->addParams(['alias' => $alias]);
+							}
+						}
+
+						$URLToRedirect = $uri->getLocator();
+					}
 				}
 
 				$urlParams = array();
@@ -314,7 +337,7 @@ class CExtranet
 					$URLToRedirect = CHTTP::urlAddParams($URLToRedirect, $urlParams);
 				}
 
-				LocalRedirect($URLToRedirect, true);
+				LocalRedirect($URLToRedirect, true, '307 Temporary Redirect');
 			}
 		}
 	}

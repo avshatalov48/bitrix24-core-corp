@@ -58,7 +58,7 @@
 	box-sizing: border-box;
 	padding: 56px 65px 60px 65px;
 	background: #0E1622;
-	background-image: url('../../../images/pattern-white.png'), url('../../../images/highlights.png');
+	background-image: url('../../../images/pattern-white.png'), url('../../../images/highlights-v2.png');
 	background-position: top right, center;
 	background-repeat: repeat, no-repeat;
 	background-size: auto, cover;
@@ -471,7 +471,7 @@
 
 .bx-messenger-videocall-wrap {
 	background: #0E1622;
-	background-image: url('../../../images/pattern-white-op.png'), url('../../../images/highlights.png');
+	background-image: url('../../../images/pattern-white-op-v2.png'), url('../../../images/highlights-v2.png');
 	background-position: top right, center;
 	background-repeat: repeat, no-repeat;
 	background-size: auto, cover;
@@ -481,6 +481,15 @@
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
+	transition: background 200ms linear;
+}
+
+.bx-messenger-videocall-wrap-with-copilot {
+	background: #241A4A;
+	background-image: url('../../../images/pattern-white-copilot-v2.png'), url('../../../images/highlights-copilot.png');
+	background-position: top right, center;
+	background-repeat: repeat, no-repeat;
+	background-size: auto, cover;
 }
 
 .bx-messenger-videocall-top-panel {
@@ -563,7 +572,7 @@
 	height: 24px;
 	margin-left: 14px;
 	border-radius: 12px;
-	background-color: #053C69;
+	background: rgba(0, 145, 227, 0.28);
 	overflow: hidden;
 }
 .bx-messenger-videocall-top-participants-inner {
@@ -1067,7 +1076,7 @@
 
 .bx-messenger-videocall-panel-inner-left {
 	display: flex;
-	flex-basis: 33%;
+	flex-basis: 30%;
 	height: 100%;
 	justify-content: flex-start;
 	gap: 12px;
@@ -1079,12 +1088,12 @@
 	align-items: flex-start;
 	gap: 10px;
 	flex-shrink: 0;
-	flex-basis: 33%;
+	flex-basis: 40%;
 	height: 100%;
 }
 .bx-messenger-videocall-panel-inner-right {
 	display: flex;
-	flex-basis: 33%;
+	flex-basis: 30%;
 	height: 100%;
 	justify-content: flex-end;
 	flex-shrink: 0;
@@ -1222,6 +1231,25 @@
 .bx-messenger-videocall-panel-item-btn {
 	width: 100%;
 	opacity: .9;
+}
+
+.bx-messenger-videocall-panel-item-coming-soon {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: absolute;
+	left: 50%;
+	top: -7px;
+	font: 11px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-medium, 500);
+	color: #FFFFFF;
+	border-radius: 8px;
+	background: #559BE6;
+	padding: 0 7px;
+}
+
+.bx-messenger-videocall-panel-item-coming-soon[data-visible="N"] {
+	display: none;
 }
 
 .bx-messenger-videocall-panel-item-counter {
@@ -1496,6 +1524,10 @@
 	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28' fill='none'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M24.6638 14.0819C24.6638 19.9261 19.9261 24.6638 14.0819 24.6638C8.23767 24.6638 3.5 19.9261 3.5 14.0819C3.5 8.23767 8.23767 3.5 14.0819 3.5C19.9261 3.5 24.6638 8.23767 24.6638 14.0819ZM22.3706 14.0815C22.3706 18.6588 18.6599 22.3695 14.0826 22.3695C9.50526 22.3695 5.7946 18.6588 5.7946 14.0815C5.7946 9.50412 9.50526 5.79346 14.0826 5.79346C18.6599 5.79346 22.3706 9.50412 22.3706 14.0815ZM14.0819 18.7007C16.6328 18.7007 18.7007 16.6328 18.7007 14.0819C18.7007 11.531 16.6328 9.46307 14.0819 9.46307C11.531 9.46307 9.46307 11.531 9.46307 14.0819C9.46307 16.6328 11.531 18.7007 14.0819 18.7007Z' fill='%23EDEEF0'/%3E%3C/svg%3E");
 }
 
+.bx-messenger-videocall-panel-icon-copilot {
+	background-image: url("data:image/svg+xml,%3Csvg width='28' height='28' viewBox='0 0 28 28' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d_2105_370426)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M14.0012 20.1223C17.3589 20.1223 20.0808 17.3829 20.0808 14.0037C20.0808 10.6245 17.3589 7.88514 14.0012 7.88514C10.6435 7.88514 7.92153 10.6245 7.92153 14.0037C7.92153 17.3829 10.6435 20.1223 14.0012 20.1223ZM13.0295 9.4224C12.9747 9.27336 12.7652 9.27336 12.7104 9.4224L12.1052 11.0684C11.9329 11.5369 11.5658 11.9064 11.1002 12.0798L9.46473 12.6889C9.31663 12.744 9.31663 12.9548 9.46473 13.01L11.1002 13.619C11.5658 13.7924 11.9329 14.1619 12.1052 14.6304L12.7104 16.2764C12.7652 16.4255 12.9747 16.4255 13.0295 16.2764L13.6346 14.6304C13.8069 14.1619 14.174 13.7924 14.6396 13.619L16.2751 13.01C16.4232 12.9548 16.4232 12.744 16.2751 12.6889L14.6396 12.0798C14.174 11.9064 13.8069 11.5369 13.6346 11.0684L13.0295 9.4224ZM16.5039 14.1788C16.4722 14.0927 16.3512 14.0927 16.3195 14.1788L15.9698 15.1298C15.8703 15.4006 15.6582 15.614 15.3891 15.7142L14.4442 16.0662C14.3586 16.098 14.3586 16.2198 14.4442 16.2517L15.3891 16.6036C15.6582 16.7038 15.8703 16.9173 15.9698 17.188L16.3195 18.1391C16.3512 18.2252 16.4722 18.2252 16.5039 18.1391L16.8535 17.188C16.9531 16.9173 17.1652 16.7038 17.4342 16.6036L18.3792 16.2517C18.4648 16.2198 18.4648 16.098 18.3792 16.0662L17.4342 15.7142C17.1652 15.614 16.9531 15.4006 16.8535 15.1298L16.5039 14.1788Z' fill='white' fill-opacity='0.9'/%3E%3Cpath d='M22.7491 14.3751C23.3464 14.4012 23.8161 14.9113 23.726 15.5062C23.0053 20.2597 18.9258 23.9015 14.001 23.9015C8.56768 23.9015 4.16309 19.4687 4.16309 14.0005C4.16309 8.5324 8.56768 4.09961 14.001 4.09961C16.5894 4.09961 18.9443 5.10561 20.7008 6.75031C21.1394 7.16104 21.085 7.85565 20.631 8.24918C20.1776 8.64226 19.4979 8.58436 19.0473 8.18793C17.6986 7.00115 15.9332 6.28207 14.0008 6.28207C9.7646 6.28207 6.33044 9.73821 6.33044 14.0016C6.33044 18.2649 9.7646 21.7211 14.0008 21.7211C17.7581 21.7211 20.8844 19.0023 21.5434 15.4129C21.6522 14.8198 22.1504 14.349 22.7491 14.3751Z' fill='white' fill-opacity='0.9'/%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_d_2105_370426' x='-2' y='-1' width='32' height='32' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.12 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow_2105_370426'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow_2105_370426' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A");
+}
+
 /* TODO: Change */
 .bx-messenger-videocall-panel-icon-document {
 	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28' fill='none'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.11778 5.02051C7.47345 5.02051 6.95111 5.54284 6.95111 6.18717L6.95116 21.904C6.95116 22.5483 7.47349 23.0706 8.11783 23.0706H19.8822C20.5265 23.0706 21.0489 22.5483 21.0489 21.904V11.0639C21.0489 10.478 20.8285 9.91357 20.4314 9.48272L17.1828 5.77265C16.741 5.29324 16.1188 5.02051 15.4669 5.02051L8.11778 5.02051ZM10.2433 9.87468C9.73448 9.87468 9.32196 10.2919 9.32196 10.8007C9.32196 11.3096 9.73448 11.7268 10.2433 11.7268H17.0745C17.5834 11.7268 17.9959 11.3096 17.9959 10.8007C17.9959 10.2919 17.5834 9.87468 17.0745 9.87468H10.2433ZM10.2433 13.3924C9.73448 13.3924 9.32196 13.8096 9.32196 14.3185C9.32196 14.8274 9.73448 15.2446 10.2433 15.2446L17.0745 15.2446C17.5834 15.2446 17.9959 14.8274 17.9959 14.3185C17.9959 13.8096 17.5834 13.3924 17.0745 13.3924L10.2433 13.3924ZM9.32196 17.7893C9.32196 17.2805 9.73448 16.8633 10.2433 16.8633H15.0763C15.5852 16.8633 15.9977 17.2805 15.9977 17.7893C15.9977 18.2982 15.5852 18.7154 15.0763 18.7154H10.2433C9.73448 18.7154 9.32196 18.2982 9.32196 17.7893Z' fill='%23EDEEF0'/%3E%3C/svg%3E");
@@ -1543,12 +1575,20 @@
 	background-color: #22272B;
 }
 
+.bx-messenger-videocall-panel-background-copilot-coming-soon {
+	position: relative;
+}
+
 .bx-messenger-videocall-panel-item.active .bx-messenger-videocall-panel-icon-users {
 	background-image: url('data:image/svg+xml,%3Csvg%20width%3D%2222%22%20height%3D%2219%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M10.382%202.742a9%209%200%20010%202.636s.74-.086.246%201.345c0%200-.272%201.03-.69.797%200%200%20.069%201.302-.59%201.523%200%200%20.038.548.046.703l.002.038.55.085s-.016.578.093.64a5.8%205.8%200%20001.628.741c1.708.441%202.573%201.198%202.573%201.86%200%200%20.755%202.842%201.069%204.557-2.043.665-4.407%201.046-6.927%201.046-3.136%200-6.031-.59-8.365-1.585.246-1.26.573-2.912.726-3.516.26-1.03%201.721-1.796%203.065-2.384.695-.304.845-.487%201.546-.799a2.36%202.36%200%2000.047-.383v-.193l.595-.072s.078.145-.047-.706c0%200-.669-.178-.7-1.534%200%200-.502.17-.532-.65-.02-.523-.397-.981.064-1.365l.103-.076-.314-.85s-.33-3.293%201.118-3.025c-.587-.946%204.365-1.733%204.694%201.167zm5.33-1.248a3.463%203.463%200%20011.71.607c.342.275.6.64.747%201.052.204.829.356%201.669.453%202.516.043.456.122.908.235%201.352.17.48.376.946.616%201.395a3.629%203.629%200%2001-.718-.695s.133.487.16.559c.073.109.138.223.194.341-.03%200-.302.125-.379.16l-.02.01-1.412.441.02.67c.267.106.503.28.683.504.085.215.22.407.395.56.34.118.669.27.98.45.473.263.991.433%201.527.5.541.09.882.962.882.962l.124%202.47c-1.546.519-3.36.932-5.358%201.21l-.529-.001c-.045-.631-.825-3.433-.846-3.586-.031-.855-.784-1.62-2.07-2.141.097-.132.18-.273.249-.422.144-.179.323-.326.526-.432l.157-.072.02-.67-1.412-.44s-.363-.17-.4-.17c.042-.104.095-.202.157-.294.027-.072.198-.61.198-.61-.155.199-.329.38-.52.542l-.197.154.178-.33a8.85%208.85%200%2000.313-.682l.135-.351c.112-.455.187-.917.224-1.383.097-.848.248-1.688.453-2.516.146-.413.405-.778.746-1.053a3.459%203.459%200%20011.479-.581l.228-.026h.072z%22%20fill%3D%22%232FC6F6%22%20fill-rule%3D%22evenodd%22%20opacity%3D%22.85%22%2F%3E%3C%2Fsvg%3E');
 }
 
 .bx-messenger-videocall-panel-item.active .bx-messenger-videocall-panel-background-record {
 	background-color: rgba(244, 67, 62, 0.40);
+}
+
+.bx-messenger-videocall-panel-item.active .bx-messenger-videocall-panel-background-copilot {
+	background: radial-gradient(109.46% 109.46% at -3.11% -15.22%, #C8A9F8 0%, #711BF9 100%);
 }
 
 .bx-messenger-videocall-panel-item.active .bx-messenger-videocall-panel-background-floor-request {

@@ -10,6 +10,8 @@
 
 namespace Bitrix\Tasks\Integration\Intranet;
 
+use Bitrix\Extranet\Service\ServiceContainer;
+use Bitrix\Main\Loader;
 use Bitrix\Tasks\Util;
 
 final class User extends \Bitrix\Tasks\Integration\Intranet
@@ -61,6 +63,26 @@ final class User extends \Bitrix\Tasks\Integration\Intranet
 		}
 
 		return (new \Bitrix\Intranet\User($userId))->isIntranet();
+	}
+
+	public static function isCollaber(int $userId): bool
+	{
+		return \Bitrix\Tasks\Integration\Extranet\User::isCollaber($userId);
+	}
+
+	public static function getType(int $userId): string
+	{
+		if (!self::includeModule())
+		{
+			return '';
+		}
+
+		if ($userId <= 0)
+		{
+			return '';
+		}
+
+		return \Bitrix\Intranet\Util::getUserStatus($userId);
 	}
 
 	/**

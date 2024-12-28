@@ -56,4 +56,9 @@ class Timeman extends AbstractMenuItem
 	{
 		return 'timer';
 	}
+
+	public function getMessageCode(): string
+	{
+		return 'AVA_MENU_NAME_TIMEMAN_MSGVER_1';
+	}
 }

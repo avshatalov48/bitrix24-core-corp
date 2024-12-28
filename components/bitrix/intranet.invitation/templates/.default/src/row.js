@@ -54,6 +54,10 @@ export class Row
 		{
 			this.phoneObj.renderPhoneRow(element);
 		}
+		else if (element.value.length === 0)
+		{
+			this.renderDefaultRow(element)?.focus();
+		}
 	}
 
 	bindPhoneChecker(element)
@@ -72,6 +76,40 @@ export class Row
 		}
 	}
 
+	renderDefaultRow(node)
+	{
+		const phoneFlagBlock = node.parentNode.querySelector('[data-role="phone-block"]');
+
+		if (Type.isDomNode(phoneFlagBlock))
+		{
+			Dom.remove(phoneFlagBlock);
+		}
+
+		const phoneBlock = node.parentNode.querySelector('input.ui-ctl-element');
+
+		if (Type.isDomNode(phoneBlock))
+		{
+			const newInput = Tag.render`
+							<input
+								name="${phoneBlock.name}"
+								type="text"
+								maxlength="50"
+								data-num="${node.getAttribute('data-num')}"
+								class="ui-ctl-element js-email-phone-input"
+								placeholder="${phoneBlock.placeholder}"
+							/>`;
+
+			Dom.replace(phoneBlock, newInput);
+			this.bindCloseIcons(newInput.parentNode);
+			this.bindPhoneChecker(newInput.parentNode);
+			Dom.remove(phoneBlock);
+
+			return newInput;
+		}
+
+		return phoneBlock;
+	}
+
 	bindCloseIcons(container)
 	{
 		const inputNodes = Array.prototype.slice.call(container.querySelectorAll("input"));
@@ -88,25 +126,7 @@ export class Row
 
 				if (Type.isDomNode(node.parentNode))
 				{
-					const phoneBlock = node.parentNode.querySelector('input.ui-ctl-element');
-
-					if (Type.isDomNode(phoneBlock))
-					{
-						const newInput = Tag.render`
-							<input
-								name="${phoneBlock.name}"
-								type="text"
-								maxlength="50"
-								data-num="${node.getAttribute('data-num')}"
-								class="ui-ctl-element js-email-phone-input"
-								placeholder="${phoneBlock.placeholder}"
-							/>`;
-
-						Dom.replace(phoneBlock, newInput);
-						this.bindCloseIcons(newInput.parentNode);
-						this.bindPhoneChecker(newInput.parentNode);
-						Dom.remove(phoneBlock);
-					}
+					this.renderDefaultRow(node);
 				}
 
 				Dom.style(closeIcon, 'display', "none");

@@ -1,0 +1,96 @@
+.hr-hcmlink-sync__page_title {
+	color: var(--ui-color-base-default, #333333);
+	font-size: var(--ui-size-xl);
+	font-weight: var(--ui-font-weight-normal, 400);
+	font-family: var(--ui-font-family-system);
+}
+
+.hr-hcmlink-sync__page_toolbar_container {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.hr-hcmlink-sync__page_count-title {
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-semi-bold);
+	font-family: var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.hr-hcmlink-sync__page_mapped-persons-count {
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-semi-bold);
+	font-family: var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.hr-hcmlink-sync__page_all-persons-count {
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-semi-bold);
+	font-family: var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-40);
+}
+
+.hr-hcmlink-sync__page_counter_container {
+	background-color: var(--ui-color-background-primary);
+	border: 2px solid var(--ui-color-palette-orange-30);
+	border-radius: 20px;
+	padding: 5px 10px;
+}
+
+.hr-hcmlink-sync__column-title-container {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-2xl);
+	font-family: var(--ui-font-family-system);
+	color: var(--ui-color-palette-black-base);
+	display: flex;
+}
+
+.hr-hcmlink-sync__column-title-container > div {
+	flex-grow: 4;
+	flex-basis: 250px;
+	padding: 7px;
+}
+
+.hr-hcmlink-mapping-page-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: normal;
+	position: relative;
+}
+
+.hr-hcmlink-mapping-alert-container {
+	margin-bottom: 25px;
+}
+
+.hr-hcmlink-mapping-alert-container__more-button {
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+.hr-hcmlink-mapping-page-person-wrapper_right {
+	position: absolute;
+	background-color: var(--ui-color-palette-orange-30);
+	opacity: var(--ui-opacity-40);
+	border-radius: 8px;
+	top: -8px;
+	right: -10px;
+	content: '';
+	width: 379px;
+	height: calc(100% + 8px);
+	z-index: 1;
+}
+
+.hr-hcmlink-mapping-page-person-wrapper_left {
+	position: absolute;
+	background-color: var(--ui-color-palette-orange-30);
+	opacity: var(--ui-opacity-40);
+	border-radius: 8px;
+	top: -8px;
+	left: -10px;
+	content: '';
+	width: 328px;
+	height: calc(100% + 8px);
+	z-index: 1;
+}

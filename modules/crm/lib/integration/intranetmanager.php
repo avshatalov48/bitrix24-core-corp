@@ -309,6 +309,18 @@ class IntranetManager
 		return $customSectionManager->getUrlForPage($customSectionCode, $pageCode);
 	}
 
+	public static function getUrlForCustomSection(CustomSection $customSection): ?Uri
+	{
+		if (!static::isCustomSectionsAvailable())
+		{
+			return null;
+		}
+
+		$customSectionManager = ServiceLocator::getInstance()->get('intranet.customSection.manager');
+
+		return $customSectionManager->getSectionRootUrl($customSection->getCode());
+	}
+
 	public static function isCustomSectionExists(?string $customSectionCode): bool
 	{
 		if (is_null($customSectionCode) || !self::isCustomSectionsAvailable())

@@ -9,3 +9,18 @@ type DialogHeaderButtonsIds =
 	| 'unsubscribed_from_comments'
 
 type DialogHeaderTitleParams = ChatAvatarTitleParams & ChatTitleTileParams
+
+type DialogHeaderButton = {
+	id: string,
+	testId: string,
+	type: string,
+	color?: string | null,
+	badgeCode?: string,
+	badgeValue?: string,
+	svg?: object,
+	name?: string,
+	imageUrl?: string,
+	accent?: boolean,
+	dot?: boolean,
+	callback?: () => any,
+}

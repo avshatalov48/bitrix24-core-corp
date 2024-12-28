@@ -33,7 +33,7 @@ if (!function_exists('renderMyTasksColumn'))
 		}
 		else
 		{
-			$data = Loc::getMessage('TASKS_FLOW_LIST_NO_TASKS');
+			$data = Loc::getMessage('TASKS_FLOW_LIST_NO_YOUR_TASKS');
 
 			return <<<HTML
 				<div class="tasks-flow__list-cell $disableClass --right">$data</div>
@@ -49,6 +49,7 @@ if (!function_exists('prepareMyTasksColumnData'))
 	{
 		$flowId = $data['flowId'];
 		$flowName = $data['flowName'];
+		$userId = $arResult['currentUserId'];
 
 		$myTasksUri = new Uri(
 			CComponentEngine::makePathFromTemplate(
@@ -58,8 +59,8 @@ if (!function_exists('prepareMyTasksColumnData'))
 
 		$myTasksUri->addParams(['apply_filter' => 'Y']);
 		$myTasksUri->addParams(['FLOW' => $flowId]);
+		$myTasksUri->addParams(['CREATED_BY' => $userId]);
 		$myTasksUri->addParams(['FLOW_label' => $flowName]);
-		$myTasksUri->addParams(['ROLEID' => \Bitrix\Tasks\Internals\Counter\Role::ORIGINATOR]);
 		$myTasksUri->addParams(['show_counters_toolbar' => 'N']);
 		$myTasksUri->addParams(['my_tasks_column' => 'Y']);
 		$myTasksUri->addParams(

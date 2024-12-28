@@ -1,0 +1,36 @@
+.ui-page-slider-workarea {
+	height: calc(100vh - 100px);
+}
+
+.ui-form {
+	padding-top: 16px;
+}
+
+.db-connection-hint {
+	border-radius: 6px;
+	background-color: var(--ui-color-palette-blue-15);
+	padding: 14px 16px;
+	margin-bottom: 16px;
+}
+
+.db-connection-button-block {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	margin-top: 16px;
+}
+
+.db-connection-success, .db-connection-error {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	margin-left: 8px;
+}
+
+.db-connection-status .ui-icon-set {
+	margin-right: 4px;
+}
+
+.db-connection-error {
+	color: var(--ui-color-palette-red-60);
+}

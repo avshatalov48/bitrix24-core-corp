@@ -232,6 +232,10 @@
 	top: 219px;
 }
 
+.bx-im-bar-with-copilot .bx-im-users-wrap {
+	top: 219px;
+}
+
 .bx-im-bar-with-ol.bx-im-bar-with-copilot .bx-im-users-wrap {
 	top: 265px;
 }

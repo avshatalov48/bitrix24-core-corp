@@ -2,6 +2,7 @@
 
 namespace Bitrix\Tasks\Flow\Grid;
 
+use Bitrix\Tasks\Flow\Grid\Column\Activity;
 use Bitrix\Tasks\Flow\Grid\Column\AtWork;
 use Bitrix\Tasks\Flow\Grid\Column\BIAnalytics;
 use Bitrix\Tasks\Flow\Grid\Column\Column;
@@ -24,6 +25,7 @@ abstract class Columns
 	{
 		self::set(new Id());
 		self::set(new Name());
+		self::set(new Activity());
 		self::set(new MyTasks());
 		self::set(new CreateTask());
 		self::set(new Pending());

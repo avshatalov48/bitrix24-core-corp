@@ -2,7 +2,6 @@
 
 namespace Bitrix\Intranet\Settings;
 
-use Bitrix\Intranet\Settings\Controls\Field;
 use Bitrix\Intranet\Settings\Controls\Section;
 use Bitrix\Intranet\Settings\Controls\Selector;
 use Bitrix\Intranet\Settings\Controls\Switcher;
@@ -29,11 +28,13 @@ class EmployeeSettings extends AbstractSettings
 	public const TYPE = 'employee';
 
 	private bool $isBitrix24;
+	private bool $isExtranetInstalled;
 
 	public function __construct(array $data = [])
 	{
 		parent::__construct($data);
 		$this->isBitrix24 = IsModuleInstalled("bitrix24");
+		$this->isExtranetInstalled = IsModuleInstalled("extranet");
 	}
 
 	public function validate(): ErrorCollection
@@ -120,12 +121,12 @@ class EmployeeSettings extends AbstractSettings
 				\COption::SetOptionString("intranet", "show_year_for_female", "N", false);
 			}
 
-
 			if (isset($this->data['feature_extranet']) && $this->data['feature_extranet'] === 'Y')
 			{
 				Option::set('bitrix24', 'feature_extranet', 'Y');
+				\CUserOptions::DeleteOptionsByName('intranet', 'isUserListPresetsUpdated');
 				\CBitrix24::updateExtranetUsersActivity(true);
-				if (!IsModuleInstalled("extranet"))
+				if (!$this->isExtranetInstalled)
 				{
 					ModuleManager::add("extranet");
 				}
@@ -134,13 +135,17 @@ class EmployeeSettings extends AbstractSettings
 			elseif (
 				isset($this->data['feature_extranet'])
 				&& $this->data['feature_extranet'] !== 'Y'
-				&& IsModuleInstalled('extranet')
+				&& $this->isExtranetInstalled
 			)
 			{
 				Option::set('bitrix24', 'feature_extranet', 'N');
+				\CUserOptions::DeleteOptionsByName('intranet', 'isUserListPresetsUpdated');
 				\CBitrix24::updateExtranetUsersActivity(false);
-				ModuleManager::delete('extranet');
-				$manualModulesChangedList['extranet'] = 'N';
+				if (\Bitrix\Extranet\PortalSettings::getInstance()->canBeDeleted())
+				{
+					ModuleManager::delete('extranet');
+					$manualModulesChangedList['extranet'] = 'N';
+				}
 			}
 			if (!empty($manualModulesChangedList))
 			{
@@ -232,18 +237,20 @@ class EmployeeSettings extends AbstractSettings
 				],
 			);
 
-			$defaultExtranet = IsModuleInstalled("extranet") ? 'Y' : 'N';
-
-			$data['feature_extranet'] = new Switcher(
-				'settings-employee-field-feature_extranet',
-				'feature_extranet',
-				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_EXTRANET'),
-				Option::get('bitrix24', 'feature_extranet', $defaultExtranet),
-				[
-					'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_EXTRANET_ON_MSGVER_1'),
-				],
-				helpDesk: 'redirect=detail&code=17983050'
-			);
+			if (!$this->isExtranetInstalled || \Bitrix\Extranet\PortalSettings::getInstance()->isModuleToggleable())
+			{
+				$defaultExtranet = $this->isExtranetInstalled ? 'Y' : 'N';
+				$data['feature_extranet'] = new Switcher(
+					'settings-employee-field-feature_extranet',
+					'feature_extranet',
+					Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_EXTRANET'),
+					Option::get('bitrix24', 'feature_extranet', $defaultExtranet),
+					[
+						'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_EXTRANET_ON_MSGVER_1'),
+					],
+					helpDesk: 'redirect=detail&code=17983050'
+				);
+			}
 		}
 
 		$data['show_fired_employees'] = new Switcher(

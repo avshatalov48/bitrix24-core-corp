@@ -557,7 +557,7 @@ class Order extends Entity
 		return \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($id, $permissions);
 	}
 
-	public function getItem(int $id): ?array
+	public function getItem(int $id, array $fieldsToSelect = []): ?array
 	{
 		$order = \Bitrix\Crm\Order\Order::load($id);
 

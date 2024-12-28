@@ -1,6 +1,7 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,main_popup,tasks_flow_teamPopup,tasks_sidePanelIntegration,ui_label,main_core,main_loader,ui_buttons,ui_infoHelper) {
+(function (exports,main_core_events,main_popup,tasks_flow_teamPopup,tasks_sidePanelIntegration,ui_label,main_core,main_loader,ui_buttons,ui_infoHelper) {
 	'use strict';
 
 	let _ = t => t,
@@ -299,18 +300,22 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  _t8,
 	  _t9,
 	  _t10,
-	  _t11;
+	  _t11,
+	  _t12;
 	var _params$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
 	var _layout$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
+	var _notificationList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("notificationList");
 	var _viewAjax$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("viewAjax");
 	var _selectedSegment = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedSegment");
 	var _viewFormData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("viewFormData");
+	var _subscribeEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeEvents");
 	var _load$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("load");
 	var _render = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("render");
 	var _renderLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderLoader");
 	var _renderHeader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderHeader");
 	var _renderDescription = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderDescription");
 	var _renderEfficiencyLabel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderEfficiencyLabel");
+	var _renderTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderTitle");
 	var _renderContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderContent");
 	var _renderSegmentButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderSegmentButton");
 	var _updateSegmentsVisibility = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateSegmentsVisibility");
@@ -369,6 +374,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    Object.defineProperty(this, _renderContent, {
 	      value: _renderContent2
 	    });
+	    Object.defineProperty(this, _renderTitle, {
+	      value: _renderTitle2
+	    });
 	    Object.defineProperty(this, _renderEfficiencyLabel, {
 	      value: _renderEfficiencyLabel2
 	    });
@@ -387,6 +395,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    Object.defineProperty(this, _load$1, {
 	      value: _load2$1
 	    });
+	    Object.defineProperty(this, _subscribeEvents, {
+	      value: _subscribeEvents2
+	    });
 	    Object.defineProperty(this, _params$1, {
 	      writable: true,
 	      value: void 0
@@ -394,6 +405,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    Object.defineProperty(this, _layout$1, {
 	      writable: true,
 	      value: void 0
+	    });
+	    Object.defineProperty(this, _notificationList, {
+	      writable: true,
+	      value: new Set()
 	    });
 	    Object.defineProperty(this, _viewAjax$1, {
 	      writable: true,
@@ -411,7 +426,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1] = {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _viewAjax$1)[_viewAjax$1] = new ViewAjax(babelHelpers.classPrivateFieldLooseBase(this, _params$1)[_params$1].flowId);
 	    this.isFeatureEnabled = params.isFeatureEnabled === 'Y';
+	    this.flowUrl = params.flowUrl;
 	    void babelHelpers.classPrivateFieldLooseBase(this, _load$1)[_load$1]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeEvents)[_subscribeEvents]();
 	  }
 	  static showInstance(params) {
 	    this.getInstance(params).show(params.bindElement);
@@ -420,6 +437,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    var _this$instances, _params$flowId, _this$instances$_para;
 	    (_this$instances$_para = (_this$instances = this.instances)[_params$flowId = params.flowId]) != null ? _this$instances$_para : _this$instances[_params$flowId] = new this(params);
 	    return this.instances[params.flowId];
+	  }
+	  static removeInstance(flowId) {
+	    if (Object.hasOwn(this.instances, flowId)) {
+	      delete this.instances[flowId];
+	    }
 	  }
 	  show(bindElement) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].popup = this.getPopup();
@@ -456,6 +478,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    return popup;
 	  }
 	}
+	function _subscribeEvents2() {
+	  main_core_events.EventEmitter.subscribe('BX.Tasks.Flow.EditForm:afterSave', event => {
+	    var _event$data$id, _event$data;
+	    const flowId = (_event$data$id = (_event$data = event.data) == null ? void 0 : _event$data.id) != null ? _event$data$id : 0;
+	    ViewForm.removeInstance(flowId);
+	  });
+	}
 	async function _load2$1() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _viewFormData)[_viewFormData] = await babelHelpers.classPrivateFieldLooseBase(this, _viewAjax$1)[_viewAjax$1].getViewFormData();
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].popup.setContent(babelHelpers.classPrivateFieldLooseBase(this, _render)[_render]());
@@ -485,12 +514,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return main_core.Tag.render(_t3$1 || (_t3$1 = _$2`
 			<div class="tasks-flow__view-form_header">
 				<div class="tasks-flow__view-form_header-title">
-					<div
-						class="tasks-flow__view-form-header_title-text"
-						title="${0}"
-					>
-						${0}
-					</div>
+					${0}
 					<div class="tasks-flow__view-form-header_title-efficiency">
 						${0}
 					</div>
@@ -499,7 +523,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 					${0}
 				</div>
 			</div>
-		`), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _viewFormData)[_viewFormData].flow.name), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _viewFormData)[_viewFormData].flow.name), babelHelpers.classPrivateFieldLooseBase(this, _renderEfficiencyLabel)[_renderEfficiencyLabel](babelHelpers.classPrivateFieldLooseBase(this, _viewFormData)[_viewFormData].flow.efficiency), babelHelpers.classPrivateFieldLooseBase(this, _renderDescription)[_renderDescription](babelHelpers.classPrivateFieldLooseBase(this, _viewFormData)[_viewFormData].flow.description));
+		`), babelHelpers.classPrivateFieldLooseBase(this, _renderTitle)[_renderTitle](), babelHelpers.classPrivateFieldLooseBase(this, _renderEfficiencyLabel)[_renderEfficiencyLabel](babelHelpers.classPrivateFieldLooseBase(this, _viewFormData)[_viewFormData].flow.efficiency), babelHelpers.classPrivateFieldLooseBase(this, _renderDescription)[_renderDescription](babelHelpers.classPrivateFieldLooseBase(this, _viewFormData)[_viewFormData].flow.description));
 	}
 	function _renderDescription2(description) {
 	  const descriptionNode = main_core.Tag.render(_t4$1 || (_t4$1 = _$2`
@@ -519,8 +543,44 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    fill: true
 	  }).render();
 	}
+	function _renderTitle2() {
+	  const title = main_core.Tag.render(_t5 || (_t5 = _$2`
+			<div class="tasks-flow__view-form-header_title-link">
+				<div
+					class="tasks-flow__view-form-header_title-text"
+					title="${0}"
+				>
+					${0}
+				</div>
+				<div 
+					class="tasks-flow__view-form-header_title-link-icon ui-icon-set --link-3"
+					style="--ui-icon-set__icon-size: 16px;"
+					title="${0}"
+				></div>
+			</div>
+		`), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _viewFormData)[_viewFormData].flow.name), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _viewFormData)[_viewFormData].flow.name), main_core.Loc.getMessage('TASKS_FLOW_VIEW_FORM_LINK_TITLE'));
+	  main_core.Event.bind(title, 'click', () => {
+	    const notificationId = 'copy-link';
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _notificationList)[_notificationList].has(notificationId)) {
+	      const flowURL = window.location.protocol + this.flowUrl;
+	      BX.clipboard.copy(flowURL);
+	      BX.UI.Notification.Center.notify({
+	        id: notificationId,
+	        content: main_core.Loc.getMessage('TASKS_FLOW_VIEW_FORM_TITLE_COPY_LINK')
+	      });
+	      babelHelpers.classPrivateFieldLooseBase(this, _notificationList)[_notificationList].add(notificationId);
+	      main_core_events.EventEmitter.subscribeOnce('UI.Notification.Balloon:onClose', baseEvent => {
+	        const closingBalloon = baseEvent.getTarget();
+	        if (closingBalloon.getId() === notificationId) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _notificationList)[_notificationList].delete(notificationId);
+	        }
+	      });
+	    }
+	  });
+	  return title;
+	}
 	function _renderContent2() {
-	  const content = main_core.Tag.render(_t5 || (_t5 = _$2`
+	  const content = main_core.Tag.render(_t6 || (_t6 = _$2`
 			<div class="tasks-flow__view-form-content">
 				${0}
 				${0}
@@ -560,7 +620,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }
 	}
 	function _renderDetails2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].details = main_core.Tag.render(_t6 || (_t6 = _$2`
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].details = main_core.Tag.render(_t7 || (_t7 = _$2`
 			<div class="tasks-flow__view-form-details">
 				${0}
 				${0}
@@ -578,7 +638,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _renderField)[_renderField](main_core.Loc.getMessage('TASKS_FLOW_VIEW_FORM_PROJECT'), babelHelpers.classPrivateFieldLooseBase(this, _renderEntity)[_renderEntity](babelHelpers.classPrivateFieldLooseBase(this, _viewFormData)[_viewFormData].project));
 	}
 	function _renderField2(title, content) {
-	  return main_core.Tag.render(_t7 || (_t7 = _$2`
+	  return main_core.Tag.render(_t8 || (_t8 = _$2`
 			<div class="tasks-flow__view-form_field-name">
 				${0}
 			</div>
@@ -588,7 +648,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 		`), title, content);
 	}
 	function _renderEntity2(entity) {
-	  return main_core.Tag.render(_t8 || (_t8 = _$2`
+	  return main_core.Tag.render(_t9 || (_t9 = _$2`
 			<a class="tasks-flow__view-form_entity" href="${0}">
 				${0}
 				<div class="tasks-flow__view-form_entity-name" title="${0}">
@@ -604,7 +664,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _viewFormData)[_viewFormData].team.length === 1) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _renderEntity)[_renderEntity](babelHelpers.classPrivateFieldLooseBase(this, _viewFormData)[_viewFormData].team[0]);
 	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].teamNode = main_core.Tag.render(_t9 || (_t9 = _$2`
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].teamNode = main_core.Tag.render(_t10 || (_t10 = _$2`
 			<div class="tasks-flow__view-form_line-avatars">
 				${0}
 				${0}
@@ -617,7 +677,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}
 	function _renderAvatar2(entity) {
 	  const style = babelHelpers.classPrivateFieldLooseBase(this, _isAvatar)[_isAvatar](entity.avatar) ? `background-image: url('${encodeURI(entity.avatar)}');` : '';
-	  return main_core.Tag.render(_t10 || (_t10 = _$2`
+	  return main_core.Tag.render(_t11 || (_t11 = _$2`
 			<span class="ui-icon ui-icon-common-user tasks-flow__view-form_avatar" title="${0}">
 				<i style="${0}"></i>
 			</span>
@@ -633,7 +693,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].showTeamButton = null;
 	    return '';
 	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].showTeamButton = main_core.Tag.render(_t11 || (_t11 = _$2`
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].showTeamButton = main_core.Tag.render(_t12 || (_t12 = _$2`
 			<div class="tasks-flow__view-form_show-team-button">
 				${0}
 			</div>
@@ -671,5 +731,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.ViewForm = ViewForm;
 
-}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.Main,BX.Tasks.Flow,BX.Tasks,BX.UI,BX,BX,BX.UI,BX.UI));
+}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.Event,BX.Main,BX.Tasks.Flow,BX.Tasks,BX.UI,BX,BX,BX.UI,BX.UI));
 //# sourceMappingURL=view-form.bundle.js.map

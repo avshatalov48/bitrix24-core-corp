@@ -6,6 +6,7 @@ import EntityChat from "./streams/entitychat";
 import Schedule from "./streams/schedule";
 import SchedulePostponeController from "./tools/schedule-postpone-controller";
 import AudioPlaybackRateSelector from "./tools/audio-playback-rate-selector";
+import WorkflowEventManager from "./tools/workflow-event-manager";
 import * as Types from "./types";
 import Action from "./action";
 import Activity from "./actions/activity";
@@ -72,6 +73,7 @@ const Streams = {
 const Tools = {
 	SchedulePostponeController,
 	AudioPlaybackRateSelector,
+	WorkflowEventManager,
 }
 
 const Actions = {

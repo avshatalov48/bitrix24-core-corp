@@ -1,3 +1,5 @@
+import type { DocumentInitiatedType } from 'sign.v2.document-setup';
+
 export type MemberItem = {
 	part: number,
 	cid: number,
@@ -52,4 +54,6 @@ export type DocumentOptions = {
 	afterSaveCallback?: () => {},
 	saveErrorCallback?: () => {},
 	languages: {[key: string]: { NAME: string; IS_BETA: boolean; }},
+	isTemplateMode: boolean,
+	documentInitiatedByType?: DocumentInitiatedType,
 };

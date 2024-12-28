@@ -1,8 +1,29 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
-(function (exports,main_core,ui_wizard,sign_v2_preview) {
+(function (exports,main_core,main_core_cache,ui_wizard,sign_v2_preview,sign_v2_analytics) {
 	'use strict';
+
+	function decorateResultBeforeCompletion$$1(innerCallback, onSuccess, onFail) {
+	  return async () => {
+	    let result = false;
+	    try {
+	      result = await innerCallback();
+	    } catch (e) {
+	      await onFail();
+	      throw e;
+	    }
+	    if (result) {
+	      await onSuccess();
+	    } else {
+	      await onFail();
+	    }
+	    return result;
+	  };
+	}
+	function isTemplateMode$$1(mode) {
+	  return mode === DocumentMode.template;
+	}
 
 	let _ = t => t,
 	  _t,
@@ -12,9 +33,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  document: 'document',
 	  template: 'template'
 	});
-	function isTemplateMode(mode) {
-	  return mode === DocumentMode.template;
-	}
+	var _cache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
 	var _containerId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("containerId");
 	var _preview = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preview");
 	var _type = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("type");
@@ -23,7 +42,10 @@ this.BX.Sign = this.BX.Sign || {};
 	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	var _overlayContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("overlayContainer");
 	var _currentOverlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentOverlay");
+	var _isEditMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isEditMode");
 	var _createHead = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createHead");
+	var _getHeaderTitleSubText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getHeaderTitleSubText");
+	var _getHeaderTitleText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getHeaderTitleText");
 	var _getLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLayout");
 	var _getOverlayContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOverlayContainer");
 	var _showCompleteNotification = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showCompleteNotification");
@@ -63,8 +85,18 @@ this.BX.Sign = this.BX.Sign || {};
 	    Object.defineProperty(this, _getLayout, {
 	      value: _getLayout2
 	    });
+	    Object.defineProperty(this, _getHeaderTitleText, {
+	      value: _getHeaderTitleText2
+	    });
+	    Object.defineProperty(this, _getHeaderTitleSubText, {
+	      value: _getHeaderTitleSubText2
+	    });
 	    Object.defineProperty(this, _createHead, {
 	      value: _createHead2
+	    });
+	    Object.defineProperty(this, _cache, {
+	      writable: true,
+	      value: new main_core_cache.MemoryCache()
 	    });
 	    Object.defineProperty(this, _containerId, {
 	      writable: true,
@@ -98,13 +130,18 @@ this.BX.Sign = this.BX.Sign || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _isEditMode, {
+	      writable: true,
+	      value: false
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _containerId)[_containerId] = containerId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview] = new sign_v2_preview.Preview();
 	    babelHelpers.classPrivateFieldLooseBase(this, _wizardOptions)[_wizardOptions] = wizardOptions;
 	    const {
 	      type = '',
 	      config = {},
-	      documentMode
+	      documentMode,
+	      initiatedByType
 	    } = signOptions;
 	    this.documentMode = documentMode;
 	    babelHelpers.classPrivateFieldLooseBase(this, _type)[_type] = type;
@@ -113,11 +150,16 @@ this.BX.Sign = this.BX.Sign || {};
 	    } = (_config$documentSendC = config.documentSendConfig) != null ? _config$documentSendC : {};
 	    const EditorConstructor = main_core.Reflection.getClass('top.BX.Sign.V2.Editor');
 	    this.editor = new EditorConstructor(type, {
-	      languages
+	      languages,
+	      isTemplateMode: this.isTemplateMode(),
+	      documentInitiatedByType: initiatedByType
 	    });
 	  }
 	  isTemplateMode() {
 	    return this.documentMode === DocumentMode.template;
+	  }
+	  isDocumentMode() {
+	    return this.documentMode === DocumentMode.document;
 	  }
 	  onComplete(showNotification = true) {
 	    BX.SidePanel.Instance.close();
@@ -248,11 +290,12 @@ this.BX.Sign = this.BX.Sign || {};
 	    const {
 	      blocks
 	    } = setupData;
-	    babelHelpers.classPrivateFieldLooseBase(this, _renderPages)[_renderPages](blocks, preparedPages);
+	    await babelHelpers.classPrivateFieldLooseBase(this, _renderPages)[_renderPages](blocks, preparedPages);
 	    return setupData;
 	  }
-	  async init(uid) {
-	    const metadata = this.getStepsMetadata(this);
+	  async init(uid, templateUid) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _isEditMode)[_isEditMode] = main_core.Type.isStringFilled(uid) || main_core.Type.isStringFilled(templateUid);
+	    const metadata = this.getStepsMetadata(this, uid, templateUid);
 	    const {
 	      complete,
 	      ...rest
@@ -276,15 +319,31 @@ this.BX.Sign = this.BX.Sign || {};
 	    if (uid) {
 	      await this.applyDocumentData(uid);
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _render)[_render]();
+	    if (templateUid) {
+	      await this.applyTemplateData(templateUid);
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _render)[_render](uid);
 	  }
-	  getStepsMetadata() {
+	  async applyTemplateData(templateUid) {}
+	  getStepsMetadata(signSettings, documentUid, templateUid) {
 	    return {};
+	  }
+	  setAnalyticsContext(context) {
+	    this.getAnalytics().setContext(new sign_v2_analytics.Context(context));
+	  }
+	  getAnalytics() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('analytics', () => {
+	      var _top$BX$Sign$V2$Analy, _top$BX;
+	      return new ((_top$BX$Sign$V2$Analy = (_top$BX = top.BX) == null ? void 0 : _top$BX.Sign.V2.Analytics) != null ? _top$BX$Sign$V2$Analy : sign_v2_analytics.Analytics)();
+	    });
+	  }
+	  isEditMode() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _isEditMode)[_isEditMode];
 	  }
 	}
 	function _createHead2() {
-	  const headerTitle = this.isTemplateMode() ? main_core.Loc.getMessage('SIGN_SETTINGS_TITLE_TEMPLATE') : main_core.Loc.getMessage('SIGN_SETTINGS_TITLE');
-	  const headerTitleSub = babelHelpers.classPrivateFieldLooseBase(this, _type)[_type] === 'b2b' ? main_core.Loc.getMessage('SIGN_SETTINGS_B2B_TITLE_SUB') : main_core.Loc.getMessage('SIGN_SETTINGS_B2E_TITLE_SUB');
+	  const headerTitle = babelHelpers.classPrivateFieldLooseBase(this, _getHeaderTitleText)[_getHeaderTitleText]();
+	  const headerTitleSub = babelHelpers.classPrivateFieldLooseBase(this, _getHeaderTitleSubText)[_getHeaderTitleSubText]();
 	  return main_core.Tag.render(_t || (_t = _`
 			<div class="sign-settings__head">
 				<div>
@@ -295,6 +354,21 @@ this.BX.Sign = this.BX.Sign || {};
 				</div>
 			</div>
 		`), headerTitle, headerTitleSub);
+	}
+	function _getHeaderTitleSubText2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _type)[_type] === 'b2b') {
+	    return main_core.Loc.getMessage('SIGN_SETTINGS_B2B_TITLE_SUB');
+	  }
+	  if (this.isTemplateMode() && babelHelpers.classPrivateFieldLooseBase(this, _isEditMode)[_isEditMode]) {
+	    return null;
+	  }
+	  return main_core.Loc.getMessage('SIGN_SETTINGS_B2E_TITLE_SUB');
+	}
+	function _getHeaderTitleText2() {
+	  if (this.isTemplateMode()) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _isEditMode)[_isEditMode] ? main_core.Loc.getMessage('SIGN_SETTINGS_TITLE_TEMPLATE_EDIT') : main_core.Loc.getMessage('SIGN_SETTINGS_TITLE_TEMPLATE');
+	  }
+	  return main_core.Loc.getMessage('SIGN_SETTINGS_TITLE');
 	}
 	function _getLayout2() {
 	  const className = babelHelpers.classPrivateFieldLooseBase(this, _type)[_type] === 'b2e' ? 'sign-settings --b2e' : 'sign-settings';
@@ -361,12 +435,13 @@ this.BX.Sign = this.BX.Sign || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _currentOverlay)[_currentOverlay] = overlay;
 	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _currentOverlay)[_currentOverlay], babelHelpers.classPrivateFieldLooseBase(this, _overlayContainer)[_overlayContainer]);
 	}
-	function _render2() {
+	function _render2(uid) {
 	  const container = document.getElementById(babelHelpers.classPrivateFieldLooseBase(this, _containerId)[_containerId]);
 	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getOverlayContainer)[_getOverlayContainer](), container);
 	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getLayout)[_getLayout](), container);
 	  const step = this.documentSetup.setupData ? 1 : 0;
-	  this.wizard.toggleBtnActiveState('next', true);
+	  const isDraft = main_core.Type.isStringFilled(uid);
+	  this.wizard.toggleBtnActiveState('next', !isDraft);
 	  this.wizard.moveOnStep(step);
 	}
 	function _showOverlay2() {
@@ -379,8 +454,9 @@ this.BX.Sign = this.BX.Sign || {};
 	}
 
 	exports.DocumentMode = DocumentMode;
-	exports.isTemplateMode = isTemplateMode;
+	exports.decorateResultBeforeCompletion = decorateResultBeforeCompletion$$1;
+	exports.isTemplateMode = isTemplateMode$$1;
 	exports.SignSettings = SignSettings;
 
-}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX,BX.Ui,BX.Sign.V2));
+}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX,BX.Cache,BX.Ui,BX.Sign.V2,BX.Sign.V2));
 //# sourceMappingURL=sign-settings.bundle.js.map

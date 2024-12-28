@@ -2,13 +2,13 @@
 
 namespace Bitrix\Disk;
 
-use Bitrix\Disk\Document\Online\ObjectEvent;
 use Bitrix\Disk\Internals\Entity\ModelSynchronizer;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\ObjectNameService;
 use Bitrix\Disk\Internals\ObjectPathTable;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\SharingTable;
+use Bitrix\Disk\Realtime\Events\ObjectEvent;
 use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Disk\Ui\Avatar;
 use Bitrix\Im\Model\ChatTable;
@@ -525,7 +525,15 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 
 		$data['OBJECT_ID'] = $this->id;
 
-		return ExternalLink::add($data, $this->errorCollection);
+		$addResult = ExternalLink::add($data, $this->errorCollection);
+
+		if ($addResult)
+		{
+			$event = new Event(Driver::INTERNAL_MODULE_ID, 'onAfterAddExternalLinkToObject', [$this, $data]);
+			$event->send();
+		}
+
+		return $addResult;
 	}
 
 	/**
@@ -654,9 +662,22 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 	public function rename(string $newName, bool $generateUniqueName = false)
 	{
 		$success = $this->renameInternal($newName, $generateUniqueName);
-		if($success)
+		if ($success)
 		{
 			$this->changeParentUpdateTime();
+
+			$objectEvent = $this->makeObjectEvent(
+				'objectRenamed',
+				[
+					'object' => [
+						'id' => (int)$this->getId(),
+						'type' => (int)$this->getType(),
+						'name' => $this->getName(),
+						'parentId' => (int)$this->getParentId(),
+					],
+				]
+			);
+			$objectEvent->sendToObjectChannel();
 		}
 
 		return $success;

@@ -1,9 +1,11 @@
 <?php
 namespace Bitrix\AI\Controller;
 
+use Bitrix\AI\Parameter\DefaultParameter;
 use Bitrix\AI\Prompt;
 use Bitrix\AI\Facade\User;
 use Bitrix\AI\Role\RoleManager;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Error;
@@ -11,15 +13,18 @@ use Bitrix\Main\Error;
 class Role extends Controller
 {
 
-	public function getPrimaryAutoWiredParameter()
+	public function getAutoWiredParameters()
 	{
-		return new ExactParameter(
-			RoleManager::class,
-			'roleManager',
-			function($className, $parameters){
-				return new $className(User::getCurrentUserId(), User::getUserLanguage());
-			}
-		);
+		return [
+			new DefaultParameter(),
+			new ExactParameter(
+				RoleManager::class,
+				'roleManager',
+				function($className, $parameters){
+					return new $className(User::getCurrentUserId(), User::getUserLanguage());
+				}
+			)
+		];
 	}
 
 	public function getDefaultPreFilters(): array
@@ -187,6 +192,7 @@ class Role extends Controller
 			'recommended' => $roleManager->getRecommendedRoles(),
 			'recents' => $roleManager->getRecentRoles(),
 			'favorites' => $roleManager->getFavoriteRoles(),
+			'customs' => $roleManager->getCustomRoles(),
 		];
 	}
 }

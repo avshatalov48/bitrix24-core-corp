@@ -28,6 +28,7 @@ jn.define('communication/events/phone', (require, exports, module) => {
 			return {
 				number,
 				canUseTelephony: this.canUseTelephony(),
+				analyticsSection: this.props.analyticsSection,
 				layoutWidget,
 				params: {
 					...params,

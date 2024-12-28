@@ -100,7 +100,6 @@ $MESS["TASKS_HOURS_G"] = "часа";
 $MESS["TASKS_HOURS_P"] = "часов";
 $MESS["TASKS_NO_TEMPLATES"] = "Шаблонов пока нет";
 $MESS["TASKS_PARENT_TASK"] = "Базовая задача";
-$MESS["TASKS_TASK_GROUP"] = "Задача в проекте (группе)";
 $MESS["TASKS_NO_SUBTASKS"] = "нет подзадач";
 $MESS["TASKS_LOG_NEW"] = "Создана задача";
 $MESS["TASKS_LOG_TITLE"] = "Название задачи";
@@ -139,7 +138,7 @@ $MESS["TASKS_ADD_TASK_TO_TIMEMAN"] = "Добавить в план рабоче�
 $MESS["TASKS_COPY_TASK_EX"] = "Создать задачу на основе текущей";
 $MESS["TASKS_ADD_TASK_TO_TIMEMAN_EX"] = "Добавить в план рабочего дня";
 $MESS["TASKS_ELAPSED_TIME"] = "Затраченное время";
-$MESS["TASKS_ELAPSED_TIME_SHORT"] = "Время";
+$MESS["TASKS_ELAPSED_TIME_SHORT_MSGVER_1"] = "Время";
 $MESS["TASKS_ELAPSED_H"] = "ч";
 $MESS["TASKS_ELAPSED_M"] = "м";
 $MESS["TASKS_ELAPSED_AUTHOR"] = "Автор";
@@ -193,4 +192,3 @@ $MESS["TASKS_DETAIL_CHECKLIST_HIDE_COMPLETED"] = "скрыть завершён�
 $MESS["TASKS_DETAIL_CHECKLIST_SHOW_COMPLETED"] = "показать завершённые";
 
 $MESS["TASKS_DELETE_SUCCESS"] = "Задача успешно удалена";
-?>

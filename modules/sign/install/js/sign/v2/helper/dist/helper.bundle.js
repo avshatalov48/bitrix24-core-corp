@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 (function (exports,main_core) {
@@ -24,14 +25,15 @@ this.BX.Sign = this.BX.Sign || {};
 	      event.preventDefault();
 	    });
 	  }
-	  static replaceLink(text, code, redirect = defaultRedirectValue) {
+	  static replaceLink(text, code, redirect = defaultRedirectValue, extraClasses = []) {
 	    return text.replace(`[${defaultHelpdeskTag}]`, `
-					<a class="sign-v2e-helper__link" 
+					<a class="sign-v2e-helper__link ${extraClasses.join(' ')}"
 						href="javascript:top.BX.Helper.show('redirect=${main_core.Tag.safe(_t3 || (_t3 = _`${0}`), redirect)}&code=${main_core.Tag.safe(_t4 || (_t4 = _`${0}`), code)}');"
 					>
 				`).replace(`[/${defaultHelpdeskTag}]`, '</a>');
 	  }
 	}
+	Helpdesk.defaultRedirectValue = defaultRedirectValue;
 
 	class Link {
 	  static replaceInLoc(text, link, linkTag = 'link') {

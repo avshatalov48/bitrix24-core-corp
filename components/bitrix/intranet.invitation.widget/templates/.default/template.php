@@ -7,6 +7,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 
+/**
+ * @var $arResult array
+ */
+
 \Bitrix\Main\UI\Extension::load(['ui.button', 'ui.fonts.opensans']);
 
 $frame = $this->createFrame()->begin();
@@ -25,11 +29,13 @@ $frame = $this->createFrame()->begin();
 			button: document.querySelector("[data-id='invitationButton']"),
 			isCurrentUserAdmin: <?= $arResult['isCurrentUserAdmin'] ? 'true' : 'false' ?>,
 			isExtranetAvailable: <?= $arResult['isExtranetAvailable'] ? 'true' : 'false' ?>,
+			isCollabAvailable: <?= $arResult['isCollabAvailable'] ? 'true' : 'false' ?>,
 			isInvitationAvailable: <?= $arResult['isInvitationAvailable'] ? 'true' : 'false' ?>,
 			structureLink: '<?= CUtil::JSEscape($arResult['structureLink']) ?>',
 			invitationLink: '<?= CUtil::JSEscape($arResult['invitationLink']) ?>',
 			invitationCounter: <?= $arResult['invitationCounter'] ?? 0 ?>,
 			counterId: '<?= $arResult['counterId'] ?? '' ?>',
+			shouldShowStructureCounter: <?= $arResult['shouldShowStructureCounter'] ? 'true' : 'false' ?>,
 		});
 	});
 </script>

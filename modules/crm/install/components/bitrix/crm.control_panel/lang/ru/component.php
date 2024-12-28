@@ -79,3 +79,4 @@ $MESS["CRM_CTRL_PANEL_ITEM_CATALOGUE_GOODS"] = "Каталог товаров";
 $MESS["CRM_CTRL_PANEL_ITEM_CONTRACTORS"] = "Поставщики";
 $MESS["CRM_CTRL_PANEL_ITEM_SIGN_COUNTERPARTY"] = "Контрагенты подписания";
 $MESS["CRM_CTRL_PANEL_ITEM_TERMINAL"] = "Платёжный терминал";
+$MESS["CRM_CTRL_PANEL_ITEM_CALL_ASSESSMENT"] = "Скрипты и Речевая аналитика с AI";

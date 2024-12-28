@@ -24,9 +24,4 @@ class Employee extends Base
 			PermissionDictionary::HUMAN_RESOURCES_CHANEL_UNBIND_TO_STRUCTURE => PermissionVariablesDictionary::VARIABLE_NONE,
 		];
 	}
-
-	public function getTitle(): string
-	{
-		return RoleDictionary::getTitle(RoleDictionary::ROLE_EMPLOYEE);
-	}
 }

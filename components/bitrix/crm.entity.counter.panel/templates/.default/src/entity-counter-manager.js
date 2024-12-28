@@ -82,11 +82,6 @@ export default class EntityCounterManager
 
 	#onPullEvent(event: BaseEvent): void
 	{
-		if (!this.#isTabActive)
-		{
-			return;
-		}
-
 		const [command, params] = event.getData();
 		if (command !== 'user_counter')
 		{
@@ -94,6 +89,10 @@ export default class EntityCounterManager
 		}
 
 		this.#lastPullEventData = params;
+		if (!this.#isTabActive)
+		{
+			return;
+		}
 
 		this.#tryRecalculate(params);
 	}

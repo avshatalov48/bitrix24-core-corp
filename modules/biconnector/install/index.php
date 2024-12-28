@@ -138,6 +138,8 @@ class BIConnector extends \CModule
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Tasks\TaskStages', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Tasks\Flow', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Tasks\TaskElapsedTime', 'onBIConnectorDataSources');
+			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Tasks\TaskEfficiency', 'onBIConnectorDataSources');
+			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\HumanResources\Structure', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'biconnector', '\Bitrix\BIConnector\LimitManager', 'onBitrix24LicenseChange');
 			$eventManager->registerEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\SupersetInitializer', 'onBitrix24LicenseChange');
 			$eventManager->registerEventHandler('main', 'OnBeforeUserUpdate', 'biconnector', '\Bitrix\BIConnector\DictionaryManager', 'onBeforeUserUpdateHandler');
@@ -155,6 +157,16 @@ class BIConnector extends \CModule
 			$eventManager->registerEventHandler('crm', 'onAfterAutomatedSolutionDelete', 'biconnector', '\Bitrix\BIConnector\Superset\Scope\ScopeService', 'deleteAutomatedSolutionBinding');
 
 			$eventManager->registerEventHandler('main', 'OnBuildGlobalMenu', 'biconnector', '\Bitrix\BIConnector\Superset\Scope\MenuItem\MenuItemCreatorShop', 'buildCrmMenu');
+
+			$eventManager->registerEventHandler('biconnector', 'onAfterAddDataset', 'biconnector', '\Bitrix\BIConnector\ExternalSource\SupersetIntegration', 'onAfterAddDataset');
+			$eventManager->registerEventHandler('biconnector', 'onAfterDeleteDataset', 'biconnector', '\Bitrix\BIConnector\ExternalSource\SupersetIntegration', 'onAfterDeleteDataset');
+			$eventManager->registerEventHandler('biconnector', 'onAfterDeleteDataset', 'biconnector', '\Bitrix\BIConnector\ExternalSource\Source\Csv', 'onAfterDeleteDataset');
+
+			$eventManager->registerEventHandler('biconnector', 'OnBIBuilderDataSources', 'biconnector', '\Bitrix\BIConnector\ExternalSource\Dataset\Base', 'onBIBuilderExternalDataSources');
+
+			// bi builder
+			$eventManager->registerEventHandler('biconnector', 'OnBIBuilderDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Tracking\Dataset\SourceExpenses', 'onBIBuilderDataSources');
+			$eventManager->registerEventHandler('biconnector', 'OnBIBuilderDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Tracking\Dataset\Source', 'onBIBuilderDataSources');
 
 			$this->InstallTasks();
 
@@ -225,6 +237,8 @@ class BIConnector extends \CModule
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Tasks\TaskStages', 'onBIConnectorDataSources');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Tasks\Flow', 'onBIConnectorDataSources');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Tasks\TaskElapsedTime', 'onBIConnectorDataSources');
+		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Tasks\TaskEfficiency', 'onBIConnectorDataSources');
+		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\HumanResources\Structure', 'onBIConnectorDataSources');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'biconnector', '\Bitrix\BIConnector\LimitManager', 'onBitrix24LicenseChange');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\SupersetInitializer', 'onBitrix24LicenseChange');
 		$eventManager->unRegisterEventHandler('main', 'OnBeforeUserUpdate', 'biconnector', '\Bitrix\BIConnector\DictionaryManager', 'onBeforeUserUpdateHandler');
@@ -235,6 +249,14 @@ class BIConnector extends \CModule
 		$eventManager->unregisterEventHandler('pull', 'onGetDependentModule', $this->MODULE_ID, '\Bitrix\BIConnector\Integration\Pull\PullManager', 'onGetDependentModule');
 		$eventManager->unregisterEventHandler('crm', 'onAfterAutomatedSolutionDelete', 'biconnector', '\Bitrix\BIConnector\Superset\Scope\ScopeService', 'deleteAutomatedSolutionBinding');
 		$eventManager->unregisterEventHandler('main', 'OnBuildGlobalMenu', 'biconnector', '\Bitrix\BIConnector\Superset\Scope\MenuItem\MenuItemCreatorShop', 'buildCrmMenu');
+		$eventManager->unregisterEventHandler('biconnector', 'onAfterAddDataset', 'biconnector', '\Bitrix\BIConnector\ExternalSource\SupersetIntegration', 'onAfterAddDataset');
+		$eventManager->unregisterEventHandler('biconnector', 'onAfterDeleteDataset', 'biconnector', '\Bitrix\BIConnector\ExternalSource\SupersetIntegration', 'onAfterDeleteDataset');
+		$eventManager->unRegisterEventHandler('biconnector', 'onAfterDeleteDataset', 'biconnector', '\Bitrix\BIConnector\ExternalSource\Source\Csv', 'onAfterDeleteDataset');
+		$eventManager->unRegisterEventHandler('biconnector', 'OnBIBuilderDataSources', 'biconnector', '\Bitrix\BIConnector\ExternalSource\Dataset\Base', 'onBIBuilderExternalDataSources');
+
+		// bi builder
+		$eventManager->unRegisterEventHandler('biconnector', 'OnBIBuilderDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Tracking\Dataset\SourceExpenses', 'onBIBuilderDataSources');
+		$eventManager->unRegisterEventHandler('biconnector', 'OnBIBuilderDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Tracking\Dataset\Source', 'onBIBuilderDataSources');
 
 		\CAgent::RemoveModuleAgents('biconnector');
 

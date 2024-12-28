@@ -113,7 +113,11 @@ class CIntranetUserListComponent extends UserList
 			$this->grid = new UserGrid($settings);
 
 			$this->grid->setTotalCountCalculator(function() {
-				return UserTable::getCount($this->grid->getOrmFilter());
+				$params = $this->grid->getOrmParams();
+				unset($params['limit'], $params['offset']);
+				$params['count_total'] = true;
+
+				return UserTable::getList($params)->getCount();
 			});
 		}
 
@@ -141,13 +145,13 @@ class CIntranetUserListComponent extends UserList
 			unset($params['limit'], $params['offset']);
 
 			$grid->setRawRows(
-				UserTable::getList($params)
+				UserTable::getList($params)->fetchAll()
 			);
 		}
 		else
 		{
 			$grid->setRawRowsWithLazyLoadPagination(function(array $ormParams) {
-				return UserTable::getList($ormParams);
+				return UserTable::getList($ormParams)->fetchAll();
 			});
 		}
 

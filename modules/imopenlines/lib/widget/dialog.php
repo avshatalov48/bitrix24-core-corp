@@ -58,7 +58,7 @@ class Dialog
 		}
 		else
 		{
-			$user = \Bitrix\Main\UserTable::getById($userId)->fetch();
+			$user = \Bitrix\Main\UserTable::getByPrimary($userId, ['select' => ['PERSONAL_PHOTO']])->fetch();
 			if ($user)
 			{
 				$avatarId = $user['PERSONAL_PHOTO'];
@@ -88,6 +88,7 @@ class Dialog
 			}
 		}
 
+		$addChat = [];
 		$addChat['TITLE'] = Loc::getMessage('IMOL_WIDGET_CHAT_NAME', Array(
 			"#USER_NAME#" => $userName,
 			"#LINE_NAME#" => $config['LINE_NAME']
@@ -130,10 +131,6 @@ class Dialog
 	 * @param int $chatId Uses to get chat by id, otherwise will be returned last chat.
 	 *
 	 * @return array|bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function get($userId, $configId, int $chatId = 0)
 	{

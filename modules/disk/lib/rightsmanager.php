@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk;
 
+use Bitrix\Disk\Document\TrackedObject;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\Error\IErrorable;
@@ -11,6 +12,7 @@ use Bitrix\Disk\Internals\Rights\SetupSession;
 use Bitrix\Disk\Internals\Rights\Table\TmpSimpleRight;
 use Bitrix\Disk\Internals\RightTable;
 use Bitrix\Disk\Internals\SimpleRightTable;
+use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\MysqlCommonConnection;
 use Bitrix\Main\Entity\ExpressionField;
@@ -568,6 +570,72 @@ class RightsManager implements IErrorable
 		;
 
 		return $query->exec()->fetchAll();
+	}
+
+	/**
+	 * Get available actions for tracked object.
+	 * @param TrackedObject $trackedObject Tracked object.
+	 * @param int $userId User id.
+	 * @return array
+	 */
+	public function getAvailableActionsByTrackedObject(TrackedObject $trackedObject, int $userId): array
+	{
+		return [
+			'canChangeRights' => $trackedObject->canChangeRights($userId),
+			'canRead' => $trackedObject->canRead($userId),
+			'canRename' => $trackedObject->canRename($userId),
+			'canShare' => $trackedObject->canShare($userId),
+			'canUpdate' => $trackedObject->canUpdate($userId),
+			'canMarkDeleted' => $trackedObject->canMarkDeleted($userId),
+		];
+	}
+
+	/**
+	 * Get available actions for object.
+	 * Remember to use \Bitrix\Disk\Folder::preloadOperationsForSpecifiedObjects for preload operations
+	 * if you want to get available actions for many objects under folder.
+	 * @param BaseObject $object File or Folder.
+	 * @param SecurityContext $securityContext Security context.
+	 * @return array
+	 */
+	public function getAvailableActions(BaseObject $object, SecurityContext $securityContext): array
+	{
+		$rights = [
+			'canChangeRights' => $object->canChangeRights($securityContext),
+			'canRead' => $object->canRead($securityContext),
+			'canRename' => $object->canRename($securityContext),
+			'canShare' => $object->canShare($securityContext),
+		];
+		if ($object->isDeleted())
+		{
+			$rights['canDelete'] = $object->canDelete($securityContext);
+			$rights['canRestore'] = $object->canRestore($securityContext);
+		}
+		else
+		{
+			$rights['canDelete'] = $object->canDelete($securityContext);
+			$rights['canMarkDeleted'] = $object->canMarkDeleted($securityContext);
+		}
+
+		if ($object instanceof Folder)
+		{
+			$rights['canAdd'] = $object->canAdd($securityContext);
+		}
+
+		if ($object instanceof File)
+		{
+			$rights['canUpdate'] = $object->canUpdate($securityContext);
+			$rights['canLock'] = false;
+			$rights['canUnlock'] = false;
+
+			if (Configuration::isEnabledObjectLock())
+			{
+				$rights['canLock'] = $object->canLock($securityContext);
+				$rights['canUnlock'] = $object->canUnlock($securityContext);
+			}
+		}
+
+		return $rights;
 	}
 
 	/**

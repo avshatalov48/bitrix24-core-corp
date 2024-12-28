@@ -48,6 +48,7 @@ export class CopilotPromoPopup
 		const promoVideoPopup = new PromoVideoPopup({
 			targetOptions: options.targetOptions,
 			videoSrc: preset.videoSrc[CopilotPromoPopup.#getVideoLang()],
+			videoContainerMinHeight: preset.videoContainerMinHeight,
 			title: preset.title,
 			text: preset.text,
 			icon: MainIconSet.COPILOT_AI,

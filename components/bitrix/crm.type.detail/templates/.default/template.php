@@ -643,13 +643,13 @@ BX.ready(function()
 		restrictionSliderCode: '<?= $arResult['restrictionSliderCode'] ?>',
 		isExternal: <?= $arResult['isExternal'] ? 'true' : 'false' ?>,
 		isCreateSectionsViaAutomatedSolutionDetails: <?= \Bitrix\Crm\Settings\Crm::isAutomatedSolutionListEnabled() ? 'true' : 'false' ?>,
-		isCrmAdmin: <?= $arResult['isCrmAdmin'] ? 'true' : 'false' ?>,
+		canEditAutomatedSolution: <?= $arResult['canEditAutomatedSolution'] ? 'true' : 'false' ?>,
 	});
 	component.init();
 	BX.UI.Hint.init(form);
 	BX.UI.Switcher.initByClassName();
 
-	<?php if (isset($customSectionSwitcherID) && $isNew || !$arResult['isCrmAdmin']) :?>
+	<?php if (isset($customSectionSwitcherID) && ($isNew || !$arResult['canToggleAutomatedSolutionSwitcher'])) :?>
 		const customSectionSwitcher = BX.UI.Switcher.getById('<?= $customSectionSwitcherID ?>');
 		const customSectionSwitcherNode = document.getElementById('<?= $customSectionSwitcherID ?>');
 		if (customSectionSwitcherNode)

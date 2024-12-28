@@ -37,5 +37,6 @@ export type DocumentData = {
 	status: string;
 	title: string;
 	uid: string;
+	hcmLinkCompanyId: number | null,
 	initiatedByType: DocumentInitiatedType;
 };

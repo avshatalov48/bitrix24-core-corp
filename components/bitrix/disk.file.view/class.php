@@ -233,7 +233,7 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 					'LINK' => $createdByLink,
 					'NAME' => $this->file->getCreateUser()->getFormattedName(),
 					'WORK_POSITION' => $this->file->getCreateUser()->getWorkPosition(),
-					'AVA' => $this->file->getCreateUser()->getAvatarSrc(),
+					'AVA_HTML' => $this->file->getCreateUser()->renderAvatar(),
 				),
 				'VIEWER_ATTRIBUTES' => $attr,
 				'UPDATE_TIME' => $this->file->getUpdateTime(),
@@ -384,8 +384,8 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 					'IFRAME' => 'N',
 					'LAZYLOAD' => 'Y',
 					'PREVIEW' => $previewPath,
-					'WIDTH' => 800,
-					'HEIGHT' => 800 * 9 / 16,
+					'WIDTH' => 560,
+					'HEIGHT' => 480,
 				]
 			);
 		}

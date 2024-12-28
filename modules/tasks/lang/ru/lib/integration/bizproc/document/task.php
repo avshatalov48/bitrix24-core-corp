@@ -58,4 +58,5 @@ $MESS["TASKS_BP_DOCUMENT_SCRUM_OWNER_ROLE"] = "Владелец продукта
 $MESS["TASKS_BP_DOCUMENT_SCRUM_MASTER_ROLE"] = "Скрам-мастер";
 $MESS["TASKS_BP_DOCUMENT_SCRUM_TEAM_ROLE"] = "Команда разработки";
 
-$MESS['TASKS_FLOW_NOTIFICATION_MESSAGE_HALF_TIME_BEFORE_EXPIRE_MESSAGE'] = 'Осталась половина срока на выполнение задачи [url=/workgroups/group/{groupId}/tasks/task/view/{taskId}/][#{taskId}] {taskTitle}[/url]. Убедитесь, что успеваете завершить работу вовремя';
+$MESS['TASKS_FLOW_NOTIFICATION_MESSAGE_HALF_TIME_BEFORE_EXPIRE_MESSAGE'] = 'Осталась половина срока на выполнение задачи [url=#TASK_URL#][#{taskId}] #TASK_TITLE#[/url]. Убедитесь, что успеваете завершить работу вовремя';
+$MESS['TASKS_FLOW_NOTIFICATION_MESSAGE_HIMSELF_ADMIN_TASK_NOT_TAKEN_MESSAGE'] = 'Никто не взял в работу задачу в потоке [url=#FLOW_URL#][#{flowId}] #FLOW_TITLE#[/url]. Назначьте исполнителя самостоятельно';

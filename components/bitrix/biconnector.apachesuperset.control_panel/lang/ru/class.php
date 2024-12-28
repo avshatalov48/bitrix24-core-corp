@@ -6,3 +6,4 @@ $MESS['BICONNECTOR_CONTROL_PANEL_MENU_ITEM_COMMON_SETTINGS'] = 'Общие на�
 $MESS['BICONNECTOR_CONTROL_PANEL_MENU_ITEM_RIGHTS_SETTINGS'] = 'Права доступа';
 $MESS['BICONNECTOR_CONTROL_PANEL_MENU_ITEM_MARKET'] = 'Готовые отчёты в Маркете';
 $MESS['BICONNECTOR_CONTROL_PANEL_MENU_ITEM_FEEDBACK'] = 'Обратная связь';
+$MESS['BICONNECTOR_CONTROL_PANEL_MENU_ITEM_ANALYTICS'] = 'Рабочее место аналитика';

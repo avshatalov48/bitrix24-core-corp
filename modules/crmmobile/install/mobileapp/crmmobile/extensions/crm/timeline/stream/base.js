@@ -375,7 +375,11 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 				type: 'RecordsNotSupported',
 				key: `RecordsNotSupported_${model.id}`,
 				props: {
-					title: Loc.getMessagePlural('CRM_TIMELINE_ITEM_NOT_SUPPORTED_MULTIPLE_TITLE', records.length, replacements),
+					title: Loc.getMessagePlural(
+						'CRM_TIMELINE_ITEM_NOT_SUPPORTED_MULTIPLE_TITLE',
+						records.length,
+						replacements,
+					),
 					description: Loc.getMessage('CRM_TIMELINE_ITEM_NOT_SUPPORTED_MULTIPLE_DESCRIPTION'),
 					style: {
 						marginBottom: 16,
@@ -419,7 +423,9 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 			return TimelineItemFactory.make(model.type, {
 				model,
 				timelineScopeEventBus: this.timelineScopeEventBus,
-				ref: (ref) => this.itemRefs[id] = ref,
+				ref: (ref) => {
+					this.itemRefs[id] = ref;
+				},
 				onAction: this.onItemAction.bind(this),
 				entityType: this.entityType,
 			});

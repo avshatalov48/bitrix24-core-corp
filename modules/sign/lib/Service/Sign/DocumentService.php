@@ -12,6 +12,7 @@ use Bitrix\Main\Result;
 use Bitrix\Sign\Access\Permission\PermissionDictionary;
 use Bitrix\Sign\Document;
 use Bitrix\Sign\Integration\CRM\Model\EventData;
+use Bitrix\Sign\Internal\DocumentTable;
 use Bitrix\Sign\Item;
 use Bitrix\Sign\Main\User;
 use Bitrix\Sign\Operation\CheckDocumentAccess;
@@ -26,7 +27,9 @@ use Bitrix\Sign\Service;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Type;
 use Bitrix\Sign\Type\Document\EntityType;
+use Bitrix\Sign\Type\Document\InitiatedByType;
 use Bitrix\Sign\Type\DocumentStatus;
+use Bitrix\Sign\Type\Template\Visibility;
 
 class DocumentService
 {
@@ -91,6 +94,9 @@ class DocumentService
 		?int $entityId = null,
 		?string $entityType = null,
 		bool $asTemplate = false,
+		InitiatedByType $initiatedByType = InitiatedByType::COMPANY,
+		int $createdById = 0,
+		int $chatId = 0,
 	): Main\Result
 	{
 		$result = new Main\Result();
@@ -118,23 +124,37 @@ class DocumentService
 		}
 
 		$documentItem = new Item\Document(entityType: $entityType, entityId: $entityId);
+		$documentItem->initiatedByType = $initiatedByType;
+
+		if ($blank->scenario === Type\BlankScenario::B2B && $chatId)
+		{
+			$chatService = Service\Container::instance()->getImService();
+			$chat = $chatService->getCollabById($chatId);
+
+			if ($chat && $chatService->isUserHaveAccessToChat($chat, $createdById))
+			{
+				$documentItem->chatId = $chatId;
+			}
+		}
 
 		$template = null;
-		if ($asTemplate)
+		if ($result->isSuccess() && $asTemplate)
 		{
 			$createTemplateResult = $this->makeTemplateForDocument(
 				$documentItem,
 				$title,
-				createdByUserId: Main\Engine\CurrentUser::get()->getId(),
+				Main\Engine\CurrentUser::get()->getId(),
 			);
+
 			if (!$createTemplateResult instanceof CreateTemplateResult)
 			{
 				return $createTemplateResult;
 			}
+
 			$template = $createTemplateResult->template;
 		}
 
-		$result = $this->insertToDB($title, $blank, $documentItem);
+		$result = $this->insertToDB($title, $blank, $documentItem, $createdById);
 
 		if (!$result->isSuccess())
 		{
@@ -163,7 +183,10 @@ class DocumentService
 
 		$result = $this->documentRepository->update($documentItem);
 
-		return $result->setData([...$result->getData(), 'template' => $template]);
+		return $result->setData([...$result->getData(),
+			'template' => $template,
+			'documentId' => $documentItem->id,
+		]);
 	}
 
 	/**
@@ -251,7 +274,7 @@ class DocumentService
 
 	public function getComposedTitleByDocument(Item\Document $item): string
 	{
-		if (!Type\DocumentScenario::isB2EScenario($item->scenario))
+		if (!Type\DocumentScenario::isB2EScenario($item->scenario) || $item->externalId === null)
 		{
 			return (string)$item->title;
 		}
@@ -353,6 +376,40 @@ class DocumentService
 		return $result;
 	}
 
+	/**
+	 * @param string $uid
+	 * @param InitiatedByType $initiatedByType
+	 * @return \Bitrix\Main\Result
+	 */
+	public function modifyInitiatedByType(string $uid, InitiatedByType $initiatedByType): Main\Result
+	{
+		$result = new Main\Result();
+
+		$document = $this->documentRepository->getByUid($uid);
+
+		if (!$document)
+		{
+			return $result->addError(new Main\Error('Document not found'));
+		}
+
+		$document->initiatedByType = $initiatedByType;
+		$updateResult = $this->documentRepository->update($document);
+
+		if (!$updateResult->isSuccess())
+		{
+			return $result->addError(new Main\Error('Error when trying to save document'));
+		}
+
+		return $updateResult;
+	}
+
+	public function setResultFileId(Item\Document $document, int $resultFileId): Main\Result
+	{
+		$document->resultFileId = $resultFileId;
+
+		return DocumentTable::update($document->id, ['RESULT_FILE_ID' => $resultFileId]);
+	}
+
 	public function modifyRepresentativeId(string $documentUid, int $representativeId): Main\Result
 	{
 		$result = new Main\Result();
@@ -412,7 +469,7 @@ class DocumentService
 		return $this->providerCodeService->updateProviderCode($document, $providerCode);
 	}
 
-	private function insertToDB(string $title, Item\Blank $blank, Item\Document $documentItem): Main\Result
+	private function insertToDB(string $title, Item\Blank $blank, Item\Document $documentItem, int $createdById = 0): Main\Result
 	{
 		// backward compatibility
 		if ($documentItem->entityType === null)
@@ -420,9 +477,12 @@ class DocumentService
 			$documentItem->entityType = EntityType::SMART;
 		}
 
-		if (
-			($documentItem->entityId === null || $documentItem->entityId === 0) && !$documentItem->isTemplated()
-		)
+		if ($createdById)
+		{
+			$documentItem->createdById = $createdById;
+		}
+
+		if ((int)$documentItem->entityId === 0 && !$documentItem->isTemplated())
 		{
 			$result = $this->documentEntityFactory->createNewEntity($documentItem, $this->checkPermission);
 			if (!$result->isSuccess())
@@ -516,9 +576,15 @@ class DocumentService
 
 	private function getPreviousDocumentInitiatorName(): ?string
 	{
+		$currentUserId = Main\Engine\CurrentUser::get()->getId();
+
+		if ($currentUserId === null)
+		{
+			return null;
+		}
+
 		$lastUserDocuments = $this->getUserLastDocuments(
-			User::getInstance()
-				->getId(),
+			(int)$currentUserId,
 			5,
 		);
 
@@ -590,32 +656,38 @@ class DocumentService
 		}
 
 		$reuseResult = $this->reuse($document->uid, $blank->getId());
-		if (!$reuseResult->isSuccess())
+		if ($reuseResult->isSuccess())
 		{
-			$fileCollection = new Item\Api\Property\Request\Document\Upload\FileCollection();
+			$document->status = DocumentStatus::UPLOADED;
 
-			foreach ($blank->fileCollection->toArray() as $file)
+			return $this->documentRepository->update($document);
+		}
+		$fileCollection = new Item\Api\Property\Request\Document\Upload\FileCollection();
+
+		foreach ($blank->fileCollection->toArray() as $file)
+		{
+			if (empty($file->content->data))
 			{
-				if (empty($file->content->data))
-				{
-					return (new Main\Result())->addError(new Main\Error(Loc::getMessage('SIGN_SERVICE_DOCUMENT_FILE_EMPTY')));
-				}
-
-				$fileCollection->addItem(
-					new Item\Api\Property\Request\Document\Upload\File(
-						$file->name, $file->type, base64_encode($file->content->data),
-					),
+				return (new Main\Result())->addError(
+					new Main\Error(Loc::getMessage('SIGN_SERVICE_DOCUMENT_FILE_EMPTY'))
 				);
 			}
-			$documentUploadRequest = new Item\Api\Document\UploadRequest($uid, $fileCollection);
-			$apiDocument = Service\Container::instance()
-				->getApiDocumentService();
-			$documentUploadResponse = $apiDocument->upload($documentUploadRequest);
 
-			if (!$documentUploadResponse->isSuccess())
-			{
-				return (new Main\Result())->addErrors($documentUploadResponse->getErrors());
-			}
+			$fileCollection->addItem(
+				new Item\Api\Property\Request\Document\Upload\File(
+					$file->name, $file->type, base64_encode($file->content->data),
+				),
+			);
+		}
+		$documentUploadRequest = new Item\Api\Document\UploadRequest($uid, $fileCollection);
+		$apiDocument = Service\Container::instance()
+			->getApiDocumentService()
+		;
+		$documentUploadResponse = $apiDocument->upload($documentUploadRequest);
+
+		if (!$documentUploadResponse->isSuccess())
+		{
+			return (new Main\Result())->addErrors($documentUploadResponse->getErrors());
 		}
 
 		$document->status = DocumentStatus::UPLOADED;
@@ -774,21 +846,65 @@ class DocumentService
 	public function rollbackDocument(int $documentId): Main\Result
 	{
 		$document = $this->getById($documentId);
+		if ($document === null)
+		{
+			return (new Main\Result())->addError(new Main\Error('Document not found'));
+		}
+
+		if (!in_array($document->entityType, EntityType::getAll(), true))
+		{
+			return (new Main\Result())->addError(new Main\Error('Invalid document entityType'));
+		}
+
 		$documentResult = $this->documentRepository->delete($document);
 		if (!$documentResult->isSuccess())
 		{
 			return $documentResult;
 		}
 
-		// skip blank deletion, if assigned to documents
-		if ($this->documentRepository->getCountByBlankId($document->blankId) > 0)
+		$smartDocument = $this->documentEntityFactory->getByDocument($document);
+		if ($smartDocument && $smartDocument->getId())
 		{
-			return new Main\Result();
+			$smartDocumentDeleteResult = $smartDocument->delete();
+			if (!$smartDocumentDeleteResult->isSuccess())
+			{
+				return $smartDocumentDeleteResult;
+			}
 		}
 
-		$blank = $this->blankRepository->getById($document->blankId);
+		$deleteMembersResult = $this->memberRepository->deleteAllByDocumentId($documentId);
+		if (!$deleteMembersResult->isSuccess())
+		{
+			return $deleteMembersResult;
+		}
 
-		return $this->blankService->deleteWithResources($blank);
+		if ($document->templateId)
+		{
+			$templateDeleteResult = $this->documentTemplateRepository->deleteById($document->templateId);
+			if (!$templateDeleteResult->isSuccess())
+			{
+				return $templateDeleteResult;
+			}
+		}
+
+		if ($document->blankId)
+		{
+			// skip blank deletion, if assigned to documents
+			if ($this->documentRepository->getCountByBlankId($document->blankId) > 0)
+			{
+				return new Main\Result();
+			}
+
+			$blank = $this->blankRepository->getById($document->blankId);
+			if ($blank === null)
+			{
+				return (new Main\Result())->addError(new Main\Error('Blank not found'));
+			}
+
+			return $this->blankService->deleteWithResources($blank);
+		}
+
+		return new Main\Result();
 	}
 
 	public function rollbackDocumentByUid(string $uid): Main\Result
@@ -902,6 +1018,11 @@ class DocumentService
 		return new Main\Result();
     }
 
+	public function unsetEntityId(Item\Document $document): Result
+	{
+		return $this->documentRepository->unsetEntityId($document);
+	}
+
 	public function isCurrentUserCanEditDocument(Item\Document $document): bool
 	{
 		$result = (new CheckDocumentAccess(
@@ -948,6 +1069,30 @@ class DocumentService
 		return new Main\Result();
 	}
 
+
+	public function modifyHcmLinkCompanyId(string $documentUid, ?int $hcmLinkCompanyId = null): ?Main\Result
+	{
+		if (!Container::instance()->getHcmLinkService()->isAvailable())
+		{
+			return (new Main\Result())->addError(new Main\Error('Is not available', 'HCM_LINK_NOT_AVAILABLE'));
+		}
+
+		$document = $this->documentRepository->getByUid($documentUid);
+		if (!$document || !$this->canBeChanged($document))
+		{
+			return (new Main\Result())->addError(new Main\Error('Document not found'));
+		}
+
+		$document->hcmLinkCompanyId = $hcmLinkCompanyId ?? 0;
+		$updateResult = $this->documentRepository->update($document);
+		if (!$updateResult->isSuccess())
+		{
+			return (new Main\Result())->addError(new Main\Error('Error when trying to save document'));
+		}
+
+		return new Main\Result();
+	}
+
 	public function resolveDocumentByCrmEntity(string $entityType, int $entityId): ?Item\Document
 	{
 		return $this->documentRepository
@@ -960,9 +1105,18 @@ class DocumentService
 		return $this->resolveDocumentByCrmEntity(EntityType::SMART, $entityId);
 	}
 
-	private function makeTemplateForDocument(Item\Document $document, string $title, int $createdByUserId): Result|CreateTemplateResult
+	private function makeTemplateForDocument(
+		Item\Document $document,
+		string $title,
+		int $currentUserId,
+	): Result|CreateTemplateResult
 	{
-		$template = new Item\Document\Template($title ?: 'Template title', $createdByUserId);
+		$template = new Item\Document\Template(
+			title: $title ?: 'Template title',
+			createdById: $currentUserId,
+			modifiedById: $currentUserId,
+			visibility: Visibility::INVISIBLE,
+		);
 		$result = $this->documentTemplateRepository->add($template);
 		if (!$result->isSuccess())
 		{
@@ -1026,5 +1180,27 @@ class DocumentService
 		}
 
 		return $companyIds;
+	}
+
+	public function getLastCreatedEmployeeDocumentFromDocuments(int $creatorUserId, Item\DocumentCollection $documents): ?Item\Document
+	{
+		$documentIds = $documents->listIdsWithoutNull();
+		if (empty($documentIds))
+		{
+			return null;
+		}
+
+		$lastDocument = $this->documentRepository->getByCreatedFromDocumentIdsAndInitiatedByTypeAndCreatedByIdOrderedByDateCreateDesc(
+			$documentIds,
+			Type\Document\InitiatedByType::EMPLOYEE,
+			$creatorUserId,
+		);
+
+		return $lastDocument;
+	}
+
+	public function getDocumentEntity(Item\Document $document): ?Document\Entity\Dummy
+	{
+		return $this->documentEntityFactory->getByDocument($document);
 	}
 }

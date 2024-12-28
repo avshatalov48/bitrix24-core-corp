@@ -3,6 +3,7 @@
 namespace Bitrix\Tasks\Integration\IM\Notification\UseCase;
 
 use Bitrix\Tasks\Access\Role\RoleDictionary;
+use Bitrix\Tasks\Integration\Extranet\User;
 use Bitrix\Tasks\Integration\IM\Notification;
 use Bitrix\Tasks\Internals\Notification\Message;
 use Bitrix\Tasks\Internals\TaskObject;
@@ -33,10 +34,13 @@ class TaskExpiresSoon
 
 	private function expiresSoonForResponsible(Message $message, TaskObject $task): Notification
 	{
-		$sameCreatorMessagePart = 'SAME_CREATOR_';
+		$isHideEfficiencyPartNeeded = (
+			$task->getResponsibleId() === $task->getCreatedBy()
+			|| User::isExtranet($message->getRecepient()->getId())
+		);
 
-		$messageKey = ($task->getResponsibleId() === $task->getCreatedBy())
-			? "TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_{$sameCreatorMessagePart}MESSAGE"
+		$messageKey = $isHideEfficiencyPartNeeded
+			? 'TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_HIDE_EFFICIENCY_PART_MESSAGE'
 			: 'TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE'
 		;
 
@@ -45,8 +49,13 @@ class TaskExpiresSoon
 
 	private function expiresSoonForAccomplice(Message $message, TaskObject $task): Notification
 	{
-		$messageKey = ($message->getRecepient()->getId() === $task->getCreatedBy())
-			? 'TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_SAME_CREATOR_MESSAGE'
+		$isHideEfficiencyPartNeeded = (
+			$message->getRecepient()->getId() === $task->getCreatedBy()
+			|| User::isExtranet($message->getRecepient()->getId())
+		);
+
+		$messageKey = $isHideEfficiencyPartNeeded
+			? 'TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_HIDE_EFFICIENCY_PART_MESSAGE'
 			: 'TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE'
 		;
 

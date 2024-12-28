@@ -2,6 +2,7 @@
 namespace Bitrix\Tasks\Grid\Task\Row\Content;
 
 use Bitrix\Main\Web\Uri;
+use Bitrix\Socialnetwork\Livefeed\Context\Context;
 use Bitrix\Tasks\Grid\Task\Row\Content;
 use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Internals\Task\Status;
@@ -38,12 +39,21 @@ class Title extends Content
 			])
 		);
 
+		$context = $this->getParameter('CONTEXT');
 		$isFlowMyTasksContext = ($parameters['FLOW_MY_TASKS'] ?? null) === 'Y';
-		$taSec = (
-			$isFlowMyTasksContext
-				? Analytics::SECTION['flows']
-				: Analytics::SECTION['tasks']
-		);
+		if ($isFlowMyTasksContext)
+		{
+			$taSec = Analytics::SECTION['flows'];
+		}
+		elseif ($context === Context::COLLAB)
+		{
+			$taSec = Analytics::SECTION['collab'];
+		}
+		else
+		{
+			$taSec = Analytics::SECTION['tasks'];
+		}
+
 		$taEl = (
 			$isFlowMyTasksContext
 				? Analytics::ELEMENT['my_tasks_column']

@@ -120,6 +120,7 @@ class PermissionRepository
 		return new Restrictions(
 			$hasPermission,
 			$hasPermission ? null : $restriction->prepareInfoHelperScript(),
+			$hasPermission ? null : $restriction->getInfoHelperId(),
 		);
 	}
 
@@ -198,9 +199,9 @@ class PermissionRepository
 		return new Result();
 	}
 
-	public function addRole(string $name): AddResult
+	public function addRole(string $name, ?string $groupCode = null): AddResult
 	{
-		return RoleTable::add(['NAME' => $name]);
+		return RoleTable::add(['NAME' => $name, 'GROUP_CODE' => $groupCode]);
 	}
 
 	public function saveRolesRelations(array $perms): void
@@ -209,16 +210,41 @@ class PermissionRepository
 		$CCrmRole->SetRelation($perms);
 	}
 
+	public function saveRoleRelations(int $roleId, array $relations): void
+	{
+		$existedRelations = RoleRelationTable::query()
+			->where('ROLE_ID', $roleId)
+			->setSelect(['RELATION'])
+			->fetchCollection()->getRelationList();
+
+		sort($existedRelations);
+		sort($relations);
+		if ($existedRelations !== $relations)
+		{
+			RoleRelationTable::updateForRole($roleId, $relations);
+		}
+	}
+
 	public function updateRole(int $id, string $name): void
 	{
+		$existedRole = RoleTable::query()
+			->setSelect(['ID', 'NAME'])
+			->where('ID', $id)
+			->fetch()
+		;
+		if (!$existedRole || $existedRole['NAME'] === $name)
+		{
+			return;
+		}
+
 		RoleTable::update($id, ['NAME' => $name]);
 	}
 
-	public function updateOrCreateRole(int $id, string $name): int
+	public function updateOrCreateRole(int $id, string $name, ?string $groupCode = null): int
 	{
 		if ($id === 0)
 		{
-			$addResult = $this->addRole($name);
+			$addResult = $this->addRole($name, $groupCode);
 
 			return $addResult->getId();
 		}

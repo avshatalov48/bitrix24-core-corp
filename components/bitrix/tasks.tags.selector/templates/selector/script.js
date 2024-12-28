@@ -33,6 +33,11 @@ this.BX = this.BX || {};
 	  },
 	  bindEvents: function bindEvents() {
 	    var onPullTagChanged = function onPullTagChanged() {
+		  if (!this.dialog)
+		  {
+		  	return
+		  }
+
 	      this.dialog.hide();
 	      this.dialog = null;
 	    };

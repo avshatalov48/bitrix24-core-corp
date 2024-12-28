@@ -37,6 +37,14 @@ jn.define('im/messenger/api/tab', (require, exports, module) => {
 	/**
 	 * @return {Promise}
 	 */
+	async function openCollabsTab()
+	{
+		return openTab(ComponentCode.imCollabMessenger);
+	}
+
+	/**
+	 * @return {Promise}
+	 */
 	async function openLinesTab()
 	{
 		return openTab(ComponentCode.imOpenlinesRecent);
@@ -137,6 +145,7 @@ jn.define('im/messenger/api/tab', (require, exports, module) => {
 		openChatsTab,
 		openCopilotTab,
 		openChannelsTab,
+		openCollabsTab,
 		openNotificationsTab,
 		openLinesTab,
 	};

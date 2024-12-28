@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @global \CMain $APPLICATION
  */
 
+use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
 use Bitrix\Crm\Integration\DocumentGenerator;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Main\Localization\Loc;
@@ -354,9 +355,22 @@ if ($arParams['TYPE'] === 'list')
 		unset($stExportId);
 	}
 
+	$isAddDelimiter = true;
+	$permissionItem = PermissionItem::createByEntity(CCrmOwnerType::Quote);
+	if ($permissionItem->canShow())
+	{
+		$isAddDelimiter = false;
+		$arResult['BUTTONS'][] = $permissionItem->interfaceToolbarDelimiter();
+		$arResult['BUTTONS'][] = $permissionItem->toInterfaceToolbarButton();
+	}
+
 	if (count($arResult['BUTTONS']) > 1)
 	{
-		$arResult['BUTTONS'][] = ['SEPARATOR' => true];
+		if ($isAddDelimiter)
+		{
+			$arResult['BUTTONS'][] = ['SEPARATOR' => true];
+		}
+
 		//Force start new bar after first button
 		array_splice($arResult['BUTTONS'], 1, 0, array(array('NEWBAR' => true)));
 	}

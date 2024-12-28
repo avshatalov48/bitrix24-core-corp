@@ -41,6 +41,19 @@ if ($perm < 'R')
 
 $arResult['CAN_EDIT'] = $perm  >= 'U';
 
+$newStruct = ($_REQUEST['newStruct'] ?? '') === 'Y';
+
+if (\Bitrix\Main\Loader::includeModule('humanresources')
+	&&
+	($newStruct
+		||
+		\Bitrix\HumanResources\Config\Storage::instance()->isPublicStructureAvailable()
+	)
+)
+{
+	LocalRedirect('/hr/structure/');
+}
+
 $mode = isset($_REQUEST['mode']) ? $_REQUEST['mode'] : '';
 
 if (isset($_REQUEST['action']) && $arResult['CAN_EDIT'] && check_bitrix_sessid())

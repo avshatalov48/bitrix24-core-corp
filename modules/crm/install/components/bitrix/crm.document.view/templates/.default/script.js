@@ -332,7 +332,12 @@
 					{
 						if (typeof response.data.SMART_DOCUMENT !== 'undefined')
 						{
-							BX.SidePanel.Instance.open('/sign/doc/0/?docId=' + response.data.SMART_DOCUMENT + '&stepId=changePartner&noRedirect=Y');
+							BX.SidePanel.Instance.open(
+								'/sign/doc/0/?docId=' + response.data.SMART_DOCUMENT + '&stepId=changePartner&noRedirect=Y',
+								{
+									width: 1250,
+								},
+							);
 							this.sendedToSign = false;
 							this.rightPanelLoader.hide();
 							return;

@@ -2,23 +2,21 @@
 
 namespace Bitrix\Tasks\Flow;
 
-use Bitrix\Main\Access\AccessCode;
 use Bitrix\Main\Type\Contract\Arrayable;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\UI\EntitySelector\Converter;
 use Bitrix\Tasks\Flow\Access\FlowModel;
 use Bitrix\Tasks\Flow\Access\SimpleFlowAccessController;
 use Bitrix\Tasks\Flow\Comment\CommentEvent;
 use Bitrix\Tasks\Flow\Comment\Task\FlowCommentFactory;
 use Bitrix\Tasks\Flow\Comment\Task\FlowCommentInterface;
+use Bitrix\Tasks\Flow\Distribution\FlowDistributionServicesFactory;
+use Bitrix\Tasks\Flow\Distribution\FlowDistributionType;
 use Bitrix\Tasks\Flow\Internal\Entity\Role;
-use Bitrix\Tasks\Internals\TaskObject;
-use ReflectionClass;
 
 class Flow implements Arrayable
 {
-	public const DISTRIBUTION_TYPE_MANUALLY = 'manually';
-	public const DISTRIBUTION_TYPE_QUEUE = 'queue';
-	public const DEFAULT_DISTRIBUTION_TYPE = self::DISTRIBUTION_TYPE_QUEUE;
+	public const DEFAULT_DISTRIBUTION_TYPE = FlowDistributionType::QUEUE;
 
 	private int $id = 0;
 	private int $ownerId = 0;
@@ -31,13 +29,17 @@ class Flow implements Arrayable
 	private ?DateTime $activity;
 	private string $name = '';
 	private string $description = '';
-	private string $distributionType = self::DEFAULT_DISTRIBUTION_TYPE;
-	private ?array $responsibleQueue = null;
+	private FlowDistributionType $distributionType = self::DEFAULT_DISTRIBUTION_TYPE;
+
+	/**
+	 * @see Converter::convertFromFinderCodes
+	 */
+	private array $responsibleList = [];
 	private bool $demo = false;
 
-	private ?int $manualDistributorId = null;
 	private bool $responsibleCanChangeDeadline = false;
 	private bool $matchWorkTime = true;
+	private bool $matchSchedule = false;
 	private bool $taskControl = false;
 
 	private bool $notifyAtHalfTime = true;
@@ -45,8 +47,14 @@ class Flow implements Arrayable
 	private ?int $notifyOnTasksInProgressOverflow = null;
 	private ?int $notifyWhenEfficiencyDecreases = null;
 
+	/**
+	 * @see Converter::convertFromFinderCodes
+	 */
 	private array $taskCreators = [];
-	private array $taskAssignees = [];
+	/**
+	 * @see Converter::convertFromFinderCodes
+	 */
+	private array $team = [];
 	private bool $trialFeatureEnabled = false;
 
 	/**
@@ -60,7 +68,7 @@ class Flow implements Arrayable
 	 *  'ACTIVITY' => ?\Bitrix\Main\Type\DateTime(),
 	 *  'NAME' => string,
 	 *  'DESCRIPTION' => ?string,
-	 *  'DISTRIBUTION_TYPE' => ?string,
+	 *  'DISTRIBUTION_TYPE' => string,
 	 * ]
 	 */
 	public function __construct(array $data)
@@ -116,7 +124,7 @@ class Flow implements Arrayable
 
 		if (!empty($data['DISTRIBUTION_TYPE']))
 		{
-			$this->distributionType = (string)$data['DISTRIBUTION_TYPE'];
+			$this->distributionType = FlowDistributionType::from((string)$data['DISTRIBUTION_TYPE']);
 		}
 
 		if (!empty($data['DEMO']))
@@ -127,12 +135,12 @@ class Flow implements Arrayable
 		if (!empty($data['MEMBERS']) && is_array($data['MEMBERS']))
 		{
 			$this->mapTaskCreators($data['MEMBERS']);
-			$this->mapTaskAssignees($data['MEMBERS']);
+			$this->mapTeam($data['MEMBERS']);
 		}
 
 		if (!empty($data['QUEUE']) && is_array($data['QUEUE']))
 		{
-			$this->responsibleQueue = $data['QUEUE'];
+			$this->responsibleList = $data['QUEUE'];
 		}
 
 		if (!empty($data['OPTIONS']) && is_array($data['OPTIONS']))
@@ -178,7 +186,7 @@ class Flow implements Arrayable
 		return $this->efficiency;
 	}
 
-	public function getDistributionType(): string
+	public function getDistributionType(): FlowDistributionType
 	{
 		return $this->distributionType;
 	}
@@ -198,9 +206,16 @@ class Flow implements Arrayable
 		return new SimpleFlowAccessController($userId, FlowModel::createFromId($this->id));
 	}
 
-	public function setResponsibleQueue(array $responsibleQueue): self
+	public function setResponsibleList(array $responsibleList): self
 	{
-		$this->responsibleQueue = $responsibleQueue;
+		$this->responsibleList = $responsibleList;
+
+		return $this;
+	}
+
+	public function setTeam(array $team): self
+	{
+		$this->team = $team;
 
 		return $this;
 	}
@@ -212,9 +227,21 @@ class Flow implements Arrayable
 	{
 		foreach ($options as $option)
 		{
-			if ($option->getName() === Option\OptionDictionary::MANUAL_DISTRIBUTOR_ID->value)
+			/**
+			 * For flows that were created or changed their type after exiting tasks 24.300.0,
+			 * the option MANUAL_DISTRIBUTOR_ID exists only for manually distribution type flows.
+			 *
+			 * To maintain compatibility $this->getDistributionType() === FlowDistributionType::MANUALLY
+			 */
+			if (
+				$this->distributionType === FlowDistributionType::MANUALLY
+				&& $option->getName() === Option\OptionDictionary::MANUAL_DISTRIBUTOR_ID->value
+			)
 			{
-				$this->manualDistributorId = (int)$option->getValue();
+				$manuallyDistributorId = $option->getValue();
+				$this->responsibleList = [
+					['user', $manuallyDistributorId]
+				];
 			}
 			if ($option->getName() === Option\OptionDictionary::RESPONSIBLE_CAN_CHANGE_DEADLINE->value)
 			{
@@ -223,6 +250,10 @@ class Flow implements Arrayable
 			if ($option->getName() === Option\OptionDictionary::MATCH_WORK_TIME->value)
 			{
 				$this->matchWorkTime = (bool)$option->getValue();
+			}
+			if ($option->getName() === Option\OptionDictionary::MATCH_SCHEDULE->value)
+			{
+				$this->matchSchedule = (bool)$option->getValue();
 			}
 			if ($option->getName() === Option\OptionDictionary::NOTIFY_AT_HALF_TIME->value)
 			{
@@ -260,11 +291,6 @@ class Flow implements Arrayable
 		return $this->active;
 	}
 
-	public function isQueue(): bool
-	{
-		return $this->distributionType === self::DISTRIBUTION_TYPE_QUEUE;
-	}
-
 	public function isDemo(): bool
 	{
 		return $this->demo;
@@ -272,7 +298,17 @@ class Flow implements Arrayable
 
 	public function isManually(): bool
 	{
-		return $this->distributionType === self::DISTRIBUTION_TYPE_MANUALLY;
+		return $this->distributionType === FlowDistributionType::MANUALLY;
+	}
+
+	public function isQueue(): bool
+	{
+		return $this->distributionType === FlowDistributionType::QUEUE;
+	}
+
+	public function isHimself(): bool
+	{
+		return $this->distributionType === FlowDistributionType::HIMSELF;
 	}
 
 	public function getTargetEfficiency(): int
@@ -283,6 +319,11 @@ class Flow implements Arrayable
 	public function getMatchWorkTime(): bool
 	{
 		return $this->matchWorkTime;
+	}
+
+	public function getMatchSchedule(): bool
+	{
+		return $this->matchSchedule;
 	}
 
 	public function getTaskControl(): bool
@@ -300,6 +341,16 @@ class Flow implements Arrayable
 		$this->trialFeatureEnabled = $trialFeatureEnabled;
 	}
 
+	public function getResponsibleCanChangeDeadline(): bool
+	{
+		return $this->responsibleCanChangeDeadline;
+	}
+
+	public function getActivityDate(): DateTime
+	{
+		return $this->activity;
+	}
+
 	public function toArray(): array
 	{
 		return [
@@ -314,13 +365,13 @@ class Flow implements Arrayable
 			'activity' => $this->activity,
 			'name' => $this->name,
 			'description' => $this->description,
-			'distributionType' => $this->distributionType,
-			'responsibleQueue' => $this->responsibleQueue,
+			'distributionType' => $this->distributionType?->value,
+			'responsibleList' => $this->responsibleList,
 			'demo' => $this->demo,
 
-			'manualDistributorId' => $this->manualDistributorId,
 			'responsibleCanChangeDeadline' => $this->responsibleCanChangeDeadline,
 			'matchWorkTime' => $this->matchWorkTime,
+			'matchSchedule' => $this->matchSchedule,
 			'taskControl' => $this->taskControl,
 
 			'notifyAtHalfTime' => $this->notifyAtHalfTime,
@@ -328,7 +379,7 @@ class Flow implements Arrayable
 			'notifyOnTasksInProgressOverflow' => $this->notifyOnTasksInProgressOverflow,
 			'notifyWhenEfficiencyDecreases' => $this->notifyWhenEfficiencyDecreases,
 			'taskCreators' => $this->taskCreators,
-			'taskAssignees' => $this->taskAssignees,
+			'team' => $this->team,
 
 			'trialFeatureEnabled' => $this->trialFeatureEnabled,
 		];
@@ -341,42 +392,29 @@ class Flow implements Arrayable
 
 	private function mapTaskCreators(array $members): void
 	{
-		$this->taskCreators = array_column(
-			array_filter(
-				$members, static fn(array $member): bool => $member['ROLE'] === Role::TASK_CREATOR->value
-			),
-			'ACCESS_CODE'
-		);
+		$this->taskCreators = $this->filterMembersByRole($members, Role::TASK_CREATOR);
 	}
 
-	private function mapTaskAssignees(array $members): void
+	private function mapTeam(array $members): void
 	{
-		$taskAssigneesAccessCodes = array_column(
+		$responsibleRole = (new FlowDistributionServicesFactory($this->distributionType))
+			->getMemberProvider()
+			->getResponsibleRole()
+		;
+
+		$this->team = $this->filterMembersByRole($members, $responsibleRole);
+	}
+
+	private function filterMembersByRole(array $members, Role $role): array
+	{
+		$filteredAccessCodes = array_column(
 			array_filter(
 				$members, static fn(array $member): bool =>
-				$member['ROLE'] === Role::QUEUE_ASSIGNEE->value
+				$member['ROLE'] === $role->value
 			),
 			'ACCESS_CODE'
 		);
 
-		foreach ($taskAssigneesAccessCodes as $accessCode)
-		{
-			$access = new AccessCode($accessCode);
-			$this->taskAssignees[] = $access->getEntityId();
-		}
-	}
-
-	/**
-	 * @return string[]
-	 */
-	public static function getDistributionTypesList(): array
-	{
-		$constants = (new ReflectionClass(__CLASS__))->getConstants();
-
-		return array_filter(
-			$constants,
-			static fn($value, $key): bool => str_starts_with($key, 'DISTRIBUTION_TYPE'),
-			ARRAY_FILTER_USE_BOTH
-		);
+		return Converter::convertFromFinderCodes($filteredAccessCodes);
 	}
 }

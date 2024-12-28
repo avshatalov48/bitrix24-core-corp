@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Integration\Intranet;
 
 use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Integration\Intranet\SystemPageProvider\ActivityPage;
+use Bitrix\Crm\Integration\Intranet\SystemPageProvider\PermissionsPage;
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory\Dynamic;
@@ -25,6 +26,7 @@ class CustomSectionProvider extends Provider
 
 		return [
 			$router->getSystemPageCode(\CCrmOwnerType::Activity) => ActivityPage::class,
+			PermissionsPage::CODE => PermissionsPage::class,
 		];
 	}
 

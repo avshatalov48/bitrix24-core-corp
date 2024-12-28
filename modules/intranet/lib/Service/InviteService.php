@@ -2,29 +2,28 @@
 
 namespace Bitrix\Intranet\Service;
 
-use Bitrix\Intranet\Command\AddToGroupCommand;
+use Bitrix\Intranet\Command;
 use Bitrix\Intranet\CurrentUser;
 use Bitrix\Intranet\Entity\Collection\EmailCollection;
-use Bitrix\Intranet\Entity\Collection\InvitationCollection;
 use Bitrix\Intranet\Entity\Collection\PhoneCollection;
 use Bitrix\Intranet\Entity\Type\Email;
 use Bitrix\Intranet\Entity\Type\InvitationsContainer;
 use Bitrix\Intranet\Entity\Type\Phone;
-use Bitrix\Intranet\Entity\Type\PhoneInvitation;
 use Bitrix\Intranet\Entity\Invitation;
 use Bitrix\Intranet\Entity\User;
-use Bitrix\Intranet\Enum\InvitationStatus;
 use Bitrix\Intranet\Enum\InvitationType;
-use Bitrix\Intranet\Repository\UserRepository;
 use Bitrix\Intranet\Contract\Repository\UserRepository as UserRepositoryContract;
-use Bitrix\Main\Event;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Security\Random;
+use Bitrix\Main\Analytics\AnalyticsEvent;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Error;
 use Bitrix\Intranet\Invitation\Register;
+use Bitrix\Socialnetwork\Internals\Registry\GroupRegistry;
+use Bitrix\Socialnetwork\Item\Workgroup\Type;
 
 class InviteService
 {
@@ -37,9 +36,7 @@ class InviteService
 
 	public function inviteUser(User $user, InvitationType $type, string $formType): Invitation
 	{
-		$invitationRepository = ServiceContainer::getInstance()->invitationRepository();
-
-		return $invitationRepository->save(new Invitation(
+		return ServiceContainer::getInstance()->invitationRepository()->save(new Invitation(
 			userId: $user->getId(),
 			initialized: false,
 			isMass: $formType === 'mass',
@@ -52,6 +49,12 @@ class InviteService
 		));
 	}
 
+	/**
+	 * @throws LoaderException
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
 	public function inviteUsersToGroup(int $groupId, InvitationsContainer $inviteData): Result
 	{
 		$result = new Result();
@@ -61,16 +64,24 @@ class InviteService
 			throw new SystemException('Module "socialnetwork" is not installed');
 		}
 
-		if (\CSocNetUserToGroup::GetById($groupId) === false)
+		$group = GroupRegistry::getInstance()->get($groupId);
+
+		if ($group === null)
 		{
 			$result->addError(new Error('', 'socnetgroup_not_found'));
 
 			return $result;
 		}
 
+		$invitationItems = $inviteData->backwardsCompatibility();
+		if ($group->getType() === Type::Collab)
+		{
+			$invitationItems['COLLAB_GROUP'] = $group;
+		}
+
 		$result = Register::inviteNewUsers(
 			SITE_ID,
-			$inviteData->backwardsCompatibility(),
+			$invitationItems,
 			'email'
 		);
 
@@ -80,59 +91,82 @@ class InviteService
 		}
 
 		$userCollection = $this->userRepository->findUsersByIds($result->getData());
-//		\CSocNetUserToGroup::addUniqueUsersToGroup($groupId, $result->getData());
-		(new AddToGroupCommand($groupId, $userCollection))->execute();
+		$inviteCommand = new Command\Invitation\InviteUserCollectionToGroupCommand(
+			groupId: $groupId,
+			userCollection: $userCollection
+		);
+		$inviteToGroupResult = $inviteCommand->execute();
+
+		if (!$inviteToGroupResult->isSuccess())
+		{
+			return $inviteToGroupResult;
+		}
+
+		if ($group->getType() === Type::Collab)
+		{
+			$this->sendAnalyticsInvitationsCollabs($groupId, $inviteToGroupResult, $invitationItems);
+		}
 
 		$result->setData($userCollection->all());
 
 		return $result;
 	}
 
-	public function checkInvitationsStatusByEmailCollection(EmailCollection $emailCollection): Result
+	private function sendAnalyticsInvitationsCollabs(int $groupId, Result $inviteToGroupResult, array $invitationItems): void
 	{
-		$userCollection = $this->userRepository->findUsersByEmails(
-			$emailCollection->map(fn(Email $email) => $email->toLogin())
-		);
+		$analyticEvent = new AnalyticsEvent('invitation', 'Invitation', 'Invitation');
 
-		$statuses = $emailCollection->map(
-			function(Email $email) use ($userCollection)
+		$p2 = 'user_intranet';
+		$currentUser = \Bitrix\Main\Engine\CurrentUser::get();
+		$isCollaber = Loader::includeModule('extranet')
+			&& \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById($currentUser->getId());
+		if ($isCollaber)
+		{
+			$p2 = 'user_collaber';
+		}
+		else
+		{
+			$isExtranet = \Bitrix\Intranet\Util::isExtranetUser($currentUser->getId());
+			if ($isExtranet)
 			{
-				$user = $userCollection->filter(
-					fn (User $user) => mb_strtolower($user->getEmail()) === mb_strtolower($email->toLogin())
-
-				)
-					->first()
-				;
-				return [
-					'email' => $email,
-					'user' => $user,
-				];
+				$p2 = 'user_extranet';
 			}
-		);
+		}
 
-		return (new Result())->setData($statuses);
+		/** @var InvitationType $type */
+		$type = null;
+
+		foreach ($inviteToGroupResult->getData() as $user)
+		{
+			$index = array_search($user->getEmail(), array_column($invitationItems['ITEMS'], 'EMAIL'));
+
+			$type = InvitationType::PHONE;
+			if ($index !== false)
+			{
+				$type = InvitationType::EMAIL;
+			}
+
+			$analyticEvent->setType($type->value)
+				->setP2($p2)
+				->setP4('collabId_' . $groupId)
+				->setP5('userId_' . $user->getId())
+				->send();
+		}
 	}
 
-	public function checkInvitationsStatusByPhoneCollection(PhoneCollection $phoneCollection): Result
+	/**
+	 * @param array<int> $userIds
+	 * @return array<int, string|null>
+	 */
+	public function getFormattedInvitationNameByIds(array $userIds): array
 	{
-		$userCollection = $this->userRepository->findUsersByPhoneNumbers(
-			$phoneCollection->map(fn(Phone $phone) => $phone->defaultFormat())
-		);
+		$names = [];
 
-		$statuses = $phoneCollection->map(
-			function(Phone $phone) use ($userCollection)
-			{
-				$user = $userCollection
-					->filter(fn(User $user) => $user->getAuthPhoneNumber() === $phone->defaultFormat())
-					->first();
+		$this->userRepository->findUsersByIds($userIds)->forEach(
+			function (User $user) use (&$names) {
+				$names[$user->getId()] = $user->getAuthPhoneNumber() ?? $user->getEmail() ?? $user->getLogin();
+		});
 
-				return [
-					'phone' => $phone,
-					'user' => $user,
-				];
-			}
-		);
-
-		return (new Result())->setData($statuses);
+		return $names;
 	}
 }

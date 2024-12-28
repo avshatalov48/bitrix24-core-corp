@@ -31,12 +31,14 @@ jn.define('sign/dialog/banners/response', (require, exports, module) => {
 				documentTitle,
 				memberId,
 				role,
+				initiatedByType,
 			} = props;
 
 			this.documentTitle = documentTitle;
 			this.memberId = memberId;
 			this.layoutWidget = layoutWidget;
 			this.role = role;
+			this.initiatedByType = initiatedByType;
 		}
 
 		componentDidMount()
@@ -90,6 +92,7 @@ jn.define('sign/dialog/banners/response', (require, exports, module) => {
 									this.layoutWidget.showComponent(new SignedByAssignee({
 										layoutWidget: this.layoutWidget,
 										documentTitle: this.documentTitle,
+										initiatedByType: this.initiatedByType,
 									}));
 								}
 								else
@@ -98,6 +101,7 @@ jn.define('sign/dialog/banners/response', (require, exports, module) => {
 										layoutWidget: this.layoutWidget,
 										documentTitle: this.documentTitle,
 										memberId: this.memberId,
+										initiatedByType: this.initiatedByType,
 									}));
 								}
 							}).catch(() => {

@@ -16,7 +16,6 @@ jn.define('statemanager/redux/slices/users/selector', (require, exports, module)
 
 	module.exports = {
 		usersSelector,
-
 		selectAll,
 		selectById,
 		selectEntities,

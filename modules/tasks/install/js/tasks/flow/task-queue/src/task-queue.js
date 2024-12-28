@@ -88,7 +88,6 @@ export class TaskQueue
 		const popup = new Popup({
 			id,
 			className: 'tasks-flow__task-queue-popup',
-			width: 200,
 			padding: 2,
 			autoHide: true,
 			closeByEsc: true,

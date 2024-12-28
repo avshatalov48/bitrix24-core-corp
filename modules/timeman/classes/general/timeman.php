@@ -413,10 +413,26 @@ class CTimeMan
 		{
 			$arCurDpt = $arStruct['DATA'][$dpt];
 
-			$employee = (($arCurDpt["UF_HEAD"]) ? $arCurDpt["UF_HEAD"] ://have we a manager?
-				((count($arCurDpt["EMPLOYEES"]) > 0) ? $arCurDpt["EMPLOYEES"][0] : false//first employee of the dep
+			if (!empty($arCurDpt["UF_HEAD"]))
+			{
+				$employee = $arCurDpt["UF_HEAD"];
+			}
+			else
+			{
+				if (
+					!empty($arCurDpt["EMPLOYEES"])
+					&& is_array($arCurDpt["EMPLOYEES"])
+					&& count($arCurDpt["EMPLOYEES"]) > 0
 				)
-			);
+				{
+					$employee = $arCurDpt["EMPLOYEES"][0];
+				}
+				else
+				{
+					$employee = false;
+				}
+			}
+
 			if ($employee && $employee == $USER_ID)//this user is a head manager
 			{
 				foreach ($arCurDpt["EMPLOYEES"] as $empUser)

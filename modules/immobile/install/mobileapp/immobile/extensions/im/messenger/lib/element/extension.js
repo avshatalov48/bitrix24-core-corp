@@ -10,6 +10,7 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 	const { ChatItem } = require('im/messenger/lib/element/recent/item/chat');
 	const { CopilotItem } = require('im/messenger/lib/element/recent/item/copilot');
 	const { CallItem } = require('im/messenger/lib/element/recent/item/call');
+	const { CollabItem } = require('im/messenger/lib/element/recent/item/chat/collab');
 	const { AnnouncementItem } = require('im/messenger/lib/element/recent/item/chat/announcement');
 	const { ExtranetItem } = require('im/messenger/lib/element/recent/item/chat/extranet');
 	const { Support24NotifierItem } = require('im/messenger/lib/element/recent/item/chat/support-24-notifier');
@@ -21,6 +22,7 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 	const { SupportBotItem } = require('im/messenger/lib/element/recent/item/user/support');
 	const { ConnectorUserItem } = require('im/messenger/lib/element/recent/item/user/connector');
 	const { ExtranetUserItem } = require('im/messenger/lib/element/recent/item/user/extranet');
+	const { CollaberUserItem } = require('im/messenger/lib/element/recent/item/user/collaber');
 	const { InvitedUserItem } = require('im/messenger/lib/element/recent/item/user/invited');
 	const { NetworkUserItem } = require('im/messenger/lib/element/recent/item/user/network');
 
@@ -63,6 +65,7 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 		RecentItem,
 		CallItem,
 		ChatItem,
+		CollabItem,
 		CopilotItem,
 		UserItem,
 		CurrentUserItem,
@@ -75,6 +78,7 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 		SupportBotItem,
 		ConnectorUserItem,
 		ExtranetUserItem,
+		CollaberUserItem,
 		InvitedUserItem,
 		NetworkUserItem,
 

@@ -12,6 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\BIConnector\Configuration\Feature;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\PageNavigation;
 
@@ -33,7 +34,8 @@ $APPLICATION->SetTitle(Loc::getMessage('CC_BBUS_TITLE'));
 
 $maxFieldsCount = 5;
 $manager = Bitrix\BIConnector\Manager::getInstance();
-$service = $manager->createService('gds');
+$serviceCode = Feature::isBuilderEnabled() ? 'bi-ctr' : 'gds';
+$service = $manager->createService($serviceCode);
 $service->setLanguage(LANGUAGE_ID);
 $tables = [];
 $tableList = $service->getTableList();

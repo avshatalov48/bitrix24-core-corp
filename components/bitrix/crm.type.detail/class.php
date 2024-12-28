@@ -57,6 +57,10 @@ class CrmTypeDetailComponent extends Base
 
 		$userPermissions = $this->userPermissions;
 		$entityTypeId = (int) $this->arParams['entityTypeId'];
+		$automatedSolutionId = (!empty($this->arParams['automatedSolutionId']) && (int)$this->arParams['automatedSolutionId'] > 0)
+			? (int)$this->arParams['automatedSolutionId']
+			: null
+		;
 		if($entityTypeId > 0)
 		{
 			$this->type = Service\Container::getInstance()->getTypeByEntityTypeId($entityTypeId);
@@ -87,7 +91,7 @@ class CrmTypeDetailComponent extends Base
 				);
 			}
 		}
-		elseif($userPermissions->canAddType())
+		elseif($userPermissions->canAddType($automatedSolutionId))
 		{
 			$this->type = $this->createDraftType();
 			$this->getApplication()->setTitle(Loc::getMessage('CRM_TYPE_DETAIL_NEW_TITLE'));
@@ -155,7 +159,18 @@ class CrmTypeDetailComponent extends Base
 		$this->arResult['isCustomSectionsAvailable'] = Integration\IntranetManager::isCustomSectionsAvailable();
 		$this->arResult['linkedUserFields'] = $this->getLinkedUserFields();
 		$this->arResult['isExternal'] = $this->request->get('isExternal') === 'Y';
-		$this->arResult['isCrmAdmin'] = $this->userPermissions->isCrmAdmin();
+		if (!$this->type->getId())
+		{
+			$this->arResult['canEditAutomatedSolution'] = $this->arResult['isExternal']
+				? $this->userPermissions->canEditAutomatedSolutions()
+				: $this->userPermissions->isCrmAdmin();
+		}
+		else
+		{
+			$this->arResult['canEditAutomatedSolution'] = $this->type->getCustomSectionId() > 0 ? $this->userPermissions->canEditAutomatedSolutions() : $this->userPermissions->isCrmAdmin();
+		}
+		$this->arResult['canToggleAutomatedSolutionSwitcher'] = $this->userPermissions->canEditAutomatedSolutions() && $this->userPermissions->isCrmAdmin();
+
 		$this->initializeRestrictionValues();
 
 		$this->arResult['activeTabId'] = $this->arParams['activeTabId'] ?? null;

@@ -19,15 +19,15 @@ class TaskDirectorPreloader
 		$this->init();
 	}
 
-	final protected function load(array $filter, int ...$flowIds): void
+	final protected function load(array $filter, array $order, int ...$flowIds): void
 	{
 		if (empty($flowIds))
 		{
 			return;
 		}
 
-		$flowTaskDirectors = $this->getTasks($flowIds, $filter);
-		$directors = array_unique(array_merge([], ...$flowTaskDirectors));
+		$flowTaskDirectors = $this->getTasks($flowIds, $filter, $order);
+		$directors = array_merge([], ...$flowTaskDirectors);
 		try
 		{
 			$users = $this->userProvider->getUsersInfo($directors);
@@ -47,7 +47,7 @@ class TaskDirectorPreloader
 					continue;
 				}
 
-				static::$storage[$flowId][$userId] = $users[$userId];
+				static::$storage[$flowId][] = $users[$userId];
 			}
 		}
 	}
@@ -57,12 +57,12 @@ class TaskDirectorPreloader
 		return static::$storage[$flowId] ?? [];
 	}
 
-	private function getTasks(array $flowIds, array $filter): array
+	private function getTasks(array $flowIds, array $filter, array $order): array
 	{
 		$result = [];
 		foreach ($flowIds as $flowId)
 		{
-			$result[$flowId] = $this->directorProvider->getDirectors($flowId, $filter);
+			$result[$flowId] = $this->directorProvider->getDirectors($flowId, $filter, $order);
 		}
 
 		return $result;

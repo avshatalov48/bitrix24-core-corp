@@ -503,9 +503,6 @@ export class BlankSelector extends EventEmitter
 		const canUploadNewBlank = this.#config.canUploadNewBlank ?? true;
 		const selectorContainer = Tag.render`
 			<div class="sign-blank-selector">
-				<p class="sign-blank-selector__add-title">
-					${Loc.getMessage('SIGN_BLANK_SELECTOR_ADD_TITLE')}
-				</p>
 				${this.#tileWidgetContainer}
 				${canUploadNewBlank ? this.#uploadButtonsContainer : ''}
 				<p class="sign-blank-selector__templates_title">

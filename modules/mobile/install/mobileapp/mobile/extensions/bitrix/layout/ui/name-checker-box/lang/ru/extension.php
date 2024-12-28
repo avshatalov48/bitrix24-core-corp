@@ -1,0 +1,5 @@
+<?php
+$MESS["NAME_CHECKER_ITEM_FIRST_NAME_PLACEHOLDER"] = "Имя";
+$MESS["NAME_CHECKER_ITEM_SECOND_NAME_PLACEHOLDER"] = "Фамилия";
+$MESS["NAME_CHECKER_EXISTING_USERS_TITLE"] = "Уже есть в Битрикс24";
+$MESS["NAME_CHECKER_EXISTING_USERS_SUBTITLE"] = "Будут сразу добавлены в коллабу:\n#users#";

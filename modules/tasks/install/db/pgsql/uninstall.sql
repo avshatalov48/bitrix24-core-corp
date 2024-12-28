@@ -134,8 +134,24 @@ DROP TABLE IF EXISTS b_tasks_regular_parameters;
 
 DROP TABLE IF EXISTS b_tasks_custom_sort;
 
+DROP TABLE IF EXISTS b_tasks_flow;
+
+DROP TABLE IF EXISTS b_tasks_flow_member;
+
+DROP TABLE IF EXISTS b_tasks_flow_task;
+
+DROP TABLE IF EXISTS b_tasks_flow_option;
+
+DROP TABLE IF EXISTS b_tasks_flow_responsible_queue;
+
 DROP TABLE IF EXISTS b_tasks_flow_notification;
 
 DROP TABLE IF EXISTS b_tasks_flow_search_index;
 
 DROP TABLE IF EXISTS b_tasks_flow_auto_created_robot;
+
+DROP TABLE IF EXIStS b_tasks_flow_user_option;
+
+DROP TABLE IF EXISTS b_tasks_flow_copilot_advice;
+
+DROP TABLE IF EXISTS b_tasks_flow_copilot_collected_data;

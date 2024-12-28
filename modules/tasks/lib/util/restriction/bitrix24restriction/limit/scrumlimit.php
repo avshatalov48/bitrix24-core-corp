@@ -33,18 +33,16 @@ class ScrumLimit extends Limit
 			return false;
 		}
 
+		if (self::isFeatureEnabledByTrial())
+		{
+			return false;
+		}
+
 		$limit = ($limit > 0 ? $limit : static::getLimit());
 
 		if ($limit === 0)
 		{
-			if (self::isNewFeaturesPoliticEnabled())
-			{
-				return true;
-			}
-			else
-			{
-				return (static::getCurrentValue() >= 5);
-			}
+			return true;
 		}
 
 		return (static::getCurrentValue() >= $limit);
@@ -82,11 +80,11 @@ class ScrumLimit extends Limit
 		return 0;
 	}
 
-	public static function isFeatureEnabled()
+	public static function isFeatureEnabled(): bool
 	{
 		if (!Loader::includeModule('socialnetwork'))
 		{
-			return true;
+			return false;
 		}
 
 		if (Feature::isFeatureEnabled(Feature::SCRUM_CREATE))
@@ -94,6 +92,20 @@ class ScrumLimit extends Limit
 			return true;
 		}
 
+		return false;
+	}
+
+	public static function isFeatureEnabledByTrial(): bool
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return false;
+		}
+
+		if (Feature::isFeatureEnabledByTrial(Feature::SCRUM_CREATE))
+		{
+			return true;
+		}
 
 		return false;
 	}
@@ -121,10 +133,5 @@ class ScrumLimit extends Limit
 	public static function getLimitCode(): string
 	{
 		return self::getSidePanelId();
-	}
-
-	private static function isNewFeaturesPoliticEnabled(): bool
-	{
-		return \Bitrix\Main\Config\Option::get('bitrix24', 'new-features-politic-2024', 'N', '-') === 'Y';
 	}
 }

@@ -2,7 +2,7 @@
 
 namespace Bitrix\Tasks\Flow\Notification\Command;
 
-use Bitrix\Tasks\Flow\Flow;
+use Bitrix\Tasks\Flow\Distribution\FlowDistributionType;
 use Bitrix\Tasks\Flow\FlowRegistry;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 
@@ -27,7 +27,7 @@ class PingManualDistributorAboutNewTaskCommandHandler
 
 		$flow = $this->flowRegistry->get($task->getFlowId());
 
-		if (!$flow || $flow->getDistributionType() !== Flow::DISTRIBUTION_TYPE_MANUALLY)
+		if (!$flow || $flow->getDistributionType() !== FlowDistributionType::MANUALLY->value)
 		{
 			return;
 		}

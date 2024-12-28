@@ -14,6 +14,8 @@ class GroupDto extends Dto
 		public readonly array $additionalData,
 		public readonly ?int $dateStart = null,
 		public readonly ?int $dateFinish = null,
+		public readonly bool $isCollab = false,
+		public readonly bool $isExtranet = false,
 	)
 	{
 		parent::__construct();

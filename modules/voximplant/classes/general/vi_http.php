@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main\Application;
+use Bitrix\Main\Data\Cache;
 use Bitrix\Voximplant\Result;
 use Bitrix\Main\Error;
 
@@ -12,6 +13,10 @@ class CVoxImplantHttp
 
 	const CONTROLLER_RU = 'https://telephony-ru.bitrix.info/telephony/portal.php';
 	const CONTROLLER_OTHER = 'https://telephony.bitrix.info/telephony/portal.php';
+
+	private const CACHE_ACCOUNT_NODE_ID_PREFIX = 'account_node_';
+	private const CACHE_ACCOUNT_NODE_DIR = '/voximplant/';
+	private const CACHE_ACCOUNT_NODE_TTL = 604800; //1 week
 
 	private $licenceCode = '';
 	private $domain = '';
@@ -86,16 +91,38 @@ class CVoxImplantHttp
 
 	public function GetAccountNode(array $params = [])
 	{
-		$query = $this->Query('GetAccountNode', $params);
-		if (isset($query->error))
+		$cache = Cache::createInstance();
+		if ($cache->initCache(
+			self::CACHE_ACCOUNT_NODE_TTL,
+			self::CACHE_ACCOUNT_NODE_ID_PREFIX . md5($this->licenceCode),
+			self::CACHE_ACCOUNT_NODE_DIR
+		))
 		{
-			$error = (array)$query->error;
-			$this->error = new CVoxImplantError(__METHOD__, $error['code'] ?? '', $error['msg'] ?? '');
+			$node = $cache->getVars();
+		}
+		else
+		{
+			$query = $this->Query('GetAccountNode', $params);
+			if (!$query && ($this->error instanceof CVoxImplantError))
+			{
+				$cache->abortDataCache();
+				return false;
+			}
 
-			return false;
+			if (isset($query->error))
+			{
+				$error = (array)$query->error;
+				$this->error = new CVoxImplantError(__METHOD__, $error['code'] ?? '', $error['msg'] ?? '');
+
+				$cache->abortDataCache();
+				return false;
+			}
+
+			$cache->endDataCache($query);
+			$node = $query;
 		}
 
-		return $query;
+		return $node;
 	}
 
 	public function GetPhoneNumberCategories($countryCode = '')
@@ -789,7 +816,7 @@ class CVoxImplantHttp
 		$query = $this->Query('GetDocumentAccess');
 		if (isset($query->error))
 		{
-			$this->error = new CVoxImplantError(__METHOD__, $query->error['code'], $query->error['msg']);
+			$this->error = new CVoxImplantError(__METHOD__, $query->error->code, $query->error->msg);
 			return false;
 		}
 
@@ -1100,7 +1127,17 @@ class CVoxImplantHttp
 			$decodedResponse->error->code = '';
 		}
 
-		return $decodedResponse ?? $failResult;
+		if (isset($decodedResponse))
+		{
+			return $decodedResponse;
+		}
+
+		if ($returnArray && $failResult instanceof \stdClass)
+		{
+			return (array)$failResult;
+		}
+
+		return $failResult;
 	}
 
 	public static function RequestSign($type, $str)

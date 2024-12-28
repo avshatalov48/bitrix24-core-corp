@@ -503,6 +503,23 @@ class Task extends Base
 		}
 	}
 
+	public function takeAction(int $taskId): ?array
+	{
+		try
+		{
+			$provider = new TaskProvider($this->getCurrentUser()?->getId());
+			$takeResult = $provider->take($taskId);
+
+			return $this->prepareActionResult($takeResult, $taskId);
+		}
+		catch (\Exception $exception)
+		{
+			$this->addError(Error::createFromThrowable($exception));
+
+			return null;
+		}
+	}
+
 	public function pauseAction(int $taskId): ?array
 	{
 		try

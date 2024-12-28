@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item;
 
+use Bitrix\Crm\Activity\Provider\ProviderManager;
 use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Service\Timeline\Config;
 use Bitrix\Crm\Service\Timeline\Item\Interfaces\Deadlinable;
@@ -141,6 +142,12 @@ abstract class Activity extends Configurable implements Deadlinable
 
 		$menuItems['delete'] = $this->createDeleteMenuItem($activityId);
 
+		$filterRelated = $this->createFilterRelatedMenuItem($activityId);
+		if ($filterRelated)
+		{
+			$menuItems['filterRelated'] = $filterRelated;
+		}
+
 		return $menuItems;
 	}
 
@@ -255,6 +262,11 @@ abstract class Activity extends Configurable implements Deadlinable
 		return Loc::getMessage('CRM_TIMELINE_ACTIVITY_DELETION_CONFIRM');
 	}
 
+	protected function getDeleteTagConfirmationText(): string
+	{
+		return Loc::getMessage('CRM_TIMELINE_ACTIVITY_DELETE_TAG_CONFIRM');
+	}
+
 	protected function createDeleteMenuItem(int $activityId): ?Layout\Menu\MenuItem
 	{
 		return MenuItemFactory::createDeleteMenuItem()
@@ -265,6 +277,19 @@ abstract class Activity extends Configurable implements Deadlinable
 					->addActionParamInt('ownerId', $this->getContext()->getEntityId())
 					->addActionParamString('confirmationText', $this->getDeleteConfirmationText())
 					->setAnimation(Layout\Action\Animation::disableItem()->setForever())
+			)
+		;
+	}
+
+	protected function createDeleteTagMenuItem(int $activityId): ?Layout\Menu\MenuItem
+	{
+		return MenuItemFactory::createDeleteTagMenuItem()
+			->setAction(
+				(new Layout\Action\JsEvent('Activity:DeleteTag'))
+					->addActionParamInt('activityId', $activityId)
+					->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
+					->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+					->addActionParamString('confirmationText', $this->getDeleteTagConfirmationText())
 			)
 		;
 	}
@@ -459,5 +484,49 @@ abstract class Activity extends Configurable implements Deadlinable
 	public function getNoteItemId(): int
 	{
 		return $this->getActivityId();
+	}
+
+	protected function isTagDeleted(): bool
+	{
+		$activitySettings = $this->getAssociatedEntityModel()?->get('SETTINGS');
+
+		return (isset($activitySettings['TAGS_DELETED']) && $activitySettings['TAGS_DELETED'] === 'Y');
+	}
+
+	protected function createFilterRelatedMenuItem(int $activityId): ?Layout\Menu\MenuItem
+	{
+		$entityModel = $this->getModel()->getAssociatedEntityModel();
+
+		if (!$entityModel || !ProviderManager::isRelatedFilterProvider((string)$entityModel->get('PROVIDER_ID')))
+		{
+			return null;
+		}
+
+		$title = $entityModel->get('SUBJECT');
+		if ($title === '')
+		{
+			$activityFields = $entityModel->toArray();
+			if (!isset($activityFields['COMPLETED']))
+			{
+				$activityFields['COMPLETED'] = $this->isScheduled() ? 'N' : 'Y';
+			}
+			$provider = \CCrmActivity::GetActivityProvider($activityFields);
+			$title = $provider ? $provider::getActivityTitle($activityFields) : "ACTIVITY_{$activityId}";
+		}
+
+		return MenuItemFactory::createFilterRelatedMenuItem()
+			->setAction(
+				(new Layout\Action\JsEvent('Activity:FilterRelated'))
+					->addActionParamInt('activityId', $activityId)
+					->addActionParamString('activityLabel', $title)
+					->addActionParamString(
+						'filterId',
+						sprintf('%s_%d_timeline_history',
+							strtolower(CCrmOwnerType::ResolveName($this->getContext()->getEntityTypeId())),
+							$this->getContext()->getEntityId()
+						)
+					)
+			)->setScopeWeb() // temporary disable action for mobile app
+		;
 	}
 }

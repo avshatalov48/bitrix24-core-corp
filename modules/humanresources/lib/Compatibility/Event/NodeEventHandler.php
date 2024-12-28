@@ -377,6 +377,7 @@ class NodeEventHandler
 							entityType: MemberEntityType::USER,
 							entityId: (int)$currentHead,
 							nodeId: $node->id,
+							active: true,
 							role: $headRole,
 						),
 					)

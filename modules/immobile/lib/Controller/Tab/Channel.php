@@ -2,8 +2,7 @@
 
 namespace Bitrix\ImMobile\Controller\Tab;
 
-use Bitrix\Im\V2\Message\CounterService;
-use Bitrix\Im\V2\Recent\Recent;
+use Bitrix\Im\V2\Recent\RecentChannel;
 use Bitrix\ImMobile\Controller\Tab;
 use Bitrix\Main\Engine\CurrentUser;
 
@@ -19,7 +18,7 @@ class Channel extends Tab
 
 	protected function getRecentList(): array
 	{
-		$recentList = Recent::getOpenChannels(self::LIMIT);
+		$recentList = RecentChannel::getOpenChannels(self::LIMIT);
 
 		return $this->toRestFormatWithPaginationData(
 			[$recentList],

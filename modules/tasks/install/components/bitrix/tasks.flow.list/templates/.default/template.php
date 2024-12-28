@@ -21,6 +21,7 @@ Extension::load([
 	'tasks.flow.view-form',
 	'tasks.flow.team-popup',
 	'tasks.flow.task-queue',
+	'tasks.flow.copilot-advice',
 	'pull.queuemanager',
 	'ui.icon-set.main',
 	'ui.info-helper',
@@ -29,6 +30,7 @@ Extension::load([
 	'ui.manual',
 	'ui.counter',
 	'ui.notification',
+	'ai.copilot-chat.ui',
 ]);
 
 /** intranet-settings-support */
@@ -92,6 +94,7 @@ $currentUrl = $uri->getUri();
 			currentUserId: '<?= $arResult['currentUserId'] ?>',
 			currentUrl: '<?= CUtil::JSEscape($currentUrl) ?>',
 			isAhaShownOnMyTasksColumn: <?= $arResult['isAhaShownOnMyTasksColumn'] === true ? 'true' : 'false' ?>,
+			isAhaShownCopilotAdvice: <?= $arResult['isAhaShownCopilotAdvice'] === true ? 'true' : 'false' ?>,
 			flowLimitCode: '<?= \Bitrix\Tasks\Flow\FlowFeature::LIMIT_CODE ?>',
 		});
 

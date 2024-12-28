@@ -1,6 +1,6 @@
 <?
-$MESS["IM_LIST_CHAT_NEW"] = "Групповой чат";
-$MESS["IM_LIST_CHAT_OPEN_NEW"] = "Канал";
+$MESS["IM_LIST_CHAT_NEW_MSGVER_1"] = "Групповой чат";
+$MESS["IM_LIST_CHAT_OPEN_NEW_MSGVER_1"] = "Открытый чат";
 $MESS["IM_LIST_EMPLOYEE"] = "Сотрудник";
 $MESS["IM_LIST_EXTRANET"] = "Внешний пользователь";
 $MESS["ELEMENT_MENU_DELETE"] = "Удалить";

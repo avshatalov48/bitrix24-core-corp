@@ -2,10 +2,13 @@
 
 namespace Bitrix\Tasks\Flow\Controllers;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\EntitySelector\Converter;
+use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Flow\Access\FlowAccessController;
 use Bitrix\Tasks\Flow\Access\FlowAction;
 use Bitrix\Tasks\Flow\Access\FlowModel;
@@ -13,7 +16,11 @@ use Bitrix\Tasks\Flow\Control\Command\AddCommand;
 use Bitrix\Tasks\Flow\Control\Command\DeleteCommand;
 use Bitrix\Tasks\Flow\Control\Command\UpdateCommand;
 use Bitrix\Tasks\Flow\Control\Decorator\EmptyOwnerDecorator;
+use Bitrix\Tasks\Flow\Control\Decorator\ProjectMembersProxyDecorator;
 use Bitrix\Tasks\Flow\Control\Decorator\ProjectProxyDecorator;
+use Bitrix\Tasks\Flow\Integration\HumanResources\DepartmentService;
+use Bitrix\Tasks\Flow\Option\FlowUserOption\FlowUserOptionRepository;
+use Bitrix\Tasks\Flow\Option\FlowUserOption\FlowUserOptionService;
 use Bitrix\Tasks\InvalidCommandException;
 use Bitrix\Tasks\Flow\Controllers\Dto\FlowDto;
 use Bitrix\Tasks\Flow\Controllers\Trait\ControllerTrait;
@@ -21,7 +28,7 @@ use Bitrix\Tasks\Flow\Controllers\Trait\MessageTrait;
 use Bitrix\Tasks\Flow\FlowFeature;
 use Bitrix\Tasks\Flow\Integration\Socialnetwork\Exception\AutoCreationException;
 use Bitrix\Tasks\Flow\Provider\Exception\FlowNotFoundException;
-use Bitrix\Tasks\Flow\Provider\MembersProvider;
+use Bitrix\Tasks\Flow\Provider\FlowMemberFacade;
 use Bitrix\Tasks\Flow\Responsible\ResponsibleQueue\ResponsibleQueueProvider;
 use Bitrix\Tasks\Flow\Control\FlowService;
 use Bitrix\Tasks\Flow\Provider\FlowProvider;
@@ -39,7 +46,9 @@ class Flow extends Controller
 	protected FlowProvider $provider;
 	protected ResponsibleQueueProvider $queueProvider;
 	protected OptionService $optionProvider;
-	protected MembersProvider $membersProvider;
+	protected FlowUserOptionService $flowUserOptionService;
+	protected FlowUserOptionRepository $flowUserOptionRepository;
+	protected FlowMemberFacade $memberFacade;
 	protected Converter $converter;
 	protected int $userId;
 
@@ -52,7 +61,9 @@ class Flow extends Controller
 		$this->provider = new FlowProvider();
 		$this->queueProvider = new ResponsibleQueueProvider();
 		$this->optionProvider = OptionService::getInstance();
-		$this->membersProvider = new MembersProvider();
+		$this->memberFacade = ServiceLocator::getInstance()->get('tasks.flow.member.facade');
+		$this->flowUserOptionService = FlowUserOptionService::getInstance();
+		$this->flowUserOptionRepository = FlowUserOptionRepository::getInstance();
 		$this->converter = new Converter();
 	}
 
@@ -69,9 +80,20 @@ class Flow extends Controller
 		try
 		{
 			$flow = $this->provider->getFlow($flowId, ['*']);
-			$taskCreators = $this->converter::convertFromFinderCodes($this->membersProvider->getTaskCreators($flow->getId()));
-			$responsibleQueue = $this->queueProvider->getResponsibleQueue($flow->getId())->getUserIds();
-			$options = $this->optionProvider->getOptions($flow->getId());
+
+			$responsibleList = $this->converter::convertFromFinderCodes(
+				$this->memberFacade->getResponsibleAccessCodes($flowId)
+			);
+
+			$taskCreators = $this->converter::convertFromFinderCodes(
+				$this->memberFacade->getTaskCreatorAccessCodes($flowId)
+			);
+
+			$team = $this->converter::convertFromFinderCodes(
+				$this->memberFacade->getTeamAccessCodes($flowId)
+			);
+
+			$options = $this->optionProvider->getOptions($flowId);
 		}
 		catch (FlowNotFoundException $e)
 		{
@@ -84,8 +106,9 @@ class Flow extends Controller
 		}
 
 		$flow
+			->setResponsibleList($responsibleList)
 			->setTaskCreators($taskCreators)
-			->setResponsibleQueue($responsibleQueue)
+			->setTeam($team)
 			->setOptions($options);
 
 		return $flow;
@@ -130,15 +153,19 @@ class Flow extends Controller
 			->setActivity();
 
 		$addCommand = AddCommand::createFromArray($flowData)
-			->setTaskCreators($this->converter::convertToFinderCodes($flowData->taskCreators));
+			->setTaskCreators($this->converter::convertToFinderCodes($flowData->taskCreators))
+			->setResponsibleList($this->converter::convertToFinderCodes($flowData->responsibleList));
 
 		try
 		{
-			$service = new EmptyOwnerDecorator(
-				new ProjectProxyDecorator(
-					$this->service
-				)
-			);
+			$service =
+				new EmptyOwnerDecorator(
+					new ProjectProxyDecorator(
+						new ProjectMembersProxyDecorator(
+							$this->service
+						)
+					)
+				);
 
 			$flow = $service->add($addCommand);
 
@@ -187,9 +214,16 @@ class Flow extends Controller
 			$updateCommand->setTaskCreators($this->converter::convertToFinderCodes($flowData->taskCreators));
 		}
 
+		if ($flowData->hasResponsibleList())
+		{
+			$updateCommand->setResponsibleList($this->converter::convertToFinderCodes($flowData->responsibleList));
+		}
+
 		try
 		{
-			$flow = $this->service->update($updateCommand);
+			$service = new ProjectMembersProxyDecorator($this->service);
+
+			$flow = $service->update($updateCommand);
 		}
 		catch (InvalidCommandException $e)
 		{
@@ -270,6 +304,11 @@ class Flow extends Controller
 		if ($flowData->hasTaskCreators())
 		{
 			$updateCommand->setTaskCreators($this->converter::convertToFinderCodes($flowData->taskCreators));
+		}
+
+		if ($flowData->hasResponsibleList())
+		{
+			$updateCommand->setResponsibleList($this->converter::convertToFinderCodes($flowData->responsibleList));
 		}
 
 		$updateCommand->setActive(true);
@@ -357,6 +396,81 @@ class Flow extends Controller
 		}
 
 		return true;
+	}
+
+	/**
+	 * Pin flow in flow list for current user
+	 *
+	 * @restMethod tasks.flow.Flow.pin
+	 */
+	public function pinAction(int $flowId): ?bool
+	{
+		if (!FlowAccessController::can($this->userId, FlowAction::READ, $flowId))
+		{
+			return $this->buildErrorResponse($this->getAccessDeniedError());
+		}
+
+		try
+		{
+			$pinOption = $this->flowUserOptionService->changePinOption($flowId, $this->userId);
+		}
+		catch (Throwable $e)
+		{
+			$this->log($e);
+
+			return $this->buildErrorResponse($this->getUnknownError(__LINE__));
+		}
+
+		return $pinOption->getValue() === 'Y';
+	}
+
+	/**
+	 * Get department users count
+	 * @restMethod tasks.flow.Flow.getDepartmentMembersCount
+	 *
+	 * @param array $departments array of departments we want to count like [['department', '15'], ['department', '13:F']].
+	 * @return ?array Returns map with EntitySelector codes like [['15', 6], ['13:F', 15]].
+	 */
+	public function getDepartmentsMemberCountAction(array $departments): ?array
+	{
+		if (empty($departments))
+		{
+			return [];
+		}
+
+		try
+		{
+			$countMap = [];
+
+			$departmentService = new DepartmentService();
+			foreach ($departments as $department)
+			{
+				// Allow only department entities
+				if ($department[0] !== 'department')
+				{
+					continue;
+				}
+
+				$accessCode = $this->converter::convertToFinderCodes([$department]);
+				$count = isset($accessCode[0])
+					? $departmentService->getDepartmentUsersCountByAccessCode($accessCode[0])
+					: 0
+				;
+
+				$countMap[] = [
+					'departmentId' => $department[1],
+					'count' => $count,
+				];
+			}
+		}
+		catch (Throwable $e)
+		{
+			$this->log($e);
+
+			return $this->buildErrorResponse($this->getUnknownError(__LINE__));
+		}
+
+		return $countMap;
 	}
 
 	private function sendFlowCreateFinishAnalytics(string $element, string $subSection = 'flows_grid'): void

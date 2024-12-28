@@ -110,6 +110,7 @@ $MESS["INTRANET_USER_PROFILE_VIDEOCALL"] = "Videoanruf";
 $MESS["INTRANET_USER_PROFILE_VIEW_ACCESS_DENIED"] = "Zugriff auf Nutzerprofil ist verweigert.";
 $MESS["INTRANET_USER_PROFILE_YES"] = "Ja";
 $MESS["INTRANET_USER_PROFILE_admin"] = "Administrator";
+$MESS["INTRANET_USER_PROFILE_collaber"] = "Besucher";
 $MESS["INTRANET_USER_PROFILE_email"] = "E-Mail-Nutzer";
 $MESS["INTRANET_USER_PROFILE_employee"] = "Aktionen";
 $MESS["INTRANET_USER_PROFILE_extranet"] = "Extranet";

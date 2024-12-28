@@ -75,8 +75,6 @@ class Text extends Controller
 			return [];
 		}
 
-		$isQueueable = $engine instanceof IQueue;
-
 		$resultData = null;
 		$queueHash = null;
 		$roleCode = $roleCode ?: RoleManager::getUniversalRoleCode();
@@ -89,8 +87,8 @@ class Text extends Controller
 			->setUserParameters($parameters)
 			->setAnalyticData($parameters['bx_analytic'] ?? [])
 			->setHistoryState($this->isTrue($parameters['bx_history'] ?? false))
-			->onSuccess(function(Result $result, ?string $hash = null) use($isQueueable, &$resultData, &$queueHash) {
-				$resultData = $isQueueable ? $result->getRawData() : $result->getPrettifiedData();
+			->onSuccess(function(Result $result, ?string $hash = null) use(&$resultData, &$queueHash) {
+				$resultData = $result->getPrettifiedData();
 				$queueHash = $hash;
 			})
 			->onError(function(Error $error) {
@@ -98,7 +96,7 @@ class Text extends Controller
 			})
 		;
 
-		if (/*$isQueueable &&*/ $this->shouldUseQueueMode())
+		if ($this->shouldUseQueueMode())
 		{
 			$engine->completionsInQueue();
 		}

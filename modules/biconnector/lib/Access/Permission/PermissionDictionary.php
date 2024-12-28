@@ -16,6 +16,7 @@ final class PermissionDictionary extends Permission\PermissionDictionary
 	public const BIC_SETTINGS_EDIT_RIGHTS = 4;
 	public const BIC_DASHBOARD_TAG_MODIFY = 5;
 	public const BIC_DASHBOARD_EDIT_SCOPE = 6;
+	public const BIC_EXTERNAL_DASHBOARD_CONFIG = 7;
 
 	public const BIC_DASHBOARD = 100;
 	public const BIC_DASHBOARD_VIEW = 101;

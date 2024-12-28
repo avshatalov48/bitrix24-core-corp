@@ -3,8 +3,10 @@
 namespace Bitrix\Sign\Service;
 
 use Bitrix\Sign\Item\User;
+use Bitrix\Sign\Type\User\Gender;
 use CSite;
 use CUser;
+use Bitrix\Main\UserTable;
 
 class UserService
 {
@@ -44,6 +46,39 @@ class UserService
 		}
 
 		return null;
+	}
+
+	public function getUserLanguage(null|int $userId): null|string
+	{
+		if (!$userId)
+		{
+			return null;
+		}
+
+		$res = UserTable::query()
+			->where('ID', $userId)
+			->setSelect([
+				'NOTIFICATION_LANGUAGE_ID',
+			])
+			->exec()
+			->fetchObject()
+		;
+
+		return ($res)
+			? $res->getNotificationLanguageId()
+			: null
+		;
+	}
+
+	public function getGender(int $userId): Gender
+	{
+		$profileGender = UserTable::getById($userId)?->fetchObject()?->getPersonalGender();
+		return match ($profileGender)
+		{
+			'M' => Gender::MALE,
+			'F' => Gender::FEMALE,
+			default => Gender::DEFAULT,
+		};
 	}
 
 	public function getUserTimezoneOffsetRelativeToServer(int $userId, bool $forced = false): int

@@ -2,9 +2,7 @@
 
 namespace Bitrix\DocumentGenerator\Model;
 
-use Bitrix\Crm\Relation\RelationType;
 use Bitrix\Main\ORM\Data\DataManager;
-use Bitrix\Main\ORM\Fields\EnumField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Fields\StringField;
@@ -21,7 +19,9 @@ class DocumentBindingTable extends DataManager
 	{
 		return [
 			(new IntegerField('ID'))
-				->configurePrimary(),
+				->configurePrimary()
+				->configureAutocomplete()
+			,
 			(new IntegerField('DOCUMENT_ID'))
 				->configureRequired(),
 			(new StringField('ENTITY_NAME'))

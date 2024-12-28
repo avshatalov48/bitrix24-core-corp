@@ -253,7 +253,7 @@ if (!isset($folderTitleFormat) || !is_callable($folderTitleFormat))
 		else
 		{
 			$parentsHint = '';
-			if (count($row['PARENTS']) > 0)
+			if (!empty($row['PARENTS']))
 			{
 				$parentsHint = ' onmouseover="BX.hint(this, \''. Loc::getMessage('DISK_VOLUME_PARENT_FOLDER').'\', \'/&nbsp;'. addslashes(implode('&nbsp;/&nbsp; ', $row['PARENTS'])). '&nbsp;/\')"';
 			}
@@ -318,17 +318,15 @@ if (!isset($fileTitleFormat) || !is_callable($fileTitleFormat))
 				$titleFormat =
 					'<span class="bx-file-icon-container-small bx-file-icon-tiny '.$iconClass.'"></span>'.
 					'<span class="bx-disk-file-title" id="disk_obj_'.$row['ID'].'" '. $dataAttributesForViewer .'>'.$row['TITLE'].'</span>'.
-
 					'<div class="disk-volume-folder-parent" title="'.Loc::getMessage('DISK_VOLUME_PARENT_FOLDER').'">'.
-					Loc::getMessage('DISK_VOLUME_USING_CHAT').': '.
-					$row['PARENTS'][0].
+					Loc::getMessage('DISK_VOLUME_USING_CHAT').': '. $row['PARENTS'][0].
 					'</div>';
 			}
 			else
 			{
 
 				$parentsHint = '';
-				if (count($row['PARENTS']) > 0)
+				if (!empty($row['PARENTS']))
 				{
 					$parentsHint = ' onmouseover="BX.hint(this, \''. Loc::getMessage('DISK_VOLUME_PARENT_FOLDER').'\', \'/&nbsp;'. addslashes(implode('&nbsp;/&nbsp; ', $row['PARENTS'])). '&nbsp;/\')"';
 				}

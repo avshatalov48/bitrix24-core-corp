@@ -203,6 +203,24 @@ class OnecStartComponent extends CBitrixComponent
 					],
 				];
 
+				if ($this->isHcmLinkAvailable())
+				{
+					$this->arResult['ITEMS'][] = [
+						'id' => 'hcmlink-1c',
+						'name' => Loc::getMessage('CRM_1C_HCMLINK_KEDO'),
+						'iconClass' => 'ui-icon ui-icon-service-1c',
+						'selected' => false,
+						'data' => [
+							'url' => '/hr/hcmlink/companies/',
+							'sliderOptions' => [
+								'width' => 705,
+								'cacheable' => false,
+							],
+						],
+						'badgeNew' => true,
+					];
+				}
+
 				if (\Bitrix\Main\Loader::includeModule('rest'))
 				{
 					\Bitrix\Main\Loader::includeModule('sale');
@@ -217,7 +235,7 @@ class OnecStartComponent extends CBitrixComponent
 							'data' => [
 								'url' => '/onec/backoffice/'
 							],
-							'badgeNew' => true,
+							'badgeNew' => false,
 						];
 					}
 
@@ -351,6 +369,22 @@ class OnecStartComponent extends CBitrixComponent
 		}
 
 		return false;
+	}
+
+
+	private function isHcmLinkAvailable(): bool
+	{
+		if (!Loader::includeModule('humanresources'))
+		{
+			return false;
+		}
+
+		if (!class_exists(\Bitrix\HumanResources\Config\Feature::class))
+		{
+			return false;
+		}
+
+		return \Bitrix\HumanResources\Config\Feature::instance()->isHcmLinkAvailable();
 	}
 
 	protected function applicationBackOfficeIsInactive()

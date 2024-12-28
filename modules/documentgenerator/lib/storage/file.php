@@ -9,7 +9,6 @@ use Bitrix\Main\IO\Path;
 use Bitrix\Main\Loader;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\Error;
-use Bitrix\Main\Text\BinaryString;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\IO;
 
@@ -60,14 +59,7 @@ class File implements Storage
 			if(mb_strpos($uri->getHost(), \CBXPunycode::PREFIX) === false)
 			{
 				$errors = array();
-				if(defined("BX_UTF"))
-				{
-					$punycodedPath = \CBXPunycode::ToUnicode($uri->getHost(), $errors);
-				}
-				else
-				{
-					$punycodedPath = \CBXPunycode::ToASCII($uri->getHost(), $errors);
-				}
+				$punycodedPath = \CBXPunycode::ToUnicode($uri->getHost(), $errors);
 
 				if($punycodedPath != $uri->getHost())
 				{
@@ -146,7 +138,7 @@ class File implements Storage
 	 */
 	protected function saveToCloud($content, $fileName, \CCloudStorageBucket $bucket, array $options = [])
 	{
-		$fileSize = BinaryString::getLength($content);
+		$fileSize = strlen($content);
 		$fileName = \CCloudTempFile::GetFileName($bucket, $fileName);
 		$result = new AddResult();
 		if(Loader::includeModule('clouds'))
@@ -174,7 +166,7 @@ class File implements Storage
 			$partSize = $bucket->getService()->GetMinUploadPartSize();
 			do
 			{
-				$data = BinaryString::getSubstring($content, $currentPos, $partSize);
+				$data = substr($content, $currentPos, $partSize);
 				$currentPos += $partSize;
 				$success = false;
 				while($upload->hasRetries())

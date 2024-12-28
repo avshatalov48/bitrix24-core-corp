@@ -30,12 +30,9 @@
 	overflow: hidden;
 	font-size: var(--ui-font-size-xl);
 	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-reset);
 	letter-spacing: var(--ui-text-letter-spacing-neg-1);
 	color: var(--ui-color-base-solid);
-}
-
-.tasks-flow__view-form-header_title-efficiency {
-	padding-top: 3px;
 }
 
 .tasks-flow__view-form-header_title-efficiency .ui-label {
@@ -133,8 +130,8 @@
 .tasks-flow__view-form_line-avatars {
 	display: flex;
 	align-items: center;
-	flex-direction: row-reverse;
-	justify-content: flex-end;
+	flex-direction: row;
+	justify-content: flex-start;
 	padding-left: 9px;
 }
 
@@ -245,4 +242,20 @@
 	text-overflow: ellipsis;
 	font-size: var(--ui-font-size-xs);
 	color: var(--ui-color-base-90);
+}
+
+.tasks-flow__view-form-header_title-link {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	cursor: pointer;
+	--ui-icon-set__icon-color: var(--ui-color-base-50);
+}
+
+.tasks-flow__view-form-header_title-link:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-80);
+}
+
+.tasks-flow__view-form-header_title-link-icon {
+	margin-top: 2px;
 }

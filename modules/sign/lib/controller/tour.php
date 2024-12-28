@@ -7,11 +7,10 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sign\Config\Storage;
+use Bitrix\Sign\Service\Container;
 
 final class Tour extends Controller
 {
-	private const OPTIONS_CATEGORY_NAME = 'sign.tour';
-	private const OPTIONS_VISIT_VALUE_PREFIX = 'visit_date_';
 	private const VISIT_DATE_FORMAT = \DateTimeInterface::ATOM;
 
 	public function saveVisitAction(string $tourId): void
@@ -25,7 +24,7 @@ final class Tour extends Controller
 
 		$userId = CurrentUser::get()->getId();
 
-		$saveSuccess = $this->saveVisit($tourId, $userId, new DateTime());
+		$saveSuccess = Container::instance()->getTourService()->saveVisit($tourId, $userId, new DateTime());
 
 		if (!$saveSuccess)
 		{
@@ -47,7 +46,7 @@ final class Tour extends Controller
 		}
 
 		$userId = CurrentUser::get()->getId();
-		$visitDate = $this->getLastVisitDate($tourId, $userId);
+		$visitDate = Container::instance()->getTourService()->getLastVisitDate($tourId, $userId);
 
 		return [
 			'lastVisitDate' => $visitDate?->format(self::VISIT_DATE_FORMAT),
@@ -67,30 +66,5 @@ final class Tour extends Controller
 		}
 
 		return new Result();
-	}
-
-	private function saveVisit(string $tourId, int $userId, DateTime $value): bool
-	{
-		$formattedDateTime = $value->format(self::VISIT_DATE_FORMAT);
-
-		return \CUserOptions::SetOption(
-			self::OPTIONS_CATEGORY_NAME,
-			self::OPTIONS_VISIT_VALUE_PREFIX . $tourId,
-			$formattedDateTime,
-			false,
-			$userId
-		);
-	}
-
-	private function getLastVisitDate(string $tourId, int $userId): ?DateTime
-	{
-		$visitDate = \CUserOptions::GetOption(
-			self::OPTIONS_CATEGORY_NAME,
-			self::OPTIONS_VISIT_VALUE_PREFIX . $tourId,
-			null,
-			$userId
-		);
-
-		return $visitDate === null ? null : DateTime::tryParse((string)$visitDate, self::VISIT_DATE_FORMAT);
 	}
 }

@@ -5,7 +5,6 @@
 jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (require, exports, module) => {
 	include('InAppNotifier');
 	const { Filesystem, utils } = require('native/filesystem');
-	const { MessageParams } = require('im/messenger/const');
 
 	const { Type } = require('type');
 	const { Loc } = require('loc');
@@ -18,9 +17,12 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 	const {
 		EventType,
 		FileType,
+		OwnMessageStatus,
+		MessageParams,
 	} = require('im/messenger/const');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { isOnline } = require('device/connection');
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 	const { showDeleteChannelPostAlert } = require('im/messenger/lib/ui/alert');
@@ -28,6 +30,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 	const { UserProfile } = require('im/messenger/controller/user-profile');
 	const { ForwardSelector } = require('im/messenger/controller/forward-selector');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
+	const { SelectManager } = require('im/messenger/controller/dialog/lib/select-manager');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { AnalyticsService } = require('im/messenger/provider/service');
@@ -55,8 +58,10 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		DownloadToDeviceAction,
 		DownloadToDiskAction,
 		FeedbackAction,
+		ResendAction,
 		SubscribeAction,
 		UnsubscribeAction,
+		MultiSelectAction,
 	} = require('im/messenger/controller/dialog/lib/message-menu/action');
 	const { ActionType } = require('im/messenger/controller/dialog/lib/message-menu/action-type');
 	const { MessageMenuMessage } = require('im/messenger/controller/dialog/lib/message-menu/message');
@@ -78,6 +83,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		constructor({ serviceLocator, dialogId })
 		{
+			/** @type {DialogLocator} */
 			this.locator = serviceLocator;
 			this.dialogId = dialogId;
 			this.store = serviceLocator.get('store');
@@ -103,6 +109,15 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			;
 		}
 
+		unsubscribeEvents()
+		{
+			this.locator.get('view')
+				.off(EventType.dialog.messageMenuActionTap, this.messageMenuActionTapHandler)
+				.off(EventType.dialog.messageMenuReactionTap, this.messageMenuReactionTapHandler)
+				.off(EventType.dialog.messageLongTap, this.messageLongTapHandler)
+			;
+		}
+
 		/**
 		 * @param {Message} message
 		 * @return {Array<string>}
@@ -125,6 +140,19 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				ActionType.profile,
 				ActionType.edit,
 				ActionType.delete,
+				ActionType.multiselect,
+			];
+		}
+
+		/**
+		 * @param {Message} message
+		 * @return {Array<string>}
+		 */
+		getOrderedActionsForErrorMessage(message)
+		{
+			return [
+				ActionType.resend,
+				ActionType.delete,
 			];
 		}
 
@@ -137,10 +165,9 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			logger.log('MessageMenu onMessageLongTap', message);
 			const messageId = Number(message.id);
 			const isRealMessage = Type.isNumber(messageId);
-
 			if (!isRealMessage)
 			{
-				Haptics.notifyFailure();
+				this.#processFileErrorMessage(message);
 
 				return;
 			}
@@ -207,6 +234,50 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		}
 
 		/**
+		 * @param {Message} message
+		 */
+		#processFileErrorMessage(message)
+		{
+			if (message.status !== OwnMessageStatus.error)
+			{
+				Haptics.notifyFailure();
+
+				return;
+			}
+
+			const messageModel = this.store.getters['messagesModel/getById'](message.id);
+			if (!messageModel || !('id' in messageModel))
+			{
+				Haptics.notifyFailure();
+
+				return;
+			}
+
+			if (this.isMenuNotAvailableByComponentId(messageModel))
+			{
+				Haptics.notifyFailure();
+
+				return;
+			}
+
+			const dialogModel = this.store.getters['dialoguesModel/getById'](this.dialogId);
+			const contextMenuMessage = new MessageMenuMessage({
+				messageModel,
+				dialogModel,
+			});
+
+			const menu = new MessageMenuView();
+			this.getOrderedActionsForErrorMessage()
+				.forEach((actionId) => this.actions[actionId](menu, contextMenuMessage))
+			;
+
+			this.locator.get('view')
+				.showMenuForMessage(message, menu)
+			;
+			Haptics.impactMedium();
+		}
+
+		/**
 		 * @param {string} actionId
 		 * @param {Message} message
 		 */
@@ -249,6 +320,8 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				[ActionType.downloadToDevice]: this.addDownloadToDeviceAction.bind(this),
 				[ActionType.downloadToDisk]: this.addDownloadToDiskAction.bind(this),
 				[ActionType.feedback]: this.addFeedbackAction.bind(this),
+				[ActionType.multiselect]: this.addMultiselectAction.bind(this),
+				[ActionType.resend]: this.addResendAction.bind(this),
 			};
 		}
 
@@ -270,6 +343,8 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				[ActionType.downloadToDevice]: this.onDownloadToDevice.bind(this),
 				[ActionType.downloadToDisk]: this.onDownloadToDisk.bind(this),
 				[ActionType.feedback]: this.onFeedback.bind(this),
+				[ActionType.multiselect]: this.onMultiSelect.bind(this),
+				[ActionType.resend]: this.onResend.bind(this),
 			};
 		}
 
@@ -482,6 +557,30 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		}
 
 		/**
+		 * @param {MessageMenuView} menu
+		 * @param {MessageMenuMessage} message
+		 */
+		addMultiselectAction(menu, message)
+		{
+			if (message.isPossibleMultiselect())
+			{
+				menu.addAction(MultiSelectAction);
+			}
+		}
+
+		/**
+		 * @param {MessageMenuView} menu
+		 * @param {MessageMenuMessage} message
+		 */
+		addResendAction(menu, message)
+		{
+			if (message.isPossibleResend())
+			{
+				menu.addAction(ResendAction);
+			}
+		}
+
+		/**
 		 * @param {Message} message
 		 */
 		onCopy(message)
@@ -651,7 +750,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 
 			const forwardController = new ForwardSelector();
 			forwardController.open({
-				messageId: message.id,
+				messageIds: [message.id],
 				fromDialogId: this.dialogId,
 				locator: this.locator,
 			});
@@ -675,7 +774,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				return;
 			}
 
-			MessageCreateMenu.open(messageModel, this.locator);
+			MessageCreateMenu.open(this.dialogId, messageModel, this.store);
 		}
 
 		/**
@@ -716,10 +815,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				return;
 			}
 
-			AnalyticsService.getInstance().sendMessageDeleteActionClicked({
-				messageId: messageModel.id,
-				dialogId: this.dialogId,
-			});
+			if (Type.isNumber(messageModel.id))
+			{
+				AnalyticsService.getInstance().sendMessageDeleteActionClicked({
+					messageId: messageModel.id,
+					dialogId: this.dialogId,
+				});
+			}
 
 			const helper = DialogHelper.createByDialogId(this.dialogId);
 
@@ -732,10 +834,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 						;
 					},
 					cancelCallback: () => {
-						AnalyticsService.getInstance().sendMessageDeletingCanceled({
-							messageId: messageModel.id,
-							dialogId: this.dialogId,
-						});
+						if (Type.isNumber(messageModel.id))
+						{
+							AnalyticsService.getInstance().sendMessageDeletingCanceled({
+								messageId: messageModel.id,
+								dialogId: this.dialogId,
+							});
+						}
 					},
 				});
 
@@ -766,14 +871,27 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			}
 
 			const file = this.store.getters['filesModel/getById'](messageModel.files[0]);
-
-			const hasFile = Boolean(file);
-			const isImageMessage = hasFile && file.type === FileType.image;
+			if (!file)
+			{
+				return;
+			}
 
 			void NotifyManager.showLoadingIndicator();
 			Filesystem.downloadFile(withCurrentDomain(file.urlDownload))
 				.then((localPath) => {
-					this.#saveToLibrary(localPath, isImageMessage);
+					AnalyticsService.getInstance().sendDownloadToDevice({
+						fileType: file.type,
+						dialogId: this.dialogId,
+					});
+
+					if (file.type === FileType.audio)
+					{
+						this.#saveFile(localPath, messageModel);
+
+						return;
+					}
+
+					this.#saveToLibrary(localPath, file.type, messageModel);
 				})
 				.catch((error) => {
 					logger.error(`${this.constructor.name}.onDownloadToDevice.downloadFile.catch:`, error);
@@ -782,21 +900,22 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 
 		/**
 		 * @param {String} localPath
-		 * @param {Boolean} isImageMessage
+		 * @param {FileType} fileType
+		 * @param {MessagesModelState} messageModel
 		 */
-		#saveToLibrary(localPath, isImageMessage)
+		#saveToLibrary(localPath, fileType, messageModel)
 		{
 			return utils.saveToLibrary(localPath)
 				.then(() => {
-					const successMessage = isImageMessage
-						? Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_PHOTO_TO_GALLERY_SUCCESS')
-						: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_VIDEO_TO_GALLERY_SUCCESS')
-					;
-
-					Notification.showToastWithParams({ message: successMessage, svgType: 'image' }, this.locator.get('view').ui);
-				})
-				.finally(() => {
-					NotifyManager.hideLoadingIndicatorWithoutFallback();
+					const successMessages = {
+						[FileType.image]: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_PHOTO_TO_GALLERY_SUCCESS'),
+						[FileType.video]: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_VIDEO_TO_GALLERY_SUCCESS'),
+					};
+					const successMessage = successMessages[fileType];
+					if (successMessages)
+					{
+						Notification.showToastWithParams({ message: successMessage, svgType: 'image' }, this.locator.get('view').ui);
+					}
 				})
 				.catch((error) => {
 					logger.error(`${this.constructor.name}.saveToLibrary.catch:`, error);
@@ -818,6 +937,23 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 							locSettingsMessage,
 						],
 					);
+				})
+				.finally(() => {
+					NotifyManager.hideLoadingIndicatorWithoutFallback();
+				});
+		}
+
+		/**
+		 * @param {String} localPath
+		 */
+		#saveFile(localPath)
+		{
+			return utils.saveFile(localPath)
+				.catch((error) => {
+					logger.error(`${this.constructor.name}.saveFile.catch:`, error);
+				})
+				.finally(() => {
+					NotifyManager.hideLoadingIndicatorWithoutFallback();
 				});
 		}
 
@@ -840,18 +976,29 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			}
 
 			const file = this.store.getters['filesModel/getById'](messageModel.files[0]);
-			const hasFile = Boolean(file);
-			const isImageMessage = hasFile && file.type === FileType.image;
+			if (!file)
+			{
+				return;
+			}
 
 			this.locator.get('disk-service')
 				.save(file.id)
 				.then(() => {
-					const successMessage = isImageMessage
-						? Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_PHOTO_TO_DISK_SUCCESS')
-						: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_VIDEO_TO_DISK_SUCCESS')
-					;
+					const successMessages = {
+						[FileType.image]: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_PHOTO_TO_DISK_SUCCESS'),
+						[FileType.video]: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_VIDEO_TO_DISK_SUCCESS'),
+						[FileType.audio]: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_AUDIO_TO_DISK_SUCCESS'),
+					};
+					const successMessage = successMessages[file.type];
+					if (successMessages)
+					{
+						Notification.showToastWithParams({ message: successMessage, svgType: 'catalogueSuccess' }, this.locator.get('view').ui);
+					}
 
-					Notification.showToastWithParams({ message: successMessage, svgType: 'catalogueSuccess' }, this.locator.get('view').ui);
+					AnalyticsService.getInstance().sendDownloadToDisk({
+						fileType: file.type,
+						dialogId: this.dialogId,
+					});
 				})
 				.catch((error) => {
 					logger.error(`${this.constructor.name}.onDownloadToDisk.catch`, error);
@@ -874,19 +1021,55 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		}
 
 		/**
+		 * @param {Message} message
+		 */
+		onMultiSelect(message)
+		{
+			(new SelectManager(this.locator, this.dialogId))
+				.enableMultiSelectMode(message.id)
+				.catch((error) => logger.error(`${this.constructor.name}.onMultiSelect(${message.id}).enableMultiSelectMode catch:`, error))
+			;
+		}
+
+		/**
+		 * @param {Message} message
+		 */
+		onResend(message)
+		{
+			MessengerEmitter.emit(EventType.dialog.external.resend, {
+				index: null,
+				message,
+			});
+		}
+
+		/**
 		 * @param {MessagesModelState} message
 		 * @return {Boolean}
 		 */
 		isMenuNotAvailableByComponentId(message)
 		{
 			const componentId = message.params?.componentId;
-			const componentIds = [
+			if (Type.isNil(componentId))
+			{
+				return false;
+			}
+
+			const componentIdsNotAvailableMenu = [
 				MessageParams.ComponentId.SignMessage,
 				MessageParams.ComponentId.CallMessage,
 			];
-			const isCreateBannerMessage = componentId?.includes('CreationMessage');
+			if (componentIdsNotAvailableMenu.includes(componentId))
+			{
+				return true;
+			}
 
-			return componentId && (isCreateBannerMessage || componentIds.includes(componentId));
+			const isCreateBannerMessage = componentId?.includes('CreationMessage');
+			if (isCreateBannerMessage)
+			{
+				return true;
+			}
+
+			return false;
 		}
 	}
 

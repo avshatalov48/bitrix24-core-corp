@@ -6,6 +6,7 @@ type CreateMessageOptions = {
 	showReactions?: boolean,
 	fontColor?: string,
 	canBeQuoted?: boolean,
+	canBeChecked?: boolean,
 	isBackgroundOn?: boolean,
 	showReaction?: boolean,
 	marginTop?: number,

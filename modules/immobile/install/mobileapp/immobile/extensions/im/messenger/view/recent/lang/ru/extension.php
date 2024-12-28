@@ -11,3 +11,6 @@ $MESS['IMMOBILE_RECENT_VIEW_ITEMS_LOADING'] = 'Загрузка...';
 
 $MESS['IMMOBILE_RECENT_VIEW_EMPTY_CHANNEL_UPPER_TEXT'] = 'Каналы';
 $MESS['IMMOBILE_RECENT_VIEW_EMPTY_CHANNEL_LOWER_TEXT'] = "Пока нет каналов\nВы можете создать свой канал";
+
+$MESS['IMMOBILE_RECENT_VIEW_EMPTY_COLLAB_UPPER_TEXT'] = 'Коллабы';
+$MESS['IMMOBILE_RECENT_VIEW_EMPTY_COLLAB_LOWER_TEXT'] = "Организуйте работу с внешними командами и клиентами. Вся история коммуникаций сохранится в компании";

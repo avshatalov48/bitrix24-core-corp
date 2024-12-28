@@ -164,7 +164,7 @@ class PromptTable extends Entity\DataManager
 	{
 		$result = parent::delete($primary);
 
-		if (!$result->isSuccess() || is_numeric($primary))
+		if (!$result->isSuccess() || !is_numeric($primary))
 		{
 			return $result;
 		}

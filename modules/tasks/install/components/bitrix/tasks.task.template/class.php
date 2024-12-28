@@ -471,7 +471,7 @@ class TasksTaskTemplateComponent extends TasksBaseComponent implements Errorable
 		$this->arResult['DATA']['TASK'] = $this->getTasksData($this->tasks2Get);
 		$this->arResult['DATA']['TEMPLATE'] = $this->getTaskTemplateData($this->templates2Get);
 
-		$this->arResult['DATA']['GROUP'] = Group::getData($this->groups2Get);
+		$this->arResult['DATA']['GROUP'] = Group::getData($this->groups2Get, ['TYPE'], ['WITH_CHAT' => true]);
 		$this->arResult['DATA']['USER'] = User::getData($this->users2Get);
 
 		// "new" user

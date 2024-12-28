@@ -9,6 +9,8 @@ jn.define('im/messenger/provider/service/classes/analytics/message-delete', (req
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessageHelper } = require('im/messenger/lib/helper');
 
+	const { AnalyticsHelper } = require('im/messenger/provider/service/classes/analytics/helper');
+
 	class MessageDelete
 	{
 		constructor()
@@ -32,8 +34,8 @@ jn.define('im/messenger/provider/service/classes/analytics/message-delete', (req
 				.setEvent(Analytics.Event.clickDelete)
 				.setType(messageHelper.getComponentId())
 				.setSubSection(Analytics.SubSection.contextMenu)
-				.setP1(`chatType_${chatData?.type}`)
-				.setP5(`chatId_${chatData?.chatId}`)
+				.setP1(AnalyticsHelper.getP1ByChatType(chatData?.type))
+				.setP5(AnalyticsHelper.getFormattedChatId(chatData?.chatId))
 			;
 
 			analyticsEvent.send();
@@ -56,8 +58,8 @@ jn.define('im/messenger/provider/service/classes/analytics/message-delete', (req
 				.setType(messageHelper.getComponentId())
 				.setSection(Analytics.Section.popup)
 				.setSubSection(Analytics.SubSection.contextMenu)
-				.setP1(`chatType_${chatData?.type}`)
-				.setP5(`chatId_${chatData?.chatId}`)
+				.setP1(AnalyticsHelper.getP1ByChatType(chatData?.type))
+				.setP5(AnalyticsHelper.getFormattedChatId(chatData?.chatId))
 			;
 
 			analyticsEvent.send();
@@ -73,8 +75,8 @@ jn.define('im/messenger/provider/service/classes/analytics/message-delete', (req
 				.setCategory(Analytics.Category.chatPopup)
 				.setEvent(Analytics.Event.view)
 				.setType('deleted_message')
-				.setP1(`chatType_${chatData?.type}`)
-				.setP5(`chatId_${chatData?.chatId}`)
+				.setP1(AnalyticsHelper.getP1ByChatType(chatData?.type))
+				.setP5(AnalyticsHelper.getFormattedChatId(chatData?.chatId))
 			;
 
 			switch (context)
@@ -106,9 +108,9 @@ jn.define('im/messenger/provider/service/classes/analytics/message-delete', (req
 				.setEvent(Analytics.Event.view)
 				.setType('deleted_message')
 				.setSection(Analytics.Section.comments)
-				.setP1(`chatType_${parentChatData.type}`)
-				.setP4(`parentChatId_${parentChatId}`)
-				.setP5(`chatId_${chatId}`)
+				.setP1(AnalyticsHelper.getP1ByChatType(parentChatData.type))
+				.setP4(AnalyticsHelper.getFormattedParentChatId(parentChatId))
+				.setP5(AnalyticsHelper.getFormattedChatId(chatId))
 			;
 
 			analyticsEvent.send();

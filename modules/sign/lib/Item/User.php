@@ -12,6 +12,7 @@ final class User implements Contract\Item
 		public readonly ?string $lastName = null,
 		public readonly ?string $secondName = null,
 		public readonly ?int $personalPhotoId = null,
+		public readonly ?string $notificationLanguageId	= null,
 	)
 	{
 	}

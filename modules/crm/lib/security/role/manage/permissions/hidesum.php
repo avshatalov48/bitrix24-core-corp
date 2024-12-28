@@ -6,6 +6,8 @@ use Bitrix\Main\Localization\Loc;
 
 class HideSum extends Permission
 {
+	public const INHERIT = 'INHERIT';
+
 	public function code(): string
 	{
 		return 'HIDE_SUM';

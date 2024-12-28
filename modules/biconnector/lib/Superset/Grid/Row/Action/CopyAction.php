@@ -5,6 +5,7 @@ namespace Bitrix\BIConnector\Superset\Grid\Row\Action;
 use Bitrix\BIConnector\Access\AccessController;
 use Bitrix\BIConnector\Access\ActionDictionary;
 use Bitrix\BIConnector\Access\Model\DashboardAccessItem;
+use Bitrix\BIConnector\Configuration\DashboardTariffConfigurator;
 use Bitrix\Main\Grid\Row\Action\BaseAction;
 use Bitrix\Main\HttpRequest;
 use Bitrix\Main\Localization\Loc;
@@ -30,6 +31,11 @@ final class CopyAction extends BaseAction
 
 	public function getControl(array $rawFields): ?array
 	{
+		if (!DashboardTariffConfigurator::isAvailableDashboard($rawFields['APP_ID']))
+		{
+			return null;
+		}
+
 		$accessItem = DashboardAccessItem::createFromArray([
 			'ID' => (int)$rawFields['ID'],
 			'TYPE' => $rawFields['TYPE'],

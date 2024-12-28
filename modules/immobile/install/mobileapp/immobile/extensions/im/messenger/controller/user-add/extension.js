@@ -5,15 +5,19 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 	/* global ChatUtils */
 	const { Type } = require('type');
 	const { Loc } = require('loc');
+
 	const { Logger } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { EventType, RestMethod, ComponentCode } = require('im/messenger/const');
-	const { ChatTitle } = require('im/messenger/lib/element');
+	const {
+		ChatTitle,
+		ChatAvatar,
+	} = require('im/messenger/lib/element');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper/dialog');
 	const { UserAddView } = require('im/messenger/controller/user-add/view');
-	const { runAction } = require('im/messenger/lib/rest');
+	const { ChatService } = require('im/messenger/provider/service');
 	const { Theme } = require('im/lib/theme');
 
 	class UserAdd
@@ -130,6 +134,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 		prepareUserData(user)
 		{
 			const chatTitle = ChatTitle.createFromDialogId(user.id);
+			const chatAvatar = ChatAvatar.createFromDialogId(user.id);
 
 			return {
 				data: {
@@ -138,6 +143,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 					subtitle: chatTitle.getDescription(),
 					avatarColor: user.color,
 					avatarUri: user.avatar,
+					avatar: chatAvatar.getListItemAvatarProps(),
 				},
 				nextTo: false,
 			};
@@ -233,13 +239,12 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 			});
 
 			return new Promise((resolve) => {
-				const addUserData = {
-					id: this.dialogId.replace('chat', ''),
-					userIds: this.view.selector.getSelectedItems().map((user) => user.id),
-					hideHistory: chatSettings.historyShow ? 'N' : 'Y',
-				};
+				const chatId = this.dialogId.replace('chat', '');
+				const userIds = this.view.selector.getSelectedItems().map((user) => user.id);
+				const showHistory = chatSettings.historyShow;
 
-				runAction(RestMethod.imV2ChatAddUsers, { data: addUserData })
+				const chatService = new ChatService();
+				chatService.addToChat(chatId, userIds, showHistory)
 					.then((response) => {
 						resolve();
 						if (this.options.callback.onAddUser)

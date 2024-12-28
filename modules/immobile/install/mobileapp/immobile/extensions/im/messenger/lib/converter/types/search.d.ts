@@ -1,3 +1,5 @@
+import {AvatarDetail} from "../../element/types/chat-avatar";
+
 export interface RecentCarouselItem
 {
 	id: `user/${number}`;
@@ -18,6 +20,7 @@ export interface RecentCarouselItem
 			}
 		}
 	}
+	avatar: AvatarDetail
 }
 
 

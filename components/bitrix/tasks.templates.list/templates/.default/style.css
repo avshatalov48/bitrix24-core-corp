@@ -153,6 +153,18 @@
 	color: #eb9134;
 }
 
+.tasks-grid-avatar.tasks-grid-avatar-collaber {
+	border-radius: 50%;
+	outline: 1px solid #19CC45;
+	border: 3px solid #fff;
+	outline-offset: -1px;
+	box-sizing: border-box;
+}
+
+.tasks-grid-username-inner.tasks-grid-avatar-collaber {
+	color: #19CC45;
+}
+
 .tasks-grid-username:hover {
 	color: #525c69;
 	text-decoration: none;

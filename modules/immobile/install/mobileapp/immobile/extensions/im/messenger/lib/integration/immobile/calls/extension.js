@@ -95,6 +95,12 @@ jn.define('im/messenger/lib/integration/immobile/calls', (require, exports, modu
 		static sendAnalyticsEvent(dialogId, callElement, analyticSection)
 		{
 			const dialogData = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
+
+			if (!dialogData)
+			{
+				return;
+			}
+
 			const callType = dialogData.type === DialogType.videoconf
 				? Analytics.Type.videoconf
 				: DialogHelper.isDialogId(dialogId)
@@ -109,7 +115,17 @@ jn.define('im/messenger/lib/integration/immobile/calls', (require, exports, modu
 				.setSection(analyticSection)
 				.setSubSection(Analytics.SubSection.window)
 				.setElement(callElement)
-				.setP5(`chatId_${dialogData.chatId}`);
+				.setP5(`chatId_${dialogData.chatId}`)
+			;
+
+			if (DialogHelper.createByModel(dialogData).isCollab)
+			{
+				const collabId = serviceLocator.get('core').getStore()
+					.getters['dialoguesModel/collabModel/getCollabIdByDialogId'](dialogId)
+				;
+
+				analytics.setP4(`collabId_${collabId}`);
+			}
 
 			analytics.send();
 		}

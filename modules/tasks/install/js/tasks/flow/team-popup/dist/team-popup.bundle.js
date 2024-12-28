@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,main_loader,main_popup,tasks_sidePanelIntegration,main_core) {
+(function (exports,main_core_events,main_loader,main_popup,tasks_sidePanelIntegration,main_core) {
 	'use strict';
 
 	var _flowId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("flowId");
@@ -42,7 +42,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    const {
 	      data,
 	      error
-	    } = await main_core.ajax.runAction('tasks.flow.Assignee.list', {
+	    } = await main_core.ajax.runAction('tasks.flow.Team.list', {
 	      data: {
 	        flowData: {
 	          id: babelHelpers.classPrivateFieldLooseBase(this, _flowId)[_flowId]
@@ -141,6 +141,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _layout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
 	var _teamAjax = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("teamAjax");
 	var _members = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("members");
+	var _subscribeEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeEvents");
 	var _load = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("load");
 	var _render = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("render");
 	var _renderMembers = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderMembers");
@@ -163,6 +164,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    Object.defineProperty(this, _load, {
 	      value: _load2
 	    });
+	    Object.defineProperty(this, _subscribeEvents, {
+	      value: _subscribeEvents2
+	    });
 	    Object.defineProperty(this, _params, {
 	      writable: true,
 	      value: void 0
@@ -183,6 +187,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout] = {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _teamAjax)[_teamAjax] = new TeamAjax(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].flowId);
 	    void babelHelpers.classPrivateFieldLooseBase(this, _load)[_load]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeEvents)[_subscribeEvents]();
 	  }
 	  static showInstance(params) {
 	    this.getInstance(params).show(params.bindElement);
@@ -191,6 +196,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    var _this$instances, _params$flowId, _this$instances$_para;
 	    (_this$instances$_para = (_this$instances = this.instances)[_params$flowId = params.flowId]) != null ? _this$instances$_para : _this$instances[_params$flowId] = new this(params);
 	    return this.instances[params.flowId];
+	  }
+	  static removeInstance(flowId) {
+	    if (Object.hasOwn(this.instances, flowId)) {
+	      delete this.instances[flowId];
+	    }
 	  }
 	  show(bindElement) {
 	    const popup = this.getPopup();
@@ -222,15 +232,27 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    return popup;
 	  }
 	}
+	function _subscribeEvents2() {
+	  main_core_events.EventEmitter.subscribe('BX.Tasks.Flow.EditForm:afterSave', event => {
+	    var _event$data$id, _event$data;
+	    const flowId = (_event$data$id = (_event$data = event.data) == null ? void 0 : _event$data.id) != null ? _event$data$id : 0;
+	    TeamPopup.removeInstance(flowId);
+	  });
+	}
 	async function _load2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].loader) {
 	    return;
 	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _showLoader)[_showLoader]();
-	  const {
+	  let {
 	    members,
 	    page
 	  } = await babelHelpers.classPrivateFieldLooseBase(this, _teamAjax)[_teamAjax].get();
+	  if (!main_core.Type.isNil(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].excludeMembers)) {
+	    const isNeedToExclude = member => babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].excludeMembers.includes(Number(member.id));
+	    page = page.filter(member => !isNeedToExclude(member));
+	    members = members.filter(member => !isNeedToExclude(member));
+	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _members)[_members] = members;
 	  page.forEach(data => main_core.Dom.append(new TeamMember(data).render(), babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].members));
 	  babelHelpers.classPrivateFieldLooseBase(this, _destroyLoader)[_destroyLoader]();
@@ -290,5 +312,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.TeamPopup = TeamPopup;
 
-}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX,BX.Main,BX.Tasks,BX));
+}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.Event,BX,BX.Main,BX.Tasks,BX));
 //# sourceMappingURL=team-popup.bundle.js.map

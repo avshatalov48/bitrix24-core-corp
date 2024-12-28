@@ -52,7 +52,7 @@ jn.define('sign/dialog/banners/gotoweb', (require, exports, module) => {
 									title: Loc.getMessage('SIGN_MOBILE_DIALOG_GO_TO_WEB_QRCODE_AUTH_TITLE'),
 									redirectUrl: `/sign/link/member/${this.memberId}/`,
 									showHint: true,
-									hintText: Loc.getMessage('SIGN_MOBILE_DIALOG_GO_TO_WEB_QRCODE_AUTH_HINT_TEXT'),
+									hintText: Loc.getMessage('SIGN_MOBILE_DIALOG_GO_TO_WEB_QRCODE_AUTH_HINT_TEXT_MSGVER_1'),
 								});
 							});
 						},

@@ -497,6 +497,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 					showHint: false,
 					data: {
 						qrUrl: this.getEntityType(this.props.entityTypeId).link,
+						analyticsSection: 'crm',
 					},
 				},
 			];
@@ -1071,6 +1072,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				qrauth.open({
 					title: entityType.titleInPlural || entityType.title,
 					redirectUrl: entityType.link,
+					analyticsSection: 'crm',
 				});
 			}
 		}
@@ -1102,6 +1104,13 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 		handleFloatingButtonClick()
 		{
+			if (this.entityTypes.length === 1)
+			{
+				this.handleNewItemOpen(this.entityTypes[0].id);
+
+				return;
+			}
+
 			const menu = this.getFloatingButtonMenu();
 			if (menu)
 			{

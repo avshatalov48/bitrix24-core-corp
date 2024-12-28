@@ -235,7 +235,7 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 
 			return {
 				ref: this.bindInputRef,
-				style: this.styles.editableValue,
+				style: this.styles?.editableValue,
 				value: this.getValue(),
 				forcedValue: this.getForcedValue(),
 				focus: focus || undefined,
@@ -243,7 +243,7 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 				enableKeyboardHide,
 				autoCapitalize,
 				placeholder: this.getPlaceholder(),
-				placeholderTextColor: this.styles.textPlaceholder?.color || AppTheme.colors.base4,
+				placeholderTextColor: this.styles?.textPlaceholder?.color || AppTheme.colors.base4,
 				onFocus: () => this.setFocus(),
 				onBlur: this.onBlur,
 				onChangeText: this.debouncedChangeText,

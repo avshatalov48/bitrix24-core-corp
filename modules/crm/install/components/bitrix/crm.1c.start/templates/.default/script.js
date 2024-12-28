@@ -12,7 +12,7 @@
 				this.tileManager,
 				this.tileManager.events.tileClick,
 				function (tile) {
-					BX.SidePanel.Instance.open(tile.data.url/*, {width: 735, cacheable: false}*/);
+					BX.SidePanel.Instance.open(tile.data.url, tile.data.sliderOptions ?? undefined);
 				}
 			);
 
@@ -36,7 +36,7 @@
 					this.integrationtileManager,
 					this.integrationtileManager.events.tileClick,
 					function (tile) {
-						BX.SidePanel.Instance.open(tile.data.url/*, {width: 735, cacheable: false}*/);
+						BX.SidePanel.Instance.open(tile.data.url, tile.data.sliderOptions ?? undefined);
 					}
 				);
 			}

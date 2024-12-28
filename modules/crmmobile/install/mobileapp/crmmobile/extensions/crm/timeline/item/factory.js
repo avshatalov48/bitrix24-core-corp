@@ -5,6 +5,7 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 	const { TimelineItemCompatible } = require('crm/timeline/item/compatible');
 	const { GenericTimelineItem } = require('crm/timeline/item/generic');
 	const { TimelineSchedulerCommentProvider } = require('crm/timeline/scheduler/providers');
+	const { get } = require('utils/object');
 
 	const {
 		CallActivity,
@@ -77,6 +78,23 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 	if (TimelineSchedulerCommentProvider.isSupported())
 	{
 		SupportedTypes.push('Comment');
+	}
+
+	if (get(jnExtensionData.get('crm:timeline/item'), 'isBizprocActivityAvailable', false))
+	{
+		SupportedTypes.push(
+			'Activity:BizprocTask',
+			'Activity:BizprocWorkflowCompleted',
+			'Activity:BizprocCommentAdded',
+			'BizprocWorkflowStarted',
+			'BizprocWorkflowCompleted',
+			'BizprocWorkflowTerminated',
+			'BizprocTaskCreation',
+			'BizprocTaskCompleted',
+			'BizprocTaskDelegated',
+			'BizprocCommentRead',
+			'BizprocCommentAdded',
+		);
 	}
 
 	/**

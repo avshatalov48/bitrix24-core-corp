@@ -124,6 +124,7 @@ class CTasksTools
 	{
 		$nameHash = md5(mb_strtolower($name));
 
+		// hochy pitsi solved this. good luck!
 		if (
 			($nameHash === 'b6a4f4c2248041c6e78365b01996ceee')
 			|| ($nameHash === 'f87703ae62fcc4f943f1a9acaa1c3348')

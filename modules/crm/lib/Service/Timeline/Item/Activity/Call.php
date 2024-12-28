@@ -6,9 +6,14 @@ use Bitrix\Crm\Activity\StatisticsMark;
 use Bitrix\Crm\Badge\Badge;
 use Bitrix\Crm\Badge\SourceIdentifier;
 use Bitrix\Crm\Badge\Type\AiCallFieldsFillingResult;
+use Bitrix\Crm\Copilot\AiQualityAssessment\Controller\AiQualityAssessmentController;
+use Bitrix\Crm\Copilot\CallAssessment\ItemFactory;
 use Bitrix\Crm\Format\Duration;
 use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\AI\Operation\OperationState;
 use Bitrix\Crm\Integration\AI\Operation\Orchestrator;
+use Bitrix\Crm\Integration\AI\Operation\Scenario;
+use Bitrix\Crm\Integration\AI\SuitableAudiosChecker;
 use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
@@ -23,6 +28,7 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Client;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ClientMark;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockWithTitle;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Copilot\CallScoringPill;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
 use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
@@ -30,8 +36,11 @@ use Bitrix\Crm\Service\Timeline\Layout\Footer\Button;
 use Bitrix\Crm\Service\Timeline\Layout\Footer\IconButton;
 use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
 use Bitrix\Crm\Service\Timeline\Layout\Menu;
+use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItem;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
 use Bitrix\Crm\Tour\CopilotInCall;
+use Bitrix\Crm\Tour\CopilotRunAutomatically;
+use Bitrix\Crm\Tour\CopilotRunManually;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\PhoneNumber;
 use Bitrix\Main\Type\DateTime;
@@ -221,6 +230,12 @@ class Call extends Activity
 		$recordUrls = array_unique(array_column($this->fetchAudioRecordList(), 'VIEW_URL'));
 		if (!empty($recordUrls))
 		{
+			$callScoringPill = $this->buildCopilotCallScoringPill();
+			if (isset($callScoringPill))
+			{
+				$result['callScoringPill'] = $callScoringPill;
+			}
+
 			// show first audio record
 			$audio = (new Audio())->setId($this->getAssociatedEntityModel()?->get('ID'))->setSource($recordUrls[0]);
 			if (isset($clientBlock))
@@ -433,13 +448,16 @@ class Call extends Activity
 	private function getAiTags(): array
 	{
 		$tags = [];
+		$entityTypeId = $this->getContext()->getIdentifier()->getEntityTypeId();
 
 		if (
-			AIManager::isLaunchOperationsSuccess(
-				$this->getContext()->getIdentifier()->getEntityTypeId(),
+			$this->isCopilotScope()
+			&& (new OperationState(
+				$this->getActivityId(),
+				$entityTypeId,
 				$this->getContext()->getIdentifier()->getEntityId(),
-				$this->getActivityId()
-			)
+
+			))->isFillFieldsScenarioSuccess()
 		)
 		{
 			$tags['copilotDone'] = new Tag(
@@ -491,11 +509,27 @@ class Call extends Activity
 			->setEntityTypeId($this->getContext()->getIdentifier()->getEntityTypeId())
 			->isWelcomeTourEnabled()
 		;
+		$isWelcomeTourAutomaticallyEnabled = (CopilotRunAutomatically::getInstance())
+			->setEntityTypeId($this->getContext()->getIdentifier()->getEntityTypeId())
+			->isWelcomeTourEnabled()
+		;
+		$isWelcomeTourManuallyEnabled = (CopilotRunManually::getInstance())
+			->setEntityTypeId($this->getContext()->getIdentifier()->getEntityTypeId())
+			->isWelcomeTourEnabled()
+		;
 
 		return (new Payload())
 			->addValueBoolean(
 				'isWelcomeTourEnabled',
 				$isWelcomeTourEnabled
+			)
+			->addValueBoolean(
+				'isWelcomeTourAutomaticallyEnabled',
+				$isWelcomeTourAutomaticallyEnabled
+			)
+			->addValueBoolean(
+				'isWelcomeTourManuallyEnabled',
+				$isWelcomeTourManuallyEnabled
 			)
 		;
 	}
@@ -651,7 +685,7 @@ class Call extends Activity
 		return $callInfoBlockIsEmpty ? null : $block;
 	}
 
-	private function buildClientMarkBlock():  ?ContentBlock
+	private function buildClientMarkBlock(): ?ContentBlock
 	{
 		$clientMark = $this->mapClientMark((int)$this->getAssociatedEntityModel()?->get('RESULT_MARK'));
 		if (!isset($clientMark))
@@ -666,9 +700,76 @@ class Call extends Activity
 			->setText(
 				Loc::getMessage(
 					'CRM_TIMELINE_BLOCK_CLIENT_MARK_TEXT_MSGVER_1',
-					['#MARK#' => (int)$callInfo['CALL_VOTE']]
+					['#MARK#' => (int)($callInfo['CALL_VOTE'] ?? 0)]
 				)
 			)
+		;
+	}
+
+	private function buildCopilotCallScoringPill(): ?ContentBlock
+	{
+		$isPillVisible = AIManager::isAiCallProcessingEnabled()
+			&& $this->hasUpdatePermission()
+			&& $this->isCopilotScope()
+			&& $this->isCopilotMultiScenarioEnabled()
+			&& count($this->fetchAudioRecordList()) > 0
+		;
+
+		if (!$isPillVisible)
+		{
+			return null;
+		}
+
+		$activityId = $this->getActivityId();
+		$ownerTypeId = $this->getContext()->getEntityTypeId();
+		$ownerId = $this->getContext()->getEntityId();
+		$communication = $this->getAssociatedEntityModel()?->get('COMMUNICATION') ?? [];
+		$userData = $this->getUserData($this->getAssociatedEntityModel()?->get('RESPONSIBLE_ID'));
+		$scoringResult = AiQualityAssessmentController::getInstance()->getByActivityIdAndJobId($this->getActivityId());
+		$jobId = $scoringResult['JOB_ID'] ?? null;
+		$createdTimestamp = (new DateTime($this->getAssociatedEntityModel()?->get('CREATED')))->getTimestamp();
+
+		$action = (new JsEvent('Call:OpenCallScoringResult'))
+			->addActionParamInt('activityId', $activityId)
+			->addActionParamInt('ownerTypeId', $ownerTypeId)
+			->addActionParamInt('ownerId', $ownerId)
+			->addActionParamInt('activityCreated', $createdTimestamp)
+			->addActionParamString('clientDetailUrl', isset($communication['SHOW_URL']) ? new Uri($communication['SHOW_URL']) : null)
+			->addActionParamString('clientFullName', $communication['TITLE'] ?? '')
+			->addActionParamString('userPhotoUrl', $userData['PHOTO_URL'] ?? '')
+			->addActionParamInt('jobId', $jobId)
+		;
+		$pill = (new CallScoringPill())
+			->setAction($action)
+			->setScopeWeb()
+		;
+
+		if ($scoringResult)
+		{
+			$pill
+				->setTitle($scoringResult['TITLE'] ?? '')
+				->setValue(($scoringResult['ASSESSMENT'] ?? 0) . '%')
+				->setState(CallScoringPill::STATE_PROCESSED)
+			;
+		}
+		else
+		{
+			$callAssessmentItem = ItemFactory::getByActivityId($activityId);
+			$operationState = new OperationState($activityId, $ownerTypeId, $ownerId);
+			$pill
+				->setTitle($callAssessmentItem?->getTitle() ?? Loc::getMessage('CRM_TIMELINE_COPILOT_SCORING_PILL_DEFAULT_TITLE'))
+				->setState($operationState->isCallScoringScenarioPending()
+					? CallScoringPill::STATE_LOADING
+					: CallScoringPill::STATE_UNPROCESSED
+				)
+			;
+			$action->addActionParamInt('assessmentSettingsId', $callAssessmentItem?->getId());
+		}
+
+		return (new ContentBlockWithTitle())
+			->setTitle(Loc::getMessage('CRM_TIMELINE_BLOCK_TITLE_SCRIPT'))
+			->setContentBlock($pill)
+			->setInline()
 		;
 	}
 
@@ -733,7 +834,7 @@ class Call extends Activity
 		//	- OR if there is another entity that is selected as target for this call
 		$isButtonVisible = AIManager::isAiCallProcessingEnabled()
 			&& $this->hasUpdatePermission()
-			&& in_array($ownerTypeId, AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
+			&& $this->isCopilotScope()
 			&& count($this->fetchAudioRecordList()) > 0
 			&& (new Orchestrator())->findPossibleFillFieldsTarget($activityId)?->getHash() === $this->getContext()->getIdentifier()->getHash()
 		;
@@ -743,10 +844,13 @@ class Call extends Activity
 			return null;
 		}
 
+		$operationState = new OperationState($activityId, $ownerTypeId, $ownerId);
+
 		$buttonProps = [
 			'data-activity-id' => $activityId,
 		];
-		$jsEventAction = (new JsEvent('Call:LaunchCallRecordingTranscription'))
+
+		$jsEventAction = (new JsEvent('Call:LaunchCopilot'))
 			->addActionParamInt('activityId', $activityId)
 			->addActionParamInt('ownerTypeId', $ownerTypeId)
 			->addActionParamInt('ownerId', $ownerId)
@@ -773,13 +877,17 @@ class Call extends Activity
 		}
 
 		$button->setAction($jsEventAction);
+		if ($this->isCopilotMultiScenarioEnabled())
+		{
+			$button->setMenuItems($this->getAiButtonMenuItems($jsEventAction, $operationState));
+		}
 
 		if (!empty($buttonProps))
 		{
 			$button->setProps($buttonProps);
 		}
 
-		if (AIManager::isLaunchOperationsPending($ownerTypeId, $ownerId, $activityId))
+		if ($operationState->isLaunchOperationsPending())
 		{
 			$button->setAction(null);
 			$button->setState(Layout\Button::STATE_AI_LOADING);
@@ -787,33 +895,87 @@ class Call extends Activity
 			return $button;
 		}
 
-		$isErrorOccurred = AIManager::isLaunchOperationsErrorsLimitExceeded($ownerTypeId, $ownerId, $activityId);
-		if (!$isErrorOccurred)
-		{
-			$checkForSuitableAudiosResult = AIManager::checkForSuitableAudios(
-				(string)$this->getAssociatedEntityModel()?->get('ORIGIN_ID'),
-				(int)$this->getAssociatedEntityModel()?->get('STORAGE_TYPE_ID'),
-				(string)$this->getAssociatedEntityModel()?->get('STORAGE_ELEMENT_IDS')
-			);
-			$isErrorOccurred = !$checkForSuitableAudiosResult->isSuccess();
-		}
-		if (
-			$isErrorOccurred
-			|| AIManager::isLaunchOperationsSuccess($ownerTypeId, $ownerId, $activityId)
-		)
+		if ($this->isAIButtonDisabled($operationState))
 		{
 			$button->setAction(null);
 			$button->setState(Layout\Button::STATE_DISABLED);
-			$button->setTooltip(
-				Loc::getMessage(
-					$isErrorOccurred
-						? 'CRM_TIMELINE_ITEM_COPILOT_ERROR_TOOLTIP'
-						: 'CRM_TIMELINE_BUTTON_TIP_COPILOT',
-				)
-			);
+			$button->setTooltip(Loc::getMessage(
+				!$this->isAudiosValid()
+					? 'CRM_TIMELINE_ITEM_COPILOT_ERROR_TOOLTIP'
+					: 'CRM_TIMELINE_BUTTON_TIP_COPILOT',
+			));
+		}
+		elseif (
+			$operationState->isFillFieldsScenarioSuccess()
+			|| $operationState->isCallScoringScenarioSuccess()
+		)
+		{
+			$button->setState(Layout\Button::STATE_DEFAULT);
 		}
 
 		return $button;
+	}
+
+	private function getAiButtonMenuItems(JsEvent $baseEvent, OperationState $operationState): array
+	{
+		$fillFieldsScenarioState = Layout\Button::STATE_DEFAULT;
+		$callScoringScenarioState = Layout\Button::STATE_DEFAULT;
+		$fillFieldsScenarioAction = (clone $baseEvent)
+			->addActionParamString('scenario', Scenario::FILL_FIELDS_SCENARIO)
+		;
+		$callScoringScenarioAction  = (clone $baseEvent)
+			->addActionParamString('scenario', Scenario::CALL_SCORING_SCENARIO)
+		;
+
+		if ($operationState->isFillFieldsScenarioPending())
+		{
+			$fillFieldsScenarioState = Layout\Button::STATE_AI_LOADING;
+			$fillFieldsScenarioAction = null;
+		}
+		elseif (
+			$operationState->isFillFieldsScenarioSuccess()
+			|| $operationState->isFillFieldsScenarioErrorsLimitExceeded()
+		)
+		{
+			$fillFieldsScenarioState = Layout\Button::STATE_AI_SUCCESS;
+			$fillFieldsScenarioAction = null;
+		}
+
+		if ($operationState->isCallScoringScenarioPending())
+		{
+			$callScoringScenarioState = Layout\Button::STATE_AI_LOADING;
+			$callScoringScenarioAction  = null;
+		}
+		elseif (
+			$operationState->isCallScoringScenarioSuccess()
+			|| $operationState->isCallScoringScenarioErrorsLimitExceeded()
+		)
+		{
+			$callScoringScenarioState = Layout\Button::STATE_AI_SUCCESS;
+			$callScoringScenarioAction  = null;
+		}
+
+		if (!$this->isAudiosValid())
+		{
+			$fillFieldsScenarioState = Layout\Button::STATE_DISABLED;
+			$fillFieldsScenarioAction = null;
+			$callScoringScenarioState = Layout\Button::STATE_DISABLED;
+			$callScoringScenarioAction  = null;
+		}
+
+		$result['fillFields'] = (new MenuItem(Loc::getMessage('CRM_TIMELINE_BUTTON_COPILOT_MENU_FILL_FIELDS')))
+			->setAction($fillFieldsScenarioAction)
+			->setState($fillFieldsScenarioState)
+			->setScopeWeb()
+		;
+
+		$result['callScoring'] = (new MenuItem(Loc::getMessage('CRM_TIMELINE_BUTTON_COPILOT_MENU_CALL_SCORING')))
+			->setAction($callScoringScenarioAction)
+			->setState($callScoringScenarioState)
+			->setScopeWeb()
+		;
+
+		return $result;
 	}
 
 	private function mapClientMark(int $callVote): ?string
@@ -929,5 +1091,74 @@ class Call extends Activity
 	private function isCopilotBannerNeedShow(): bool
 	{
 		return \Bitrix\AI\Config::getPersonalValue('first_launch') !== 'N';
+	}
+
+	private function isCopilotMultiScenarioEnabled(): bool
+	{
+		return Scenario::isMultiScenarioEnabled($this->getDate()?->getTimestamp() ?? 0);
+	}
+
+	private function isCopilotScope(): bool
+	{
+		return in_array(
+			$this->getContext()->getEntityTypeId(),
+			AIManager::SUPPORTED_ENTITY_TYPE_IDS,
+			true
+		);
+	}
+
+	private function isAudiosValid(): bool
+	{
+		static $isAudiosValidList = [];
+
+		$originId = (string)$this->getAssociatedEntityModel()?->get('ORIGIN_ID');
+
+		if (!isset($isAudiosValidList[$originId]))
+		{
+			$audiosCheckResult = (new SuitableAudiosChecker(
+				$originId,
+				(int)$this->getAssociatedEntityModel()?->get('STORAGE_TYPE_ID'),
+				(string)$this->getAssociatedEntityModel()?->get('STORAGE_ELEMENT_IDS')
+			))->run();
+			$isSuccess = $audiosCheckResult->isSuccess();
+			$isAudiosValidList[$originId] = $isSuccess;
+		}
+
+		return $isAudiosValidList[$originId];
+	}
+
+	private function isAIButtonDisabled(OperationState $operationState): bool
+	{
+		if (!$this->isAudiosValid())
+		{
+			return true;
+		}
+
+		$isMultiScenario = $this->isCopilotMultiScenarioEnabled();
+		$isFillFieldsScenarioSuccess = $operationState->isFillFieldsScenarioSuccess();
+		$isCallScoringScenarioSuccess = $operationState->isCallScoringScenarioSuccess();
+		$isAllSuccess = $isMultiScenario
+			? $isFillFieldsScenarioSuccess && $isCallScoringScenarioSuccess
+			: $isFillFieldsScenarioSuccess
+		;
+		if ($isAllSuccess)
+		{
+			return true;
+		}
+
+		$isFillFieldsScenarioError = $operationState->isFillFieldsScenarioErrorsLimitExceeded();
+		$isCallScoringScenarioError = $operationState->isCallScoringScenarioErrorsLimitExceeded();
+		$isAllError = $isMultiScenario
+			? $isFillFieldsScenarioError && $isCallScoringScenarioError
+			: $isFillFieldsScenarioError
+		;
+		if ($isAllError)
+		{
+			return true;
+		}
+
+		return ($isFillFieldsScenarioSuccess && $isCallScoringScenarioError)
+			|| ($isCallScoringScenarioSuccess && $isFillFieldsScenarioError)
+		;
 	}
 }

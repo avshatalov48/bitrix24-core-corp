@@ -61,12 +61,12 @@ jn.define('im/messenger/controller/participant-manager', (require, exports, modu
 		prepareActionsData() {
 			this.actionsItems.forEach((action) => {
 				this.actionsData.push({
-					id: action.actionName,
-					title: Loc.getMessage(`IMMOBILE_PARTICIPANTS_MANAGER_ITEM_LIST_${action.actionName.toUpperCase()}`),
+					id: action.id,
+					title: action.title,
 					onItemSelected: action.callback,
 					showIcon: Boolean(action.icon),
 					iconName: action.icon,
-					testId: `SIDEBAR_USER_CONTEXT_MENU_${action.actionName.toUpperCase()}`,
+					testId: action.testId,
 				});
 			});
 		}

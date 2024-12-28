@@ -3,6 +3,8 @@
 namespace Bitrix\Sign\Document\Entity;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Item;
+use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
 use Bitrix\Main\Web\Uri;
@@ -11,6 +13,7 @@ use Bitrix\Sign\Document\Member;
 
 abstract class Dummy
 {
+	protected ?Item $item = null;
 	/**
 	 * Class constructor.
 	 *
@@ -22,7 +25,7 @@ abstract class Dummy
 	 * Creates new entity and returns its id.
 	 * @return int|null
 	 */
-	abstract public static function create(bool $checkPermission = true): ?int;
+	abstract public static function create(\Bitrix\Sign\Item\Document $document, bool $checkPermission = true): ?int;
 
 	abstract public static function getEntityTypeId(): int;
 
@@ -109,6 +112,8 @@ abstract class Dummy
 	 */
 	abstract public function getCommunications(Member $member): array;
 
+	abstract protected static function getItemData(\Bitrix\Sign\Item\Document $document): array;
+
 	public static function getEntityDetailUrlId(): Uri | string | null
 	{
 		if (!Loader::includeModule('crm'))
@@ -119,5 +124,51 @@ abstract class Dummy
 		return Crm\Service\Container::getInstance()->getRouter()
 				->getItemDetailUrl(static::getEntityTypeId())
 		;
+	}
+
+	public function setAssignedById(int $userId): bool
+	{
+		if ($this->item && $userId > 0)
+		{
+			$this->item->setAssignedById($userId);
+			$result = $this->item->save();
+
+			return $result->isSuccess();
+		}
+
+		return false;
+	}
+
+	public function addObserver(int $userId): bool
+	{
+		if ($this->item && $userId > 0)
+		{
+			$observers = $this->item->getObservers();
+			$observers[] = $userId;
+			$this->item->setObservers($observers);
+			$result = $this->item->save();
+
+			return $result->isSuccess();
+		}
+
+		return false;
+	}
+
+	public function delete(): Result
+	{
+		$result = new Result();
+
+		if ($this->item === null)
+		{
+			return $result->addError(new Error('Item not found'));
+		}
+
+		$deleteResult = $this->item->delete();
+		if (!$deleteResult->isSuccess())
+		{
+			return $deleteResult;
+		}
+
+		return $result;
 	}
 }

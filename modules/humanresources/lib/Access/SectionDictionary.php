@@ -26,12 +26,6 @@ class SectionDictionary
 				PermissionDictionary::HUMAN_RESOURCES_EMPLOYEE_ADD_TO_DEPARTMENT,
 				PermissionDictionary::HUMAN_RESOURCES_EMPLOYEE_REMOVE_FROM_DEPARTMENT,
 			],
-			self::BINDING_TO_STRUCTURE => [
-				PermissionDictionary::HUMAN_RESOURCES_CHAT_BIND_TO_STRUCTURE,
-				PermissionDictionary::HUMAN_RESOURCES_CHANEL_BIND_TO_STRUCTURE,
-				PermissionDictionary::HUMAN_RESOURCES_CHAT_UNBIND_TO_STRUCTURE,
-				PermissionDictionary::HUMAN_RESOURCES_CHANEL_UNBIND_TO_STRUCTURE,
-			],
 			self::ACCESS_RIGHTS => [
 				PermissionDictionary::HUMAN_RESOURCES_USERS_ACCESS_EDIT,
 			]
@@ -56,8 +50,17 @@ class SectionDictionary
 		{
 			return '';
 		}
-		$title = $sectionsList[$value];
 
-		return Loc::getMessage('HUMAN_RESOURCES_CONFIG_SECTIONS_' . $title) ?? '';
+		$rephrasedSectionCode = self::getRephrasedSection($value);
+		return Loc::getMessage($rephrasedSectionCode ?? 'HUMAN_RESOURCES_CONFIG_SECTIONS_' . $sectionsList[$value]) ?? '';
+	}
+
+	private static function getRephrasedSection(int $key): ?string
+	{
+		return match ($key) {
+			self::BINDING_TO_STRUCTURE => 'HUMAN_RESOURCES_CONFIG_SECTIONS_BINDING_TO_STRUCTURE_MSGVER_1',
+			self::ACCESS_RIGHTS => 'HUMAN_RESOURCES_CONFIG_SECTIONS_ACCESS_RIGHTS_MSGVER_1',
+			default => null,
+		};
 	}
 }

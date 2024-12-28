@@ -177,3 +177,5 @@ BX.CrmSmsWatcher = BX.Crm.Timeline.Tools.SmsWatcher;
 //endregion
 
 BX.CrmTimelineAudioPlaybackRateSelector = BX.Crm.Timeline.Tools.AudioPlaybackRateSelector;
+
+BX.CrmTimelineWorkflowEventManager = BX.Crm.Timeline.Tools.WorkflowEventManager;

@@ -1,4 +1,4 @@
-import { Type } from 'main.core';
+import { Type, Text } from 'main.core';
 import { Main, Animated } from 'ui.icon-set.api.core';
 import { BIcon } from 'ui.icon-set.api.vue';
 import { mapWritableState } from 'ui.vue3.pinia';
@@ -37,7 +37,7 @@ export function getRolesDialogRoleItemWithStates(States: StatesType): Object
 				return this.itemData.itemData;
 			},
 			subtitle(): string {
-				const subtitle = this.item.subtitle;
+				const subtitle = Text.encode(this.item.subtitle);
 
 				if (this.searching && this.searchQuery !== '')
 				{
@@ -47,7 +47,7 @@ export function getRolesDialogRoleItemWithStates(States: StatesType): Object
 				return subtitle;
 			},
 			title(): string {
-				const title = this.item.title;
+				const title = Text.encode(this.item.title);
 
 				if (this.searching && this.searchQuery !== '')
 				{

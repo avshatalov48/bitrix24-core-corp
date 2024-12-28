@@ -32,13 +32,17 @@ class MangoAppNotifier
 		{
 			return false;
 		}
-		if (Option::get('crm', 'mango_notification_skip', false) === 'Y')
+		if (Option::get('crm', 'mango_notification_skip_v2', false) === 'Y')
 		{
 			return false;
 		}
 
 		$now = time();
 		if ($now > $this->getEndNotificationTs())
+		{
+			return false;
+		}
+		if ($now < $this->getStartNotificationTs())
 		{
 			return false;
 		}
@@ -58,15 +62,19 @@ class MangoAppNotifier
 	{
 		$secondsToNextDayInUserTimezone = (new DateTime())->toUserTime()->add('+1day')->setTime(0,0,0)->getTimestamp() - (new DateTime())->toUserTime()->getTimestamp();
 
-		return (int)\CUserOptions::SetOption('crm', 'mango_notification_skip_to', ['value' => time() + $secondsToNextDayInUserTimezone]);
+		return (int)\CUserOptions::SetOption('crm', 'mango_notification_skip_to_v2', ['value' => time() + $secondsToNextDayInUserTimezone]);
 	}
 
 	public function getNextPopupTypeTs(): int
 	{
 		$now = time();
+		if ($now > $this->getPopupType4Ts())
+		{
+			return (new \Bitrix\Main\Type\Date('31.01.2025', 'd.m.Y'))->getTimestamp(); // forever
+		}
 		if ($now > $this->getPopupType3Ts())
 		{
-			return (new \Bitrix\Main\Type\Date('31.12.2024', 'd.m.Y'))->getTimestamp(); // forever
+			return $this->getPopupType4Ts();
 		}
 		if ($now > $this->getPopupType2Ts())
 		{
@@ -79,6 +87,10 @@ class MangoAppNotifier
 	public function getPopupType(): int
 	{
 		$now = time();
+		if ($now > $this->getPopupType4Ts())
+		{
+			return 4;
+		}
 		if ($now > $this->getPopupType3Ts())
 		{
 			return 3;
@@ -147,29 +159,39 @@ class MangoAppNotifier
 
 	private function getNotificationSkippedTo(): int
 	{
-		$value = \CUserOptions::GetOption('crm', 'mango_notification_skip_to', ['value' => 0]);
+		$value = \CUserOptions::GetOption('crm', 'mango_notification_skip_to_v2', ['value' => 0]);
 
 		return is_array($value) ? ($value['value'] ?? 0) : 0;
 	}
 
+	private function getPopupType4Ts(): int
+	{
+		return Option::get('crm', 'mango_notification_type_4_ts_v2', (new \Bitrix\Main\Type\Date('23.12.2024', 'd.m.Y'))->getTimestamp());
+	}
+
 	private function getPopupType3Ts(): int
 	{
-		return Option::get('crm', 'mango_notification_type_3_ts', (new \Bitrix\Main\Type\Date('06.11.2024', 'd.m.Y'))->getTimestamp());
+		return Option::get('crm', 'mango_notification_type_3_ts_v2', (new \Bitrix\Main\Type\Date('16.12.2024', 'd.m.Y'))->getTimestamp());
 	}
 
 	private function getPopupType2Ts(): int
 	{
-		return Option::get('crm', 'mango_notification_type_2_ts', (new \Bitrix\Main\Type\Date('28.10.2024', 'd.m.Y'))->getTimestamp());
+		return Option::get('crm', 'mango_notification_type_2_ts_v2', (new \Bitrix\Main\Type\Date('09.12.2024', 'd.m.Y'))->getTimestamp());
+	}
+
+	private function getStartNotificationTs(): int
+	{
+		return Option::get('crm', 'mango_notification_start_ts_v2', (new \Bitrix\Main\Type\Date('02.12.2024', 'd.m.Y'))->getTimestamp());
 	}
 
 	private function getEndNotificationTs(): int
 	{
-		return Option::get('crm', 'mango_notification_end_ts', (new \Bitrix\Main\Type\Date('29.11.2024', 'd.m.Y'))->getTimestamp());
+		return Option::get('crm', 'mango_notification_end_ts_v2', (new \Bitrix\Main\Type\Date('30.12.2024', 'd.m.Y'))->getTimestamp());
 	}
 
 	private function isSubscriptionActive(): bool
 	{
-		$subscriptionOptionCode = 'mango_notification_subscr_available';
+		$subscriptionOptionCode = 'mango_notification_subscr_available_v2';
 
 		if (Option::get('crm', $subscriptionOptionCode, false) === 'Y')
 		{

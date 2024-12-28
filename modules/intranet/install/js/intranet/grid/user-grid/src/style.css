@@ -45,6 +45,10 @@
 	color: var(--ui-color-palette-orange-60);
 }
 
+.user-grid_role-label.--collaber {
+	color: var(--ui-color-palette-gray-70);
+}
+
 .user-grid_full-name-label {
 	font-size: 14px;
 }
@@ -55,22 +59,6 @@
 	align-items: flex-start;
 	white-space: nowrap;
 	max-width: 100%;
-}
-
-.user-grid_user-photo {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	margin: 0;
-	min-width: 40px;
-	min-height: 40px;
-	max-width: 40px;
-	max-height: 40px;
-	background-color: var(--ui-color-base-30);
-	border-radius: 50%;
-	white-space: nowrap;
-	background-position: center;
-	background-size: cover;
 }
 
 .user-grid_employee-card-container > .user-grid_user-photo {

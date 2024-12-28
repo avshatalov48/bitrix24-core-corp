@@ -2,10 +2,15 @@
 
 namespace Bitrix\Crm\Security\Role;
 
+use Bitrix\Crm\CategoryIdentifier;
+use Bitrix\Crm\Feature;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Transition;
 use Bitrix\Crm\Security\Role\Model\RoleTable;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Crm\Security\Role\Model\RolePermissionTable;
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
+use Bitrix\Main\Result;
 
 class RolePermission
 {
@@ -60,7 +65,7 @@ class RolePermission
 					$result[$entity][$permissionType][$field][$fieldValue] = $attribute;
 				}
 
-			if ($permissionType !== (new Transition([]))->code())
+			if ($permissionType !== (new Transition())->code())
 			{
 				continue;
 			}
@@ -134,13 +139,21 @@ class RolePermission
 	}
 
 	/**
-	 * @param string $entityId
+	 * @param string $permissionEntityId
 	 * @return array it is an array like [roleId => ["READ" => ["-" => "X"], ...]]]
 	 */
-	public static function getByEntityId(string $entityId, bool $skipSystemRoles = true)
+	public static function getByEntityId(string $permissionEntityId, bool $skipSystemRoles = true)
 	{
 		$result = [];
 		$systemRolesIds = self::getSystemRolesIds();
+
+		$needSplitByRoleGroup = Feature::enabled(\Bitrix\Crm\Feature\PermissionsLayoutV2::class);
+		if ($needSplitByRoleGroup)
+		{
+			$entityTypeId = \CCrmOwnerType::ResolveID((string)Container::getInstance()->getUserPermissions()->getEntityNameByPermissionEntityType($permissionEntityId));
+			$strictByRoleGroupCode = (string)\Bitrix\Crm\Security\Role\GroupCodeGenerator::getGroupCodeByEntityTypeId($entityTypeId);
+			$rolesIdsInGroup = self::getRolesByGroupCode($strictByRoleGroupCode);
+		}
 
 		foreach (self::getAll() as $roleId => $entities)
 		{
@@ -148,18 +161,14 @@ class RolePermission
 			{
 				continue;
 			}
-
-			if (array_key_exists($entityId, $entities))
+			if ($needSplitByRoleGroup && !in_array($roleId, $rolesIdsInGroup, false))
 			{
-				$result[$roleId] = $entities[$entityId];
+				continue;
 			}
-			else
+
+			if (array_key_exists($permissionEntityId, $entities))
 			{
-				$categoryIdentifier = \Bitrix\Crm\Category\PermissionEntityTypeHelper::extractEntityEndCategoryFromPermissionEntityType($entityId);
-				if ($categoryIdentifier)
-				{
-					$result[$roleId] = \CCrmRole::getDefaultPermissionSetForEntity($categoryIdentifier);
-				}
+				$result[$roleId] = $entities[$permissionEntityId];
 			}
 		}
 
@@ -169,42 +178,50 @@ class RolePermission
 	/**
 	 * Sets a permission from the set for certain roles but one entity
 	 *
-	 * @param string $entityId
+	 * @param string $permissionEntityId
 	 * @param array $permissionSet it is an array like [roleId => ["READ" => ["-" => "X"], ...]]]
 	 * @param bool $skipAdminRoles Skip roles with "Allow edit config" checkbox to avoid decreasing permissions level in them
 	 * @return Main\Result
 	 */
-	public static function setByEntityId(string $entityId, array $permissionSet, $skipAdminRoles = false, $skipSystemRoles = true)
+	public static function setByEntityId(string $permissionEntityId, array $permissionSet, $skipAdminRoles = false, $skipSystemRoles = true)
 	{
 		static::$cache = null;
 		$systemRolesIds = self::getSystemRolesIds();
 
 		$result = new Main\Result();
 
+		$needSplitByRoleGroup = Feature::enabled(\Bitrix\Crm\Feature\PermissionsLayoutV2::class);
+		if ($needSplitByRoleGroup)
+		{
+			$entityTypeId = \CCrmOwnerType::ResolveID((string)Container::getInstance()->getUserPermissions()->getEntityNameByPermissionEntityType($permissionEntityId));
+			$strictByRoleGroupCode = (string)\Bitrix\Crm\Security\Role\GroupCodeGenerator::getGroupCodeByEntityTypeId($entityTypeId);
+			$rolesIdsInGroup = self::getRolesByGroupCode($strictByRoleGroupCode);
+			$adminRolesIds = self::getAdminRolesIds($entityTypeId);
+		}
+		else
+		{
+			$adminRolesIds = self::getAdminRolesIds();
+		}
+
 		$role = new \CCrmRole();
 		foreach (self::getAll() as $roleId => $entities)
 		{
-			if (
-				$skipAdminRoles
-				&& array_key_exists("CONFIG", $entities)
-				&& array_key_exists("WRITE", $entities["CONFIG"])
-			)
+			if (in_array($roleId, $adminRolesIds, false) && $skipAdminRoles) // do not affect admin roles
 			{
-				$perms = reset($entities["CONFIG"]["WRITE"]);
-				$adminPermValue = is_array($perms) ? $perms['ATTR'] : $perms;
-				if ($adminPermValue >= \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL)
-				{
-					continue;
-				}
+				continue;
 			}
 			if (in_array($roleId, $systemRolesIds, false) && $skipSystemRoles) // do not affect system roles
+			{
+				continue;
+			}
+			if ($needSplitByRoleGroup && !in_array($roleId, $rolesIdsInGroup, false))
 			{
 				continue;
 			}
 
 			if (array_key_exists($roleId, $permissionSet))
 			{
-				$entities[$entityId] = $permissionSet[$roleId];
+				$entities[$permissionEntityId] = $permissionSet[$roleId];
 
 				$fields = ["RELATION" => $entities];
 				if (!$role->Update($roleId, $fields))
@@ -220,34 +237,56 @@ class RolePermission
 	/**
 	 * Sets the same permission for all roles but one entity
 	 *
-	 * @param string $entityId
+	 * @param CategoryIdentifier $categoryIdentifier
 	 * @param array $permissionSet it is an array like ["READ" => ["-" => ["ATTR" => "X"]], ...]]
-	 * @return Main\Result
+	 * @return Result
 	 */
-	public static function setByEntityIdForAllNotAdminRoles(string $entityId, array $permissionSet)
+	public static function setByEntityIdForAllNotAdminRoles(CategoryIdentifier $categoryIdentifier, array $permissionSet, bool $needStrictByRoleGroupCode = true)
 	{
+		$permissionEntityId = $categoryIdentifier->getPermissionEntityCode();
 		static::$cache = null;
 
 		$systemRolesIds = self::getSystemRolesIds();
+
+		if ($needStrictByRoleGroupCode && !Feature::enabled(\Bitrix\Crm\Feature\PermissionsLayoutV2::class))
+		{
+			$needStrictByRoleGroupCode = false;
+		}
+
+		if ($needStrictByRoleGroupCode)
+		{
+			$strictByRoleGroupCode = (string)\Bitrix\Crm\Security\Role\GroupCodeGenerator::getGroupCodeByEntityTypeId($categoryIdentifier->getEntityTypeId());
+			$rolesIdsInGroup = self::getRolesByGroupCode($strictByRoleGroupCode);
+		}
+
 		$result = new Main\Result();
+
+		if (Feature::enabled(\Bitrix\Crm\Feature\PermissionsLayoutV2::class))
+		{
+			$adminRolesIds = self::getAdminRolesIds($categoryIdentifier->getEntityTypeId());
+		}
+		else
+		{
+			$adminRolesIds = self::getAdminRolesIds();
+		}
 
 		$role = new \CCrmRole();
 		foreach (self::getAll() as $roleId => $entities)
 		{
-			if (array_key_exists("CONFIG", $entities) && array_key_exists("WRITE", $entities["CONFIG"]))
+			if (in_array($roleId, $adminRolesIds, false)) // do not affect admin roles
 			{
-				$perms = reset($entities["CONFIG"]["WRITE"]);
-				$adminPermValue = is_array($perms) ? $perms['ATTR'] : $perms;
-				if ($adminPermValue >= \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL)
-				{
-					continue;
-				}
+				continue;
 			}
 			if (in_array($roleId, $systemRolesIds, false)) // do not affect system roles
 			{
 				continue;
 			}
-			$entities[$entityId] = $permissionSet;
+			if ($needStrictByRoleGroupCode && !in_array($roleId, $rolesIdsInGroup, false))
+			{
+				continue;
+			}
+
+			$entities[$permissionEntityId] = $permissionSet;
 
 			$fields = ["RELATION" => $entities];
 			if (!$role->Update($roleId, $fields))
@@ -263,6 +302,56 @@ class RolePermission
 	{
 		return array_column(RoleTable::query()
 			->where('IS_SYSTEM', 'Y')
+			->setSelect(['ID'])
+			->fetchAll(), 'ID');
+	}
+
+	public static function getAdminRolesIds(?int $entityTypeId = null): array
+	{
+		$result = [];
+		$adminRolePermissionName = 'CONFIG';
+		if ($entityTypeId && \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			$type = Container::getInstance()->getTypeByEntityTypeId($entityTypeId);
+			if ($type?->getCustomSectionId())
+			{
+				$adminRolePermissionName = \Bitrix\Crm\Security\Role\Manage\Entity\AutomatedSolutionConfig::generateEntity($type->getCustomSectionId());
+			}
+		}
+
+		foreach (self::getAll() as $roleId => $entities)
+		{
+			if (array_key_exists($adminRolePermissionName, $entities)
+				&& array_key_exists("WRITE", $entities[$adminRolePermissionName])
+			)
+			{
+				$perms = reset($entities[$adminRolePermissionName]["WRITE"]);
+				$adminPermValue = is_array($perms) ? $perms['ATTR'] : $perms;
+				if ($adminPermValue >= \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL)
+				{
+					$result[] = $roleId;
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	private static function getRolesByGroupCode(string $strictByRoleGroup): array
+	{
+		$ct = new ConditionTree();
+		$ct->where('GROUP_CODE', $strictByRoleGroup);
+
+		if ($strictByRoleGroup === '')
+		{
+			$ct
+				->logic(ConditionTree::LOGIC_OR)
+				->whereNull('GROUP_CODE')
+			;
+		}
+
+		return array_column(RoleTable::query()
+			->where($ct)
 			->setSelect(['ID'])
 			->fetchAll(), 'ID');
 	}

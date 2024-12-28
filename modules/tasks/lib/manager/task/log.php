@@ -4,55 +4,61 @@
  * @package bitrix
  * @subpackage tasks
  * @copyright 2001-2016 Bitrix
- * 
+ *
  * @access private
- * 
+ *
  * This class should be used in components, inside agent functions, in rest, ajax and more, bringing unification to all places and processes
  */
 
 namespace Bitrix\Tasks\Manager\Task;
 
-use \Bitrix\Main\Loader;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Tasks\Manager;
+use Bitrix\Tasks\Provider\Exception\Log\TaskLogProviderException;
+use CTaskLog;
+use CTimeZone;
 
-use \Bitrix\Tasks\Util\Error\Collection;
-
-final class Log extends \Bitrix\Tasks\Manager
+final class Log extends Manager
 {
 	public static function getIsMultiple()
 	{
 		return true;
 	}
 
-	public static function getListByParentEntity($userId, $taskId, array $parameters = array())
+	/**
+	 * @throws TaskLogProviderException
+	 * @throws ArgumentException
+	 */
+	public static function getListByParentEntity($userId, $taskId, array $parameters = []): array
 	{
-		$data = array();
+		$data = [];
 
-		$task = static::getTask($userId, $taskId);
+		$task = self::getTask($userId, $taskId);
 
-		if($task !== null && $task->checkCanRead())
+		if ($task !== null && $task->checkCanRead())
 		{
-			$res = \CTaskLog::GetList(
-				array('CREATED_DATE' => 'DESC'),
-				array('TASK_ID' => $taskId)
+			$res = CTaskLog::GetList(
+				['CREATED_DATE' => 'DESC'],
+				['TASK_ID' => $taskId],
 			);
 
-			$tzDisabled = ! \CTimeZone::enabled();
+			$tzDisabled = !CTimeZone::enabled();
 
 			if ($tzDisabled)
 			{
-				\CTimeZone::enable();
+				CTimeZone::enable();
 			}
 
-			$tzOffset = \CTimeZone::getOffset();
+			$tzOffset = CTimeZone::getOffset();
 
 			if ($tzDisabled)
 			{
-				\CTimeZone::disable();
+				CTimeZone::disable();
 			}
 
-			while(true)
+			while (true)
 			{
-				if($parameters['ESCAPE_DATA'])
+				if ($parameters['ESCAPE_DATA'])
 				{
 					$item = $res->GetNext();
 				}
@@ -61,23 +67,23 @@ final class Log extends \Bitrix\Tasks\Manager
 					$item = $res->fetch();
 				}
 
-				if(!$item)
+				if (!$item)
 				{
 					break;
 				}
 
 				// Adjust unix timestamps to "bitrix timestamps"
 				if (
-					isset(\CTaskLog::$arComparedFields[$item['FIELD']]) 
-					&& (\CTaskLog::$arComparedFields[$item['FIELD']] === 'date')
+					isset(CTaskLog::$arComparedFields[$item['FIELD']])
+					&& (CTaskLog::$arComparedFields[$item['FIELD']] === 'date')
 				)
 				{
-					if(intval($item['TO_VALUE']))
+					if (intval($item['TO_VALUE']))
 					{
-						$item['TO_VALUE']   = $item['TO_VALUE'] + $tzOffset;
+						$item['TO_VALUE'] = $item['TO_VALUE'] + $tzOffset;
 					}
 
-					if(intval($item['FROM_VALUE']))
+					if (intval($item['FROM_VALUE']))
 					{
 						$item['FROM_VALUE'] = $item['FROM_VALUE'] + $tzOffset;
 					}
@@ -87,6 +93,6 @@ final class Log extends \Bitrix\Tasks\Manager
 			}
 		}
 
-		return array('DATA' => $data, 'CAN' => array());
+		return ['DATA' => $data, 'CAN' => []];
 	}
 }

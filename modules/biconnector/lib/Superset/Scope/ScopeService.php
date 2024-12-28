@@ -23,12 +23,15 @@ final class ScopeService
 {
 	public const BIC_SCOPE_CRM = 'crm';
 	public const BIC_SCOPE_BIZPROC = 'bizproc';
-	public const BIC_SCOPE_BIZPROC_TEMPLATE_ITEM = 'bizproc_template_item';
+	public const BIC_SCOPE_WORKFLOW_TEMPLATE = 'workflow_template';
 	public const BIC_SCOPE_TASKS = 'tasks';
+	public const BIC_SCOPE_TASKS_EFFICIENCY = 'tasks_efficiency';
 	public const BIC_SCOPE_AUTOMATED_SOLUTION_PREFIX = 'automated_solution_';
 	public const BIC_SCOPE_PROFILE = 'profile';
 	public const BIC_SCOPE_SHOP = 'shop';
 	public const BIC_SCOPE_STORE = 'store';
+	public const BIC_SCOPE_TASKS_FLOWS = 'tasks_flows';
+	public const BIC_SCOPE_TASKS_FLOWS_FLOW = 'tasks_flows_flow';
 
 	private static ?ScopeService $instance = null;
 	private static array $scopeNameMap = [];
@@ -201,10 +204,13 @@ final class ScopeService
 			self::BIC_SCOPE_BIZPROC,
 			self::BIC_SCOPE_CRM,
 			self::BIC_SCOPE_TASKS,
-//			self::BIC_SCOPE_BIZPROC_TEMPLATE_ITEM,
+			self::BIC_SCOPE_TASKS_EFFICIENCY,
+			self::BIC_SCOPE_WORKFLOW_TEMPLATE,
 			self::BIC_SCOPE_PROFILE,
 			self::BIC_SCOPE_SHOP,
 			self::BIC_SCOPE_STORE,
+			self::BIC_SCOPE_TASKS_FLOWS,
+			self::BIC_SCOPE_TASKS_FLOWS_FLOW,
 		];
 
 		if (Loader::includeModule('crm'))

@@ -3,7 +3,9 @@
 namespace Bitrix\Sign\Service;
 
 use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Sign\Access\Service\AccessService;
 use Bitrix\Sign\Access\Service\RolePermissionService;
+use Bitrix\Sign\Factory\Access\AccessibleItemFactory;
 use Bitrix\Sign\Repository;
 use Bitrix\Sign\Connector;
 use Bitrix\Sign\Service;
@@ -56,9 +58,14 @@ class Container
 		return self::getService('sign.service.user');
 	}
 
-	public function getB2eUserToSignDocumentCounterService(): Service\Counter\B2e\UserToSignDocumentCounterService
+	public function getCounterService(): CounterService
 	{
-		return self::getService('sign.service.counter.b2e.userToSignDocument');
+		return self::getService('sign.service.counter');
+	}
+
+	public function getB2eKanbanCategoryService(): Service\Sign\B2e\KanbanCategoryService
+	{
+		return self::getService('sign.service.b2e.kanbanCategory');
 	}
 
 	public function getApiDocumentService(): Api\DocumentService
@@ -181,6 +188,11 @@ class Container
 		return static::getService('sign.repository.member');
 	}
 
+	public function getMemberNodeRepository(): Repository\MemberNodeRepository
+	{
+		return static::getService('sign.repository.membernode');
+	}
+
 	public function getFileRepository(): Repository\FileRepository
 	{
 		return static::getService('sign.repository.file');
@@ -266,6 +278,16 @@ class Container
 		return static::getService('sign.service.integration.crm.kanban.b2e.entity');
 	}
 
+	public function getHcmLinkFieldService(): Service\Integration\HumanResources\HcmLinkFieldService
+	{
+		return static::getService('sign.service.integration.humanresources.hcmlink.field');
+	}
+
+	public function getHcmLinkSignedFileService(): Service\Integration\HumanResources\HcmLinkSignedFileService
+	{
+		return static::getService('sign.service.integration.humanresources.hcmlink.signedFile');
+	}
+
 	public function getUrlGeneratorService(): Service\Sign\UrlGeneratorService
 	{
 		return static::getService('sign.service.sign.url.generator');
@@ -312,6 +334,11 @@ class Container
 	public function getRolePermissionService(): ?RolePermissionService
 	{
 		return static::getService('sign.service.access.rolePermission');
+	}
+
+	public function getAccessService(): AccessService
+	{
+		return static::getService('sign.access.service.access');
 	}
 
 	public function getApiProviderCodeService(): Service\Api\B2e\ProviderCodeService
@@ -372,5 +399,60 @@ class Container
 	public function getCrmMyCompanyService(): Service\Integration\Crm\MyCompanyService
 	{
 		return static::getService('sign.service.integration.crm.myCompany');
+	}
+
+	public function getMemberDynamicFieldProvider(): Service\Providers\MemberDynamicFieldInfoProvider
+	{
+		return static::getService('sign.service.provider.memberDynamic');
+	}
+
+	public function getMyDocumentService():Service\B2e\MyDocumentsGrid\DataService
+	{
+		return static::getService('sign.service.b2e.myDocumentsGrid.data');
+	}
+
+	public function getFieldValueRepository(): Repository\FieldValueRepository
+	{
+		return static::getService('sign.repository.fieldValue');
+	}
+
+	public function getAccessibleItemFactory(): AccessibleItemFactory
+	{
+		return static::getService('sign.accessibleItem.factory');
+	}
+
+	public function getHcmLinkService(): Service\Integration\HumanResources\HcmLinkService
+	{
+		return static::getService('sign.service.integration.humanresources.hcmlink');
+	}
+
+	public function getLegalInfoProvider(): Service\Providers\LegalInfoProvider
+	{
+		return static::getService('sign.service.provider.legal');
+	}
+
+	public function getPermissionsService(): Service\Sign\PermissionsService
+	{
+		return static::getService('sign.service.sign.permissions');
+	}
+
+	public function getMyDocumentGridEventService(): Service\B2e\MyDocumentsGrid\EventService
+	{
+		return static::getService('sign.service.b2e.myDocument.event');
+	}
+
+	public function getTourService(): Service\Tour
+	{
+		return static::getService('sign.service.tour');
+	}
+
+	public function getAnalyticService(): Service\Analytic\AnalyticService
+	{
+		return static::getService('sign.service.analytic.analytic');
+	}
+
+	public function getPresetTemplatesService(): Service\Sign\PresetTemplatesService
+	{
+		return static::getService('sign.service.preset.templates');
 	}
 }

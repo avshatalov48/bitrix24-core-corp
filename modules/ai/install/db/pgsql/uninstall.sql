@@ -20,3 +20,7 @@ drop table if exists b_ai_prompt_translate_name;
 drop table if exists b_ai_prompt_display_rule;
 drop table if exists b_ai_role_display_rule;
 drop table if exists b_ai_image_style_prompt;
+drop table if exists b_ai_role_share;
+drop table if exists b_ai_role_owner;
+drop table if exists b_ai_role_translate_name;
+drop table if exists b_ai_role_translate_description;

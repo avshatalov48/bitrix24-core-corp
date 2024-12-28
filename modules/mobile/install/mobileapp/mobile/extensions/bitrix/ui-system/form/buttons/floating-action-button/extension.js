@@ -208,12 +208,13 @@ jn.define('ui-system/form/buttons/floating-action-button', (require, exports, mo
 			const {
 				hide = false,
 				safeArea = this.shouldSafeArea(),
+				accentByDefault = this.isAccentButton(),
 			} = params;
 			const floatingActionButtonParams = hide
 				? {}
 				: {
 					...transformedProps,
-					accentByDefault: this.isAccentButton(),
+					accentByDefault,
 					safeArea,
 					callback: () => {},
 				};

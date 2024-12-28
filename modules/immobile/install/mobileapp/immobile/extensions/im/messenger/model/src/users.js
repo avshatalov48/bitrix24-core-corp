@@ -7,6 +7,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { UserType, UserColor } = require('im/messenger/const');
 	const logger = LoggerManager.getInstance().getLogger('model--users');
 
 	const userDefaultElement = Object.freeze({
@@ -15,7 +16,8 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		firstName: '',
 		lastName: '',
 		avatar: '',
-		color: '#048bd0',
+		color: UserColor.default,
+		type: UserType.user,
 		workPosition: '',
 		gender: 'M',
 		extranet: false,
@@ -453,6 +455,26 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		if (Type.isStringFilled(fields.color))
 		{
 			result.color = fields.color;
+		}
+
+		if (Type.isStringFilled(fields.type))
+		{
+			result.type = fields.type;
+		}
+		else if (fromLocalDatabase && Type.isNil(fields.type))
+		{
+			if (Type.isBoolean(fields.bot))
+			{
+				result.type = UserType.bot;
+			}
+			else if (Type.isBoolean(fields.extranet))
+			{
+				result.type = UserType.extranet;
+			}
+			else
+			{
+				result.type = UserType.user;
+			}
 		}
 
 		if (Type.isStringFilled(fields.avatar))

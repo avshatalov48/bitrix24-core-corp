@@ -8,7 +8,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-$new = time() < strtotime('15 July 2024');
+$new = time() < strtotime('15 May 2025');
 $videoDomain = (new ThemePickerVideo())->getDomain();
 
 return array(
@@ -28,6 +28,14 @@ return array(
 	),
 
 	"subThemes" => array(
+		"light:gravity" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_GRAVITY"),
+			"previewImage" => "gravity-preview.jpg",
+			"prefetchImages" => array("gravity.jpg"),
+			"resizable" => true,
+			"new" => $new,
+		),
+
 		"light:video-orion" => array(
 			"title" => Loc::getMessage("BITRIX24_THEME_VIDEO_ORION"),
 			"previewImage" => "orion-preview.jpg",
@@ -39,7 +47,6 @@ return array(
 				)
 			),
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:orion" => array(
@@ -47,7 +54,6 @@ return array(
 			"previewImage" => "orion-preview.jpg",
 			"prefetchImages" => array("orion.jpg"),
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:video-shining-intelligence" => array(
@@ -61,7 +67,6 @@ return array(
 				)
 			),
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:shining-intelligence" => array(
@@ -71,7 +76,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:contrast-horizon" => array(
@@ -81,7 +85,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:amethyst-inspiration" => array(
@@ -91,7 +94,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:astronomical-watercolor" => array(
@@ -101,7 +103,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:galactic-dream" => array(
@@ -111,7 +112,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:cosmic-dreams" => array(
@@ -121,7 +121,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:sunset-magic" => array(
@@ -131,7 +130,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:dawn-harmony" => array(
@@ -141,7 +139,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:northern-lights" => array(
@@ -151,7 +148,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:jupiter" => array(

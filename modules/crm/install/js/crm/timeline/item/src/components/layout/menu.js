@@ -1,5 +1,8 @@
-import {MenuManager} from "main.popup";
-import {Action} from "../../action";
+import { Type } from 'main.core';
+import { MenuManager } from 'main.popup';
+
+import { Action } from '../../action';
+import { ButtonState } from '../enums/button-state';
 
 export class Menu
 {
@@ -13,7 +16,7 @@ export class Menu
 		this.#menuOptions = {
 			angle: false,
 			cacheable: false,
-			...this.#menuOptions
+			...this.#menuOptions,
 		};
 
 		this.#menuOptions.items = [];
@@ -28,14 +31,13 @@ export class Menu
 		MenuManager.show(this.#menuOptions);
 	}
 
-
 	createMenuItem(item): Object
 	{
-		if (item.hasOwnProperty('delimiter') && item.delimiter)
+		if (Object.prototype.hasOwnProperty.call(item, 'delimiter') && item.delimiter)
 		{
 			return {
 				text: item.title || '',
-				delimiter: true
+				delimiter: true,
 			};
 		}
 
@@ -44,10 +46,29 @@ export class Menu
 			value: item.title,
 		};
 
+		if (Type.isStringFilled(item.state))
+		{
+			switch (item.state)
+			{
+				case ButtonState.AI_LOADING:
+					result.className = 'menu-popup-item-add-to-tm menu-popup-item-disabled';
+					break;
+				case ButtonState.AI_SUCCESS:
+					result.className = 'menu-popup-item-accept menu-popup-item-disabled';
+					break;
+				case ButtonState.DISABLED:
+					result.className = 'menu-popup-no-icon menu-popup-item-disabled';
+					break;
+				default:
+					result.className = '';
+			}
+		}
+
 		if (item.icon)
 		{
-			result.className = 'menu-popup-item-' + item.icon;
+			result.className = `menu-popup-item-${item.icon}`;
 		}
+
 		if (item.menu)
 		{
 			result.items = [];
@@ -68,9 +89,8 @@ export class Menu
 			}
 			else
 			{
-				result.onclick = () =>
-				{
-					this.onMenuItemClick(item);
+				result.onclick = () => {
+					void this.onMenuItemClick(item);
 				};
 			}
 		}
@@ -86,12 +106,13 @@ export class Menu
 			menu.close();
 		}
 
-		(new Action(item.action)).execute(this.#vueComponent);
+		void (new Action(item.action)).execute(this.#vueComponent);
 	}
 
-	static showMenu(vueComponent: Object, menuItems: Array, menuOptions: ?Object)
+	static showMenu(vueComponent: Object, menuItems: Array, menuOptions: ?Object): void
 	{
 		const menu = new Menu(vueComponent, menuItems, menuOptions);
+
 		menu.show();
 	}
 }

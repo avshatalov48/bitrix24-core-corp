@@ -1,6 +1,7 @@
 <?php
 $MESS["INTRANET_JS_CONTROL_BALLOON_ADD_DEPARTMENT"] = "Select a department";
 $MESS["INTRANET_JS_CONTROL_BALLOON_ADMIN"] = "Administrator";
+$MESS["INTRANET_JS_CONTROL_BALLOON_COLLABER"] = "Guest";
 $MESS["INTRANET_JS_CONTROL_BALLOON_EXTRANET"] = "Extranet";
 $MESS["INTRANET_JS_CONTROL_BALLOON_INTEGRATOR"] = "Bitrix24 Partner";
 $MESS["INTRANET_JS_CONTROL_BALLOON_INVITATION_NOT_ACCEPTED"] = "Invite pending";
@@ -22,7 +23,7 @@ $MESS["INTRANET_USER_LIST_ACTION_DECLINE_TITLE"] = "Decline log in";
 $MESS["INTRANET_USER_LIST_ACTION_DELETE_BUTTON"] = "Delete";
 $MESS["INTRANET_USER_LIST_ACTION_DELETE_MESSAGE"] = "User will be deleted from the company structure and won't be able to log in to Bitrix24.\n\nDo you want to delete this user?";
 $MESS["INTRANET_USER_LIST_ACTION_DELETE_TITLE"] = "Delete user";
-$MESS["INTRANET_USER_LIST_ACTION_REINVITE_DISABLED"] = "Only your Bitrix24 administrator can invite employees. Please contact them to get access.";
+$MESS["INTRANET_USER_LIST_ACTION_REINVITE_DISABLED"] = "Only your Bitrix24 administrator can invite employees. Please contact them to get access to this function.";
 $MESS["INTRANET_USER_LIST_ACTION_REINVITE_SUCCESS"] = "Invitation has been sent.";
 $MESS["INTRANET_USER_LIST_ACTION_RESTORE_BUTTON"] = "Hire";
 $MESS["INTRANET_USER_LIST_ACTION_RESTORE_TITLE"] = "Hire user";

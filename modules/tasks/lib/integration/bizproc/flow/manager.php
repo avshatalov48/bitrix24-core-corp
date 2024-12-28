@@ -3,6 +3,7 @@
 namespace Bitrix\Tasks\Integration\Bizproc\Flow;
 
 use Bitrix\Bizproc\Script\Manager as BizProcManager;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Flow\Notification\Config\Item;
 use Bitrix\Tasks\Integration\Bizproc\Flow\Robot\Factory;
@@ -14,6 +15,11 @@ class Manager
 	public function runProc(int $procId, array $docIds = []): void
 	{
 		if (!$procId)
+		{
+			return;
+		}
+
+		if (!Loader::includeModule('bizproc'))
 		{
 			return;
 		}
@@ -33,6 +39,11 @@ class Manager
 
 	public function deleteSmartProcess(int $procId): void
 	{
+		if (!Loader::includeModule('bizproc'))
+		{
+			return;
+		}
+
 		if ($procId > 0)
 		{
 			BizProcManager::deleteScript($procId);
@@ -44,6 +55,11 @@ class Manager
 	 */
 	public function addSmartProcess(Item $item): int
 	{
+		if (!Loader::includeModule('bizproc'))
+		{
+			return 0;
+		}
+
 		$userId = 1;
 		$procId = 0;
 		$documentType = Factory::getDocumentType($item);

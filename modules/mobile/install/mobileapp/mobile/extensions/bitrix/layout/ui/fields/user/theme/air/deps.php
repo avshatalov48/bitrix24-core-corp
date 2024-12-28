@@ -2,16 +2,17 @@
 
 return [
 	'extensions' => [
+		'tokens',
+
 		'layout/ui/fields/user',
 		'layout/ui/fields/theme',
+		'layout/ui/user/user-name',
 		'layout/ui/fields/theme/air/elements/field-wrapper',
 
-		'tokens',
 		'ui-system/blocks/icon',
-
-		'elements-stack',
-		'layout/ui/fields/user/theme/elements/user-icon',
 		'ui-system/typography/text',
+		'ui-system/blocks/avatar',
+		'ui-system/blocks/avatar-stack'
 	],
 	'bundle' => [
 		'./src/entity-list',

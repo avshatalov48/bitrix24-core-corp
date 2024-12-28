@@ -8,6 +8,7 @@ $MESS['TASKS_GRID_TASK_GRID_HEADER_RESPONSIBLE_NAME'] = 'Ответственн�
 $MESS['TASKS_GRID_TASK_GRID_HEADER_ASSIGNEE_NAME'] = 'Исполнитель';
 $MESS['TASKS_GRID_TASK_GRID_HEADER_STATUS'] = 'Статус';
 $MESS['TASKS_GRID_TASK_GRID_HEADER_GROUP_NAME'] = 'Проект';
+$MESS['TASKS_GRID_TASK_GRID_HEADER_COLLAB_NAME'] = 'Коллаба';
 $MESS['TASKS_GRID_TASK_GRID_HEADER_CREATED_DATE'] = 'Дата создания';
 $MESS['TASKS_GRID_TASK_GRID_HEADER_CHANGED_DATE'] = 'Дата изменения';
 $MESS['TASKS_GRID_TASK_GRID_HEADER_CLOSED_DATE'] = 'Дата закрытия';

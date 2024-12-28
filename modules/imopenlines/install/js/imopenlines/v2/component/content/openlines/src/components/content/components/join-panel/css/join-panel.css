@@ -1,0 +1,23 @@
+.bx-imol-textarea_join-panel-container {
+	--imol-textarea__background-color_panel-dark: rgba(var(--ui-color-palette-white-base-rgb), 0.06);
+	--imol-textarea__background-color_panel-light: rgba(var(--ui-color-palette-white-base-rgb), 0.3);
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 64px;
+	background: linear-gradient(180deg,
+	var(--imol-textarea__background-color_panel-dark) 0%,
+	var(--imol-textarea__background-color_panel-light) 100%);
+}
+
+.bx-imol-textarea_join-panel-list-button {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+

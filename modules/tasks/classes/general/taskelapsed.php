@@ -155,7 +155,7 @@ class CTaskElapsedTime
 			}
 
 			if (isset($arFields['SECONDS']))
-				$arFields['MINUTES'] = (int) round($arFields['SECONDS'] / 60, 0);
+				$arFields['MINUTES'] = (int) round((int)$arFields['SECONDS'] / 60, 0);
 			elseif (isset($arFields['MINUTES']))
 				$arFields['SECONDS'] = 60 * $arFields['MINUTES'];
 			else

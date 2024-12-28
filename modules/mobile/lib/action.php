@@ -5,7 +5,7 @@ namespace Bitrix\Mobile;
 class Action
 {
 	protected $actions;
-
+	protected const JSON_OPTIONS = JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_UNESCAPED_UNICODE;
 	function __construct()
 	{
 		$this->actions = include(\Bitrix\Main\Application::getDocumentRoot() . "/bitrix/modules/mobile/ajax_action.php");
@@ -64,18 +64,18 @@ class Action
 				$json = $actionDesc["json"] ?? false;
 				if ($json === true)
 				{
-					header("Content-Type: application/x-javascript");
+					header("Content-Type: application/json; charset=".LANG_CHARSET);
 					$data = include($file);
 					if ($data)
 					{
 						$removeNulls = $actionDesc["removeNulls"] ?? false;
 						if ($removeNulls)
 						{
-							echo json_encode(self::removeNulls($data));
+							echo json_encode(self::removeNulls($data), self::JSON_OPTIONS);
 						}
 						else
 						{
-							echo json_encode($data);
+							echo json_encode($data, self::JSON_OPTIONS);
 						}
 					}
 				}
@@ -92,8 +92,8 @@ class Action
 				define("MOBILE_INIT_EVENT_SKIP", true);
 			}
 
-			header("Content-Type: application/x-javascript");
-			echo json_encode(["error" => "unknown action for data request"]);
+			header("Content-Type: application/json; charset=".LANG_CHARSET);
+			echo json_encode(["error" => "unknown action for data request"], self::JSON_OPTIONS);
 		}
 	}
 

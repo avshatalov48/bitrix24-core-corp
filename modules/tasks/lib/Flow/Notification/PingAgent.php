@@ -99,6 +99,6 @@ class PingAgent
 
 	private static function getAgentName(int $taskId, int $flowId, int $offset): string
 	{
-		return static::class . "::execute(". $taskId .", " . $flowId . ", " . $offset .");";
+		return static::class . "::execute(". $taskId .", " . $flowId . ", " . $offset . ");";
 	}
 }

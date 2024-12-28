@@ -8,6 +8,7 @@ jn.define('layout/ui/fields/textarea/theme/air-description', (require, exports, 
 	const { CollapsibleText } = require('layout/ui/collapsible-text');
 	const { EditableTextBlock } = require('layout/ui/editable-text-block');
 	const { stringify } = require('utils/string');
+	const { PlainTextFormatter } = require('bbcode/formatter/plain-text-formatter');
 
 	const descriptionStyle = (isEmpty = false) => ({
 		...Typography.getTokenBySize({ size: 4 })?.getStyle(),
@@ -67,6 +68,14 @@ jn.define('layout/ui/fields/textarea/theme/air-description', (require, exports, 
 
 		render()
 		{
+			const plainTextFormatter = new PlainTextFormatter();
+			const plainAst = plainTextFormatter.format({
+				source: this.value,
+				data: {
+					files: this.field.getConfig().fileField?.value ?? [],
+				},
+			});
+
 			return View(
 				{
 					testId: `${this.field.testId}_FIELD`,
@@ -74,12 +83,12 @@ jn.define('layout/ui/fields/textarea/theme/air-description', (require, exports, 
 				},
 				this.field.isReadOnly()
 					? new CollapsibleText({
-						value: this.value,
+						value: plainAst.toString(),
 						style: descriptionStyle(),
 						containerStyle: {
 							marginTop: (this.field.isEmpty() ? 0 : Indent.XL3.toNumber()),
 						},
-						bbCodeMode: true,
+						bbCodeMode: false,
 						useBBCodeEditor: true,
 						onClick: () => this.field.openBBCodeTextEditor(this.value),
 						onLongClick: () => this.field.openBBCodeTextEditor(this.value),
@@ -93,7 +102,7 @@ jn.define('layout/ui/fields/textarea/theme/air-description', (require, exports, 
 						textProps: {
 							testId: `${this.field.testId}_CONTENT`,
 							style: descriptionStyle(this.field.isEmpty()),
-							bbCodeMode: true,
+							bbCodeMode: false,
 							moreButtonColor: Color.accentMainPrimary,
 						},
 						editorProps: {

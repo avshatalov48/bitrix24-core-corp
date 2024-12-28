@@ -3,32 +3,46 @@
  */
 jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) => {
 	const { contacts } = require('native/contacts');
-	const { Alert } = require('alert');
-	const { makeLibraryImagePath } = require('asset-manager');
+	const { Alert, ButtonType } = require('alert');
 	const { Type } = require('type');
-	const { getCountryCode } = require('utils/phone');
+	const { getCountryCode, isPhoneNumber, getFormattedNumber } = require('utils/phone');
 	const { checkValueMatchQuery } = require('utils/search');
 	const { debounce } = require('utils/function');
 	const { Loc } = require('loc');
 	const { Feature } = require('feature');
-	const { isNil } = require('utils/type');
+	const { Haptics } = require('haptics');
+	const { AvatarClass, AvatarShape, AvatarEntityType } = require('ui-system/blocks/avatar');
+	const { Notify } = require('notify');
+	const { PhoneInputBox } = require('layout/ui/smartphone-contact-selector/src/phone-input-box');
 
 	const SECTION_CODE = 'main';
-	const imageUri = makeLibraryImagePath('person_rounded.svg', 'smartphone-contact-selector');
 
+	/**
+	 * @typedef {Object} SmartphoneContactSelectorProps
+	 * @property {layout} [parentLayout]
+	 * @property {boolean} [allowMultipleSelection=true]
+	 * @property {boolean} [allowPhoneNumberInput=true]
+	 * @property {boolean} [closeAfterSendButtonClick=true]
+	 * @property {Function} [onSendButtonClickHandler]
+	 * @property {Function} [onRequestContactsSuccess]
+	 * @property {Function} [onSelectionChanged]
+	 * @property {string} [itemImageUri]
+	 * @property {AvatarEntityType} [avatarType=AvatarEntityType.USER]
+	 *
+	 * @class SmartphoneContactSelector
+	 */
 	class SmartphoneContactSelector
 	{
 		/**
-		 * @params {object} props
-		 * @params {boolean} [props.allowMultipleSelection]
-		 * @params {layout} [props.parentLayout]
-		 * @params {boolean} [props.closeAfterSendButtonClick]
-		 * @params {function} [props.onSendButtonClickHandler]
-		 * @param {function} [props.onRequestContactsSuccess]
-		 * @param {function} [props.onSelectionChanged]
+		 * @param {SmartphoneContactSelectorProps} props
 		 */
 		constructor(props)
 		{
+			PropTypes.validate(SmartphoneContactSelector.propTypes, props, 'SmartphoneContactSelector');
+
+			/**
+			 * @type {SmartphoneContactSelectorProps}
+			 */
 			this.props = props;
 			this.selector = null;
 			this.allContacts = [];
@@ -36,6 +50,11 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 			this.isSendButtonLoading = false;
 
 			this.onListFillDebounce = debounce(this.#onListFill, 500, this);
+		}
+
+		get allowPhoneNumberInput()
+		{
+			return this.props.allowPhoneNumberInput ?? true;
 		}
 
 		get allowMultipleSelection()
@@ -68,6 +87,25 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 			return this.props.onSelectionChanged ?? null;
 		}
 
+		get dismissAlert()
+		{
+			return this.props.dismissAlert;
+		}
+
+		getAvatarType()
+		{
+			const { avatarType } = this.props;
+
+			return AvatarEntityType.resolve(avatarType, AvatarEntityType.USER);
+		}
+
+		getImage()
+		{
+			const { itemImageUri } = this.props;
+
+			return itemImageUri;
+		}
+
 		open = async () => {
 			if (Feature.isSmartphoneContactsAPISupported())
 			{
@@ -88,9 +126,29 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 
 		async openNewSelector()
 		{
+			await Notify.showIndicatorLoading();
+			this.allContacts = await this.#getContacts();
+			Notify.hideCurrentIndicator();
+			if (!Type.isArrayFilled(this.allContacts))
+			{
+				if (this.allowPhoneNumberInput)
+				{
+					await PhoneInputBox.open({
+						onContinue: this.#onPhoneInputBoxContinue,
+						parentLayout: this.parentLayout,
+					});
+				}
+				else
+				{
+					this.close();
+				}
+
+				return;
+			}
+
 			this.selector = await this.parentLayout.openWidget('selector', {
 				titleParams: {
-					text: Loc.getMessage('CONTACT_SELECTOR_TITLE'),
+					text: Loc.getMessage('CONTACT_SELECTOR_TITLE_MSGVER_1'),
 					type: 'dialog',
 				},
 				backdrop: {
@@ -99,16 +157,10 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 				},
 				sendButtonName: Loc.getMessage('CONTACT_SELECTOR_SEND_BUTTON_TEXT'),
 			});
+			this.selector.setPlaceholder(Loc.getMessage('CONTACT_SELECTOR_SEARCH_PLACEHOLDER_TEXT'));
 			this.selector.setSendButtonEnabled(false);
 			this.#initLoadingSelector();
-			this.allContacts = await this.#getContacts();
-			if (isNil(this.allContacts))
-			{
-				this.close();
-
-				return;
-			}
-			const isEmptyItems = !Array.isArray(this.allContacts) || this.allContacts.length === 0;
+			const isEmptyItems = !Type.isArrayFilled(this.allContacts);
 			if (isEmptyItems)
 			{
 				this.#setItems([this.#getEmptyResultItem()]);
@@ -117,6 +169,52 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 			}
 
 			this.#initSelector();
+		}
+
+		#onPhoneInputBoxContinue = ({ phone, selectorInstance }) => {
+			const contact = {
+				phone,
+				countryCode: getCountryCode(phone, null),
+			};
+
+			if (Type.isFunction(this.onSendButtonClickHandler))
+			{
+				this.onSendButtonClickHandler([contact], selectorInstance);
+			}
+		};
+
+		#onPreventDismiss = () => {
+			if (this.dismissAlert && this.selectedContacts.length > 0)
+			{
+				this.#showConfirmOnBoxClosing();
+			}
+			else
+			{
+				this.selector.close();
+			}
+		};
+
+		#showConfirmOnBoxClosing()
+		{
+			Haptics.impactLight();
+
+			Alert.confirm(
+				this.dismissAlert.title,
+				this.dismissAlert.description,
+				[
+					{
+						type: ButtonType.DESTRUCTIVE,
+						text: this.dismissAlert.destructiveButtonText,
+						onPress: () => {
+							this.selector.close();
+						},
+					},
+					{
+						type: ButtonType.DEFAULT,
+						text: this.dismissAlert.defaultButtonText,
+					},
+				],
+			);
 		}
 
 		async openOldNativeSelector()
@@ -184,20 +282,32 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 
 		#getEmptyResultItem = () => {
 			return {
-				title: Loc.getMessage('CONTACT_SELECTOR_NOTHING_FOUND_ITEM_TEXT'),
+				title: Loc.getMessage('CONTACT_SELECTOR_NOTHING_FOUND_ITEM_TEXT_MSGVER_1'),
 				type: 'button',
 				sectionCode: SECTION_CODE,
 				unselectable: true,
 			};
 		};
 
+		#getValidPhoneResultItem = (phoneNumber) => {
+			return {
+				id: phoneNumber,
+				title: phoneNumber,
+				useLetterImage: false,
+				sectionCode: SECTION_CODE,
+				avatar: this.#getAvatar({}),
+			};
+		};
+
 		#initSelector = () => {
 			if (this.selector)
 			{
+				this.selector.preventBottomSheetDismiss(true);
 				this.selector.enableNavigationBarBorder(false);
 				this.selector.setSearchEnabled(true);
 				this.selector.allowMultipleSelection(this.allowMultipleSelection);
 				this.#setItems(this.#prepareItemsForSelector(this.allContacts));
+				this.selector.on('preventDismiss', this.#onPreventDismiss);
 				this.selector.on('onSelectedChanged', this.#onSelectedChangedHandler);
 				this.selector.on('onListFill', this.onListFillDebounce);
 				this.selector.on('send', ({ item, text, scope }) => {
@@ -229,11 +339,18 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 				if (targetContacts.length > 0)
 				{
 					this.#setItems(targetContacts);
+
+					return;
 				}
-				else
+
+				if (isPhoneNumber(text))
 				{
-					this.#setItems([this.#getEmptyResultItem()]);
+					this.#setItems([this.#getValidPhoneResultItem(getFormattedNumber(text))]);
+
+					return;
 				}
+
+				this.#setItems([this.#getEmptyResultItem()]);
 			}
 		};
 
@@ -246,45 +363,79 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 		};
 
 		#onSelectedChangedHandler = ({ items, text, scope }) => {
-			if (this.selector)
+			Keyboard.dismiss();
+			if (!this.selector)
 			{
-				this.selector.setSendButtonCounter(items.length);
-				this.selector.setSendButtonEnabled(items.length > 0);
-				this.selectedContacts = items.map((item) => {
-					const targetContact = this.allContacts.find((contact) => contact.id === item.id);
-					const phone = item.subtitle;
+				return;
+			}
 
-					return {
-						name: targetContact.displayName,
-						firstName: targetContact.firstName,
-						secondName: targetContact.secondName,
-						phone,
-						countryCode: getCountryCode(phone),
-					};
-				});
-
-				if (this.onSelectionChanged)
+			this.selector.setSendButtonCounter(items.length);
+			this.selector.setSendButtonEnabled(items.length > 0);
+			this.selectedContacts = items.map((item) => {
+				const targetContact = this.allContacts.find((contact) => contact.id === item.id);
+				if (!targetContact)
 				{
-					this.onSelectionChanged();
+					if (isPhoneNumber(item.id))
+					{
+						const phone = item.id;
+
+						return {
+							phone,
+							countryCode: getCountryCode(phone),
+						};
+					}
+
+					return false;
 				}
+				const phone = item.subtitle;
+
+				return {
+					name: targetContact.displayName,
+					firstName: targetContact.firstName,
+					secondName: targetContact.secondName,
+					phone,
+					countryCode: getCountryCode(phone, null),
+				};
+			}).filter(Boolean);
+
+			if (this.onSelectionChanged)
+			{
+				this.onSelectionChanged();
 			}
 		};
 
 		#prepareItemsForSelector = (items) => {
-			return items.map((item) => {
-				return {
-					id: item.id,
-					title: item.displayName,
-					subtitle: item.phoneNumber,
-					useLetterImage: false,
-					sectionCode: SECTION_CODE,
-					imageUrl: item.avatar ?? imageUri,
-				};
-			});
+			return items.map((item) => ({
+				id: item.id,
+				title: item.displayName,
+				subtitle: item.phoneNumber,
+				useLetterImage: false,
+				sectionCode: SECTION_CODE,
+				avatar: this.#getAvatar(item),
+			}));
 		};
+
+		#getAvatar({ avatar, displayName })
+		{
+			return AvatarClass
+				.getAvatar({
+					name: displayName,
+					testId: 'smartphone-contact-selector-avatar',
+					shape: AvatarShape.CIRCLE,
+					uri: avatar || this.getImage(),
+					entityType: this.getAvatarType(),
+				})
+				.getAvatarNativeProps();
+		}
 
 		#getNativeSelectorSections = () => {
 			return [{ id: SECTION_CODE }];
+		};
+
+		#timer = (ms) => {
+			return new Promise((resolve) => {
+				setTimeout(resolve, ms);
+			});
 		};
 
 		#getContacts = async () => {
@@ -297,11 +448,11 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 					'secondName',
 					'phoneNumbers',
 					'avatar',
-				])
-					.catch((error) => {
-						console.error(error);
-					});
+				]).catch((error) => {
+					console.error(error);
+				});
 
+				Notify.hideCurrentIndicator();
 				const contactsWithSeparatedPhoneNumbers = [];
 				if (Array.isArray(initialContacts) && initialContacts.length > 0)
 				{
@@ -324,10 +475,13 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 
 			if (Type.isFunction(contacts.hasDeterminedStatus) && contacts.hasDeterminedStatus())
 			{
-				const toOpenSettings = await this.#showNeedToAddContactsAccessMessage();
-				if (toOpenSettings)
+				if (!this.allowPhoneNumberInput)
 				{
-					Application.openSettings();
+					const toOpenSettings = await this.#showNeedToAddContactsAccessMessage();
+					if (toOpenSettings)
+					{
+						Application.openSettings();
+					}
 				}
 
 				return null;
@@ -346,6 +500,14 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 
 					return this.#getContacts();
 				}
+
+				if (this.allowPhoneNumberInput)
+				{
+					// need to avoid first time open PhoneInputBox keyboard bug
+					await this.#timer(500);
+
+					return null;
+				}
 			}
 
 			const toOpenSettings = await this.#showNeedToAddContactsAccessMessage();
@@ -362,24 +524,45 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 				Alert.confirm(
 					Loc.getMessage('CONTACT_SELECTOR_NEED_TO_ADD_CONTACT_ACCESS_ALERT_TITLE'),
 					Loc.getMessage('CONTACT_SELECTOR_NEED_TO_ADD_CONTACT_ACCESS_ALERT_DESCRIPTION'),
-					[{
-						text: Loc.getMessage('CONTACT_SELECTOR_ALERT_OPEN_SETTINGS_BUTTON_TEXT'),
-						type: 'default',
-						onPress: () => {
-							resolve(true);
+					[
+						{
+							text: Loc.getMessage('CONTACT_SELECTOR_ALERT_OPEN_SETTINGS_BUTTON_TEXT'),
+							type: ButtonType.DEFAULT,
+							onPress: () => {
+								resolve(true);
+							},
 						},
-					},
-					{
-						text: Loc.getMessage('CONTACT_SELECTOR_ALERT_CANCEL_BUTTON_TEXT'),
-						type: 'default',
-						onPress: () => {
-							resolve(false);
+						{
+							text: Loc.getMessage('CONTACT_SELECTOR_ALERT_CANCEL_BUTTON_TEXT'),
+							type: ButtonType.DEFAULT,
+							onPress: () => {
+								resolve(false);
+							},
 						},
-					}],
+					],
 				);
 			});
 		};
 	}
 
-	module.exports = { SmartphoneContactSelector };
+	SmartphoneContactSelector.defaultProps = {
+		allowMultipleSelection: true,
+		closeAfterSendButtonClick: true,
+	};
+
+	SmartphoneContactSelector.propTypes = {
+		allowMultipleSelection: PropTypes.bool,
+		closeAfterSendButtonClick: PropTypes.bool,
+		parentLayout: PropTypes.object,
+		avatarType: PropTypes.instanceOf(AvatarEntityType),
+		onSelectionChanged: PropTypes.func,
+		onSendButtonClickHandler: PropTypes.func,
+		onRequestContactsSuccess: PropTypes.func,
+		itemImageUri: PropTypes.string,
+	};
+
+	module.exports = {
+		SmartphoneContactSelector,
+		AvatarEntityType,
+	};
 });

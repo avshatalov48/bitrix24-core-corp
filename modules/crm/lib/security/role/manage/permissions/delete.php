@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Security\Role\Manage\Permissions;
 
+
 class Delete extends Permission
 {
 	public function code(): string

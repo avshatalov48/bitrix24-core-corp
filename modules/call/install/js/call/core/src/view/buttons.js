@@ -53,10 +53,12 @@ export class SimpleButton
 		this.text = BX.prop.getString(config, "text", "");
 		this.isActive = false;
 		this.counter = BX.prop.getInteger(config, "counter", 0);
+		this.isComingSoon = config.isComingSoon || false;
 
 		this.elements = {
 			root: null,
 			counter: null,
+			comingSoon: null,
 		};
 
 		this.callbacks = {
@@ -98,6 +100,13 @@ export class SimpleButton
 									dataset: {
 										counter: 0,
 										counterType: 'digits',
+									}
+								}),
+								this.elements.comingSoon = Dom.create("span", {
+									props: {className: "bx-messenger-videocall-panel-item-coming-soon"},
+									text: BX.message('CALL_FEATURES_COMING_SOON'),
+									dataset: {
+										visible: this.isComingSoon ? 'Y' : 'N',
 									}
 								}),
 							]
@@ -187,6 +196,15 @@ export class SimpleButton
 		this.elements.counter.dataset.counterType = counterType;
 		this.elements.counter.innerText = counterLabel;
 	};
+
+	setIsComingSoon(isActive)
+	{
+		this.isComingSoon = isActive;
+
+		this.isComingSoon
+			? this.elements.comingSoon.dataset.visible = 'Y'
+			: this.elements.comingSoon.dataset.visible = 'N';
+	}
 }
 
 export class DeviceButton

@@ -1,0 +1,6 @@
+<?php
+$MESS['SIGN_MOBILE_DIALOG_REFUSED_BY_ASSIGNEE_TITLE'] = 'Документ оклонён';
+$MESS['SIGN_MOBILE_DIALOG_REFUSED_BY_ASSIGNEE_BUTTON_SAVE_TITLE'] = 'Скачать';
+$MESS['SIGN_MOBILE_DIALOG_REFUSED_BY_ASSIGNEE_BUTTON_CLOSE'] = 'Закрыть';
+$MESS['SIGN_MOBILE_DIALOG_REFUSED_BY_ASSIGNEE_DESCRIPTION'] = 'Документ [COLOR="#COLOR_OF_HIGHLIGHTED_TEXT#"]#DOCUMENT_TITLE#[/COLOR] отклонён. Вы можете скачать подписанный вами экземпляр';
+$MESS['SIGN_MOBILE_DIALOG_REFUSED_BY_ASSIGNEE_SAVE_FILE_ERROR_TEXT'] = 'Не удалось выполнить действие, перезапустите приложение и попробуйте ещё раз';

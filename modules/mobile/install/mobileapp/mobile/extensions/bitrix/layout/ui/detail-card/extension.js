@@ -1850,6 +1850,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 				qrauth.open({
 					title: tab.title,
 					redirectUrl: tab.desktopUrl,
+					analyticsSection: this.getEntityAnalyticsData()?.analyticsSection || '',
 				});
 			}
 		}

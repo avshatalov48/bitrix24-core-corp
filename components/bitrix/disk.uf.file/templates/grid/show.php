@@ -224,7 +224,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 										?> style="background-image: url('<?=$file["INLINE"]["src"] ?>')"<?
 									}
 									?> alt="<?=htmlspecialcharsbx($file["NAME"])?>"<?
-                                    ?> <?=$file['ATTRIBUTES_FOR_VIEWER']?> <?
+									?> <?=$file['ATTRIBUTES_FOR_VIEWER']?> <?
 									?> border="0"<?
 									?> data-bx-title="<?=htmlspecialcharsbx($file["NAME"])?>"<?
 									?> data-bx-size="<?=$file["SIZE"]?>"<?
@@ -265,6 +265,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 								?> id="<?=$id?>"<?
 								?> src="<?=\Bitrix\Disk\Ui\LazyLoad::getBase64Stub()?>"<?
 								?> alt="<?=htmlspecialcharsbx($file["NAME"])?>"<?
+								?> data-thumb-src="<?=$file["THUMB"]["src"] ?>"<?
 								?> <?=$file['ATTRIBUTES_FOR_VIEWER']?> <?
 								?> border="0"<?
 								?> data-bx-title="<?=htmlspecialcharsbx($file["NAME"])?>"<?

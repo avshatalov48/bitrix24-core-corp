@@ -357,6 +357,7 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 						layout: this.props.layout,
 						redirectUrl: this.smsConfig.contactCenterUrl,
 						redirectUrlTitle: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_SMS_SETTINGS_CONTACT_CENTER'),
+						analyticsSection: 'crm',
 					}),
 					View(
 						{
@@ -393,6 +394,7 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 					redirectUrl,
 					redirectUrlTitle,
 					layout,
+					analyticsSection: 'crm',
 				}),
 			);
 		}

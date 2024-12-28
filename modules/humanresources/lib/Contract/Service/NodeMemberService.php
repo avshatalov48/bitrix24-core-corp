@@ -41,4 +41,37 @@ interface NodeMemberService
 	):  Item\Collection\NodeMemberCollection;
 
 	public function getDefaultHeadRoleEmployees(int $nodeId): Item\Collection\NodeMemberCollection;
+
+	/**
+	 * @param Item\NodeMember $nodeMember
+	 *
+	 * @return Item\NodeMember|null
+	 */
+	public function removeUserMemberFromDepartment(Item\NodeMember $nodeMember): ?Item\NodeMember;
+
+	/**
+	 * @param Item\Node $node
+	 * @param array $departmentUserIds
+	 *
+	 * @return Item\Collection\NodeMemberCollection
+	 */
+	public function saveUsersToDepartment(Item\Node $node, array $departmentUserIds = []): Item\Collection\NodeMemberCollection;
+
+	public function removeUserMembersFromDepartmentByCollection(
+		Item\Collection\NodeMemberCollection $nodeMemberCollection,
+	): Item\Collection\NodeMemberCollection;
+
+	/**
+	 * @param Item\Node $node
+	 * @param array $departmentUserIds
+	 *
+	 * @return array
+	 * @throws \Bitrix\HumanResources\Exception\CreationFailedException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\DB\DuplicateEntryException
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function moveUsersToDepartment(Item\Node $node, array $departmentUserIds = []): Item\Collection\NodeMemberCollection;
 }

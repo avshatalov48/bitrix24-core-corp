@@ -27,6 +27,7 @@
 	const { Feature } = require('feature');
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { CrmNavigator } = require('crm/navigator');
+	const { qrauth } = require('qrauth/utils');
 
 	SkeletonFactory.alias('Kanban', ListItemType.CRM_ENTITY);
 
@@ -154,12 +155,25 @@
 
 			const preparedCounters = {};
 
-			Object.keys(counters).forEach((counter) => {
+			for (const counter of Object.keys(counters))
+			{
 				if (counters[counter] >= 0)
 				{
 					preparedCounters[counter] = counters[counter];
 				}
-			});
+				else if (counters[counter] === -1)
+				{
+					BX.ajax.runAction('crm.counter.list', {
+						data: {
+							entityTypeId: this.kanbanTabRef.props.entityTypeId,
+							extras: data.ex,
+							withExcludeUsers: Boolean(this.props.withExcludeUsers),
+						},
+					});
+
+					break;
+				}
+			}
 
 			if (Object.keys(preparedCounters).length > 0)
 			{
@@ -314,6 +328,7 @@
 					qrauth.open({
 						title,
 						redirectUrl: this.getDesktopPageLink(typeName),
+						analyticsSection: 'crm',
 					});
 				}
 
@@ -514,6 +529,7 @@
 					qrauth.open({
 						title: tab.title,
 						redirectUrl: this.getDesktopPageLink(tab.typeName),
+						analyticsSection: 'crm',
 					});
 				}
 			}
@@ -921,6 +937,7 @@
 					qrauth: {
 						redirectUrl,
 						type: 'crm',
+						analyticsSection: 'crm',
 					},
 				},
 				params: {

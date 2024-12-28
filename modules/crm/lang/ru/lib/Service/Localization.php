@@ -99,6 +99,7 @@ $MESS["CRM_COMMON_HIDDEN_ITEM"] = "Скрытый элемент";
 $MESS["CRM_COMMON_HIDDEN_VALUE"] = "скрыто";
 $MESS["CRM_COMMON_ADDRESS"] = "Адрес";
 
+$MESS["CRM_COMMON_PERMISSIONS_SETTINGS_ITEM"] = 'Права доступа';
 $MESS["CRM_COMMON_READ_ACCESS_DENIED"] = "У Вас нет прав на просмотр этого элемента";
 $MESS["CRM_COMMON_ADD_ACCESS_DENIED"] = "У вас нет прав на добавление нового элемента сущности #ENTITY_DESCRIPTION#";
 
@@ -231,3 +232,7 @@ $MESS["CRM_LOCALIZATION_FIELD_VALUE_WITH_TITLE"] = "#TITLE# #VALUE#";
 $MESS["CRM_LOCALIZATION_DB_TYPE_NOT_SUPPORTED"] = "Это действие не поддерживается используемой базой данных";
 
 $MESS["CRM_PERMISSION_STAGE_TRANSITION_NOT_ALLOWED"] = "Недостаточно прав на смену стадии";
+
+$MESS["CRM_LIST_ALL"] = "Всего";
+$MESS["CRM_LIST_ALL_COUNT"] = "Всего: #COUNT#";
+$MESS["CRM_LIST_SHOW_ROW_COUNT"] = "Показать количество";

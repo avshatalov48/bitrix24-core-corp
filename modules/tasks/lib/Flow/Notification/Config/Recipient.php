@@ -9,6 +9,7 @@ use Bitrix\Tasks\ValueObjectInterface;
 class Recipient implements ValueObjectInterface
 {
 	public const FLOW_OWNER = 'flowOwner';
+	public const TASK_FLOW_OWNER = 'taskFlowOwner';
 
 	private string $type;
 	private int|null $value;
@@ -44,6 +45,7 @@ class Recipient implements ValueObjectInterface
 		return [
 			RoleDictionary::ROLE_RESPONSIBLE,
 			self::FLOW_OWNER,
+			self::TASK_FLOW_OWNER,
 		];
 	}
 }

@@ -2,7 +2,7 @@
 
 namespace Bitrix\Disk\Internals\Collection;
 
-class CustomHeap extends \SplHeap
+class CustomHeap extends \SplHeap implements \JsonSerializable
 {
 	protected \Closure $comparator;
 
@@ -51,5 +51,10 @@ class CustomHeap extends \SplHeap
 		}
 
 		return $data;
+	}
+
+	public function jsonSerialize(): array
+	{
+		return $this->toArray();
 	}
 }

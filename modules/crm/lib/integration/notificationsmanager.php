@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Integration;
 
+use Bitrix\Crm\Integration\Booking\TemplateRepository;
 use Bitrix\Crm\Integration\ImOpenLines\GoToChat;
 use Bitrix\Crm\MessageSender\Channel;
 use Bitrix\Crm\MessageSender\ICanSendMessage;
@@ -540,6 +541,12 @@ class NotificationsManager implements ICanSendMessage
 			Calendar\Notification\NotificationService::TEMPLATE_SHARING_EVENT_CANCELLED,
 			Calendar\Notification\NotificationService::TEMPLATE_SHARING_EVENT_EDITED,
 		];
+
+		$bookingTemplates = TemplateRepository::getCodes();
+		foreach ($bookingTemplates as $bookingTemplate)
+		{
+			$availableTemplates[] = $bookingTemplate;
+		}
 
 		return in_array($templateCode, $availableTemplates, true);
 	}

@@ -1,8 +1,10 @@
-(() => {
-	const require = (ext) => jn.require(ext);
-
+/**
+ * @module selector/widget/factory
+ */
+jn.define('selector/widget/factory', (require, exports, module) => {
 	const { ProjectSelector } = require('selector/widget/entity/socialnetwork/project');
 	const { WarnLogger } = require('utils/logger/warn-logger');
+	const { SocialNetworkUserSelector } = require('selector/widget/entity/socialnetwork/user');
 	const { DepartmentSelector } = require('selector/widget/entity/intranet/department');
 
 	let TaskTagSelector = null;
@@ -45,9 +47,6 @@
 		(new WarnLogger()).warn(e);
 	}
 
-	/**
-	 * @class EntitySelectorFactory.Type
-	 */
 	const Type = {
 		SECTION: 'section',
 		PRODUCT: 'product',
@@ -177,18 +176,17 @@
 		}
 	}
 
-	this.EntitySelectorFactory = EntitySelectorFactory;
-	this.EntitySelectorFactory.Type = Type;
-})();
-
-/**
- * @module selector/widget/factory
- */
-jn.define('selector/widget/factory', (require, exports, module) => {
 	module.exports = {
-		EntitySelectorFactory: this.EntitySelectorFactory,
-
+		EntitySelectorFactory,
 		/** @type EntitySelectorFactory.Type */
-		EntitySelectorFactoryType: this.EntitySelectorFactory.Type,
+		EntitySelectorFactoryType: Type,
 	};
 });
+
+(() => {
+	const require = (ext) => jn.require(ext);
+	const { EntitySelectorFactory, EntitySelectorFactoryType } = require('selector/widget/factory');
+
+	this.EntitySelectorFactory = EntitySelectorFactory;
+	this.EntitySelectorFactory.Type = EntitySelectorFactoryType;
+})();

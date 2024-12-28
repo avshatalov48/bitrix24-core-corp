@@ -1,17 +1,31 @@
-import { Loc, Tag, Type } from 'main.core';
-import { FeatureStorage } from 'sign.feature-storage';
+import { Loc, Type } from 'main.core';
 import './style.css';
+import { type BaseEvent } from 'main.core.events';
 import { Api, MemberRole, type SetupMember } from 'sign.v2.api';
 import { ProviderCode } from 'sign.v2.b2e.company-selector';
 import { DocumentSend } from 'sign.v2.b2e.document-send';
 import { DocumentSetup } from 'sign.v2.b2e.document-setup';
 import { Parties as CompanyParty } from 'sign.v2.b2e.parties';
-import { UserParty } from 'sign.v2.b2e.user-party';
+import { type CardItem, UserParty } from 'sign.v2.b2e.user-party';
 import { DocumentInitiated, DocumentInitiatedType } from 'sign.v2.document-setup';
 import { SectionType } from 'sign.v2.editor';
 import { SignSettingsItemCounter } from 'sign.v2.helper';
-import { isTemplateMode, type SignOptions, type SignOptionsConfig, SignSettings } from 'sign.v2.sign-settings';
+import {
+	decorateResultBeforeCompletion,
+	isTemplateMode,
+	type SignOptions,
+	type SignOptionsConfig,
+	SignSettings,
+} from 'sign.v2.sign-settings';
 import type { Metadata } from 'ui.wizard';
+import { B2EFeatureConfig } from './type';
+
+export type { B2EFeatureConfig };
+
+type SetupMembersResponse = {
+	members: Array<SetupMember>,
+	currentParty: number,
+};
 
 export class B2ESignSettings extends SignSettings
 {
@@ -27,12 +41,22 @@ export class B2ESignSettings extends SignSettings
 			complete: { className: 'ui-btn-success' },
 			swapButtons: true,
 		});
-		const { blankSelectorConfig, documentSendConfig, userPartyConfig } = this.#prepareConfig(signOptions);
+		const {
+			b2eFeatureConfig,
+			blankSelectorConfig,
+			documentSendConfig,
+			userPartyConfig,
+		} = this.#prepareConfig(signOptions);
+
 		blankSelectorConfig.hideValidationParty = isTemplateMode(this.documentMode);
 
 		this.documentSetup = new DocumentSetup(blankSelectorConfig);
 		this.documentSend = new DocumentSend(documentSendConfig);
-		this.#companyParty = new CompanyParty(blankSelectorConfig);
+		this.#companyParty = new CompanyParty({
+			...blankSelectorConfig,
+			documentInitiatedType: signOptions.initiatedByType,
+			documentMode: signOptions.documentMode,
+		}, b2eFeatureConfig.hcmLinkAvailable);
 		this.#api = new Api();
 		this.#userParty = new UserParty({ mode: 'edit', ...userPartyConfig });
 		this.subscribeOnEvents();
@@ -61,13 +85,40 @@ export class B2ESignSettings extends SignSettings
 		this.documentSend.subscribe('enableBack', () => {
 			this.wizard.toggleBtnActiveState('back', false);
 		});
+		this.documentSend.subscribe('enableComplete', () => {
+			this.wizard.toggleBtnActiveState('complete', false);
+		});
+		this.documentSend.subscribe('disableComplete', () => {
+			this.wizard.toggleBtnActiveState('complete', true);
+		});
+		this.documentSend.subscribe(
+			this.documentSend.events.onTemplateComplete,
+			(event: BaseEvent<{ templateId: number }>) => {
+				if (this.isTemplateMode() && !this.isEditMode())
+				{
+					const templateId = event.getData().templateId;
+					this.getAnalytics().send({
+						event: 'turn_on_off_template',
+						type: 'auto',
+						c_element: 'on',
+						p5: `templateId_${templateId}`,
+					});
+					this.getAnalytics().send({
+						event: 'click_save_template',
+						c_element: 'create_button',
+						p5: `templateId_${templateId}`,
+						status: 'success',
+					});
+				}
+			},
+		);
 	}
 
-	async #setupParties(): Array
+	async #setupParties(): Promise<Array<Object>>
 	{
 		const uid = this.#documentUid;
 		const { representative } = this.#companyParty.getParties();
-		const members = this.#makeSetupMembers();
+		const { members, signerParty } = this.#makeSetupMembers();
 
 		await this.#api.setupB2eParties(uid, representative.entityId, members);
 		const membersData = await this.#api.loadMembers(uid);
@@ -75,6 +126,8 @@ export class B2ESignSettings extends SignSettings
 		{
 			throw new Error('Members are empty');
 		}
+
+		await this.#syncMembers(uid, signerParty);
 
 		return membersData.map((memberData) => {
 			return {
@@ -85,6 +138,26 @@ export class B2ESignSettings extends SignSettings
 				entityId: memberData?.entityId ?? null,
 				role: memberData?.role ?? null,
 			};
+		});
+	}
+
+	async #syncMembers(uid: string, signerParty: number): Promise<void>
+	{
+		let syncFinished = false;
+		while (!syncFinished)
+		{
+			// eslint-disable-next-line no-await-in-loop
+			const response = await this.#api.syncB2eMembersWithDepartments(uid, signerParty);
+			syncFinished = response.syncFinished;
+			// eslint-disable-next-line no-await-in-loop
+			await this.#sleep(1000);
+		}
+	}
+
+	#sleep(ms: Number): Promise
+	{
+		return new Promise((resolve) => {
+			setTimeout(resolve, ms);
 		});
 	}
 
@@ -108,26 +181,25 @@ export class B2ESignSettings extends SignSettings
 		};
 	}
 
-	#getSigner(currentParty: number, userId: number): SetupMember
+	#getSigner(currentParty: number, entity: CardItem): SetupMember
 	{
 		return {
-			entityType: 'user',
-			entityId: userId,
+			entityType: entity.entityType,
+			entityId: entity.entityId,
 			party: currentParty,
 			role: MemberRole.signer,
 		};
 	}
 
-	#makeSetupMembers(): Array<SetupMember>
+	#makeSetupMembers(): SetupMembersResponse
 	{
 		const { company, validation } = this.#companyParty.getParties();
 
-		const userPartyIds = this.#userParty.getUserIds();
-		let members = [];
+		const userPartyEntities = this.#userParty.getEntities();
 
 		let currentParty = this.#isDocumentInitiatedByEmployee ? 2 : 1;
 
-		members = validation.map((item): SetupMember => {
+		const members = validation.map((item): SetupMember => {
 			const result = { ...item, party: currentParty };
 			currentParty++;
 
@@ -135,14 +207,15 @@ export class B2ESignSettings extends SignSettings
 		});
 		members.push(this.#getAssignee(currentParty, company.entityId));
 
-		if (!this.isTemplateMode())
+		let signerParty = currentParty;
+		if (this.isDocumentMode())
 		{
-			const signerParty = this.#isDocumentInitiatedByEmployee ? 1 : currentParty + 1;
-			const signers = userPartyIds.map((userId) => this.#getSigner(signerParty, userId));
+			signerParty = this.#isDocumentInitiatedByEmployee ? 1 : currentParty + 1;
+			const signers = userPartyEntities.map((entity) => this.#getSigner(signerParty, entity));
 			members.push(...signers);
 		}
 
-		return members;
+		return { members, signerParty };
 	}
 
 	#parseMembers(loadedMembers: SetupMember[]): { [$Keys<typeof MemberRole>]: number[]; }
@@ -174,12 +247,13 @@ export class B2ESignSettings extends SignSettings
 			return false;
 		}
 
-		const { entityId, representativeId, companyUid } = setupData;
+		const { entityId, representativeId, companyUid, hcmLinkCompanyId } = setupData;
 		this.documentSend.documentData = setupData;
 		this.editor.documentData = setupData;
 		this.#companyParty.setEntityId(entityId);
 		if (companyUid)
 		{
+			this.#companyParty.setLastSavedIntegrationId(hcmLinkCompanyId);
 			this.#companyParty.loadCompany(companyUid);
 		}
 
@@ -209,7 +283,17 @@ export class B2ESignSettings extends SignSettings
 		return true;
 	}
 
-	#getSetupStep(signSettings: B2ESignSettings): $Values<typeof Metadata>
+	async applyTemplateData(templateUid: string): Promise<boolean>
+	{
+		super.applyTemplateData(templateUid);
+
+		this.documentSetup.setupData.templateUid = templateUid;
+		this.documentSend.setExistingTemplate();
+
+		return true;
+	}
+
+	#getSetupStep(signSettings: B2ESignSettings, documentUid?: string): $Values<Metadata>
 	{
 		return {
 			get content(): HTMLElement
@@ -246,8 +330,13 @@ export class B2ESignSettings extends SignSettings
 		};
 	}
 
-	#getCompanyStep(signSettings: B2ESignSettings): $Values<typeof Metadata>
+	#getCompanyStep(signSettings: B2ESignSettings): $Values<Metadata>
 	{
+		const titleLocCode = this.isTemplateMode()
+			? 'SIGN_SETTINGS_B2E_ROUTES'
+			: 'SIGN_SETTINGS_B2E_COMPANY'
+		;
+
 		return {
 			get content(): HTMLElement
 			{
@@ -256,27 +345,24 @@ export class B2ESignSettings extends SignSettings
 
 				return layout;
 			},
-			title: Loc.getMessage('SIGN_SETTINGS_B2E_COMPANY'),
+			title: Loc.getMessage(titleLocCode),
 			beforeCompletion: async () => {
 				const { uid } = this.documentSetup.setupData;
 				try
 				{
 					await this.#companyParty.save(uid);
+					this.documentSetup.setupData.integrationId = this.#companyParty.getSelectedIntegrationId();
+
 					this.#setSecondPartySectionVisibility();
 
 					if (this.isTemplateMode())
 					{
-						const entityData = await this.#setupParties();
-						this.editor.entityData = entityData;
-
+						this.editor.entityData = await this.#setupParties();
 						const { title, isTemplate, entityId, externalId, templateUid } = this.documentSetup.setupData;
 						const blocks = await this.documentSetup.loadBlocks(uid);
+						this.#executeDocumentSendActions({ uid, title, blocks, externalId, templateUid });
 
-						const documentSendData = { uid, title, blocks, externalId, templateUid };
-						this.#executeDocumentSendActions(documentSendData, entityData);
-
-						const editorData = { isTemplate, uid, blocks, entityId };
-						this.#executeEditorActions(editorData);
+						this.#executeEditorActions({ isTemplate, uid, blocks, entityId });
 					}
 				}
 				catch
@@ -289,7 +375,7 @@ export class B2ESignSettings extends SignSettings
 		};
 	}
 
-	#getEmployeeStep(signSettings: B2ESignSettings): $Values<typeof Metadata>
+	#getEmployeeStep(signSettings: B2ESignSettings): $Values<Metadata>
 	{
 		return {
 			get content(): HTMLElement
@@ -309,17 +395,14 @@ export class B2ESignSettings extends SignSettings
 						return isValid;
 					}
 
-					const entityData = await this.#setupParties();
-					this.editor.entityData = entityData;
+					this.editor.entityData = await this.#setupParties();
 
-					const { uid, title, isTemplate, externalId, entityId } = this.documentSetup.setupData;
+					const { uid, title, isTemplate, externalId, entityId, integrationId } = this.documentSetup.setupData;
 					const blocks = await this.documentSetup.loadBlocks(uid);
 
-					const documentSendData = { uid, title, blocks, externalId };
-					this.#executeDocumentSendActions(documentSendData, entityData);
+					this.#executeDocumentSendActions({ uid, title, blocks, externalId, integrationId });
 
-					const editorData = { isTemplate, uid, blocks, entityId };
-					this.#executeEditorActions(editorData);
+					this.#executeEditorActions({ isTemplate, uid, blocks, entityId });
 
 					return true;
 				}
@@ -333,23 +416,23 @@ export class B2ESignSettings extends SignSettings
 		};
 	}
 
-	async #executeDocumentSendActions(documentSendData, entityData): void
+	async #executeDocumentSendActions(documentSendData: Object): Promise<void>
 	{
 		const partiesData = this.#companyParty.getParties();
 		Object.assign(partiesData, {
-			employees: this.#userParty.getUserIds().map((userId) => {
+			employees: this.#userParty.getEntities().map((entity) => {
 				return {
-					entityType: 'user',
-					entityId: userId,
+					entityType: entity.entityType,
+					entityId: entity.entityId,
 				};
 			}),
 		});
 		this.documentSend.documentData = documentSendData;
+		this.documentSend.resetUserPartyPopup();
 		this.documentSend.setPartiesData(partiesData);
-		this.documentSend.members = entityData;
 	}
 
-	async #executeEditorActions(editorData): void
+	async #executeEditorActions(editorData: Object): Promise<void>
 	{
 		this.editor.documentData = editorData;
 		await this.editor.waitForPagesUrls();
@@ -358,8 +441,13 @@ export class B2ESignSettings extends SignSettings
 		await this.editor.show();
 	}
 
-	#getSendStep(signSettings: B2ESignSettings): $Values<typeof Metadata>
+	#getSendStep(signSettings: B2ESignSettings): $Values<Metadata>
 	{
+		const titleLocCode = this.isTemplateMode()
+			? 'SIGN_SETTINGS_SEND_DOCUMENT_CREATE'
+			: 'SIGN_SETTINGS_SEND_DOCUMENT'
+		;
+
 		return {
 			get content(): HTMLElement
 			{
@@ -368,24 +456,27 @@ export class B2ESignSettings extends SignSettings
 
 				return layout;
 			},
-			title: Loc.getMessage('SIGN_SETTINGS_SEND_DOCUMENT'),
+			title: Loc.getMessage(titleLocCode),
 			beforeCompletion: () => this.documentSend.sendForSign(),
 		};
 	}
 
-	getStepsMetadata(signSettings: B2ESignSettings): Metadata
+	getStepsMetadata(signSettings: this, documentUid: ?string, templateUid?: string): Metadata
 	{
+		this.#sendAnalyticsOnStart(documentUid);
 		const steps = {
-			setup: this.#getSetupStep(signSettings),
+			setup: this.#getSetupStep(signSettings, documentUid),
 			company: this.#getCompanyStep(signSettings),
 		};
 
-		if (!this.isTemplateMode())
+		if (this.isDocumentMode())
 		{
 			steps.employees = this.#getEmployeeStep(signSettings);
 		}
 
 		steps.send = this.#getSendStep(signSettings);
+
+		this.#decorateStepsBeforeCompletionWithAnalytics(steps, documentUid);
 
 		return steps;
 	}
@@ -394,42 +485,164 @@ export class B2ESignSettings extends SignSettings
 	{
 		if (this.isTemplateMode())
 		{
-			BX.SidePanel.Instance.close();
-
-			BX.SidePanel.Instance.open('sign-settings-template-created', {
-				contentCallback: () => {
-					return Promise.resolve(this.getTemplateStatusLayout());
-				},
-			});
-
 			return;
 		}
 		super.onComplete();
 	}
 
-	getTemplateStatusLayout(): HTMLElement
+	isTemplateCreateMode(): boolean
 	{
-		return Tag.render`
-			<div class="sign-b2e-template-status">
-				<div class="sign-b2e-template-status-inner">
-					<div class="sign-b2e-template-status-img"></div>
-					<div class="sign-b2e-template-status-title">${Loc.getMessage('SIGN_SETTINGS_TEMPLATE_CREATED')}</div>
-					<button class="ui-btn ui-btn-light-border ui-btn-round" onclick="BX.SidePanel.Instance.close();">${Loc.getMessage('SIGN_SETTINGS_TEMPLATES_LIST')}</button>
-				</div>
-			 </div>
-		`;
+		return isTemplateMode(this.documentMode) && !this.isEditMode();
 	}
 
 	#setSecondPartySectionVisibility(): void
 	{
 		const selectedProvider = this.#companyParty.getSelectedProvider();
-		const isSecondPartySectionVisible = selectedProvider.code !== ProviderCode.sesRu
-			|| isTemplateMode(this.documentMode)
+
+		const isNotSesRuProvider = selectedProvider.code !== ProviderCode.sesRu;
+		const isInitiatedByEmployee = this.documentSetup.setupData.initiatedByType === DocumentInitiated.employee;
+		const isInitiatedByCompany = this.documentSetup.setupData.initiatedByType === DocumentInitiated.company;
+
+		const isSecondPartySectionVisible =	isNotSesRuProvider
+			|| (isTemplateMode(this.documentMode) && isInitiatedByEmployee)
 		;
+
+		const isHcmLinkIntegrationSectionVisible = this.documentSetup.setupData.integrationId > 0
+			|| isInitiatedByCompany
+		;
+
+		this.editor.setSectionVisibilityByType(
+			SectionType.HcmLinkIntegration,
+			isHcmLinkIntegrationSectionVisible,
+		);
 
 		this.editor.setSectionVisibilityByType(
 			SectionType.SecondParty,
 			isSecondPartySectionVisible,
 		);
+	}
+
+	#decorateStepsBeforeCompletionWithAnalytics(steps: Metadata, documentUid?: string): void
+	{
+		const analytics = this.getAnalytics();
+
+		if (Type.isPlainObject(steps.setup))
+		{
+			steps.setup.beforeCompletion = decorateResultBeforeCompletion(
+				steps.setup.beforeCompletion,
+				() => this.#sendAnalyticsOnSetupStep(analytics, documentUid),
+				() => this.#sendAnalyticsOnSetupError(analytics),
+			);
+		}
+
+		if (Type.isPlainObject(steps.company))
+		{
+			steps.company.beforeCompletion = decorateResultBeforeCompletion(
+				steps.company.beforeCompletion,
+				() => this.#sendAnalyticsOnCompanyStepSuccess(analytics),
+				() => this.#sendAnalyticsOnCompanyStepError(analytics),
+			);
+		}
+
+		if (Type.isPlainObject(steps.send))
+		{
+			steps.send.beforeCompletion = decorateResultBeforeCompletion(
+				steps.send.beforeCompletion,
+				() => this.#sendAnalyticsOnSendStepSuccess(analytics, this.documentSetup.setupData.uid),
+				() => this.#sendAnalyticsOnSendStepError(analytics, this.documentSetup.setupData.uid),
+			);
+		}
+	}
+
+	#sendAnalyticsOnSetupStep(analytics: Analytics, documentUid?: string): void
+	{
+		if (this.isTemplateCreateMode())
+		{
+			analytics.send({ event: 'proceed_step_document', c_element: 'create_button', status: 'success' });
+			analytics.send({
+				event: 'turn_on_off_template',
+				type: 'auto',
+				c_element: 'off',
+				p5: `templateId_${this.documentSetup.setupData.templateId}`,
+			});
+		}
+	}
+
+	#sendAnalyticsOnSetupError(analytics: Analytics): void
+	{
+		if (this.isTemplateCreateMode())
+		{
+			analytics.send({ event: 'proceed_step_document', status: 'error', c_element: 'create_button' });
+		}
+	}
+
+	#sendAnalyticsOnCompanyStepSuccess(analytics: Analytics): void
+	{
+		if (this.isTemplateCreateMode())
+		{
+			analytics.send({ event: 'proceed_step_route', status: 'success', c_element: 'create_button' });
+		}
+	}
+
+	#sendAnalyticsOnCompanyStepError(analytics: Analytics): void
+	{
+		if (this.isTemplateCreateMode())
+		{
+			analytics.send({ event: 'proceed_step_route', status: 'error', c_element: 'create_button' });
+		}
+	}
+
+	async #sendAnalyticsOnSendStepSuccess(analytics: Analytics, documentUid: string): void
+	{
+		if (this.isDocumentMode())
+		{
+			analytics.sendWithProviderTypeAndDocId({
+				event: 'sent_document_to_sign',
+				c_element: 'create_button',
+				status: 'success',
+			}, documentUid);
+		}
+	}
+
+	async #sendAnalyticsOnSendStepError(analytics: Analytics, documentUid: string): void
+	{
+		if (this.isTemplateCreateMode())
+		{
+			this.getAnalytics().send({
+				event: 'click_save_template',
+				status: 'error',
+				c_element: 'create_button',
+			});
+		}
+
+		if (this.isDocumentMode())
+		{
+			analytics.sendWithProviderTypeAndDocId({
+				event: 'sent_document_to_sign',
+				c_element: 'create_button',
+				status: 'error',
+			}, documentUid);
+		}
+	}
+
+	#sendAnalyticsOnStart(documentUid?: string): void
+	{
+		const analytics = this.getAnalytics();
+		if (this.isTemplateCreateMode())
+		{
+			analytics.send({ event: 'open_wizard', c_element: 'create_button' });
+		}
+		else if (this.isDocumentMode())
+		{
+			const context = { event: 'click_create_document', c_element: 'create_button' };
+			if (this.isEditMode() && Type.isStringFilled(documentUid))
+			{
+				analytics.sendWithDocId(context, documentUid);
+			}
+			else
+			{
+				analytics.send(context);
+			}
+		}
 	}
 }

@@ -285,7 +285,6 @@ jn.define('calendar/layout/sharing-joint/link-page', (require, exports, module) 
 		dotsContainer: {
 			height: '100%',
 			justifyContent: 'center',
-			marginLeft: 'auto',
 			paddingHorizontal: 16,
 		},
 		dotsIcon: {

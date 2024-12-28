@@ -218,6 +218,7 @@ jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, mo
 					description: Loc.getMessage('M_RP_F_PHONE_NOT_CONFIRMED_WARNING_TEXT'),
 					redirectUrl: `/shop/stores/?force_verify_site_id=${this.state.connectedSiteId}`,
 					redirectTitle: Loc.getMessage('M_RP_F_PHONE_CONFIRMATION_WARNING_TITLE'),
+					analyticsSection: 'crm',
 				}),
 			);
 		}

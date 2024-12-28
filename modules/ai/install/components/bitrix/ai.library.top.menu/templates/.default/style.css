@@ -1,0 +1,6 @@
+.pagetitle-above{
+	margin-top: 25px;
+}
+.main-buttons.--default{
+	border-radius: var(--ui-border-radius-md);
+}

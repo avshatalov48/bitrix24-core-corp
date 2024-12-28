@@ -18,7 +18,7 @@ jn.define('im/messenger/core/collab/application', (require, exports, module) => 
 		async init()
 		{
 			// Collab uses the immobile-messenger-store and must be initialized after chat
-			await EntityReady.wait('chat-core');
+			await EntityReady.wait('chat');
 
 			return super.init();
 		}

@@ -3,7 +3,7 @@
 return [
 	'extensions' => [
 		'alert',
-		'analytics',
+        'analytics',
 		'asset-manager',
 		'feature',
 		'haptics',

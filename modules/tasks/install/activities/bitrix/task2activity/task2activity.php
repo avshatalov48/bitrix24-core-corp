@@ -7,6 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Bizproc\FieldType;
+use Bitrix\Bizproc\Result\ResultDto;
 use Bitrix\Crm\Activity\Provider\Tasks\Task;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -33,6 +34,7 @@ class CBPTask2Activity extends CBPActivity implements
 		'DESCRIPTION',
 		'PRIORITY',
 		'GROUP_ID',
+		'FLOW_ID',
 		'ALLOW_CHANGE_DEADLINE',
 		'TASK_CONTROL',
 		'ADD_IN_REPORT',
@@ -145,13 +147,13 @@ class CBPTask2Activity extends CBPActivity implements
 			$fields["SITE_ID"] = SITE_ID;
 		}
 
-		if(!is_array($fields['UF_CRM_TASK'] ?? null))
+		if (!is_array($fields['UF_CRM_TASK'] ?? null))
 		{
 			$fields['UF_CRM_TASK'] = isset($fields['UF_CRM_TASK']) ? [$fields['UF_CRM_TASK']] : [];
 		}
 		if ($this->AUTO_LINK_TO_CRM_ENTITY && $documentId[0] === 'crm' && CModule::IncludeModule('crm'))
 		{
-			$documentId   = $this->GetDocumentId();
+			$documentId = $this->GetDocumentId();
 			$documentType = $this->GetDocumentType();
 
 			$letter = CCrmOwnerTypeAbbr::ResolveByTypeID(CCrmOwnerType::ResolveID($documentType[2]));
@@ -166,9 +168,7 @@ class CBPTask2Activity extends CBPActivity implements
 			if (empty($fields['GROUP_ID']))
 			{
 				$res = \CTasks::GetList(
-					array(),
-					['ID' => (int) $fields['PARENT_ID'], 'CHECK_PERMISSIONS' => 'N'],
-					array('GROUP_ID')
+					[], ['ID' => (int)$fields['PARENT_ID'], 'CHECK_PERMISSIONS' => 'N'], ['GROUP_ID']
 				);
 				if ($res && ($task = $res->fetch()))
 				{
@@ -176,10 +176,10 @@ class CBPTask2Activity extends CBPActivity implements
 				}
 			}
 		}
-		elseif(!$this->AsChildTask && CBPHelper::isEmptyValue($fields['PARENT_ID']) === false)
+		elseif (!$this->AsChildTask && CBPHelper::isEmptyValue($fields['PARENT_ID']) === false)
 		{
 			$parentId = is_array($fields['PARENT_ID']) ? reset($fields['PARENT_ID']) : $fields['PARENT_ID'];
-			if(
+			if (
 				!is_numeric($parentId)
 				|| is_null(\Bitrix\Tasks\Integration\Bizproc\Document\Task::getDocument($parentId))
 			)
@@ -188,7 +188,9 @@ class CBPTask2Activity extends CBPActivity implements
 				$parentIdModifiedProperty['BaseType'] = 'string';
 				if ($this->workflow->isDebug())
 				{
-					$this->writeDebugInfo($this->getDebugInfo(['PARENT_ID' => $parentId], ['PARENT_ID' => $parentIdModifiedProperty]));
+					$this->writeDebugInfo(
+						$this->getDebugInfo(['PARENT_ID' => $parentId], ['PARENT_ID' => $parentIdModifiedProperty])
+					);
 				}
 
 				$this->WriteToTrackingService(
@@ -199,19 +201,17 @@ class CBPTask2Activity extends CBPActivity implements
 
 				return false;
 			}
-			elseif(empty($fields['GROUP_ID']))
+			elseif (empty($fields['GROUP_ID']))
 			{
 				$res = \CTasks::GetList(
-					array(),
-					['ID' => (int) $parentId, 'CHECK_PERMISSIONS' => 'N'],
-					array('GROUP_ID')
+					[], ['ID' => (int)$parentId, 'CHECK_PERMISSIONS' => 'N'], ['GROUP_ID']
 				);
 				if ($res && ($task = $res->fetch()))
 				{
 					$fields['GROUP_ID'] = $task['GROUP_ID'];
 				}
 			}
-			$fields['PARENT_ID'] = (int) $parentId;
+			$fields['PARENT_ID'] = (int)$parentId;
 		}
 
 		$arUnsetFields = [];
@@ -231,15 +231,14 @@ class CBPTask2Activity extends CBPActivity implements
 
 		// Check fields for "white" list
 		$arFieldsChecked = [];
+		$rawFields = $this->getRawProperty('Fields');
 		foreach (array_keys($fields) as $fieldName)
 		{
 			if (
 				in_array($fieldName, static::$arAllowedTasksFieldNames, true)
-				||
-				\Bitrix\Tasks\Util\Userfield::isUFKey($fieldName)
+				|| \Bitrix\Tasks\Util\Userfield::isUFKey($fieldName)
 			)
 			{
-				$rawFields = $this->getRawProperty('Fields');
 				if ($fieldName === 'UF_TASK_WEBDAV_FILES' && Loader::includeModule('disk'))
 				{
 					$canUseDisk = \Bitrix\Disk\Configuration::isSuccessfullyConverted();
@@ -307,8 +306,7 @@ class CBPTask2Activity extends CBPActivity implements
 			{
 				$this->writeDebugInfo(
 					$this->getDebugInfo(
-						['CREATED_BY' => $arFieldsChecked['CREATED_BY']],
-						['CREATED_BY' => $logMap['CREATED_BY']]
+						['CREATED_BY' => $arFieldsChecked['CREATED_BY']], ['CREATED_BY' => $logMap['CREATED_BY']]
 					)
 				);
 			}
@@ -322,6 +320,26 @@ class CBPTask2Activity extends CBPActivity implements
 			return false;
 		}
 
+		if (isset($arFieldsChecked['GROUP_ID']))
+		{
+			$arFieldsChecked['GROUP_ID'] = (int)CBPHelper::stringify($arFieldsChecked['GROUP_ID']);
+		}
+
+		if (!CBPHelper::isEmptyValue($rawFields['FLOW_ID']))
+		{
+			$arFieldsChecked['FLOW_ID'] = (int)CBPHelper::stringify($arFieldsChecked['FLOW_ID']);
+			if ($arFieldsChecked['FLOW_ID'] <= 0)
+			{
+				$this->WriteToTrackingService(
+					Loc::getMessage('BPTA1A_TASK_FLOW_PRESENCE_ERROR'),
+					0,
+					CBPTrackingType::Error
+				);
+
+				return false;
+			}
+		}
+
 		$allDateFields = array_merge(
 			['DEADLINE', 'END_DATE_PLAN', 'START_DATE_PLAN'],
 			\Bitrix\Tasks\Integration\Bizproc\Document\Task::getFieldsCreatedByUser('datetime')
@@ -329,7 +347,7 @@ class CBPTask2Activity extends CBPActivity implements
 		foreach ($allDateFields as $dateField)
 		{
 			$dateFieldName = is_array($dateField) ? $dateField['Name'] : $dateField;
-			$checkedDateField = $this->assertDateField($dateField, $arFieldsChecked[$dateFieldName] ??  null);
+			$checkedDateField = $this->assertDateField($dateField, $arFieldsChecked[$dateFieldName] ?? null);
 
 			// In some cases (crm), we got time in user timezone
 			if ($dateFieldName === 'DEADLINE')
@@ -341,8 +359,7 @@ class CBPTask2Activity extends CBPActivity implements
 				}
 			}
 
-
-			if(!$checkedDateField)
+			if (!$checkedDateField)
 			{
 				unset($arFieldsChecked[$dateFieldName]);
 			}
@@ -357,7 +374,7 @@ class CBPTask2Activity extends CBPActivity implements
 
 		if ($fields['ALLOW_TIME_TRACKING'] === 'Y')
 		{
-			$arFieldsChecked['TIME_ESTIMATE'] = (int) $this->TimeEstimateHour * 3600 + (int) $this->TimeEstimateMin * 60;
+			$arFieldsChecked['TIME_ESTIMATE'] = (int)$this->TimeEstimateHour * 3600 + (int)$this->TimeEstimateMin * 60;
 		}
 
 		$prevOccurAsUserId = \Bitrix\Tasks\Util\User::getOccurAsId(); // null or positive integer
@@ -365,7 +382,7 @@ class CBPTask2Activity extends CBPActivity implements
 
 		$result = false;
 		$task = null;
-		$errors = array();
+		$errors = [];
 		try
 		{
 			if ($this->workflow->isDebug())
@@ -377,21 +394,19 @@ class CBPTask2Activity extends CBPActivity implements
 
 			// todo: use \Bitrix\Tasks\Item\Task here
 			$task = CTaskItem::add(
-				$arFieldsChecked,
-				\Bitrix\Tasks\Util\User::getAdminId(),
-				[
-					'SPAWNED_BY_WORKFLOW' => true,
-					'SKIP_TIMEZONE' => [
-						'DEADLINE',
-					],
-				]
+				$arFieldsChecked, \Bitrix\Tasks\Util\User::getAdminId(), [
+									'SPAWNED_BY_WORKFLOW' => true,
+									'SKIP_TIMEZONE' => [
+										'DEADLINE',
+									],
+								]
 			);
 			$result = $task->getId();
 		}
-		catch(TasksException $e)
+		catch (TasksException $e)
 		{
 			// todo: incapsulate this
-			if($e->checkOfType(TasksException::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE))
+			if ($e->checkOfType(TasksException::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE))
 			{
 				$errors = unserialize($e->getMessage(), ['allowed_classes' => false]);
 			}
@@ -403,17 +418,20 @@ class CBPTask2Activity extends CBPActivity implements
 		{
 			if (count($errors) > 0)
 			{
-				$errorDesc = array();
-				if(is_array($errors) && !empty($errors))
+				$errorDesc = [];
+				if (is_array($errors) && !empty($errors))
 				{
-					foreach($errors as $error)
+					foreach ($errors as $error)
 					{
-						$errorDesc[] = $error['text'].' ('.$error['id'].')';
+						$errorDesc[] = $error['text'] . ' (' . $error['id'] . ')';
 					}
 				}
 
 				$this->WriteToTrackingService(
-					Loc::getMessage("BPSA_TRACK_ERROR").(!empty($errorDesc) ? ' '.implode(', ', $errorDesc) : ''),
+					html_entity_decode(
+						Loc::getMessage("BPSA_TRACK_ERROR") . (!empty($errorDesc) ? ' ' . implode(', ', $errorDesc)
+							: '')
+					),
 					0,
 					CBPTrackingType::Error
 				);
@@ -450,15 +468,16 @@ class CBPTask2Activity extends CBPActivity implements
 				if ($this->workflow->isDebug())
 				{
 					$map = $this->getDebugInfo(
-						['CHECK_LIST_ITEMS' => $checkListItems],
-						[
-							"CHECK_LIST_ITEMS" => [
-								"Name" => Loc::getMessage("BPSA_CHECK_LIST_ITEMS"),
-								"Type" => "string",
-								"Required" => false,
-								"Multiple" => true,
-							],
-						]
+						['CHECK_LIST_ITEMS' => $checkListItems], [
+																   "CHECK_LIST_ITEMS" => [
+																	   "Name" => Loc::getMessage(
+																		   "BPSA_CHECK_LIST_ITEMS"
+																	   ),
+																	   "Type" => "string",
+																	   "Required" => false,
+																	   "Multiple" => true,
+																   ],
+															   ]
 					);
 					$this->writeDebugInfo($map);
 				}
@@ -469,12 +488,35 @@ class CBPTask2Activity extends CBPActivity implements
 		$this->markAsBPTask($result);
 		$this->WriteToTrackingService(str_replace("#VAL#", $result, Loc::getMessage("BPSA_TRACK_OK")));
 
+		if (
+			$this->TaskId
+			&& (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024')
+			&& method_exists($this, 'fixResult')
+		)
+		{
+			$this->fixResult($this->makeResultFromId($this->TaskId));
+		}
+
 		if ($this->workflow->isDebug())
 		{
 			$this->logDebugTaskUrl($result);
 		}
 
 		return $result > 0;
+	}
+
+	public function makeResultFromId(int $id): ResultDto
+	{
+		$resultDocumentId = Tasks\Integration\Bizproc\Document\Task::resolveDocumentId($id);
+		$resultDocumentType = $resultDocumentId;
+		array_pop($resultDocumentType);
+		$resultDocumentType[] = 'TASK';
+		$resultValue = [
+			'DOCUMENT_ID' => $resultDocumentId,
+			'DOCUMENT_TYPE' => $resultDocumentType,
+		];
+
+		return new ResultDto(get_class($this), $resultValue);
 	}
 
 	protected function canUploadFilesToDisk($value) : bool
@@ -572,7 +614,7 @@ class CBPTask2Activity extends CBPActivity implements
 			$parameters[\Bitrix\Tasks\Internals\Task\ParameterTable::PARAM_RESULT_REQUIRED] = [
 				'VALUE' => CBPHelper::getBool($fields['REQUIRED_RESULT']) ? 'Y' : 'N',
 				'CODE' => \Bitrix\Tasks\Internals\Task\ParameterTable::PARAM_RESULT_REQUIRED,
-				'ID' => '0'
+				'ID' => '0',
 			];
 
 			unset($fields['REQUIRED_RESULT']);
@@ -611,7 +653,7 @@ class CBPTask2Activity extends CBPActivity implements
 					'OWNER_ID' => $documentId,
 					'OWNER_TYPE_ID' => CCrmOwnerType::ResolveID($documentType),
 					'TYPE_ID' => CCrmActivityType::Task,
-					'ASSOCIATED_ENTITY_ID' => $taskId
+					'ASSOCIATED_ENTITY_ID' => $taskId,
 				],
 				false,
 				false,
@@ -834,7 +876,7 @@ class CBPTask2Activity extends CBPActivity implements
 			'workflowVariables' => $arWorkflowVariables,
 			'currentValues' => $arCurrentValues,
 			'formName' => $formName,
-			'siteId' => $currentSiteId
+			'siteId' => $currentSiteId,
 		));
 
 		$map = static::getPropertiesDialogMap();
@@ -954,10 +996,26 @@ class CBPTask2Activity extends CBPActivity implements
 		&$errors
 	)
 	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return false;
+		}
+
 		$errors = [];
 		$properties = ['Fields' => []];
 
 		$documentService = CBPRuntime::getRuntime()->getDocumentService();
+
+		if (isset($currentValues['FLOW_ID'])
+			&& !CBPHelper::isEmptyValue($currentValues['FLOW_ID'])
+		)
+		{
+			foreach ((new \Bitrix\Tasks\Flow\Control\Task\Field\FlowFieldHandler(0))->getModifiedFields() as $field)
+			{
+				$currentValues[$field] = null;
+			}
+		}
+
 
 		$map = static::getPropertiesDialogMap();
 		foreach ($map['Fields']['Map'] as $taskFieldId => $taskField)
@@ -1077,6 +1135,13 @@ class CBPTask2Activity extends CBPActivity implements
 				&& \CBPHelper::isEmptyValue($testProperties[$propertyKey] ?? null)
 			)
 			{
+				if (
+					$propertyKey === 'RESPONSIBLE_ID'
+					&& !\CBPHelper::isEmptyValue($testProperties['FLOW_ID'] ?? null)
+				)
+				{
+					continue;
+				}
 				$errors[] = [
 					'code' => 'NotExist',
 					'parameter' => 'FieldValue',
@@ -1276,8 +1341,18 @@ class CBPTask2Activity extends CBPActivity implements
 				'Multiple' => false,
 				'Default' => 0,
 			],
+			'FLOW_ID' => [
+				'Name' => Loc::getMessage('BPTA1A_TASK_FLOW_ID'),
+				'FieldName' => 'FLOW_ID',
+				'Type' => FieldType::SELECT,
+				'Options' => static::fetchTaskFlows(),
+				'Editable' => true,
+				'Required' => false,
+				'Multiple' => false,
+				'Default' => 0,
+			],
 			'ALLOW_CHANGE_DEADLINE' => [
-				'Name' => Loc::getMessage('BPTA1A_CHANGE_DEADLINE'),
+				'Name' => Loc::getMessage('BPTA1A_CHANGE_DEADLINE_MSGVER_1'),
 				'FieldName' => 'ALLOW_CHANGE_DEADLINE',
 				'Type' => FieldType::BOOL,
 				'Editable' => true,
@@ -1403,6 +1478,26 @@ class CBPTask2Activity extends CBPActivity implements
 
 		return $groups;
 	}
+	private static function fetchTaskFlows(): array
+	{
+		$flows = [];
+
+		$provider = new \Bitrix\Tasks\Flow\Provider\FlowProvider();
+		$query = new \Bitrix\Tasks\Flow\Provider\Query\ExpandedFlowQuery();
+
+		$query
+			->setSelect(['ID', 'NAME'])
+			->whereActive(true)
+			->setAccessCheck(false);
+
+		foreach ($provider->getList($query) as $flow)
+		{
+			$flowId = (string)$flow->getId();
+			$flows[$flowId] = "[{$flowId}]" . htmlspecialcharsbx($flow->getName());
+		}
+
+		return $flows;
+	}
 
 	private function checkCycling(array $documentId)
 	{
@@ -1440,7 +1535,7 @@ class CBPTask2Activity extends CBPActivity implements
 				'Type' => \Bitrix\Bizproc\FieldType::BOOL,
 				'BaseType' => \Bitrix\Bizproc\FieldType::BOOL,
 				'Required' => true,
-				'Default' => 'N'
+				'Default' => 'N',
 			],
 		];
 

@@ -8,7 +8,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/tab-view', (require, export
 	const { SidebarLinksView } = require('im/messenger/controller/sidebar/chat/tabs/links/view');
 	const { Loc } = require('loc');
 	const { Theme } = require('im/lib/theme');
-	const { MessengerParams } = require('im/messenger/lib/params');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { SidebarTab } = require('im/messenger/const');
 
 	/**
@@ -126,12 +126,12 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/tab-view', (require, export
 				tabsSet.delete(SidebarTab.participant);
 			}
 
-			if (this.props.isCopilot || !MessengerParams.isFilesMigrated())
+			if (this.props.isCopilot || !Feature.isSidebarFilesEnabled)
 			{
 				tabsSet.delete(SidebarTab.document);
 			}
 
-			if (this.props.isCopilot || !MessengerParams.isLinksMigrated())
+			if (this.props.isCopilot || !Feature.isSidebarLinksEnabled)
 			{
 				tabsSet.delete(SidebarTab.link);
 			}

@@ -91,6 +91,8 @@ class CrmSmartDocumentDetailsComponent extends FactoryBased
 
 		$this->executeBaseLogic();
 
+		$this->setBizprocStarterConfig();
+
 		$this->includeComponentTemplate();
 	}
 

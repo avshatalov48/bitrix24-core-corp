@@ -5,7 +5,7 @@ type RolesDialogAnalyticsOptions = {
 	cSection: string;
 }
 
-const RolesDialogAnalyticsEvent = Object.freeze( {
+const RolesDialogAnalyticsEvent = Object.freeze({
 	OPEN: 'open',
 	CLOSE: 'close',
 	SAVE: 'save',
@@ -131,6 +131,7 @@ export class RolesDialogAnalytics
 	#formatCSectionParam(cSection: string): string
 	{
 		return cSection
+			.replaceAll('-', '_')
 			.split('_')
 			.map((stringPart: string) => {
 				if (Number.isNaN(parseInt(stringPart, 10)))

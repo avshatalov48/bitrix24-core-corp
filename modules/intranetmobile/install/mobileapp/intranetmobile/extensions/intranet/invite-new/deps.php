@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'alert',
 		'asset-manager',
+        'assets/icons',
 		'tokens',
 		'loc',
 		'type',
@@ -33,12 +34,10 @@ return [
 		'statemanager/redux/store',
 		'statemanager/redux/slices/users',
 		'intranet:create-department',
+		'layout/ui/name-checker-box',
 	],
 	'bundle' => [
 		'./src/department-chooser',
-		'./src/name-checker',
-		'./src/name-checker-item',
-		'./src/name-checker-item-avatar',
 		'./src/tab/base',
 		'./src/tab/phone',
 		'./src/tab/link',

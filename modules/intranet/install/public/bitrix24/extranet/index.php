@@ -8,7 +8,18 @@
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 
 \CModule::IncludeModule('intranet');
+
+use Bitrix\Extranet\Service\ServiceContainer;
 use Bitrix\Intranet;
+use Bitrix\Main\Engine\CurrentUser;
+
+$collaberService = ServiceContainer::getInstance()->getCollaberService();
+$userId = CurrentUser::get()->getId();
+
+if ($collaberService->isCollaberById($userId))
+{
+	LocalRedirect('/extranet/online/');
+}
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/extranet/index.php");
 

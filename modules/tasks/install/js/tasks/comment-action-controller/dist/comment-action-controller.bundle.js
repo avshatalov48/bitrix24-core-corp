@@ -10,7 +10,8 @@ this.BX = this.BX || {};
 	      taskApprove: 'taskApprove',
 	      taskDisapprove: 'taskDisapprove',
 	      taskComplete: 'taskComplete',
-	      taskChangeResponsible: 'taskChangeResponsible'
+	      taskChangeResponsible: 'taskChangeResponsible',
+	      showFlowAttendees: 'showFlowAttendees'
 	    };
 	  }
 	  static get accessActions() {
@@ -100,25 +101,42 @@ this.BX = this.BX || {};
 	    return Object.keys(CommentActionController.possibleActions).includes(action);
 	  }
 	  static processLink(link) {
-	    const [url, userId, taskId, action, deadline] = link.matches;
+	    var _urlParams$get;
+	    const [url, userId, taskId, action] = link.matches;
+	    const urlParams = new URLSearchParams(link.url);
+	    const [deadline, flowId, excludeMembers] = [urlParams.get('deadline'), urlParams.get('flowId'), JSON.parse((_urlParams$get = urlParams.get('excludeMembers')) != null ? _urlParams$get : '[]')];
 	    if (!CommentActionController.isActionValid(action)) {
 	      return;
 	    }
-	    if (action === CommentActionController.possibleActions.deadlineChange) {
-	      CommentActionController.init().then(() => {
-	        CommentActionController.showDeadlinePicker(link.anchor, taskId, deadline);
-	      });
-	      return;
+	    switch (action) {
+	      case CommentActionController.possibleActions.deadlineChange:
+	        CommentActionController.init().then(() => {
+	          CommentActionController.showDeadlinePicker(link.anchor, taskId, deadline);
+	        });
+	        return;
+	      case CommentActionController.possibleActions.taskChangeResponsible:
+	        CommentActionController.showResponsibleSelector(link.anchor, taskId, flowId);
+	        return;
+	      case CommentActionController.possibleActions.showFlowAttendees:
+	        CommentActionController.showFlowAttendees(link.anchor, flowId, excludeMembers);
+	        return;
+	      default:
+	        CommentActionController.checkCanRun(action, taskId).then(response => {
+	          if (response) {
+	            CommentActionController.runAjaxAction(action, taskId);
+	          }
+	        }, response => console.error(response));
 	    }
-	    if (action === CommentActionController.possibleActions.taskChangeResponsible) {
-	      CommentActionController.showResponsibleSelector(link.anchor, taskId);
-	      return;
-	    }
-	    CommentActionController.checkCanRun(action, taskId).then(response => {
-	      if (response) {
-	        CommentActionController.runAjaxAction(action, taskId);
-	      }
-	    }, response => console.error(response));
+	  }
+	  static async showFlowAttendees(target, flowId, excludeMembers = []) {
+	    const {
+	      TeamPopup
+	    } = await main_core.Runtime.loadExtension('tasks.flow.team-popup');
+	    TeamPopup.showInstance({
+	      flowId,
+	      bindElement: target,
+	      excludeMembers
+	    });
 	  }
 	  static showDeadlinePicker(target, taskId, deadline) {
 	    const now = new Date();
@@ -139,13 +157,21 @@ this.BX = this.BX || {};
 	      callback_after: value => CommentActionController.onDeadlinePicked(value, taskId)
 	    });
 	  }
-	  static showResponsibleSelector(target, taskId) {
-	    const dialog = new ui_entitySelector.Dialog({
-	      targetNode: target,
-	      enableSearch: true,
-	      multiple: false,
-	      cacheable: false,
-	      entities: [{
+	  static showResponsibleSelector(target, taskId, flowId = null) {
+	    const entities = [{
+	      id: 'department'
+	    }];
+	    const isFlowCorrect = flowId !== null;
+	    if (isFlowCorrect) {
+	      entities.unshift({
+	        id: 'flow-user',
+	        options: {
+	          flowId
+	        },
+	        dynamicLoad: true
+	      });
+	    } else {
+	      entities.unshift({
 	        id: 'user',
 	        options: {
 	          intranetUsersOnly: true,
@@ -153,7 +179,15 @@ this.BX = this.BX || {};
 	          inviteEmployeeLink: false,
 	          inviteGuestLink: false
 	        }
-	      }],
+	      });
+	    }
+	    const dialog = new ui_entitySelector.Dialog({
+	      targetNode: target,
+	      enableSearch: true,
+	      multiple: false,
+	      cacheable: false,
+	      dropdownMode: isFlowCorrect,
+	      entities,
 	      clearSearchOnSelect: true,
 	      events: {
 	        'Item:onSelect': event => {

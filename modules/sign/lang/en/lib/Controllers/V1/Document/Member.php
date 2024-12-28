@@ -1,0 +1,3 @@
+<?php
+$MESS["SIGN_CONTROLLER_MEMBER_DOCUMENT_NOT_FOUND"] = "Document was not found.";
+$MESS["SIGN_CONTROLLER_MEMBER_FLAT_DEPARTMENT"] = "#DEPARTMENT_NAME# (without subdepartments)";

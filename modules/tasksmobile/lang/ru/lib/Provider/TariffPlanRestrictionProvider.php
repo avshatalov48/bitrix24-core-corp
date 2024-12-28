@@ -9,4 +9,5 @@ $MESS['TASKSMOBILE_TARIFF_PLAN_RESTRICTION_TIME_TRACKING'] = 'Учёт врем�
 $MESS['TASKSMOBILE_TARIFF_PLAN_RESTRICTION_RESULT_REQUIREMENT'] = 'Обязательный результат работы';
 $MESS['TASKSMOBILE_TARIFF_PLAN_RESTRICTION_TASK_CONTROL'] = 'Контроль результата';
 $MESS['TASKSMOBILE_TARIFF_PLAN_RESTRICTION_WORK_TIME_MATCH'] = 'Пропускать выходные дни';
+$MESS['TASKSMOBILE_TARIFF_PLAN_RESTRICTION_USER_FIELDS'] = 'Пользовательские поля';
 $MESS['TASKSMOBILE_TARIFF_PLAN_RESTRICTION_SEARCH'] = 'Поиск по задачам';

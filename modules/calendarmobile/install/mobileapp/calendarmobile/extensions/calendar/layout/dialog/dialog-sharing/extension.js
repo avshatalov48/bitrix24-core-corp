@@ -2,8 +2,9 @@
  * @module calendar/layout/dialog/dialog-sharing
  */
 jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { NotifyManager } = require('notify-manager');
+	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
+
 	const { ModelSharingStatus } = require('calendar/model/sharing');
 	const { SharingPanel } = require('calendar/layout/sharing-panel');
 	const { SharingContext } = require('calendar/sharing');
@@ -25,8 +26,6 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 					...this.sharing.getModel().getFieldsValues(),
 				},
 			};
-
-			this.onSwitcherChangeHandler = this.onSwitcherChangeHandler.bind(this);
 
 			this.sharingSettings = null;
 
@@ -69,7 +68,7 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 
 		isLoading()
 		{
-			return !this.props.sharing.model.userInfo;
+			return !this.sharing.model.userInfo;
 		}
 
 		renderContent()
@@ -97,10 +96,9 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 			);
 		}
 
-		onSwitcherChangeHandler(status)
-		{
+		onSwitcherChangeHandler = (status) => {
 			this.handleSwitcher(status);
-		}
+		};
 
 		handleSwitcher(status)
 		{
@@ -118,21 +116,14 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 				const fields = this.sharing.resolveAjaxResponse(response);
 
 				this.sharing.getModel().setFields(fields);
-				// eslint-disable-next-line promise/catch-or-return
-				this.setStateModel().then(() => this.props.onSharing(fields));
 
-				NotifyManager.hideLoadingIndicator(true);
-			});
-		}
-
-		setStateModel()
-		{
-			return new Promise((resolve) => {
 				this.setState({
 					model: {
 						...this.sharing.getModel().getFieldsValues(),
 					},
-				}, () => resolve());
+				}, () => this.props.onSharing(fields));
+
+				NotifyManager.hideLoadingIndicator(true);
 			});
 		}
 

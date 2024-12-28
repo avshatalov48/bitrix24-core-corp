@@ -39,6 +39,7 @@ final class Driver
 	protected $virtualDocumentClassName;
 	protected $templateClassName;
 	protected $userPermissionsClassName;
+	protected $regionList;
 
 	/** @var Bitrix24Manager */
 	protected $bitrix24Manager = Bitrix24Manager::class;
@@ -237,15 +238,23 @@ final class Driver
 	 */
 	public function getRegionsList(): array
 	{
+		if (is_array($this->regionList))
+		{
+			return $this->regionList;
+		}
+
 		Loc::loadLanguageFile(__FILE__);
 		$regions = $this->getDefaultRegions();
-		$userRegionsList = RegionTable::getList();
+		$userRegionsList = RegionTable::getList([
+			"cache" => ["ttl" => 86400]
+		]);
 		while($userRegion = $userRegionsList->fetch())
 		{
 			$userRegion['CODE'] = $userRegion['ID'];
 			$regions[$userRegion['ID']] = $userRegion;
 		}
 
+		$this->regionList = $regions;
 		return $regions;
 	}
 

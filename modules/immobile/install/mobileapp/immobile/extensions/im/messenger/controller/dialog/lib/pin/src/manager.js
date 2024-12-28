@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { EventType } = require('im/messenger/const');
 	const { parser } = require('im/messenger/lib/parser');
@@ -425,9 +426,13 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 		 */
 		prepareMessage(modelMessage)
 		{
-			const messageFiles = modelMessage.files
-				.map((fileId) => this.store.getters['filesModel/getById'](fileId))
-			;
+			let messageFiles = [];
+			if (Type.isArrayFilled(modelMessage.files))
+			{
+				messageFiles = modelMessage.files
+					.map((fileId) => this.store.getters['filesModel/getById'](fileId))
+				;
+			}
 
 			const user = this.store.getters['usersModel/getById'](modelMessage.authorId);
 

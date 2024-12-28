@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,rest_client,ui_analytics,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_hint,ui_cnt,location_core,main_loader,crm_timeline_editors_commentEditor,ui_textEditor,ui_bbcode_formatter_htmlFormatter,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_main,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_textcrop,ui_alerts,crm_field_pingSelector,im_public,main_date,crm_timeline_tools,ui_infoHelper,ai_engine,ui_buttons,ui_feedback_form,crm_activity_fileUploaderPopup,ui_entitySelector,ui_sidepanel,ui_designTokens,main_core_events,crm_entityEditor_field_paymentDocuments,pull_client,crm_timeline_item,calendar_util,main_popup,crm_router,calendar_sharing_interface,crm_ai_call,ui_notification,main_core,ui_dialogs_messagebox) {
+(function (exports,rest_client,ui_analytics,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_cnt,location_core,main_loader,crm_timeline_editors_commentEditor,ui_textEditor,ui_bbcode_formatter_htmlFormatter,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_textcrop,ui_alerts,ui_avatar,crm_field_pingSelector,bizproc_workflow_timeline,bizproc_types,im_public,main_date,crm_timeline_tools,ui_infoHelper,ai_engine,ui_buttons,ui_feedback_form,crm_activity_fileUploaderPopup,ui_entitySelector,ui_sidepanel,crm_entityEditor_field_paymentDocuments,pull_client,calendar_util,main_popup,crm_router,calendar_sharing_interface,crm_ai_call,ui_hint,ui_dialogs_messagebox,main_core_events,ui_notification,main_core,ui_imageStackSteps,ui_iconSet_main,ui_designTokens,crm_timeline_item) {
 	'use strict';
 
 	var crm_timeline_item__default = 'default' in crm_timeline_item ? crm_timeline_item['default'] : crm_timeline_item;
@@ -11,6 +11,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  scheduled: 1,
 	  pinned: 2
 	};
+
+	let ButtonState = function ButtonState() {
+	  babelHelpers.classCallCheck(this, ButtonState);
+	};
+	babelHelpers.defineProperty(ButtonState, "DEFAULT", '');
+	babelHelpers.defineProperty(ButtonState, "LOADING", 'loading');
+	babelHelpers.defineProperty(ButtonState, "DISABLED", 'disabled');
+	babelHelpers.defineProperty(ButtonState, "HIDDEN", 'hidden');
+	babelHelpers.defineProperty(ButtonState, "AI_LOADING", 'ai-loading');
+	babelHelpers.defineProperty(ButtonState, "AI_SUCCESS", 'ai-success');
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -47,7 +57,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "createMenuItem",
 	    value: function createMenuItem(item) {
-	      if (item.hasOwnProperty('delimiter') && item.delimiter) {
+	      if (Object.prototype.hasOwnProperty.call(item, 'delimiter') && item.delimiter) {
 	        return {
 	          text: item.title || '',
 	          delimiter: true
@@ -57,8 +67,23 @@ this.BX.Crm = this.BX.Crm || {};
 	        text: item.title,
 	        value: item.title
 	      };
+	      if (main_core.Type.isStringFilled(item.state)) {
+	        switch (item.state) {
+	          case ButtonState.AI_LOADING:
+	            result.className = 'menu-popup-item-add-to-tm menu-popup-item-disabled';
+	            break;
+	          case ButtonState.AI_SUCCESS:
+	            result.className = 'menu-popup-item-accept menu-popup-item-disabled';
+	            break;
+	          case ButtonState.DISABLED:
+	            result.className = 'menu-popup-no-icon menu-popup-item-disabled';
+	            break;
+	          default:
+	            result.className = '';
+	        }
+	      }
 	      if (item.icon) {
-	        result.className = 'menu-popup-item-' + item.icon;
+	        result.className = `menu-popup-item-${item.icon}`;
 	      }
 	      if (item.menu) {
 	        result.items = [];
@@ -72,7 +97,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          result.onclick = item.action.value;
 	        } else {
 	          result.onclick = () => {
-	            this.onMenuItemClick(item);
+	            void this.onMenuItemClick(item);
 	          };
 	        }
 	      }
@@ -85,7 +110,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (menu) {
 	        menu.close();
 	      }
-	      new Action(item.action).execute(babelHelpers.classPrivateFieldGet(this, _vueComponent));
+	      void new Action(item.action).execute(babelHelpers.classPrivateFieldGet(this, _vueComponent));
 	    }
 	  }], [{
 	    key: "showMenu",
@@ -748,15 +773,6 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 	babelHelpers.defineProperty(ButtonScope, "MOBILE", 'mobile');
 
-	let ButtonState = function ButtonState() {
-	  babelHelpers.classCallCheck(this, ButtonState);
-	};
-	babelHelpers.defineProperty(ButtonState, "DEFAULT", '');
-	babelHelpers.defineProperty(ButtonState, "LOADING", 'loading');
-	babelHelpers.defineProperty(ButtonState, "DISABLED", 'disabled');
-	babelHelpers.defineProperty(ButtonState, "HIDDEN", 'hidden');
-	babelHelpers.defineProperty(ButtonState, "AI_LOADING", 'ai-loading');
-
 	let ButtonType = function ButtonType() {
 	  babelHelpers.classCallCheck(this, ButtonType);
 	};
@@ -860,6 +876,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      type: String,
 	      required: false,
 	      default: 'extra_small'
+	    },
+	    menuItems: {
+	      type: Object,
+	      required: false,
+	      default: null
 	    }
 	  },
 	  data() {
@@ -937,12 +958,31 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.parentSetButtonState(state);
 	      (_this$getUiButton = this.getUiButton()) === null || _this$getUiButton === void 0 ? void 0 : _this$getUiButton.setState((_this$itemStateToButt = this.itemStateToButtonStateDict[this.currentState]) !== null && _this$itemStateToButt !== void 0 ? _this$itemStateToButt : null);
 	    },
+	    createSplitButton() {
+	      const menuItems = Object.keys(this.menuItems).map(key => this.menuItems[key]);
+	      const options = this.getButtonOptions();
+	      options.menuButton = {
+	        onclick: (element, event) => {
+	          event.stopPropagation();
+	          Menu.showMenu(this, menuItems, {
+	            id: `split-button-menu-${this.id}`,
+	            className: 'crm-timeline__split-button-menu',
+	            width: 230,
+	            angle: true,
+	            cacheable: false,
+	            offsetLeft: 13,
+	            bindElement: this.$el.querySelector('.ui-btn-menu')
+	          });
+	        }
+	      };
+	      return new ui_buttons.SplitButton(options);
+	    },
 	    renderButton() {
 	      if (!this.buttonContainerRef) {
 	        return;
 	      }
 	      this.buttonContainerRef.innerHTML = '';
-	      const button = new ui_buttons.Button(this.getButtonOptions());
+	      const button = this.menuItems ? this.createSplitButton() : new ui_buttons.Button(this.getButtonOptions());
 	      button.renderTo(this.buttonContainerRef);
 	      this.uiButton = button;
 	    },
@@ -3116,12 +3156,14 @@ this.BX.Crm = this.BX.Crm || {};
 	var _getActivityEditor = /*#__PURE__*/new WeakSet();
 	var _createSelectorDialog = /*#__PURE__*/new WeakSet();
 	var _runMoveAction = /*#__PURE__*/new WeakSet();
+	var _filterRelated = /*#__PURE__*/new WeakSet();
 	let Activity = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Activity, _Base);
 	  function Activity(...args) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, Activity);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Activity).call(this, ...args));
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _filterRelated);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _runMoveAction);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _createSelectorDialog);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _getActivityEditor);
@@ -3145,6 +3187,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      return 'crm.activity.binding.move';
 	    }
 	  }, {
+	    key: "getDeleteTagActionMethod",
+	    value: function getDeleteTagActionMethod() {
+	      return 'crm.timeline.activity.deleteTag';
+	    }
+	  }, {
 	    key: "getDeleteActionCfg",
 	    value: function getDeleteActionCfg(recordId, ownerTypeId, ownerId) {
 	      return {
@@ -3154,6 +3201,26 @@ this.BX.Crm = this.BX.Crm || {};
 	          ownerId
 	        }
 	      };
+	    }
+	  }, {
+	    key: "runDeleteTagAction",
+	    value: function runDeleteTagAction(recordId, ownerTypeId, ownerId) {
+	      const deleteTagActionCfg = {
+	        data: {
+	          activityId: recordId,
+	          ownerTypeId,
+	          ownerId
+	        }
+	      };
+	      return main_core.ajax.runAction(this.getDeleteTagActionMethod(), deleteTagActionCfg).then(() => {
+	        return true;
+	      }, response => {
+	        ui_notification.UI.Notification.Center.notify({
+	          content: response.errors[0].message,
+	          autoHideDelay: 5000
+	        });
+	        return true;
+	      });
 	    }
 	  }, {
 	    key: "onItemAction",
@@ -3194,6 +3261,29 @@ this.BX.Crm = this.BX.Crm || {};
 	        } else {
 	          this.runDeleteAction(actionData.activityId, actionData.ownerTypeId, actionData.ownerId);
 	        }
+	      }
+	      if (action === 'Activity:DeleteTag' && actionData && actionData.activityId) {
+	        var _actionData$confirmat2;
+	        const confirmationText = (_actionData$confirmat2 = actionData.confirmationText) !== null && _actionData$confirmat2 !== void 0 ? _actionData$confirmat2 : '';
+	        if (confirmationText) {
+	          ui_dialogs_messagebox.MessageBox.show({
+	            message: main_core.Text.encode(confirmationText),
+	            modal: true,
+	            buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_CANCEL,
+	            yesCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_TODO_DELETE_TAG_CONFIRM_YES_CAPTION'),
+	            onYes: () => {
+	              return this.runDeleteTagAction(actionData.activityId, actionData.ownerTypeId, actionData.ownerId);
+	            },
+	            onCancel: messageBox => {
+	              messageBox.close();
+	            }
+	          });
+	        } else {
+	          this.runDeleteTagAction(actionData.activityId, actionData.ownerTypeId, actionData.ownerId);
+	        }
+	      }
+	      if (action === 'Activity:FilterRelated' && main_core.Type.isPlainObject(actionData)) {
+	        _classPrivateMethodGet$2(this, _filterRelated, _filterRelated2).call(this, actionData);
 	      }
 	    }
 	  }], [{
@@ -3340,6 +3430,22 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    throw response;
 	  });
+	}
+	function _filterRelated2(actionData) {
+	  if (!(main_core.Type.isNumber(actionData.activityId) && main_core.Type.isStringFilled(actionData.activityLabel) && main_core.Type.isStringFilled(actionData.filterId))) {
+	    return;
+	  }
+	  const filterManager = BX.Main.filterManager.getById(actionData.filterId);
+	  if (!filterManager) {
+	    return;
+	  }
+	  const filterApi = filterManager.getApi();
+	  const fields = {
+	    ACTIVITY: actionData.activityId,
+	    ACTIVITY_label: actionData.activityLabel
+	  };
+	  filterApi.extendFilter(fields, true);
+	  BX.CrmTimelineManager.getDefault().getHistory().showFilter();
 	}
 
 	var AddressBlock = {
@@ -4178,6 +4284,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.classCallCheck(this, TextColor);
 	};
 	babelHelpers.defineProperty(TextColor, "GREEN", 'green');
+	babelHelpers.defineProperty(TextColor, "PURPLE", 'purple');
 	babelHelpers.defineProperty(TextColor, "BASE_50", 'base-50');
 	babelHelpers.defineProperty(TextColor, "BASE_60", 'base-60');
 	babelHelpers.defineProperty(TextColor, "BASE_70", 'base-70');
@@ -4505,6 +4612,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      type: String,
 	      required: false,
 	      default: ''
+	    },
+	    rowLimit: {
+	      type: Number,
+	      required: false,
+	      default: 0
 	    }
 	  },
 	  computed: {
@@ -4536,7 +4648,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return attrs;
 	    },
 	    className() {
-	      return ['crm-timeline__card_link', this.colorClassName, this.boldClassName, this.decorationClassName];
+	      return ['crm-timeline__card_link', this.colorClassName, this.boldClassName, this.decorationClassName, this.rowLimitClassName];
 	    },
 	    colorClassName() {
 	      var _TextColor$upperCaseC;
@@ -4561,6 +4673,17 @@ this.BX.Crm = this.BX.Crm || {};
 	        return [];
 	      }
 	      return ['crm-timeline__card_link_icon', `--code-${this.icon}`];
+	    },
+	    rowLimitClassName() {
+	      return this.rowLimit ? '--limit' : '';
+	    },
+	    rowLimitStyle() {
+	      if (this.rowLimit && this.rowLimit > 0) {
+	        return {
+	          '-webkit-line-clamp': this.rowLimit
+	        };
+	      }
+	      return {};
 	    }
 	  },
 	  methods: {
@@ -4577,6 +4700,7 @@ this.BX.Crm = this.BX.Crm || {};
 				v-bind="linkAttrs"
 				:class="className"
 				:title="title"
+				:style="rowLimitStyle"
 			>{{text}}<span v-if="icon" :class="iconClassName"></span>
 			</a>
 			<span
@@ -4584,6 +4708,7 @@ this.BX.Crm = this.BX.Crm || {};
 				@click="executeAction"
 				:class="className"
 				:title="title"
+				:style="rowLimitStyle"
 			>{{text}}<span v-if="icon" :class="iconClassName"></span>
 			</span>
 		`
@@ -5727,6 +5852,158 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
+	const STATE_LOADING = 'loading';
+	const STATE_PROCESSED = 'processed';
+	const STATE_UNPROCESSED = 'unprocessed';
+	const CallScoringPill = {
+	  props: {
+	    title: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    value: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    state: {
+	      type: String,
+	      required: false,
+	      default: STATE_UNPROCESSED
+	    },
+	    action: Object | null
+	  },
+	  inject: ['isReadOnly'],
+	  computed: {
+	    className() {
+	      return ['crm-timeline__call-scoring-pill', {
+	        '--readonly': this.isPillReadonly
+	      }];
+	    },
+	    renderValue() {
+	      switch (this.state) {
+	        case STATE_LOADING:
+	          return '<span class="loader"></span>';
+	        case STATE_PROCESSED:
+	          return main_core.Text.encode(this.value);
+	        case STATE_UNPROCESSED:
+	        default:
+	          return '<span class="arrow">&nbsp;</span>';
+	      }
+	    },
+	    isPillReadonly() {
+	      return this.isReadOnly || !this.action;
+	    }
+	  },
+	  methods: {
+	    executeAction() {
+	      if (this.isPillReadonly) {
+	        return;
+	      }
+	      const action = new Action(this.action);
+	      void action.execute(this);
+	    }
+	  },
+	  template: `
+		<div
+			:class='className'
+			@click='executeAction'
+		>
+			<div class='crm-timeline__call-scoring-pill-left'>{{ this.title }}</div>
+			<div class='crm-timeline__call-scoring-pill-separator'></div>
+			<div class='crm-timeline__call-scoring-pill-right' v-html='renderValue'></div>
+		</div>
+	`
+	};
+
+	const CallScoring = {
+	  props: {
+	    userName: String,
+	    userAvatarUrl: String,
+	    scoringData: Object | null,
+	    action: Object | null
+	  },
+	  inject: ['isReadOnly'],
+	  computed: {
+	    assessmentScriptClassName() {
+	      return ['crm-timeline__call-scoring-assessment-script', {
+	        '--readonly': this.isContentReadonly
+	      }];
+	    },
+	    assessmentPillClassName() {
+	      return ['crm-timeline__call-scoring-assessment-pill', {
+	        '--readonly': this.isContentReadonly
+	      }];
+	    },
+	    isContentReadonly() {
+	      return this.isReadOnly || !this.action;
+	    },
+	    renderUserAvatarElement() {
+	      return new ui_avatar.AvatarRoundGuest({
+	        size: 26,
+	        userName: this.userName,
+	        userpicPath: this.userAvatarUrl,
+	        baseColor: '#7fdefc',
+	        borderColor: '#9dcf00'
+	      }).getContainer().outerHTML;
+	    }
+	  },
+	  methods: {
+	    executeAction() {
+	      if (this.isContentReadonly) {
+	        return;
+	      }
+	      const action = new Action(this.action);
+	      void action.execute(this);
+	    }
+	  },
+	  template: `
+		<div class='crm-timeline__call-scoring'>
+			<div class='crm-timeline__call-scoring-wrapper'>
+				<div class='crm-timeline__call-scoring-responsible'>
+					<div class='crm-timeline__call-scoring-title'>
+						{{ this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_CALL_SCORING_RESPONSIBLE_TITLE') }}
+					</div>
+					<div class='crm-timeline__call-scoring-responsible-content'>
+						<div class='responsible-user-avatar' v-html="renderUserAvatarElement"></div>
+						<div class='responsible-user-name'>{{ this.userName }}</div>
+					</div>
+				</div>
+				<div class='crm-timeline__line-div'></div>
+				<div class='crm-timeline__call-scoring-assessment'>
+					<div class='crm-timeline__call-scoring-assessment-wrapper'>
+						<!--
+						<img 
+							class='copilot-avatar' 
+							src='/bitrix/js/crm/timeline/item/src/images/crm-timelime__copilot-avatar.svg' 
+							alt='copilot-avatar'
+						>
+						-->
+						<div
+							:class='assessmentPillClassName'
+							@click='executeAction'
+						>
+							<span class="value">{{ this.scoringData?.ASSESSMENT }}</span>
+						</div>
+						<div class='script-layout'>
+							<div class='crm-timeline__call-scoring-title'>
+								{{ this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_CALL_SCORING_SCRIPT_TITLE') }}
+							</div>
+							<div 
+								:class='assessmentScriptClassName'
+								@click='executeAction'
+							>
+								{{ this.scoringData?.TITLE }}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
 	let DeadlineAndPingSelectorBackgroundColor = function DeadlineAndPingSelectorBackgroundColor() {
 	  babelHelpers.classCallCheck(this, DeadlineAndPingSelectorBackgroundColor);
 	};
@@ -5983,6 +6260,136 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
+	let _ = t => t,
+	  _t,
+	  _t2;
+	var WorkflowEfficiency = {
+	  props: {
+	    averageDuration: Number,
+	    efficiency: String,
+	    executionTime: Number,
+	    processTimeText: String,
+	    workflowResult: Object,
+	    author: Object
+	  },
+	  computed: {
+	    itemClassName() {
+	      return `bizproc-workflow-timeline-eff-icon --${this.efficiency}`;
+	    },
+	    formattedAverageDuration() {
+	      return bizproc_workflow_timeline.DurationFormatter.formatTimeInterval(this.averageDuration);
+	    },
+	    formattedExecutionTime() {
+	      return bizproc_workflow_timeline.DurationFormatter.formatTimeInterval(this.executionTime);
+	    },
+	    efficiencyCaption() {
+	      let notice = this.efficiency === 'fast' ? 'QUICKLY' : 'SLOWLY';
+	      if (this.efficiency === 'stopped') {
+	        notice = 'NO_PROGRESS';
+	      }
+	      return main_core.Loc.getMessage(`BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMED_${notice}`);
+	    },
+	    hasResult() {
+	      return this.workflowResult !== undefined;
+	    },
+	    href() {
+	      if (this.author && this.author.link) {
+	        return this.author.link;
+	      }
+	      return '';
+	    },
+	    imageStyle() {
+	      if (this.author && this.author.avatarSize100) {
+	        return {
+	          backgroundImage: `url('${encodeURI(this.author.avatarSize100)}')`
+	        };
+	      }
+	      return {};
+	    },
+	    workflowResultHtml() {
+	      var _this$workflowResult$, _this$workflowResult;
+	      if (this.workflowResult && this.workflowResult.status === bizproc_types.WorkflowResultStatus.NO_RIGHTS_RESULT) {
+	        this.workflowResult.text = main_core.Loc.getMessage('CRM_TIMELINE_WORKFLOW_RESULT_NO_RIGHTS_VIEW');
+	      }
+	      return (_this$workflowResult$ = (_this$workflowResult = this.workflowResult) === null || _this$workflowResult === void 0 ? void 0 : _this$workflowResult.text) !== null && _this$workflowResult$ !== void 0 ? _this$workflowResult$ : null;
+	    },
+	    averageDurationText() {
+	      return main_core.Loc.getMessage('CRM_TIMELINE_WORKFLOW_EFFICIENCY_AVERAGE_PROCESS_TIME');
+	    },
+	    resultCaption() {
+	      if (!this.userResult) {
+	        return main_core.Loc.getMessage('CRM_TIMELINE_WORKFLOW_RESULT_TITLE');
+	      }
+	      return '';
+	    },
+	    userResult() {
+	      if (!this.hasResult) {
+	        var _this$author;
+	        const userLink = main_core.Tag.render(_t || (_t = _`<a href="${0}"></a>`), this.href);
+	        userLink.textContent = (_this$author = this.author) === null || _this$author === void 0 ? void 0 : _this$author.fullName;
+	        return main_core.Loc.getMessage('CRM_TIMELINE_WORKFLOW_NO_RESULT', {
+	          '#USER#': userLink.outerHTML
+	        });
+	      }
+	      if (this.workflowResult && this.workflowResult.status === bizproc_types.WorkflowResultStatus.USER_RESULT) {
+	        var _this$workflowResult$2;
+	        return main_core.Loc.getMessage('CRM_TIMELINE_WORKFLOW_NO_RESULT', {
+	          '#USER#': (_this$workflowResult$2 = this.workflowResult.text) !== null && _this$workflowResult$2 !== void 0 ? _this$workflowResult$2 : ''
+	        });
+	      }
+	      return null;
+	    }
+	  },
+	  mounted() {
+	    if (this.workflowResult && this.workflowResult.status === bizproc_types.WorkflowResultStatus.NO_RIGHTS_RESULT) {
+	      this.showHint();
+	    }
+	  },
+	  methods: {
+	    showHint() {
+	      const resultBlock = this.$refs.resultBlock;
+	      if (resultBlock) {
+	        const hintAnchor = main_core.Tag.render(_t2 || (_t2 = _`<span data-hint="${0}"></span>`), main_core.Loc.getMessage('CRM_TIMELINE_WORKFLOW_RESULT_NO_RIGHTS_TOOLTIP'));
+	        main_core.Dom.append(hintAnchor, resultBlock);
+	        BX.UI.Hint.init(resultBlock);
+	      }
+	    }
+	  },
+	  template: `
+		<div class="crm-timeline__text-block crm-timeline__workflow-efficiency-block">
+			<div class="bizproc-workflow-timeline-item --result">
+				<div class="">
+					<div class="bizproc-workflow-timeline-content">
+						<div v-if="!userResult" class="bp-result">
+							<div class="bizproc-workflow-timeline-caption">{{ resultCaption }}</div>
+							<div class="bizproc-workflow-timeline-result" ref="resultBlock" v-html="workflowResultHtml"></div>
+						</div>
+						<div v-if="userResult" class="bp-result" v-html="userResult"></div>
+					</div>
+				</div>
+			</div>
+			<div class="bizproc-workflow-timeline-item --efficiency">
+				<div class="bizproc-workflow-timeline-item-wrapper">
+					<div class="bizproc-workflow-timeline-content">
+						<div class="bizproc-workflow-timeline-content-inner">
+							<div class="bizproc-workflow-timeline-caption">{{ efficiencyCaption }}</div>
+							<div class="bizproc-workflow-timeline-notice">
+								<div class="bizproc-workflow-timeline-subject">{{ processTimeText }}</div>
+								<span class="bizproc-workflow-timeline-text">{{ formattedExecutionTime }}</span>
+							</div>
+							<div class="bizproc-workflow-timeline-notice">
+								<div class="bizproc-workflow-timeline-subject">{{ averageDurationText }}</div>
+								<span class="bizproc-workflow-timeline-text">{{ formattedAverageDuration }}</span>
+							</div>
+						</div>
+						<div :class="itemClassName"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
 	function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$6(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
@@ -6028,7 +6435,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        CommentContent,
 	        ItemSelector,
 	        PingSelector,
-	        DeadlineAndPingSelector
+	        DeadlineAndPingSelector,
+	        WorkflowEfficiency,
+	        CallScoringPill,
+	        CallScoring
 	      };
 	    }
 	    /**
@@ -6683,8 +7093,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
-	let _ = t => t,
-	  _t;
+	let _$1 = t => t,
+	  _t$1;
 	function _classPrivateMethodInitSpec$7(obj, privateSet) { _checkPrivateRedeclaration$a(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$a(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$a(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -7079,7 +7489,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        babelHelpers.classPrivateFieldGet(this, _popupConfirm).destroy();
 	      }
 	    },
-	    content: main_core.Tag.render(_t || (_t = _`<div class="bx-popup-document-activity-popup-content-text">${0}</div>`), content),
+	    content: main_core.Tag.render(_t$1 || (_t$1 = _$1`<div class="bx-popup-document-activity-popup-content-text">${0}</div>`), content),
 	    titleBar: title,
 	    className: 'bx-popup-document-activity-popup',
 	    maxWidth: 510
@@ -7099,38 +7509,47 @@ this.BX.Crm = this.BX.Crm || {};
 	const COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITHOUT_BOOST_LIMIT = 2;
 	const COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITH_BOOST_LIMIT = 5;
 	const COPILOT_HELPDESK_CODE = 18799442;
+	const FULL_SCENARIO = 'full';
+	const FILL_FIELDS_SCENARIO = 'fill_fields';
+	const CALL_SCORING_SCENARIO = 'call_scoring';
 	var _isCopilotWelcomeTourShown = /*#__PURE__*/new WeakMap();
 	var _isCopilotBannerShown = /*#__PURE__*/new WeakMap();
 	var _makeCall = /*#__PURE__*/new WeakSet();
 	var _openTranscript = /*#__PURE__*/new WeakSet();
 	var _changePlayerState = /*#__PURE__*/new WeakSet();
 	var _downloadRecord = /*#__PURE__*/new WeakSet();
-	var _launchCallRecordingTranscription = /*#__PURE__*/new WeakSet();
+	var _launchCopilot = /*#__PURE__*/new WeakSet();
+	var _openCallScoringResult = /*#__PURE__*/new WeakSet();
 	var _showAdditionalInfo = /*#__PURE__*/new WeakSet();
 	var _showCopilotWelcomeTour = /*#__PURE__*/new WeakSet();
 	var _bindAdditionalCopilotActions = /*#__PURE__*/new WeakSet();
 	var _showMarketMessageBox = /*#__PURE__*/new WeakSet();
 	var _showFeedbackMessageBox = /*#__PURE__*/new WeakSet();
 	var _showCopilotBanner = /*#__PURE__*/new WeakSet();
+	var _emitTimelineCopilotTourEvents = /*#__PURE__*/new WeakSet();
 	var _emitTimelineCopilotTourEvent = /*#__PURE__*/new WeakSet();
 	var _isSliderCodeExist = /*#__PURE__*/new WeakSet();
 	var _isAiMarketplaceAppsExist = /*#__PURE__*/new WeakSet();
+	var _isValidScenario = /*#__PURE__*/new WeakSet();
 	let Call = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Call, _Base);
 	  function Call(...args) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, Call);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Call).call(this, ...args));
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _isValidScenario);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _isAiMarketplaceAppsExist);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _isSliderCodeExist);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _emitTimelineCopilotTourEvent);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _emitTimelineCopilotTourEvents);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showCopilotBanner);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showFeedbackMessageBox);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showMarketMessageBox);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _bindAdditionalCopilotActions);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showCopilotWelcomeTour);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showAdditionalInfo);
-	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _launchCallRecordingTranscription);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _openCallScoringResult);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _launchCopilot);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _downloadRecord);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _changePlayerState);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _openTranscript);
@@ -7177,7 +7596,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (action === 'Call:DownloadRecord' && actionData && actionData.url) {
 	        _classPrivateMethodGet$8(this, _downloadRecord, _downloadRecord2).call(this, actionData.url);
 	      }
-	      if (action === 'Call:LaunchCallRecordingTranscription' && actionData) {
+	      if (action === 'Call:LaunchCopilot' && actionData) {
 	        const isCopilotAgreementNeedShow = actionData.isCopilotAgreementNeedShow || false;
 	        if (isCopilotAgreementNeedShow) {
 	          main_core.Runtime.loadExtension('ai.copilot-agreement').then(({
@@ -7187,20 +7606,23 @@ this.BX.Crm = this.BX.Crm || {};
 	              moduleId: 'crm',
 	              contextId: 'audio',
 	              events: {
-	                onAccept: () => _classPrivateMethodGet$8(this, _launchCallRecordingTranscription, _launchCallRecordingTranscription2).call(this, item, actionData)
+	                onAccept: () => _classPrivateMethodGet$8(this, _launchCopilot, _launchCopilot2).call(this, item, actionData)
 	              }
 	            });
 	            void copilotAgreementPopup.checkAgreement()
 	            // eslint-disable-next-line promise/no-nesting
 	            .then(isAgreementAccepted => {
 	              if (isAgreementAccepted) {
-	                _classPrivateMethodGet$8(this, _launchCallRecordingTranscription, _launchCallRecordingTranscription2).call(this, item, actionData);
+	                _classPrivateMethodGet$8(this, _launchCopilot, _launchCopilot2).call(this, item, actionData);
 	              }
 	            });
 	          }).catch(() => console.error('Cant load "ai.copilot-agreement" extension'));
 	        } else {
-	          _classPrivateMethodGet$8(this, _launchCallRecordingTranscription, _launchCallRecordingTranscription2).call(this, item, actionData);
+	          _classPrivateMethodGet$8(this, _launchCopilot, _launchCopilot2).call(this, item, actionData);
 	        }
+	      }
+	      if (action === 'Call:OpenCallScoringResult' && actionData) {
+	        _classPrivateMethodGet$8(this, _openCallScoringResult, _openCallScoringResult2).call(this, actionData);
 	      }
 	    }
 	  }], [{
@@ -7255,7 +7677,7 @@ this.BX.Crm = this.BX.Crm || {};
 	function _downloadRecord2(url) {
 	  location.href = url;
 	}
-	function _launchCallRecordingTranscription2(item, actionData) {
+	function _launchCopilot2(item, actionData) {
 	  const isValidParams = main_core.Type.isNumber(actionData.activityId) && main_core.Type.isNumber(actionData.ownerId) && main_core.Type.isNumber(actionData.ownerTypeId) && [BX.CrmEntityType.enumeration.lead, BX.CrmEntityType.enumeration.deal].includes(parseInt(actionData.ownerTypeId, 10));
 	  if (!isValidParams) {
 	    throw new Error('Invalid "actionData" parameters');
@@ -7268,20 +7690,23 @@ this.BX.Crm = this.BX.Crm || {};
 
 	  // start call record transcription
 	  aiCopilotBtnUI.setState(ui_buttons.ButtonState.AI_WAITING);
-	  main_core.ajax.runAction('crm.timeline.ai.launchRecordingTranscription', {
+	  main_core.ajax.runAction('crm.timeline.ai.launchCopilot', {
 	    data: {
 	      activityId: actionData.activityId,
 	      ownerTypeId: actionData.ownerTypeId,
-	      ownerId: actionData.ownerId
+	      ownerId: actionData.ownerId,
+	      scenario: _classPrivateMethodGet$8(this, _isValidScenario, _isValidScenario2).call(this, actionData) ? actionData.scenario : null
 	    }
 	  }).then(response => {
 	    if ((response === null || response === void 0 ? void 0 : response.status) === 'success') {
 	      var _response$data;
 	      const numberOfManualStarts = response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.numberOfManualStarts;
+	      if (numberOfManualStarts >= COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITH_BOOST_LIMIT) {
+	        _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotBtnUI.getContainer(), 'BX.Crm.Timeline.Call:onShowTourWhenManualStartTooMuch', 'copilot-in-call-automatically', 500);
+	        return;
+	      }
 	      if (numberOfManualStarts >= COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITHOUT_BOOST_LIMIT) {
 	        _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotBtnUI.getContainer(), 'BX.Crm.Timeline.Call:onShowTourWhenNeedBuyBoost', 'copilot-in-call-buying-boost', 500);
-	      } else if (numberOfManualStarts >= COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITH_BOOST_LIMIT) {
-	        _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotBtnUI.getContainer(), 'BX.Crm.Timeline.Call:onShowTourWhenManualStartTooMuch', 'copilot-in-call-automatically', 500);
 	      }
 	    }
 	  }).catch(response => {
@@ -7302,6 +7727,24 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	    throw response;
 	  });
+	}
+	function _openCallScoringResult2(actionData) {
+	  var _actionData$activityC, _actionData$clientDet, _actionData$clientFul, _actionData$userPhoto, _actionData$jobId, _actionData$assessmen;
+	  if (!main_core.Type.isInteger(actionData.activityId) || !main_core.Type.isInteger(actionData.ownerTypeId) || !main_core.Type.isInteger(actionData.ownerId)) {
+	    return;
+	  }
+	  const callScoring = new crm_ai_call.Call.CallQuality({
+	    activityId: actionData.activityId,
+	    ownerTypeId: actionData.ownerTypeId,
+	    ownerId: actionData.ownerId,
+	    activityCreated: (_actionData$activityC = actionData.activityCreated) !== null && _actionData$activityC !== void 0 ? _actionData$activityC : null,
+	    clientDetailUrl: (_actionData$clientDet = actionData.clientDetailUrl) !== null && _actionData$clientDet !== void 0 ? _actionData$clientDet : null,
+	    clientFullName: (_actionData$clientFul = actionData.clientFullName) !== null && _actionData$clientFul !== void 0 ? _actionData$clientFul : null,
+	    userPhotoUrl: (_actionData$userPhoto = actionData.userPhotoUrl) !== null && _actionData$userPhoto !== void 0 ? _actionData$userPhoto : null,
+	    jobId: (_actionData$jobId = actionData.jobId) !== null && _actionData$jobId !== void 0 ? _actionData$jobId : null,
+	    assessmentSettingsId: (_actionData$assessmen = actionData.assessmentSettingsId) !== null && _actionData$assessmen !== void 0 ? _actionData$assessmen : null
+	  });
+	  callScoring.open();
 	}
 	function _showAdditionalInfo2(data, item, actionData) {
 	  if (_classPrivateMethodGet$8(this, _isSliderCodeExist, _isSliderCodeExist2).call(this, data)) {
@@ -7350,9 +7793,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    return;
 	  }
 	  const payload = main_core.Type.isPlainObject(item.getDataPayload()) ? item.getDataPayload() : {};
-	  if (!payload.isWelcomeTourEnabled) {
-	    return;
-	  }
 	  setTimeout(() => {
 	    const aiCopilotBtn = item.getLayoutFooterButtonById('aiButton');
 	    const aiCopilotUIBtn = aiCopilotBtn === null || aiCopilotBtn === void 0 ? void 0 : aiCopilotBtn.getUiButton();
@@ -7360,12 +7800,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      return;
 	    }
 	    if (aiCopilotBtn !== null && aiCopilotBtn !== void 0 && aiCopilotBtn.isInViewport()) {
-	      _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotUIBtn.getContainer(), 'BX.Crm.Timeline.Call:onShowCopilotTour', 'copilot-button-in-call');
+	      _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvents, _emitTimelineCopilotTourEvents2).call(this, aiCopilotUIBtn.getContainer(), 1500, payload);
 	      return;
 	    }
 	    const showCopilotTourOnScroll = () => {
 	      if (aiCopilotBtn !== null && aiCopilotBtn !== void 0 && aiCopilotBtn.isInViewport()) {
-	        _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotUIBtn.getContainer(), 'BX.Crm.Timeline.Call:onShowCopilotTour', 'copilot-button-in-call');
+	        _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvents, _emitTimelineCopilotTourEvents2).call(this, aiCopilotUIBtn.getContainer(), 1500, payload);
 	        babelHelpers.classPrivateFieldSet(this, _isCopilotWelcomeTourShown, true);
 	        main_core.Event.unbind(window, 'scroll', showCopilotTourOnScroll);
 	      }
@@ -7391,7 +7831,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!aiCopilotUIBtn || aiCopilotUIBtn.getState() === ui_buttons.ButtonState.DISABLED || !(aiCopilotBtn !== null && aiCopilotBtn !== void 0 && aiCopilotBtn.isPropEqual('data-activity-id', initiator))) {
 	        return;
 	      }
-	      _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotUIBtn.getContainer(), 'BX.Crm.Timeline.Call:onShowCopilotTour', 'copilot-button-in-call', 500);
+	      _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvents, _emitTimelineCopilotTourEvents2).call(this, aiCopilotUIBtn.getContainer(), 500);
 	    });
 	  }, 75);
 	}
@@ -7478,6 +7918,21 @@ this.BX.Crm = this.BX.Crm || {};
 	    }, 500);
 	  });
 	}
+	function _emitTimelineCopilotTourEvents2(target, delay = 1500, payload = null) {
+	  var _payload$isWelcomeTou, _payload$isWelcomeTou2, _payload$isWelcomeTou3;
+	  const isWelcomeTourEnabled = (_payload$isWelcomeTou = payload === null || payload === void 0 ? void 0 : payload.isWelcomeTourEnabled) !== null && _payload$isWelcomeTou !== void 0 ? _payload$isWelcomeTou : true;
+	  const isWelcomeTourAutomaticallyEnabled = (_payload$isWelcomeTou2 = payload === null || payload === void 0 ? void 0 : payload.isWelcomeTourAutomaticallyEnabled) !== null && _payload$isWelcomeTou2 !== void 0 ? _payload$isWelcomeTou2 : true;
+	  const isWelcomeTourManuallyEnabled = (_payload$isWelcomeTou3 = payload === null || payload === void 0 ? void 0 : payload.isWelcomeTourManuallyEnabled) !== null && _payload$isWelcomeTou3 !== void 0 ? _payload$isWelcomeTou3 : true;
+	  if (isWelcomeTourEnabled) {
+	    _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, target, 'BX.Crm.Timeline.Call:onShowCopilotTour', 'copilot-button-in-call', delay);
+	  }
+	  if (isWelcomeTourAutomaticallyEnabled) {
+	    _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, target, 'BX.Crm.Timeline.Call:onShowTourWhenCopilotAutomaticallyStart', 'copilot-button-in-call-automatically', delay);
+	  }
+	  if (isWelcomeTourManuallyEnabled) {
+	    _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, target, 'BX.Crm.Timeline.Call:onShowTourWhenCopilotManuallyStart', 'copilot-button-in-call-manually', delay);
+	  }
+	}
 	function _emitTimelineCopilotTourEvent2(target, eventName, stepId, delay = 1500) {
 	  main_core_events.EventEmitter.emit(this, eventName, {
 	    target,
@@ -7490,6 +7945,9 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _isAiMarketplaceAppsExist2(data) {
 	  return Object.hasOwn(data, 'isAiMarketplaceAppsExist') && main_core.Type.isBoolean(data.isAiMarketplaceAppsExist) && data.isAiMarketplaceAppsExist;
+	}
+	function _isValidScenario2(actionData) {
+	  return main_core.Type.isStringFilled(actionData.scenario) && [FULL_SCENARIO, FILL_FIELDS_SCENARIO, CALL_SCORING_SCENARIO].includes(actionData.scenario);
 	}
 
 	function _classPrivateMethodInitSpec$9(obj, privateSet) { _checkPrivateRedeclaration$c(obj, privateSet); privateSet.add(obj); }
@@ -8661,9 +9119,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  return main_core.Type.isNumber(params.commentId) && main_core.Type.isNumber(params.ownerId) && main_core.Type.isNumber(params.ownerTypeId);
 	}
 
-	let _$1 = t => t,
-	  _t$1,
-	  _t2,
+	let _$2 = t => t,
+	  _t$2,
+	  _t2$1,
 	  _t3;
 	var SharingSlotsList = {
 	  data() {
@@ -8686,7 +9144,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	    this.moreLinkRef = moreLink;
 	    main_core.Event.bind(this.moreLinkRef, 'click', () => this.openPopup());
-	    main_core.Dom.append(main_core.Tag.render(_t$1 || (_t$1 = _$1`<i/>`)), this.moreLinkRef);
+	    main_core.Dom.append(main_core.Tag.render(_t$2 || (_t$2 = _$2`<i/>`)), this.moreLinkRef);
 	  },
 	  computed: {
 	    items() {
@@ -8746,9 +9204,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      };
 	    },
 	    getPopupContent() {
-	      const root = main_core.Tag.render(_t2 || (_t2 = _$1`<div></div>`));
+	      const root = main_core.Tag.render(_t2$1 || (_t2$1 = _$2`<div></div>`));
 	      this.formattedRules.forEach(item => {
-	        main_core.Dom.append(main_core.Tag.render(_t3 || (_t3 = _$1`<div class="crm-timeline-calendar-sharing-slots-more-popup-item">${0}</div>`), item), root);
+	        main_core.Dom.append(main_core.Tag.render(_t3 || (_t3 = _$2`<div class="crm-timeline-calendar-sharing-slots-more-popup-item">${0}</div>`), item), root);
 	      });
 	      return root;
 	    }
@@ -8763,8 +9221,8 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	let _$2 = t => t,
-	  _t$2;
+	let _$3 = t => t,
+	  _t$3;
 	function _classPrivateMethodInitSpec$i(obj, privateSet) { _checkPrivateRedeclaration$l(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$l(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$i(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
@@ -8890,7 +9348,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  const {
 	    root,
 	    icon
-	  } = main_core.Tag.render(_t$2 || (_t$2 = _$2`
+	  } = main_core.Tag.render(_t$3 || (_t$3 = _$3`
 			<a class="crm-timeline-sharing-members-popup-item" href="${0}" target="_blank">
 				<div class="ui-icon ui-icon-common-user crm-timeline-sharing-members-popup-item-image">
 					<i ref="icon"></i>
@@ -9309,6 +9767,92 @@ this.BX.Crm = this.BX.Crm || {};
 	function _classPrivateMethodInitSpec$m(obj, privateSet) { _checkPrivateRedeclaration$p(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$p(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$m(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _open$2 = /*#__PURE__*/new WeakSet();
+	var _editPrompt = /*#__PURE__*/new WeakSet();
+	let CallScoringResult = /*#__PURE__*/function (_Base) {
+	  babelHelpers.inherits(CallScoringResult, _Base);
+	  function CallScoringResult(...args) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, CallScoringResult);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CallScoringResult).call(this, ...args));
+	    _classPrivateMethodInitSpec$m(babelHelpers.assertThisInitialized(_this), _editPrompt);
+	    _classPrivateMethodInitSpec$m(babelHelpers.assertThisInitialized(_this), _open$2);
+	    return _this;
+	  }
+	  babelHelpers.createClass(CallScoringResult, [{
+	    key: "onItemAction",
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData
+	      } = actionParams;
+	      if (actionType !== 'jsEvent') {
+	        return;
+	      }
+	      if (action === 'CallScoringResult:Open' && actionData) {
+	        _classPrivateMethodGet$m(this, _open$2, _open2$2).call(this, actionData);
+	      }
+	      if (action === 'CallScoringResult:EditPrompt') {
+	        _classPrivateMethodGet$m(this, _editPrompt, _editPrompt2).call(this, item, actionData);
+	      }
+	    }
+	  }], [{
+	    key: "isItemSupported",
+	    value: function isItemSupported(item) {
+	      return item.getType() === 'AI:Call:CallScoringResult';
+	    }
+	  }]);
+	  return CallScoringResult;
+	}(Base);
+	function _open2$2(actionData) {
+	  var _actionData$activityC, _actionData$clientDet, _actionData$clientFul, _actionData$userPhoto, _actionData$jobId;
+	  if (!main_core.Type.isInteger(actionData.activityId) || !main_core.Type.isInteger(actionData.ownerTypeId) || !main_core.Type.isInteger(actionData.ownerId)) {
+	    return;
+	  }
+	  const callQualityDlg = new crm_ai_call.Call.CallQuality({
+	    activityId: actionData.activityId,
+	    activityCreated: (_actionData$activityC = actionData.activityCreated) !== null && _actionData$activityC !== void 0 ? _actionData$activityC : null,
+	    ownerTypeId: actionData.ownerTypeId,
+	    ownerId: actionData.ownerId,
+	    clientDetailUrl: (_actionData$clientDet = actionData.clientDetailUrl) !== null && _actionData$clientDet !== void 0 ? _actionData$clientDet : null,
+	    clientFullName: (_actionData$clientFul = actionData.clientFullName) !== null && _actionData$clientFul !== void 0 ? _actionData$clientFul : null,
+	    userPhotoUrl: (_actionData$userPhoto = actionData.userPhotoUrl) !== null && _actionData$userPhoto !== void 0 ? _actionData$userPhoto : null,
+	    jobId: (_actionData$jobId = actionData.jobId) !== null && _actionData$jobId !== void 0 ? _actionData$jobId : null
+	  });
+	  callQualityDlg.open();
+	}
+	function _editPrompt2(item, actionData) {
+	  var _item$getLayoutFooter;
+	  const btn = (_item$getLayoutFooter = item.getLayoutFooterButtonById('editPromptButton')) === null || _item$getLayoutFooter === void 0 ? void 0 : _item$getLayoutFooter.getUiButton();
+	  BX.UI.Hint.popupParameters = {
+	    closeByEsc: true,
+	    autoHide: true
+	  };
+	  main_core.Runtime.debounce(() => {
+	    BX.UI.Hint.show(btn === null || btn === void 0 ? void 0 : btn.getContainer(), main_core.Loc.getMessage('CRM_TIMELINE_ITEM_CALL_SCORING_EDIT_PROMPT_HINT'), true);
+	  }, 150, this)();
+
+	  // @todo: not implemented yet
+	  /*
+	  if (!Type.isInteger(actionData.assessmentSettingId))
+	  {
+	  	return;
+	  }
+	  	if (SidePanel.Instance)
+	  {
+	  	const path = `/crm/copilot-call-assessment/details/${actionData.assessmentSettingId}/`;
+	  		SidePanel.Instance.open(path, {
+	  		width: 700,
+	  		allowChangeHistory: false,
+	  	});
+	  }
+	  */
+	}
+
+	function _classPrivateMethodInitSpec$n(obj, privateSet) { _checkPrivateRedeclaration$q(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$q(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$n(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _changePlayerState$1 = /*#__PURE__*/new WeakSet();
 	let Visit = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Visit, _Base);
@@ -9316,7 +9860,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, Visit);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Visit).call(this, ...args));
-	    _classPrivateMethodInitSpec$m(babelHelpers.assertThisInitialized(_this), _changePlayerState$1);
+	    _classPrivateMethodInitSpec$n(babelHelpers.assertThisInitialized(_this), _changePlayerState$1);
 	    return _this;
 	  }
 	  babelHelpers.createClass(Visit, [{
@@ -9331,7 +9875,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 	      if (action === 'Activity:Visit:ChangePlayerState' && actionData && actionData.recordId) {
-	        _classPrivateMethodGet$m(this, _changePlayerState$1, _changePlayerState2$1).call(this, item, actionData.recordId);
+	        _classPrivateMethodGet$n(this, _changePlayerState$1, _changePlayerState2$1).call(this, item, actionData.recordId);
 	      }
 	      if (action === 'Activity:Visit:Schedule' && actionData) {
 	        this.runScheduleAction(actionData.activityId, actionData.scheduleDate);
@@ -9360,9 +9904,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
-	function _classPrivateMethodInitSpec$n(obj, privateSet) { _checkPrivateRedeclaration$q(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$q(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$n(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$o(obj, privateSet) { _checkPrivateRedeclaration$r(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$r(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$o(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	const DOWNLOAD_DELAY = 300;
 	var _copyToClipboard = /*#__PURE__*/new WeakSet();
 	var _downloadAllRecords = /*#__PURE__*/new WeakSet();
@@ -9372,8 +9916,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, Zoom);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Zoom).call(this, ...args));
-	    _classPrivateMethodInitSpec$n(babelHelpers.assertThisInitialized(_this), _downloadAllRecords);
-	    _classPrivateMethodInitSpec$n(babelHelpers.assertThisInitialized(_this), _copyToClipboard);
+	    _classPrivateMethodInitSpec$o(babelHelpers.assertThisInitialized(_this), _downloadAllRecords);
+	    _classPrivateMethodInitSpec$o(babelHelpers.assertThisInitialized(_this), _copyToClipboard);
 	    return _this;
 	  }
 	  babelHelpers.createClass(Zoom, [{
@@ -9388,16 +9932,16 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 	      if (action === 'Activity:Zoom:CopyInviteUrl') {
-	        _classPrivateMethodGet$n(this, _copyToClipboard, _copyToClipboard2).call(this, actionData.url);
+	        _classPrivateMethodGet$o(this, _copyToClipboard, _copyToClipboard2).call(this, actionData.url);
 	      }
 	      if (action === 'Activity:Zoom:Schedule') {
 	        this.runScheduleAction(actionData.activityId, actionData.scheduleDate);
 	      }
 	      if (action === 'Activity:Zoom:CopyPassword') {
-	        _classPrivateMethodGet$n(this, _copyToClipboard, _copyToClipboard2).call(this, actionData.password);
+	        _classPrivateMethodGet$o(this, _copyToClipboard, _copyToClipboard2).call(this, actionData.password);
 	      }
 	      if (action === 'Activity:Zoom:DownloadAllRecords' && main_core.Type.isArray(actionData.urlList)) {
-	        _classPrivateMethodGet$n(this, _downloadAllRecords, _downloadAllRecords2).call(this, actionData.urlList);
+	        _classPrivateMethodGet$o(this, _downloadAllRecords, _downloadAllRecords2).call(this, actionData.urlList);
 	      }
 	    }
 	  }], [{
@@ -9436,9 +9980,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  const interval = setInterval(download, DOWNLOAD_DELAY, urlList);
 	}
 
-	function _classPrivateMethodInitSpec$o(obj, privateSet) { _checkPrivateRedeclaration$r(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$r(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$o(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$p(obj, privateSet) { _checkPrivateRedeclaration$s(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$s(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$p(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _resendSms = /*#__PURE__*/new WeakSet();
 	let Sms = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Sms, _Base);
@@ -9446,7 +9990,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, Sms);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Sms).call(this, ...args));
-	    _classPrivateMethodInitSpec$o(babelHelpers.assertThisInitialized(_this), _resendSms);
+	    _classPrivateMethodInitSpec$p(babelHelpers.assertThisInitialized(_this), _resendSms);
 	    return _this;
 	  }
 	  babelHelpers.createClass(Sms, [{
@@ -9461,7 +10005,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 	      if (action === 'Activity:Sms:Resend' && main_core.Type.isPlainObject(actionData.params)) {
-	        _classPrivateMethodGet$o(this, _resendSms, _resendSms2).call(this, actionData.params);
+	        _classPrivateMethodGet$p(this, _resendSms, _resendSms2).call(this, actionData.params);
 	      }
 	    }
 	  }], [{
@@ -9509,9 +10053,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
-	function _classPrivateMethodInitSpec$p(obj, privateSet) { _checkPrivateRedeclaration$s(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$s(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$p(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$q(obj, privateSet) { _checkPrivateRedeclaration$t(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$t(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$q(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _resendWhatsApp = /*#__PURE__*/new WeakSet();
 	let WhatsApp = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(WhatsApp, _Base);
@@ -9519,7 +10063,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, WhatsApp);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WhatsApp).call(this, ...args));
-	    _classPrivateMethodInitSpec$p(babelHelpers.assertThisInitialized(_this), _resendWhatsApp);
+	    _classPrivateMethodInitSpec$q(babelHelpers.assertThisInitialized(_this), _resendWhatsApp);
 	    return _this;
 	  }
 	  babelHelpers.createClass(WhatsApp, [{
@@ -9534,7 +10078,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 	      if (action === 'Activity:Whatsapp:Resend' && main_core.Type.isPlainObject(actionData.params)) {
-	        _classPrivateMethodGet$p(this, _resendWhatsApp, _resendWhatsApp2).call(this, actionData.params);
+	        _classPrivateMethodGet$q(this, _resendWhatsApp, _resendWhatsApp2).call(this, actionData.params);
 	      }
 	    }
 	  }], [{
@@ -9582,6 +10126,302 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
+	const ICON_COLORS = Object.freeze({
+	  lightGrey: 'var(--crm-timeline-avatars-stack-steps-icon-color-light-gray)',
+	  blue: 'var(--crm-timeline-avatars-stack-steps-icon-color-blue)',
+	  lightGreen: 'var(--crm-timeline-avatars-stack-steps-icon-color-light-green)'
+	});
+	var AvatarsStackSteps = {
+	  props: {
+	    steps: {
+	      type: Array,
+	      required: true,
+	      validator: value => {
+	        return main_core.Type.isArrayFilled(value);
+	      }
+	    },
+	    styles: {
+	      type: Object,
+	      required: false
+	    }
+	  },
+	  data() {
+	    return {
+	      stack: null
+	    };
+	  },
+	  mounted() {
+	    if (this.$refs.controlWrapper) {
+	      this.stack = new ui_imageStackSteps.ImageStackSteps({
+	        steps: this.convertIconColors(this.steps)
+	      });
+	      this.stack.renderTo(this.$refs.controlWrapper);
+	    }
+	  },
+	  updated() {
+	    if (this.stack) {
+	      this.convertIconColors(this.steps).forEach(step => {
+	        this.stack.updateStep(step, step.id);
+	      });
+	    }
+	  },
+	  unmounted() {
+	    if (this.stack) {
+	      this.stack.destroy();
+	    }
+	  },
+	  computed: {
+	    getStyles() {
+	      var _this$styles;
+	      const styles = {};
+	      if ((_this$styles = this.styles) !== null && _this$styles !== void 0 && _this$styles.minWidth) {
+	        styles['min-width'] = `${main_core.Text.toInteger(this.styles.minWidth)}px`;
+	      }
+	      return styles;
+	    }
+	  },
+	  methods: {
+	    convertIconColors(steps) {
+	      const colors = Object.keys(ICON_COLORS);
+	      steps.forEach(step => {
+	        const images = step.stack.images;
+	        if (main_core.Type.isArrayFilled(images)) {
+	          images.forEach(image => {
+	            if (image.type === ui_imageStackSteps.imageTypeEnum.ICON) {
+	              var _image$data;
+	              const color = (_image$data = image.data) === null || _image$data === void 0 ? void 0 : _image$data.color;
+	              if (colors.includes(color)) {
+	                // eslint-disable-next-line no-param-reassign
+	                image.data.color = ICON_COLORS[color];
+	              }
+	            }
+	          });
+	        }
+	      });
+	      return steps;
+	    }
+	  },
+	  template: `
+		<div class="crm-timeline__avatars-stack-steps" ref="controlWrapper" :style="getStyles"></div>
+	`
+	};
+
+	const TaskUserStatus = Object.freeze({
+	  WAITING: 0,
+	  YES: 1,
+	  NO: 2,
+	  OK: 3,
+	  CANCEL: 4
+	});
+
+	function _classPrivateMethodInitSpec$r(obj, privateSet) { _checkPrivateRedeclaration$u(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$u(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$r(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _openSlider = /*#__PURE__*/new WeakSet();
+	var _openTimeline = /*#__PURE__*/new WeakSet();
+	var _terminateWorkflow = /*#__PURE__*/new WeakSet();
+	var _detectSliderWidth = /*#__PURE__*/new WeakSet();
+	var _doTask = /*#__PURE__*/new WeakSet();
+	var _openTask = /*#__PURE__*/new WeakSet();
+	let Bizproc = /*#__PURE__*/function (_Base) {
+	  babelHelpers.inherits(Bizproc, _Base);
+	  function Bizproc(...args) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, Bizproc);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Bizproc).call(this, ...args));
+	    _classPrivateMethodInitSpec$r(babelHelpers.assertThisInitialized(_this), _openTask);
+	    _classPrivateMethodInitSpec$r(babelHelpers.assertThisInitialized(_this), _doTask);
+	    _classPrivateMethodInitSpec$r(babelHelpers.assertThisInitialized(_this), _detectSliderWidth);
+	    _classPrivateMethodInitSpec$r(babelHelpers.assertThisInitialized(_this), _terminateWorkflow);
+	    _classPrivateMethodInitSpec$r(babelHelpers.assertThisInitialized(_this), _openTimeline);
+	    _classPrivateMethodInitSpec$r(babelHelpers.assertThisInitialized(_this), _openSlider);
+	    return _this;
+	  }
+	  babelHelpers.createClass(Bizproc, [{
+	    key: "getContentBlockComponents",
+	    value: function getContentBlockComponents(item) {
+	      return {
+	        AvatarsStackSteps
+	      };
+	    }
+	  }, {
+	    key: "onItemAction",
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData
+	      } = actionParams;
+	      if (actionType !== 'jsEvent') {
+	        return;
+	      }
+	      const taskId = main_core.Text.toInteger(actionData === null || actionData === void 0 ? void 0 : actionData.taskId);
+	      if (action === 'Bizproc:Task:Open' && taskId > 0) {
+	        _classPrivateMethodGet$r(this, _openTask, _openTask2).call(this, taskId, actionData);
+	        return;
+	      }
+	      if (action === 'Bizproc:Task:Do' && taskId > 0) {
+	        var _item$getCurrentUser;
+	        const responsibleId = main_core.Text.toInteger(actionData === null || actionData === void 0 ? void 0 : actionData.responsibleId);
+	        if (responsibleId > 0 && main_core.Text.toInteger((_item$getCurrentUser = item.getCurrentUser()) === null || _item$getCurrentUser === void 0 ? void 0 : _item$getCurrentUser.userId) === responsibleId) {
+	          _classPrivateMethodGet$r(this, _doTask, _doTask2).call(this, taskId, actionData, item);
+	          return;
+	        }
+	        ui_notification.UI.Notification.Center.notify({
+	          content: main_core.Text.encode(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_BIZPROC_TASK_DO_ACTION_ACCESS_DENIED')),
+	          autoHideDelay: 5000
+	        });
+	        return;
+	      }
+	      const isTimelineOpen = action === 'Bizproc:Workflow:Timeline:Open';
+	      const isBizprocOpen = action === 'Bizproc:Workflow:Open';
+	      const isWorkflowTerminate = action === 'Bizproc:Workflow:Terminate';
+	      const workflowId = actionData === null || actionData === void 0 ? void 0 : actionData.workflowId;
+	      if (!workflowId) {
+	        return;
+	      }
+	      if (isTimelineOpen) {
+	        _classPrivateMethodGet$r(this, _openTimeline, _openTimeline2).call(this, workflowId);
+	      }
+	      if (isBizprocOpen) {
+	        _classPrivateMethodGet$r(this, _openSlider, _openSlider2).call(this, `/company/personal/bizproc/${workflowId}/`);
+	      }
+	      if (isWorkflowTerminate) {
+	        _classPrivateMethodGet$r(this, _terminateWorkflow, _terminateWorkflow2).call(this, workflowId);
+	      }
+	    }
+	  }, {
+	    key: "onAfterItemLayout",
+	    value: function onAfterItemLayout(item, options) {
+	      main_core_events.EventEmitter.emit('BX.Crm.Timeline.Items.Bizproc:onAfterItemLayout', {
+	        target: item.getWrapper(),
+	        id: item.getId(),
+	        type: item.getType(),
+	        options
+	      });
+	    }
+	  }], [{
+	    key: "isItemSupported",
+	    value: function isItemSupported(item) {
+	      const supportedItemTypes = ['BizprocWorkflowStarted', 'BizprocWorkflowCompleted', 'BizprocWorkflowTerminated', 'BizprocTaskCreation', 'BizprocTaskCompleted', 'BizprocCommentAdded', 'BizprocCommentRead', 'BizprocTaskDelegated', 'Activity:BizprocWorkflowCompleted', 'Activity:BizprocCommentAdded', 'Activity:BizprocTask'];
+	      return supportedItemTypes.includes(item.getType());
+	    }
+	  }]);
+	  return Bizproc;
+	}(Base);
+	function _openSlider2(url) {
+	  main_core.Runtime.loadExtension('sidepanel').then(() => {
+	    const options = {
+	      width: _classPrivateMethodGet$r(this, _detectSliderWidth, _detectSliderWidth2).call(this),
+	      // TODO extend UI with openSlider
+	      cacheable: false,
+	      loader: 'bizproc:workflow-info'
+	    };
+	    BX.SidePanel.Instance.open(main_core.Uri.addParam(url), options);
+	  }).catch(response => console.error(response.errors));
+	}
+	function _openTimeline2(workflowId) {
+	  main_core.Runtime.loadExtension('bizproc.workflow.timeline').then(() => {
+	    BX.Bizproc.Workflow.Timeline.open({
+	      workflowId
+	    });
+	  }).catch(response => console.error(response.errors));
+	}
+	function _terminateWorkflow2(workflowId) {
+	  main_core.ajax.runAction('bizproc.workflow.terminate', {
+	    data: {
+	      workflowId
+	    }
+	  }).catch(response => {
+	    response.errors.forEach(error => {
+	      ui_notification.UI.Notification.Center.notify({
+	        content: error.message,
+	        autoHideDelay: 5000
+	      });
+	    });
+	  });
+	}
+	function _detectSliderWidth2() {
+	  if (window.innerWidth < 1500) {
+	    return null; // default slider width
+	  }
+
+	  return 1500 + Math.floor((window.innerWidth - 1500) / 3);
+	}
+	function _doTask2(taskId, actionData, item) {
+	  const value = actionData === null || actionData === void 0 ? void 0 : actionData.value;
+	  const name = actionData === null || actionData === void 0 ? void 0 : actionData.name;
+	  if (main_core.Type.isStringFilled(name) && main_core.Type.isStringFilled(value)) {
+	    const buttons = Object.values(TaskUserStatus).map(status => {
+	      return item.getLayoutFooterButtonById(`status_${status}`);
+	    }).filter(button => button);
+	    buttons.forEach(button => {
+	      button.setButtonState(ButtonState.DISABLED);
+	    });
+	    const data = {
+	      taskId,
+	      taskRequest: {
+	        [name]: value
+	      }
+	    };
+	    main_core.ajax.runAction('bizproc.task.do', {
+	      data
+	    }).then(() => {}) // waiting push
+	    .catch(response => {
+	      response.errors.forEach(error => {
+	        ui_notification.UI.Notification.Center.notify({
+	          content: main_core.Text.encode(error.message),
+	          autoHideDelay: 5000
+	        });
+	      });
+	      buttons.forEach(button => {
+	        button.setButtonState(ButtonState.DEFAULT);
+	      });
+	    });
+	  }
+	}
+	function _openTask2(taskId, actionData) {
+	  let url = `/company/personal/bizproc/${taskId}/`;
+	  const userId = main_core.Text.toInteger(actionData === null || actionData === void 0 ? void 0 : actionData.userId);
+	  if (userId > 0) {
+	    url += `?USER_ID=${userId}`;
+	  }
+	  _classPrivateMethodGet$r(this, _openSlider, _openSlider2).call(this, url);
+	}
+
+	let Booking = /*#__PURE__*/function (_Base) {
+	  babelHelpers.inherits(Booking, _Base);
+	  function Booking() {
+	    babelHelpers.classCallCheck(this, Booking);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Booking).apply(this, arguments));
+	  }
+	  babelHelpers.createClass(Booking, [{
+	    key: "onItemAction",
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData
+	      } = actionParams;
+	      if (actionType !== 'jsEvent') {
+	        return;
+	      }
+	      if (action === 'Activity:Booking:ShowBooking') {
+	        const url = `/booking/?editingBookingId=${actionData.id}`;
+	        BX.SidePanel.Instance.open(url, {
+	          customLeftBoundary: 0
+	        });
+	      }
+	    }
+	  }], [{
+	    key: "isItemSupported",
+	    value: function isItemSupported(item) {
+	      return item.getType() === 'Activity:Booking';
+	    }
+	  }]);
+	  return Booking;
+	}(Base);
+
 	ControllerManager.registerController(Activity);
 	ControllerManager.registerController(CommonContentBlocks);
 	ControllerManager.registerController(OpenLines);
@@ -9605,11 +10445,14 @@ this.BX.Crm = this.BX.Crm || {};
 	ControllerManager.registerController(TranscriptResult);
 	ControllerManager.registerController(TranscriptSummaryResult);
 	ControllerManager.registerController(EntityFieldsFillingResult);
+	ControllerManager.registerController(CallScoringResult);
 	ControllerManager.registerController(SignB2eDocument);
 	ControllerManager.registerController(Visit);
 	ControllerManager.registerController(Zoom);
 	ControllerManager.registerController(Sms);
 	ControllerManager.registerController(WhatsApp);
+	ControllerManager.registerController(Bizproc);
+	ControllerManager.registerController(Booking);
 
 	exports.Item = Item$1;
 	exports.ConfigurableItem = ConfigurableItem;
@@ -9617,5 +10460,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.ControllerManager = ControllerManager;
 	exports.BaseController = Base;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX,BX.UI,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.UI.TextEditor,BX.UI.BBCode.Formatter,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.Crm.Field,BX.Messenger.v2.Lib,BX.Main,BX.Crm.Timeline,BX.UI,BX.AI,BX.UI,BX.UI.Feedback,BX.Crm.Activity,BX.UI.EntitySelector,BX,BX,BX.Event,BX.Crm,BX,BX.Crm.Timeline,BX.Calendar,BX.Main,BX.Crm,BX.Calendar.Sharing,BX.Crm.AI,BX,BX,BX.UI.Dialogs));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX.UI,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.UI.TextEditor,BX.UI.BBCode.Formatter,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.UI,BX.Crm.Field,BX.Bizproc.Workflow,BX.Bizproc,BX.Messenger.v2.Lib,BX.Main,BX.Crm.Timeline,BX.UI,BX.AI,BX.UI,BX.UI.Feedback,BX.Crm.Activity,BX.UI.EntitySelector,BX,BX.Crm,BX,BX.Calendar,BX.Main,BX.Crm,BX.Calendar.Sharing,BX.Crm.AI,BX,BX.UI.Dialogs,BX.Event,BX,BX,BX.UI,BX,BX,BX.Crm.Timeline));
 //# sourceMappingURL=index.bundle.js.map

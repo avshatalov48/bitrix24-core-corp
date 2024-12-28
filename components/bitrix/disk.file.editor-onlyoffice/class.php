@@ -236,7 +236,13 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		}
 		else
 		{
-			$proxyTypeUser = Driver::getInstance()->getStorageByUserId($this->currentUser->getId())->getProxyType();
+			$proxyTypeUser = Driver::getInstance()->getStorageByUserId($this->currentUser->getId())?->getProxyType();
+			if (!$proxyTypeUser)
+			{
+				$this->includeComponentTemplate('not-found');
+
+				return;
+			}
 			if($proxyTypeUser instanceof Disk\ProxyType\User)
 			{
 				$this->arResult['HEADER_LOGO_LINK'] = $proxyTypeUser->getBaseUrlDocumentList();

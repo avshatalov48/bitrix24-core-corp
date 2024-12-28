@@ -135,12 +135,14 @@ jn.define('layout/ui/list/base-more-menu', (require, exports, module) => {
 		 * @param {string} options.title
 		 * @param {string} options.counterColor
 		 * @param {boolean} options.checked
+		 * @param {string} [options.testId]
 		 * @param {boolean} [options.showTopSeparator=false]
 		 * @param {boolean} [options.showCheckedIcon=false]
 		 * @returns {Object}
 		 */
 		createMenuItem({
 			id,
+			testId,
 			title,
 			counterColor,
 			showIcon = true,
@@ -164,7 +166,7 @@ jn.define('layout/ui/list/base-more-menu', (require, exports, module) => {
 
 			return {
 				id,
-				testId: id,
+				testId: testId ?? id,
 				title,
 				iconUrl: iconUrlToShow,
 				icon: iconToShow,

@@ -50,6 +50,7 @@ jn.define('crm/communication/communication-selector', (require, exports, module)
 					'M_CRM_COMMUNICATION_SELECTOR_TITLE',
 					typeId,
 				),
+				analyticsSection: 'crm',
 			});
 		}
 

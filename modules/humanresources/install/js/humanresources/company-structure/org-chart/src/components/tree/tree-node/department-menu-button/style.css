@@ -1,0 +1,30 @@
+.humanresources-tree__node_department-menu-button {
+	background-size: contain;
+	--ui-icon-set__icon-size: 22px;
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-50);
+}
+
+.humanresources-tree__node_department-menu-button:hover {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-80);
+}
+
+.humanresources-tree__node_department-menu-button.--focused {
+	background-size: contain;
+	--ui-icon-set__icon-color: var(--ui-color-palette-blue-60);
+}
+
+.--tree-node-edit-department-menu-icon::before {
+	background-image: url('./images/edit-department-menu-icon.svg')
+}
+
+.--tree-node-add-employee-menu-icon::before {
+	background-image: url('./images/add-employee-menu-icon.svg')
+}
+
+.--tree-node-add-department-menu-icon::before {
+	background-image: url('./images/add-subdepartment-menu-button.svg');
+}
+
+.--tree-node-remove-department-menu-icon::before {
+	background-image: url('./images/remove-department-menu-icon.svg');
+}

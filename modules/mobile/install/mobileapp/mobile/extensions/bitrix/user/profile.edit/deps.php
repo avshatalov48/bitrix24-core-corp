@@ -8,6 +8,8 @@ return [
 		"files/converter",
 		"files/entry",
 		'user/account',
-		'user/profile'
+		'user/profile',
+		'statemanager/redux/store',
+		'statemanager/redux/slices/users/thunk',
 	]
 ];

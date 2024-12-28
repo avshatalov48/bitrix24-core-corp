@@ -12,6 +12,7 @@ use Bitrix\Sign\Factory\Field;
 use Bitrix\Sign\Item\B2e\LegalInfoField;
 use Bitrix\Sign\Item\B2e\Provider\ProfileFieldData;
 use Bitrix\Sign\Service\Cache\Memory\Sign\UserCache;
+use Bitrix\Sign\Type\Field\FrontFieldCategory;
 use Bitrix\Sign\Type\FieldType;
 
 final class ProfileProvider
@@ -173,10 +174,13 @@ final class ProfileProvider
 		return $result;
 	}
 
+	/**
+	 * @return array{PROFILE: array{CAPTION: string, FIELDS: array, MODULE_ID: string}}
+	 */
 	public function getFieldsForSelector(): array
 	{
 		return [
-			'PROFILE' => [
+			FrontFieldCategory::PROFILE->value => [
 				'CAPTION' => Loc::getMessage('SIGN_SERVICE_PROVIDER_PROFILE_CAPTION'),
 				'FIELDS' => (new LegalInfoProvider())->getFieldsForSelector(),
 				'MODULE_ID' => 'sign',
@@ -263,7 +267,11 @@ final class ProfileProvider
 			return '';
 		}
 
-		$userModel = $this->userCache?->getLoadedModel($userId);
+		$userModel = null;
+		if ($this->userCache && in_array($fieldSourceName, $this->userCache->getCachedFields(), true))
+		{
+			$userModel = $this->userCache->getLoadedModel($userId);
+		}
 		$userModel ??= UserTable::getById($userId)->fetchObject();
 
 		return (string)($userModel?->get($fieldSourceName) ?? '');
@@ -379,5 +387,22 @@ final class ProfileProvider
 		$filtered = array_filter($legalFields, static fn(LegalInfoField $field) => $field->name === $fieldName);
 
 		return !empty($filtered);
+	}
+
+	public function isFieldCodeUserProfileField(string $fieldCode): bool
+	{
+		if (!str_starts_with($fieldCode, \Bitrix\Sign\Factory\Field::USER_FIELD_CODE_PREFIX))
+		{
+			return false;
+		}
+
+		$fieldName = $this->getProfileFieldNameByFieldCode($fieldCode);
+
+		return $this->isProfileField($fieldName);
+	}
+
+	public function getProfileFieldNameByFieldCode(string $fieldCode): string
+	{
+		return mb_substr($fieldCode, mb_strlen(\Bitrix\Sign\Factory\Field::USER_FIELD_CODE_PREFIX));
 	}
 }

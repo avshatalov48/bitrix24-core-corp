@@ -50,6 +50,7 @@ class Icon
 	public const TASK_VIEWED_COMMENT = 'task-viewed-comment';
 	public const TASK_ACTIVITY = 'task-activity';
 	public const AI_COPILOT = 'ai-copilot';
+	public const AI_PROCESS = 'ai-process';
 	public const RESTORATION = 'restoration';
 	public const ARROW_UP = 'arrow-up';
 	public const ARROW_DOWN = 'arrow-down';
@@ -57,6 +58,11 @@ class Icon
 	public const CAMERA = 'camera';
 	public const COPY = 'copy';
 
+	public const CYCLE_EQUAL = 'cycle-equal';
+	public const BIZPROC = 'bizproc';
+	public const MESSAGE_WITH_POINT = 'message-with-point';
+
+	public const BOOKING = 'booking';
 	//endregion
 
 	public static function getSystemIcons(): array

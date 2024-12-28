@@ -12,6 +12,7 @@ $MESS["INTRANET_USER_PROFILE_BLOG_GRAT_TITLE"] = "Благодарности";
 $MESS["INTRANET_USER_PROFILE_BLOG_GRAT_ADD"] = "Поблагодарить";
 $MESS["INTRANET_USER_PROFILE_MORE"] = "Показать еще #NUM#";
 $MESS["INTRANET_USER_PROFILE_extranet"] = "Экстранет";
+$MESS["INTRANET_USER_PROFILE_collaber"] = "Гость";
 $MESS["INTRANET_USER_PROFILE_waiting"] = "Ждёт подтверждения входа";
 $MESS["INTRANET_USER_PROFILE_visitor"] = "Посетитель";
 $MESS["INTRANET_USER_PROFILE_fired"] = "Уволен";

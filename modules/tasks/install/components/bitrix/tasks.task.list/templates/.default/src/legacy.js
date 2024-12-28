@@ -22,29 +22,79 @@ BX.Tasks.GridActions = {
 	initPopupBalloon: function(mode, searchField, groupIdField)
 	{
 		this.groupSelector = null;
+		this.flowSelectorDialog = null;
 
 		BX.bind(BX(searchField + '_control'), 'click', BX.delegate(function() {
-			if (!this.groupSelector)
-			{
-				this.groupSelector = new BX.Tasks.Integration.Socialnetwork.NetworkSelector({
-					scope: BX(searchField + '_control'),
-					id: 'group-selector-' + this.gridId,
-					mode: mode,
-					query: false,
-					useSearch: true,
-					useAdd: false,
-					parent: this,
-					popupOffsetTop: 5,
-					popupOffsetLeft: 40,
-				});
+				if (mode === 'flow')
+				{
+					if (!this.flowSelectorDialog)
+					{
+						this.flowSelectorDialog = new BX.UI.EntitySelector.Dialog({
+							targetNode: BX(searchField + '_control'),
+							width: 350,
+							height: 400,
+							multiple: false,
+							dropdownMode: true,
+							enableSearch: true,
+							cacheable: true,
+							entities: [
+								{
+									id: 'flow',
+									options: {
+										onlyActive: true,
+									},
+									dynamicLoad: true,
+									dynamicSearch: true,
+								},
+							],
+							events: {
+								'Item:onBeforeSelect': (baseEvent) => {
+									const data = baseEvent.getData();
+									BX(searchField + '_control').value = BX.util.htmlspecialcharsback(data.item.title.text) || '';
+									BX(groupIdField + '_control').value = data.item.id || '';
+								},
+							},
+							recentTabOptions: {
+								stub: 'BX.Tasks.Flow.EmptyStub',
+								stubOptions: {
+									showArrow: true,
+								},
+							},
+						});
 
-				this.groupSelector.bindEvent('item-selected', BX.delegate(function(data) {
-					BX(searchField + '_control').value = BX.util.htmlspecialcharsback(data.nameFormatted) || '';
-					BX(groupIdField + '_control').value = data.id || '';
-					this.groupSelector.close();
-				}, this));
-			}
-			this.groupSelector.open();
+						const footer = (new BX.Tasks.Flow.Footer(this.flowSelectorDialog));
+						this.flowSelectorDialog.setFooter(footer.render());
+
+					}
+
+					this.flowSelectorDialog.show();
+				}
+				else
+				{
+					if (!this.groupSelector)
+					{
+						const targetNodeId = searchField + '_control';
+						const targetControlNodeId = groupIdField + '_control';
+
+						this.groupSelector = new BX.Tasks.GroupSelector({
+							mode: mode,
+							targetNodeId: targetNodeId,
+							showAvatars: true,
+							enableSearch: true,
+							multiple: false,
+							context: 'TASKS',
+						});
+
+						this.groupSelector.subscribe('itemSelected', (event) => {
+							const { item } = event.getData();
+
+							document.getElementById(targetNodeId).value = BX.util.htmlspecialcharsback(item.getTitle()) || '';
+							document.getElementById(targetControlNodeId).value = item.getId() || '';
+						});
+					}
+
+					this.groupSelector.show();
+				}
 		}, this));
 	},
 
@@ -480,46 +530,68 @@ BX.Tasks.GridActions = {
 
 	action: function(code, taskId, args)
 	{
-		if (code === 'add2Timeman')
+		switch (code)
 		{
-			if (BX.addTaskToPlanner)
+			case 'add2Timeman':
 			{
-				BX.addTaskToPlanner(taskId);
-			}
-			else if (window.top.BX.addTaskToPlanner)
-			{
-				window.top.BX.addTaskToPlanner(taskId);
-			}
-		}
-		else if (code === 'copyLink')
-		{
-			if (BX.clipboard.copy(args.copyLink))
-			{
-				BX.UI.Notification.Center.notify({ content: BX.message('TASKS_LIST_ACTION_COPY_LINK_NOTIFICATION') });
-			}
-		}
-		else if (code === 'complete' || code === 'renew')
-		{
-			BX.ajax.runAction(
-				'bitrix:tasks.scrum.task.isScrumTask',
+				if (BX.addTaskToPlanner)
 				{
-					mode: 'class',
-					data: { taskId: taskId },
-				},
-			).then(function(response) {
-				if (response.data === true)
-				{
-					this.doScrumAction(code, taskId, args);
+					BX.addTaskToPlanner(taskId);
 				}
-				else
+				else if (window.top.BX.addTaskToPlanner)
 				{
-					this.doAction(code, taskId, args);
+					window.top.BX.addTaskToPlanner(taskId);
 				}
-			}.bind(this));
-		}
-		else
-		{
-			this.doAction(code, taskId, args);
+
+				break;
+			}
+
+			case 'copyLink':
+			{
+				if (BX.clipboard.copy(args.copyLink))
+				{
+					BX.UI.Notification.Center.notify({ content: BX.message('TASKS_LIST_ACTION_COPY_LINK_NOTIFICATION') });
+				}
+
+				break;
+			}
+
+			case 'complete':
+			case 'renew':
+			{
+				BX.ajax.runAction(
+					'bitrix:tasks.scrum.task.isScrumTask',
+					{
+						mode: 'class',
+						data: { taskId: taskId },
+					},
+				).then(function(response) {
+					if (response.data === true)
+					{
+						this.doScrumAction(code, taskId, args);
+					}
+					else
+					{
+						this.doAction(code, taskId, args);
+					}
+				}.bind(this));
+
+				break;
+			}
+
+			case 'take':
+			{
+				this.doTakeAction(taskId, args);
+
+				break;
+			}
+
+			default:
+			{
+				this.doAction(code, taskId, args);
+
+				break;
+			}
 		}
 	},
 
@@ -574,6 +646,44 @@ BX.Tasks.GridActions = {
 					BX.UI.Notification.Center.notify({ content: content });
 				}
 			}.bind(this),
+		);
+	},
+
+	doTakeAction: function(taskId, args)
+	{
+		if (!args.allowTimeTracking)
+		{
+			this.doAction('TAKE', taskId, args);
+
+			return;
+		}
+
+		BX.ajax.runComponentAction('bitrix:tasks.task', 'getTaskFromTimer', {
+			mode: 'class',
+			data: {},
+		}).then(
+			(response) => {
+				const data = response.data;
+
+				if (!data.id)
+				{
+					this.doAction('TAKE', taskId, args);
+
+					return;
+				}
+
+				let body = BX.Loc.getMessage('TASKS_TASK_CONFIRM_START_TIMER');
+				body = body.replace('{{TITLE}}', BX.type.isNotEmptyString(data.title)
+					? BX.util.htmlspecialchars(data.title)
+					: BX.Loc.getMessage('TASKS_UNKNOWN'));
+
+				BX.Tasks.confirm(body, BX.delegate(function(result) {
+					if (result)
+					{
+						this.doAction('TAKE', taskId, args);
+					}
+				}, this), { title: BX.Loc.getMessage('TASKS_TASK_CONFIRM_START_TIMER_TITLE') });
+			},
 		);
 	},
 
@@ -752,10 +862,82 @@ BX.Tasks.GridActions = {
 	},
 
 	confirmGroupAction: function(gridId) {
-		BX.Tasks.confirm(BX.message('TASKS_CONFIRM_GROUP_ACTION')).then(function() {
-			this.processBeforeGroupActionSent();
-			BX.Main.gridManager.getById(gridId).instance.sendSelected();
-		}.bind(this));
+		const gridActions = BX.Main.gridManager.getById(gridId).instance.getActionsPanel().getValues();
+		const actionKey = BX.Main.gridManager.getById(gridId).instance.getActionKey();
+		const action = gridActions[actionKey];
+
+		const data = this.preparationDataGroupAction(gridId, action);
+
+		if (!action.includes("none") && (data.forAll !== 'N' || data.selectedIds.length))
+		{
+			const groupActions = new BX.Tasks.GroupActionsStepper({
+				action,
+				data,
+				requestStopFunction() {
+					BX.Tasks.GridActions.processBeforeGroupActionSent();
+					BX.Tasks.GridActions.reloadGrid();
+				},
+			});
+			groupActions.showDialog();
+		}
+	},
+
+	preparationDataGroupAction(gridId, action) {
+		const selectedIds = BX.Main.gridManager.getById(gridId).instance.getRows().getSelectedIds();
+		const gridActions = BX.Main.gridManager.getById(gridId).instance.getActionsPanel().getValues();
+		const data = {
+			forAll: gridActions[`action_all_rows_${gridId}`] ? 'Y' : 'N',
+			selectedIds,
+			groupId: Number(this.groupId),
+		};
+
+		if (action === 'setdeadline')
+		{
+			data.setDeadline = gridActions.ACTION_SET_DEADLINE_from;
+		}
+
+		if (action === 'adjustdeadline' || action === 'substractdeadline')
+		{
+			data.num = Number(gridActions.num);
+			data.type = gridActions.type;
+		}
+
+		if (action === 'settaskcontrol')
+		{
+			data.taskControlState = gridActions.value;
+		}
+
+		if (action === 'setresponsible')
+		{
+			data.responsibleId = Number(gridActions.responsibleId);
+		}
+
+		if (action === 'setoriginator')
+		{
+			data.originatorId = Number(gridActions.originatorId);
+		}
+
+		if (action === 'addauditor')
+		{
+			data.auditorId = Number(gridActions.auditorId);
+		}
+
+		if (action === 'addaccomplice')
+		{
+			data.accompliceId = Number(gridActions.accompliceId);
+		}
+
+		if (action === 'setgroup')
+		{
+			data.specifyGroupId = Number(gridActions.groupId);
+		}
+
+		if (action === 'setflow')
+		{
+			data.flowId = Number(gridActions.flowId);
+		}
+
+		return data;
 	},
 
 	onDeadlineChangeClick: function(taskId, node, curDeadline, event) {
@@ -1293,6 +1475,9 @@ BX(function() {
 			new BX.Pull.QueueManager({
 				moduleId: 'tasks',
 				userId: this.ownerId,
+				config: {
+					loadItemsDelay: 1000,
+				},
 				additionalData: {},
 				events: {
 					onBeforePull: (event) => {

@@ -64,7 +64,6 @@ if (\Bitrix\Crm\Restriction\RestrictionManager::getLeadsRestriction()->hasPermis
 			'MULTIFIELD_DATA' => $arResult['ENTITY_DATA']['MULTIFIELD_DATA'] ?? [],
 			'OWNER_INFO' => $arResult['ENTITY_INFO'] ?? null,
 			'CONVERSION_PERMITTED' => $arResult['CONVERSION_PERMITTED'],
-			'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'] ?? null,
 			'TYPE' => 'details',
 			'SCRIPTS' => [
 				'DELETE' => 'BX.Crm.EntityDetailManager.items["' . CUtil::JSEscape($guid) . '"].processRemoval();',
@@ -139,6 +138,7 @@ $APPLICATION->IncludeComponent(
 		'EXTRAS' => [
 			'ANALYTICS' => $arParams['EXTRAS']['ANALYTICS'] ?? [],
 		],
+		'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'] ?? [],
 	]
 );
 

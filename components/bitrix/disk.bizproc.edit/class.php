@@ -87,6 +87,7 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 				$this->arResult['PARAMETERS'] = $template['PARAMETERS'];
 				$this->arResult['VARIABLES'] = $template['VARIABLES'];
 				$this->arResult['CONSTANTS'] = $template['CONSTANTS'];
+				$this->arResult['TYPE'] = $template['TYPE'];
 			}
 			else
 			{
@@ -278,6 +279,7 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 			'CONSTANTS' => $_POST['arWorkflowConstants'],
 			'USER_ID' => intval($this->getUser()->getID()),
 			'MODIFIER_USER' => new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser),
+			'TYPE' => $this->arResult['TYPE']
 		];
 
 		if(!is_array($fields["VARIABLES"]))

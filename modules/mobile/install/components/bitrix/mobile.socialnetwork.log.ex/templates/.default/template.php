@@ -69,7 +69,9 @@ UI\Extension::load([
 	'ui.buttons',
 	'main.rating',
 	'mobile.rating.comment',
-	'ui.livefeed.background'
+	'ui.livefeed.background',
+	'main.core',
+	'ui.avatar'
 ]);
 
 if (!empty($arResult['TARGET']))

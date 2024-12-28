@@ -3,7 +3,6 @@ import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { Button, ButtonState } from 'ui.buttons';
 import { Wizard } from 'tasks.wizard';
-import { Layout } from 'ui.sidepanel.layout';
 import { FormPage } from './pages/form-page';
 import { AboutPage } from './pages/about-page';
 import { SettingsPage } from './pages/settings-page';
@@ -22,7 +21,7 @@ type Params = {
 	guideFlow?: 'Y' | 'N',
 };
 
-type DistributionType = 'manually' | 'queue' | 'by_workload';
+export type DistributionType = 'manually' | 'queue' | 'himself' | 'by_workload';
 
 export type Flow = {
 	id: ?number,
@@ -30,14 +29,14 @@ export type Flow = {
 	description: string,
 	taskCreators: string[],
 	plannedCompletionTime: number,
+	matchSchedule: boolean,
 	matchWorkTime: boolean,
 	templateId: number,
-	responsibleQueue: number[],
+	responsibleList: string[],
 	responsibleCanChangeDeadline: boolean,
 	distributionType: DistributionType,
 	groupId: number,
 	ownerId: number,
-	manualDistributorId: number,
 	demo: boolean,
 	notifyOnQueueOverflow: ?number,
 	notifyOnTasksInProgressOverflow: ?number,
@@ -68,8 +67,6 @@ export class EditForm extends EventEmitter
 
 	#pageChanging: boolean = false;
 
-	#hintManager = null;
-
 	constructor(params: Params = {})
 	{
 		super(params);
@@ -90,7 +87,7 @@ export class EditForm extends EventEmitter
 
 		const initFlowData = {
 			notifyAtHalfTime: true,
-			responsibleCanChangeDeadline: true,
+			responsibleCanChangeDeadline: false,
 			taskControl: true,
 			notifyOnQueueOverflow: 50,
 			notifyOnTasksInProgressOverflow: 50,
@@ -107,8 +104,10 @@ export class EditForm extends EventEmitter
 		this.#flow = this.#getFlow(initFlowData);
 	}
 
-	static createInstance(params: Params = {}): EditForm
+	static async createInstance(params: Params = {}): EditForm
 	{
+		const { EditForm } = await top.BX.Runtime.loadExtension('tasks.flow.edit-form');
+
 		const instance = new EditForm(params);
 		instance.openInSlider();
 
@@ -121,44 +120,37 @@ export class EditForm extends EventEmitter
 
 		BX.SidePanel.Instance.open(sidePanelId, {
 			cacheable: true,
-			contentCallback: (slider) => {
-				return Layout.createContent({
-					extensions: ['tasks.flow.edit-form'],
-					design: { section: false },
-					content: async () => {
-						this.slider = slider;
+			contentCallback: async (slider) => {
+				this.slider = slider;
 
-						const {data: noAccess} = await ajax.runAction('tasks.flow.View.Access.check', {
+						const { data: noAccess } = await ajax.runAction('tasks.flow.View.Access.check', {
 							data: {
 								flowId: this.#flow.id > 0 ? this.#flow.id : 0,
 								context: 'edit-form',
 								demoFlow: this.#params.demoFlow,
 								guideFlow: this.#params.guideFlow,
-							}
+							},
 						});
 
-						if (noAccess !== null)
-						{
-							return Tag.render`${noAccess.html}`;
-						}
+				if (noAccess !== null)
+				{
+					return Tag.render`${noAccess.html}`;
+				}
 
-						if (this.#flow.id > 0)
-						{
-							const { data: flowData, error } = await ajax.runAction('tasks.flow.Flow.get', {
-								data: {
-									flowId: this.#flow.id,
-								},
-							});
+				if (this.#flow.id > 0)
+				{
+					const { data: flowData } = await ajax.runAction('tasks.flow.Flow.get', {
+						data: {
+							flowId: this.#flow.id,
+						},
+					});
 
-							this.#flow = this.#getFlow(flowData);
-						}
+					this.#flow = this.#getFlow(flowData);
+				}
 
-						this.#pages.forEach((page) => page.setFlow(this.#flow));
+				this.#pages.forEach((page) => page.setFlow(this.#flow));
 
-						return this.#render();
-					},
-					buttons: [],
-				});
+				return this.#render();
 			},
 			width: SLIDER_WIDTH,
 			events: {
@@ -167,24 +159,19 @@ export class EditForm extends EventEmitter
 						.find((page) => page.getId() === 'about-flow')
 					;
 					aboutPage.focusToEmptyName();
-
-					this.#hintManager = top.BX.UI.Hint.createInstance({
-						id: sidePanelId,
-						popupParameters: {
-							targetContainer: window.top.document.body,
-						},
+					requestAnimationFrame(() => {
+						this.#wizard.initHints();
 					});
-					this.#hintManager.init(event.slider.getContainer());
 				},
 				onClose: () => {
-					this.#hintManager.hide();
+					this.#wizard.hideHints();
 					this.emit('afterClose');
 				},
 			},
 		});
 	}
 
-	#render()
+	#render(): HTMLElement
 	{
 		return Tag.render`
 			<div class="tasks-flow__create">
@@ -347,11 +334,10 @@ export class EditForm extends EventEmitter
 				});
 			}
 		}, (error) => {
-				this.#saveChangesButton?.setState(null);
-				this.#finishButton?.setState(null);
-				alert(error.errors.map((e) => e.message).join('\n'))
-			}
-		);
+			this.#saveChangesButton?.setState(null);
+			this.#finishButton?.setState(null);
+			alert(error.errors.map((e) => e.message).join('\n'));
+		});
 	}
 
 	#showErrors(): void
@@ -386,16 +372,16 @@ export class EditForm extends EventEmitter
 			<div class="tasks-flow__task-demo-info_wrapper">
 				<div class="tasks-flow__task-demo-info_content">
 					<div class="tasks-flow__task-demo-info_title">
-						${Loc.getMessage('TASKS_FLOW_EDIT_FORM_DEMO_INFO_TITLE')}
+						${Loc.getMessage('TASKS_FLOW_EDIT_FORM_DEMO_INFO_TITLE_1')}
 					</div>
 					<div class="tasks-flow__task-demo-info_text">
-						${Loc.getMessage('TASKS_FLOW_EDIT_FORM_DEMO_INFO_TEXT')}
+						${Loc.getMessage('TASKS_FLOW_EDIT_FORM_DEMO_INFO_TEXT_1')}
 					</div>
 					<div class="tasks-flow__task-demo-info_text-trial">
-						${Loc.getMessage('TASKS_FLOW_EDIT_FORM_DEMO_INFO_TEXT_TRIAL')}
+						${Loc.getMessage('TASKS_FLOW_EDIT_FORM_DEMO_INFO_TEXT_TRIAL_1')}
 					</div>
 					<div class="ui-btn ui-btn-sm ui-btn-primary ui-btn-round ui-btn-no-caps">
-						${Loc.getMessage('TASKS_FLOW_EDIT_FORM_DEMO_INFO_BTN')}
+						${Loc.getMessage('TASKS_FLOW_EDIT_FORM_DEMO_INFO_BTN_1')}
 					</div>
 				</div>
 				${this.#getLottieIconContainer()}
@@ -470,14 +456,12 @@ export class EditForm extends EventEmitter
 			incorrectData.push('taskCreators');
 		}
 
-		if (flowData.distributionType === 'manually' && flowData.manualDistributorId <= 0)
+		if (
+			!Type.isArrayFilled(flowData.responsibleList)
+			|| (flowData.distributionType === 'manually' && flowData.responsibleList[0] <= 0)
+		)
 		{
-			incorrectData.push('manualDistributorId');
-		}
-
-		if (flowData.distributionType === 'queue' && !Type.isArrayFilled(flowData.responsibleQueue))
-		{
-			incorrectData.push('responsibleQueue');
+			incorrectData.push('responsibleList');
 		}
 
 		if (flowData.id > 0 && flowData.groupId <= 0 && flowData.demo === false)

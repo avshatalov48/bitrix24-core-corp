@@ -11,6 +11,35 @@ jn.define('im/messenger/model/messages/pin', (require, exports, module) => {
 
 	const logger = LoggerManager.getInstance().getLogger('model--messages-pin');
 
+	const messageDefaultElement = Object.freeze({
+		id: 0,
+		templateId: '',
+		previousId: 0,
+		nextId: 0,
+		chatId: 0,
+		authorId: 0,
+		date: new Date(),
+		text: '',
+		loadText: '',
+		uploadFileId: '',
+		params: {},
+		replaces: [],
+		files: [],
+		unread: false,
+		viewed: true,
+		viewedByOthers: false,
+		sending: false,
+		error: false,
+		errorReason: 0, // code from rest/classes/general/rest.php:25 or main/install/js/main/core/core_ajax.js:1044
+		retry: false,
+		audioPlaying: false,
+		playingTime: 0,
+		attach: [],
+		keyboard: [],
+		richLinkId: null,
+		forward: {},
+	});
+
 	/**
 	 * @type {PinMessengerModel}
 	 */
@@ -88,7 +117,12 @@ jn.define('im/messenger/model/messages/pin', (require, exports, module) => {
 					return;
 				}
 
-				const messages = payload.messages.map((message) => validateMessage(message));
+				const messages = payload.messages.map((message) => {
+					return {
+						...messageDefaultElement,
+						...validateMessage(message),
+					};
+				});
 				const pins = payload.pins.map((pin) => validatePin(pin));
 
 				if (messages.length === 0 || pins.length === 0)
@@ -118,7 +152,12 @@ jn.define('im/messenger/model/messages/pin', (require, exports, module) => {
 					return;
 				}
 
-				const messages = payload.messages.map((message) => validateMessage(message));
+				const messages = payload.messages.map((message) => {
+					return {
+						...messageDefaultElement,
+						...validateMessage(message),
+					};
+				});
 				const pins = payload.pins.map((pin) => validatePin(pin));
 
 				if (messages.length === 0 || pins.length === 0)
@@ -144,7 +183,12 @@ jn.define('im/messenger/model/messages/pin', (require, exports, module) => {
 			set: (store, payload) => {
 				const pin = validatePin(payload.pin);
 				const pinnedMessage = payload.messages
-					.map((rawMessage) => validateMessage(rawMessage))
+					.map((rawMessage) => {
+						return {
+							...messageDefaultElement,
+							...validateMessage(rawMessage),
+						};
+					})
 					.find((message) => message.id === pin.messageId)
 				;
 

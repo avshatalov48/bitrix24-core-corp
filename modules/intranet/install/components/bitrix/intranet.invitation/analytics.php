@@ -94,7 +94,13 @@ class Analytics
 
 		if ($status !== '')
 		{
-			$analytic['status'] = $status === 'Y' ? 'success' : 'fail';
+			$success = 'success';
+			$fail = 'fail';
+			if ($event === self::ANALYTIC_EVENT_CHANGE_QUICK_REG) {
+				$success = 'on';
+				$fail = 'off';
+			}
+			$analytic['status'] = $status === 'Y' ? $success : $fail;
 		}
 		$analytics[] = $analytic;
 		$this->send($analytics);
@@ -115,8 +121,9 @@ class Analytics
 	public function sendInvitation(
 		int $userId,
 		string $subSection,
+		bool $status,
 		int $analyticEmails = 0,
-		int $analyticPhones = 0
+		int $analyticPhones = 0,
 	): void
 	{
 		$analyticData = $this->getData();
@@ -127,6 +134,7 @@ class Analytics
 			'event' => self::ANALYTIC_EVENT_INVITATION,
 			'section' => $analyticData['source'] ?? '',
 			'subSection' => $subSection,
+			'status' => $status ? 'success' : 'fail',
 			'p1' => $this->getAdmin(),
 			'p5' => 'userId_' . $userId,
 		];

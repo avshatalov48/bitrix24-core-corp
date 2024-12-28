@@ -107,13 +107,13 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 				'CREATED_BY' => (in_array('CREATED_BY', $visibleColumns) ? [
 					'ID' => $file->getCreateUser()->getId(),
 					'URL' => $file->getCreateUser()->getDetailUrl(),
-					'AVATAR' => htmlspecialcharsbx($file->getCreateUser()->getAvatarSrc()),
+					'AVATAR_HTML' => $file->getCreateUser()->renderAvatar(),
 					'NAME' => htmlspecialcharsbx($file->getCreateUser()->getFormattedName())
 				] : null),
 				'UPDATED_BY' => (in_array('UPDATED_BY', $visibleColumns) ? [
 					'ID' => $file->getUpdatedBy(),
 					'URL' => $file->getUpdateUser()->getDetailUrl(),
-					'AVATAR' => htmlspecialcharsbx($file->getUpdateUser()->getAvatarSrc()),
+					'AVATAR_HTML' => $file->getUpdateUser()->renderAvatar(),
 					'NAME' => htmlspecialcharsbx($file->getUpdateUser()->getFormattedName())
 				] : null),
 				'CREATE_TIME' => $this->getRelativeTime($timestampCreate),
@@ -212,6 +212,7 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 				'TRACKED_OBJECT.USER_ID' => $this->getUserId(),
 				'DELETED_TYPE' => Disk\Internals\ObjectTable::DELETED_TYPE_NONE,
 				'TYPE' => Disk\Internals\ObjectTable::TYPE_FILE,
+				'TYPE_FILE' => TypeFile::DOCUMENT,
 			] + $filter,
 			'with' => $aliases,
 			'order' => $sorting

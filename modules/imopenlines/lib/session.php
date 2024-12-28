@@ -1230,6 +1230,7 @@ class Session
 					'FROM_USER_ID' => $this->session['OPERATOR_ID'],
 					'MESSAGE' => Loc::getMessage('IMOL_SESSION_CLOSE_FINAL'),
 					'SYSTEM' => 'Y',
+					'SKIP_USER_CHECK' => 'Y',
 					'RECENT_ADD' => $userViewChat ? 'Y' : 'N',
 					'PARAMS' => [
 						Params::STYLE_CLASS => 'bx-messenger-content-item-ol-end',
@@ -1362,6 +1363,7 @@ class Session
 								Params::STYLE_CLASS => 'bx-messenger-content-item-ol-output bx-messenger-content-item-vote',
 								Params::TYPE => 'lines',
 								Params::COMPONENT_ID => 'bx-imopenlines-message',
+								Params::COMPONENT_PARAMS => [MessageParameter::IMOL_FORM => 'like'],
 							]
 						];
 
@@ -2806,14 +2808,20 @@ class Session
 	 */
 	public static function deleteSession($sessionId)
 	{
-		//TODO - add removing of bounded im_chat
+		$sessionData = Model\SessionTable::getByIdPerformance($sessionId)->fetch();
+		$chat = \Bitrix\Im\V2\Chat::getInstance($sessionData['CHAT_ID']);
+		$chat->getRelations()->delete();
+
+		Im::chatHide($sessionData['CHAT_ID']);
+		$fakeRelation = new Relation((int)$sessionData['CHAT_ID']);
+		$fakeRelation->removeAllRelations(true);
+
 		SessionTable::delete($sessionId);
 		SessionCheckTable::delete($sessionId);
 		SessionIndexTable::delete($sessionId);
 		$kpi = new KpiManager($sessionId);
 		$kpi->deleteSessionMessages();
 		unset($kpi);
-		Recent::clearRecent((int)$sessionId);
 
 		return true;
 	}

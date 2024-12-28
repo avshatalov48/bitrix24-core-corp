@@ -49,6 +49,9 @@ class Logo
 	public const TASK_ACTIVITY = 'task-activity';
 	public const AI_COPILOT = 'ai-copilot';
 	public const ZOOM = 'zoom';
+
+	public const BIZPROC = 'bizproc';
+	public const BIZPROC_TASK = 'bizproc-task';
 	//endregion
 
 	public static function getInstance(string $code): self
@@ -130,6 +133,8 @@ class Logo
 			case self::TASK_ACTIVITY:
 			case self::AI_COPILOT:
 			case self::ZOOM:
+			case self::BIZPROC:
+			case self::BIZPROC_TASK:
 				return (new Body\Logo($this->getCode()))
 					->setInCircle(true)
 				;

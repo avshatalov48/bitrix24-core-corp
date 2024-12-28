@@ -2,14 +2,15 @@
  * @module ui-system/blocks/badges/counter
  */
 jn.define('ui-system/blocks/badges/counter', (require, exports, module) => {
-	const { PropTypes } = require('utils/validation');
-	const { Component, Indent } = require('tokens');
 	const { Type } = require('type');
+	const { Component, Indent } = require('tokens');
 	const { mergeImmutable } = require('utils/object');
 	const { Text5 } = require('ui-system/typography/text');
+	const { PropTypes } = require('utils/validation');
 	const { BadgeCounterDesign } = require('ui-system/blocks/badges/counter/src/design-enum');
 
 	const MAX_COUNTS = 99;
+	const SIZE = 18;
 
 	/**
 	 * @typedef {Object} BadgeCounterProps
@@ -49,10 +50,11 @@ jn.define('ui-system/blocks/badges/counter', (require, exports, module) => {
 			badgeText = badgeText > MAX_COUNTS ? `${MAX_COUNTS}+` : badgeText;
 		}
 
+		const isRoundedBadge = value < 10 && !showRawValue;
+
 		const viewProps = mergeImmutable({
 			testId: `${testId}_${design.getName()}`,
 			style: {
-				height: 18,
 				flexShrink: 1,
 				alignItems: 'flex-start',
 			},
@@ -63,9 +65,12 @@ jn.define('ui-system/blocks/badges/counter', (require, exports, module) => {
 			View(
 				{
 					style: {
+						height: SIZE,
+						width: isRoundedBadge ? SIZE : null,
 						flexDirection: 'row',
 						alignItems: 'center',
-						paddingHorizontal: Indent.S.toNumber(),
+						justifyContent: 'center',
+						paddingHorizontal: isRoundedBadge ? null : Indent.S.toNumber(),
 						borderRadius: Component.elementAccentCorner.toNumber(),
 						backgroundColor: design.getBackgroundColor().toHex(),
 					},

@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_TIMELINE_BIZPROC_EXEC_TIME"] = "Instant";
+$MESS["CRM_TIMELINE_BIZPROC_EXEC_TITLE"] = "Start-up time";

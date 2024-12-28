@@ -6,7 +6,7 @@ jn.define('text-editor/components/toolbar', (require, exports, module) => {
 	const { Button, ButtonDesign, ButtonSize } = require('ui-system/form/buttons/button');
 	const { Icon } = require('assets/icons');
 	const { ToolbarButton } = require('text-editor/components/toolbar-button');
-	const { Color } = require('tokens');
+	const { Color, Indent } = require('tokens');
 
 	const separatorSvg = '<svg width="10" height="14" viewBox="0 0 10 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4.5" width="1" height="14" fill="#E2E2E2"/></svg>';
 
@@ -105,6 +105,7 @@ jn.define('text-editor/components/toolbar', (require, exports, module) => {
 						justifyContent: (allowBBCode ? 'space-between' : 'flex-end'),
 						alignItems: 'center',
 						height: 52,
+						marginHorizontal: Indent.XL3.toNumber(),
 					},
 				},
 				allowBBCode && ToolbarButton({

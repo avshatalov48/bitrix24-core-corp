@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'ui.form-elements.view',
 		'main.core',
+		'types.js',
 	],
 	'skip_core' => false,
 ];

@@ -8,13 +8,13 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 	const defaultChatOptions = {
 		itemOptions: {
 			CHANNEL: {
-				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_CHANNEL_SUBTITLE'),
+				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_CHANNEL_SUBTITLE_MSGVER_1'),
 			},
 			ANNOUNCEMENT: {
 				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_ANNOUNCEMENT_SUBTITLE'),
 			},
 			GROUP: {
-				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_GROUP_SUBTITLE'),
+				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_GROUP_SUBTITLE_MSGVER_1'),
 			},
 			VIDEOCONF: {
 				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_VIDEOCONF_SUBTITLE'),

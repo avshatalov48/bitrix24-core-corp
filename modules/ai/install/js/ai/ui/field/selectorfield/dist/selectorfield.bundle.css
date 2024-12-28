@@ -58,10 +58,9 @@
 .select-label {
 	display: flex;
 	align-items: center;
-	width: 100%;
 	height: 40px;
 	max-height: 0;
-	padding: 0 16px;
+	padding: 0 6px 0 16px;
 	cursor: pointer;
 	overflow: hidden;
 }
@@ -71,6 +70,7 @@
 	height: 40px;
 	max-height: 0;
 	padding-right: 16px;
+	cursor: pointer;
 }
 
 .select-link {
@@ -98,7 +98,19 @@
 	transition: all 0.2s ease-out;
 }
 
+.select-label-recommended {
+	font: 8px var(--ui-font-family-open-sans);
+	font-weight: var(--ui-font-weight-bold, 700);
+	text-transform: uppercase;
+	color: #2FC6F6;
+	background: #E1F3F9;
+	border-radius: 20px;
+	padding: 1px 5px;
+}
+
 .select-label-icon {
+	position: absolute;
+	right: 16px;
 	width: 20px;
 	opacity: .0;
 	background-color: #2066B0;

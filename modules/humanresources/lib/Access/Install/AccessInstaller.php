@@ -93,6 +93,7 @@ class AccessInstaller
 		return match ($roleName) {
 			Role\RoleDictionary::ROLE_DIRECTOR => AccessCode::ACCESS_DIRECTOR . '0',
 			Role\RoleDictionary::ROLE_EMPLOYEE => AccessCode::ACCESS_EMPLOYEE . '0',
+			Role\RoleDictionary::ROLE_ADMIN => 'G1',
 			default => null,
 		};
 	}

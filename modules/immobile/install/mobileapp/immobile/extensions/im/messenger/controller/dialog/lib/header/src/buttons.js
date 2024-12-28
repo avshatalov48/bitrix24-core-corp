@@ -2,23 +2,28 @@
  * @module im/messenger/controller/dialog/lib/header/buttons
  */
 jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports, module) => {
-	const AppTheme = require('apptheme');
-	const { Theme } = require('im/lib/theme');
 	const { Loc } = require('loc');
 	const { debounce } = require('utils/function');
 	const { isEqual } = require('utils/object');
 	const { isOnline } = require('device/connection');
 
-	const { DialogType, UserRole, HeaderButton, BotCode, Analytics  } = require('im/messenger/const');
+	const { DialogType, UserRole, BotCode, Analytics } = require('im/messenger/const');
 	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { ChatPermission, UserPermission } = require('im/messenger/lib/permission-manager');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-
-	const { UserAdd } = require('im/messenger/controller/user-add');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
-	const { buttonIcons } = require('im/messenger/assets/common');
+	const { UserAdd } = require('im/messenger/controller/user-add');
+
+	const {
+		CallAudioButton,
+		CallVideoButton,
+		UnsubscribedFromCommentsButton,
+		SubscribedToCommentsButton,
+		AddUsersButton,
+		CancelMultipleSelectButton,
+	} = require('im/messenger/controller/dialog/lib/header/button-configuration');
 
 	/**
 	 * @class HeaderButtons
@@ -49,11 +54,18 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 		}
 
 		/**
-		 * @return {Array<Object>}
 		 * @param {boolean} [isUpdateState=false] this only open widget
+		 * @return {Array<DialogHeaderButton>}
 		 */
 		getButtons(isUpdateState = false)
 		{
+			if (this.checkSelectMessagesModeEnabled())
+			{
+				this.buttons = [this.getCancelMultipleSelectButton()];
+
+				return this.buttons;
+			}
+
 			const isDialogWithUser = !DialogHelper.isDialogId(this.dialogId);
 			const dialogData = this.store.getters['dialoguesModel/getById'](this.dialogId);
 
@@ -72,9 +84,9 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 
 		/**
 		 * @param {DialogView} view
-		 * @param {boolean} [isUseCallbacks=false]
+		 * @param {boolean} [isUseCallbacks=false] deprecated - use EventType.view.barButtonTap
 		 */
-		render(view, isUseCallbacks = false)
+		render(view = this.dialogLocator.get('view'), isUseCallbacks = false)
 		{
 			let buttons = this.getButtons();
 
@@ -106,6 +118,7 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 		}
 
 		/**
+		 * @return {Array<DialogHeaderButton>}
 		 * @private
 		 */
 		renderUserHeaderButtons()
@@ -117,26 +130,12 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 				return [];
 			}
 
-			return [
-				{
-					id: 'call_video',
-					type: 'call_video',
-					badgeCode: 'call_video',
-					color: Theme.isDesignSystemSupported ? null : AppTheme.colors.accentMainPrimaryalt,
-					testId: 'DIALOG_HEADER_VIDEO_CALL_BUTTON',
-				},
-				{
-					id: 'call_audio',
-					type: 'call_audio',
-					badgeCode: 'call_audio',
-					color: Theme.isDesignSystemSupported ? null : AppTheme.colors.accentMainPrimaryalt,
-					testId: 'DIALOG_HEADER_AUDIO_CALL_BUTTON',
-				},
-			];
+			return [CallVideoButton, CallAudioButton];
 		}
 
 		/**
 		 * @param {DialoguesModelState?} dialogData
+		 * @return {Array<DialogHeaderButton>} buttons
 		 * @private
 		 */
 		renderDialogHeaderButtons(dialogData)
@@ -150,8 +149,28 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 		}
 
 		/**
+		 * @param {() => any} callback
+		 * @void
+		 */
+		renderCancelMultipleButton(callback)
+		{
+			this.forceRenderButtons([this.getCancelMultipleSelectButton(callback)]);
+		}
+
+		/**
+		 * @param {Array<DialogHeaderButton>} buttons
+		 * @param {DialogView} view
+		 */
+		forceRenderButtons(buttons, view = this.dialogLocator.get('view'))
+		{
+			Logger.info(`${this.constructor.name}.forceRenderButton before:`, this.buttons, ' after: ', buttons);
+			this.buttons = buttons;
+			view.setRightButtons(buttons);
+		}
+
+		/**
 		 * @param {DialogType} type
-		 * @return {*}
+		 * @return {Array<DialogHeaderButton>}
 		 */
 		getButtonsByChatType(type)
 		{
@@ -172,6 +191,9 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 			}
 		}
 
+		/**
+		 * @return {Array<DialogHeaderButton>}
+		 */
 		getDefaultChatButtons()
 		{
 			const dialogData = this.store.getters['dialoguesModel/getById'](this.dialogId);
@@ -180,24 +202,12 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 				return [];
 			}
 
-			return [
-				{
-					id: HeaderButton.callVideo,
-					type: 'call_video',
-					badgeCode: 'call_video',
-					testId: 'DIALOG_HEADER_VIDEO_CALL_BUTTON',
-					color: Theme.isDesignSystemSupported ? null : AppTheme.colors.accentMainPrimaryalt,
-				},
-				{
-					id: HeaderButton.callAudio,
-					type: 'call_audio',
-					badgeCode: 'call_audio',
-					testId: 'DIALOG_HEADER_AUDIO_CALL_BUTTON',
-					color: Theme.isDesignSystemSupported ? null : AppTheme.colors.accentMainPrimaryalt,
-				},
-			];
+			return [CallVideoButton, CallAudioButton];
 		}
 
+		/**
+		 * @return {Array<DialogHeaderButton>}
+		 */
 		getCommentButtons()
 		{
 			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
@@ -226,22 +236,10 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 
 			if (!isUserSubscribed)
 			{
-				return [{
-					id: HeaderButton.unsubscribedFromComments,
-					testId: HeaderButton.unsubscribedFromComments,
-					type: 'text',
-					name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HEADER_SUBSCRIBE_COMMENTS'),
-					color: Theme.colors.base4,
-				}];
+				return [UnsubscribedFromCommentsButton];
 			}
 
-			return [{
-				id: HeaderButton.subscribedToComments,
-				testId: HeaderButton.subscribedToComments,
-				type: 'text',
-				name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HEADER_SUBSCRIBED_COMMENTS'),
-				color: Theme.colors.accentMainPrimaryalt,
-			}];
+			return [SubscribedToCommentsButton];
 		}
 
 		getCopilotButtons()
@@ -250,6 +248,7 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 		}
 
 		/**
+		 * @return {DialogHeaderButton}
 		 * @private
 		 */
 		renderAddUserButton()
@@ -260,20 +259,24 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 				return [];
 			}
 
-			return [
-				{
-					id: 'add_users',
-					type: 'add_users',
-					badgeCode: 'add_users',
-					testId: 'DIALOG_HEADER_ADD_USERS_BUTTON',
-					svg: { content: buttonIcons.copilotHeaderAddInline() },
-				},
-			];
+			return [AddUsersButton];
+		}
+
+		/**
+		 * @param {() => any} callback
+		 * @return {DialogHeaderButton}
+		 */
+		getCancelMultipleSelectButton(callback)
+		{
+			return {
+				...CancelMultipleSelectButton,
+				callback,
+			};
 		}
 
 		/**
 		 * @private
-		 * @param {HeaderButton} buttonId
+		 * @param {string} buttonId
 		 */
 		onTap(buttonId)
 		{
@@ -286,33 +289,33 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 
 			switch (buttonId)
 			{
-				case HeaderButton.callVideo: {
+				case CallVideoButton.id: {
 					Calls.sendAnalyticsEvent(this.dialogId, Analytics.Element.videocall, Analytics.Section.chatWindow);
 					Calls.createVideoCall(this.dialogId);
 					break;
 				}
 
-				case HeaderButton.callAudio: {
+				case CallAudioButton.id: {
 					Calls.sendAnalyticsEvent(this.dialogId, Analytics.Element.audiocall, Analytics.Section.chatWindow);
 					Calls.createAudioCall(this.dialogId);
 					break;
 				}
 
-				case HeaderButton.subscribedToComments: {
+				case SubscribedToCommentsButton.id: {
 					Notification.showToast(ToastType.unsubscribeFromComments, this.dialogLocator.get('view').ui);
 					this.dialogLocator.get('chat-service').unsubscribeFromComments(this.dialogId);
 
 					break;
 				}
 
-				case HeaderButton.unsubscribedFromComments: {
+				case UnsubscribedFromCommentsButton.id: {
 					Notification.showToast(ToastType.subscribeToComments, this.dialogLocator.get('view').ui);
 					this.dialogLocator.get('chat-service').subscribeToComments(this.dialogId);
 
 					break;
 				}
 
-				case HeaderButton.addUsers: {
+				case AddUsersButton.id: {
 					this.callUserAddWidget();
 					break;
 				}
@@ -359,6 +362,20 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 			this.isCopilot = dialogData?.type === DialogType.copilot;
 
 			return this.isCopilot;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		checkSelectMessagesModeEnabled()
+		{
+			const view = this.dialogLocator.get('view');
+			if (view?.selector)
+			{
+				return view.getSelectEnable();
+			}
+
+			return false;
 		}
 	}
 

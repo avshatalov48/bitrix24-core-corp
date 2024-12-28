@@ -13,6 +13,11 @@ class PermIdentifier
 	{
 	}
 
+	public static function fromArray(array $perm): self
+	{
+		return new self($perm['ENTITY'], $perm['PERM_TYPE'], $perm['FIELD'], $perm['FIELD_VALUE']);
+	}
+
 	public function isEqual(PermIdentifier $other): bool
 	{
 		$field1 = $this->field === '-' ? null : $this->field;

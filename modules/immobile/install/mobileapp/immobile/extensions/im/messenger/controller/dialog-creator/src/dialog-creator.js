@@ -23,6 +23,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 	const { AnalyticsEvent } = require('analytics');
 	const { CopilotRoleSelector } = require('layout/ui/copilot-role-selector');
 	const { ChannelCreator } = require('im/messenger/controller/channel-creator');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	class DialogCreator
 	{
@@ -62,6 +63,29 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 				userList: this.prepareItems(this.getUserList()),
 				analytics: new AnalyticsEvent().setSection(Analytics.Section.channelTab),
 			});
+		}
+
+		async createCollab()
+		{
+			if (!Feature.isCollabSupported)
+			{
+				Feature.showUnsupportedWidget();
+
+				return;
+			}
+
+			try
+			{
+				const { openCollabCreate } = await requireLazy('collab/create');
+
+				await openCollabCreate({
+					// todo provide some analytics here
+				});
+			}
+			catch (error)
+			{
+				console.error(error);
+			}
 		}
 
 		createCopilotDialog()
@@ -233,6 +257,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 						subtitle: chatTitle.getDescription(),
 						avatarUri: chatAvatar.getAvatarUrl(),
 						avatarColor: item.color,
+						avatar: chatAvatar.getListItemAvatarProps(),
 					},
 					type: 'chats',
 					selected: false,

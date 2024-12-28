@@ -94,7 +94,14 @@ abstract class Member extends \Bitrix\Tasks\Manager
 			{
 				if(isset($knownMembers[$item['ID']]))
 				{
+					$originalData = $data[$code][$k];
 					$data[$code][$k] = \Bitrix\Tasks\Util\User::extractPublicData($knownMembers[$item['ID']]);
+
+					$toAdd = array_diff_key($originalData, $data[$code][$k]);
+					if (!empty($toAdd))
+					{
+						$data[$code][$k] = array_merge($data[$code][$k], $toAdd);
+					}
 				}
 				else
 				{
@@ -107,7 +114,13 @@ abstract class Member extends \Bitrix\Tasks\Manager
 		{
 			if(isset($knownMembers[$data[$code]['ID']]))
 			{
+				$originalData = $data[$code];
 				$data[$code] = \Bitrix\Tasks\Util\User::extractPublicData($knownMembers[$data[$code]['ID']]);
+				$toAdd = array_diff_key($originalData, $data[$code]);
+				if (!empty($toAdd))
+				{
+					$data[$code] = array_merge($data[$code], $toAdd);
+				}
 			}
 			else
 			{
@@ -190,7 +203,7 @@ abstract class Member extends \Bitrix\Tasks\Manager
 		{
 			return 0;
 		}
-		
+
 		return SocialServices\User::create($user, $errors);
 	}
 }

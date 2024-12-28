@@ -72,6 +72,15 @@ class TaskSaveRule extends AbstractRule
 		{
 			return true;
 		}
+		elseif (
+			$this->newTask->getFlowId() > 0
+			&& $this->oldTask->getFlowId() !== $this->newTask->getFlowId()
+			&& !$this->checkFlowPermissions($this->newTask->getFlowId())
+		)
+		{
+			$this->controller->addError(static::class, 'Access to flow is denied');
+			return false;
+		}
 
 		// user can set group
 		if (

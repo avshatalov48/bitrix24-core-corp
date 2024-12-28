@@ -113,7 +113,8 @@ class PortalLogo
 			if (!($id = (int)\CFile::SaveFile($saveFile, 'bitrix24')))
 			{
 				global $APPLICATION;
-				$result->addError(new Error($APPLICATION->GetException()?->GetString()));
+				$exception = $APPLICATION->GetException();
+				$result->addError(new Error($exception ? $exception->GetString() : ''));
 				break;
 			}
 			else

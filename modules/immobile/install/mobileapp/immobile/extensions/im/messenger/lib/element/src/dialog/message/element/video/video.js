@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/element/video/video', (require, exports, module) => {
 	const { Type } = require('type');
+	const { FileStatus } = require('im/messenger/const');
 
 	class Video
 	{
@@ -35,6 +36,7 @@ jn.define('im/messenger/lib/element/dialog/message/element/video/video', (requir
 				previewImage: this.#getPreviewImage(),
 				previewParams: this.#getPreviewParams(),
 				size: this.#getSize(),
+				status: this.#getUploadStatus(),
 			};
 		}
 
@@ -56,7 +58,7 @@ jn.define('im/messenger/lib/element/dialog/message/element/video/video', (requir
 				return this.fileModel.id.toString();
 			}
 
-			return '';
+			return this.fileModel.id;
 		}
 
 		/**
@@ -133,6 +135,20 @@ jn.define('im/messenger/lib/element/dialog/message/element/video/video', (requir
 			}
 
 			return 0;
+		}
+
+		/**
+		 * @return {FileStatus}
+		 */
+		#getUploadStatus()
+		{
+			const status = this.fileModel.status;
+			if ([FileStatus.done, FileStatus.wait].includes(status))
+			{
+				return FileStatus.done;
+			}
+
+			return FileStatus.upload;
 		}
 	}
 

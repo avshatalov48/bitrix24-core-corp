@@ -266,7 +266,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    const popup = new main_popup.Popup({
 	      id,
 	      className: 'tasks-flow__task-queue-popup',
-	      width: 200,
 	      padding: 2,
 	      autoHide: true,
 	      closeByEsc: true,

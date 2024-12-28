@@ -152,14 +152,30 @@
 	font: 17px/20.29px var(--ui-font-family-system);
 	color: var(--ui-color-palette-gray-70);
 	margin: 0 0 30px 0;
+	text-align: center;
+	max-width: 450px;
 }
 
 .sign-b2e-submit-document-info__field {
-	margin-bottom: 20px;
+	margin-bottom: 10px;
 }
 
 .sign-b2e-submit-document-info__field:last-child {
 	margin: 0;
+}
+
+.sign-b2e-submit-document-info__field .ui-section__field-inline-box {
+	display: block;
+}
+
+.sign-b2e-submit-document-info__subfields {
+	padding: 10px;
+	border: 1px solid var(--ui-label-background-color);
+	border-radius: 5px;
+}
+
+.sign-b2e-submit-document-info__field_required {
+	color: var(--ui-field-color-warning);
 }
 
 
@@ -167,4 +183,40 @@
     100% {
 		transform: rotate(360deg);
     }
+}
+
+.sign-submit-document-info-center-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	height: 100%;
+	background-color: var(--ui-color-background-primary);
+	border-radius: var(--ui-border-radius-2xl);
+	text-align: center;
+	justify-content: center;
+}
+
+.sign-submit-document-info-center-icon {
+	margin-bottom: var(--ui-space-stack-md);
+}
+
+.sign-submit-document-info-center-icon img {
+	width: 180px;
+	height: 180px;
+}
+
+.sign-submit-document-info-center-title {
+	font-size: var(--ui-font-size-4xl);
+	color: var(--ui-color-palette-gray-90);
+	font-weight: var(--ui-font-weight-medium);
+	margin-bottom: var(--ui-space-stack-sm);
+	max-width: 480px;
+}
+
+.sign-submit-document-info-center-description {
+	font-size: var(--ui-font-size-2xl);
+	color: var(--ui-color-palette-gray-70);
+	font-weight: var(--ui-font-weight-normal);
+	margin-bottom: var(--ui-space-stack-5xl);
+	max-width: 480px;
 }

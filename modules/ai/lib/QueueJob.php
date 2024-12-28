@@ -40,6 +40,7 @@ final class QueueJob
 	private ?string $hash = null;
 	private ?string $cacheHash = null;
 	private ?Error $error = null;
+	private bool $apiRequestCompleted = true;
 	private Context $context;
 	private IEngine $engine;
 	protected LimitControlService $limitControlService;
@@ -150,6 +151,10 @@ final class QueueJob
 			{
 				$engine->skipAgreement();
 			}
+			if (!empty($engineCustomSettings['HIDDEN_TOKENS']) && \is_array($engineCustomSettings['HIDDEN_TOKENS']))
+			{
+				$payload->setProcessedReplacements($engineCustomSettings['HIDDEN_TOKENS']);
+			}
 
 			$engine->setPayload($payload);
 			$engine->setParameters($row['PARAMETERS']);
@@ -196,6 +201,7 @@ final class QueueJob
 				'JSON_RESPONSE_MODE' => $this->engine->getResponseJsonMode(),
 				'ANALYTIC_DATA' => $this->engine->getAnalyticData(),
 				'SHOULD_SKIP_AGREEMENT' => $this->engine->shouldSkipAgreement(),
+				'HIDDEN_TOKENS' => $this->engine->getPayload()->getTokenProcessor()->getReplacements(),
 			],
 		];
 		$cacheHash = md5(serialize($data));
@@ -352,6 +358,11 @@ final class QueueJob
 		$this->error = new Error($rawError['message'] ?? 'Unknown Error', $rawError['code'] ?? '');
 		$this->engine->writeErrorInHistory($this->error);
 
+		if (isset($rawError['api_request_completed']))
+		{
+			$this->apiRequestCompleted = (bool)$rawError['api_request_completed'];
+		}
+
 		$errorCode = isset($rawError['code']) ? (int)$rawError['code'] : 0;
 
 		Loc::loadLanguageFile(__DIR__ . '/Engine.php');
@@ -369,11 +380,14 @@ final class QueueJob
 		$this->sendBackendEvent(new Result(null, null), self::EVENT_FAIL);
 		$this->sendFrontendEvent(new Result(null, null), self::EVENT_FAIL);
 
-		$this->getLimitControlService()->rollbackConsumption(
-			new Limiter\Usage($this->engine->getContext()),
-			$this->engine->getPayload()->getCost(),
-			$this->engine->getConsumptionId()
-		);
+		if (!$this->apiRequestCompleted)
+		{
+			$this->getLimitControlService()->rollbackConsumption(
+				new Limiter\Usage($this->engine->getContext()),
+				$this->engine->getPayload()->getCost(),
+				$this->engine->getConsumptionId()
+			);
+		}
 
 		$this->delete();
 	}

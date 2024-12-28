@@ -21,7 +21,7 @@ class PermissionDictionary extends Main\Access\Permission\PermissionDictionary
 	public const HUMAN_RESOURCES_CHAT_UNBIND_TO_STRUCTURE = 303;
 	public const HUMAN_RESOURCES_CHANEL_UNBIND_TO_STRUCTURE = 304;
 
-	public static function getHint(int $permissionId): string | null
+	public static function getHint(int $permissionId): ?string
 	{
 		$permissionList = self::getList();
 
@@ -30,7 +30,19 @@ class PermissionDictionary extends Main\Access\Permission\PermissionDictionary
 			return '';
 		}
 
-		return Loc::getMessage(self::HINT_PREFIX . $permissionList[$permissionId]['NAME']);
+		$rephrasedHintCode = self::getRephrasedHintCode($permissionId);
+		return Loc::getMessage($rephrasedHintCode ?? self::HINT_PREFIX . $permissionList[$permissionId]['NAME']) ?? '';
+	}
+
+	public static function getTitle($permissionId): string
+	{
+		$rephrasedPermissionCode = self::getRephrasedPermissionCode($permissionId);
+		if ($rephrasedPermissionCode)
+		{
+			return Loc::getMessage($rephrasedPermissionCode) ?? '';
+		}
+
+		return parent::getTitle($permissionId) ?? '';
 	}
 
 	public static function getType($permissionId): string
@@ -95,5 +107,31 @@ class PermissionDictionary extends Main\Access\Permission\PermissionDictionary
 			],
 			true,
 		);
+	}
+
+	private static function getRephrasedPermissionCode(int $id): ?string
+	{
+		return match ($id) {
+			self::HUMAN_RESOURCES_DEPARTMENT_CREATE => 'HUMAN_RESOURCES_DEPARTMENT_CREATE_MSGVER_1',
+			self::HUMAN_RESOURCES_DEPARTMENT_DELETE => 'HUMAN_RESOURCES_DEPARTMENT_DELETE_MSGVER_1',
+			self::HUMAN_RESOURCES_DEPARTMENT_EDIT => 'HUMAN_RESOURCES_DEPARTMENT_EDIT_MSGVER_1',
+			self::HUMAN_RESOURCES_EMPLOYEE_ADD_TO_DEPARTMENT => 'HUMAN_RESOURCES_EMPLOYEE_ADD_TO_DEPARTMENT_MSGVER_1',
+			self::HUMAN_RESOURCES_CHAT_BIND_TO_STRUCTURE => 'HUMAN_RESOURCES_CHAT_BIND_TO_STRUCTURE_MSGVER_1',
+			self::HUMAN_RESOURCES_CHANEL_BIND_TO_STRUCTURE => 'HUMAN_RESOURCES_CHANEL_BIND_TO_STRUCTURE_MSGVER_1',
+			self::HUMAN_RESOURCES_CHAT_UNBIND_TO_STRUCTURE => 'HUMAN_RESOURCES_CHAT_UNBIND_TO_STRUCTURE_MSGVER_1',
+			self::HUMAN_RESOURCES_CHANEL_UNBIND_TO_STRUCTURE => 'HUMAN_RESOURCES_CHANEL_UNBIND_TO_STRUCTURE_MSGVER_1',
+			self::HUMAN_RESOURCES_USERS_ACCESS_EDIT => 'HUMAN_RESOURCES_USERS_ACCESS_EDIT_MSGVER_1',
+			default => null,
+		};
+	}
+
+	private static function getRephrasedHintCode($id): ?string
+	{
+		return match ($id) {
+			self::HUMAN_RESOURCES_DEPARTMENT_DELETE => 'HINT_HUMAN_RESOURCES_DEPARTMENT_DELETE_MSGVER_1',
+			self::HUMAN_RESOURCES_DEPARTMENT_EDIT => 'HINT_HUMAN_RESOURCES_DEPARTMENT_EDIT_MSGVER_1',
+			self::HUMAN_RESOURCES_EMPLOYEE_ADD_TO_DEPARTMENT => 'HINT_HUMAN_RESOURCES_EMPLOYEE_ADD_TO_DEPARTMENT_MSGVER_1',
+			default => null,
+		};
 	}
 }

@@ -7,6 +7,7 @@ $MESS["TAB_NAME_IM_OPENLINES_SHORT"] = "Линии";
 
 $MESS["TAB_NAME_MORE"] = "Меню";
 $MESS["TAB_NAME_MORE_SHORT"] = "Ещё";
+$MESS["TAB_NAME_MORE_SHORT_MSGVER_1"] = "Ещё";
 $MESS["TAB_NAME_TASKS_LIST"] = "Задачи и Проекты";
 $MESS["TAB_NAME_TASKS_LIST_SHORT"] = "Задачи";
 $MESS["TAB_NAME_NOTIFY"] = "Уведомления";
@@ -52,4 +53,4 @@ $MESS["TAB_STREAM_NAVIGATION_TAB_MAIL"] = "Почта";
 $MESS['TAB_NAME_DISK'] = 'Файлы';
 $MESS['TAB_DISK_NAVIGATION_TAB_RECENT'] = 'Недавние';
 $MESS['TAB_DISK_NAVIGATION_TAB_MY_FILES'] = 'Мои файлы';
-$MESS['TAB_DISK_NAVIGATION_TAB_SHARED_FILES'] = 'Общие файлы';
+$MESS['TAB_DISK_NAVIGATION_TAB_COMPANY_FILES'] = 'Файлы компании';

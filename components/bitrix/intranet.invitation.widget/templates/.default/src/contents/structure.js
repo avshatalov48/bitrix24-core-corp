@@ -1,8 +1,10 @@
 import { Content } from './content';
-import { Tag, Loc } from 'main.core';
+import { Counter } from 'ui.cnt';
+import { Tag, Loc, Type, Dom } from 'main.core';
 import { Analytics } from '../analytics';
 import type { StructureContentOptions } from '../types/options';
 import type { ConfigContent } from '../types/content';
+import { EventEmitter } from 'main.core.events';
 
 export class StructureContent extends Content
 {
@@ -13,6 +15,13 @@ export class StructureContent extends Content
 
 	getConfig(): ConfigContent
 	{
+		this.#showCounter();
+
+		if (this.getOptions().shouldShowStructureCounter)
+		{
+			EventEmitter.subscribeOnce('HR.company-structure:first-popup-showed', this.#onFirstWatchNewStructure.bind(this));
+		}
+
 		return {
 			html: this.getLayout(),
 			flex: 3,
@@ -42,5 +51,54 @@ export class StructureContent extends Content
 				</div>
 			`;
 		});
+	}
+
+	#getCounterWrapper(): HTMLElement
+	{
+		return this.cache.remember('counter-wrapper', () => {
+			return this.getLayout().querySelector('.intranet-invitation-widget-item-name');
+		});
+	}
+
+	#showCounter(): void
+	{
+		if (this.#getCounterValue() > 0)
+		{
+			Dom.addClass(this.#getCounter().getContainer(), 'invitation-structure-counter');
+			this.#getCounter().renderTo(this.#getCounterWrapper());
+		}
+	}
+
+	#getCounter(): Counter
+	{
+		return this.cache.remember('counter', () => {
+			return new Counter({
+				value: this.#getCounterValue(),
+				color: Counter.Color.DANGER,
+			});
+		});
+	}
+
+	#getCounterValue(): number
+	{
+		return (this.getOptions().shouldShowStructureCounter) ? 1 : 0;
+	}
+
+	#onFirstWatchNewStructure(): void
+	{
+		const value = this.#getCounter().value;
+		if (!Type.isNumber(value))
+		{
+			return;
+		}
+
+		if (!this.getOptions().shouldShowStructureCounter)
+		{
+			return;
+		}
+
+		this.getOptions().shouldShowStructureCounter = false;
+		this.#getCounter().destroy();
+		this.cache.delete('counter');
 	}
 }

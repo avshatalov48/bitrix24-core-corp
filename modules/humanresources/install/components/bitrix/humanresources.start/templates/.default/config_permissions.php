@@ -18,9 +18,9 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_PARAMS' => [
 		],
 		'USE_UI_TOOLBAR' => 'Y',
-		'USE_PADDING' => false,
+		'USE_PADDING' => true,
 		'PLAIN_VIEW' => false,
 		'PAGE_MODE' => false,
-		'PAGE_MODE_OFF_BACK_URL' => "/humanresources/"
+		'PAGE_MODE_OFF_BACK_URL' => "/hr/structure/"
 	]
 );

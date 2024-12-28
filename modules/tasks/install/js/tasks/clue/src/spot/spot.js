@@ -42,6 +42,7 @@ export class Spot
 			{
 				targetElement: this.#targetElement,
 				targetVertex: 'middle-center',
+				color: this.getSpotlightColor(),
 			},
 		);
 
@@ -56,6 +57,16 @@ export class Spot
 	getIconSrc(): ?string
 	{
 		return null;
+	}
+
+	getSpotlightColor(): ?string
+	{
+		return null;
+	}
+
+	getConditionColor(): string
+	{
+		return 'primary';
 	}
 
 	getTitle(): string {}

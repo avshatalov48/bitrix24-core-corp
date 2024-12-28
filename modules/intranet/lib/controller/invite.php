@@ -1,21 +1,88 @@
 <?php
 namespace Bitrix\Intranet\Controller;
 
+use Bitrix\Bitrix24\Portal\Notification\EmailConfirmationPopup;
+use Bitrix\Bitrix24\Portal\Settings\EmailConfirmationRequirements\Type;
+use Bitrix\Intranet\Service\InviteLinkGenerator;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Bitrix24\Integration\Network\ProfileService;
+use Bitrix\Main\Engine\AutoWire\BinderArgumentException;
+use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Event;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\UserTable;
 use Bitrix\Socialservices\Network;
 use Bitrix\Intranet\Invitation;
+use Bitrix\Intranet\Entity;
+use Bitrix\Intranet\Dto;
+use Bitrix\Intranet\Service\UseCase;
 use Bitrix\Intranet;
 use Bitrix\Main;
 
 class Invite extends Main\Engine\Controller
 {
+	/**
+	 * @throws BinderArgumentException
+	 */
+	public function getAutoWiredParameters(): array
+	{
+		return [
+			new ExactParameter(
+				Dto\Invitation\UserInvitationDtoCollection::class,
+				'users',
+				function($className, array $users) {
+					$collection = new $className;
+
+					foreach ($users as $user)
+					{
+						$collection->add(new Dto\Invitation\UserInvitationDto(
+							$user['name'] ?? null,
+							$user['lastName'] ?? null,
+							isset($user['phone']) ? new Entity\Type\Phone($user['phone']) : null,
+							isset($user['email']) ? new Entity\Type\Email($user['email']) : null
+						));
+					}
+
+					return $collection;
+				}
+			),
+			new ExactParameter(
+				Entity\Collection\EmailCollection::class,
+				'emails',
+				function($className, array $emails) {
+					$collection = new $className;
+
+					foreach ($emails as $email)
+					{
+						$collection->add(new Entity\Type\Email($email));
+					}
+
+					return $collection;
+				}
+			),
+			new ExactParameter(
+				Entity\Collection\PhoneCollection::class,
+				'phones',
+				function($className, array $phones) {
+					$collection = new $className;
+
+					foreach ($phones as $phone)
+					{
+						$collection->add(new Entity\Type\Phone($phone));
+					}
+
+					return $collection;
+				}
+			),
+		];
+	}
+
 	protected function getDefaultPreFilters()
 	{
 		$preFilters = parent::getDefaultPreFilters();
@@ -27,15 +94,58 @@ class Invite extends Main\Engine\Controller
 
 	public function configureActions(): array
 	{
-		$configureActions = parent::configureActions();
-
-		$configureActions['register'] = [
-			'+prefilters' => [
-				new Intranet\ActionFilter\InviteLimitControl()
-			]
+		return [
+			...parent::configureActions(),
+			'register' => [
+				'+prefilters' => [
+					new Intranet\ActionFilter\InviteLimitControl(),
+				],
+			],
+			'inviteUsersToCollab' => [
+				'+prefilters' => [
+					new Intranet\ActionFilter\InviteToCollabAccessControl(),
+					new Intranet\ActionFilter\InviteLimitControl(),
+				],
+				'-prefilters' => [
+					Intranet\ActionFilter\InviteIntranetAccessControl::class,
+				],
+			],
+			'getLinkByCollabId' => [
+				'+prefilters' => [
+					new Intranet\ActionFilter\InviteToCollabAccessControl(),
+					new Intranet\ActionFilter\InviteLimitControl(),
+				],
+				'-prefilters' => [
+					Intranet\ActionFilter\InviteIntranetAccessControl::class,
+				],
+			],
+			'regenerateLinkByCollabId' => [
+				'+prefilters' => [
+					new Intranet\ActionFilter\InviteToCollabAccessControl(),
+				],
+				'-prefilters' => [
+					Intranet\ActionFilter\InviteIntranetAccessControl::class,
+				],
+			],
+			'getEmailsInviteStatus' => [
+				'+prefilters' => [
+					new Intranet\ActionFilter\IntranetUser(),
+				],
+				'-prefilters' => [
+					Intranet\ActionFilter\UserType::class,
+					Intranet\ActionFilter\InviteIntranetAccessControl::class,
+				],
+			],
+			'getPhoneNumbersInviteStatus' => [
+				'+prefilters' => [
+					new Intranet\ActionFilter\IntranetUser(),
+				],
+				'-prefilters' => [
+					Intranet\ActionFilter\UserType::class,
+					Intranet\ActionFilter\InviteIntranetAccessControl::class,
+				],
+			],
 		];
-
-		return $configureActions;
 	}
 
 	public function registerAction(array $fields)
@@ -48,6 +158,51 @@ class Invite extends Main\Engine\Controller
 		}
 
 		return $result->getData();
+	}
+
+	/**
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 * @throws LoaderException
+	 */
+	public function inviteUsersToCollabAction(
+		int $collabId,
+		Dto\Invitation\UserInvitationDtoCollection $users,
+	): Main\Engine\Response\AjaxJson
+	{
+		$useCase = new UseCase\Invitation\BulkInviteUsersToCollabAndPortal();
+		$result = $useCase->execute(collabId: $collabId, userInvitationDtoCollection: $users);
+
+		if (!$result->isSuccess())
+		{
+			return Main\Engine\Response\AjaxJson::createError($result->getErrorCollection());
+		}
+
+		return Main\Engine\Response\AjaxJson::createSuccess($result->getData());
+	}
+
+	public function getEmailsInviteStatusAction(
+		Entity\Collection\EmailCollection $emails
+	): Main\Engine\Response\AjaxJson
+	{
+		$result = Intranet\Service\ServiceContainer::getInstance()
+			->inviteStatusService()
+			->getInviteStatusesByEmailCollection($emails)
+		;
+
+		return Main\Engine\Response\AjaxJson::createSuccess($result);
+	}
+
+	public function getPhoneNumbersInviteStatusAction(
+		Entity\Collection\PhoneCollection $phones
+	): Main\Engine\Response\AjaxJson
+	{
+		$result = Intranet\Service\ServiceContainer::getInstance()
+			->inviteStatusService()
+			->getInviteStatusesByPhoneCollection($phones)
+		;
+
+		return Main\Engine\Response\AjaxJson::createSuccess($result);
 	}
 
 	public function reinviteWithChangeContactAction(int $userId, ?string $newEmail = null, ?string $newPhone = null): ?array
@@ -239,7 +394,9 @@ class Invite extends Main\Engine\Controller
 
 		if (Loader::includeModule('bitrix24'))
 		{
-			$data['creatorEmailConfirmed'] = \CBitrix24::isEmailConfirmed();
+			$data['creatorEmailConfirmed'] = !\Bitrix\Bitrix24\Service\PortalSettings::getInstance()
+				->getEmailConfirmationRequirements()
+				->isRequiredByType(Type::INVITE_USERS);
 		}
 		else
 		{
@@ -341,6 +498,55 @@ class Invite extends Main\Engine\Controller
 		$this->addErrors($result->getErrors());
 
 		return $result->isSuccess();
+	}
+
+	public function getLinkByCollabIdAction(int $collabId): Main\Engine\Response\AjaxJson
+	{
+		$linkGenerator = InviteLinkGenerator::createByCollabId($collabId);
+
+		if (!$linkGenerator)
+		{
+			$this->addError(new Error('Unable to create link generator'));
+
+			return Main\Engine\Response\AjaxJson::createError($this->errorCollection);
+		}
+
+		$event = new Event(
+			'intranet',
+			'onCopyCollabInviteLink',
+			[
+				'collabId' => $collabId,
+				'userId' => Intranet\CurrentUser::get()->getId(),
+			]
+		);
+		Main\EventManager::getInstance()->send($event);
+
+		return Main\Engine\Response\AjaxJson::createSuccess($linkGenerator->getShortCollabLink());
+	}
+
+	public function regenerateLinkByCollabIdAction(int $collabId): Main\Engine\Response\AjaxJson
+	{
+		$codeGenerator = Intranet\Infrastructure\LinkCodeGenerator::createByCollabId($collabId);
+
+		if (!$codeGenerator)
+		{
+			$this->addError(new Error('Unable to create code generator'));
+
+			return Main\Engine\Response\AjaxJson::createError($this->errorCollection);
+		}
+
+		$codeGenerator->generate();
+
+		(new Event(
+			'intranet',
+			'onRegenerateCollabInviteLink',
+			[
+				'collabId' => $collabId,
+				'userId' => Intranet\CurrentUser::get()->getId(),
+			]
+		))->send();
+
+		return Main\Engine\Response\AjaxJson::createSuccess();
 	}
 }
 

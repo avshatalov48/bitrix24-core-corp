@@ -32,9 +32,9 @@ use Bitrix\Main\SystemException;
 
 class NodeRepository implements Contract\Repository\NodeRepository
 {
-	private Contract\Util\CacheManager $cacheManager;
-	private EventSenderService $eventSenderService;
-	private const DEFAULT_TTL = 3600;
+	protected Contract\Util\CacheManager $cacheManager;
+	protected EventSenderService $eventSenderService;
+	protected const DEFAULT_TTL = 3600;
 
 	public function __construct(
 		?EventSenderService $eventSenderService = null,
@@ -254,9 +254,10 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			$updatedField['sort'] = $node->sort;
 		}
 
-		if ($node->description && $node->description !== $nodeCache->description)
+		if ($node->description !== null && $node->description !== $nodeCache->description)
 		{
-			$nodeCache->description = $node->description;
+			$nodeCache->description = $node->description === '' ? null : $node->description;
+			$updatedField['description'] = $node->description;
 		}
 
 		if (!empty($updatedField))
@@ -290,7 +291,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function findAllByUserId(int $userId, NodeActiveFilter $activeFilter = NodeActiveFilter::ALL): Item\Collection\NodeCollection
+	public function findAllByUserId(int $userId, NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE): Item\Collection\NodeCollection
 	{
 		$nodeItems = new Item\Collection\NodeCollection();
 		$query = NodeTable::query()
@@ -306,6 +307,8 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			)
 			->where('nm.ENTITY_ID', $userId)
 			->where('nm.ENTITY_TYPE', MemberEntityType::USER->name)
+			->cacheJoins(true)
+			->setCacheTtl(86400)
 		;
 
 		$query = $this->setNodeActiveFilter($query, $activeFilter);
@@ -330,21 +333,66 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	 */
 	public function getById(int $nodeId, bool $needDepth = false): ?Item\Node
 	{
+		if ($needDepth)
+		{
+			return $this->getByIdWithDepth($nodeId);
+		}
+
+		$nodeCacheKey = sprintf(self::NODE_ENTITY_CACHE_KEY, $nodeId);
+
+		$nodeCache = $this->cacheManager->getData($nodeCacheKey);
+		if ($nodeCache)
+		{
+			$nodeCache['type'] = NodeEntityType::tryFrom($nodeCache['type']);
+			$nodeCache['createdAt'] = null;
+			$nodeCache['updatedAt'] = null;
+
+			return new Item\Node(...$nodeCache);
+		}
+
 		$query =
 			NodeTable::query()
 			->setSelect(['*', 'ACCESS_CODE',])
 			->where('ID', $nodeId)
 			->setLimit(1)
-			->setCacheTtl(self::DEFAULT_TTL)
-			->cacheJoins(true)
 		;
-		if ($needDepth)
+
+		$node = $query->fetchObject();
+		$convertedNode = $node !== null ? $this->convertModelToItem($node) : null;
+		if ($convertedNode)
 		{
-			$query->addSelect('CHILD_NODES')
-				->addOrder('CHILD_NODES.DEPTH', 'DESC')
-				->where('PARENT_NODES.CHILD_ID', $nodeId)
-			;
+			$this->cacheManager->setData($nodeCacheKey, $convertedNode);
+
+			return $convertedNode;
 		}
+
+		return null;
+	}
+
+	/**
+	 *
+	 * returns node data with depth level
+	 *
+	 * @param int $nodeId
+	 *
+	 * @return Node|null
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public function getByIdWithDepth(int $nodeId): ?Item\Node
+	{
+		$query =
+			NodeTable::query()
+					 ->setSelect(['*', 'ACCESS_CODE', 'CHILD_NODES'])
+					 ->where('ID', $nodeId)
+					->where('PARENT_NODES.CHILD_ID', $nodeId)
+					->addOrder('CHILD_NODES.DEPTH', 'DESC')
+					 ->setLimit(1)
+					->setCacheTtl(86400)
+					 ->cacheJoins(true)
+		;
+
 		$node = $query->fetchObject();
 
 		return $node !== null ? $this->convertModelToItem($node) : null;
@@ -433,7 +481,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	public function getChildOf(
 		Item\Node $node,
 		DepthLevel|int $depthLevel = DepthLevel::FIRST,
-		NodeActiveFilter $activeFilter = NodeActiveFilter::ALL,
+		NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE,
 	): Item\Collection\NodeCollection
 	{
 		$nodeCollection = new Item\Collection\NodeCollection();
@@ -449,7 +497,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			->where('CHILD_NODES.PARENT_ID', $node->id)
 			->setOrder([
 				'CHILD_NODES.DEPTH' => 'ASC',
-				'SORT' => 'ASC'
+				'SORT' => 'ASC',
 			])
 			->setCacheTtl(self::DEFAULT_TTL)
 			->cacheJoins(true)
@@ -480,7 +528,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	 * @throws \Bitrix\HumanResources\Exception\WrongStructureItemException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function findAllByUserIdAndRoleId(int $userId, int $roleId, NodeActiveFilter $activeFilter = NodeActiveFilter::ALL): Item\Collection\NodeCollection
+	public function findAllByUserIdAndRoleId(int $userId, int $roleId, NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE): Item\Collection\NodeCollection
 	{
 		$nodeItems = new Item\Collection\NodeCollection();
 		$query =
@@ -499,6 +547,8 @@ class NodeRepository implements Contract\Repository\NodeRepository
 				->where('nm.ENTITY_ID', $userId)
 				->where('nm.ENTITY_TYPE', MemberEntityType::USER->name)
 				->where('nm.ROLE.ID', $roleId)
+				->setCacheTtl(86400)
+				->cacheJoins(true)
 		;
 
 		$this->setNodeActiveFilter($query, $activeFilter);
@@ -528,12 +578,16 @@ class NodeRepository implements Contract\Repository\NodeRepository
 		}
 
 		$accessCode = str_replace('DR', 'D', $accessCode);
-		$node = NodeTable::getList([
-			'select' => ['*', 'ACCESS_CODE',],
-			'filter' => ['=ACCESS_CODE.ACCESS_CODE' => $accessCode],
-			'limit' => 1
-		])->fetch()
-		;
+
+		$node = NodeTable::query()
+			->setSelect(['*'])
+			->addSelect('ACCESS_CODE')
+			->where('ACCESS_CODE.ACCESS_CODE', $accessCode)
+			->setLimit(1)
+			->setCacheTtl(86400)
+			->cacheJoins(true)
+			->exec()
+			->fetch();
 
 		 $nodes[$accessCode] = !$node ? null: $this->convertModelArrayToItem($node);
 
@@ -552,6 +606,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			->addSelect('ACCESS_CODE')
 			->where('STRUCTURE_ID', $structureId)
 			->where('PARENT_ID', 0)
+			->setCacheTtl(86400)
 			->fetchObject();
 
 		return $node !== null ? $this->convertModelToItem($node) : null;
@@ -566,7 +621,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function getAllByStructureId(int $structureId, NodeActiveFilter $activeFilter = NodeActiveFilter::ALL): Item\Collection\NodeCollection
+	public function getAllByStructureId(int $structureId, NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE): Item\Collection\NodeCollection
 	{
 		$nodeItems = new Item\Collection\NodeCollection();
 		$query =
@@ -595,7 +650,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 */
-	public function getAllPagedByStructureId(int $structureId, int $limit = 10, int $offset = 0, NodeActiveFilter $activeFilter = NodeActiveFilter::ALL): Item\Collection\NodeCollection
+	public function getAllPagedByStructureId(int $structureId, int $limit = 10, int $offset = 0, NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE): Item\Collection\NodeCollection
 	{
 		$nodeItems = new Item\Collection\NodeCollection();
 		$query =
@@ -699,6 +754,8 @@ class NodeRepository implements Contract\Repository\NodeRepository
 				->addSelect('ACCESS_CODE')
 				->addSelect('CHILD_NODES')
 				->whereIn('ACCESS_CODE.ACCESS_CODE', $departments)
+				->cacheJoins(true)
+				->setCacheTtl(86400)
 				->fetchAll()
 		;
 
@@ -716,6 +773,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 		?int $parentId = null,
 		DepthLevel|int $depth = DepthLevel::FULL,
 		bool $strict = false,
+		NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE,
 	): Item\Collection\NodeCollection
 	{
 		$nodeCollection = new Item\Collection\NodeCollection();
@@ -727,6 +785,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			->setCacheTtl(self::DEFAULT_TTL)
 			->cacheJoins(true)
 		;
+		$nodeQuery = $this->setNodeActiveFilter($nodeQuery, $activeFilter);
 
 		if (!empty($name))
 		{
@@ -758,7 +817,15 @@ class NodeRepository implements Contract\Repository\NodeRepository
 
 		if (is_null($parentId))
 		{
-			$rootNode = self::getRootNodeByStructureId($structureId);
+			try
+			{
+				$rootNode = self::getRootNodeByStructureId($structureId);
+			}
+			catch (ObjectPropertyException|ArgumentException|SystemException $e)
+			{
+				return $nodeCollection;
+			}
+
 			if (!$rootNode)
 			{
 				return $nodeCollection;
@@ -790,7 +857,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 		;
 	}
 
-	private function convertModelArrayToItemByCollection(Model\NodeCollection $models): Item\Collection\NodeCollection
+	protected function convertModelArrayToItemByCollection(Model\NodeCollection $models): Item\Collection\NodeCollection
 	{
 		return new Item\Collection\NodeCollection(
 			...array_map([$this, 'convertModelToItem'],
@@ -798,7 +865,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 		));
 	}
 
-	private function convertModelArrayToItemByArray(array $nodeModelArray)
+	protected function convertModelArrayToItemByArray(array $nodeModelArray)
 	{
 		return new Item\Collection\NodeCollection(
 			...array_map([$this, 'convertModelArrayToItem'],
@@ -821,7 +888,8 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	 */
 	public function getChildOfNodeCollection(
 		Item\Collection\NodeCollection $nodeCollection,
-		DepthLevel|int $depthLevel = DepthLevel::FIRST
+		DepthLevel|int $depthLevel = DepthLevel::FIRST,
+		NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE,
 	): Item\Collection\NodeCollection
 	{
 		$resultNodeCollection = new Item\Collection\NodeCollection();
@@ -849,6 +917,8 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			$nodeQuery->where('CHILD_NODES.DEPTH', $depthLevel);
 		}
 
+		$nodeQuery = $this->setNodeActiveFilter($nodeQuery, $activeFilter);
+
 		$nodeModelArray = $nodeQuery->fetchAll();
 
 		return !$nodeModelArray
@@ -857,7 +927,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			;
 	}
 
-	public function findAllByXmlId(string $xmlId, NodeActiveFilter $activeFilter = NodeActiveFilter::ALL): Item\Collection\NodeCollection
+	public function findAllByXmlId(string $xmlId, NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE): Item\Collection\NodeCollection
 	{
 		$query = NodeTable::query()
 			->setSelect(['*', 'ACCESS_CODE', 'CHILD_NODES'])
@@ -873,7 +943,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 		;
 	}
 
-	private function setNodeActiveFilter(Query $query, NodeActiveFilter $activeFilter): Query
+	protected function setNodeActiveFilter(Query $query, NodeActiveFilter $activeFilter): Query
 	{
 		return match ($activeFilter)
 		{
@@ -892,7 +962,11 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	 */
 	private function setGlobalActiveToNodeAndChildren(Node $parentNode, bool $active): void
 	{
-		$childCollection = $this->getChildOf($parentNode, DepthLevel::FULL);
+		$childCollection = $this->getChildOf(
+			$parentNode,
+			DepthLevel::FULL,
+			NodeActiveFilter::ALL,
+		);
 		$nodeIdsToChangeGlobalActive = [];
 		$inactiveParentIds = [];
 		foreach ($childCollection as $child)
@@ -936,7 +1010,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			NodeTable::updateMulti(
 				$nodeIdsToChangeGlobalActive,
 				[
-					'GLOBAL_ACTIVE' => $active === true ? 'Y' : 'N'
+					'GLOBAL_ACTIVE' => $active === true ? 'Y' : 'N',
 				],
 			);
 		}
@@ -944,5 +1018,37 @@ class NodeRepository implements Contract\Repository\NodeRepository
 		{
 			throw (new UpdateFailedException())->addError(new Main\Error('Failed to update global active status for child nodes'));
 		}
+	}
+
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
+	public function findAllByIds(
+		array $departmentIds,
+		NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE,
+	): Item\Collection\NodeCollection
+	{
+		if (empty($departmentIds))
+		{
+			return new Item\Collection\NodeCollection();
+		}
+
+		$query = NodeTable::query()
+			->setSelect(['*'])
+			->addSelect('ACCESS_CODE')
+			->addSelect('CHILD_NODES')
+			->whereIn('ID', $departmentIds)
+			->setCacheTtl(self::DEFAULT_TTL)
+			->cacheJoins(true)
+		;
+
+		$query = $this->setNodeActiveFilter($query, $activeFilter);
+		$nodeModelArray = $query->fetchAll();
+
+		return !$nodeModelArray
+			? new Item\Collection\NodeCollection()
+			: $this->convertModelArrayToItemByArray($nodeModelArray);
 	}
 }

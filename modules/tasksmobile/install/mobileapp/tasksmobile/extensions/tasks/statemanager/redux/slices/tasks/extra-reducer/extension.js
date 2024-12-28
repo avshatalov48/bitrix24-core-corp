@@ -207,6 +207,8 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 
 	const prepareStartTimerNewState = (oldTaskState) => ({
 		...oldTaskState,
+		status: TaskStatus.IN_PROGRESS,
+		canDefer: false,
 		isTimerRunningForCurrentUser: true,
 	});
 
@@ -246,6 +248,27 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 
 		const oldTaskState = state.entities[taskId];
 		const newTaskState = prepareStartNewState(oldTaskState);
+
+		upsertOne(state, action, oldTaskState, newTaskState);
+	};
+
+	const prepareTakeNewState = (oldTaskState) => {
+		return {
+			...oldTaskState,
+			status: TaskStatus.IN_PROGRESS,
+			canStart: false,
+			canPause: true,
+			canComplete: true,
+			canDefer: false,
+			responsible: Number(env.userId),
+		};
+	};
+
+	const takePending = (state, action) => {
+		const { taskId } = action.meta.arg;
+
+		const oldTaskState = state.entities[taskId];
+		const newTaskState = prepareTakeNewState(oldTaskState);
 
 		upsertOne(state, action, oldTaskState, newTaskState);
 	};
@@ -294,7 +317,12 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		const oldTaskState = state.entities[taskId];
 		const newTaskState = prepareCompleteNewState(oldTaskState);
 
-		if (selectIsCreator(newTaskState) || !oldTaskState.isResultRequired || oldTaskState.isOpenResultExists)
+		if (
+			env.isAdmin
+			|| selectIsCreator(newTaskState)
+			|| !oldTaskState.isResultRequired
+			|| oldTaskState.isOpenResultExists
+		)
 		{
 			upsertOne(state, action, oldTaskState, newTaskState);
 		}
@@ -798,6 +826,8 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 
 	const startFulfilled = onCommonActionFulfilled;
 
+	const takeFulfilled = onCommonActionFulfilled;
+
 	const pauseFulfilled = onCommonActionFulfilled;
 
 	const completeFulfilled = onCommonActionFulfilled;
@@ -962,6 +992,8 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		pauseTimerFulfilled,
 		startPending,
 		startFulfilled,
+		takePending,
+		takeFulfilled,
 		pausePending,
 		pauseFulfilled,
 		completePending,

@@ -13,6 +13,7 @@
 	const preinstalledTitle = BX.componentParameters.get('title', '');
 	const preinstalledIsGoskey = BX.componentParameters.get('isGoskey', false);
 	const preinstalledIsExternal = BX.componentParameters.get('isExternal', false);
+	const initiatedByType = BX.componentParameters.get('initiatedByType');
 
 	function addHeader(role = preinstalledRole)
 	{
@@ -51,6 +52,7 @@
 			title: preinstalledTitle,
 			isGoskey: preinstalledIsGoskey,
 			isExternal: preinstalledIsExternal,
+			initiatedByType: initiatedByType,
 		}));
 		addHeader();
 	}
@@ -65,6 +67,7 @@
 				state,
 				role,
 				documentTitle = '',
+				initiatedByType,
 			} = data;
 
 			if (isReadyForSigning)
@@ -78,6 +81,7 @@
 					title: documentTitle,
 					isGoskey,
 					isExternal,
+					initiatedByType,
 				}));
 				addHeader(role);
 			}
@@ -89,6 +93,7 @@
 					layoutWidget: layout,
 					fileDownloadUrl: url,
 					documentTitle,
+					initiatedByType,
 				});
 			}
 		}).catch(({ errors }) => {
@@ -102,6 +107,7 @@
 						SignDialog.show({
 							type: SignDialog.ERROR_ACCESS_DENIED_BANNER_TYPE,
 							layoutWidget: layout,
+							initiatedByType,
 						});
 						accessDeniedHandled = true;
 					}
@@ -113,6 +119,7 @@
 				SignDialog.show({
 					type: SignDialog.ERROR_BANNER_TYPE,
 					layoutWidget: layout,
+					initiatedByType,
 				});
 			}
 		});

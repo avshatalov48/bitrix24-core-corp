@@ -11,6 +11,7 @@ class CrmStore extends Crm
 		'shown' => [
 			'menu_crm_store',
 			'menu_crm_favorite',
+			'menu_booking',
 			'menu_marketing',
 			'menu_sites',
 			'menu_shop',
@@ -18,6 +19,7 @@ class CrmStore extends Crm
 			'menu_teamwork' => [
 				'menu_live_feed',
 				'menu_im_messenger',
+				'menu_im_collab',
 				'menu_calendar',
 				'menu_documents',
 				'menu_files',

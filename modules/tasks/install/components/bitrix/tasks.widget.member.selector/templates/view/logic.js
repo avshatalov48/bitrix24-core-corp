@@ -86,6 +86,16 @@ BX.namespace('Tasks.Component');
 						callback: this.onPullTask.bind(this),
 					});
 				}
+
+				if (this.option('role') === 'RESPONSIBLE')
+				{
+					BX.PULL.subscribe({
+						type: BX.PullClient.SubscriptionType.Server,
+						moduleId: 'tasks',
+						command: 'task_update',
+						callback: this.onPullTask.bind(this),
+					});
+				}
 			},
 
 			onPullTask: function(params, extra, command)
@@ -96,13 +106,26 @@ BX.namespace('Tasks.Component');
 					return;
 				}
 
-				let auditorsBefore = params.BEFORE?.AUDITORS;
-				let auditorsAfter = params.AFTER?.AUDITORS;
+				if (params.BEFORE?.RESPONSIBLE_ID !== params.AFTER?.RESPONSIBLE_ID)
+				{
+					this.resetResponsible(taskId);
+				}
+
+				this.resetAuditors(params.BEFORE?.AUDITORS, params.AFTER?.AUDITORS, taskId);
+			},
+
+			resetAuditors(auditorsBefore, auditorsAfter, taskId)
+			{
+				if (this.option('role') !== 'AUDITORS')
+				{
+					return;
+				}
 
 				let auditors = [];
 				if (!auditorsBefore && auditorsAfter)
 				{
-					auditors = auditorsAfter.split(',').map(Number);
+					auditorsAfter = auditorsAfter.split(',').map(Number);
+					auditors = auditorsAfter;
 				}
 				else if (auditorsBefore && auditorsAfter)
 				{
@@ -117,19 +140,64 @@ BX.namespace('Tasks.Component');
 				}
 
 				BX.ajax.runComponentAction('bitrix:tasks.widget.member.selector', 'getMember', {
-					mode: 'class',
-					data: {
-						userIds: auditors,
-						taskId: taskId,
-					}
-				})
+						mode: 'class',
+						data: {
+							userIds: auditors,
+							taskId,
+						}
+					})
 					.then((response) => {
 						const users = Array.from(response.data);
-
+						const manager = this.getManager();
+						const preselected = [];
 						users.forEach((user) => {
-							this.getManager().onSelectorItemSelected(user);
-						})
+							manager.onSelectorItemSelected(user);
+							preselected.push(['user', user.id]);
+						});
+						manager.unsetDialog();
+						manager.getDialog().setPreselectedItems(preselected);
+
+						const readOnly = Boolean(this.option('readOnly'));
+
+						if (readOnly)
+						{
+							const currentUser = Number(this.option('currentUser'));
+
+							if (auditorsAfter.includes(currentUser))
+							{
+								this.setHeaderButtonLabelText(this.option('leaveAuditorMessage'));
+								BX.Tasks.Component.TaskViewSidebarObject?.setAmIAuditorValue(true);
+							}
+							else
+							{
+								this.setHeaderButtonLabelText(this.option('enterAuditorMessage'));
+								BX.Tasks.Component.TaskViewSidebarObject?.setAmIAuditorValue(false);
+							}
+						}
+					});
+			},
+
+			resetResponsible(taskId)
+			{
+				if (this.option('role') !== 'RESPONSIBLE')
+				{
+					return;
+				}
+
+				BX.ajax.runComponentAction('bitrix:tasks.widget.member.selector', 'getResponsible', {
+					mode: 'class',
+					data: {
+						taskId,
+					},
+				})
+					.then((response) => {
+						const user = response.data;
+						const manager = this.getManager();
+						manager.onSelectorItemSelected(user);
+						manager.unsetDialog();
+						manager.getDialog().setPreselectedItems([['user', user.id]]);
 					})
+				;
 			},
 
 			recognizeTaskId(pullData)
@@ -170,6 +238,8 @@ BX.namespace('Tasks.Component');
 
 						min: this.option('min'),
 						max: this.option('max'),
+
+						flowId: this.option('flowId'),
 
 						path: this.option('path'),
 
@@ -395,6 +465,7 @@ BX.namespace('Tasks.Component');
 					entities: this.getDialogEntities(),
 					preselectedItems: this.getDialogSelectedItems(),
 					undeselectedItems: this.getDialogUndeselectedItems(),
+					dropdownMode: this.option('flowId') > 0,
 					events: {
 						'Item:onSelect': function(event) {
 							var item = event.getData().item;
@@ -533,13 +604,24 @@ BX.namespace('Tasks.Component');
 
 			getDialogEntities: function()
 			{
-				var mode = this.option('mode');
-				var networkEnabled = this.option('networkEnabled');
-				var entities = [];
+				const mode = this.option('mode');
+				const networkEnabled = this.option('networkEnabled');
+				const flowId = this.option('flowId');
 
-				if (mode === 'user')
-				{
-					entities = [
+				const entityConfigurations = {
+					'flowTeam': [
+						{
+							id: 'flow-user',
+							options: {
+								flowId,
+							},
+							dynamicLoad: true,
+						},
+						{
+							id: 'department',
+						}
+					],
+					'user': [
 						{
 							id: 'user',
 							options: {
@@ -548,7 +630,7 @@ BX.namespace('Tasks.Component');
 								extranetUsers: true,
 								inviteGuestLink: true,
 								myEmailUsers: true,
-								analyticsSource: 'task',
+								analyticsSource: 'tasks',
 								lockGuestLink: !this.option('taskMailUserIntegrationEnabled'),
 								lockGuestLinkFeatureId: this.option('taskMailUserIntegrationFeatureId'),
 							}
@@ -556,18 +638,20 @@ BX.namespace('Tasks.Component');
 						{
 							id: 'department',
 						}
-					];
-				}
-				else if (mode === 'group')
-				{
-					entities = [
+					],
+					'group': [
 						{
 							id: 'project',
 						}
-					];
+					]
+				};
+
+				if (flowId > 0)
+				{
+					return entityConfigurations['flowTeam'];
 				}
 
-				return entities;
+				return entityConfigurations[mode] || [];
 			},
 
 			prepareUserData: function(user)
@@ -705,6 +789,15 @@ BX.namespace('Tasks.Component');
 
 				var dialogItem = this.getDialog().getItem(value);
 				dialogItem && dialogItem.deselect();
+			},
+
+			unsetDialog()
+			{
+				if (this.dialog)
+				{
+					this.dialog.destroy();
+					this.dialog = null;
+				}
 			}
 		}
 	});

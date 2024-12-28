@@ -12,6 +12,7 @@ class Link extends ContentBlock implements TextPropertiesInterface
 
 	protected ?string $value = null;
 	protected ?string $icon = null;
+	protected ?int $rowLimit = null;
 
 	public function getRendererName(): string
 	{
@@ -42,6 +43,18 @@ class Link extends ContentBlock implements TextPropertiesInterface
 		return $this;
 	}
 
+	public function getRowLimit(): ?int
+	{
+		return $this->rowLimit;
+	}
+
+	public function setRowLimit(?int $rowLimit): self
+	{
+		$this->rowLimit = $rowLimit;
+
+		return $this;
+	}
+
 	protected function getProperties(): array
 	{
 		return array_merge(
@@ -52,6 +65,7 @@ class Link extends ContentBlock implements TextPropertiesInterface
 				'title' => $this->getTitle(),
 				'icon' => $this->getIcon(),
 				'action' => $this->getAction(),
+				'rowLimit' => $this->getRowLimit(),
 			]
 		);
 	}

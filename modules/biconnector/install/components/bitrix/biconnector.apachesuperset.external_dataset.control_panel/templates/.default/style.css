@@ -1,0 +1,27 @@
+.biconnector-external-dataset-top {
+	height: 73px;
+	display: flex;
+	align-items: center;
+}
+
+.biconnector-external-dataset-title-box {
+	display: flex;
+	align-items: center;
+	margin-right: 20px;
+	overflow: hidden;
+}
+
+.biconnector-external-dataset-title {
+	margin: 1px 9px 0 0;
+	max-width: 100%;
+	font: 24px/27px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
+	color: #333;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.bitrix24-light-theme .biconnector-external-dataset-title {
+	color: #fff;
+}

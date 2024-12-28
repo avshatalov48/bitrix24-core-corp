@@ -12,12 +12,26 @@
 
 
 	--tasks_widget_result-green: rgba(248,251,235,1);
+
+	--tasks_widget_result-collab-70: #19CC45;
 }
 
 .tasks-result-list-container {
 	transition: .2s;
 	overflow: hidden;
 	border-radius: var(--ui-border-radius-md);
+}
+
+.tasks-widget-result__item-header--name.tasks-widget-result__item-header--name-collaber {
+	color: var(--tasks_widget_result-collab-70);
+}
+
+.tasks-widget-result__item-header--avatar.tasks-widget-result__item-header--avatar-collaber {
+	outline: 1px solid var(--tasks_widget_result-collab-70);
+	border: 3px solid var(--tasks_widget_result-green);
+	outline-offset: -1px;
+	box-sizing: border-box;
+	width: var(--height);
 }
 
 .tasks-widget-result {

@@ -1,5 +1,6 @@
 import { Guide } from 'ui.tour';
 import { BannerDispatcher } from 'ui.banner-dispatcher';
+import { FlowCopilotAdvice } from './spot/flow-copilot-advice';
 
 import { Spot } from './spot/spot';
 import { MyTasks } from './spot/my-tasks';
@@ -16,6 +17,7 @@ export class Clue
 	static SPOT = Object.freeze({
 		MY_TASKS: new MyTasks(),
 		TASK_START: new TaskStart(),
+		FLOW_COPILOT_ADVICE: new FlowCopilotAdvice(),
 	});
 
 	#params: Params;
@@ -49,7 +51,7 @@ export class Clue
 					condition: {
 						top: true,
 						bottom: false,
-						color: 'primary',
+						color: this.#spot.getConditionColor(),
 					},
 				},
 			],

@@ -12,8 +12,9 @@ export class B2BSignSettings extends SignSettings
 	constructor(containerId: string, signOptions: SignOptions)
 	{
 		super(containerId, signOptions);
-		const { config } = signOptions;
+		const { config, chatId = 0 } = signOptions;
 		const { blankSelectorConfig, documentSendConfig } = config;
+		blankSelectorConfig.chatId = chatId;
 		this.documentSetup = new DocumentSetup(blankSelectorConfig);
 		this.documentSend = new DocumentSend(documentSendConfig);
 		this.#requisites = new Requisites();

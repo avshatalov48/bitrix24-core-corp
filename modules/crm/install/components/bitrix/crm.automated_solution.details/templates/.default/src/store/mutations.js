@@ -1,4 +1,5 @@
 /* eslint-disable no-param-reassign */
+import { Text } from 'main.core';
 import { Error } from './index';
 import {
 	isValidError,
@@ -20,6 +21,13 @@ export default {
 		state.automatedSolution.title = normalizeTitle(stateToSet.automatedSolution?.title);
 
 		state.automatedSolution.typeIds = normalizeTypesIds(stateToSet.automatedSolution?.typeIds);
+
+		state.permissions.canMoveSmartProcessFromCrm = Text.toBoolean(
+			stateToSet.permissions?.canMoveSmartProcessFromCrm ?? false,
+		);
+		state.permissions.canMoveSmartProcessFromAnotherAutomatedSolution = Text.toBoolean(
+			stateToSet.permissions?.canMoveSmartProcessFromAnotherAutomatedSolution ?? false,
+		);
 
 		state.dynamicTypesTitles = normalizeDynamicTypesTitles(stateToSet.dynamicTypesTitles);
 

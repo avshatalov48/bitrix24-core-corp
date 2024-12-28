@@ -19,6 +19,7 @@ $messages = Loc::loadLanguageFile(__FILE__);
 
 CJSCore::Init([
 	'ui.viewer',
+	'ui.avatar',
 	'disk',
 	'disk_information_popups',
 	'sidepanel',

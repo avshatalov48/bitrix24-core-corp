@@ -1,6 +1,9 @@
 import { Dom, Event, Loc, Tag } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Dialog } from 'ui.entity-selector';
 import { Checker } from 'ui.form-elements.view';
+
+import 'main.polyfill.intersectionobserver';
 
 type Params = {
 	id: string,
@@ -10,9 +13,12 @@ type Params = {
 	entitySelector: ?Dialog,
 	unit: ?string,
 	size: ?string,
+	isFieldDisabled: ?boolean,
+	hintText?: string,
+	hintOnDisabled?: boolean,
 };
 
-export class ValueChecker
+export class ValueChecker extends EventEmitter
 {
 	#params: Params;
 
@@ -22,10 +28,15 @@ export class ValueChecker
 		checkerValue: ?HTMLInputElement,
 		disabledValue: ?HTMLElement,
 		entitySelector: ?HTMLElement,
+		checkerContentField: HTMLElement;
 	};
 
 	constructor(params: Params)
 	{
+		super(params);
+
+		this.setEventNamespace('BX.Tasks.Flow.EditForm.ValueChecker');
+
 		this.#params = params;
 		this.#layout = {};
 
@@ -62,6 +73,21 @@ export class ValueChecker
 		return this.#renderInput();
 	}
 
+	getChecker(): Checker
+	{
+		return this.#layout.checker;
+	}
+
+	disable(disabled: boolean)
+	{
+		if (disabled)
+		{
+			this.#layout.checker.switcher.check(true);
+		}
+
+		this.#layout.checker.switcher.disable(disabled);
+	}
+
 	render(): HTMLElement
 	{
 		this.#layout.wrap = Tag.render`
@@ -93,10 +119,11 @@ export class ValueChecker
 	#renderChecker(): HTMLElement
 	{
 		this.#layout.checker = new Checker({
-			checked: !!this.#params.value,
+			checked: Boolean(this.#params.value),
 			title: this.#params.title,
 			hideSeparator: true,
 			size: this.#params.size ?? 'small',
+			isFieldDisabled: this.#params.isFieldDisabled ?? false,
 		});
 
 		this.#layout.checker.subscribe('change', (baseEvent: BaseEvent) => {
@@ -112,11 +139,45 @@ export class ValueChecker
 				this.#layout.checkerValue.setSelectionRange(length, length);
 			}
 		});
+		EventEmitter.subscribe(this.#layout.checker.switcher, 'lock', () => {
+			this.#setHint(true);
+			this.emit('lock', this.#layout.checkerContentField);
+		});
+		EventEmitter.subscribe(this.#layout.checker.switcher, 'unlock', () => {
+			this.#setHint(false);
+			this.emit('unlock', this.#layout.checkerContentField);
+		});
 
-		return this.#layout.checker.render();
+		this.#layout.checkerContentField = this.#layout.checker.render();
+
+		this.#setHint(this.#params.isFieldDisabled ?? false);
+
+		return this.#layout.checkerContentField;
 	}
 
-	#renderValue(): HTMLElement|string
+	#setHint(isDisabled: boolean): void
+	{
+		if (!this.#params.hintText)
+		{
+			return;
+		}
+
+		if (
+			this.#params.hintOnDisabled === true
+			&& isDisabled === false
+		)
+		{
+			Dom.attr(this.#layout.checkerContentField, 'data-hint', null);
+			Dom.attr(this.#layout.checkerContentField, 'data-hint-no-icon', null);
+		}
+		else
+		{
+			Dom.attr(this.#layout.checkerContentField, 'data-hint', this.#params.hintText);
+			Dom.attr(this.#layout.checkerContentField, 'data-hint-no-icon', true);
+		}
+	}
+
+	#renderValue(): HTMLElement | string
 	{
 		if (!this.#params.placeholder)
 		{

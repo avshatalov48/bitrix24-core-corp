@@ -319,7 +319,10 @@ class UserConsent
 		$existed = AgreementTable::getList(array(
 			'select' => array('ID'),
 			'filter' => array('=CODE' => $code),
-			'limit' => 1
+			'limit' => 1,
+			'cache' => [
+				'ttl' => 86400,
+			]
 		));
 		if ($agreement = $existed->fetch())
 		{

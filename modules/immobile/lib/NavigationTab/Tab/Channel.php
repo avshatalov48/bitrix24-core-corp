@@ -2,9 +2,10 @@
 
 namespace Bitrix\ImMobile\NavigationTab\Tab;
 
-use Bitrix\Im\V2\Chat\ChannelChat;
+use Bitrix\Im\V2\Entity\User\UserType;
 use Bitrix\ImMobile\NavigationTab\MessengerComponentTitle;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\ImMobile\User;
 
 class Channel extends BaseRecent
 {
@@ -12,9 +13,11 @@ class Channel extends BaseRecent
 	
 	public function isAvailable(): bool
 	{
-		return true;
+		$userType = User::getCurrent()?->getType();
+
+		return $userType === UserType::USER;
 	}
-	
+
 	public function getId(): string
 	{
 		return 'channel';

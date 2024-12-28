@@ -1,0 +1,60 @@
+.integration-slider-content {
+	background: #FFFFFF;
+	border-radius: 16px;
+	margin: 20px;
+	padding: 20px;
+	font-family: 'Open Sans';
+	font-style: normal;
+	font-weight: 400;
+	font-size: 16px;
+	line-height: 26px;
+}
+
+.integration-slider-content li {
+	position: relative;
+	list-style-type: none;
+	margin: 3px 0;
+}
+
+.integration-slider-content li:before {
+	content: "";
+	position: absolute;
+	top: 5px;
+	left: -26px;
+	width: 20px;
+	height: 20px;
+	background-image:  url(/bitrix/js/sign/v2/b2e/company-selector/dist/images/1c-promo-bullet.svg)
+}
+
+.integration-slider-content .integration-slider-text {
+	margin-left: 150px;
+}
+
+.integration-slider-content .integration-slider-text:before {
+	content: '';
+	display: inline-block;
+	background: url(/bitrix/js/sign/v2/b2e/company-selector/dist/images/1c-promo.svg) center no-repeat;
+	background-size: contain !important;
+	width: 120px;
+	height: 120px;
+	position: absolute;
+	left: 65px;
+}
+
+.integration-slider-text h2 {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-5xl);
+	color: var(--ui-typography-heading-h1-color);
+}
+
+.integration-slider-text p {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-xl);
+	color: var(--ui-typography-heading-h1-color);
+}
+
+.integration-slider-text li {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-xl);
+	color: var(--ui-typography-heading-h1-color);
+}

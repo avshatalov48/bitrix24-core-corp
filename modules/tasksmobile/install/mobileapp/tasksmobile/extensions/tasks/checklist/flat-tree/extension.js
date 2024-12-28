@@ -5,6 +5,7 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { isNil } = require('utils/type');
+	const { escapeRegExp } = require('utils/string');
 	const { Random } = require('utils/random');
 	const { mergeImmutable } = require('utils/object');
 	const { CheckListFlatTreeItem } = require('tasks/checklist/flat-tree/item');
@@ -819,7 +820,7 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 				foundMember = false;
 				for (const member of Object.values(members))
 				{
-					const regex = new RegExp(`${member.name}\\s*$`);
+					const regex = new RegExp(`${escapeRegExp(member.name)}\\s*$`);
 					if (regex.test(modifiedText))
 					{
 						modifiedText = modifiedText.replace(regex, '').trim();

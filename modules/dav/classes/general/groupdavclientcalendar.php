@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Calendar\Integration\Pull\PushCommand;
 use Bitrix\Calendar\Util;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Web\HttpClient;
@@ -965,7 +966,7 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 				);
 				$connectionName = $connectionType.$arConnection['ID'];
 				$connectionStatus = CCalendarSync::isConnectionSuccess($t);
-				Util::addPullEvent('refresh_sync_status', $arConnection['ENTITY_ID'], [
+				Util::addPullEvent(PushCommand::RefreshSyncStatus, $arConnection['ENTITY_ID'], [
 					'syncInfo' => [
 						$connectionName => [
 							'syncTimestamp' => time() - CTimeZone::GetOffset((int)$arConnection['ENTITY_ID']),
@@ -1057,7 +1058,11 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 
 						foreach ($arCalendarItemsList as $value)
 						{
-							if (!array_key_exists($value["href"], $arIdMap))
+							if (
+								!array_key_exists($value["href"], $arIdMap)
+								|| !is_array($value['calendar-data'])
+								|| empty($value['calendar-data'])
+							)
 							{
 								continue;
 							}
@@ -1100,9 +1105,8 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 							);
 
 							if (
-								isset($value['calendar-data-ex'])
+								!empty($value['calendar-data-ex'])
 								&& is_array($value['calendar-data-ex'])
-								&& !empty($value['calendar-data-ex'])
 							)
 							{
 								CCalendarSync::ModifyReccurentInstances([
@@ -1127,7 +1131,7 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 				? 'yandex' : 'caldav'
 			);
 			$connectionName = $connectionType.$arConnection['ID'];
-			Util::addPullEvent('refresh_sync_status', $arConnection['ENTITY_ID'], [
+			Util::addPullEvent(PushCommand::RefreshSyncStatus, $arConnection['ENTITY_ID'], [
 				'syncInfo' => [
 					$connectionName => [
 						'syncTimestamp' => time() - CTimeZone::GetOffset((int)$arConnection['ENTITY_ID']),

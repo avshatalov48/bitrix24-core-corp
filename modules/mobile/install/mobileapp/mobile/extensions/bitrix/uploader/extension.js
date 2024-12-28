@@ -286,6 +286,7 @@
 				end: data.end,
 				size: this.fileEntry.getSize(),
 				folderId: this.fileEntry.folderId,
+				disableAutoCommit: this.fileEntry.params?.disableAutoCommit,
 				controller: this.fileEntry.controller,
 				controllerOptions: this.fileEntry.controllerOptions ? JSON.stringify(this.fileEntry.controllerOptions) : [],
 			};

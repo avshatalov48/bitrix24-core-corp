@@ -1,40 +1,35 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_popup,ui_vue3,ui_vue3_components_audioplayer,main_core) {
+(function (exports,ui_vue3_components_audioplayer,main_core,ui_vue3) {
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	var defaultPlaybackRateValues = [0.5, 0.7, 1.0, 1.2, 1.5, 1.7, 2.0];
+	var defaultPlaybackRateValues = [0.5, 0.7, 1, 1.2, 1.5, 1.7, 2];
 
 	// @vue/component
 	var AudioPlayerProps = {
 	  props: {
 	    playbackRateValues: {
 	      type: Array,
-	      required: false,
 	      "default": function _default() {
 	        return defaultPlaybackRateValues;
 	      }
 	    },
 	    isShowPlaybackRateMenu: {
 	      type: Boolean,
-	      required: false,
 	      "default": true
 	    },
 	    recordName: {
 	      type: String,
-	      required: false,
 	      "default": ''
 	    },
 	    mini: {
 	      type: Boolean,
-	      required: false,
 	      "default": false
 	    },
 	    // eslint-disable-next-line vue/require-prop-types
 	    context: {
-	      required: false,
 	      "default": window
 	    }
 	  },
@@ -226,7 +221,7 @@ this.BX = this.BX || {};
 	      if (this.mini) {
 	        return;
 	      }
-	      this.progress = percent;
+	      this.progress = Number.isNaN(percent) ? 0 : percent;
 	      this.progressInPixel = pixel > 0 ? pixel : Math.round(this.$refs.track.offsetWidth / 100 * percent);
 	    },
 	    audioEventRouterWrapper: function audioEventRouterWrapper(eventName, event) {
@@ -315,5 +310,5 @@ this.BX = this.BX || {};
 	exports.AudioPlayer = AudioPlayer;
 	exports.AudioPlayerComponent = AudioPlayerComponent;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX.Main,BX.Vue3,BX.Vue3.Components,BX));
+}((this.BX.Crm = this.BX.Crm || {}),BX.Vue3.Components,BX,BX.Vue3));
 //# sourceMappingURL=audio-player.bundle.js.map

@@ -242,7 +242,7 @@ class SecuritySettings extends AbstractSettings
 				'settings-employee-field-allow_register',
 				'disable_copy_text',
 				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DISABLE_COPY'),
-				$this->mobileAppService->canCopyText() ? 'Y' : 'N',
+				$this->mobileAppService->canCopyText() ? 'N' : 'Y',
 				[
 					'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_DISABLE_COPY'),
 				]
@@ -252,7 +252,7 @@ class SecuritySettings extends AbstractSettings
 				'settings-employee-field-allow_screenshot',
 				'disable_copy_screenshot',
 				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DISABLE_SCREENSHOT'),
-				$this->mobileAppService->canTakeScreenshot() ? 'Y' : 'N',
+				$this->mobileAppService->canTakeScreenshot() ? 'N' : 'Y',
 				[
 					'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_DISABLE_SCREENSHOT'),
 				]
@@ -403,12 +403,12 @@ class SecuritySettings extends AbstractSettings
 
 		if (isset($this->data['disable_copy_text']))
 		{
-			$this->mobileAppService->setAllowCopyText($this->data['disable_copy_text'] === 'Y');
+			$this->mobileAppService->setAllowCopyText(!($this->data['disable_copy_text'] === 'Y'));
 		}
 
 		if (isset($this->data['disable_copy_screenshot']))
 		{
-			$this->mobileAppService->setAllowScreenshot($this->data['disable_copy_screenshot'] === 'Y');
+			$this->mobileAppService->setAllowScreenshot(!($this->data['disable_copy_screenshot'] === 'Y'));
 		}
 	}
 

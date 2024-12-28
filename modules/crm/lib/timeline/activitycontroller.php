@@ -380,6 +380,9 @@ class ActivityController extends EntityController
 						Activity\Provider\Tasks\Task::getId(),
 						Activity\Provider\Tasks\Comment::getId(),
 						Activity\Provider\OpenLine::getId(),
+						Activity\Provider\Bizproc\Workflow::getId(),
+						Activity\Provider\Bizproc\Comment::getId(),
+						Activity\Provider\Bizproc\Task::getId(),
 					]
 				)
 			)
@@ -709,6 +712,9 @@ class ActivityController extends EntityController
 			Activity\Provider\CalendarSharing::getId(),
 			Activity\Provider\Tasks\Comment::getId(),
 			Activity\Provider\Tasks\Task::getId(),
+			Activity\Provider\Bizproc\Workflow::getId(),
+			Activity\Provider\Bizproc\Comment::getId(),
+			Activity\Provider\Bizproc\Task::getId(),
 		];
 	}
 
@@ -735,6 +741,9 @@ class ActivityController extends EntityController
 				Activity\Provider\CalendarSharing::getId(),
 				Activity\Provider\Tasks\Comment::getId(),
 				Activity\Provider\Tasks\Task::getId(),
+				Activity\Provider\Bizproc\Workflow::getId(),
+				Activity\Provider\Bizproc\Comment::getId(),
+				Activity\Provider\Bizproc\Task::getId(),
 			],
 			true
 		);

@@ -1,0 +1,11 @@
+.crm-timeline__avatars-stack-steps {
+	--crm-timeline-avatars-stack-steps-icon-color-light-gray: var(--ui-color-palette-gray-20);
+	--crm-timeline-avatars-stack-steps-icon-color-blue: var(--ui-color-palette-blue-60);
+	--crm-timeline-avatars-stack-steps-icon-color-light-green: var(--ui-color-primary-alt);
+
+	border: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) var(--ui-color-base-20);
+	border-radius: var(--ui-border-radius-xs);
+	width: fit-content;
+	padding: 4px 30px 4px 16px;
+	align-content: center;
+}

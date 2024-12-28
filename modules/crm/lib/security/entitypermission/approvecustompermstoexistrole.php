@@ -5,9 +5,11 @@ namespace Bitrix\Crm\Security\EntityPermission;
 use Bitrix\Crm\Security\Role\Manage\RoleManagementModelBuilder;
 use Bitrix\Crm\Security\Role\Model\EO_RolePermission;
 use Bitrix\Crm\Security\Role\Model\RolePermissionTable;
+use Bitrix\Crm\Security\Role\Utils\RolePermissionLogContext;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Web\Json;
+use Bitrix\Crm\Service\Container;
 
 final class ApproveCustomPermsToExistRole
 {
@@ -26,22 +28,69 @@ final class ApproveCustomPermsToExistRole
 			return self::DONE;
 		}
 
-		$roleIds = $this->getRoleIds();
+		$roles = $this->getRoles();
 
-		if (empty($roleIds))
+		if (empty($roles))
 		{
+			$this->clearDefaultPermissions();
+
 			return self::DONE;
 		}
 
 		$defaultPermission = array_shift($defaultPermissions);
 
-		$entities = (RoleManagementModelBuilder::getInstance())
-			->getEntityNamesWithPermissionClass($defaultPermission)
+		$this->log('Start applying default permission', $defaultPermission->toArray());
+
+		$roleIds = [];
+
+		$permissionRoleGroups = $defaultPermission->getRoleGroups();
+
+		foreach ($roles as $role)
+		{
+			$roleGroupCode = (string)$role['GROUP_CODE'];
+			if ($roleGroupCode === '' && in_array('CRM', $permissionRoleGroups, true))
+			{
+				$roleIds[] = $role['ID'];
+			}
+			elseif (
+				\Bitrix\Crm\Security\Role\GroupCodeGenerator::isAutomatedSolutionGroupCode($roleGroupCode)
+				&& in_array('AUTOMATED_SOLUTION', $permissionRoleGroups, true)
+			)
+			{
+				$roleIds[] = $role['ID'];
+			}
+			elseif(in_array($roleGroupCode, $permissionRoleGroups, true))
+			{
+				$roleIds[] = $role['ID'];
+			}
+		}
+
+		$this->log('Affected roleIds', ['roleIds' => $roleIds]);
+
+		if (empty($roleIds))
+		{
+			$this->removeDefaultPermissionFromOptions($defaultPermission);
+
+			return $this->needContinue($defaultPermissions);
+		}
+
+		RolePermissionLogContext::getInstance()->set(array_merge([
+			'scenario' => 'ApproveCustomPermsToExistRole',
+		], $defaultPermission->toArray()));
+
+		$modelBuilder = RoleManagementModelBuilder::getInstance();
+		$modelBuilder->clearEntitiesCache();
+		$entities = $modelBuilder->getEntityNamesWithPermissionClass($defaultPermission)
 		;
 		$existedPermissions = [];
-		if (empty($entities) && !$this->needContinue($defaultPermissions))
+
+		$this->log('Affected entities', ['entities' => $entities]);
+
+		if (empty($entities))
 		{
-			return self::DONE;
+			$this->removeDefaultPermissionFromOptions($defaultPermission);
+
+			return $this->needContinue($defaultPermissions);
 		}
 
 		$rolePermissions = RolePermissionTable::query()
@@ -83,8 +132,8 @@ final class ApproveCustomPermsToExistRole
 
 			if (!$newRolePermissions->isEmpty())
 			{
-				$newRolePermissions->save(true);
-				$processedRolesCount++;
+				$newRolePermissions->save();
+				$processedRolesCount+= $newRolePermissions->count();
 			}
 
 			if ($processedRolesCount > $maxProcessedRolesCount)
@@ -92,6 +141,7 @@ final class ApproveCustomPermsToExistRole
 				return self::CONTINUE;
 			}
 		}
+		RolePermissionLogContext::getInstance()->clear();
 
 		$this->removeDefaultPermissionFromOptions($defaultPermission);
 
@@ -135,7 +185,7 @@ final class ApproveCustomPermsToExistRole
 		return $result;
 	}
 
-	private function getRoleIds(): array
+	private function getRoles(): array
 	{
 		$dbResult = \CCrmRole::GetList(
 			[],
@@ -145,7 +195,7 @@ final class ApproveCustomPermsToExistRole
 		$result = [];
 		while ($row = $dbResult->fetch())
 		{
-			$result[] = $row['ID'];
+			$result[] = $row;
 		}
 
 		return $result;
@@ -192,6 +242,11 @@ final class ApproveCustomPermsToExistRole
 		$this->saveOption($defaultPermissions);
 	}
 
+	private function clearDefaultPermissions(): void
+	{
+		\Bitrix\Main\Config\Option::delete('crm', ['name' => 'default_permissions']);
+	}
+
 	private function saveOption(array $defaultPermissions): void
 	{
 		Option::set('crm', 'default_permissions', Json::encode($defaultPermissions));
@@ -204,13 +259,24 @@ final class ApproveCustomPermsToExistRole
 		return $maxProcessedRolesCount > 0 ? $maxProcessedRolesCount : self::MAX_PROCESSED_ROLES_COUNT;
 	}
 
-	public function hasWaitingPermission(string $code): bool
+	private function log(string $message, array $context): void
 	{
+		Container::getInstance()->getLogger('Permissions')->info('ApproveCustomPermsToExistRole: ' . $message, $context);
+	}
+
+	public function hasWaitingPermission(\Bitrix\Crm\Security\Role\Manage\Permissions\Permission $permission): bool
+	{
+		$permissionClass = $permission::class;
+		$code = $permission->code();
+
 		$defaultPermissions = $this->getDefaultPermissions();
 
 		foreach ($defaultPermissions as $defaultPermission)
 		{
-			if ($defaultPermission->getPermissionType() === $code)
+			if (
+				$defaultPermission->getPermissionClass() === $permissionClass
+				 && $defaultPermission->getPermissionType() === $code
+			)
 			{
 				return true;
 			}

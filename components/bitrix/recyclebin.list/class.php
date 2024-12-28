@@ -344,6 +344,8 @@ class RecyclebinListComponent extends RecyclebinBaseComponent implements Errorab
 
 		$formatted['USER_IS_EXTERNAL'] = User::isExternalUser($row['USER_ID'] ?? null);
 
+		$formatted['USER_IS_COLLABER'] = User::isCollaber((int)($row['USER_ID'] ?? 0));
+
 		$formatted['USER_IS_CRM'] = false;
 
 		if (

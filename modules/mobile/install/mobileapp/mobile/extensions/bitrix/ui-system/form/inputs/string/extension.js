@@ -3,7 +3,7 @@
  */
 
 jn.define('ui-system/form/inputs/string', (require, exports, module) => {
-	const { useCallback } = require('utils/function');
+	const { refSubstitution } = require('utils/function');
 	const { TextField } = require('ui-system/typography/text-field');
 	const { Input, InputClass, InputSize, InputMode, InputDesign, Icon } = require('ui-system/form/inputs/input');
 
@@ -48,7 +48,11 @@ jn.define('ui-system/form/inputs/string', (require, exports, module) => {
 	};
 
 	module.exports = {
-		StringInput: (props) => new StringInput(props),
+		/**
+		 * @param {StringInputProps} props
+		 */
+		StringInput: (props) => refSubstitution(StringInput)(props),
+		StringInputClass: StringInput,
 		InputSize,
 		InputMode,
 		InputDesign,

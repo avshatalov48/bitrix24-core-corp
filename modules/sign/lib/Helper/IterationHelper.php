@@ -9,8 +9,9 @@ abstract class IterationHelper
 	/**
 	 * @template Tv
 	 * @template Tk
-	 * @param iterable<Tk, Tv> $in
-	 * @param Closure(Tv, Tk, iterable<Tk, Tv>): bool $rule
+	 * @template TIn of iterable<Tk, Tv>
+	 * @param TIn $in
+	 * @param Closure(Tv, Tk, TIn): bool $rule
 	 * @return bool
 	 */
 	public static function all(iterable $in, Closure $rule): bool
@@ -23,6 +24,26 @@ abstract class IterationHelper
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * @template Tv
+	 * @template Tk
+	 * @template TIn of iterable<Tk, Tv>
+	 * @param TIn $in
+	 * @param Closure(Tv, Tk, TIn): bool $rule
+	 * @return bool
+	 */
+	public static function any(iterable $in, Closure $rule): bool
+	{
+		foreach ($in as $key => $item)
+		{
+			if ($rule($item, $key, $in))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

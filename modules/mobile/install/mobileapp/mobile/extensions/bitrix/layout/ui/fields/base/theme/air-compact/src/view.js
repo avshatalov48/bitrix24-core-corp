@@ -17,6 +17,7 @@ jn.define('layout/ui/fields/base/theme/air-compact/src/view', (require, exports,
 	 * @param {boolean} empty
 	 * @param {boolean} [hasError=false]
 	 * @param {boolean} [readOnly=false]
+	 * @param {Avatar} avatar
 	 * @param {boolean} multiple
 	 * @param {object} [leftIcon]
 	 * @param {string} [leftIcon.icon]
@@ -35,6 +36,7 @@ jn.define('layout/ui/fields/base/theme/air-compact/src/view', (require, exports,
 	const AirCompactThemeView = ({
 		testId,
 		empty,
+		avatar,
 		hasError = false,
 		readOnly = false,
 		multiple,
@@ -85,6 +87,10 @@ jn.define('layout/ui/fields/base/theme/air-compact/src/view', (require, exports,
 					size: 'small',
 				}),
 			);
+		}
+		else if (avatar)
+		{
+			leftContent.push(avatar);
 		}
 		else if (leftIcon.icon)
 		{
@@ -188,8 +194,12 @@ jn.define('layout/ui/fields/base/theme/air-compact/src/view', (require, exports,
 		DEFAULT: 'DEFAULT',
 
 		/**
+		 * @typedef {Object} ColorSchemeObject
+		 * @property {Color} content
+		 * @property {Color} border
+		 *
 		 * @param {string} value
-		 * @return {{ content: Color, border: Color }}
+		 * @return {ColorSchemeObject}
 		 */
 		resolve(value)
 		{

@@ -74,7 +74,20 @@ while($lang = $langs->Fetch())
 			"SUBJECT" => GetMessage("EXTRANET_INVITATION_SUBJECT"),
 			"MESSAGE" => "<?EventMessageThemeCompiler::includeComponent(\"bitrix:intranet.template.mail\", \"\", array(\"USER_ID\" => \"{#USER_ID#}\",\"CHECKWORD\" => \"{#CHECKWORD#}\",\"SERVER_NAME\" => \"{#SERVER_NAME#}\",\"USER_TEXT\" => \"{#USER_TEXT#}\",\"USER_ID_FROM\" => \"{#USER_ID_FROM#}\",\"TEMPLATE_TYPE\" => \"EXTRANET_INVITATION\",\"FIELDS\" => \$arParams));?>",
 			"BODY_TYPE" => "html",
-		));		
+		));
+
+		$emess = new CEventMessage;
+		$emess->Add(array(
+			"ACTIVE" => "Y",
+			"EVENT_NAME" => "COLLAB_INVITATION",
+			"LID" => $arSites,
+			"EMAIL_FROM" => "#DEFAULT_EMAIL_FROM#",
+			"EMAIL_TO" => "#EMAIL#",
+			"BCC" => "",
+			"SUBJECT" => "#COLLAB_INVITATION_SUBJECT#",
+			"MESSAGE" => "<?EventMessageThemeCompiler::includeComponent(\"bitrix:intranet.template.mail\", \"\", array(\"USER_ID\" => \"{#USER_ID#}\",\"CHECKWORD\" => \"{#CHECKWORD#}\",\"SERVER_NAME\" => \"{#SERVER_NAME#}\",\"USER_TEXT\" => \"{#USER_TEXT#}\",\"USER_ID_FROM\" => \"{#USER_ID_FROM#}\",\"TEMPLATE_TYPE\" => \"COLLAB_INVITATION\",\"FIELDS\" => \$arParams));?>",
+			"BODY_TYPE" => "html",
+		));
 	}
 }
 ?>

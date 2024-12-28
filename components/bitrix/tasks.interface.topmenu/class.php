@@ -100,7 +100,8 @@ class TasksTopmenuComponent extends TasksBaseComponent
 
 		$this->arResult['EFFECTIVE_COUNTER'] = 0;
 		if (
-			$this->arParams['PARENT_COMPONENT'] !== 'tasks.task'
+			!isset($this->arParams['PARENT_COMPONENT'])
+			|| $this->arParams['PARENT_COMPONENT'] !== 'tasks.task'
 			|| !array_key_exists('IFRAME', $_REQUEST)
 			|| $_REQUEST['IFRAME'] !== 'Y'
 		)
@@ -141,7 +142,8 @@ class TasksTopmenuComponent extends TasksBaseComponent
 		$this->arResult['FLOW_COUNTER'] = 0;
 
 		if (
-			$this->arParams['PARENT_COMPONENT'] !== 'tasks.task'
+			!isset($this->arParams['PARENT_COMPONENT'])
+			|| $this->arParams['PARENT_COMPONENT'] !== 'tasks.task'
 			|| !array_key_exists('IFRAME', $_REQUEST)
 			|| $_REQUEST['IFRAME'] !== 'Y'
 		)

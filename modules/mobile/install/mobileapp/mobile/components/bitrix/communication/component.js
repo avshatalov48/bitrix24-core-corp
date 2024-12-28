@@ -40,6 +40,9 @@
 				crm_all_no_orders: 'crm_all_no_orders',
 				crm_activity_current_calltracker: 'crm_activity_current_calltracker',
 				calendar: 'calendar',
+				menu_invite: 'menu_invite',
+				menu_tab_presets: 'menu_tab_presets',
+				menu_disk_tabs: 'menu_disk_tabs',
 			};
 
 			this.userCounterMapTabName = {
@@ -50,6 +53,9 @@
 				crm_all_no_orders: 'crm_all_no_orders',
 				crm_activity_current_calltracker: 'crm_activity_current_calltracker',
 				calendar: 'calendar',
+				menu_invite: 'menu_invite',
+				menu_tab_presets: 'menu_tab_presets',
+				menu_disk_tabs: 'menu_disk_tabs',
 			};
 
 			this.tabNameMapOldUserCounter = {

@@ -51,26 +51,9 @@ final class Updater
 		}
 		$remoteDbUri = self::getRemoteDbUri();
 		$currentVersion = self::getVersion();
-		if ($currentVersion && self::isCurrentFormatSubVersion())
+		if (self::tryPartitionalUpdate($http, $remoteDbUri, $currentVersion))
 		{
-			// try partition update
-			$remoteDbUriNextVersion = str_replace(
-				'.json',
-				'-' . $currentVersion + 1 . '.json',
-				$remoteDbUri
-			);
-			$responseNext = $http->get($remoteDbUriNextVersion);
-			$etag = $http->getHeaders()->get('Etag') ?? '';
-			if ($http->getStatus() === 304)
-			{
-				return;
-			}
-			if ($http->getStatus() === 200 && $http->getContentType() === 'application/json')
-			{
-				self::refreshFromJson($responseNext, $etag, SyncMode::Partitional);
-
-				return;
-			}
+			return;
 		}
 		$response = $http->get($remoteDbUri);
 		$etag = $http->getHeaders()->get('Etag') ?? '';
@@ -81,6 +64,44 @@ final class Updater
 		}
 
 		self::refreshFromJson($response, $etag);
+	}
+
+	private static function tryPartitionalUpdate(HttpClient $http, string $remoteDbUri, int $currentVersion): bool
+	{
+		$nextVersion = $currentVersion + 1;
+		$lastVersion = self::getRemoteDbVersion($remoteDbUri);
+		if (!$lastVersion || $nextVersion !== $lastVersion)
+		{
+			return false;
+		}
+		if ($currentVersion === $lastVersion)
+		{
+			return self::isCurrentFormatSubVersion();
+		}
+
+		$remoteDbUriNextVersion = str_replace('.json', '-' . $nextVersion . '.json', $remoteDbUri);
+		$responseNext = $http->get($remoteDbUriNextVersion);
+		$etag = $http->getHeaders()->get('Etag') ?? '';
+		if ($http->getStatus() === 304)
+		{
+			return true;
+		}
+		if ($http->getStatus() === 200 && $http->getContentType() === 'application/json')
+		{
+			self::refreshFromJson($responseNext, $etag, SyncMode::Partitional);
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private static function getRemoteDbVersion(string $remoteDbUri): int
+	{
+		$http = new HttpClient();
+		$removeDbVersion = $http->get(preg_replace('/[^\/]+\.json$/', 'version.txt', $remoteDbUri));
+
+		return (int)$removeDbVersion;
 	}
 
 	/**
@@ -142,7 +163,9 @@ final class Updater
 			|| self::getFormatSubVersion() !== self::CURRENT_JSON_FORMAT_SUBVERSION
 		)
 		{
-			(new RoleSync())->sync($response['roles'] ?? [], [], $mode);
+			static::sendInfo('start. Version ' . $response['version'] . ' ' . time());
+
+			(new RoleSync())->sync($response['roles'] ?? [], ['=IS_SYSTEM' => 'Y'], $mode);
 			(new RoleIndustrySync())->sync($response['industries'] ?? [], [], $mode);
 			(new PromptSync())->sync($response['abilities'] ?? [], ['=IS_SYSTEM' => 'Y'], $mode);
 			(new PlanSync())->sync($response['plans'] ?? [], [], $mode);
@@ -163,6 +186,8 @@ final class Updater
 			self::setFormatVersion(self::CURRENT_JSON_FORMAT_VERSION);
 			self::setFormatSubVersion(self::CURRENT_JSON_FORMAT_SUBVERSION);
 			self::setJsonDbEtag($etag);
+
+			static::sendInfo('end. Version ' . time());
 		}
 
 		self::makeExpired(self::TTL_HOURS);
@@ -339,5 +364,10 @@ final class Updater
 	public static function decreaseVersion(): void
 	{
 		self::setVersion(max(0, self::getVersion() - 1));
+	}
+
+	private static function sendInfo($msg)
+	{
+		AddMessage2Log('Prompt Updater ' . $msg, 'ai');
 	}
 }

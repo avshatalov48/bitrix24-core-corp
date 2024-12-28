@@ -5,13 +5,10 @@ import { Label, LabelColor } from 'ui.label';
 export type FullNameFieldType = {
 	fullName: string,
 	profileLink: string,
-	isConfirmed: boolean,
-	isAdmin: boolean,
-	isExtranet: boolean,
 	position: ?string,
-	isInvited: boolean,
 	photoUrl: string,
-	isIntegrator: boolean,
+	role: string,
+	inviteStatus: string,
 }
 
 export class FullNameField extends BaseField
@@ -24,31 +21,37 @@ export class FullNameField extends BaseField
 
 		if (params.position)
 		{
-			Dom.append(this.#getPositionContainer(Text.encode(params.position)), fullNameContainer);
+			Dom.append(this.#getPositionLabelContainer(Text.encode(params.position)), fullNameContainer);
 		}
 
-		if (!params.isInvited && params.isConfirmed)
+		switch (params.role)
 		{
-			if (params.isIntegrator)
-			{
+			case 'integrator':
 				Dom.append(this.#getIntegratorBalloonContainer(), fullNameContainer);
-			}
-			else if (params.isAdmin)
-			{
+				break;
+			case 'admin':
 				Dom.append(this.#getAdminBalloonContainer(), fullNameContainer);
-			}
-			else if (params.isExtranet)
-			{
+				break;
+			case 'extranet':
 				Dom.append(this.#getExtranetBalloonContainer(), fullNameContainer);
-			}
+				break;
+			case 'collaber':
+				Dom.append(this.#getCollaberBalloonContainer(), fullNameContainer);
+				break;
+			default:
+				break;
 		}
-		else if (params.isInvited && !params.isConfirmed)
+
+		switch (params.inviteStatus)
 		{
-			Dom.append(this.#getInviteNotConfirmedContainer(), fullNameContainer);
-		}
-		else if (params.isInvited)
-		{
-			Dom.append(this.#getInviteNotAcceptedContainer(), fullNameContainer);
+			case 'INVITE_AWAITING_APPROVE':
+				Dom.append(this.#getWaitingConfirmationLabelContainer(), fullNameContainer);
+				break;
+			case 'INVITED':
+				Dom.append(this.#getInvitedLabelContainer(), fullNameContainer);
+				break;
+			default:
+				break;
 		}
 
 		this.appendToFieldNode(fullNameContainer);
@@ -56,10 +59,14 @@ export class FullNameField extends BaseField
 
 	#getFullNameLink(fullName: string, profileLink: string): HTMLElement
 	{
-		return Tag.render`<a class="user-grid_full-name-label" href="${profileLink}">${fullName}</a>`;
+		return Tag.render`
+			<a class="user-grid_full-name-label" href="${profileLink}">
+				${fullName}
+			</a>
+		`;
 	}
 
-	#getInviteNotAcceptedContainer(): HTMLElement
+	#getInvitedLabelContainer(): HTMLElement
 	{
 		const label = new Label({
 			text: Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_INVITATION_NOT_ACCEPTED'),
@@ -72,7 +79,7 @@ export class FullNameField extends BaseField
 		return label.render();
 	}
 
-	#getInviteNotConfirmedContainer(): HTMLElement
+	#getWaitingConfirmationLabelContainer(): HTMLElement
 	{
 		const label = new Label({
 			text: Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_NOT_CONFIRMED'),
@@ -85,7 +92,7 @@ export class FullNameField extends BaseField
 		return label.render();
 	}
 
-	#getPositionContainer(position: string): HTMLElement
+	#getPositionLabelContainer(position: string): HTMLElement
 	{
 		return Tag.render`<div class="user-grid_position-label">${position}</div>`;
 	}
@@ -113,6 +120,15 @@ export class FullNameField extends BaseField
 		return Tag.render`
 			<span class="user-grid_role-label --extranet">
 				${Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_EXTRANET')}
+			</span>
+		`;
+	}
+
+	#getCollaberBalloonContainer(): HTMLElement
+	{
+		return Tag.render`
+			<span class="user-grid_role-label --collaber">
+				${Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_COLLABER')}
 			</span>
 		`;
 	}

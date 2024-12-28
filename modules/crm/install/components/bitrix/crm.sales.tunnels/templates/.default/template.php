@@ -5,10 +5,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Crm\Automation\Factory;
 use Bitrix\Crm\Integration;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Crm\Feature;
 
 Extension::load([
 	'ui.design-tokens',
@@ -113,7 +113,11 @@ $APPLICATION->includeComponent(
 
 		robotsUrl: '<?=$arResult['robotsUrl']?>',
 		generatorUrl: '<?=$arResult['generatorUrl']?>',
-		permissionEditUrl: '<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('crm', 'path_to_perm_list'))?>/',
+		permissionEditUrl: '<?= \CUtil::JSEscape(Feature::enabled(Feature\PermissionsLayoutV2::class)
+			? \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getEntityPermissionsUrl((int)$arResult['entityTypeId'])
+			: \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getPermissionsUrl()
+		)
+		?>',
 		allowWrite: true,
 	});
 </script>

@@ -296,6 +296,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				preparedTask.canUpdateResponsible = actions.canUpdateResponsible ?? preparedTask.canUpdateResponsible;
 				preparedTask.canUpdateAccomplices = actions.canUpdateAccomplices ?? preparedTask.canUpdateAccomplices;
 				preparedTask.canDelegate = actions.canDelegate ?? preparedTask.canDelegate;
+				preparedTask.canTake = actions.canTake ?? preparedTask.canTake;
 				preparedTask.canUpdateMark = actions.canUpdateMark ?? preparedTask.canUpdateMark;
 				preparedTask.canUpdateReminder = actions.canUpdateReminder ?? preparedTask.canUpdateReminder;
 				preparedTask.canUpdateElapsedTime = actions.canUpdateElapsedTime ?? preparedTask.canUpdateElapsedTime;
@@ -310,6 +311,25 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				preparedTask.canApprove = actions.canApprove ?? preparedTask.canApprove;
 				preparedTask.canDisapprove = actions.canDisapprove ?? preparedTask.canDisapprove;
 				preparedTask.canDefer = actions.canDefer ?? preparedTask.canDefer;
+			}
+
+			const userFieldNames = serverTask.userFieldNames;
+
+			Object.keys(preparedTask).forEach((key) => {
+				if (key.startsWith('UF_AUTO_') && !userFieldNames.includes(key))
+				{
+					delete preparedTask[key];
+				}
+			});
+			preparedTask.userFieldNames = userFieldNames;
+
+			if (serverTask.areUserFieldsLoaded && serverTask.userFields)
+			{
+				preparedTask.areUserFieldsLoaded = true;
+
+				serverTask.userFields.forEach((field) => {
+					preparedTask[field.fieldName] = field;
+				});
 			}
 
 			preparedTask.isExpired = selectIsExpired(preparedTask);
@@ -584,6 +604,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				preparedTask.actionsOld = actions.actions;
 				preparedTask.canUpdateDeadline = actions.canChangeDeadline;
 				preparedTask.canDelegate = actions.canDelegate;
+				preparedTask.canTake = actions.canTake;
 				preparedTask.canRemove = actions.canRemove;
 				preparedTask.canUseTimer = actions.canStartTimer || actions.canPauseTimer;
 				preparedTask.canStart = actions.canStart;
@@ -642,6 +663,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				tags: undefined,
 				files: undefined,
 				uploadedFiles: [],
+				userFieldNames: undefined,
 
 				isMuted: undefined,
 				isPinned: undefined,
@@ -654,6 +676,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				allowTimeTracking: undefined,
 				allowTaskControl: undefined,
 				isTimerRunningForCurrentUser: undefined,
+				areUserFieldsLoaded: undefined,
 
 				deadline: undefined,
 				activityDate: undefined,
@@ -688,6 +711,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				canUpdateResponsible: false,
 				canUpdateAccomplices: false,
 				canDelegate: false,
+				canTake: false,
 				canUpdateMark: false,
 				canUpdateReminder: false,
 				canUpdateElapsedTime: false,
@@ -746,6 +770,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				tags: [],
 				files: [],
 				uploadedFiles: [],
+				userFieldNames: [],
 
 				isMuted: false,
 				isPinned: false,
@@ -758,6 +783,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				allowTimeTracking: false,
 				allowTaskControl: false,
 				isTimerRunningForCurrentUser: false,
+				areUserFieldsLoaded: true,
 
 				deadline: null,
 				activityDate: Math.ceil(Date.now() / 1000),
@@ -792,6 +818,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				canUpdateResponsible: true,
 				canUpdateAccomplices: true,
 				canDelegate: false,
+				canTake: false,
 				canUpdateMark: true,
 				canUpdateReminder: true,
 				canUpdateElapsedTime: false,

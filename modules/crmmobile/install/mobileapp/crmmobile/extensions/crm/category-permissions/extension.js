@@ -229,6 +229,7 @@ jn.define('crm/category-permissions', (require, exports, module) => {
 			this.menu.close(() => {
 				qrauth.open({
 					redirectUrl: '/crm/configs/perms/',
+					analyticsSection: 'crm',
 				});
 			});
 

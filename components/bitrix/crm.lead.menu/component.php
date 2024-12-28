@@ -19,10 +19,12 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
-\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
-
+use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
 use Bitrix\Crm\Integration\Sender\Rc;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
+
+Container::getInstance()->getLocalization()->loadMessages();
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $CrmPerms = CCrmPerms::GetCurrentUserPermissions();
@@ -631,6 +633,13 @@ if (isset($arParams['TYPE']) && $arParams['TYPE'] === 'list')
 	)
 	{
 		$arResult['BUTTONS'] = array_merge($arResult['BUTTONS'], $arParams['ADDITIONAL_SETTINGS_MENU_ITEMS']);
+	}
+
+	$permissionItem = PermissionItem::createByEntity(CCrmOwnerType::Lead);
+	if ($permissionItem->canShow())
+	{
+		$arResult['BUTTONS'][] = $permissionItem->interfaceToolbarDelimiter();
+		$arResult['BUTTONS'][] = $permissionItem->toInterfaceToolbarButton();
 	}
 
 	if(count($arResult['BUTTONS']) > 1)

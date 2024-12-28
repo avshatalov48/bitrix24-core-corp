@@ -18,6 +18,10 @@ class CompletedTaskPreloader extends TaskDirectorPreloader
 			'>=CLOSED_DATE' => (new DateTime())->add('-' . static::DAYS_LIMIT . ' days'),
 		];
 
-		$this->load($filter, ...$flowIds);
+		$order = [
+			'START_POINT' => 'ASC',
+		];
+
+		$this->load($filter, $order, ...$flowIds);
 	}
 }

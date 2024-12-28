@@ -7,14 +7,14 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Duration } = require('utils/date');
 	const { Alert } = require('alert');
-	const { UIScrollView } = require('layout/ui/scroll-view');
+	const { ScrollView } = require('layout/ui/scroll-view');
 	const { Card } = require('ui-system/layout/card');
 	const { IconView, iconTypes } = require('ui-system/blocks/icon');
 	const { Link4, LinkMode, Ellipsize } = require('ui-system/blocks/link');
 	const { CollapsibleText } = require('layout/ui/collapsible-text');
 	const { AhaMoment } = require('ui-system/popups/aha-moment');
 	const { ChipStatus, ChipStatusMode, ChipStatusDesign } = require('ui-system/blocks/chips/chip-status');
-	const { Avatar } = require('layout/ui/user/avatar');
+	const { Avatar } = require('ui-system/blocks/avatar');
 	const { ProfileView } = require('user/profile');
 	const { usersSelector } = require('statemanager/redux/slices/users');
 	const { selectGroupById } = require('tasks/statemanager/redux/slices/groups');
@@ -49,7 +49,7 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 				return this.renderFlowDataNotFound();
 			}
 
-			return UIScrollView(
+			return ScrollView(
 				{
 					style: {
 						flex: 1,
@@ -103,6 +103,8 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 		}
 
 		renderFlowSubTitle = () => {
+			const { groupId, groupName, groupIsCollab, groupDialogId } = this.props.flow;
+
 			return View(
 				{
 					style: {
@@ -123,7 +125,7 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 				}),
 				Link4({
 					testId: `${this.testId}-flow-subtitle-link`,
-					text: this.props.flow.groupName,
+					text: groupName,
 					color: Color.accentMainPrimary,
 					numberOfLines: 1,
 					mode: LinkMode.DASH,
@@ -131,9 +133,7 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 					style: {
 						marginTop: Indent.XS2.toNumber(),
 					},
-					onClick: () => {
-						this.openGroupDetail(this.props.flow.groupId);
-					},
+					onClick: () => this.openGroupDetail(groupId, groupIsCollab, groupDialogId),
 				}),
 			);
 		};
@@ -229,6 +229,7 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 				targetRef,
 				description: Loc.getMessage('TASKSMOBILE_FLOW_DETAIL_FLOW_AHA_MOMENT_TEXT'),
 				closeButton: false,
+				disableHideByOutsideClick: false,
 			});
 		};
 
@@ -284,6 +285,8 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 		}
 
 		renderFlowAdministrator = () => {
+			const { flow } = this.props;
+
 			return Card(
 				{
 					testId: `${this.testId}-flow-administrator-card`,
@@ -295,14 +298,13 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 						alignItems: 'center',
 					},
 					onClick: () => {
-						this.openUserProfile(this.props.flow.ownerId);
+						this.openUserProfile(flow.ownerId);
 					},
 				},
 				Avatar({
-					id: this.props.flow.ownerId,
-					name: this.props.flow.ownerFullName,
-					image: this.props.flow.ownerAvatarSize100,
+					id: flow.ownerId,
 					size: 32,
+					withRedux: true,
 					testId: `${this.testId}-flow-administrator-avatar`,
 				}),
 				View(
@@ -322,7 +324,7 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 					}),
 					Text4({
 						testId: `${this.testId}-flow-administrator-name`,
-						text: this.props.flow.ownerFullName,
+						text: flow.ownerFullName,
 						color: Color.base2,
 						style: {
 							flexShrink: 1,
@@ -334,7 +336,11 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 					{
 						onClick: () => {
 							// todo: replace after fix DialogOpener in immobile
-							BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [{ dialogId: this.props.flow.ownerId }], 'im.messenger');
+							BX.postComponentEvent(
+								'ImMobile.Messenger.Dialog:open',
+								[{ dialogId: flow.ownerId }],
+								'im.messenger',
+							);
 						},
 					},
 					IconView({
@@ -346,8 +352,8 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 			);
 		};
 
-		openGroupDetail = (groupId) => {
-			ProjectViewManager.open(env.userId, groupId, this.props.layout);
+		openGroupDetail = (groupId, groupIsCollab, groupDialogId) => {
+			ProjectViewManager.open(env.userId, groupId, this.props.layout, groupIsCollab, groupDialogId);
 		};
 	}
 
@@ -362,14 +368,19 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 
 		const {
 			fullName: ownerFullName,
-			avatarSize100: ownerAvatarSize100,
 		} = usersSelector.selectById(state, Number(flow.ownerId));
 
 		let groupName = null;
+		let groupIsCollab = null;
+		let groupDialogId = null;
+
 		if (flow.groupId > 0)
 		{
-			const group = selectGroupById(store.getState(), flow.groupId);
-			groupName = group.name;
+			const { name, isCollab, additionalData } = selectGroupById(store.getState(), flow.groupId);
+
+			groupName = name;
+			groupIsCollab = isCollab;
+			groupDialogId = additionalData.DIALOG_ID;
 		}
 
 		const {
@@ -393,9 +404,10 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 				efficiencySuccess,
 				ownerId,
 				ownerFullName,
-				ownerAvatarSize100,
 				groupId,
 				groupName,
+				groupIsCollab,
+				groupDialogId,
 			},
 		};
 	};

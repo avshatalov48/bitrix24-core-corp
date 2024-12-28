@@ -1,10 +1,9 @@
 <?php
 
 use Bitrix\HumanResources\Compatibility\Event\NewToOldEventHandler;
+use Bitrix\HumanResources\Compatibility\Event\HcmLink\JobEventHandler;
 use Bitrix\HumanResources\Compatibility\Event\NodeEventHandler;
 use Bitrix\HumanResources\Compatibility\Event\UserEventHandler;
-use Bitrix\HumanResources\Exception\CreationFailedException;
-use Bitrix\HumanResources\Service\Container;
 use Bitrix\Main\Localization\Loc;
 
 if (class_exists('humanresources'))
@@ -36,9 +35,14 @@ class HumanResources extends CModule
 			'humanresources' => [
 				'MEMBER_ADDED' => [NewToOldEventHandler::class, 'onMemberAdded',],
 				'MEMBER_DELETED' => [NewToOldEventHandler::class, 'onMemberDeleted',],
+				'MEMBER_UPDATED' => [NewToOldEventHandler::class, 'onMemberUpdated',],
 				'NODE_ADDED' => [NewToOldEventHandler::class, 'onNodeAdded',],
 				'NODE_UPDATED' => [NewToOldEventHandler::class, 'onNodeUpdated',],
 				'NODE_DELETED' => [NewToOldEventHandler::class, 'onNodeDeleted',],
+				'OnHumanResourcesHcmLinkJobIsDone' => [JobEventHandler::class, 'onUpdateDoneJob'],
+			],
+			'rest' => [
+				'OnRestServiceBuildDescription' => [\Bitrix\HumanResources\Marketplace\Rest\HcmLink::class, 'onRestServiceBuildDescription']
 			],
 		]
 	;
@@ -124,6 +128,10 @@ class HumanResources extends CModule
 		// module
 		registerModule($this->MODULE_ID);
 
+		$DB->runSQLBatch(
+			$this->getDocumentRoot() .'/bitrix/modules/' . $this->MODULE_ID . '/install/db/' . $connectionType . '/install_ft.sql'
+		);
+
 		return true;
 	}
 
@@ -202,6 +210,22 @@ class HumanResources extends CModule
 			module: $this->MODULE_ID,
 			interval: 600,
 			next_exec: $startTime,
+			existError: false,
+		);
+
+		\CAgent::addAgent(
+			'Bitrix\HumanResources\Install\Agent\HcmLink\JobCleaner::run();',
+			$this->MODULE_ID,
+			'N',
+			3600,
+			existError: false,
+		);
+
+		\CAgent::addAgent(
+			'Bitrix\HumanResources\Install\Agent\HcmLink\ExpiredFieldValueCleaner::run();',
+			$this->MODULE_ID,
+			'N',
+			3600,
 			existError: false,
 		);
 	}

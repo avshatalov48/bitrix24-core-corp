@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'type',
+		'assets/icons',
 		'device/connection',
 		'im:messenger/const',
 		'im:messenger/lib/logger',
@@ -15,11 +16,13 @@ return [
 	],
 	'bundle' => [
 		'./src/dialog',
+		'./src/user',
 		'./src/message',
 		'./src/date',
 		'./src/worker',
 		'./src/soft-loader',
 		'./src/file',
 		'./src/url',
+		'./src/entity-selector',
 	],
 ];

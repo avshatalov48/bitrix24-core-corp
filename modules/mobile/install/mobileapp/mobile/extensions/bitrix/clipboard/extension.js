@@ -6,9 +6,9 @@ jn.define('clipboard', (require, exports, module) => {
 		get: () => {
 			return Application.copyFromClipboard();
 		},
-		put: async (text) => {
+		put: async (text, force = false) => {
 			return new Promise((resolve, reject) => {
-				const result = Application.copyToClipboard(text);
+				const result = Application.copyToClipboard(text, force);
 				if (result instanceof Promise)
 				{
 					result.then(() => resolve())

@@ -215,6 +215,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    this.onCallConnectionQualityChangedHandler = this.onCallConnectionQualityChanged.bind(this);
 	    this.onCallToggleRemoteParticipantVideoHandler = this.onCallToggleRemoteParticipantVideo.bind(this);
 	    this._onGetUserMediaEndedHandler = this.onGetUserMediaEnded.bind(this);
+	    this._onSwitchTrackRecordStatusHandler = this.onUpdateCallCopilotState.bind(this);
 	    this.onPreCallDestroyHandler = this.onPreCallDestroy.bind(this);
 	    this.onPreCallUserStateChangedHandler = this.onPreCallUserStateChanged.bind(this);
 	    this.waitingForCallStatus = false;
@@ -490,12 +491,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            language: _this7.params.language,
 	            layout: im_lib_utils.Utils.device.isMobile() ? Call.View.Layout.Mobile : Call.View.Layout.Centered,
 	            uiState: Call.View.UiState.Preparing,
-	            blockedButtons: ['camera', 'microphone', 'floorRequest', 'screen', 'record'],
+	            blockedButtons: ['camera', 'microphone', 'floorRequest', 'screen', 'record', 'copilot'],
 	            localUserState: Call.UserState.Idle,
 	            hiddenTopButtons: !_this7.isBroadcast() || _this7.getBroadcastPresenters().length > 1 ? [] : ['grid'],
 	            hiddenButtons: hiddenButtons,
 	            broadcastingMode: _this7.isBroadcast(),
-	            broadcastingPresenters: _this7.getBroadcastPresenters()
+	            broadcastingPresenters: _this7.getBroadcastPresenters(),
+	            isCopilotFeaturesEnabled: false,
+	            isCopilotActive: false
 	          });
 	          _this7.callView.subscribe(Call.View.Event.onButtonClick, _this7.onCallButtonClick.bind(_this7));
 	          _this7.callView.subscribe(Call.View.Event.onReplaceCamera, _this7.onCallReplaceCamera.bind(_this7));
@@ -945,6 +948,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        _this15.currentCall = e.call;
 	        //this.currentCall.useHdVideo(Call.Hardware.preferHdQuality);
 	        _this15.currentCall.useHdVideo(true);
+	        _this15.onUpdateCallCopilotState({
+	          isTrackRecordOn: _this15.currentCall.isCopilotActive
+	        });
 	        if (Call.Hardware.defaultMicrophone) {
 	          _this15.currentCall.setMicrophoneId(Call.Hardware.defaultMicrophone);
 	        }
@@ -976,7 +982,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              video: Call.Hardware.isCameraOn,
 	              audio: !Call.Hardware.isMicrophoneMuted
 	            },
-	            status: call_lib_analytics.Analytics.AnalyticsStatus.success
+	            status: call_lib_analytics.Analytics.AnalyticsStatus.success,
+	            isCopilotActive: _this15.currentCall.isCopilotActive
 	          });
 	          _this15.currentCall.inviteUsers();
 	        } else {
@@ -1572,7 +1579,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        fullscreen: this.onCallViewFullScreenButtonClick.bind(this),
 	        floorRequest: this.onCallViewFloorRequestButtonClick.bind(this),
 	        feedback: this.onCallViewFeedbackButtonClick.bind(this),
-	        onUserClick: this.onCallUserClick.bind(this)
+	        onUserClick: this.onCallUserClick.bind(this),
+	        copilot: this.onCallCopilotButtonClick.bind(this)
 	      };
 	      if (handlers[buttonName]) {
 	        handlers[buttonName](event);
@@ -1987,9 +1995,58 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      });
 	    }
 	  }, {
+	    key: "onCallCopilotButtonClick",
+	    value: function onCallCopilotButtonClick() {
+	      this.onChangeStateCopilot();
+
+	      /* if (!Call.Util.isAIServiceEnabled())
+	      {
+	      	BX.SidePanel.Instance.open(CallAI.serviceEnabled, {
+	      		cacheable: false
+	      	});
+	      	return;
+	      }
+	      	this.copilotPopup = new Call.CopilotPopup({
+	      	isCopilotActive: this.currentCall.isCopilotActive,
+	      	isCopilotFeaturesEnabled: this.currentCall.isCopilotFeaturesEnabled,
+	      	updateCopilotState: () => {
+	      		this.onChangeStateCopilot();
+	      	},
+	      	onClose: () => {
+	      		this.copilotPopup = null;
+	      	}
+	      });
+	      	if (this.copilotPopup)
+	      {
+	      	this.copilotPopup.toggle();
+	      } */
+	    }
+	  }, {
+	    key: "onUpdateCallCopilotState",
+	    value: function onUpdateCallCopilotState(_ref) {
+	      var isTrackRecordOn = _ref.isTrackRecordOn;
+	      this.currentCall.isCopilotActive = isTrackRecordOn;
+	      this.callView.updateCopilotState(this.currentCall.isCopilotActive);
+	    }
+	  }, {
+	    key: "onChangeStateCopilot",
+	    value: function onChangeStateCopilot() {
+	      var _this24 = this;
+	      var action = !this.currentCall.isCopilotActive ? 'call.Track.start' : 'call.Track.stop';
+	      BX.ajax.runAction(action, {
+	        data: {
+	          callId: this.currentCall.id
+	        }
+	      }).then(function () {
+	        _this24.onUpdateCallCopilotState({
+	          isTrackRecordOn: !_this24.currentCall.isCopilotActive
+	        });
+	      });
+	    }
+	  }, {
 	    key: "onCallViewFloorRequestButtonClick",
 	    value: function onCallViewFloorRequestButtonClick() {
-	      var _this24 = this;
+	      var _this25 = this;
 	      call_lib_analytics.Analytics.getInstance().onFloorRequest({
 	        callId: this.currentCall.id,
 	        callType: call_lib_analytics.Analytics.AnalyticsType.videoconf
@@ -2003,8 +2060,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      clearTimeout(this.callViewFloorRequestTimeout);
 	      if (talkingState && !floorState) {
 	        this.callViewFloorRequestTimeout = setTimeout(function () {
-	          if (_this24.currentCall) {
-	            _this24.currentCall.requestFloor(false);
+	          if (_this25.currentCall) {
+	            _this25.currentCall.requestFloor(false);
 	          }
 	        }, 1500);
 	      }
@@ -2039,6 +2096,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      this.currentCall.addEventListener(Call.Event.onConnectionQualityChanged, this.onCallConnectionQualityChangedHandler);
 	      this.currentCall.addEventListener(Call.Event.onToggleRemoteParticipantVideo, this.onCallToggleRemoteParticipantVideoHandler);
 	      this.currentCall.addEventListener(Call.Event.onGetUserMediaEnded, this._onGetUserMediaEndedHandler);
+	      this.currentCall.addEventListener(Call.Event.onSwitchTrackRecordStatus, this._onSwitchTrackRecordStatusHandler);
 	    }
 	  }, {
 	    key: "removeCallEvents",
@@ -2069,18 +2127,19 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      this.currentCall.removeEventListener(Call.Event.onReconnected, this.onReconnectedHandler);
 	      this.currentCall.addEventListener(Call.Event.onUpdateLastUsedCameraId, this.onUpdateLastUsedCameraIdHandler);
 	      this.currentCall.removeEventListener(Call.Event.onGetUserMediaEnded, this._onGetUserMediaEndedHandler);
+	      this.currentCall.removeEventListener(Call.Event.onSwitchTrackRecordStatus, this._onSwitchTrackRecordStatusHandler);
 	    }
 	  }, {
 	    key: "onCallUserInvited",
 	    value: function onCallUserInvited(e) {
-	      var _this25 = this;
+	      var _this26 = this;
 	      this.callView.addUser(e.userId);
 	      Call.Util.getUsers(this.currentCall.id, [e.userId]).then(function (userData) {
-	        _this25.controller.getStore().dispatch('users/set', Object.values(userData));
-	        _this25.controller.getStore().dispatch('conference/setUsers', {
+	        _this26.controller.getStore().dispatch('users/set', Object.values(userData));
+	        _this26.controller.getStore().dispatch('conference/setUsers', {
 	          users: Object.keys(userData)
 	        });
-	        _this25.callView.updateUserData(userData);
+	        _this26.callView.updateUserData(userData);
 	      });
 	    }
 	  }, {
@@ -2227,13 +2286,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "loopConnectionQuality",
 	    value: function loopConnectionQuality(userId, quality) {
-	      var _this26 = this;
+	      var _this27 = this;
 	      var timeout = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 200;
 	      if (this.callView) {
 	        this.loopTimers[userId] = setTimeout(function () {
-	          _this26.callView.setUserConnectionQuality(userId, quality);
+	          _this27.callView.setUserConnectionQuality(userId, quality);
 	          var newQuality = quality >= 4 ? 1 : quality + 1;
-	          _this26.loopConnectionQuality(userId, newQuality, timeout);
+	          _this27.loopConnectionQuality(userId, newQuality, timeout);
 	        }, timeout);
 	      }
 	    }
@@ -2812,11 +2871,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "setUserName",
 	    value: function setUserName(name) {
-	      var _this27 = this;
+	      var _this28 = this;
 	      return new Promise(function (resolve, reject) {
-	        _this27.restClient.callMethod('im.call.user.update', {
+	        _this28.restClient.callMethod('im.call.user.update', {
 	          name: name,
-	          chat_id: _this27.getChatId()
+	          chat_id: _this28.getChatId()
 	        }).then(function () {
 	          resolve();
 	        })["catch"](function (error) {
@@ -2827,18 +2886,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "checkPassword",
 	    value: function checkPassword(password) {
-	      var _this28 = this;
+	      var _this29 = this;
 	      return new Promise(function (resolve, reject) {
-	        _this28.restClient.callMethod('im.videoconf.password.check', {
+	        _this29.restClient.callMethod('im.videoconf.password.check', {
 	          password: password,
-	          alias: _this28.params.alias
+	          alias: _this29.params.alias
 	        }).then(function (result) {
 	          if (result.data() === true) {
-	            _this28.restClient.setPassword(password);
-	            _this28.controller.getStore().commit('conference/common', {
+	            _this29.restClient.setPassword(password);
+	            _this29.controller.getStore().commit('conference/common', {
 	              passChecked: true
 	            });
-	            _this28.initUserComplete();
+	            _this29.initUserComplete();
 	            resolve();
 	          } else {
 	            reject();
@@ -2851,10 +2910,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "changeLink",
 	    value: function changeLink() {
-	      var _this29 = this;
+	      var _this30 = this;
 	      return new Promise(function (resolve, reject) {
-	        _this29.restClient.callMethod('im.videoconf.share.change', {
-	          dialog_id: _this29.getDialogId()
+	        _this30.restClient.callMethod('im.videoconf.share.change', {
+	          dialog_id: _this30.getDialogId()
 	        }).then(function () {
 	          resolve();
 	        })["catch"](function (error) {

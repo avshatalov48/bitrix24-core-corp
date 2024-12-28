@@ -4,8 +4,12 @@
 jn.define('im/messenger/controller/dialog-creator/navigation-button', (require, exports, module) => {
 	const { Theme } = require('im/lib/theme');
 	const { withPressed } = require('utils/color');
+	const { Loc } = require('loc');
+	const { BadgeCounter, BadgeCounterDesign } = require('ui-system/blocks/badges/counter');
+	const { Text5 } = require('ui-system/typography/text');
+	const { Color } = require('tokens');
 
-	function navigationButton({ iconSvg, text, onClick, withSeparator, testId = '' })
+	function navigationButton({ iconSvg, text, subtitle, onClick, withSeparator, testId = '', isNew = false })
 	{
 		return View(
 			{
@@ -14,7 +18,6 @@ jn.define('im/messenger/controller/dialog-creator/navigation-button', (require, 
 					flexDirection: 'row',
 					paddingLeft: 18,
 					backgroundColor: withPressed(Theme.colors.bgContentPrimary),
-					height: 60,
 				},
 				clickable: true,
 				onClick,
@@ -22,8 +25,8 @@ jn.define('im/messenger/controller/dialog-creator/navigation-button', (require, 
 			View(
 				{
 					style: {
-						paddingTop: 10,
-						paddingBottom: 10,
+						alignItems: 'center',
+						justifyContent: 'center',
 					},
 				},
 				Image({
@@ -39,25 +42,53 @@ jn.define('im/messenger/controller/dialog-creator/navigation-button', (require, 
 			View(
 				{
 					style: {
+						flexDirection: 'column',
 						justifyContent: 'center',
-						flex: 1,
-						paddingTop: 10,
-						paddingBottom: 10,
+						flexGrow: 1,
+						paddingVertical: 15,
 						marginLeft: 12,
 						borderBottomWidth: withSeparator ? 1 : 0,
 						borderBottomColor: withSeparator ? Theme.colors.bgSeparatorPrimary : null,
 					},
 				},
-				Text({
-					text,
+				View(
+					{
+						style: {
+							justifyContent: 'flex-start',
+							alignItems: 'center',
+							flexDirection: 'row',
+							flexGrow: 1,
+						},
+					},
+					Text({
+						text,
+						style: {
+							color: Theme.colors.base1,
+							fontSize: 18,
+						},
+					}),
+					isNew && BadgeCounter({
+						value: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_BRAND_NEW_LABEL'),
+						testId: `${testId}_badge`,
+						showRawValue: true,
+						design: BadgeCounterDesign.COLLAB_SUCCESS, // todo use proper tokens
+						style: {
+							marginLeft: 4,
+							top: 1,
+						},
+					}),
+				),
+				subtitle && Text5({
+					text: subtitle.replaceAll('#BR#', '\n'),
+					color: Color.base3,
+					numberOfLines: 2,
 					style: {
-						color: Theme.colors.base1,
-						fontSize: 18,
+						marginTop: 2,
 					},
 				}),
-			)
+			),
 		);
 	}
 
-	module.exports = {navigationButton};
+	module.exports = { navigationButton };
 });

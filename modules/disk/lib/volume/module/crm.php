@@ -535,11 +535,15 @@ class Crm
 	 */
 	public function getStorageList(): array
 	{
-		if (count($this->storageList) == 0 || !$this->storageList[0] instanceof Disk\Storage)
+		if (empty($this->storageList))
 		{
 			if ($this->isMeasureAvailable())
 			{
-				$this->storageList[0] = \Bitrix\Crm\Integration\DiskManager::getStorage();
+				$storage = \Bitrix\Crm\Integration\DiskManager::getStorage();
+				if ($storage instanceof Disk\Storage)
+				{
+					$this->storageList[] = $storage;
+				}
 			}
 
 			$entityTypes = self::getEntityType();

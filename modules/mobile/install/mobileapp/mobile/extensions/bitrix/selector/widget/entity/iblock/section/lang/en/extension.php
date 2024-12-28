@@ -1,0 +1,3 @@
+<?php
+$MESS["SELECTOR_COMPONENT_IBLOCK_SECTION_START_TYPING_TEXT"] = "There are no sections.";
+$MESS["SELECTOR_COMPONENT_IBLOCK_SECTION_TITLE"] = "Information block section";

@@ -127,6 +127,7 @@
 					redirectUrl: BX.componentParameters.get('VIDEO_WEB_PATH', `/conference/`),
 					showHint: true,
 					title: BX.message('MOBILE_STREAM_TABS_VIDEO_TITLE'),
+					analyticsSection: 'conference',
 				});
 			}
 			else if (tabId === StreamTabs.tabNames.mail)
@@ -135,6 +136,7 @@
 					redirectUrl: BX.componentParameters.get('MAIL_WEB_PATH', `/mail/`),
 					showHint: true,
 					title: BX.message('MOBILE_STREAM_TABS_MAIL_TITLE'),
+					analyticsSection: 'mail',
 				});
 			}
 		}

@@ -6,6 +6,7 @@ export type UsersModelState = {
 	firstName: string,
 	lastName: string,
 	avatar: string,
+	type: string,
 	color: string,
 	workPosition: string,
 	gender: 'M' | 'F',

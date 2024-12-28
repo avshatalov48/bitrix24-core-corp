@@ -1,22 +1,26 @@
 import {RawChat, RawFile, RawMessage, RawUser} from "../../../../provider/service/src/types/sync-list-result";
 import {DialogId} from "../../../../types/common";
 
-declare type imV2RecentChannelTailResult = {
+declare type imV2CollabTailResult = {
 	additionalMessages: Array<RawMessage>,
 	chats: Array<RawChat>,
 	files: Array<RawFile>,
 	hasNextPage: boolean,
 	messages: Array<RawMessage>,
-	recentItems: Array<ChannelRecentItemData>,
+	recentItems: Array<CollabRecentItemData>,
 	users: Array<RawUser>,
 }
 
-declare type ChannelRecentItemData = {
-	chatId: number,
+declare type CollabRecentItemData = {
 	dialogId: DialogId,
-	invited: [],
+	chatId: number,
+	counter: number,
 	messageId: number,
-	options: [],
+	lastReadMessageId: number,
 	pinned: boolean,
 	unread: boolean,
+	dateUpdate: string,
+	dateLastActivity: string,
+	options: [],
+	invited: [],
 }

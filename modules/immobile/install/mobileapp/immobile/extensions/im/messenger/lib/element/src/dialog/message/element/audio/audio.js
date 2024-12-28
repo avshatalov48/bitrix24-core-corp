@@ -54,6 +54,11 @@ jn.define('im/messenger/lib/element/dialog/message/element/audio/audio', (requir
 				return this.fileModel.id.toString();
 			}
 
+			if (Type.isStringFilled(this.fileModel.id))
+			{
+				return this.fileModel.id;
+			}
+
 			return 0;
 		}
 

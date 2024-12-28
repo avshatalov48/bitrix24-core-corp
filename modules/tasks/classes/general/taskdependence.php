@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Application;
+
 /**
  * Bitrix Framework
  * @package bitrix
@@ -54,14 +57,21 @@ class CTaskDependence
 
 	function Add($arFields)
 	{
-		global $DB;
-
 		if ($this->CheckFields($arFields))
 		{
-			$arFields["ID"] = 1;
-			$ID = $DB->Add("b_tasks_dependence", $arFields, Array(), "tasks");
+			$connection = Application::getConnection();
+			$helper = $connection->getSqlHelper();
+			$insert = $helper->prepareInsert('b_tasks_dependence', $arFields);
 
-			return $ID;
+			$query = $helper->getInsertIgnore(
+				'b_tasks_dependence',
+				" ({$insert[0]})",
+				" VALUES ({$insert[1]})"
+			);
+
+			$connection->query($query);
+
+			return 0; // always 0, no ID in the table
 		}
 
 		return false;

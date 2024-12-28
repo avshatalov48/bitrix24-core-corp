@@ -5,6 +5,7 @@ namespace Bitrix\Tasks\Flow;
 use ArrayAccess;
 use ArrayIterator;
 use Bitrix\Main\Type\Contract\Arrayable;
+use Bitrix\Tasks\Flow\Distribution\FlowDistributionType;
 use Countable;
 use IteratorAggregate;
 
@@ -79,26 +80,6 @@ class FlowCollection implements IteratorAggregate, Arrayable, Countable, ArrayAc
 		unset($this->flows[$offset]);
 	}
 
-	public function getQueueFlows(): self
-	{
-		$flows = array_filter(
-			$this->flows,
-			static fn (Flow $flow): bool => $flow->getDistributionType() === Flow::DISTRIBUTION_TYPE_QUEUE
-		);
-
-		return new static(...$flows);
-	}
-
-	public function getManuallyFlows(): self
-	{
-		$flows = array_filter(
-			$this->flows,
-			static fn (Flow $flow): bool => $flow->getDistributionType() === Flow::DISTRIBUTION_TYPE_MANUALLY
-		);
-
-		return new static(...$flows);
-	}
-
 	public function __call(string $name, array $args)
 	{
 		$operation = substr($name, 0, 3);
@@ -113,5 +94,15 @@ class FlowCollection implements IteratorAggregate, Arrayable, Countable, ArrayAc
 		}
 
 		return null;
+	}
+
+	public function filter(FlowDistributionType $distributionType): FlowCollection
+	{
+		$flows = array_filter(
+			$this->flows,
+			static fn (Flow $flow): bool => $flow->getDistributionType() === $distributionType
+		);
+
+		return new FlowCollection(...$flows);
 	}
 }

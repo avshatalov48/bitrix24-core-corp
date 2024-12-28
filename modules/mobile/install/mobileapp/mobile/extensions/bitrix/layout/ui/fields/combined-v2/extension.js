@@ -164,6 +164,7 @@ jn.define('layout/ui/fields/combined-v2', (require, exports, module) => {
 							ENTITY_ID: primaryConfig.entityId,
 						},
 						alert: true,
+						analyticsSection: this.props?.analytics.analyticsSection,
 					};
 				case EmailType:
 					return {

@@ -7,6 +7,7 @@ use Bitrix\Crm\MessageSender\Channel;
 use Bitrix\Crm\MessageSender\ICanSendMessage;
 use Bitrix\Crm\Multifield;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Mail\Helper\LicenseManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
 use Bitrix\Main\InvalidOperationException;
@@ -47,7 +48,7 @@ final class MailManager implements ICanSendMessage
 				 * if in some point in the future you will extend this class to handle multiple recipients, check whether
 				 * limits from the method below are violated or not before sending an email. it's a spam protection
 				 */
-				&& \Bitrix\Mail\Helper\LicenseManager::getEmailsLimitToSendMessage() !== 0
+				&& LicenseManager::getEmailsLimitToSendMessage() !== 0
 			);
 		}
 
@@ -116,11 +117,12 @@ final class MailManager implements ICanSendMessage
 			$id = (int)$mailbox['ID'];
 			$email = (string)$mailbox['EMAIL'];
 			$name = $mailboxName ? "$mailboxName <$email>" : $email;
+			$ownerMailboxUserId = (int)$mailbox['USER_ID'];
 
 			$fromList[] = new Channel\Correspondents\From(
 				id: (string)$id,
 				name: $name,
-				isAvailable: \Bitrix\Mail\Helper\LicenseManager::checkTheMailboxForSyncAvailability($id),
+				isAvailable: LicenseManager::checkTheMailboxForSyncAvailability($id, $ownerMailboxUserId),
 			);
 		}
 
@@ -203,7 +205,7 @@ final class MailManager implements ICanSendMessage
 			return false;
 		}
 
-		if (!\Bitrix\Mail\Helper\LicenseManager::checkTheMailboxForSyncAvailability($fromMailboxId))
+		if (!LicenseManager::checkTheMailboxForSyncAvailability($fromMailboxId))
 		{
 			return (new Result())->addError(
 				new Error(

@@ -15,6 +15,7 @@ $MESS['BPMOBILE_WORKFLOW_TIMELINE_TASK_WAITING_FOR_ANY'] = 'ВЫПОЛНЯЕТ �
 $MESS['BPMOBILE_WORKFLOW_TIMELINE_TASK_VOTING'] = 'ПРОГОЛОСОВАЛО #FINISHED_COUNT#/#ALL_COUNT#';
 $MESS['BPMOBILE_WORKFLOW_TIMELINE_EXTENDED_TASK_STATUS_ACCEPTED'] = 'Выполнено для';
 $MESS['BPMOBILE_WORKFLOW_TIMELINE_EXTENDED_TASK_STATUS_DECLINED'] = 'Отклонено для';
+$MESS['BPMOBILE_WORKFLOW_TIMELINE_WORKFLOW_RESULT'] = 'Результат процесса:';
 $MESS['BPMOBILE_WORKFLOW_TIMELINE_WORKFLOW_COMPLETED'] = 'ПРОЦЕСС ЗАВЕРШЕН';
 $MESS['BPMOBILE_WORKFLOW_TIMELINE_TIME_LIMIT_EXCEEDED'] = 'Задание заняло больше времени, чем планировалось. Можно оптимизировать процесс, чтобы сократить время выполнения';
 $MESS['BPMOBILE_WORKFLOW_TIMELINE_MORE_TASKS'] = 'Ещё задания';

@@ -1,5 +1,10 @@
 <?php
 
 return [
-	'selector/widget/entity',
+	'extensions' => [
+		'loc',
+		'selector/widget/entity',
+
+		'tasks:ui/avatars/project-avatar'
+	]
 ];

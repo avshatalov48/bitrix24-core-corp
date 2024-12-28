@@ -10,11 +10,13 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 	const { search } = require('utils/search');
 	const { EmptyScreen } = require('layout/ui/empty-screen');
 	const { ContextMenu } = require('layout/ui/context-menu');
+	const { UIMenu } = require('layout/ui/menu');
 
 	const Type = {
 		Picker: 'picker',
 		Selector: 'selector',
 		ContextMenu: 'contextMenu',
+		PopupMenu: 'popupMenu',
 	};
 
 	const SELECTOR_SECTION_ID = 'all';
@@ -240,6 +242,11 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 			return this.getMode() === Type.ContextMenu;
 		}
 
+		isPopupMenu()
+		{
+			return this.getMode() === Type.PopupMenu;
+		}
+
 		handleAdditionalFocusActions()
 		{
 			if (this.isSelector())
@@ -250,6 +257,11 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 			if (this.isContextMenu())
 			{
 				return this.handleContextMenuFocusAction();
+			}
+
+			if (this.isPopupMenu())
+			{
+				return this.handlePopupMenuFocusAction();
 			}
 
 			return this.handlePickerFocusAction();
@@ -294,6 +306,20 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 			});
 
 			return contextMenu.show(this.getPageManager());
+		}
+
+		handlePopupMenuFocusAction()
+		{
+			const menu = new UIMenu(
+				this.getItems().map((item) => ({
+					id: item.name,
+					title: item.name,
+					checked: this.getValue() === item.value,
+					onItemSelected: () => this.removeFocus().then(() => this.handleChange(item.value)),
+				})),
+			);
+			menu.getPopup().on('hidden', () => this.removeFocus());
+			menu.show({ target: this.fieldContainerRef });
 		}
 
 		handleSelectorFocusAction()
@@ -674,7 +700,7 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 			copyingOnLongClick: PropTypes.bool,
 			titleIcon: PropTypes.object,
 
-			mode: PropTypes.oneOf([Type.Picker, Type.Selector]),
+			mode: PropTypes.oneOf([Type.Picker, Type.Selector, Type.ContextMenu, Type.PopupMenu]),
 			items: PropTypes.oneOfType([
 				PropTypes.arrayOf(PropTypes.shape({
 					value: PropTypes.string.isRequired,

@@ -22,5 +22,6 @@ return [
 	'bundle' => [
 		'./src/buttons',
 		'./src/title',
+		'./src/button-configuration',
 	],
 ];

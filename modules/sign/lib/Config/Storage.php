@@ -5,6 +5,8 @@ use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Intranet\Util;
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Main\Loader;
+use Bitrix\Sign\Service\Sign\UrlGeneratorService;
 
 class Storage
 {
@@ -24,26 +26,39 @@ class Storage
 
 	public function isAvailable(?string $region = null): bool
 	{
+		if (!Loader::includeModule('crm'))
+		{
+			return false;
+		}
+
+		static $isAvailable = [];
+
 		$region = $region ?: Main\Application::getInstance()->getLicense()->getRegion();
+
+		if (isset($isAvailable[$region]))
+		{
+			return $isAvailable[$region];
+		}
 
 		if (empty($this->getServiceAddress($region)))
 		{
+			$isAvailable[$region] = false;
+
 			return false;
 		}
 
 		$isPublic = ($this->read('service.publicity')[$region] ?? false) === true;
 		if (!$isPublic && Main\Config\Option::get('sign', '~available', 'N') !== 'Y')
 		{
-			return false;
-		}
+			$isAvailable[$region] = false;
 
-		if (!Main\Loader::includeModule('crm'))
-		{
 			return false;
 		}
 
 		if (!$this->isSignToolEnabled() || !$this->isCrmToolEnabled())
 		{
+			$isAvailable[$region] = false;
+
 			return false;
 		}
 
@@ -53,20 +68,31 @@ class Storage
 			\Bitrix\Crm\Service\Container::getInstance()->getDynamicTypesMap()->invalidateTypesCollectionCache();
 		}
 
+		$isAvailable[$region] = true;
+
 		return true;
 	}
 
 	public function isB2eAvailable(?string $region = null): bool
 	{
+		static $isB2eAvailable = [];
+
 		$region = $region ?: Main\Application::getInstance()->getLicense()->getRegion();
 
-		$isPublic = ($this->read('service.b2e.publicity')[$region] ?? false) === true;
-		if (!$isPublic && Main\Config\Option::get('sign', '~b2e_available', 'N') !== 'Y')
+		if (!isset($isB2eAvailable[$region]))
 		{
-			return false;
+			$isPublic = ($this->read('service.b2e.publicity')[$region] ?? false) === true;
+			if (!$isPublic && Main\Config\Option::get('sign', '~b2e_available', 'N') !== 'Y')
+			{
+				$isB2eAvailable[$region] = false;
+
+				return false;
+			}
+
+			$isB2eAvailable[$region] = $this->isAvailable($region);
 		}
 
-		return $this->isAvailable($region);
+		return $isB2eAvailable[$region];
 	}
 
 	/**
@@ -317,11 +343,19 @@ class Storage
 		return true;
 	}
 
+	/**
+	 * @deprecated use url generator
+	 * @see UrlGeneratorService::makeMySafeUrl()
+	 */
 	public function getB2eMySafeUrl(): string
 	{
 		return '/sign/b2e/mysafe/';
 	}
 
+	/**
+	 * @deprecated use url generator
+	 * @see UrlGeneratorService::makeProfileSafeUrl()
+	 */
 	public function getProfileSafeUrl(int $userId): string
 	{
 		return '/company/personal/user/'.$userId.'/sign';
@@ -339,5 +373,10 @@ class Storage
 		$option = (int)\Bitrix\Main\Config\Option::get('sign', 'FIELDS_FILL_MEMBER_LIMIT');
 
 		return $option > 0 ? $option : 30;
+	}
+
+	public function isBlankExportAllowed(): bool
+	{
+		return \Bitrix\Main\Config\Option::get('sign', 'TEMPLATE_EXPORT_ALLOWED', 'N') === 'Y';
 	}
 }

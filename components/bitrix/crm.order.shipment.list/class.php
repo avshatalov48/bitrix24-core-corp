@@ -7,7 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm\Order\Shipment;
 use Bitrix\Crm\Service;
-use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
@@ -959,7 +959,7 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 			{
 				if(COption::GetOptionString('crm', '~CRM_REBUILD_ORDER_SHIPMENT_ATTR', 'N') === 'Y')
 				{
-					$this->arResult['PATH_TO_PRM_LIST'] = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_perm_list'));
+					$this->arResult['PATH_TO_PRM_LIST'] = (string)Container::getInstance()->getRouter()->getPermissionsUrl();;
 					$this->arResult['NEED_FOR_REBUILD_ORDER_SHIPMENT_ATTRS'] = true;
 				}
 				if(COption::GetOptionString('crm', '~CRM_REBUILD_ORDER_SHIPMENT_SEMANTICS', 'N') === 'Y')

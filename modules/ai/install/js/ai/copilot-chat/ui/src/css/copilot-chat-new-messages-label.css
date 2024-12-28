@@ -1,0 +1,13 @@
+.ai__copilot-chat_new-messages-label {
+	width: calc(100% + 200px);
+	min-height: 30px;
+	margin: 12px -100px 0 -100px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-text-secondary);
+	background-color: rgba(var(--ui-color-background-primary-rgb), 0.8);
+}

@@ -1,5 +1,6 @@
 import { CollectionTop2List } from "market.collection-top2-list";
 import { MarketLinks } from "market.market-links";
+import { Ears } from 'ui.ears'
 
 import "./collection-top2.css";
 
@@ -17,7 +18,7 @@ export const CollectionTop2 = {
 	},
 	mounted: function() {
 		if (this.scrollable) {
-			(new BX.UI.Ears({
+			(new Ears({
 				container: document.querySelector('#item_' + this.item.CAROUSEL_ID),
 				smallSize: true,
 				noScrollbar: true,

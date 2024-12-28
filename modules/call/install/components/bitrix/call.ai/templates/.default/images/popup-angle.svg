@@ -1,0 +1,22 @@
+<svg width="45" height="31" viewBox="0 0 45 31" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="corner layout" clip-path="url(#clip0_2091_285105)">
+<g id="corner shape" filter="url(#filter0_d_2091_285105)">
+<path d="M21.9762 7.24126C20.6749 5.8532 18.3534 6.89497 18.5253 8.78985L20.9032 35L48 35L21.9762 7.24126Z" fill="white"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_d_2091_285105" x="2.51636" y="-5.39648" width="61.4836" height="60.3965" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="4"/>
+<feGaussianBlur stdDeviation="8"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.07 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2091_285105"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2091_285105" result="shape"/>
+</filter>
+<clipPath id="clip0_2091_285105">
+<rect width="45" height="31" fill="white"/>
+</clipPath>
+</defs>
+</svg>

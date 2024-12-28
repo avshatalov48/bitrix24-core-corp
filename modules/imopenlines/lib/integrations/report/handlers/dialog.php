@@ -96,13 +96,13 @@ class Dialog extends Base implements IReportSingleData, IReportMultipleData, IRe
 		if (\Bitrix\Main\Application::getInstance()->getLicense()->getRegion() === 'ru')
 		{
 			$providers = [
-				'viber', 'facebook*', 'vkgroup', 'livechat'
+				'viber', 'telegrambot', 'vkgroup', 'livechat'
 			];
 		}
 		else
 		{
 			$providers = [
-				'viber', 'facebook', 'vkgroup', 'livechat'
+				'viber', 'facebook', 'telegrambot', 'livechat'
 			];
 		}
 		for ($i = 0; $i < 30; $i++)

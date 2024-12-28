@@ -39,7 +39,6 @@ class Grid extends Common
 		if (in_array($scope, Scope::getAll(true), true))
 		{
 			$this->scope = $scope;
-			$this->resolveChangedScope();
 		}
 
 		return $this;

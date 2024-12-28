@@ -3,7 +3,6 @@
  */
 jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participants-service', (require, exports, module) => {
 	const { ParticipantsService } = require('im/messenger/controller/sidebar/chat/tabs/participants/participants-service');
-	const { Logger } = require('im/messenger/lib/logger');
 
 	/**
 	 * @class ChannelParticipantsService
@@ -43,32 +42,6 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participant
 				isManager,
 				isSuperEllipseAvatar: this.isSuperEllipseAvatar(),
 			};
-		}
-
-		/**
-		 * @desc Handler add manager
-		 * @param {number} userId
-		 * @void
-		 * @private
-		 */
-		onClickAddManager(userId)
-		{
-			Logger.log(`${this.constructor.name}.onClickAddManager.userId:`, userId);
-			this.sidebarRestService.addManager(userId)
-				.catch((error) => Logger.log(`${this.constructor.name}.sidebarRestService.addManager.catch:`, error));
-		}
-
-		/**
-		 * @desc Handler remove manager
-		 * @param {number} userId
-		 * @void
-		 * @private
-		 */
-		onClickRemoveManager(userId)
-		{
-			Logger.log(`${this.constructor.name}.onClickRemoveManager.userId:`, userId);
-			this.sidebarRestService.removeManager(userId)
-				.catch((error) => Logger.log(`${this.constructor.name}.sidebarRestService.removeManager.catch:`, error));
 		}
 	}
 

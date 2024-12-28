@@ -1,6 +1,13 @@
-(() => {
-	const require = (ext) => jn.require(ext);
+/**
+ * @module selector/widget/entity/socialnetwork/user
+ */
+
+jn.define('selector/widget/entity/socialnetwork/user', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { mergeImmutable } = require('utils/object');
+	const { AvatarClass } = require('ui-system/blocks/avatar');
+	const { SelectorDataProvider } = require('layout/ui/user/user-name');
+	const { BaseSelectorEntity } = require('selector/widget/entity');
 
 	/**
 	 * @class SocialNetworkUserSelector
@@ -30,6 +37,27 @@
 		static isCreationEnabled()
 		{
 			return true;
+		}
+
+		static prepareItemForDrawing(item)
+		{
+			if (!item.id || !AvatarClass?.isNativeSupported())
+			{
+				return item;
+			}
+
+			const avatarParams = AvatarClass.resolveEntitySelectorParams({ ...item, withRedux: true });
+			const avatar = AvatarClass.getAvatar(avatarParams).getAvatarNativeProps();
+			const userNameStyle = SelectorDataProvider.getUserTitleStyle(item);
+
+			return mergeImmutable(
+				item,
+				{
+					id: `${item.entityId}/${item.id}`,
+					avatar,
+					styles: userNameStyle,
+				},
+			);
 		}
 
 		static getSearchPlaceholderWithCreation()
@@ -92,12 +120,12 @@
 		}
 	}
 
-	/**
-	 * @module selector/widget/entity/socialnetwork/user
-	 */
-	jn.define('selector/widget/entity/socialnetwork/user', (require, exports, module) => {
-		module.exports = { SocialNetworkUserSelector };
-	});
+	module.exports = { SocialNetworkUserSelector };
+});
+
+(() => {
+	const require = (ext) => jn.require(ext);
+	const { SocialNetworkUserSelector } = require('selector/widget/entity/socialnetwork/user');
 
 	this.SocialNetworkUserSelector = SocialNetworkUserSelector;
 })();

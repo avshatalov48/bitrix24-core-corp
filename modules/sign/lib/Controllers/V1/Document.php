@@ -2,9 +2,13 @@
 
 namespace Bitrix\Sign\Controllers\V1;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Request;
+use Bitrix\Main\SystemException;
 use Bitrix\Sign\Access\ActionDictionary;
 use Bitrix\Sign\Attribute;
 use Bitrix\Sign\Config\Storage;
@@ -14,6 +18,7 @@ use Bitrix\Sign\Operation;
 use Bitrix\Sign\Service;
 use Bitrix\Sign\Type;
 use Bitrix\Sign\Type\Access\AccessibleItemType;
+use Bitrix\Sign\Type\Document\InitiatedByType;
 
 class Document extends \Bitrix\Sign\Engine\Controller
 {
@@ -25,15 +30,20 @@ class Document extends \Bitrix\Sign\Engine\Controller
 		$this->documentService = Service\Container::instance()->getDocumentService();
 	}
 
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_DOCUMENT_ADD)]
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_ADD)]
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(ActionDictionary::ACTION_DOCUMENT_ADD),
+		new Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_ADD),
+		new Attribute\ActionAccess(ActionDictionary::ACTION_B2E_TEMPLATE_ADD),
+	)]
 	public function registerAction(
 		int $blankId,
 		?string $scenarioType = null,
 		bool $asTemplate = false,
+		int $chatId = 0,
 	): array
 	{
 		$scenarioType ??= Type\DocumentScenario::SCENARIO_TYPE_B2B;
+
 		if ($scenarioType === Type\DocumentScenario::SCENARIO_TYPE_B2E)
 		{
 			if (!Storage::instance()->isB2eAvailable())
@@ -61,10 +71,14 @@ class Document extends \Bitrix\Sign\Engine\Controller
 			}
 		}
 
+		$createdById = (int)CurrentUser::get()->getId();
+
 		$result = $this->documentService->register(
 			blankId: $blankId,
 			entityType: Type\Document\EntityType::getByScenarioType($scenarioType),
 			asTemplate: $asTemplate,
+			createdById: $createdById,
+			chatId: $chatId,
 		);
 		$resultData = $result->getData();
 		if (!$result->isSuccess())
@@ -87,6 +101,57 @@ class Document extends \Bitrix\Sign\Engine\Controller
 		return [
 			'uid' => $resultData['document']->uid,
 			'templateUid' => $template?->uid,
+			'templateId' => $template?->id,
+		];
+	}
+
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_TEMPLATE_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		),
+	)]
+	public function modifyInitiatedByTypeAction(
+		string $uid,
+		string $initiatedByType,
+	): array
+	{
+		if (!Storage::instance()->isB2eAvailable())
+		{
+			$this->addError(new Error('Document scenario not available'));
+
+			return [];
+		}
+
+		$initiatedByTypeValue = InitiatedByType::tryFrom($initiatedByType);
+
+		if (null === $initiatedByTypeValue)
+		{
+			$this->addError(new Error('Initiator type is wrong'));
+
+			return [];
+		}
+
+		$result = $this->documentService->modifyInitiatedByType($uid, $initiatedByTypeValue);
+
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return [];
+		}
+
+		$document = $result->getData()['document'];
+
+		return [
+			'uid' => $document->uid,
+			'initiatedByType' => $document->initiatedByType,
 		];
 	}
 
@@ -99,12 +164,12 @@ class Document extends \Bitrix\Sign\Engine\Controller
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid'
 	)]
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid'
 	)]
 	public function changeBlankAction(string $uid, int $blankId): array
 	{
@@ -112,11 +177,27 @@ class Document extends \Bitrix\Sign\Engine\Controller
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($result->getErrors());
+
 			return [];
 		}
 
+		$document = $result->getData()['document'] ?? null;
+
+		if (!$document instanceof \Bitrix\Sign\Item\Document)
+		{
+			$this->addError(new Error('Cannot change document blank'));
+
+			return [];
+		}
+
+		$template = Service\Container::instance()
+			->getDocumentTemplateService()
+			->getById((int)$document->templateId)
+		;
+
 		return [
-			'uid' => $result->getData()['document']->uid,
+			'uid' => $document->uid,
+			'templateUid' => $template?->uid,
 		];
 	}
 
@@ -126,14 +207,14 @@ class Document extends \Bitrix\Sign\Engine\Controller
 	 * @return array
 	 */
 	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_DOCUMENT_ADD,
+		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid'
 	)]
 	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_ADD,
+		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid'
 	)]
 	public function uploadAction(
 		string $uid,
@@ -161,16 +242,17 @@ class Document extends \Bitrix\Sign\Engine\Controller
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid'
 	)]
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid'
 	)]
 	public function loadAction(string $uid): array
 	{
-		$document = Service\Container::instance()->getDocumentRepository()->getByUid($uid);
+		$documentRepository = Service\Container::instance()->getDocumentRepository();
+		$document = $documentRepository->getByUid($uid);
 
 		if (!$document)
 		{
@@ -178,21 +260,33 @@ class Document extends \Bitrix\Sign\Engine\Controller
 			return [];
 		}
 
-		$expected = [Type\DocumentStatus::NEW, Type\DocumentStatus::UPLOADED];
-		if (!in_array($document->status, $expected, true))
+		return $this->mapToRepresentedDocumentView($document);
+	}
+
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'id'
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'id'
+		),
+	)]
+	public function loadByIdAction(int $id): array
+	{
+		$documentRepository = $this->container->getDocumentRepository();
+		$document = $documentRepository->getById($id);
+
+		if (!$document)
 		{
-			$this->addError(new Error(
-				message: 'Document has improper status',
-				code: 'SIGN_DOCUMENT_INCORRECT_STATUS',
-				customData: [
-					'has' => $document->status,
-					'expected' => $expected,
-				],
-			));
+			$this->addError(new Error(Loc::getMessage('SIGN_CONTROLLER_DOCUMENT_NOT_FOUND')));
 			return [];
 		}
 
-		return (array)$document;
+		return $this->mapToRepresentedDocumentView($document);
 	}
 
 	/**
@@ -215,12 +309,12 @@ class Document extends \Bitrix\Sign\Engine\Controller
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid'
 	)]
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid'
 	)]
 	public function modifyTitleAction(
 		string $uid,
@@ -251,12 +345,12 @@ class Document extends \Bitrix\Sign\Engine\Controller
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid'
 	)]
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid'
 	)]
 	public function modifyLangIdAction(
 		string $uid,
@@ -280,12 +374,12 @@ class Document extends \Bitrix\Sign\Engine\Controller
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid'
 	)]
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid'
 	)]
 	public function modifyInitiatorAction(
 		string $uid,
@@ -304,12 +398,12 @@ class Document extends \Bitrix\Sign\Engine\Controller
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'documentUid'
+		itemIdOrUidRequestKey: 'documentUid'
 	)]
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'documentUid'
+		itemIdOrUidRequestKey: 'documentUid'
 	)]
 	public function refreshEntityNumberAction(string $documentUid): array
 	{
@@ -331,12 +425,12 @@ class Document extends \Bitrix\Sign\Engine\Controller
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid'
 	)]
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid'
 	)]
 	public function configureAction(string $uid): array
 	{
@@ -353,7 +447,11 @@ class Document extends \Bitrix\Sign\Engine\Controller
 		return [];
 	}
 
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT)]
+	#[Attribute\ActionAccess(
+		ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+		AccessibleItemType::DOCUMENT,
+		itemIdOrUidRequestKey: 'documentUid'
+	)]
 	public function modifyCompanyAction(string $documentUid, string $companyUid): array
 	{
 		if (empty($companyUid))
@@ -404,7 +502,11 @@ class Document extends \Bitrix\Sign\Engine\Controller
 		return [];
 	}
 
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT)]
+	#[Attribute\ActionAccess(
+		ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+		AccessibleItemType::DOCUMENT,
+		itemIdOrUidRequestKey: 'uid',
+	)]
 	public function modifyRegionDocumentTypeAction(string $uid, string $type): array
 	{
 		$result = $this->documentService->modifyRegionDocumentType($uid, $type);
@@ -413,7 +515,11 @@ class Document extends \Bitrix\Sign\Engine\Controller
 		return [];
 	}
 
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT)]
+	#[Attribute\ActionAccess(
+		ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+		AccessibleItemType::DOCUMENT,
+		itemIdOrUidRequestKey: 'uid',
+	)]
 	public function modifyExternalIdAction(string $uid, string $id): array
 	{
 		$result = $this->documentService->modifyExternalId($uid, trim($id));
@@ -441,7 +547,11 @@ class Document extends \Bitrix\Sign\Engine\Controller
 			);
 	}
 
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT)]
+	#[Attribute\ActionAccess(
+		ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+		AccessibleItemType::DOCUMENT,
+		itemIdOrUidRequestKey: 'uid',
+	)]
 	public function modifySchemeAction(string $uid, string $scheme): array
 	{
 		$result = $this->documentService->modifyScheme($uid, $scheme);
@@ -450,7 +560,11 @@ class Document extends \Bitrix\Sign\Engine\Controller
 		return [];
 	}
 
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT)]
+	#[Attribute\ActionAccess(
+		ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+		AccessibleItemType::DOCUMENT,
+		itemIdOrUidRequestKey: 'uid',
+	)]
 	public function modifyExternalDateAction(string $uid, string $externalDate): array
 	{
 		$result = $this->documentService->modifyExternalDate($uid, $externalDate);
@@ -459,15 +573,24 @@ class Document extends \Bitrix\Sign\Engine\Controller
 		return [];
 	}
 
+	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT)]
+	public function modifyIntegrationIdAction(string $uid, ?int $integrationId = null): array
+	{
+		$result = $this->documentService->modifyHcmLinkCompanyId($uid, $integrationId);
+		$this->addErrors($result->getErrors());
+
+		return [];
+	}
+
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_DOCUMENT_READ,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid'
 	)]
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_B2E_DOCUMENT_READ,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid'
 	)]
 	public function getFillAndStartProgressAction(string $uid): array
 	{
@@ -482,5 +605,42 @@ class Document extends \Bitrix\Sign\Engine\Controller
 		}
 
 		return [];
+	}
+
+	private function mapToRepresentedDocumentView(\Bitrix\Sign\Item\Document $document): array
+	{
+		return [
+			'id' => $document->id,
+			'blankId' => $document->blankId,
+			'entityId' => $document->entityId,
+			'entityType' => $document->entityType,
+			'entityTypeId' => $document->entityTypeId,
+			'initiator' => $document->initiator,
+			'langId' => $document->langId,
+			'parties' => $document->parties,
+			'resultFileId' => $document->resultFileId,
+			'scenario' => $document->scenario,
+			'status' => $document->status,
+			'title' => $document->title,
+			'uid' => $document->uid,
+			'version' => $document->version,
+			'createdById' => $document->createdById,
+			'companyUid' => $document->companyUid,
+			'representativeId' => $document->representativeId,
+			'scheme' => $document->scheme,
+			'dateCreate' => $document->dateCreate,
+			'dateSign' => $document->dateSign,
+			'regionDocumentType' => $document->regionDocumentType,
+			'externalId' => $document->externalId,
+			'stoppedById' => $document->stoppedById,
+			'externalDateCreate' => $document->externalDateCreate,
+			'providerCode' => $document->providerCode ? Type\ProviderCode::toRepresentativeString($document->providerCode) : null,
+			'templateId' => $document->templateId,
+			'chatId' => $document->chatId,
+			'createdFromDocumentId' => $document->createdFromDocumentId,
+			'initiatedByType' => $document->initiatedByType,
+			'hcmLinkCompanyId' => $document->hcmLinkCompanyId,
+			'dateStatusChanged' => $document->dateStatusChanged,
+		];
 	}
 }

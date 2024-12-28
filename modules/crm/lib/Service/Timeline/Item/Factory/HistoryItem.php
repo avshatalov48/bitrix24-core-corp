@@ -7,6 +7,7 @@ use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Service\Timeline\Item;
 use Bitrix\Crm\Service\Timeline\Item\Model;
 use Bitrix\Crm\Timeline\AI;
+use Bitrix\Crm\Timeline\Bizproc;
 use Bitrix\Crm\Timeline\CalendarSharing;
 use Bitrix\Crm\Timeline\DeliveryCategoryType;
 use Bitrix\Crm\Timeline\LogMessageType;
@@ -178,6 +179,10 @@ class HistoryItem
 					return new Item\LogMessage\AI\Call\FillingEntityFieldsStarted($context, $model);
 				case LogMessageType::AI_CALL_FINISH_FILLING_ENTITY_FIELDS:
 					return new Item\LogMessage\AI\Call\FillingEntityFieldsFinished($context, $model);
+				case LogMessageType::AI_CALL_START_SCORING:
+					return new Item\LogMessage\AI\Call\CallScoringResultStarted($context, $model);
+				case LogMessageType::AI_CALL_SCORING_EMPTY:
+					return new Item\LogMessage\AI\Call\CallScoringEmptyResult($context, $model);
 				case LogMessageType::AI_CALL_LAUNCH_ERROR:
 					return new Item\LogMessage\AI\Call\LaunchError($context, $model);
 				case LogMessageType::AI_CALL_AUTOMATION_LAUNCH_ERROR:
@@ -186,6 +191,8 @@ class HistoryItem
 				case LogMessageType::OPEN_LINE_MOVED:
 				case LogMessageType::EMAIL_INCOMING_MOVED:
 					return new Item\LogMessage\Binding\Moved($context, $model);
+				case LogMessageType::BOOKING_CREATED:
+					return new Item\LogMessage\Booking\BookingCreated($context, $model);
 			}
 		}
 
@@ -493,6 +500,7 @@ class HistoryItem
 				AI\Call\CategoryType::RECORD_TRANSCRIPT_FINISHED => new Item\AI\Call\TranscriptResult($context, $model),
 				AI\Call\CategoryType::RECORD_TRANSCRIPT_SUMMARY_FINISHED => new Item\AI\Call\TranscriptSummaryResult($context, $model),
 				AI\Call\CategoryType::FILLING_ENTITY_FIELDS_FINISHED => new Item\AI\Call\EntityFieldsFillingResult($context, $model),
+				AI\Call\CategoryType::CALL_SCORING_FINISHED => new Item\AI\Call\CallScoringResult($context, $model),
 			};
 		}
 
@@ -502,6 +510,36 @@ class HistoryItem
 		)
 		{
 			return new Item\LogMessage\ElementCompletion($context, $model);
+		}
+
+		$isAvailable = (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024', 0);
+		if ($typeId === TimelineType::BIZPROC && $isAvailable)
+		{
+			$status = $model->getHistoryItemModel()?->get('WORKFLOW_STATUS_NAME');
+			if (empty($typeCategoryId) && isset($status))
+			{
+				return match ($status)
+				{
+					'Created' => new Item\Bizproc\WorkflowStarted($context, $model),
+					'Completed' => new Item\Bizproc\WorkflowCompleted($context, $model),
+					'Terminated' => new Item\Bizproc\WorkflowTerminated($context, $model),
+				};
+			}
+
+			if (!empty($typeCategoryId))
+			{
+				return match ($typeCategoryId)
+				{
+					Bizproc\CategoryType::WORKFLOW_STARTED => new Item\Bizproc\WorkflowStarted($context, $model),
+					Bizproc\CategoryType::WORKFLOW_COMPLETED => new Item\Bizproc\WorkflowCompleted($context, $model),
+					Bizproc\CategoryType::WORKFLOW_TERMINATED => new Item\Bizproc\WorkflowTerminated($context, $model),
+					Bizproc\CategoryType::TASK_ADDED => new Item\LogMessage\Bizproc\TaskCreation($context, $model),
+					Bizproc\CategoryType::TASK_COMPLETED => new Item\LogMessage\Bizproc\TaskCompleted($context, $model),
+					Bizproc\CategoryType::TASK_DELEGATED => new Item\LogMessage\Bizproc\TaskDelegated($context, $model),
+					Bizproc\CategoryType::COMMENT_ADDED => new Item\LogMessage\Bizproc\CommentAdded($context, $model),
+					Bizproc\CategoryType::COMMENT_READ => new Item\LogMessage\Bizproc\CommentRead($context, $model),
+				};
+			}
 		}
 
 		return new Item\Compatible\HistoryItem(

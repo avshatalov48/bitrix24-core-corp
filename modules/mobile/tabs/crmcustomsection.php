@@ -82,7 +82,7 @@ final class CrmCustomSection implements Tabable
 		return [
 			'id' => $this->getId(),
 			'sort' => $this->defaultSortValue(),
-			'imageName' => 'crm_custom_section',
+			'imageName' => $this->getIconId(),
 			'badgeCode' => 'crm_custom_section_' . $this->customSection->getId(),
 			'component' => $this->getComponentParams(),
 		];
@@ -96,6 +96,7 @@ final class CrmCustomSection implements Tabable
 			'min_api_version' => self::MINIMAL_API_VERSION,
 			'color' => '#00ace3',
 			'imageUrl' => 'favorite/icon-crm_custom_section.png',
+			'imageName' => $this->getIconId(),
 			'params' => [
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
 				'counter' => 'crm_custom_section_' . $this->customSection->getId(),
@@ -165,6 +166,6 @@ final class CrmCustomSection implements Tabable
 
 	public function getIconId(): string
 	{
-		return self::ID_PREFIX;
+		return Mobile::getApiVersion() < 56 ?  self::ID_PREFIX : 'activity';
 	}
 }

@@ -13,6 +13,7 @@ class Button extends Base
 	public const STATE_DISABLED = 'disabled';
 	public const STATE_LOADING = 'loading';
 	public const STATE_AI_LOADING = 'ai-loading';
+	public const STATE_AI_SUCCESS = 'ai-success';
 
 	public const SCOPE_WEB = 'web';
 	public const SCOPE_MOBILE = 'mobile';

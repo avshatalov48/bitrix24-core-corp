@@ -663,6 +663,14 @@
 	bottom: 0;
 	left: 0;
 }
+.voximplant-phone-call-custom-container {
+	height: 100%;
+	overflow: auto;
+	scrollbar-track-color:    #F9FAFB;
+	scrollbar-base-color:     #D4D7D9;
+	scrollbar-shadow-color:   #D4D7D9;
+	scrollbar-highlight-color:#D4D7D9;
+}
 
 .im-phone-call-form-container {
 	max-height: 100%;

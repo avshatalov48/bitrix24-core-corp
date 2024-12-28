@@ -147,7 +147,7 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 		if ($id) // update existing field
 		{
 			$userField = \CUserTypeEntity::GetByID($id);
-			$userFieldLabels = $userField['EDIT_FORM_LABEL'];
+			$userFieldLabels = $userField['EDIT_FORM_LABEL'] ?? [];
 
 			$editFormLabel = array(
 				LANGUAGE_ID => $label

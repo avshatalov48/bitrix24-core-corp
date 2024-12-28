@@ -342,7 +342,11 @@ class DownloadController extends Internals\Controller
 		}
 
 		$fileData = $this->version->getFile();
-		\CFile::viewByUser($fileData, array('force_download' => false, 'cache_time' => Configuration::DEFAULT_CACHE_TIME, 'attachment_name' => $this->file->getName()));
+		\CFile::viewByUser($fileData, [
+			'force_download' => false,
+			'cache_time' => Configuration::DEFAULT_CACHE_TIME,
+			'attachment_name' => $this->version->getName()
+		]);
 	}
 
 	protected function processActionCopyToMe()

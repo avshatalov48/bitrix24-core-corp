@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 
 /** @var SignStartComponent $component */
+/** @var array $arResult */
 $component->setMenuIndex('sign_b2e_kanban');
 \Bitrix\Main\UI\Extension::load([
 	'sign.v2.b2e.kanban-entity-footer',
@@ -35,5 +36,5 @@ $APPLICATION->IncludeComponent(
 	$this->getComponent(),
 );
 
-$APPLICATION->setTitle(Loc::getMessage('SIGN_CMP_START_TPL_DOCS_TITLE_B2E'));
+$APPLICATION->setTitle(Loc::getMessage('SIGN_KANBAN_TOOLBAR_TITLE_SIGN_B2E_DEFAULT') ?? '');
 ?>

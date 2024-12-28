@@ -19,17 +19,8 @@ class ApproveCustomPermsToExistRoleAgent extends AgentBase
 		{
 			return self::AGENT_CONTINUE;
 		}
-
-		self::remove();
+		\CCrmRole::ClearCache();
 
 		return self::AGENT_DONE_STOP_IT;
-	}
-
-	private static function remove(): void
-	{
-		\CAgent::RemoveAgent(
-			'Bitrix\\Crm\\Agent\\Recyclebin\\ApproveCustomPermsToExistRoleAgent::run();',
-			'crm'
-		);
 	}
 }

@@ -20,7 +20,7 @@ BX.Disk.Player = function(player)
 	}
 };
 
-BX.Disk.Player.adjustWidth = function(node, maxWidth, maxHeight, videoWidth, videoHeight)
+BX.Disk.Player.prototype.adjustWidth = function(node, maxWidth, maxHeight, videoWidth, videoHeight)
 {
 	if(!BX.type.isDomNode(node))
 	{
@@ -30,17 +30,15 @@ BX.Disk.Player.adjustWidth = function(node, maxWidth, maxHeight, videoWidth, vid
 	{
 		return false;
 	}
-	if(videoHeight < maxHeight && videoWidth < maxWidth)
+
+	let width = Math.max(videoWidth, 400);
+	let height = Math.max(videoHeight, 130);
+	if (videoHeight > maxHeight || videoWidth > maxWidth)
 	{
-		BX.width(node, videoWidth);
-		return true;
-	}
-	else
-	{
-		var resultRelativeSize = maxWidth / maxHeight;
-		var videoRelativeSize = videoWidth / videoHeight;
-		var reduceRatio = 1;
-		if(resultRelativeSize > videoRelativeSize)
+		const resultRelativeSize = maxWidth / maxHeight;
+		const videoRelativeSize = videoWidth / videoHeight;
+		let reduceRatio = 1;
+		if (resultRelativeSize > videoRelativeSize)
 		{
 			reduceRatio = maxHeight / videoHeight;
 		}
@@ -48,8 +46,23 @@ BX.Disk.Player.adjustWidth = function(node, maxWidth, maxHeight, videoWidth, vid
 		{
 			reduceRatio = maxWidth / videoWidth;
 		}
-		BX.width(node, Math.floor(videoWidth * reduceRatio));
+
+		width = Math.max(videoWidth * reduceRatio, 400);
+		height = Math.max(videoHeight * reduceRatio, 130);
 	}
+
+	this.player.vjsPlayer.fluid(false);
+
+	BX.Dom.style(node, 'width', `${width}px`);
+	BX.Dom.style(node, 'height', `${height}px`);
+
+	this.player.vjsPlayer.width('');
+	this.player.vjsPlayer.height('');
+
+	BX.Dom.style(this.player.vjsPlayer.el(), 'width', '100%');
+	BX.Dom.style(this.player.vjsPlayer.el(), 'min-width', '300px');
+	BX.Dom.style(this.player.vjsPlayer.el(), 'aspect-ratio', `${width} / ${height}`);
+	BX.Dom.style(this.player.vjsPlayer.el(), 'height', 'auto');
 
 	return true;
 };
@@ -80,14 +93,16 @@ BX.Disk.Player.prototype.adjust = function()
 	{
 		return;
 	}
-	if(BX.hasClass(this.container, 'player-adjust'))
-	{
-		BX.addClass(this.container, 'player-adjusting');
-		if(BX.Disk.Player.adjustWidth(this.container, this.player.width, this.player.height, this.player.vjsPlayer.videoWidth(), this.player.vjsPlayer.videoHeight()))
-		{
-			this.player.vjsPlayer.fluid(true);
-		}
-	}
+
+	BX.addClass(this.container, 'player-adjusting');
+	this.adjustWidth(
+		this.container,
+		this.player.width,
+		this.player.height,
+		this.player.vjsPlayer.videoWidth(),
+		this.player.vjsPlayer.videoHeight()
+	);
+
 	BX.addClass(this.container, 'player-loaded');
 };
 
@@ -198,5 +213,4 @@ BX.ready(function()
 		}
 	});
 });
-
 })(window);

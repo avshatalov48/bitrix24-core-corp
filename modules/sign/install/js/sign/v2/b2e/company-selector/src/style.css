@@ -287,3 +287,19 @@
 	background-color: var(--ui-color-palette-orange-15);
 	color: var(--ui-color-palette-gray-60);
 }
+
+.sign-document-b2e-company-info-label {
+	margin-left: 5px;
+}
+.sign-document-b2e-company-info-label > .ui-label-inner {
+	font: 12px / 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold);
+}
+
+.sign-document-b2e-company-info-label[hidden] {
+	display: none;
+}
+
+.sign-document-b2e-company__alert {
+	margin-top: 15px;
+}

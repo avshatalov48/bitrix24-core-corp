@@ -1526,6 +1526,52 @@ class CCrmStatus
 		];
 	}
 
+	public static function GetDefaultSmartB2eEmployeeDocumentStatuses(): array
+	{
+		return [
+			[
+				'NAME' => GetMessage('CRM_SMART_B2E_DOCUMENT_STATUS_EMPLOYEE_DRAFT'),
+				'STATUS_ID' => 'EMPLOYEE_DRAFT',
+				'SORT' => 10,
+				'SYSTEM' => 'Y',
+				'COLOR' => '#00A9F4',
+			],
+			[
+				'NAME' => GetMessage('CRM_SMART_B2E_DOCUMENT_STATUS_EMPLOYEE_COORDINATION'),
+				'STATUS_ID' => 'EMPLOYEE_COORDINATION',
+				'SORT' => 20,
+				'COLOR' => '#00C9FA',
+			],
+			[
+				'NAME' => GetMessage('CRM_SMART_B2E_DOCUMENT_STATUS_EMPLOYEE_SIGNING'),
+				'STATUS_ID' => 'EMPLOYEE_SIGNING',
+				'SORT' => 30,
+				'COLOR' => '#00D3E2',
+			],
+			[
+				'NAME' => GetMessage('CRM_SMART_B2E_DOCUMENT_STATUS_EMPLOYEE_COMPLETED'),
+				'STATUS_ID' => 'EMPLOYEE_COMPLETED',
+				'SORT' => 40,
+				'COLOR' => '#FEA300',
+			],
+			[
+				'NAME' => GetMessage('CRM_SMART_B2E_DOCUMENT_STATUS_EMPLOYEE_ARCHIVE'),
+				'STATUS_ID' => 'ARCHIVE',
+				'SORT' => 50,
+				'COLOR' => '#7BD500',
+				'SEMANTICS' => \Bitrix\Crm\PhaseSemantics::SUCCESS,
+			],
+			[
+				'NAME' => GetMessage('CRM_SMART_B2E_DOCUMENT_STATUS_EMPLOYEE_FAILURE'),
+				'STATUS_ID' => 'FAILURE',
+				'SORT' => 60,
+				'COLOR' => '#FF5752',
+				'SYSTEM' => 'Y',
+				'SEMANTICS' => \Bitrix\Crm\PhaseSemantics::FAILURE,
+			],
+		];
+	}
+
 	/**
 	 * @internal
 	 * @return array

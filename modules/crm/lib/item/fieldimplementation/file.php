@@ -158,14 +158,14 @@ final class File implements FieldImplementation
 				{
 					if (is_numeric($singleValue) && (int)$singleValue > 0)
 					{
-						$newValue[] = $singleValue;
+						$newValue[] = (int)$singleValue;
 					}
 					elseif (is_array($singleValue))
 					{
 						$fileId = $this->fileArrayToFileId($field, $singleValue);
 						if ($fileId > 0)
 						{
-							$newValue[] = $fileId;
+							$newValue[] = (int)$fileId;
 						}
 					}
 				}
@@ -201,13 +201,17 @@ final class File implements FieldImplementation
 				$fileId = $this->fileArrayToFileId($field, $newValue);
 				if ($fileId > 0)
 				{
-					$newValue = $fileId;
+					$newValue = (int)$fileId;
 				}
 				else
 				{
 					$isNewValueProvided = false;
 					$newValue = null;
 				}
+			}
+			else
+			{
+				$newValue = (int)$newValue;
 			}
 		}
 

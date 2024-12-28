@@ -12,32 +12,6 @@ jn.define('bbcode/formatter/shared/node-formatters/list-formatter', (require, ex
 		{
 			super({
 				name: options.name,
-				before({ node }) {
-					if (options.renderType === 'text')
-					{
-						const prevSibling = node.getPreviewsSibling();
-						const nextSibling = node.getNextSibling();
-						const hasPrevNewLine = prevSibling && prevSibling.getName() === '#linebreak';
-						const hasNextNewLine = nextSibling && nextSibling.getName() === '#linebreak';
-
-						const children = [...node.getChildren()];
-						if (!hasPrevNewLine)
-						{
-							children.unshift(scheme.createNewLine());
-						}
-
-						if (!hasNextNewLine)
-						{
-							children.push(scheme.createNewLine());
-						}
-
-						return scheme.createFragment({
-							children,
-						});
-					}
-
-					return node;
-				},
 				convert({ node }) {
 					if (options.renderType === 'list')
 					{
@@ -47,7 +21,19 @@ jn.define('bbcode/formatter/shared/node-formatters/list-formatter', (require, ex
 					if (options.renderType === 'text')
 					{
 						return scheme.createFragment({
-							children: [],
+							children: node.getChildren().flatMap((child, index) => {
+								child.trimStartLinebreaks();
+
+								if (index > 0)
+								{
+									return [
+										scheme.createNewLine(),
+										...child.getChildren(),
+									];
+								}
+
+								return child.getChildren();
+							}),
 						});
 					}
 

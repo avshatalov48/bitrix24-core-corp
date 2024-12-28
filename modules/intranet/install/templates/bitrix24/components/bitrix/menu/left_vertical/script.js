@@ -1,4 +1,3 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,ui_buttons,main_core_event,im_v2_lib_desktopApi,main_core,main_popup,main_core_events,ui_dialogs_messagebox,ui_bannerDispatcher,ui_analytics) {
 	'use strict';
@@ -3270,7 +3269,8 @@ this.BX = this.BX || {};
 	  babelHelpers.createClass(Menu, [{
 	    key: "initAndBindNodes",
 	    value: function initAndBindNodes() {
-	      var _this = this;
+	      var _this$menuContainer$q,
+	        _this = this;
 	      this.menuContainer.addEventListener("dblclick", this.handleMenuDoubleClick.bind(this));
 	      this.menuContainer.addEventListener("mouseenter", this.handleMenuMouseEnter.bind(this));
 	      this.menuContainer.addEventListener("mouseleave", this.handleMenuMouseLeave.bind(this));
@@ -3309,7 +3309,7 @@ this.BX = this.BX || {};
 	      if (settingsSaveBtn) {
 	        settingsSaveBtn.addEventListener('click', this.handleViewMode.bind(this));
 	      }
-	      this.menuContainer.querySelector(".menu-settings-btn").addEventListener('click', function () {
+	      (_this$menuContainer$q = this.menuContainer.querySelector(".menu-settings-btn")) === null || _this$menuContainer$q === void 0 ? void 0 : _this$menuContainer$q.addEventListener('click', function () {
 	        _this.getSettingsController().show();
 	      });
 	    } // region Controllers
@@ -3373,7 +3373,11 @@ this.BX = this.BX || {};
 	    value: function getSettingsController() {
 	      var _this4 = this;
 	      return this.cache.remember('presetController', function () {
-	        return new SettingsController(_this4.menuContainer.querySelector(".menu-settings-btn"), {
+	        var node = _this4.menuContainer.querySelector(".menu-settings-btn");
+	        if (!node) {
+	          return null;
+	        }
+	        return new SettingsController(node, {
 	          events: {
 	            onGettingSettingMenuItems: _this4.onGettingSettingMenuItems.bind(_this4),
 	            onShow: function onShow() {
@@ -3418,7 +3422,12 @@ this.BX = this.BX || {};
 	    key: "getDefaultPresetController",
 	    value: function getDefaultPresetController() {
 	      var _this6 = this;
-	      var shouldSendCloseEvent = true;
+	      var closeEventWasProcessed = false;
+	      var postponeHandler = function postponeHandler(mode) {
+	        var result = Backend.postponeSystemPreset(mode);
+	        main_core_events.EventEmitter.emit(_this6, Options.eventName('onPresetIsPostponed'));
+	        return result;
+	      };
 	      return this.cache.remember('defaultPresetController', function () {
 	        var presetController = new PresetDefaultController(_this6.menuContainer, {
 	          events: {
@@ -3427,32 +3436,27 @@ this.BX = this.BX || {};
 	                mode = _ref5$data.mode,
 	                presetId = _ref5$data.presetId;
 	              _this6.analytics.sendSetPreset(presetId, mode === 'personal', AnalyticActions.CONFIRM);
-	              shouldSendCloseEvent = false;
+	              closeEventWasProcessed = true;
 	              return Backend.setSystemPreset(mode, presetId);
 	            },
 	            onPresetIsPostponed: function onPresetIsPostponed(_ref6) {
 	              var mode = _ref6.data.mode;
 	              _this6.analytics.sendSetPreset(presetController.getSelectedPreset(), mode === 'personal', AnalyticActions.LATER);
-	              shouldSendCloseEvent = false;
-	              var result = Backend.postponeSystemPreset(mode);
-	              main_core_events.EventEmitter.emit(_this6, Options.eventName('onPresetIsPostponed'));
-	              return result;
+	              closeEventWasProcessed = true;
+	              return postponeHandler(mode);
 	            },
 	            onShow: function onShow() {
 	              _this6.analytics.sendClose();
 	            },
 	            onClose: function onClose() {
-	              if (shouldSendCloseEvent) {
+	              if (closeEventWasProcessed !== true) {
 	                _this6.analytics.sendSetPreset(presetController.getSelectedPreset(), presetController.getMode() === 'personal', AnalyticActions.CLOSE);
+	                postponeHandler(presetController.getMode());
 	              }
+	              closeEventWasProcessed = false;
 	            }
-	            /*
-	            						onShow: () => { this.isMenuMouseLeaveBlocked.push('presets-default'); },
-	            						onClose: () => { this.isMenuMouseLeaveBlocked.pop(); },
-	            */
 	          }
 	        });
-
 	        return presetController;
 	      });
 	    } //endregion
@@ -4039,10 +4043,14 @@ this.BX = this.BX || {};
 	              menuEmployeesText.style.transform = "translateX(" + state.translateText + "px)";
 	              menuEmployeesText.style.opacity = state.opacity / 100;
 	            }
-	            settingsIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
-	            settingsIconBox.style.opacity = state.opacityRevert / 100;
-	            settingsBtnText.style.transform = "translateX(" + state.translateText + "px)";
-	            settingsBtnText.style.opacity = state.opacity / 100;
+	            if (settingsIconBox) {
+	              settingsIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
+	              settingsIconBox.style.opacity = state.opacityRevert / 100;
+	            }
+	            if (settingsBtnText) {
+	              settingsBtnText.style.transform = "translateX(" + state.translateText + "px)";
+	              settingsBtnText.style.opacity = state.opacity / 100;
+	            }
 	            helpIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
 	            helpIconBox.style.opacity = state.opacityRevert / 100;
 	            helpBtnText.style.transform = "translateX(" + state.translateText + "px)";
@@ -4099,10 +4107,14 @@ this.BX = this.BX || {};
 	              menuEmployeesText.style.transform = "translateX(" + state.translateText + "px)";
 	              menuEmployeesText.style.opacity = state.opacity / 100;
 	            }
-	            settingsIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
-	            settingsIconBox.style.opacity = state.opacityRevert / 100;
-	            settingsBtnText.style.transform = "translateX(" + state.translateText + "px)";
-	            settingsBtnText.style.opacity = state.opacity / 100;
+	            if (settingsIconBox) {
+	              settingsIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
+	              settingsIconBox.style.opacity = state.opacityRevert / 100;
+	            }
+	            if (settingsBtnText) {
+	              settingsBtnText.style.transform = "translateX(" + state.translateText + "px)";
+	              settingsBtnText.style.opacity = state.opacity / 100;
+	            }
 	            helpIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
 	            helpIconBox.style.opacity = state.opacityRevert / 100;
 	            helpBtnText.style.transform = "translateX(" + state.translateText + "px)";

@@ -185,11 +185,11 @@ ChatMessengerCommon.getChatDescription = function(chatData)
 	{
 		if (chatData.type == 'open')
 		{
-			description = BX.message("IM_CHAT_OPEN_NEW");
+			description = BX.message("IM_CHAT_OPEN_NEW_MSGVER_1");
 		}
 		else
 		{
-			description = BX.message("IM_CHAT_GROUP_NEW");
+			description = BX.message("IM_CHAT_GROUP_NEW_MSGVER_1");
 		}
 	}
 

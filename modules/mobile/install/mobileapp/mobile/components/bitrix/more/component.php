@@ -3,6 +3,7 @@
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UserTable;
 use Bitrix\Socialnetwork\Item\UserWelltory;
 use Bitrix\Intranet\Invitation;
 use Bitrix\Crm\Terminal\AvailabilityManager;
@@ -37,6 +38,7 @@ function sortMenu($item, $anotherItem)
 }
 
 $isExtranetUser = (\CModule::includeModule("extranet") && !\CExtranet::isIntranetUser());
+$isCollaber = (new \Bitrix\Mobile\Context())->isCollaber;
 $apiVersion = Bitrix\MobileApp\Mobile::getApiVersion();
 $canInviteUsers = (
 	Loader::includeModule('intranet')
@@ -301,6 +303,7 @@ if (Loader::includeModule('socialnetwork') && $showStressItemCondition)
 		"min_api_version" => 31,
 		"imageUrl" => $this->getPath() . "/images/favorite/icon-stress.png?1",
 		"color" => "#55D0E0",
+		'imageName' => 'stress',
 		"hidden" => false,
 		"attrs" => [
 			"id" => "stress",
@@ -448,6 +451,44 @@ array_walk($arResult["menu"], function (&$section) use (&$counterList) {
 	}
 });
 
+$events = \Bitrix\Mobile\Tourist::getEvents();
+
+$showPresetsCounter = false;
+if (!isset($events['visited_tab_presets']))
+{
+	$user = UserTable::getById($USER->GetID())->fetchObject();
+	if ($user && $user->getDateRegister())
+	{
+		$time = 1733875200;
+		if (\CModule::IncludeModule('bitrix24'))
+		{
+			$zone = \CBitrix24::getPortalZone();
+			if ($zone === 'ru')
+			{
+				$time = 1732579200;
+			}
+		}
+
+		$showPresetsCounter = $user->getDateRegister()->getTimestamp() > $time;
+	}
+}
+
+$usersCount = 0;
+$isUserFirstTimeInInvitations = !isset($events['visit_invitations']);
+$isUserAdmin = ((\CModule::IncludeModule('bitrix24') ? \CBitrix24::isPortalAdmin($USER->GetID()) : $USER->isAdmin()));
+
+if (
+	$isUserFirstTimeInInvitations
+	&& $isUserAdmin
+	&& Loader::includeModule('intranet')
+	&& Loader::includeModule('intranetmobile')
+)
+{
+	$usersCount = (new \Bitrix\IntranetMobile\Provider\UserProvider())->getAllUsersCount();
+}
+
+$showDiskCounter = !isset($events['visited_disk_tabs']);
+
 $arResult = array_merge($arResult, [
 	"counterList" => $counterList,
 	"invite" => [
@@ -457,6 +498,11 @@ $arResult = array_merge($arResult, [
 		"disableRegisterAdminConfirm" => $disableRegisterAdminConfirm,
 		"registerSharingMessage" => $registerSharingMessage,
 		"rootStructureSectionId" => $rootStructureSectionId,
+	],
+	'customCounters' => [
+		'menu_invite' => ($isUserAdmin && $usersCount === 1 && $isUserFirstTimeInInvitations) ? 1 : 0,
+		'menu_tab_presets' => $showPresetsCounter ? 1 : 0,
+		'menu_disk_tabs' => $showDiskCounter ? 1 : 0,
 	],
 ]);
 

@@ -13,7 +13,7 @@ class Portal extends \Bitrix\Main\Engine\Controller
 		return array_merge(
 			parent::getDefaultPreFilters(),
 			[
-				new UserType(['employee']),
+				new UserType(['employee', 'extranet']),
 			]
 		);
 	}

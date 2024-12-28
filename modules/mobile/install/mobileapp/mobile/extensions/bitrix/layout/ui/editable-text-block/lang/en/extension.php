@@ -1,0 +1,2 @@
+<?php
+$MESS["MOBILE_EDITABLE_TEXT_BLOCK_PLACEHOLDER"] = "Enter text";

@@ -1,9 +1,9 @@
-import { BaseEvent, EventEmitter } from 'main.core.events';
-import { Reflection, Type } from 'main.core';
 import { ItemIdentifier } from 'crm.data-structures';
-import { Receiver } from './receiver';
+import { Type } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { extractReceivers } from './internal/extract-receivers';
 import { ensureIsItemIdentifier, ensureIsReceiver } from './internal/validation';
+import { Receiver } from './receiver';
 
 const OBSERVED_EVENTS = new Set([
 	'onCrmEntityCreate',
@@ -19,7 +19,7 @@ const OBSERVED_EVENTS = new Set([
  * @emits BX.Crm.MessageSender.ReceiverRepository:OnItemDeleted
  *
  * Currently, this class is supposed to work only in the context of entity details tab.
- * In the future, it can be extended to work on any page.
+ * In the future, it can be extended to work on any page. (see todos)
  */
 export class ReceiverRepository
 {
@@ -31,14 +31,8 @@ export class ReceiverRepository
 
 	#observedItems: {[entityTypeId: number]: Set<number>} = {};
 
-
 	static get Instance(): ReceiverRepository
 	{
-		if ((window.top !== window) && Reflection.getClass('top.BX.Crm.MessageSender.ReceiverRepository'))
-		{
-			return window.top.BX.Crm.MessageSender.ReceiverRepository;
-		}
-
 		if (!ReceiverRepository.#instance)
 		{
 			ReceiverRepository.#instance = new ReceiverRepository();
@@ -68,6 +62,7 @@ export class ReceiverRepository
 			if (!(event instanceof BaseEvent))
 			{
 				console.error('unexpected event type', event);
+
 				return;
 			}
 
@@ -82,8 +77,10 @@ export class ReceiverRepository
 
 		for (const eventName of OBSERVED_EVENTS)
 		{
+			// todo use BX.Crm.EntityEvent.subscribe instead, we will get data from all tabs/sliders
 			EventEmitter.subscribe(eventName, this.#onDetailsTabChangeEventHandler);
 		}
+
 		if (BX.SidePanel?.Instance?.isOpen())
 		{
 			// we are on entity details slider
@@ -100,7 +97,7 @@ export class ReceiverRepository
 		ReceiverRepository.#instance = null;
 	}
 
-	#onCrmEntityChange(eventType: string, {entityTypeId, entityId, entityData}): void
+	#onCrmEntityChange(eventType: string, { entityTypeId, entityId, entityData }): void
 	{
 		if (!this.#observedItems[entityTypeId]?.has(entityId))
 		{
@@ -119,23 +116,23 @@ export class ReceiverRepository
 
 			this.#storage[item.hash] = newReceivers;
 
-			const added = newReceivers.filter(newReceiver => {
-				return Type.isNil(oldReceivers.find(oldReceiver => oldReceiver.isEqualTo(newReceiver)));
+			const added = newReceivers.filter((newReceiver) => {
+				return Type.isNil(oldReceivers.find((oldReceiver) => oldReceiver.isEqualTo(newReceiver)));
 			});
-			const deleted = oldReceivers.filter(oldReceiver => {
-				return Type.isNil(newReceivers.find(newReceiver => newReceiver.isEqualTo(oldReceiver)));
+			const deleted = oldReceivers.filter((oldReceiver) => {
+				return Type.isNil(newReceivers.find((newReceiver) => newReceiver.isEqualTo(oldReceiver)));
 			});
 
 			if (added.length > 0 || deleted.length > 0)
 			{
-				this.emit('OnReceiversChanged', {item, previous: oldReceivers, current: newReceivers, added, deleted});
+				this.emit('OnReceiversChanged', { item, previous: oldReceivers, current: newReceivers, added, deleted });
 			}
 		}
 		else if (eventType.toLowerCase() === 'onCrmEntityDelete'.toLowerCase())
 		{
 			delete this.#storage[item.hash];
 			this.#observedItems[item.entityTypeId].delete(item.entityId);
-			this.emit('OnItemDeleted', {item});
+			this.emit('OnItemDeleted', { item });
 		}
 		else
 		{
@@ -148,17 +145,18 @@ export class ReceiverRepository
 	 */
 	static onDetailsLoad(entityTypeId: number, entityId: number, receiversJSONString: string): void
 	{
-		let item: ItemIdentifier;
+		let item: ItemIdentifier = null;
 		try
 		{
 			item = new ItemIdentifier(entityTypeId, entityId);
 		}
-		catch (e)
+		catch
 		{
 			return;
 		}
 
 		const instance = ReceiverRepository.Instance;
+		// todo notify instances of this class on other tabs/sliders
 		instance.#startObservingItem(item);
 
 		const receiversJSON = JSON.parse(receiversJSONString);
@@ -176,6 +174,7 @@ export class ReceiverRepository
 
 			if (Type.isArrayFilled(receivers))
 			{
+				// todo add receivers to instances of this class on other tabs/sliders
 				instance.#addReceivers(item, receivers);
 			}
 		}
@@ -211,7 +210,7 @@ export class ReceiverRepository
 		{
 			return this.getReceiversByIdentifier(new ItemIdentifier(entityTypeId, entityId));
 		}
-		catch (e)
+		catch
 		{
 			return [];
 		}

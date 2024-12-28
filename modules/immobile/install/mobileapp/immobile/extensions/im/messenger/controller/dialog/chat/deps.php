@@ -56,6 +56,8 @@ return [
 		'im:messenger/controller/dialog/lib/pull-watch-manager',
 		'im:messenger/controller/dialog/lib/comment-button',
 		'im:messenger/controller/dialog/lib/emitter',
+		'im:messenger/lib/open-dialog-check',
+		'im:messenger/controller/dialog/lib/entity-manager',
 	],
 	'bundle' => [
 		'./src/dialog',

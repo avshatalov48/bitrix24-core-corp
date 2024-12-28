@@ -2,51 +2,50 @@
  * @module selector/providers/common/src/entity-color
  */
 jn.define('selector/providers/common/src/entity-color', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 
-	const Color = (code, group = 'background') => {
+	const getEntityColor = (code, group = 'background') => {
 		const Colors = {
 			background: {
-				user: AppTheme.colors.accentSoftBlue1,
-				userExtranet: AppTheme.colors.accentMainWarning,
-				userAll: AppTheme.colors.accentSoftGreen1,
-				'meta-user': AppTheme.colors.accentSoftGreen1,
-				group: AppTheme.colors.accentSoftBlue1,
-				project: AppTheme.colors.accentSoftBlue1,
-				'project-tag': AppTheme.colors.base5,
-				'task-tag': AppTheme.colors.base5,
-				groupExtranet: AppTheme.colors.accentMainWarning,
-				department: AppTheme.colors.bgSeparatorSecondary,
-				section: AppTheme.colors.accentSoftRed2,
-				product: AppTheme.colors.bgContentPrimary,
-				contractor: AppTheme.colors.accentExtraPurple,
-				store: AppTheme.colors.accentExtraPurple,
-				lead: AppTheme.colors.accentExtraAqua,
-				deal: AppTheme.colors.accentExtraPurple,
-				contact: AppTheme.colors.accentMainSuccess,
-				company: AppTheme.colors.accentMainWarning,
-				quote: AppTheme.colors.accentExtraAqua,
-				smart_invoice: AppTheme.colors.accentMainLinks,
-				order: AppTheme.colors.accentExtraBrown,
-				dynamic: AppTheme.colors.accentMainPrimary,
-				default: AppTheme.colors.accentSoftRed2,
+				user: Color.accentSoftBlue1,
+				userExtranet: Color.accentMainWarning,
+				userAll: Color.accentSoftGreen1,
+				'meta-user': Color.accentSoftGreen1,
+				group: Color.accentSoftBlue1,
+				project: Color.accentSoftBlue1,
+				'project-tag': Color.base5,
+				'task-tag': Color.base5,
+				groupExtranet: Color.accentMainWarning,
+				department: Color.bgSeparatorSecondary,
+				section: Color.accentSoftRed2,
+				product: Color.bgContentPrimary,
+				contractor: Color.accentExtraPurple,
+				store: Color.accentExtraPurple,
+				lead: Color.accentExtraAqua,
+				deal: Color.accentExtraPurple,
+				contact: Color.accentMainSuccess,
+				company: Color.accentMainWarning,
+				quote: Color.accentExtraAqua,
+				smart_invoice: Color.accentMainLinks,
+				order: Color.accentExtraBrown,
+				dynamic: Color.accentMainPrimary,
+				default: Color.accentSoftRed2,
 			},
 			subtitle: {
-				userExtranet: AppTheme.colors.accentMainWarning,
-				groupExtranet: AppTheme.colors.accentMainWarning,
+				userExtranet: Color.accentMainWarning,
+				groupExtranet: Color.accentMainWarning,
 			},
 			title: {
-				userExtranet: AppTheme.colors.accentMainWarning,
-				groupExtranet: AppTheme.colors.accentMainWarning,
+				userExtranet: Color.accentMainWarning,
+				groupExtranet: Color.accentMainWarning,
 			},
 			tag: {
-				groupExtranet: AppTheme.colors.accentSoftOrange1,
+				groupExtranet: Color.accentSoftOrange1,
 			},
-
 		};
 
-		return Colors?.[group]?.[code] || Colors?.[group]?.default || AppTheme.colors.base7;
+		return (Colors?.[group]?.[code] || Colors?.[group]?.default || Color.base7).toHex();
 	};
 
-	module.exports = { Color };
+	module.exports = { getEntityColor };
 });

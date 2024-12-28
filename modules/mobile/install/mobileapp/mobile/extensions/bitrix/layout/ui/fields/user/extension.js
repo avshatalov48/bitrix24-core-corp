@@ -5,15 +5,17 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { lock } = require('assets/common');
+	const { Avatar } = require('ui-system/blocks/avatar');
 	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
 	const { EntitySelectorFactory } = require('selector/widget/factory');
 	const { ProfileView } = require('user/profile');
 	const { UserListManager } = require('layout/ui/user-list');
-	const { EmptyAvatar } = require('layout/ui/user/empty-avatar');
 	const { isNil } = require('utils/type');
 	const { AnalyticsEvent } = require('analytics');
 	const { isPhoneNumber } = require('utils/phone');
 	const { Icon } = require('assets/icons');
+	const { dispatch } = require('statemanager/redux/store');
+	const { usersUpsertedFromEntitySelector } = require('statemanager/redux/slices/users');
 
 	const EMPTY_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/empty-avatar.png';
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/default-avatar.png';
@@ -220,26 +222,18 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 
 		renderEntityIcon({ user, onClick, testId })
 		{
-			if (!user.imageUrl)
-			{
-				const { width, marginRight } = this.styles.userImage;
+			const { width, marginRight } = this.styles.userImage;
 
-				return EmptyAvatar({
-					onClick,
-					id: user.id,
-					name: this.prepareUserTitle(user.title),
-					size: width,
-					additionalStyles: {
-						marginRight,
-					},
-					testId: `${testId}_LETTERS_ICON`,
-				});
-			}
-
-			return Image({
-				style: this.styles.userImage,
-				uri: this.getImageUrl(user.imageUrl || user.avatar || this.getDefaultAvatar()),
+			return Avatar({
+				id: user.id,
+				size: width,
+				name: user.title,
+				uri: user.imageUrl,
+				withRedux: true,
 				testId: `${testId}_ICON`,
+				style: {
+					marginRight,
+				},
 				onClick,
 			});
 		}
@@ -411,11 +405,12 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 		{
 			return this.getConfig().defaultLeftIcon || Icon.PERSON;
 		}
-	}
 
-	UserField.propTypes = {
-		...EntitySelectorFieldClass.propTypes,
-	};
+		setReduxState(userList)
+		{
+			dispatch(usersUpsertedFromEntitySelector(userList));
+		}
+	}
 
 	UserField.defaultProps = {
 		...EntitySelectorFieldClass.defaultProps,

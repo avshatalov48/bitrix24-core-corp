@@ -2,67 +2,86 @@
 
 namespace Bitrix\Intranet\Service;
 
+use Bitrix\Intranet\CurrentUser;
+use Bitrix\Intranet\Infrastructure\LinkCodeGenerator;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Context;
-use Bitrix\Main\Security\Random;
-use Bitrix\Main\Security\Sign\Signer;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Intranet\Command\AttachJwtTokenToUrlCommand;
+use Bitrix\Socialnetwork\Collab\Provider\CollabProvider;
 
 class InviteLinkGenerator
 {
 	public function __construct(
 		private AttachJwtTokenToUrlCommand $jwtTokenUrlService,
-		private string $secret,
 	)
 	{}
 
-	public static function createInstance(): ?self
+	public static function createByPayload(array $payload): ?self
 	{
-		$secret = Option::get("socialservices", "new_user_registration_secret", null);
-		if ($secret === null)
+		if (Option::get("socialservices", "new_user_registration_secret", null) === null)
+		{
+			return null;
+		}
+		$inviteToken = ServiceContainer::getInstance()->inviteTokenService()->create($payload);
+
+		return new self(AttachJwtTokenToUrlCommand::createDefaultInstance($inviteToken));
+	}
+
+	public static function createByCollabId(int $collabId): ?self
+	{
+		if (!Loader::includeModule('socialnetwork'))
 		{
 			return null;
 		}
 
-		$serverName = Option::get('main', 'server_name');
-
-		if (defined('BX24_HOST_NAME') && !empty(BX24_HOST_NAME))
+		$entity = CollabProvider::getInstance()->getCollab($collabId);
+		if (!$entity)
 		{
-			$serverName = BX24_HOST_NAME;
+			return null;
 		}
-		else if (defined('SITE_SERVER_NAME') && !empty(SITE_SERVER_NAME))
-		{
-			$serverName = SITE_SERVER_NAME;
-		}
-
-		$baseUrl = (Context::getCurrent()->getRequest()->isHttps() ? 'https://' : 'http://') . $serverName;
-		$uri = new Uri($baseUrl);
-
-		return new self(new AttachJwtTokenToUrlCommand((string)$secret, $uri), $secret);
-	}
-
-	private function create(int $collabId): Uri
-	{
+		$linkCodeGenerator = LinkCodeGenerator::createByCollabId($collabId);
 		$payload = [
 			'collab_id' => $collabId,
+			'collab_name' => $entity->getName(),
+			'inviting_user_id' => CurrentUser::get()?->getId() ?? null,
+			'link_code' => $linkCodeGenerator->getOrGenerate()->getCode(),
 		];
 
-		$uri = $this->jwtTokenUrlService->attach($payload);
-
-		return $uri;
+		return self::createByPayload($payload);
 	}
 
-	public function getCollabLink(int $collabId): string
+	public static function createByDepartmentsIds(array $departmentsIds): ?self
 	{
-		$uri = $this->create($collabId);
+		if (empty($departmentsIds))
+		{
+			return null;
+		}
+
+		$payload = [
+			'departments_ids' => $departmentsIds,
+			'inviting_user_id' => CurrentUser::get()?->getId() ?? null,
+		];
+
+		return self::createByPayload($payload);
+	}
+
+	private function create(): Uri
+	{
+		return $this->jwtTokenUrlService->attach();
+	}
+
+	public function getCollabLink(): string
+	{
+		$uri = $this->create();
 
 		return $uri->getUri();
 	}
 
-	public function getShortCollabLink(int $collabId): string
+	public function getShortCollabLink(): string
 	{
-		$uri = $this->create($collabId);
+		$uri = $this->create();
 
 		return $uri->getScheme().'://'.$uri->getHost().\CBXShortUri::GetShortUri($uri->getUri());
 	}

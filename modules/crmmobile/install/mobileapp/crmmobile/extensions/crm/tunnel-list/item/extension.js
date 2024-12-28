@@ -530,6 +530,7 @@ jn.define('crm/tunnel-list/item', (require, exports, module) => {
 								qrauth: {
 									redirectUrl: `/crm/deal/automation/${this.props.categoryId}/`,
 									type: 'crm',
+									analyticsSection: 'crm',
 								},
 							},
 							actions: this.getMenuActions(),

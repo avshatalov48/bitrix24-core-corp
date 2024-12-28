@@ -1,0 +1,62 @@
+.crm-timeline__workflow-efficiency-block {
+	border: 1px solid var(--ui-color-palette-gray-30);
+	border-radius: 11px;
+	max-width: 373px;
+	margin-top: 11px;
+}
+
+.bizproc-workflow-timeline-content {
+	margin-top: 0;
+	padding: 12px 15px 10px;
+}
+
+.bizproc-workflow-timeline-item.--success {
+	border: none;
+	background: none;
+}
+
+.bizproc-workflow-timeline-item.--efficiency .bizproc-workflow-timeline-content {
+	justify-content: space-between;
+	align-items: center;
+	padding-bottom: 15px;
+	margin-top: 0;
+	padding-top: 18px;
+}
+
+.bizproc-workflow-timeline-item-wrapper::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 15px;
+	right: 15px;
+	height: 1px;
+	background: var(--ui-color-palette-gray-30);
+}
+
+.bizproc-workflow-timeline-item.--result:after {
+	display: none;
+}
+
+.bizproc-workflow-timeline-item.--result .bizproc-workflow-timeline-caption {
+	text-transform: unset;
+	color: var(--ui-color-base-90);
+	font-size: var(--ui-font-size-md);
+}
+
+.crm-timeline__workflow-efficiency-block .bizproc-workflow-timeline-item.--efficiency .bizproc-workflow-timeline-subject {
+	font-size: var(--ui-font-size-3xs);
+	line-height: var(--ui-font-line-height-lg);
+}
+
+.crm-timeline__workflow-efficiency-block .bizproc-workflow-timeline-link {
+	font-size: var(--ui-font-size-sm);
+}
+
+.crm-timeline__workflow-efficiency-block .bizproc-workflow-timeline-user-pos {
+	font-size: var(--ui-font-size-xs);
+}
+
+.crm-timeline__workflow-efficiency-block .bizproc-workflow-timeline-user-block {
+	line-height: var(--ui-font-line-height-lg);
+	max-width: 86%;
+}

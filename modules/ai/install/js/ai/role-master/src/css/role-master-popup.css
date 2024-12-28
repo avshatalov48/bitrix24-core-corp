@@ -1,0 +1,30 @@
+#role-master-popup {
+	overflow: hidden;
+}
+
+#popup-window-content-role-master-popup {
+	overflow: inherit;
+	display: flex;
+	flex-direction: column;
+}
+
+.ai__role-master-popup-content-header {
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-2xs);
+	color: var(--ui-color-text-subtle);
+}
+
+.ai__role-master-popup-content {
+	padding: 0 3px 8px 3px;
+	display: flex;
+	height: 100%;
+	flex-direction: column;
+	flex: 1;
+}
+
+.ai__role-master-popup-content-main {
+	display: flex;
+	height: 100%;
+	flex-direction: column;
+	flex: 1;
+}

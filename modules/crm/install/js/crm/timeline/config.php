@@ -15,7 +15,6 @@ return [
 		'ui.vue3',
 		'main.loader',
 		'crm.field.color-selector',
-		'main.core.events',
 		'ui.vue3.directives.hint',
 		'main.popup',
 		'ui.label',
@@ -25,6 +24,7 @@ return [
 		'crm.timeline.item',
 		'main.core',
 		'crm.timeline.tools',
+		'main.core.events',
 	],
 	'skip_core' => false,
 ];

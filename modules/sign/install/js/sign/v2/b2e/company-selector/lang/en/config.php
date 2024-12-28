@@ -1,10 +1,9 @@
 <?php
 $MESS["SIGN_B2E_ADD_COMPANY"] = "Add company";
-$MESS["SIGN_B2E_COMPANIES_CHANGE_INN"] = "Enter Taxpayer ID";
+$MESS["SIGN_B2E_COMPANIES_CHANGE_INN_1"] = "Specify";
 $MESS["SIGN_B2E_COMPANIES_EDIT"] = "Edit";
 $MESS["SIGN_B2E_COMPANIES_INN"] = "Taxpayer ID %innValue%";
 $MESS["SIGN_B2E_COMPANIES_NOT_CHANGED"] = "Company is not selected.";
-$MESS["SIGN_B2E_COMPANIES_NO_RQ_INN"] = "Taxpayer ID not specified.";
 $MESS["SIGN_B2E_COMPANIES_SELECT_BUTTON"] = "Select";
 $MESS["SIGN_B2E_COMPANIES_TAB"] = "Companies";
 $MESS["SIGN_B2E_COMPANIES_UNSET_PROVIDER_MORE"] = "[helpdesklink]Learn more[/helpdesklink]";
@@ -40,3 +39,5 @@ $MESS["SIGN_B2E_SELECT_PROVIDER_WITHOUT_INN"] = "Connected on #DATE#";
 $MESS["SIGN_B2E_SELECT_PROVIDER_WITHOUT_INN_DATE"] = "Connected";
 $MESS["SIGN_B2E_TOUR_HEAD"] = "Connect GK";
 $MESS["SIGN_B2E_TOUR_TEXT"] = "Use SES to sign documents in GK.";
+$MESS["SIGN_V2_B2E_COMPANY_SELECTOR_COMPANY_RQ_WARNING_LABEL"] = "Taxpayer ID is empty.";
+$MESS["SIGN_V2_B2E_COMPANY_SELECTOR_SAVE_AND_EDIT_REQUIRE_CRM_PERMISSION"] = "You need to have CRM access permission to create new companies or edit company details. If you don't have the right permissions, contact your Bitrix24 administrator.";

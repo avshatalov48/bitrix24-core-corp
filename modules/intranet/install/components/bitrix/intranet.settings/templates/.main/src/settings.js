@@ -39,6 +39,9 @@ export class Settings extends BaseSettingsElement
 	#navigator: Navigation;
 	#permission: Permission;
 	#pagesPermission;
+	#extraSettings = {
+		reloadAfterClose: false,
+	};
 
 	constructor(params)
 	{
@@ -272,7 +275,10 @@ export class Settings extends BaseSettingsElement
 			return this.#cancelMessageBox.show();
 		}
 
-		if (this.#basePage.includes('/configs/') || this.reloadAfterClose)
+		if (
+			this.#basePage.includes('/configs/')
+			|| this.#extraSettings.reloadAfterClose === true
+		)
 		{
 			this.#reload('/index.php');
 		}
@@ -324,11 +330,17 @@ export class Settings extends BaseSettingsElement
 
 	#successSaveHandler(response: Object)
 	{
+		this.#extraSettings.reloadAfterClose = true;
+
 		this.isChanged = false;
 		this.#hideWaitIcon();
 		BX.UI.ButtonPanel.hide();
-		// EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onSuccessSave', {});
-		this.reloadAfterClose = true;
+
+		EventEmitter.emit(
+			EventEmitter.GLOBAL_TARGET,
+			'BX.Intranet.Settings:onSuccessSave',
+			this.#extraSettings,
+		);
 	}
 
 	#failSaveHandler(response: Object)

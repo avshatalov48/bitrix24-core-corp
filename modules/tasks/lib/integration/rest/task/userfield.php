@@ -31,6 +31,10 @@ final class UserField extends \Bitrix\Tasks\Integration\Rest\UserField
 
 		switch (mb_strtolower($methodName))
 		{
+			case 'gettypes':
+				$args = [];
+				break;
+
 			case 'getlist':
 				if (empty($args))
 				{

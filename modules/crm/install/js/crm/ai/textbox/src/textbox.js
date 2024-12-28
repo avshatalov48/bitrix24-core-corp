@@ -1,58 +1,80 @@
-import { Dom, Loc, Tag, Type, Text, Event } from 'main.core';
-import 'ui.design-tokens';
-import 'ui.fonts.opensans';
-import './style.css';
+import { Dom, Event, Loc, Tag, Text, Type } from 'main.core';
+
+import type { TextboxOptions } from './textbox-options';
 import { Attention, AttentionPresets } from './attention';
 
-export type TextboxOptions = {
-	text: string,
-	title: string,
-	enableSearch: boolean,
-	previousTextContent: HTMLElement,
-	attentions: Array<Attention>,
-};
+import 'ui.design-tokens';
+import 'ui.fonts.opensans';
 
-export {
-	Attention,
-	AttentionPresets,
-};
+import './style.css';
+
+const ID_TEXT_CONTAINER = 'crm-copilot-text-container';
+
+const CLASS_SEARCH_ICON = 'ui-ctl-icon-search';
+const CLASS_CLEAR_ICON = 'ui-ctl-icon-clear';
+const ROOT_CONTAINER_BOTTOM_PADDING = '28px';
 
 export class Textbox
 {
-	textContainerID = 'crm-copilot-text-container';
+	#id: string;
+	#text: string;
+	#title: string;
+	#enableSearch: boolean;
+	#enableCollapse: boolean;
+	#isCollapsed: boolean;
+	#previousTextContent: HTMLElement = null;
+	#attentions: Object = null;
 
-	searchIcon = 'ui-ctl-icon-search';
-	clearIcon = 'ui-ctl-icon-clear';
-
-	searchInputPlaceholder = Loc.getMessage('CRM_COPILOT_TEXTBOX_SEARCH_PLACEHOLDER');
+	#className = {
+		searchIcon: '--search-1',
+		clearIcon: '--cross-30',
+		arrowTopIcon: '--chevron-up',
+		arrowDownIcon: '--chevron-down',
+		bodyExpanded: '--body-expanded',
+		nodeHidden: '--hidden',
+	};
 
 	constructor(options: TextboxOptions = {}): void
 	{
 		this.setText(options.text);
-		this.title = (Type.isString(options.title)) ? options.title : '';
-		this.enableSearch = Type.isBoolean(options.enableSearch) ? options.enableSearch : true;
-		this.previousTextContent = Type.isElementNode(options.previousTextContent) ? options.previousTextContent : null;
-		this.attentions = options.attentions ?? [];
+
+		this.#id = `crm-copilot-textbox-container-${Text.getRandom(8)}`;
+		this.#title = (Type.isString(options.title)) ? options.title : '';
+		this.#enableSearch = Type.isBoolean(options.enableSearch) ? options.enableSearch : true;
+		this.#enableCollapse = Type.isBoolean(options.enableCollapse) ? options.enableCollapse : false;
+		this.#isCollapsed = Type.isBoolean(options.isCollapsed) ? options.isCollapsed : false;
+		this.#previousTextContent = Type.isElementNode(options.previousTextContent) ? options.previousTextContent : null;
+		this.#attentions = options.attentions ?? [];
 	}
 
-	setText(text)
+	setText(text): void
 	{
-		this.text = (Type.isString(text)) ? this.prepareText(text) : '';
-	}
-
-	prepareText(text): String
-	{
-		return text.replaceAll(/\r?\n/g, '<br>');
+		this.#text = (Type.isString(text)) ? this.#prepareText(text) : '';
 	}
 
 	render(): void
 	{
-		this.rootContainer = Tag.render`<div class="crm-copilot-textbox"></div>`;
+		this.rootContainer = Tag.render`
+			<div 
+				id="${this.#id}" 
+				class="crm-copilot-textbox"
+			></div>
+		`;
 
-		Dom.append(this.getHeaderContainer(), this.rootContainer);
-		Dom.append(this.getPreviousTextContainer(), this.rootContainer);
-		Dom.append(this.getContentContainer(), this.rootContainer);
-		Dom.append(this.getAttentionsContainer(), this.rootContainer);
+		if (this.#isCollapsed)
+		{
+			Dom.style(this.rootContainer, 'padding-bottom', 0);
+		}
+		else
+		{
+			Dom.style(this.rootContainer, 'padding-bottom', ROOT_CONTAINER_BOTTOM_PADDING);
+		}
+
+		const sectionWrapper = Tag.render`<div class="crm-copilot-textbox__wrapper ${this.#isCollapsed ? '' : this.#className.bodyExpanded} ${this.#enableCollapse ? 'clickable' : ''}"></div>`;
+
+		Dom.append(this.#getHeaderContainer(), sectionWrapper);
+		Dom.append(this.#getBodyContainer(), sectionWrapper);
+		Dom.append(sectionWrapper, this.rootContainer);
 	}
 
 	get(): HTMLElement
@@ -60,10 +82,49 @@ export class Textbox
 		return this.rootContainer;
 	}
 
-	getContentContainer(): HTMLElement
+	#prepareText(text): string
+	{
+		return text.replaceAll(/\r?\n/g, '<br>');
+	}
+
+	#getHeaderContainer(): HTMLElement
+	{
+		const collapseIconElement = this.#enableCollapse
+			? Tag.render`<div class="crm-copilot-textbox__collapse-icon clickable ui-icon-set ${this.#isCollapsed ? this.#className.arrowDownIcon : this.#className.arrowTopIcon}"></div>`
+			: ''
+		;
+
+		Event.bind(collapseIconElement, 'click', () => this.#handleCollapse());
+
+		return Tag.render`
+			<div class="crm-copilot-textbox__header">
+				<div class="crm-copilot-textbox__title">${Text.encode(this.#title)}</div>
+				<div class="crm-copilot-textbox__title-icon-container">
+					${this.#getSearchContainer()}
+					${collapseIconElement}
+				</div>
+			</div>
+		`;
+	}
+
+	#getBodyContainer(): HTMLElement
+	{
+		const bodyContainer = Tag.render`<div class="crm-copilot-textbox__body-container"></div>`;
+
+		Dom.append(
+			Tag.render`<div class="crm-copilot-textbox__previous-text">${this.#previousTextContent}</div>`,
+			bodyContainer,
+		);
+		Dom.append(this.#getContentContainer(), bodyContainer);
+		Dom.append(this.#getAttentionsContainer(), bodyContainer);
+
+		return Tag.render`<div class="crm-copilot-textbox__body">${bodyContainer}</div>`;
+	}
+
+	#getContentContainer(): HTMLElement
 	{
 		const contentContainer = Tag.render`<div class="crm-copilot-textbox__content"></div>`;
-		const textContainer = this.getTextContainer();
+		const textContainer = this.#getTextContainer();
 
 		Event.bind(textContainer, 'beforeinput', (e) => {
 			e.preventDefault();
@@ -74,7 +135,7 @@ export class Textbox
 		return contentContainer;
 	}
 
-	getTextContainer(): HTMLElement
+	#getTextContainer(): HTMLElement
 	{
 		if (this.textContainer)
 		{
@@ -83,66 +144,56 @@ export class Textbox
 
 		this.textContainer = Tag.render`
 			<div 
-				id="${this.textContainerID}" 
+				id="${ID_TEXT_CONTAINER}" 
 				class="crm-copilot-textbox__text-container" 
 				contenteditable="true" 
 				spellcheck="false"
 			>
-				${this.text}
+				${this.#text}
 			</div>
 		`;
 
 		return this.textContainer;
 	}
 
-	getHeaderContainer(): HTMLElement
+	#getSearchContainer(): HTMLElement
 	{
-		return Tag.render`
-			<div class="crm-copilot-textbox__header">
-				<div class="crm-copilot-textbox__title">${Text.encode(this.title)}</div>
-				${this.getSearchContainer()}
-			</div>
-		`;
-	}
-
-	getSearchContainer(): HTMLElement
-	{
-		if (!this.enableSearch)
+		if (!this.#enableSearch)
 		{
 			return Tag.render``;
 		}
 
-		const searchNode = Tag.render`<div class="ui-ctl ui-ctl-after-icon ui-ctl-no-border crm-copilot-textbox__search"></div>`;
-		const searchBtn = Tag.render`<a class="ui-ctl-after ${this.searchIcon} crm-copilot-textbox__search-btn"></a>`;
+		const searchNode = Tag.render`<div class="ui-ctl ui-ctl-after-icon ui-ctl-no-border crm-copilot-textbox__search ${this.#isCollapsed ? '--hidden' : ''}"></div>`;
+		const searchBtn = Tag.render`<a class="ui-ctl-after ${CLASS_SEARCH_ICON} crm-copilot-textbox__search-btn"></a>`;
 		const searchInput = Tag.render`
 			<input 
 				type="text" 
-				placeholder="${Text.encode(this.searchInputPlaceholder)}" 
+				placeholder="${Text.encode(Loc.getMessage('CRM_COPILOT_TEXTBOX_SEARCH_PLACEHOLDER'))}" 
 				class="ui-ctl-element ui-ctl-textbox crm-copilot-textbox__search-input"
 			>
 		`;
 
 		searchInput.oninput = () => {
-			this.resetTextContainer();
+			this.#resetTextContainer();
 
 			const value = searchInput.value;
 			if (!value)
 			{
-				this.switchStyle(searchBtn, this.clearIcon, this.searchIcon);
+				this.#switchStyle(searchBtn, CLASS_CLEAR_ICON, CLASS_SEARCH_ICON);
 
 				return;
 			}
-			this.switchStyle(searchBtn, this.searchIcon, this.clearIcon);
+			this.#switchStyle(searchBtn, CLASS_SEARCH_ICON, CLASS_CLEAR_ICON);
 
 			// Highlights pieces of text that are not part of a tag
 			const regexp = new RegExp(`((?<!<[^>]*?)(${value})(?![^<]*?>))`, 'gi');
-			const textContainer = this.getTextContainer();
+			const textContainer = this.#getTextContainer();
 
 			textContainer.innerHTML = textContainer.innerHTML.replace(regexp, '<span class="search-item">$&</span>');
 		};
 
 		let searchInputFocused = false;
-		searchInput.onblur = (event) => {
+		searchInput.onblur = () => {
 			if (searchInput.value.length === 0)
 			{
 				Dom.removeClass(searchNode, 'with-input-node');
@@ -157,8 +208,8 @@ export class Textbox
 				if (searchInput.value.length > 0)
 				{
 					searchInput.value = '';
-					this.switchStyle(searchBtn, this.clearIcon, this.searchIcon);
-					this.resetTextContainer();
+					this.#switchStyle(searchBtn, CLASS_CLEAR_ICON, CLASS_SEARCH_ICON);
+					this.#resetTextContainer();
 				}
 
 				searchInputFocused = true;
@@ -186,32 +237,26 @@ export class Textbox
 		return searchNode;
 	}
 
-	getAttentionsContainer(): HTMLElement
+	#getAttentionsContainer(): HTMLElement
 	{
-		if (!Type.isArrayFilled(this.attentions))
+		if (!Type.isArrayFilled(this.#attentions))
 		{
 			return Tag.render``;
 		}
 
 		const attentionsContainer = Tag.render`<div class="crm-copilot-textbox__attentions"></div>`;
-		this.attentions.forEach((attention) => {
-			Dom.append(attention.render(), attentionsContainer);
-		});
+
+		this.#attentions.forEach((attention) => Dom.append(attention.render(), attentionsContainer));
 
 		return attentionsContainer;
 	}
 
-	getPreviousTextContainer(): HTMLElement
+	#resetTextContainer(): void
 	{
-		return Tag.render`<div class="crm-copilot-textbox__previous-text">${this.previousTextContent}</div>`;
+		this.#getTextContainer().innerHTML = this.#text;
 	}
 
-	resetTextContainer(): void
-	{
-		this.getTextContainer().innerHTML = this.text;
-	}
-
-	switchStyle(node, fromStyle, toStyle): void
+	#switchStyle(node: HTMLElement, fromStyle: string, toStyle: string): void
 	{
 		if (Dom.hasClass(node, fromStyle) && !Dom.hasClass(node, toStyle))
 		{
@@ -219,4 +264,41 @@ export class Textbox
 			Dom.removeClass(node, fromStyle);
 		}
 	}
+
+	#handleCollapse(): void
+	{
+		this.#isCollapsed = !this.#isCollapsed;
+
+		const rootNode = this.get();
+		const wrapperNode = rootNode.querySelector('.crm-copilot-textbox__wrapper');
+		const iconNode = rootNode.querySelector('.crm-copilot-textbox__collapse-icon');
+		const bodyNode = rootNode.querySelector('.crm-copilot-textbox__body');
+		const searchNode = rootNode.querySelector('.crm-copilot-textbox__search');
+
+		// some animation
+		Dom.removeClass(bodyNode, 'body-toggle-animation');
+		Dom.addClass(bodyNode, 'body-toggle-animation');
+
+		if (this.#isCollapsed)
+		{
+			Dom.style(rootNode, 'padding-bottom', 0);
+			Dom.removeClass(wrapperNode, this.#className.bodyExpanded);
+			Dom.addClass(searchNode, this.#className.nodeHidden);
+
+			this.#switchStyle(iconNode, this.#className.arrowTopIcon, this.#className.arrowDownIcon);
+		}
+		else
+		{
+			Dom.style(rootNode, 'padding-bottom', ROOT_CONTAINER_BOTTOM_PADDING);
+			Dom.addClass(wrapperNode, this.#className.bodyExpanded);
+			Dom.removeClass(searchNode, this.#className.nodeHidden);
+
+			this.#switchStyle(iconNode, this.#className.arrowDownIcon, this.#className.arrowTopIcon);
+		}
+	}
 }
+
+export {
+	Attention,
+	AttentionPresets,
+};

@@ -1,0 +1,49 @@
+.hr-hcmlink-item-user__container {
+	display: flex;
+	flex-grow: 4;
+	flex-basis: 250px;
+	border: 1px solid var(--ui-color-base-10);
+	border-radius: 6px;
+	padding: 13px 11px;
+	background-color: var(--ui-color-palette-white-base);
+}
+
+.hr-hcmlink-item-user__container_person {
+	border: 2px solid #FFE1A6;
+}
+
+.hr-hcmlink-item-user_info {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	margin-right: auto;
+	justify-content: center;
+}
+
+.hr-hcmlink-item-user__avatar {
+	width: 36px;
+	height: 36px;
+	min-width: 36px;
+	min-height: 36px;
+	border-radius: 50%;
+	overflow: hidden;
+	float: left;
+	margin-right: 12px;
+	display: flex;
+}
+
+.hr-hcmlink-item-user__info-name {
+	font-size: var(--ui-font-size-xl);
+	font-family: var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-90);
+	margin-bottom: 4px;
+}
+
+.hr-hcmlink-item-user__info-position {
+	font-size: var(--ui-font-size-xs);
+	font-family: var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-60);
+}
+
+
+

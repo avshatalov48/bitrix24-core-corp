@@ -57,8 +57,11 @@ export class Phone
 		{
 			return function(e)
 			{
-				inputNode.parentNode.querySelector('#phone_number_' + i).value = e.value;
-				inputNode.parentNode.querySelector('#phone_country_' + i).value = e.country;
+				if (Type.isDomNode(inputNode.parentNode))
+				{
+					inputNode.parentNode.querySelector('#phone_number_' + i).value = e.value;
+					inputNode.parentNode.querySelector('#phone_country_' + i).value = e.country;
+				}
 			}
 		};
 

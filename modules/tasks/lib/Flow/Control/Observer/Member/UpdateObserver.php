@@ -5,9 +5,8 @@ namespace Bitrix\Tasks\Flow\Control\Observer\Member;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Tasks\Flow\Control\Command\UpdateCommand;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotUpdatedException;
-use Bitrix\Tasks\Flow\Control\Mapper\CreatorsCommandMapper;
 use Bitrix\Tasks\Flow\Control\Observer\UpdateObserverInterface;
-use Bitrix\Tasks\Flow\Flow;
+use Bitrix\Tasks\Flow\Distribution\FlowDistributionType;
 use Bitrix\Tasks\Flow\Internal\Entity\FlowEntity;
 use Bitrix\Tasks\Flow\Internal\Entity\Role;
 use Bitrix\Tasks\Flow\Internal\FlowMemberTable;
@@ -16,14 +15,8 @@ class UpdateObserver implements UpdateObserverInterface
 {
 	use FlowMemberTrait;
 
-	protected CreatorsCommandMapper $mapper;
 	protected UpdateCommand $command;
 	protected FlowEntity $flowEntity;
-
-	public function __construct()
-	{
-		$this->mapper = new CreatorsCommandMapper();
-	}
 
 	/**
 	 * @throws FlowNotUpdatedException
@@ -41,7 +34,7 @@ class UpdateObserver implements UpdateObserverInterface
 
 		$this->cleanUpByChanges($flowEntityBeforeUpdate);
 
-		$members = $this->getMembers();
+		$members = $this->getMembers($command, $flowEntity);
 
 		if ($members->isEmpty())
 		{
@@ -56,6 +49,7 @@ class UpdateObserver implements UpdateObserverInterface
 	/**
 	 * @throws ArgumentException
 	 */
+	//TODO refactor by distributionType
 	private function cleanUpByChanges(FlowEntity $flowEntityBeforeUpdate): void
 	{
 		if (isset($this->command->taskCreators))
@@ -73,24 +67,37 @@ class UpdateObserver implements UpdateObserverInterface
 			FlowMemberTable::deleteByRole($this->command->id, Role::CREATOR->value);
 		}
 
+		$flowEntityBeforeUpdateDistributionType = $flowEntityBeforeUpdate->getDistributionType();
+		$flowEntityDistributionType = $this->flowEntity->getDistributionType();
+
 		$isSwitchedFromQueue =
-			$flowEntityBeforeUpdate->getDistributionType() === Flow::DISTRIBUTION_TYPE_QUEUE
-			&& $this->flowEntity->getDistributionType() !== Flow::DISTRIBUTION_TYPE_QUEUE
+			$flowEntityBeforeUpdateDistributionType === FlowDistributionType::QUEUE->value
+			&& $flowEntityDistributionType !== FlowDistributionType::QUEUE->value
 		;
 
-		if ($this->hasQueue() || $isSwitchedFromQueue)
+		if ($this->hasResponsibleQueue() || $isSwitchedFromQueue)
 		{
 			FlowMemberTable::deleteByRole($this->command->id, Role::QUEUE_ASSIGNEE->value);
 		}
 
 		$isSwitchedFromManual =
-			$flowEntityBeforeUpdate->getDistributionType() === Flow::DISTRIBUTION_TYPE_MANUALLY
-			&& $this->flowEntity->getDistributionType() !== Flow::DISTRIBUTION_TYPE_MANUALLY
+			$flowEntityBeforeUpdateDistributionType === FlowDistributionType::MANUALLY->value
+			&& $flowEntityDistributionType !== FlowDistributionType::MANUALLY->value
 		;
 
 		if ($this->hasManualDistributor() || $isSwitchedFromManual)
 		{
 			FlowMemberTable::deleteByRole($this->command->id, Role::MANUAL_DISTRIBUTOR->value);
+		}
+
+		$isSwitchedFromHimself =
+			$flowEntityBeforeUpdateDistributionType === FlowDistributionType::HIMSELF->value
+			&& $flowEntityDistributionType !== FlowDistributionType::HIMSELF->value
+		;
+
+		if ($this->hasResponsibleHimself() || $isSwitchedFromHimself)
+		{
+			FlowMemberTable::deleteByRole($this->command->id, Role::HIMSELF_ASSIGNED->value);
 		}
 	}
 
@@ -100,8 +107,9 @@ class UpdateObserver implements UpdateObserverInterface
 			isset($this->command->taskCreators)
 			|| isset($this->command->ownerId)
 			|| isset($this->command->creatorId)
-			|| $this->hasQueue()
+			|| $this->hasResponsibleQueue()
 			|| $this->hasManualDistributor()
+			|| $this->hasResponsibleHimself()
 		;
 	}
 }

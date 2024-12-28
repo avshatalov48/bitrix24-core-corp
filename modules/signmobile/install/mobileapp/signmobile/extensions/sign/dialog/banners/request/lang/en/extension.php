@@ -1,5 +1,5 @@
 <?php
 $MESS["SIGN_MOBILE_DIALOG_REQUEST_BUTTON_CLOSE"] = "Sign later";
 $MESS["SIGN_MOBILE_DIALOG_REQUEST_BUTTON_START_SIGNING"] = "Sign now";
-$MESS["SIGN_MOBILE_DIALOG_REQUEST_DESCRIPTION"] = "Once the document [COLOR=\"#COLOR_OF_HIGHLIGHTED_TEXT#\"]#DOCUMENT_TITLE#[/COLOR] is signed, it will be available in your profile on the [COLOR=\"#COLOR_OF_HIGHLIGHTED_TEXT#\"]Signed documents[/COLOR] tab.";
+$MESS["SIGN_MOBILE_DIALOG_REQUEST_DESCRIPTION_MSGVER_1"] = "After you sign [COLOR=\"#COLOR_OF_HIGHLIGHTED_TEXT#\"]\"#DOCUMENT_TITLE#\"[/COLOR], it will be available in your profile on the [COLOR=\"#COLOR_OF_HIGHLIGHTED_TEXT#\"]My documents[/COLOR] tab.";
 $MESS["SIGN_MOBILE_DIALOG_REQUEST_TITLE"] = "Sign document";

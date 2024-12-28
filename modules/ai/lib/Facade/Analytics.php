@@ -12,6 +12,28 @@ use Bitrix\Main\Engine\Response\Converter;
 
 class Analytics
 {
+	private const PROMPT_SECTION_REWRITE = [
+		'set_ai_session_name' => 'system_chat',
+
+		'translate_picture_request' => 'system_pic',
+
+		'summarize_transcript' => 'system_crm_call',
+		'extract_form_fields' => 'system_crm_call',
+		'scoring_criteria_extraction' => 'system_crm_call',
+		'call_scoring' => 'system_crm_call',
+
+		'flows_recommendations' => 'system_flow',
+
+		'meeting_summarization' => 'system_videocall',
+		'meeting_overview' => 'system_videocall',
+		'meeting_insights' => 'system_videocall',
+
+		'site_ai_data' => 'system_site',
+		'site_ai_blocks_content' => 'system_site',
+		'site_ai_image_prompts_text' => 'system_site',
+		'site_ai_block_content' => 'system_site',
+	];
+
 	public static function engineGenerateResultEvent(
 		string $eventType,
 		IEngine $engine,
@@ -31,15 +53,16 @@ class Analytics
 			$section = ($engine->getPayload() instanceof Prompt) ? $engine->getPayload()->getPromptCategory() : '';
 			$promptCode = ($engine->getPayload() instanceof Prompt) ? 'prompt_' . $converter->process($engine->getPayload()->getPromptCode()) : '';
 			$p3 = ($engine->getPayload()->getRole() !== null) ? 'role_' . $converter->process($engine->getPayload()->getRole()->getCode()) : '';
-			if ($engine->getPayload() instanceof Prompt && $engine->getPayload()->hasSystemCategory())
+			if ($engine->getPayload() instanceof Prompt)
 			{
-				$section = 'system';
-			}
-
-			// temp code for catch situation with null prompt
-			if ($engine->getPayload() instanceof Prompt && $promptCode === '')
-			{
-				AddMessage2Log('EMPTY_PROMPT_DEBUG: ' . var_export($engine->getPayload(), true));
+				if (array_key_exists($engine->getPayload()->getPromptCode(), self::PROMPT_SECTION_REWRITE))
+				{
+					$section = self::PROMPT_SECTION_REWRITE[$engine->getPayload()->getPromptCode()];
+				}
+				else if($engine->getPayload()->hasSystemCategory())
+				{
+					$section = 'system';
+				}
 			}
 		}
 

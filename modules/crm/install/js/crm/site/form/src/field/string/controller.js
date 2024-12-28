@@ -6,6 +6,8 @@ type Options = BaseField.Options;
 
 class Controller extends BaseField.Controller
 {
+	#readonly: boolean;
+
 	static type(): string
 	{
 		return 'string';
@@ -27,6 +29,7 @@ class Controller extends BaseField.Controller
 			this.validators.push(Transform.Validator.makeStringLengthValidator(minSize, maxSize));
 			this.normalizers.push(Transform.Normalizer.makeStringLengthNormalizer(maxSize));
 		}
+		this.#readonly = Boolean(options.readonly);
 	}
 
 	get isComponentDuplicable()
@@ -52,6 +55,11 @@ class Controller extends BaseField.Controller
 	getInputAutocomplete(): string
 	{
 		return null;
+	}
+
+	isReadonly(): boolean
+	{
+		return this.#readonly === true;
 	}
 }
 

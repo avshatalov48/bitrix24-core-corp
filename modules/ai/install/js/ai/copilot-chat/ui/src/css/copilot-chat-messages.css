@@ -1,0 +1,31 @@
+.ai__copilot-chat-messages {
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	justify-content: flex-end;
+	align-items: flex-start;
+	list-style-type: none;
+}
+
+.ai__copilot-chat-messages_message-wrapper {
+	width: 100%;
+	margin-top: 4px;
+	animation: ease-in copilot-chat-message-fade-in 0.15s;
+	animation-fill-mode: forwards;
+}
+
+.ai__copilot-chat-messages_message-wrapper:last-child {
+	margin-bottom: 0;
+}
+
+@keyframes copilot-chat-message-fade-in {
+	0% {
+		opacity: 0.2;
+	}
+	100% {
+		opacity: 1;
+	}
+}

@@ -7,7 +7,8 @@ use Bitrix\Main\Localization\Loc;
 enum Parameter: string
 {
 	case CurrentUser = 'current_user';
-	case BizprocItemId = 'biz_process_id';
+	case WorkflowTemplateId = 'workflow_template_id';
+	case TasksFlowsFlowId = 'tasks_flows_flow_id';
 
 	/**
 	 * @return string

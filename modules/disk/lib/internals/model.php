@@ -326,6 +326,26 @@ abstract class Model implements \ArrayAccess, IErrorable
 	}
 
 	/**
+	 * Returns list of models by specific filter by id.
+	 * @param array $ids List of ids.
+	 * @param array $with List of eager loading.
+	 * @return mixed
+	 */
+	public static function loadBatchById(array $ids, array $with = []): array
+	{
+		if (empty($ids))
+		{
+			return [];
+		}
+
+		return static::getModelList([
+			'select' => ['*'],
+			'filter' => ['@ID' => $ids],
+			'with' => $with,
+		]);
+	}
+
+	/**
 	 * Returns once model by specific filter.
 	 * @param array $filter Filter.
 	 * @param array $with List of eager loading.

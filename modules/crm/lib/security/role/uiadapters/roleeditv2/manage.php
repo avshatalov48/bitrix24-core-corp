@@ -2,15 +2,19 @@
 
 namespace Bitrix\Crm\Security\Role\UIAdapters\RoleEditV2;
 
+use Bitrix\Crm\Security\Role\Exceptions\RoleNotFoundException;
 use Bitrix\Crm\Security\Role\Manage\DTO\EntityDTO;
 use Bitrix\Crm\Security\Role\Manage\DTO\PermissionModel;
-use Bitrix\Crm\Security\Role\Manage\Entity\CrmConfig;
+use Bitrix\Crm\Security\Role\Manage\Entity\AutomatedSolutionConfig;
+use Bitrix\Crm\Security\Role\Manage\Entity\AutomatedSolutionList;
+use Bitrix\Crm\Security\Role\Manage\Entity\ButtonConfig;
+use Bitrix\Crm\Security\Role\Manage\Entity\WebFormConfig;
+use Bitrix\Crm\Security\Role\Manage\Permissions\HideSum;
 use Bitrix\Crm\Security\Role\Manage\RoleManagementModelBuilder;
-use Bitrix\Crm\Security\Role\Exceptions\RoleNotFoundException;
+use Bitrix\Crm\Security\Role\Model\RoleTable;
 use Bitrix\Crm\Security\Role\Repositories\PermissionRepository;
 use Bitrix\Crm\Security\Role\Utils\RoleManagerUtils;
 use Bitrix\Crm\Security\Role\Validators\RoleNameValidator;
-use Bitrix\Crm\Security\Role\Model\RoleTable;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
@@ -25,12 +29,15 @@ class Manage
 
 	private RoleNameValidator $roleNameValidator;
 
+	private MultivariablesCompatibilityAdapter $adapter;
+
 	public function __construct()
 	{
 		$this->entitiesBuilder = RoleManagementModelBuilder::getInstance();
 		$this->permissionRepository = PermissionRepository::getInstance();
 		$this->utils = RoleManagerUtils::getInstance();
 		$this->roleNameValidator = RoleNameValidator::getInstance();
+		$this->adapter = new MultivariablesCompatibilityAdapter();
 	}
 
 	public function getRoleData(?int $roleId): RoleData
@@ -42,18 +49,24 @@ class Manage
 		if ($roleId > 0)
 		{
 			$roleDto = $this->getRoleOrThrow($roleId);
-			$rolAssignedPermissions = $this->permissionRepository->getRoleAssignedPermissions($roleId);
+			$roleAssignedPermissions = $this->permissionRepository->getRoleAssignedPermissions($roleId);
 		}
 		else
 		{
 			$roleDto = RoleDTO::createBlank();
-			$rolAssignedPermissions = $this->permissionRepository->getDefaultRoleAssignedPermissions($permissionEntities);
+			$roleAssignedPermissions = $this->permissionRepository->getDefaultRoleAssignedPermissions($permissionEntities);
 		}
+
+		$permissionEntities = $this->adaptVariants($permissionEntities, $roleAssignedPermissions);
+		$roleAssignedPermissions = $this->adapter->prepareRoleAssignedPermissions(
+			$this->entitiesBuilder,
+			$roleAssignedPermissions,
+		);
 
 		return new RoleData(
 			$roleDto,
 			$permissionEntities,
-			$rolAssignedPermissions,
+			$roleAssignedPermissions,
 			$this->permissionRepository->getTariffRestrictions(),
 		);
 	}
@@ -109,6 +122,7 @@ class Manage
 		$permissions = $data['permissions'] ?? [];
 		$toRemove = PermissionModel::creteFromAppFormBatch($permissions['toRemove'] ?? []);
 		$toChange = PermissionModel::creteFromAppFormBatch($permissions['toChange'] ?? []);
+		$toChange = (new \Bitrix\Crm\Security\Role\UIAdapters\RoleEditV2\MultivariablesCompatibilityAdapter())->prepareChangedValues($toChange);
 
 		$this->utils->saleUpdateShopAccess();
 		$this->utils->clearRolesCache();
@@ -158,19 +172,63 @@ class Manage
 	 */
 	private function excludeEntitiesIfNecessary(array $entities): array
 	{
-		$excludeEntities = ['CONFIG'];
+		$excludeEntities = [
+			'CONFIG',
+			WebFormConfig::CODE,
+			ButtonConfig::CODE,
+			AutomatedSolutionList::ENTITY_CODE,
+		];
+
+		$excludeByPrefixes = [
+			AutomatedSolutionConfig::ENTITY_CODE_PREFIX,
+		];
 
 		$result = [];
 		foreach ($entities as $entity)
 		{
-			if (in_array($entity->code(), $excludeEntities))
+			if (in_array($entity->code(), $excludeEntities, true))
 			{
 				continue;
 			}
+
+			foreach ($excludeByPrefixes as $prefix)
+			{
+				if (str_starts_with($entity->code(), $prefix))
+				{
+					continue 2;
+				}
+			}
+
 			$result[] = $entity;
 		}
 
 		return $result;
 	}
 
+	/**
+	 * @param EntityDTO[] $entities
+	 * @param array[] $roleAssignedPermissions
+	 *
+	 * @return EntityDTO[]
+	 */
+	private function adaptVariants(array $entities, array $roleAssignedPermissions): array
+	{
+		$permissionEntities = $this->adapter->preparePermissionValues($entities, $roleAssignedPermissions);
+
+		foreach ($permissionEntities as $entity)
+		{
+			foreach ($entity->permissions() as $permission)
+			{
+				if ($permission->code() !== 'HIDE_SUM')
+				{
+					continue;
+				}
+
+				// EditApp inserts 'inherit' variants to all 'hasStages' permissions manually
+				$permission->variants()?->remove(HideSum::INHERIT);
+			}
+		}
+
+		return $permissionEntities;
+	}
 }

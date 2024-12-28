@@ -28,3 +28,9 @@
 .tasks-log-pseudo-link {
 	cursor: pointer;
 }
+
+.task-log-author.task-log-author-collaber,
+.task-log-link-collaber,
+.task-log-author-text.task-log-author-collaber {
+	color: #19CC45;
+}

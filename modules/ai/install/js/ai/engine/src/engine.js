@@ -16,6 +16,7 @@ export class Engine
 	static saveImageUrl						= '/bitrix/services/main/ajax.php?action=ai.api.image.save';
 	static getToolingUrl					= '/bitrix/services/main/ajax.php?action=ai.api.tooling.get';
 	static getImageToolingUrl				= '/bitrix/services/main/ajax.php?action=ai.api.image.getTooling';
+	static getImageParamsUrl				= '/bitrix/services/main/ajax.php?action=ai.api.image.getParams';
 	static installKitUrl					= '/bitrix/services/main/ajax.php?action=ai.api.tooling.installKit';
 	static getRolesListUrl					= '/bitrix/services/main/ajax.php?action=ai.api.role.list';
 	static getRolesDialogDataUrl			= '/bitrix/services/main/ajax.php?action=ai.api.role.picker';
@@ -279,6 +280,41 @@ export class Engine
 				method: 'POST',
 				dataType: 'json',
 				url: Engine.getImageToolingUrl,
+				data: fd,
+				start: false,
+				preparePost: false,
+				onsuccess: (response) => {
+					if (response.status === 'error')
+					{
+						reject(response);
+					}
+					else
+					{
+						resolve(response);
+					}
+				},
+				onfailure: reject,
+			});
+
+			xhr.send(fd);
+		});
+	}
+
+	getImageEngineParams(engineCode: string): Promise<AjaxResponse<ImageCopilotParams>>
+	{
+		this.#addSystemParameters();
+
+		const data = {
+			engineCode,
+			parameters: this.#parameters,
+		};
+
+		return new Promise((resolve, reject) => {
+			const fd = Http.Data.convertObjectToFormData(data);
+			const xhr = ajax({
+				method: 'POST',
+				dataType: 'json',
+				url: Engine.getImageParamsUrl,
 				data: fd,
 				start: false,
 				preparePost: false,

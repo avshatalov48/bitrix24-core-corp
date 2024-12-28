@@ -812,13 +812,25 @@
 
 	class ProjectViewManager
 	{
-		static async open(userId, projectId, parentWidget = PageManager)
+		static async open(userId, projectId, parentWidget = PageManager, isCollab = false, dialogId = '')
 		{
 			await tariffPlanRestrictionsReady();
 			const { isRestricted, showRestriction } = getFeatureRestriction('socialnetwork_projects_groups');
 			if (isRestricted())
 			{
 				showRestriction({ parentWidget });
+
+				return;
+			}
+
+			if (isCollab)
+			{
+				if (dialogId)
+				{
+					void requireLazy('im:messenger/api/dialog-opener')
+						.then(({ DialogOpener }) => DialogOpener.open({ dialogId }))
+					;
+				}
 
 				return;
 			}

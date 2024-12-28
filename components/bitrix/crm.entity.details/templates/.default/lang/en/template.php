@@ -1,4 +1,5 @@
 <?php
+$MESS["CRM_ENT_DETAIL_BIZPROC_STARTER_LABEL"] = "Workflows";
 $MESS["CRM_ENT_DETAIL_BUTTON_CANCEL"] = "Cancel";
 $MESS["CRM_ENT_DETAIL_BUTTON_SAVE"] = "Save";
 $MESS["CRM_ENT_DETAIL_COMPANY_DELETE_DIALOG_MESSAGE"] = "Are you sure you want to delete the company?";

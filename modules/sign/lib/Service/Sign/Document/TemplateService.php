@@ -4,11 +4,10 @@ namespace Bitrix\Sign\Service\Sign\Document;
 
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\Result;
+use Bitrix\Sign\Item\Document\Template;
 use Bitrix\Sign\Item\Document\TemplateCollection;
 use Bitrix\Sign\Repository\Document\TemplateRepository;
-use Bitrix\Sign\Repository\DocumentRepository;
 use Bitrix\Sign\Service\Container;
-use Bitrix\Sign\Service\Sign\DocumentService;
 
 final class TemplateService
 {
@@ -36,5 +35,15 @@ final class TemplateService
 	public function updateTitle(int $templateId, string $title): Result
 	{
 		return $this->templateRepository->updateTitle($templateId, $title);
+	}
+
+	public function getById(int $templateId): ?Template
+	{
+		if ($templateId < 1)
+		{
+			return null;
+		}
+
+		return $this->templateRepository->getById($templateId);
 	}
 }

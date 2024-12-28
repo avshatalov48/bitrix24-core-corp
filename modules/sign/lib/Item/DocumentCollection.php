@@ -102,6 +102,11 @@ class DocumentCollection implements ItemCollection, \Iterator, \Countable
 		return IterationHelper::all($this->items, $rule);
 	}
 
+	public function any(\Closure $rule): bool
+	{
+		return IterationHelper::any($this->items, $rule);
+	}
+
 	public function filter(\Closure $rule): DocumentCollection
 	{
 		$result = new static();
@@ -152,5 +157,27 @@ class DocumentCollection implements ItemCollection, \Iterator, \Countable
 		});
 
 		return new static(...$items);
+	}
+
+	/**
+	 * @return list<int>
+	 */
+	public function listIdsWithoutNull(): array
+	{
+		$ids = [];
+		foreach ($this->items as $item)
+		{
+			if ($item->id !== null)
+			{
+				$ids[] = $item->id;
+			}
+		}
+
+		return $ids;
+	}
+
+	public function getFirst(): ?Document
+	{
+		return $this->items[0] ?? null;
 	}
 }

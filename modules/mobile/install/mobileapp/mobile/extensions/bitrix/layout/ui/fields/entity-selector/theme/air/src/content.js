@@ -48,16 +48,11 @@ jn.define('layout/ui/fields/entity-selector/theme/air/src/content', (require, ex
 			{
 				content = preparedEntityList.map((entity, index) => Entity({
 					field,
-					id: entity.id,
-					title: field.getEntityTitle(entity),
-					subtitle: entity.subtitle,
-					imageUrl: entity.imageUrl,
-					avatar: entity.avatar,
+					...entity,
 					indent: Indent.M,
-					type: entity.type,
+					title: field.getEntityTitle(entity),
 					isFirst: index === 0,
 					isLast: index === entityList.length - 1,
-					customData: entity.customData,
 				}));
 			}
 

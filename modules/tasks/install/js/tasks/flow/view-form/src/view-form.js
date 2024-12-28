@@ -1,4 +1,5 @@
 import { Dom, Event, Loc, Tag, Text, Type } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { Popup, PopupManager } from 'main.popup';
 import { TeamPopup } from 'tasks.flow.team-popup';
@@ -8,6 +9,7 @@ import { SegmentButton } from './layout/segment-button';
 import { ViewAjax } from './view-ajax';
 import { SimilarFlows } from './similar-flows';
 import type { Entity, FlowFormData } from './view-ajax';
+import 'ui.notification';
 
 import './style.css';
 
@@ -15,6 +17,7 @@ type Params = {
 	flowId: number,
 	bindElement: HTMLElement,
 	isFeatureEnabled: 'Y' | 'N',
+	flowUrl: string,
 };
 
 export class ViewForm
@@ -31,6 +34,8 @@ export class ViewForm
 		similarFlows: SimilarFlows,
 	};
 
+	#notificationList: Set = new Set();
+
 	#viewAjax: ViewAjax;
 
 	#selectedSegment: string;
@@ -45,8 +50,10 @@ export class ViewForm
 		this.#viewAjax = new ViewAjax(this.#params.flowId);
 
 		this.isFeatureEnabled = params.isFeatureEnabled === 'Y';
+		this.flowUrl = params.flowUrl;
 
 		void this.#load();
+		this.#subscribeEvents();
 	}
 
 	static showInstance(params: Params): void
@@ -59,6 +66,23 @@ export class ViewForm
 		this.instances[params.flowId] ??= new this(params);
 
 		return this.instances[params.flowId];
+	}
+
+	static removeInstance(flowId: number): void
+	{
+		if (Object.hasOwn(this.instances, flowId))
+		{
+			delete this.instances[flowId];
+		}
+	}
+
+	#subscribeEvents(): void
+	{
+		EventEmitter.subscribe('BX.Tasks.Flow.EditForm:afterSave', (event) => {
+			const flowId = event.data?.id ?? 0;
+
+			ViewForm.removeInstance(flowId);
+		});
 	}
 
 	async #load(): Promise
@@ -143,12 +167,7 @@ export class ViewForm
 		return Tag.render`
 			<div class="tasks-flow__view-form_header">
 				<div class="tasks-flow__view-form_header-title">
-					<div
-						class="tasks-flow__view-form-header_title-text"
-						title="${Text.encode(this.#viewFormData.flow.name)}"
-					>
-						${Text.encode(this.#viewFormData.flow.name)}
-					</div>
+					${this.#renderTitle()}
 					<div class="tasks-flow__view-form-header_title-efficiency">
 						${this.#renderEfficiencyLabel(this.#viewFormData.flow.efficiency)}
 					</div>
@@ -182,6 +201,55 @@ export class ViewForm
 			size: LabelSize.SM,
 			fill: true,
 		}).render();
+	}
+
+	#renderTitle(): HTMLElement
+	{
+		const title = Tag.render`
+			<div class="tasks-flow__view-form-header_title-link">
+				<div
+					class="tasks-flow__view-form-header_title-text"
+					title="${Text.encode(this.#viewFormData.flow.name)}"
+				>
+					${Text.encode(this.#viewFormData.flow.name)}
+				</div>
+				<div 
+					class="tasks-flow__view-form-header_title-link-icon ui-icon-set --link-3"
+					style="--ui-icon-set__icon-size: 16px;"
+					title="${Loc.getMessage('TASKS_FLOW_VIEW_FORM_LINK_TITLE')}"
+				></div>
+			</div>
+		`;
+
+		Event.bind(title, 'click', () => {
+			const notificationId = 'copy-link';
+
+			if (!this.#notificationList.has(notificationId))
+			{
+				const flowURL = window.location.protocol + this.flowUrl;
+				BX.clipboard.copy(flowURL);
+
+				BX.UI.Notification.Center.notify({
+					id: notificationId,
+					content: Loc.getMessage('TASKS_FLOW_VIEW_FORM_TITLE_COPY_LINK'),
+				});
+
+				this.#notificationList.add(notificationId);
+
+				EventEmitter.subscribeOnce(
+					'UI.Notification.Balloon:onClose',
+					(baseEvent: BaseEvent) => {
+						const closingBalloon = baseEvent.getTarget();
+						if (closingBalloon.getId() === notificationId)
+						{
+							this.#notificationList.delete(notificationId);
+						}
+					},
+				);
+			}
+		});
+
+		return title;
 	}
 
 	#renderContent(): HTMLElement

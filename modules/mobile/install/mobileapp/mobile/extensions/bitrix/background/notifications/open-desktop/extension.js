@@ -50,6 +50,7 @@ jn.define('background/notifications/open-desktop', (require, exports, module) =>
 		{
 			qrauth.open({
 				title: Loc.getMessage('OPEN_DESKTOP_NOTIFICATION_QRAUTH_TITLE'),
+				analyticsSection: 'marketing_push',
 			});
 		}
 	}

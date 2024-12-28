@@ -1,5 +1,4 @@
 <?php
-$MESS["AUTH_PROFILE"] = "Моя страница";
 $MESS["AUTH_LOGOUT"] = "Выйти";
 $MESS["AUTH_NOTIFICATION"] = "Уведомления";
 $MESS["AUTH_AUTH"] = "Авторизация";
@@ -63,6 +62,7 @@ $MESS["INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_ALL_DEVICE_ERROR"] = "Про�
 $MESS["INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_ALL_DEVICE_TITLE"] = "Подтвердите действие";
 $MESS["INTRANET_USER_PROFILE_HISTORY_BUTTON_SHOW_FULL_LIST"] = "Показать всю историю входов";
 $MESS["INTRANET_USER_PROFILE_extranet"] = "Экстранет";
+$MESS["INTRANET_USER_PROFILE_collaber"] = "Гость";
 $MESS["INTRANET_USER_PROFILE_visitor"] = "Посетитель";
 $MESS["INTRANET_USER_PROFILE_fired"] = "Уволен";
 $MESS["INTRANET_USER_PROFILE_invited"] = "Приглашен";
@@ -71,8 +71,8 @@ $MESS["INTRANET_USER_PROFILE_admin"] = "Администратор";
 $MESS["INTRANET_USER_PROFILE_email"] = "Почтовый пользователь";
 $MESS["INTRANET_USER_PROFILE_shop"] = "Пользователь магазина";
 $MESS["INTRANET_USER_PROFILE_DISABLED"] = "Отключён";
-$MESS["INTRANET_USER_PROFILE_SIGNDOCUMENT_TITLE"] = "Кадровые документы";
-$MESS["INTRANET_USER_PROFILE_SIGNDOCUMENT_TITLE_HINT"] = "Создайте, подпишите электронной подписью и отправьте заявление или документ в компанию";
-$MESS["INTRANET_USER_PROFILE_SIGNDOCUMENT_CREATE_DOCUMENT"] = "Создать документ";
-$MESS["INTRANET_USER_PROFILE_SIGNDOCUMENT_TRACK_SIGNING"] = "Следить за подписанием";
-$MESS["INTRANET_USER_PROFILE_SIGNDOCUMENT_TRACK_SIGNING_HINT"] = "Просматривайте отправленные в компанию документы и следите за процессом согласования или подписания";
+$MESS["INTRANET_USER_PROFILE_SIGNDOCUMENT_TITLE"] = "Мои документы";
+$MESS["INTRANET_USER_PROFILE_SIGNDOCUMENT_TITLE_HINT"] = "Заявления на отпуск, командировку и другие";
+$MESS["INTRANET_USER_PROFILE_SIGNDOCUMENT_CREATE_DOCUMENT"] = "Создать";
+$MESS["INTRANET_USER_PROFILE_SIGNDOCUMENT_HCMLINK_SALARY_VACATION"] = "Посмотреть зарплату и отпуск";
+$MESS["INTRANET_USER_PROFILE_SIGNDOCUMENT_HCMLINK_SALARY_VACATION_DISABLED"] = "Чтобы получить доступ к расчётным листкам и остаткам отпуска, попросите руководителя или администратора вашего Битрикс24 настроить раздел. [LINK]Подробнее[/LINK]";

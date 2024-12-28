@@ -52,6 +52,7 @@ jn.define('intranet/statemanager/redux/slices/employees/selector', (require, exp
 			const isActive = user.employeeStatus === EmployeeStatus.ACTIVE.getValue();
 			const isFired = user.employeeStatus === EmployeeStatus.FIRED.getValue();
 			const isAwaitingApproval = user.employeeStatus === EmployeeStatus.INVITE_AWAITING_APPROVE.getValue();
+			const isIntranetUser = !user.isExtranet && !user.isCollaber;
 
 			const canReinvite = isNotCurrentUser && canUserBeReinvited && canInvite && isInvited;
 
@@ -63,7 +64,7 @@ jn.define('intranet/statemanager/redux/slices/employees/selector', (require, exp
 				[EmployeeActions.REINVITE_WITH_CHANGE_CONTACT.getValue()]: canReinvite,
 				[EmployeeActions.CHANGE_PHONE.getValue()]: canReinvite && user.personalMobile,
 				[EmployeeActions.CHANGE_EMAIL.getValue()]: canReinvite && user.email,
-				[EmployeeActions.CHANGE_DEPARTMENT.getValue()]: isAdmin && (isInvited || isActive),
+				[EmployeeActions.CHANGE_DEPARTMENT.getValue()]: isAdmin && (isInvited || isActive) && isIntranetUser,
 				[EmployeeActions.CONFIRM_USER_REQUEST.getValue()]: isNotCurrentUser && isAdmin && isAwaitingApproval,
 				[EmployeeActions.DECLINE_USER_REQUEST.getValue()]: isNotCurrentUser && isAdmin && isAwaitingApproval,
 			};

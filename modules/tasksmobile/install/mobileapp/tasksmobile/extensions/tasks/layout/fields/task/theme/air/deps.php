@@ -5,16 +5,17 @@ return [
 		'layout/ui/fields/theme',
 		'layout/ui/fields/theme/air/elements/field-wrapper',
 		'layout/ui/fields/entity-selector/theme/air',
-		'tasks:layout/task/fields/task',
 
 		'tokens',
+		'utils/skeleton',
 		'ui-system/typography/text',
 		'ui-system/blocks/icon',
-		'tasks:layout/deadline-pill',
+		'ui-system/blocks/avatar',
+
 		'tasks:enum',
 		'tasks:entry',
-		'layout/ui/user/avatar',
-		'utils/skeleton',
+		'tasks:layout/deadline-pill',
+		'tasks:layout/task/fields/task',
 	],
 	'bundle' => [
 		'./src/entity',

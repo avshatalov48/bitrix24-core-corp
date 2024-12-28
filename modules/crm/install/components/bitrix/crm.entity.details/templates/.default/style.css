@@ -292,3 +292,30 @@ input.pagetitle-item {
 	position: relative;
 	height: 32px;
 }
+
+.crm-entity-section-menu-wrap {
+	display: flex;
+}
+
+.crm-entity-bizproc-container {
+	flex: 1;
+	padding-top: 13px;
+	display: flex;
+	justify-content: flex-end;
+}
+
+.crm-entity-section-tabs .main-buttons-item.main-buttons-item-more {
+	padding-right: 32px;
+}
+
+.bp_starter {
+	--ui-btn-border-color: #34c6f6;
+}
+
+.bp_starter svg {
+	margin-right: 7px;
+}
+
+.crm-entity-section-menu-wrap .crm-entity-section-tabs {
+	flex: 5;
+}

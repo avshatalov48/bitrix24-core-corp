@@ -3,11 +3,19 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/element/file/file', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Icon } = require('assets/icons');
+	const { Feature: MobileFeature } = require('feature');
+	const {
+		Icon,
+		resolveFileIcon,
+	} = require('assets/icons');
 	const { EasyIcon } = require('layout/ui/file/icon');
 
 	const { getArrowInCircle } = require('im/messenger/assets/common');
-	const { formatFileSize, getShortFileName } = require('im/messenger/lib/helper/file');
+	const {
+		formatFileSize,
+		getShortFileName,
+		getFileIconTypeByExtension,
+	} = require('im/messenger/lib/helper/file');
 
 	class File
 	{
@@ -124,10 +132,16 @@ jn.define('im/messenger/lib/element/dialog/message/element/file/file', (require,
 		 */
 		#getIconSvg()
 		{
-			// TODO: Refactor. It is worth moving the SVG generation into a separate function.
-			const easyIcon = EasyIcon(this.fileModel.extension, 24);
+			if (!MobileFeature.isAirStyleSupported())
+			{
+				const easyIcon = EasyIcon(this.fileModel.extension, 24);
 
-			return easyIcon?.children[0]?.props?.svg?.content || '';
+				return easyIcon?.children[0]?.props?.svg?.content || '';
+			}
+
+			const fileIconType = getFileIconTypeByExtension(this.fileModel.extension);
+
+			return resolveFileIcon(this.fileModel.extension, fileIconType).getSvg();
 		}
 	}
 

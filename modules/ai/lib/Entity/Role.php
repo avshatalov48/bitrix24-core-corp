@@ -11,14 +11,13 @@ class Role extends EO_Role
 	use TranslateTrait;
 
 	/**
-	 * Return role name by langCode.
+	 * Return role name
 	 *
-	 * @param string $langCode
 	 * @return string
 	 */
-	public function getName(string $langCode): string
+	public function getName(): string
 	{
-		return self::translate($this->getNameTranslates(), $langCode);
+		return $this->get('ROLE_TRANSLATE_NAME')?->getText() ?? $this->getDefaultName();
 	}
 
 	/**
@@ -42,14 +41,12 @@ class Role extends EO_Role
 	}
 
 	/**
-	 * Return role description by langCode.
+	 * Return role description
 	 *
-	 * @param string $langCode
 	 * @return string
 	 */
-	public function getDescription(string $langCode): string
+	public function getDescription(): string
 	{
-		return self::translate($this->getDescriptionTranslates(), $langCode);
+		return $this->get('ROLE_TRANSLATE_DESCRIPTION')?->getText() ?? $this->getDefaultDescription();
 	}
-
 }

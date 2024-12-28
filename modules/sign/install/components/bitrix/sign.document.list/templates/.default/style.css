@@ -214,3 +214,26 @@
 	display: flex;
 	align-items: center;
 }
+
+.sign-grid-document-title_link {
+	color: var(--ui-color-link-primary-base);
+	text-decoration: none !important;
+	font-size: 15px;
+}
+.sign-grid-document-title_link:hover {
+	border-bottom: 1px solid var(--ui-color-link-primary-base);
+	padding-bottom: 2px;
+	text-decoration: none;
+
+}
+.sign-grid-document-title_text_my_role {
+	margin-top: 3%;
+	color: var(--ui-color-text-subtle);
+	font-size: 12px;
+}
+
+.sign-grid-document-title_current_role {
+	margin-top: 3%;
+	color: var(--ui-color-palette-gray-90);
+	font-size: 12px;
+}

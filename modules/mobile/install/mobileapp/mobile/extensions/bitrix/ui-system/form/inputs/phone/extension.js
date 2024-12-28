@@ -8,7 +8,7 @@ jn.define('ui-system/form/inputs/phone', (require, exports, module) => {
 		getGlobalCountryCode,
 		getFlagImageByCountryCode,
 	} = require('utils/phone');
-	const { Corner, Indent } = require('tokens');
+	const { Corner } = require('tokens');
 	const { phoneUtils } = require('native/phonenumber');
 	const { refSubstitution } = require('utils/function');
 	const { PureComponent } = require('layout/pure-component');
@@ -129,25 +129,17 @@ jn.define('ui-system/form/inputs/phone', (require, exports, module) => {
 				return Icon.EARTH;
 			}
 
-			return View(
-				{
-					style: {
-						width: 22,
-						height: 18,
-						marginRight: Indent.XS.toNumber(),
-					},
+			return Image({
+				uri,
+				resizeMode: 'contain',
+				named: Icon.EARTH.getIconName(),
+				style: {
+					width: 22,
+					height: 18,
+					borderRadius: Corner.XS.toNumber(),
 				},
-				Image({
-					uri,
-					resizeMode: 'contain',
-					named: Icon.EARTH.getIconName(),
-					style: {
-						flex: 1,
-						borderRadius: Corner.XS.toNumber(),
-					},
-					onFailure: this.handleOnFailure,
-				}),
-			);
+				onFailure: this.handleOnFailure,
+			});
 		}
 
 		handleOnFailure = () => {

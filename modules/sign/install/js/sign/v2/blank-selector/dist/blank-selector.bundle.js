@@ -657,9 +657,6 @@ this.BX.Sign = this.BX.Sign || {};
 	    const canUploadNewBlank = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].canUploadNewBlank) != null ? _babelHelpers$classPr2 : true;
 	    const selectorContainer = main_core.Tag.render(_t6 || (_t6 = _$3`
 			<div class="sign-blank-selector">
-				<p class="sign-blank-selector__add-title">
-					${0}
-				</p>
 				${0}
 				${0}
 				<p class="sign-blank-selector__templates_title">
@@ -668,7 +665,7 @@ this.BX.Sign = this.BX.Sign || {};
 				${0}
 				${0}
 			</div>
-		`), main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_ADD_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _tileWidgetContainer)[_tileWidgetContainer], canUploadNewBlank ? babelHelpers.classPrivateFieldLooseBase(this, _uploadButtonsContainer)[_uploadButtonsContainer] : '', main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_RECENT_TEMPLATES_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _blanksContainer)[_blanksContainer], babelHelpers.classPrivateFieldLooseBase(this, _loadMoreButton)[_loadMoreButton]);
+		`), babelHelpers.classPrivateFieldLooseBase(this, _tileWidgetContainer)[_tileWidgetContainer], canUploadNewBlank ? babelHelpers.classPrivateFieldLooseBase(this, _uploadButtonsContainer)[_uploadButtonsContainer] : '', main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_RECENT_TEMPLATES_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _blanksContainer)[_blanksContainer], babelHelpers.classPrivateFieldLooseBase(this, _loadMoreButton)[_loadMoreButton]);
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _page)[_page] === 0) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _loadBlanks)[_loadBlanks](1);
 	    }

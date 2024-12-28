@@ -46,10 +46,11 @@ jn.define('im/messenger/api/dialog-selector/controller', (require, exports, modu
 							this.onUserTypeText({ text });
 						},
 						onItemSelected: (dialogParams) => {
-							this.close()
-							resolve({
-								dialogId: dialogParams.dialogId,
-								name: dialogParams.dialogTitleParams.name,
+							this.close(() => {
+								resolve({
+									dialogId: dialogParams.dialogId,
+									name: dialogParams.dialogTitleParams.name,
+								});
 							});
 						},
 						onMount: () => {
@@ -99,10 +100,10 @@ jn.define('im/messenger/api/dialog-selector/controller', (require, exports, modu
 			this.view.setItems(recentIds, withLoader);
 		}
 
-		close()
+		close(callback)
 		{
 			super.close();
-			this.layout.close();
+			this.layout.close(callback);
 		}
 
 		subscribeEvents() {}

@@ -12,6 +12,7 @@ jn.define('sign/document', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { ResponseMobile } = require('sign/dialog/banners/responsemobile');
 	const { RefusedJustNow } = require('sign/dialog/banners/refusedjustnow');
+	const { InitiatedByType } = require('sign/type/initiated-by-type');
 	const { External } = require('sign/dialog/banners/external');
 	const { NotifyManager } = require('notify-manager');
 	const { showConfirm } = require('sign/dialog/banners/template');
@@ -35,6 +36,7 @@ jn.define('sign/document', (require, exports, module) => {
 				title,
 				isGoskey,
 				isExternal,
+				initiatedByType,
 			} = props;
 
 			this.layout = widget;
@@ -44,6 +46,7 @@ jn.define('sign/document', (require, exports, module) => {
 			this.isGoskey = isGoskey;
 			this.isExternal = isExternal;
 			this.title = title;
+			this.initiatedByType = initiatedByType;
 		}
 
 		clearHeader()
@@ -57,6 +60,11 @@ jn.define('sign/document', (require, exports, module) => {
 
 		render()
 		{
+			const rejectTitleCode  = InitiatedByType.isInitiatedByEmployee(this.initiatedByType)
+				? 'SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_REJECT_BY_EMPLOYEE_TITLE'
+				: 'SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_REJECT_TITLE'
+			;
+
 			return View(
 				{
 					style: {
@@ -120,6 +128,7 @@ jn.define('sign/document', (require, exports, module) => {
 									documentTitle: this.title,
 									memberId: this.memberId,
 									layoutWidget: this.layout,
+									initiatedByType: this.initiatedByType,
 								}));
 							},
 							style: {
@@ -127,7 +136,7 @@ jn.define('sign/document', (require, exports, module) => {
 							},
 						}),
 						Button({
-							text: Loc.getMessage('SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_REJECT_TITLE'),
+							text: Loc.getMessage(rejectTitleCode),
 							size: ButtonSize.XL,
 							design: ButtonDesign.PLAN_ACCENT,
 							disabled: false,
@@ -147,11 +156,23 @@ jn.define('sign/document', (require, exports, module) => {
 									return;
 								}
 
+								const { titleCode, descriptionCode, confirmTitleCode } = InitiatedByType.isInitiatedByEmployee(this.initiatedByType)
+									? {
+										titleCode: 'SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_ALERT_BY_EMPLOYEE_TITLE',
+										descriptionCode: 'SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_ALERT_BY_EMPLOYEE_DESCRIPTION',
+										confirmTitleCode: 'SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_ALERT_BY_EMPLOYEE_REJECT_BUTTON_TITLE',
+									}
+									: {
+										titleCode: 'SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_ALERT_TITLE',
+										descriptionCode: 'SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_ALERT_DESCRIPTION',
+										confirmTitleCode: 'SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_ALERT_REJECT_BUTTON_TITLE',
+									}
+								;
+
 								showConfirm({
-									title: Loc.getMessage('SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_ALERT_TITLE'),
-									description: Loc.getMessage('SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_ALERT_DESCRIPTION'),
-									confirmTitle: Loc.getMessage(
-										'SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_ALERT_REJECT_BUTTON_TITLE'),
+									title: Loc.getMessage(titleCode),
+									description: Loc.getMessage(descriptionCode),
+									confirmTitle: Loc.getMessage(confirmTitleCode),
 									cancelTitle: Loc.getMessage(
 										'SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_ALERT_CANCEL_BUTTON_TITLE'),
 									onConfirm: () => {
@@ -163,6 +184,7 @@ jn.define('sign/document', (require, exports, module) => {
 												documentTitle: this.title,
 												memberId: this.memberId,
 												layoutWidget: this.layout,
+												initiatedByType: this.initiatedByType,
 											}));
 										}).catch(() => {
 											NotifyManager.showErrors([

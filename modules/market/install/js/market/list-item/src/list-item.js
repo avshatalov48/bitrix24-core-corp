@@ -379,7 +379,6 @@ export const ListItem = {
 				
 				<div class="market-rating__container">
 					<RatingStars
-						v-if="!this.isSiteTemplate"
 						:rating="item.RATING"
 						:reviewsNumber="item.REVIEWS_NUMBER"
 					/>

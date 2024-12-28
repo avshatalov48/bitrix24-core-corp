@@ -1,5 +1,7 @@
-(() => {
-	const require = (ext) => jn.require(ext);
+/**
+ * @module selector/widget/entity
+ */
+jn.define('selector/widget/entity', (require, exports, module) => {
 
 	const { EntitySelectorWidget } = require('selector/widget');
 	const { Type } = require('type');
@@ -30,6 +32,7 @@
 				undeselectableIds,
 				sectionTitles,
 				shouldRenderHiddenItemsInList,
+				integrateSelectorToParentLayout,
 			} = props;
 
 			if (!Array.isArray(entityIds) || entityIds.length === 0)
@@ -73,9 +76,10 @@
 				shouldRenderHiddenItemsInList,
 				animation: this.getPickerAnimation(),
 				leftButtons,
+				integrateSelectorToParentLayout,
 			});
 
-			entitySelectorWidget.provider.setHandlerPrepareItem(this.prepareItemForDrawing);
+			entitySelectorWidget.provider.setHandlerPrepareItem?.(this.prepareItemForDrawing);
 
 			return entitySelectorWidget;
 		}
@@ -313,14 +317,14 @@
 		}
 	}
 
-	this.BaseSelectorEntity = BaseSelectorEntity;
+	module.exports = {
+		BaseSelectorEntity,
+	};
+});
 
-	/**
-	 * @module selector/widget/entity
-	 */
-	jn.define('selector/widget/entity', (require, exports, module) => {
-		module.exports = {
-			BaseSelectorEntity: this.BaseSelectorEntity,
-		};
-	});
+(() => {
+	const require = (ext) => jn.require(ext);
+	const { BaseSelectorEntity } = require('selector/widget/entity');
+
+	this.BaseSelectorEntity = BaseSelectorEntity;
 })();

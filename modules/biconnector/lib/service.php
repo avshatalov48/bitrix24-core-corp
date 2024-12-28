@@ -1,9 +1,16 @@
 <?php
 namespace Bitrix\BIConnector;
 
+use Bitrix\BIConnector\DataSourceConnector\FieldCollection;
+use Bitrix\BIConnector\DataSourceConnector\FieldDto;
+use Bitrix\BIConnector\DataSourceConnector\Connector;
+use Bitrix\Main\Analytics\AnalyticsEvent;
+use Bitrix\Main\Result;
+
 abstract class Service
 {
 	protected $manager = null;
+	protected ?array $dataSourceConnectors = null;
 	protected static $serviceId = '';
 	public static $dateFormats = [];
 	protected $languageMap = null;
@@ -68,7 +75,10 @@ abstract class Service
 				'=LID' => $languageId,
 				'=ACTIVE' => 'Y'
 			],
-		])->fetch();
+		])
+			->fetch()
+		;
+
 		if ($dbLanguage)
 		{
 			$this->languageId = $dbLanguage['LID'];
@@ -83,6 +93,64 @@ abstract class Service
 	public function getLanguage()
 	{
 		return $this->languageId;
+	}
+
+	/**
+	 * Returns all available data sources descriptions.
+	 *
+	 * @param string $languageId Interface language.
+	 *
+	 * @return array
+	 */
+	public function getDataSourceConnectors(): array
+	{
+		if ($this->dataSourceConnectors === null)
+		{
+			$this->dataSourceConnectors = $this->loadDataSourceConnectors();
+		}
+
+		return $this->dataSourceConnectors;
+	}
+
+	/**
+	 * @param string $name
+	 *
+	 * @return DataSourceConnector\Connector\Base|null
+	 */
+	public function getDataSourceConnector(string $name): ?DataSourceConnector\Connector\Base
+	{
+		return $this->getDataSourceConnectors()[$name] ?? null;
+	}
+
+	/**
+	 * Returns all available data sources descriptions.
+	 *
+	 * @return array
+	 */
+	protected function loadDataSourceConnectors(): array
+	{
+		$dataSourceConnectors = [];
+
+		$dataSources = [];
+		$event = new \Bitrix\Main\Event('biconnector', 'OnBIConnectorDataSources', [
+			$this->manager,
+			&$dataSources,
+			$this->languageId,
+		]);
+		$event->send();
+
+		foreach ($dataSources as $datasourceName => $source)
+		{
+			$fields = new FieldCollection();
+			foreach ($source['FIELDS'] as $fieldName => $fieldInfo)
+			{
+				$fields->add($this->prepareFieldDto($fieldName, $fieldInfo));
+			}
+
+			$dataSourceConnectors[$datasourceName] = new Connector\Sql($datasourceName, $fields, $source);
+		}
+
+		return $dataSourceConnectors;
 	}
 
 	/**
@@ -105,27 +173,34 @@ abstract class Service
 	 *
 	 * @return array
 	 */
-	public function getTableList()
+	public function getTableList(): array
 	{
 		$result = [];
-		foreach ($this->manager->getDataSources($this->languageId) as $tableName => $tableInfo)
+		foreach ($this->getDataSourceConnectors() as $connector)
 		{
 			$result[] = [
-				$tableName,
-				$tableInfo['TABLE_DESCRIPTION'],
+				$connector->getName(),
+				$connector->rawInfo['TABLE_DESCRIPTION'] ?? [],
 			];
 		}
+
 		return $result;
 	}
 
 	/**
+	 * @deprecated
+	 *
+	 * Type mapping is realised into Bitrix\BIConnector\DataSourceConnector\FieldDto
+	 *
 	 * Returns internal type external representation.
 	 *
 	 * @param string $internalType Internal (CSQLWhere) type.
+	 * @param null $fieldName Field name - ID, TITLE, UF_CRM_100 etc.
+	 *
 	 * @return string
 	 * @see \CSQLWhere
 	 */
-	protected function mapType($internalType)
+	protected function mapType($internalType, $fieldName = null): string
 	{
 		switch ($internalType)
 		{
@@ -154,52 +229,103 @@ abstract class Service
 	 * @param string $tableName Data source name.
 	 * @return array
 	 */
-	public function getTableFields($tableName)
+	public function getTableFields(string $tableName): array
 	{
-		$result = [];
-		$tableInfo = $this->manager->getTableDescription($tableName, $this->languageId);
-		if ($tableInfo)
+		$connector = $this->getDataSourceConnector($tableName);
+		if (!$connector)
 		{
-			foreach ($tableInfo['FIELDS'] as $fieldName => $fieldInfo)
-			{
-				if (isset($fieldInfo['FIELD_TYPE_EX']))
-				{
-					$type = $fieldInfo['FIELD_TYPE_EX'];
-				}
-				else
-				{
-					$type = $fieldInfo['FIELD_TYPE'];
-				}
-
-				//Backwards compatibility
-				if (isset($fieldInfo['CONCAT_KEY']))
-				{
-					$fieldInfo['GROUP_KEY'] = $fieldInfo['CONCAT_KEY'];
-				}
-				if (isset($fieldInfo['CONCAT_GROUP_BY']))
-				{
-					$fieldInfo['GROUP_CONCAT'] = $fieldInfo['CONCAT_GROUP_BY'];
-				}
-
-				$result[] = [
-					'CONCEPT_TYPE' => (isset($fieldInfo['IS_METRIC']) && $fieldInfo['IS_METRIC'] === 'Y' ? 'METRIC' : 'DIMENSION'),
-					'ID' => $fieldName,
-					'NAME' => $fieldInfo['FIELD_DESCRIPTION'],
-					'DESCRIPTION' => $fieldInfo['FIELD_DESCRIPTION_FULL'] ?? '',
-					'TYPE' => $this->mapType($type),
-					'AGGREGATION_TYPE' => $fieldInfo['AGGREGATION_TYPE'] ?? null,
-					'IS_PRIMARY' => $fieldInfo['IS_PRIMARY'] ?? null,
-					'GROUP_KEY' => $fieldInfo['GROUP_KEY'] ?? null,
-					'GROUP_CONCAT' => $fieldInfo['GROUP_CONCAT'] ?? null,
-					'GROUP_COUNT' => $fieldInfo['GROUP_COUNT'] ?? null,
-				];
-			}
+			return [];
 		}
 
-		return $result;
+		return $connector
+			->getFields()
+			->toArray()
+		;
 	}
 
 	/**
+	 * @param string $fieldName
+	 * @param array $fieldInfo
+	 *
+	 * @return FieldDto
+	 */
+	protected function prepareFieldDto(string $fieldName, array $fieldInfo): FieldDto
+	{
+		$type = $fieldInfo['FIELD_TYPE_EX'] ?? $fieldInfo['FIELD_TYPE'];
+
+		//Backwards compatibility
+		if (isset($fieldInfo['CONCAT_KEY']))
+		{
+			$fieldInfo['GROUP_KEY'] = $fieldInfo['CONCAT_KEY'];
+		}
+
+		if (isset($fieldInfo['CONCAT_GROUP_BY']))
+		{
+			$fieldInfo['GROUP_CONCAT'] = $fieldInfo['CONCAT_GROUP_BY'];
+		}
+
+
+		if (isset($fieldInfo['IS_SYSTEM']))
+		{
+			$isSystem = $fieldInfo['IS_SYSTEM'] === 'Y';
+		}
+		else
+		{
+			$isSystem = !str_starts_with($fieldName, 'UF_');
+		}
+
+		return new FieldDto(
+			$fieldName,
+			$fieldInfo['FIELD_DESCRIPTION'] ?? $fieldName,
+			$fieldInfo['FIELD_DESCRIPTION_FULL'] ?? '',
+			$type ?? 'string',
+			($fieldInfo['IS_METRIC'] ?? 'N') === 'Y',
+			($fieldInfo['IS_PRIMARY'] ?? 'N') === 'Y',
+			$isSystem,
+			$fieldInfo['AGGREGATION_TYPE'] ?? null,
+			$fieldInfo['GROUP_KEY'] ?? null,
+			$fieldInfo['GROUP_CONCAT'] ?? null,
+			$fieldInfo['GROUP_COUNT'] ?? null
+		);
+	}
+
+	/** @deprecated */
+	protected function prepareTableFields(string $fieldName, array $fieldInfo): array
+	{
+		$type = $fieldInfo['FIELD_TYPE_EX'] ?? $fieldInfo['FIELD_TYPE'];
+
+		//Backwards compatibility
+		if (isset($fieldInfo['CONCAT_KEY']))
+		{
+			$fieldInfo['GROUP_KEY'] = $fieldInfo['CONCAT_KEY'];
+		}
+
+		if (isset($fieldInfo['CONCAT_GROUP_BY']))
+		{
+			$fieldInfo['GROUP_CONCAT'] = $fieldInfo['CONCAT_GROUP_BY'];
+		}
+
+		return [
+			'CONCEPT_TYPE' =>
+				($fieldInfo['IS_METRIC'] ?? 'N') === 'Y'
+					? 'METRIC'
+					: 'DIMENSION'
+			,
+			'ID' => $fieldName,
+			'NAME' => $fieldInfo['FIELD_DESCRIPTION'],
+			'DESCRIPTION' => $fieldInfo['FIELD_DESCRIPTION_FULL'] ?? '',
+			'TYPE' => $this->mapType($type),
+			'AGGREGATION_TYPE' => $fieldInfo['AGGREGATION_TYPE'] ?? null,
+			'IS_PRIMARY' => $fieldInfo['IS_PRIMARY'] ?? null,
+			'GROUP_KEY' => $fieldInfo['GROUP_KEY'] ?? null,
+			'GROUP_CONCAT' => $fieldInfo['GROUP_CONCAT'] ?? null,
+			'GROUP_COUNT' => $fieldInfo['GROUP_COUNT'] ?? null,
+		];
+	}
+
+	/**
+	 * @deprecated
+	 *
 	 * applyDateFilter
 	 *
 	 * @param array &$sqlWhere Modified where.
@@ -251,6 +377,8 @@ abstract class Service
 	}
 
 	/**
+	 * @deprecated
+	 *
 	 * applyDimensionsFilters
 	 *
 	 * @param array &$sqlWhere Modified where.
@@ -349,188 +477,36 @@ abstract class Service
 	 * This will be used to process "data" and "explain" service commands.
 	 *
 	 * @param string $tableName Data source name.
-	 * @param string $parameters Input parameters.
+	 * @param array $parameters Input parameters.
 	 *
 	 * @return array
 	 */
-	public function getData($tableName, $parameters)
+	public function getData(string $tableName, array $parameters): array
 	{
-		$tableInfo = $this->manager->getTableDescription($tableName, $this->languageId);
-		$tableFields = $tableInfo['FIELDS'];
-
-		$canBeFiltered = true;
-		$sqlWhere = $tableInfo['FILTER'] ?? [];
-
-		if (isset($parameters['dateRange']) && is_array($parameters['dateRange']))
+		$connector = $this->getDataSourceConnector($tableName);
+		if (!$connector)
 		{
-			if (isset($parameters['configParams']['timeFilterColumn']))
-			{
-				$timeFilterColumn = $parameters['configParams']['timeFilterColumn'];
-			}
-			elseif (isset($parameters['configParams']['timefiltercolumn']))
-			{
-				$timeFilterColumn = $parameters['configParams']['timefiltercolumn'];
-			}
-			else
-			{
-				$timeFilterColumn = '';
-			}
-
-			$this->applyDateFilter($sqlWhere, $tableFields, $parameters['dateRange'], $timeFilterColumn);
+			return [];
 		}
 
-		// https://developers.google.com/datastudio/connector/filters?hl=ru
-		if (isset($parameters['dimensionsFilters']) && is_array($parameters['dimensionsFilters']))
-		{
-			$this->applyDimensionsFilters($sqlWhere, $canBeFiltered, $tableFields, $parameters['dimensionsFilters']);
-		}
+		return $connector->getFormattedData($parameters, static::$dateFormats);
+	}
 
-		$queryWhere = new \CBIConnectorSqlBuilder;
-		$queryWhere->SetFields($tableFields);
-		if (isset($tableInfo['FILTER_FIELDS']))
-		{
-			$queryWhere->AddFields($tableInfo['FILTER_FIELDS']);
-		}
-
-		$strQueryWhere = '';
-		if ($canBeFiltered && $sqlWhere)
-		{
-			$strQueryWhere = $queryWhere->GetQuery($sqlWhere);
-		}
-
-		$selectedFields = [];
-		$groupFields = [];
-		if (isset($parameters['fields']) && is_array($parameters['fields']))
-		{
-			foreach ($parameters['fields'] as $field)
-			{
-				$fieldName = trim($field['name'], " \t\n\r");
-				if ($fieldName && isset($tableFields[$fieldName]))
-				{
-					$tableField = $tableFields[$fieldName];
-					if (
-						(!isset($field['forFilterOnly']) || !$field['forFilterOnly'])
-						|| !($strQueryWhere && $canBeFiltered)
-					)
-					{
-						if (isset($tableField['GROUP_KEY']))
-						{
-							$groupKey = $tableField['GROUP_KEY'];
-							$groupFields[$groupKey] = $tableFields[$groupKey];
-							$groupFields[$groupKey]['ID'] = $groupKey;
-						}
-						$selectedFields[$fieldName] = $tableField;
-					}
-				}
-				else
-				{
-					//TODO
-				}
-			}
-			if (!$selectedFields)
-			{
-				return [
-					'error' => 'EMPTY_SELECT_FIELDS_LIST',
-				];
-			}
-		}
-		else
-		{
-			$selectedFields = $tableFields;
-		}
-
-		$primaryFields = [];
-		if ($groupFields)
-		{
-			foreach ($tableFields as $fieldName => $tableField)
-			{
-				if (isset($tableField['IS_PRIMARY']) && $tableField['IS_PRIMARY'] == 'Y')
-				{
-					$tableField['ID'] = $fieldName;
-					$primaryFields[$fieldName] = $tableField;
-				}
-			}
-		}
-
-		foreach ($groupFields as $groupKey => $_)
-		{
-			if (isset($selectedFields[$groupKey]))
-			{
-				unset($groupFields[$groupKey]);
-			}
-		}
-
-		foreach ($primaryFields as $primaryKey => $_)
-		{
-			if (isset($selectedFields[$primaryKey]))
-			{
-				unset($primaryFields[$primaryKey]);
-			}
-		}
-
-		$shadowFields = array_merge($primaryFields, $groupFields);
-
-		$queryWhere->SetSelect(array_merge($selectedFields, $shadowFields), static::$dateFormats);
-
-		$additionalJoins = $queryWhere->GetJoins();
-		$sql = "select\n  " . $queryWhere->GetSelect()
-			. "\nfrom\n  " . $tableInfo['TABLE_NAME'] . ' AS ' . $tableInfo['TABLE_ALIAS']
-			. ($additionalJoins ? "\n  " . $additionalJoins : '')
-			. ($strQueryWhere ? "\nWHERE " . $strQueryWhere : '')
-			. (isset($tableInfo['UNION']) && $tableInfo['UNION'] ? "\n " . $tableInfo['UNION'] : '')
-			. "\n";
-
-		$i = 0;
-		$fetchCallbacks = [];
-		foreach (array_merge($selectedFields, $shadowFields) as $fieldInfo)
-		{
-			if (isset($fieldInfo['CALLBACK']))
-			{
-				$fetchCallbacks[$i] = $fieldInfo['CALLBACK'];
-			}
-			elseif ($fieldInfo['FIELD_TYPE'] === 'int')
-			{
-				$fetchCallbacks[$i] = function ($value, $dateFormats)
-				{
-					return $value === null ? null : (int)$value;
-				};
-			}
-			$i++;
-		}
-
-		$schemaFields = $this->getTableFields($tableName);
-		$schema = [];
-		foreach ($selectedFields as $fieldName => $_)
-		{
-			foreach ($schemaFields as $fieldInfo)
-			{
-				if ($fieldName === $fieldInfo['ID'])
-				{
-					$schema[] = $fieldInfo;
-				}
-			}
-		}
-
-		if (isset($tableInfo['DICTIONARY']))
-		{
-			foreach ($tableInfo['DICTIONARY'] as $dictionaryId)
-			{
-				if (!\Bitrix\BIConnector\DictionaryManager::validateCache($dictionaryId))
-				{
-					return [
-						'error' => 'DICTIONARY_' . $dictionaryId . '_UPDATE',
-					];
-				}
-			}
-		}
-
-		return [
-			'schema' => $schema,
-			'sql' => $sql,
-			'filtersApplied' => $strQueryWhere && $canBeFiltered,
-			'onAfterFetch' => $fetchCallbacks,
-			'where' => $sqlWhere,
-			'shadowFields' => $shadowFields,
-		];
+	/**
+	 * @param string $tableName
+	 * @param array $parameters
+	 *
+	 * @return Result
+	 */
+	public function printQuery(
+		string $tableName,
+		array $parameters,
+		string $requestMethod,
+		string $requestUri,
+		int $limit,
+		LimitManager $limitManager
+	): Result
+	{
+		return new Result();
 	}
 }

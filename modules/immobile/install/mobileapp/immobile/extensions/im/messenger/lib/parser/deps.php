@@ -33,5 +33,6 @@ return [
 		'./src/elements/dialog/message/quote-active',
 		'./src/elements/dialog/message/quote-inactive',
 		'./src/elements/dialog/message/text',
+		'./src/elements/dialog/message/code',
 	],
 ];

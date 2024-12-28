@@ -682,7 +682,7 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 				'order' => [],
 				'filter' => [
 					"USER_ID" => $result['currentUserId'],
-					"EVENT_ID" => 'tasks'
+					"=EVENT_ID" => 'tasks'
 				],
 				'select' => [ 'TYPE' ]
 			]);

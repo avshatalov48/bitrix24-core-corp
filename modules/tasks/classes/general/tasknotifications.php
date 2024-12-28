@@ -26,6 +26,7 @@ use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\AgentManager;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Integration\Extranet;
 
 class CTaskNotifications
 {
@@ -1058,7 +1059,6 @@ class CTaskNotifications
 	{
 		$createdBy = (int)$taskData['CREATED_BY'];
 		$responsibleId = (int)$taskData['RESPONSIBLE_ID'];
-		$sameCreatorMessagePart = 'SAME_CREATOR_';
 
 		$title = self::formatTaskName($taskData['ID'], $taskData['TITLE'], $taskData['GROUP_ID']);
 		/** @var \Bitrix\Tasks\Util\Type\DateTime $deadline */
@@ -1066,11 +1066,15 @@ class CTaskNotifications
 		$deadline->addSecond(\CTimeZone::GetOffset($responsibleId, true));
 		$formattedDeadline = $deadline->format(UI::getHumanTimeFormat($deadline->getTimestamp()));
 
-		$messageKey = (
+		$isHideEfficiencyPartNeeded = (
 			$responsibleId === $createdBy
-				? "TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_{$sameCreatorMessagePart}MESSAGE"
-				: "TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE"
+			|| Extranet\User::isExtranet($responsibleId)
 		);
+		$messageKey =
+			$isHideEfficiencyPartNeeded
+				? 'TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_HIDE_EFFICIENCY_PART_MESSAGE'
+				: 'TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE'
+		;
 		$messages = [
 			'INSTANT' => str_replace(
 				['#TASK_TITLE#', '#DEADLINE_TIME#'],
@@ -1114,7 +1118,7 @@ class CTaskNotifications
 			$deadline->addSecond(\CTimeZone::GetOffset($createdBy, true));
 			$formattedDeadline = $deadline->format(UI::getHumanTimeFormat($deadline->getTimestamp()));
 
-			$messageKey = 'TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_SAME_CREATOR_MESSAGE';
+			$messageKey = 'TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_HIDE_EFFICIENCY_PART_MESSAGE';
 			$messages = [
 				'INSTANT' => str_replace(
 					['#TASK_TITLE#', '#DEADLINE_TIME#'],
@@ -1140,7 +1144,13 @@ class CTaskNotifications
 			$deadline->addSecond(\CTimeZone::GetOffset($userId, true));
 			$formattedDeadline = $deadline->format(UI::getHumanTimeFormat($deadline->getTimestamp()));
 
-			$messageKey = 'TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE';
+			$isHideEfficiencyPartNeeded =  Extranet\User::isExtranet($userId);
+			$messageKey =
+				$isHideEfficiencyPartNeeded
+					? 'TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_HIDE_EFFICIENCY_PART_MESSAGE'
+					: 'TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE'
+			;
+
 			$messages = [
 				'INSTANT' => str_replace(
 					['#TASK_TITLE#', '#DEADLINE_TIME#'],
@@ -1200,15 +1210,19 @@ class CTaskNotifications
 	{
 		$createdBy = (int)$taskData['CREATED_BY'];
 		$responsibleId = (int)$taskData['RESPONSIBLE_ID'];
-		$sameCreatorMessagePart = 'SAME_CREATOR_';
 
 		$title = self::formatTaskName($taskData['ID'], $taskData['TITLE'], $taskData['GROUP_ID']);
 
-		$messageKey = (
+		$isHideEfficiencyPartNeeded = (
 			$responsibleId === $createdBy
-				? "TASKS_TASK_EXPIRED_RESPONSIBLE_{$sameCreatorMessagePart}MESSAGE"
-				: "TASKS_TASK_EXPIRED_RESPONSIBLE_MESSAGE"
+			|| Extranet\User::isExtranet($responsibleId)
 		);
+
+		$messageKey =
+			$isHideEfficiencyPartNeeded
+				? 'TASKS_TASK_EXPIRED_RESPONSIBLE_HIDE_EFFICIENCY_PART_MESSAGE'
+				: 'TASKS_TASK_EXPIRED_RESPONSIBLE_MESSAGE'
+		;
 		$messages = [
 			'INSTANT' => str_replace(['#TASK_TITLE#'], [$title], self::getGenderMessage(0, $messageKey)),
 			'EMAIL' => str_replace(['#TASK_TITLE#'], [strip_tags($title)], self::getGenderMessage(0, $messageKey)),
@@ -1238,7 +1252,7 @@ class CTaskNotifications
 
 		if (in_array($createdBy, $accomplices, true))
 		{
-			$messageKey = 'TASKS_TASK_EXPIRED_RESPONSIBLE_SAME_CREATOR_MESSAGE';
+			$messageKey = 'TASKS_TASK_EXPIRED_RESPONSIBLE_HIDE_EFFICIENCY_PART_MESSAGE';
 			$messages = [
 				'INSTANT' => str_replace(['#TASK_TITLE#'], [$title], self::getGenderMessage(0, $messageKey)),
 				'EMAIL' => str_replace(['#TASK_TITLE#'], [strip_tags($title)], self::getGenderMessage(0, $messageKey)),
@@ -1249,14 +1263,23 @@ class CTaskNotifications
 			unset($accomplices[array_search($createdBy, $accomplices, true)]);
 		}
 
-		$messageKey = 'TASKS_TASK_EXPIRED_RESPONSIBLE_MESSAGE';
-		$messages = [
-			'INSTANT' => str_replace(['#TASK_TITLE#'], [$title], self::getGenderMessage(0, $messageKey)),
-			'EMAIL' => str_replace(['#TASK_TITLE#'], [strip_tags($title)], self::getGenderMessage(0, $messageKey)),
-			'PUSH' => self::makePushMessage($messageKey, $createdBy, $taskData),
-		];
+		foreach ($accomplices as $userId)
+		{
+			$isHideEfficiencyPartNeeded =  Extranet\User::isExtranet($userId);
+			$messageKey =
+				$isHideEfficiencyPartNeeded
+					? 'TASKS_TASK_EXPIRED_RESPONSIBLE_HIDE_EFFICIENCY_PART_MESSAGE'
+					: 'TASKS_TASK_EXPIRED_RESPONSIBLE_MESSAGE'
+			;
 
-		self::sendMessageEx($taskData['ID'], $createdBy, $accomplices, $messages, $parameters);
+			$messages = [
+				'INSTANT' => str_replace(['#TASK_TITLE#'], [$title], self::getGenderMessage(0, $messageKey)),
+				'EMAIL' => str_replace(['#TASK_TITLE#'], [strip_tags($title)], self::getGenderMessage(0, $messageKey)),
+				'PUSH' => self::makePushMessage($messageKey, $userId, $taskData),
+			];
+
+			self::sendMessageEx($taskData['ID'], $createdBy, [$userId], $messages, $parameters);
+		}
 	}
 
 	private static function sendExpiredMessageForCreator(array $taskData, array $parameters): void

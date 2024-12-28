@@ -10,6 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var CBitrixComponent $component */
 /** @var string $templateFolder */
 
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
@@ -50,6 +51,8 @@ Extension::load([
 	'tasks.task-model',
 	'pull.queuemanager',
 	'ui.stepprocessing',
+	'tasks.group-actions-stepper',
+	'tasks.flow.entity-selector',
 ]);
 
 /** intranet-settings-support */
@@ -74,10 +77,18 @@ $APPLICATION->IncludeComponent(
 	["HIDE_ICONS" => "Y"]
 );
 
+$userId = (int)CurrentUser::get()->getId();
+$targetUserId = (int)$arParams['USER_ID'];
+$isSameUser = $userId === $targetUserId;
+
+$isCollab = isset($arResult['CONTEXT']) && $arResult['CONTEXT'] === Context::getCollab();
+
+$collabClass = $isCollab ? 'sn-collab-tasks__wrapper' : '';
+
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty(
 	'BodyClass',
-	"{$bodyClass} page-one-column transparent-workarea"
+	"{$bodyClass} page-one-column transparent-workarea {$collabClass}"
 );
 
 if ($arResult['CONTEXT'] !== Context::getSpaces())
@@ -124,8 +135,8 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 			'USE_EXPORT' => 'Y',
 			// export on role pages and all
 			'USE_AJAX_ROLE_FILTER' => 'Y',
-			'USE_GROUP_BY_SUBTASKS' => 'Y',
-			'USE_GROUP_BY_GROUPS' => ((isset($arParams['NEED_GROUP_BY_GROUPS']) && $arParams['NEED_GROUP_BY_GROUPS'] === 'Y') ? 'Y' : 'N'),
+			'USE_GROUP_BY_SUBTASKS' => $isSameUser ? 'Y' : 'N',
+			'USE_GROUP_BY_GROUPS' => ((isset($arParams['NEED_GROUP_BY_GROUPS']) && $arParams['NEED_GROUP_BY_GROUPS'] === 'Y' && $isSameUser) ? 'Y' : 'N'),
 			'GROUP_BY_PROJECT' => $arResult['GROUP_BY_PROJECT'] ?? null,
 			'SHOW_USER_SORT' => 'Y',
 			'SORT_FIELD' => $arParams['SORT_FIELD'] ?? null,
@@ -136,6 +147,7 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 			'SCOPE' => ScopeDictionary::SCOPE_TASKS_GRID,
 
 			'SHOW_COUNTERS_TOOLBAR' => $arParams['SHOW_COUNTERS_TOOLBAR'] ?? null,
+			'CONTEXT' => $arResult['CONTEXT'] ?? null,
 		],
 		$component,
 		['HIDE_ICONS' => true]
@@ -192,25 +204,25 @@ ob_end_clean();
 
 $rowCountHtml = str_replace(
 	[
+		'%text%',
+		'#LINK_START#',
+		'#LINK_END#',
 		'%prefix%',
-		'%all%',
-		'%show%',
 		'%userid%',
 		'%groupid%',
 		'%parameters%'
 	],
 	[
+		Loc::getMessage('TASKS_ROW_SHOW_COUNT'),
+		'<a id="%prefix%_row_count" onclick="BX.Tasks.GridActions.getTotalCount(\'%prefix%\', %userid%, %groupid%, %parameters%)">',
+		'</a>',
 		CUtil::JSEscape(mb_strtolower($arParams['GRID_ID'])),
-		GetMessage('TASKS_ROW_COUNT_TITLE'),
-		GetMessage('TASKS_SHOW_ROW_COUNT'),
 		$arParams['USER_ID'],
 		$arParams['GROUP_ID'],
 		CUtil::PhpToJSObject($arParams['PROVIDER_PARAMETERS'])
 	],
-	'<div id="%prefix%_row_count_wrapper" class="tasks-list-row-count-wrapper">%all%: 
-		<a id="%prefix%_row_count" onclick="BX.Tasks.GridActions.getTotalCount(\'%prefix%\', %userid%, %groupid%, %parameters%)">
-			%show%
-		</a>
+	'<div id="%prefix%_row_count_wrapper" class="tasks-list-row-count-wrapper">
+		%text%
 		<svg class="tasks-circle-loader-circular" viewBox="25 25 50 50">
 			<circle class="tasks-circle-loader-path" cx="50" cy="50" r="20" fill="none" stroke-width="1" stroke-miterlimit="10"></circle>
 		</svg>
@@ -337,6 +349,7 @@ if (ProjectLimit::canTurnOnTrial())
 				limitExceeded: <?= Json::encode($isProjectLimitExceeded); ?>,
 				limitFeatureId: '<?= ProjectLimit::getFeatureId() ?>',
 			};
+			BX.Tasks.GridActions.groupId = '<?= (int)$arParams['GROUP_ID']?>';
 
 			BX.message({
 				TASKS_CONFIRM_GROUP_ACTION: '<?=GetMessageJS('TASKS_CONFIRM_GROUP_ACTION')?>',

@@ -596,5 +596,4 @@ class BaseActivity implements OptionallyConfigurable
 
 		return $this;
 	}
-
 }

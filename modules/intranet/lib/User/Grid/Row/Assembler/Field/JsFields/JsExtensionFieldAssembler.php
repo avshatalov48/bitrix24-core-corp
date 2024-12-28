@@ -8,9 +8,6 @@ use Bitrix\Main\Grid\Settings;
 use Bitrix\Main\Security\Random;
 use Bitrix\Main\Web\Json;
 
-/**
- * @method UserSettings getSettings()
- */
 abstract class JsExtensionFieldAssembler extends CustomUserFieldAssembler
 {
 	private string $extensionClassName;

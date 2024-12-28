@@ -79,6 +79,9 @@ return function (RoutingConfigurator $routes) {
 
 		$routes->any('payment-slip/{signed_payment_id}/', new PublicPageController('/pub/payment_slip.php'))
 			->where('signed_payment_id', '[\w\W]+');
+
+		$routes->any('booking/confirmation/{hash}/', new PublicPageController('/pub/booking/confirmation.php'))
+			->where('hash', '[0-9a-z\.]+');
 	});
 
 	$routes->any('/pub/', new PublicPageController('/pub/payment.php'));
@@ -142,6 +145,7 @@ return function (RoutingConfigurator $routes) {
 				$routes->any('bp/{any}', new PublicPageController('/crm/configs/bp/index.php'));
 				$routes->any('exclusion/{any}', new PublicPageController('/crm/configs/exclusion/index.php'));
 				$routes->any('document_numerators/', new PublicPageController('/crm/configs/document_numerators/index.php'));
+				$routes->any('communication_channel_routes/{any}', new PublicPageController('/crm/configs/communication_channel_routes/index.php'));
 			});
 		}
 	);

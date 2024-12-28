@@ -27,6 +27,23 @@
 .task-form-field .task-form-field-item[data-bx-type~="group"] .task-form-field-item-text {
   color: #116F6B;
 }
+.task-form-field .task-form-field-item[data-bx-type~="collaber"],
+.task-form-field .task-form-field-item[data-bx-type~="collab"] {
+	background: #D4FDB0;
+}
+.task-form-field .task-form-field-item[data-bx-type~="collaber"] .task-form-field-item-text,
+.task-form-field .task-form-field-item[data-bx-type~="collab"] .task-form-field-item-text {
+	color: #1E8D36;
+}
+
+.task-form-field.readonly .task-form-field-item[data-bx-type~="collaber"] {
+	background: #b8bcbf;
+}
+
+.task-form-field.readonly .task-form-field-item[data-bx-type~="collaber"] .task-form-field-item-text {
+	color: #535c69;
+}
+
 .task-form-field .task-form-field-item[data-bx-type~="group"].hover-delete {
   background-color: #8CDDDA;
 }
@@ -92,4 +109,16 @@
 	background-repeat: no-repeat;
 	background-size: cover;
 	overflow: hidden;
+}
+
+.task-form-field-item.--hide-delet-btn {
+	padding-right: 10px;
+}
+
+.task-form-field-item.--hide-delet-btn .task-form-field-item-delete {
+	display: none;
+}
+
+.tasks-preselected-collab-popup-title {
+	padding-right: 20px;
 }

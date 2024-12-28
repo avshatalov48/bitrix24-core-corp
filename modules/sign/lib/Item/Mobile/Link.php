@@ -3,6 +3,7 @@
 namespace Bitrix\Sign\Item\Mobile;
 
 use Bitrix\Sign\Contract\Item;
+use Bitrix\Sign\Type\Document\InitiatedByType;
 use Bitrix\Sign\Type\DocumentStatus;
 use Bitrix\Sign\Type\Member\Role;
 use Bitrix\Sign\Type\MemberStatus;
@@ -14,6 +15,7 @@ class Link implements Item
 	public const STATE_CONTINUE_WEB_EDITOR = 'GO_TO_WEB_EDITOR';
 	public const STATE_MEMBER_SIGNED = 'PROCESSING';
 	public const STATE_DOCUMENT_STOPPED = 'REFUSED';
+	public const STATE_MEMBER_READY_FOR_DOWNLOAD_DOCUMENT_STOPPED = 'REFUSED_BY_ASSIGNEE';
 	public const STATE_MEMBER_STOPPED = 'REFUSED_SELF';
 	public const STATE_MEMBER_REVIEWER_SIGNED = 'REVIEW_SUCCESS';
 	public const STATE_MEMBER_READY_FOR_DOWNLOAD = 'SIGNED';
@@ -36,8 +38,9 @@ class Link implements Item
 		private readonly ?string $role = null, /** @see \Bitrix\Sign\Type\Member\Role */
 		private readonly ?string $status = null, /** @see \Bitrix\Sign\Type\MemberStatus */
 		private readonly ?string $documentStatus = null, /** @see \Bitrix\Sign\Type\DocumentStatus */
-		private readonly ?string $providerCode = null, /** @see \Bitrix\Sign\Type\Member\Role */
-        private readonly bool $readyForDownload = false,
+		private readonly ?string $providerCode = null, /** @see \Bitrix\Sign\Type\ProviderCode */
+		private readonly bool $readyForDownload = false,
+		private readonly ?InitiatedByType $initiatedByType = null,
 	) {}
 
 	/**
@@ -89,7 +92,10 @@ class Link implements Item
 	public function getDocumentSigningState(): ?string
 	{
 		return match (true) {
-			$this->readyForDownload => self::STATE_MEMBER_READY_FOR_DOWNLOAD,
+			$this->readyForDownload => match ($this->documentStatus) {
+				DocumentStatus::STOPPED => self::STATE_MEMBER_READY_FOR_DOWNLOAD_DOCUMENT_STOPPED,
+				default => self::STATE_MEMBER_READY_FOR_DOWNLOAD,
+			},
 
 			// TODO merge with sign/grid logic
 			$this->documentStatus === DocumentStatus::STOPPED || $this->status === MemberStatus::STOPPED => self::STATE_DOCUMENT_STOPPED,
@@ -111,6 +117,11 @@ class Link implements Item
 
 			default => null,
 		};
+	}
+
+	public function getInitiatedByType(): string
+	{
+		return $this->initiatedByType->value;
 	}
 
 	public function isGoskeyAssigneeAlmostDone(): bool

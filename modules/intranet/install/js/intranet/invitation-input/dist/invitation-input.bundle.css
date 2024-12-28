@@ -1,0 +1,25 @@
+.ui-tag-selector-outer-container .--error {
+	border-color: var(--ui-color-palette-red-60, #f4433e);
+}
+
+.intranet-invitation-input-error__text {
+	color: var(--ui-color-palette-red-50, #ff5752);
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 18px;
+}
+
+.intranet-invitation-input-error__wrapper {
+	display: flex;
+}
+
+.intranet-invitation-input-error__wrapper .ui-icon-set {
+	background-color: var(--ui-color-palette-red-60, #f4433e);
+	height: 18px;
+	width: 18px;
+}
+
+.intranet-invitation-wrapper .ui-tag-selector-text-box {
+	flex-grow: 1;
+	min-width: 0;
+}

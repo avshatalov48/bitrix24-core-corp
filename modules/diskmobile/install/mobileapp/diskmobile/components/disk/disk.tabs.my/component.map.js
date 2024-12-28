@@ -1,0 +1,1 @@
+{"version":3,"file":"component.map.js","names":["require","ext","jn","MyFilesGrid","BX","onViewLoaded","layout","showComponent","parentWidget"],"sources":["component.js"],"mappings":"AAAA,MAMC,MAAMA,EAAWC,GAAQC,GAAGF,QAAQC,GAEpC,MAAME,YAAEA,GAAgBH,EAAQ,2BAEhCI,GAAGC,cAAa,KACfC,OAAOC,cACN,IAAIJ,EAAY,CACfK,aAAcF,SAEf,GAEF,EAjBD"}

@@ -36,6 +36,9 @@
   color: #2067b0;
   border-bottom: 1px solid transparent;
 }
+.task-group-field-label.--collab {
+	color: #00a94e;
+}
 .task-group-field-label:hover {
   border-bottom: 1px solid;
 }

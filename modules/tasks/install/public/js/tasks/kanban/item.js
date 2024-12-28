@@ -443,7 +443,7 @@ BX.Tasks.Kanban.Item.prototype = {
 						extranetUsers: true,
 						inviteGuestLink: true,
 						myEmailUsers: true,
-						analyticsSource: 'task',
+						analyticsSource: 'tasks',
 					}
 				},
 				{
@@ -936,6 +936,10 @@ BX.Tasks.Kanban.Item.prototype = {
 			{
 				authorType = "tasks-kanban-item-author-avatar tasks-kanban-item-author-avatar-mail";
 			}
+			else if (data.author.collaber)
+			{
+				authorType = "tasks-kanban-item-author-avatar tasks-kanban-item-author-avatar-collaber";
+			}
 			else
 			{
 				authorType = "tasks-kanban-item-author-avatar";
@@ -999,6 +1003,10 @@ BX.Tasks.Kanban.Item.prototype = {
 			else if (data.responsible.mail)
 			{
 				responsibleType = "tasks-kanban-item-author-avatar tasks-kanban-item-author-avatar-mail";
+			}
+			else if (data.responsible.collaber)
+			{
+				responsibleType = "tasks-kanban-item-author-avatar tasks-kanban-item-author-avatar-collaber";
 			}
 			else
 			{

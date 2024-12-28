@@ -8,6 +8,7 @@ use Bitrix\Main\Error;
 use Bitrix\BIConnector\DataSource\Dataset;
 use Bitrix\BIConnector\DataSource\Field\IntegerField;
 use Bitrix\BIConnector\DataSource\Field\StringField;
+use Bitrix\Tasks\Flow\Distribution\FlowDistributionType;
 
 class Flow extends Dataset
 {
@@ -72,6 +73,22 @@ class Flow extends Dataset
 			'TFT',
 			"INNER JOIN b_tasks_flow_task TFT ON TFT.FLOW_ID = {$this->getAliasFieldName('ID')}",
 			"LEFT JOIN b_tasks_flow_task TFT ON TFT.FLOW_ID = {$this->getAliasFieldName('ID')}",
+		);
+
+		$expiredTasksJoin = $this->createJoin(
+			'EXPIRED',
+			"INNER JOIN (
+						SELECT BTFT.TASK_ID AS EXPIRED_TASKS_IDS, BTFT.FLOW_ID
+						FROM b_tasks_effective BTE
+							INNER JOIN b_tasks_flow_task BTFT ON BTE.TASK_ID = BTFT.TASK_ID
+						WHERE BTE.IS_VIOLATION = 'Y'
+					) EXPIRED ON EXPIRED.FLOW_ID = {$this->getAliasFieldName('ID')}",
+			"LEFT JOIN (
+						SELECT BTFT.TASK_ID AS EXPIRED_TASKS_IDS, BTFT.FLOW_ID
+						FROM b_tasks_effective BTE
+							INNER JOIN b_tasks_flow_task BTFT ON BTE.TASK_ID = BTFT.TASK_ID
+						WHERE BTE.IS_VIOLATION = 'Y'
+					) EXPIRED ON EXPIRED.FLOW_ID = {$this->getAliasFieldName('ID')}",
 		);
 
 		return [
@@ -161,8 +178,9 @@ class Flow extends Dataset
 			,
 			(new StringField('DISTRIBUTION_TYPE'))
 				->setDictionary([
-					\Bitrix\Tasks\Flow\Flow::DISTRIBUTION_TYPE_MANUALLY => $this->getMessage('FLOW_FIELD_DISTRIBUTION_TYPE_VALUE_TYPE_MANUALLY'),
-					\Bitrix\Tasks\Flow\Flow::DISTRIBUTION_TYPE_QUEUE => $this->getMessage('FLOW_FIELD_DISTRIBUTION_TYPE_VALUE_TYPE_QUEUE'),
+					FlowDistributionType::MANUALLY->value => $this->getMessage('FLOW_FIELD_DISTRIBUTION_TYPE_VALUE_TYPE_MANUALLY'),
+					FlowDistributionType::QUEUE->value => $this->getMessage('FLOW_FIELD_DISTRIBUTION_TYPE_VALUE_TYPE_QUEUE'),
+					FlowDistributionType::HIMSELF->value => $this->getMessage('FLOW_FIELD_DISTRIBUTION_TYPE_VALUE_TYPE_HIMSELF'),
 				]),
 			(new StringField('HAS_TEMPLATE'))
 				->setName("
@@ -199,9 +217,14 @@ class Flow extends Dataset
 				)
 				->setJoin($groupJoin)
 			,
-			(new IntegerField('TASKS_IDS'))
+			(new StringField('TASKS_IDS'))
 				->setName($tasksJoin->getJoinFieldName('TASK_ID'))
 				->setJoin($tasksJoin)
+				->setMultiple()
+			,
+			(new StringField('EXPIRED_TASKS_IDS'))
+				->setName($expiredTasksJoin->getJoinFieldName('EXPIRED_TASKS_IDS'))
+				->setJoin($expiredTasksJoin)
 				->setMultiple()
 			,
 		];

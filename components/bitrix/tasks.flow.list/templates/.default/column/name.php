@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Util\View;
+use Bitrix\Main\Application;
 
 if (!function_exists('renderNameColumn'))
 {
@@ -20,10 +21,15 @@ if (!function_exists('renderNameColumn'))
 		$dateLabel = $data['dateLabel'];
 		$date = $data['date'];
 
-		$teamLabel = $data['teamLabel'];
-		$team = $data['team'];
-
 		$groupLabel = $data['groupLabel'];
+
+		$isPinned = $data['isPinned'] ? 'active' : 'by-hover';
+		$pinText = $data['pinText'];
+		$isPinnedBlock = <<<HTML
+				<span title="$pinText" class="main-grid-cell-content-action main-grid-cell-content-action-pin main-grid-cell-content-action-$isPinned" onclick="BX.Tasks.Flow.Grid.pinFlow({$flowId})"></span>
+			HTML
+		;
+
 
 		$groupBlock = <<<HTML
 			<div class="tasks-flow__list-name_info">
@@ -67,56 +73,52 @@ if (!function_exists('renderNameColumn'))
 		}
 		else
 		{
+			$flowUri = new Uri(
+				CComponentEngine::makePathFromTemplate(
+					$arResult['pathToFlows'],
+				)
+			);
+			$host = Application::getInstance()->getContext()->getRequest()->getServer()->getHttpHost();
+
+			$flowUri->addParams(['ID_numsel' => 'exact']);
+			$flowUri->addParams(['ID_from' => $flowId]);
+			$flowUri->addParams(['ID_to' => $flowId]);
+			$flowUri->addParams(['apply_filter' => 'Y']);
+			$flowUri->setHost($host);
+			$url = $flowUri->getUri();
+
 			$nameClick = "BX.Tasks.Flow.ViewForm.showInstance({
 				flowId: $flowId,
 				bindElement: this,
-				isFeatureEnabled: '$isFeatureEnabled'
+				isFeatureEnabled: '$isFeatureEnabled',
+				flowUrl: '$url',
 			})";
 		}
 
-		if ($data['demo'])
-		{
-			$teamContentBlock = <<<HTML
-				<span class="tasks-flow__list-name_info-text">$team</span>
-			HTML;
-		}
-		else
-		{
-			$teamContentBlock = <<<HTML
-				<span 
-					class="tasks-flow__list-name_info-link"
-					title="$team"
-					onclick="{BX.Tasks.Flow.Grid.showTeam('$flowId', this)}"
-					data-id="tasks-flow-list-name-team-$flowId"
-				>
-					$team
-				</span>
-			HTML;
-		}
-
-		return <<<HTML
-			<div class="tasks-flow__list-cell tasks-flow__list-name">
-				<div>
-					<span 
-						class="tasks-flow__list-name_flow-name"
-						onclick="$nameClick"
-						data-id="tasks-flow-list-name-$flowId"
-					>
-						$flowName
-					</span>
-				</div>
-				<div class="tasks-flow__list-name_info">
-					<span class="tasks-flow__list-name_info-title">$dateLabel</span>
-					<span class="tasks-flow__list-name_info-text">$date</span>
-				</div>
-				<div class="tasks-flow__list-name_info --link">
-					<span class="tasks-flow__list-name_info-title">
-						$teamLabel
-					</span>
-					$teamContentBlock
-				</div>
-				$groupBlock
-			</div>
-		HTML;
-	}
+        return <<<HTML
+            <div class="tasks-flow__list-cell tasks-flow__list-name tasks-flow__list-container">
+                <div class="tasks-flow__list-info">
+                    <div class="tasks-flow__list-name-wrapper">
+                        <span
+                            class="tasks-flow__list-name_flow-name"
+                            onclick="$nameClick"
+                            data-id="tasks-flow-list-name-$flowId"
+                        >
+                            $flowName
+                        </span>
+                    </div>
+                    <div class="tasks-flow__list-name_info">
+                        <span class="tasks-flow__list-name_info-title">$dateLabel</span>
+                        <span class="tasks-flow__list-name_info-text">$date</span>
+                    </div>
+                    $groupBlock
+                </div>
+                <div class="tasks-flow__list-name_info --link tasks-flow__list-pinned">
+                    <span class="tasks-flow__list-name_info-title">
+                    	$isPinnedBlock
+                    </span>
+                </div>
+            </div>
+        HTML;
+    }
 }

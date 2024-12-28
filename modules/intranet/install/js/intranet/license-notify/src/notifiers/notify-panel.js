@@ -14,6 +14,16 @@ export class NotifyPanel extends LicenseNotifier
 		this.setOptions(options);
 	}
 
+	setOptions(options: LicenseNotifyPanelParams): void
+	{
+		this.#cache.set('options', options);
+	}
+
+	getOptions(): ?LicenseNotifyPanelParams
+	{
+		return this.#cache.get('options', null);
+	}
+
 	#getPanel(): HTMLElement
 	{
 		const onclick = () => {

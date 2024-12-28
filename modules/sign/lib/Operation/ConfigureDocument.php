@@ -48,6 +48,7 @@ class ConfigureDocument implements Contract\Operation
 	private readonly Service\Sign\BlockService $signBlockService;
 	private readonly Service\Sign\Document\ProviderCodeService $providerCodeService;
 	private readonly Logger $logger;
+	private readonly Service\Integration\HumanResources\HcmLinkService $hcmLinkService;
 
 	public function __construct(
 		private readonly string $uid,
@@ -72,6 +73,7 @@ class ConfigureDocument implements Contract\Operation
 		$this->signBlockService = $container->getSignBlockService();
 		$this->providerCodeService = $container->getProviderCodeService();
 		$this->logger = Logger::getInstance();
+		$this->hcmLinkService = $container->getHcmLinkService();
 	}
 
 	public function launch(): Main\Result
@@ -114,6 +116,12 @@ class ConfigureDocument implements Contract\Operation
 			->setUserCache($this->userCache)
 			->listByDocumentId($document->id)
 		;
+
+		$validateHcmLinkResult = $this->fillAndValidateHcmLinkEmployees($document, $members);
+		if (!$validateHcmLinkResult->isSuccess())
+		{
+			return $validateHcmLinkResult;
+		}
 
 		$memberCollection = new MemberCollection();
 		$owner = new Owner($document->initiator);
@@ -235,7 +243,7 @@ class ConfigureDocument implements Contract\Operation
 				return (new Main\Result())->addError(new Main\Error("Block has party: `{$block->party}` but member with party: `{$block->party}` doesnt exist"));
 			}
 
-			$fields = $this->createFields($block, $memberWithBlockRole);
+			$fields = $this->createFields($block, $memberWithBlockRole, $document);
 			foreach ($fields as $field)
 			{
 				$requestBlock->addFieldNames($field->name);
@@ -248,9 +256,10 @@ class ConfigureDocument implements Contract\Operation
 				}
 			}
 
-			$requestBlocks->addItem(
-				$requestBlock,
-			);
+			if (!$fields->isEmpty())
+			{
+				$requestBlocks->addItem($requestBlock);
+			}
 		}
 		$isB2eScenario = DocumentScenario::isB2eScenarioByDocument($document);
 		if ($isB2eScenario)
@@ -262,7 +271,9 @@ class ConfigureDocument implements Contract\Operation
 			}
 		}
 
-			$response = $this->apiDocumentSigningService->configure(
+		$culture = Main\Application::getInstance()->getContext()->getCulture();
+
+		$response = $this->apiDocumentSigningService->configure(
 			new ConfigureRequest(
 				documentUid: $document->uid,
 				title: $this->documentService->getComposedTitleByDocument($document),
@@ -280,6 +291,9 @@ class ConfigureDocument implements Contract\Operation
 				titleWithoutNumber: $document->title,
 				scheme: $this->getDocumentScheme($document),
 				externalDateCreate: $document->externalDateCreate?->format('Y-m-d') ?? '',
+				dateFormat: $culture?->getDateFormat(),
+				dateTimeFormat: $culture?->getDateTimeFormat(),
+				weekStart: $culture?->getWeekStart(),
 			),
 		);
 
@@ -301,9 +315,9 @@ class ConfigureDocument implements Contract\Operation
 		return new Main\Result();
 	}
 
-	private function createFields(Item\Block $block, ?Item\Member $member): Item\FieldCollection
+	private function createFields(Item\Block $block, ?Item\Member $member, Item\Document $document): Item\FieldCollection
 	{
-		$fields = $this->fieldFactory->createByBlocks(new Item\BlockCollection($block), $member);
+		$fields = $this->fieldFactory->createByBlocks(new Item\BlockCollection($block), $member, $document);
 		if (!BlockCode::isCommon($block->code))
 		{
 			return $fields;
@@ -452,16 +466,22 @@ class ConfigureDocument implements Contract\Operation
 		{
 			return $modelFromCache;
 		}
-
-		$model = Main\UserTable::query()
-			->where('ID', $userId)
-			->setSelect([
+		$cachedFields = $this->userCache->getCachedFields();
+		if (empty($cachedFields))
+		{
+			$cachedFields = [
 				'ID',
 				'NAME',
 				'SECOND_NAME',
 				'LAST_NAME',
 				'LOGIN',
-			])
+			];
+			$this->userCache->setCachedFields($cachedFields);
+		}
+
+		$model = Main\UserTable::query()
+			->where('ID', $userId)
+			->setSelect($cachedFields)
 			->fetchObject()
 		;
 		if ($model === null)
@@ -522,5 +542,37 @@ class ConfigureDocument implements Contract\Operation
 		}
 
 		return $document->scheme ?? Scheme::createDefaultSchemeByProviderCode($document->providerCode);
+	}
+
+	private function fillAndValidateHcmLinkEmployees(Item\Document $document, Item\MemberCollection $members): Main\Result
+	{
+		if (!$document->hcmLinkCompanyId || !$this->hcmLinkService->isAvailable())
+		{
+			return new Main\Result();
+		}
+
+		$notFilled = $members->filter(static fn(Item\Member $member) => !$member->employeeId);
+		if ($notFilled->isEmpty())
+		{
+			return new Main\Result();
+		}
+
+		$this->hcmLinkService->fillOneLinkedMembersWithEmployeeId($document, $notFilled, $document->representativeId);
+		$someoneNotFilled = $notFilled->findFirst(static fn(Item\Member $member) => !$member->employeeId);
+		if ($someoneNotFilled)
+		{
+			return (new Main\Result())->addError(new Main\Error('Not all members mapped'));
+		}
+
+		foreach ($notFilled as $member)
+		{
+			$result = $this->memberRepository->update($member);
+			if (!$result->isSuccess())
+			{
+				return $result;
+			}
+		}
+
+		return new Main\Result();
 	}
 }

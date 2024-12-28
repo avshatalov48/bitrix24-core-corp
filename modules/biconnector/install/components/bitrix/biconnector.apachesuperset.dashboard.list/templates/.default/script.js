@@ -357,20 +357,31 @@
 	    key: "deleteDashboard",
 	    value: function deleteDashboard(dashboardId) {
 	      var _this6 = this;
-	      ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_TITLE'), function (messageBox, button) {
-	        button.setWaiting();
-	        babelHelpers.classPrivateFieldGet(_this6, _dashboardManager).deleteDashboard(dashboardId).then(function () {
-	          _this6.getGrid().reload();
-	          messageBox.close();
-	        })["catch"](function (response) {
-	          messageBox.close();
-	          if (response.errors) {
-	            _classPrivateMethodGet(_this6, _notifyErrors, _notifyErrors2).call(_this6, response.errors);
+	      var messageBox = new ui_dialogs_messagebox.MessageBox({
+	        message: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_TITLE'),
+	        buttons: [new BX.UI.Button({
+	          color: BX.UI.Button.Color.DANGER,
+	          text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_YES'),
+	          onclick: function onclick(button) {
+	            button.setWaiting();
+	            babelHelpers.classPrivateFieldGet(_this6, _dashboardManager).deleteDashboard(dashboardId).then(function () {
+	              _this6.getGrid().reload();
+	              messageBox.close();
+	            })["catch"](function (response) {
+	              messageBox.close();
+	              if (response.errors) {
+	                _classPrivateMethodGet(_this6, _notifyErrors, _notifyErrors2).call(_this6, response.errors);
+	              }
+	            });
 	          }
-	        });
-	      }, main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_YES'), function (messageBox) {
-	        return messageBox.close();
-	      }, main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_NO'));
+	        }), new BX.UI.CancelButton({
+	          text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_NO'),
+	          onclick: function onclick(button) {
+	            return messageBox.close();
+	          }
+	        })]
+	      });
+	      messageBox.show();
 	    }
 	  }, {
 	    key: "openCreationSlider",

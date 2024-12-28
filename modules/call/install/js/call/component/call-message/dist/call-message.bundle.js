@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Call = this.BX.Call || {};
-(function (exports,ui_vue3_directives_hint,main_core,im_v2_component_message_elements,im_v2_component_message_base,im_v2_lib_dateFormatter,im_v2_lib_call,im_public,im_v2_const) {
+(function (exports,ui_vue3_directives_hint,main_core,im_v2_component_message_elements,im_v2_component_message_base,im_v2_lib_dateFormatter,im_v2_lib_call,im_public,im_v2_const,call_lib_analytics) {
 	'use strict';
 
 	const MESSAGE_TYPE = {
@@ -123,6 +123,11 @@ this.BX.Call = this.BX.Call || {};
 	        this.hintTimeout = setTimeout(() => this.showHint = false, 10000);
 	        return;
 	      }
+	      this.componentParams.messageType === MESSAGE_TYPE.start ? call_lib_analytics.Analytics.getInstance().onStartCallMessageClick({
+	        dialog: this.dialog
+	      }) : call_lib_analytics.Analytics.getInstance().onFinishCallMessageClick({
+	        dialog: this.dialog
+	      });
 	      this.isConference ? im_public.Messenger.openConference({
 	        code: this.dialog.public.code
 	      }) : im_public.Messenger.startVideoCall(this.dialogId);
@@ -157,5 +162,5 @@ this.BX.Call = this.BX.Call || {};
 
 	exports.CallMessage = CallMessage;
 
-}((this.BX.Call.Component = this.BX.Call.Component || {}),BX.Vue3.Directives,BX,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const));
+}((this.BX.Call.Component = this.BX.Call.Component || {}),BX.Vue3.Directives,BX,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Call.Lib));
 //# sourceMappingURL=call-message.bundle.js.map

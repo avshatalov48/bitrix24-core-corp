@@ -75,7 +75,7 @@ class BaasTokenService
 			throw new NotServiceException('Not Baas service');
 		}
 
-		return $service->consume($tokens);
+		return $service->forceConsume($tokens);
 	}
 
 	protected function getService(): ?Baas\Service

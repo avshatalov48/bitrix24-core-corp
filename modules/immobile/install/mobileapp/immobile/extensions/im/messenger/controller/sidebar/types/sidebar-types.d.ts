@@ -2,6 +2,7 @@ import { UsersModelState } from '../../../model/types/users';
 import { SidebarFile } from '../../../model/types/sidebar/files';
 import { SidebarLink } from '../../../model/types/sidebar/links';
 import { DialogId } from '../../../types/common';
+import { SidebarService } from '../src/chat/sidebar-service';
 
 type SidebarViewProps = {
 	isGroupDialog: boolean,
@@ -48,6 +49,24 @@ type ChannelSidebarViewProps = {
 	isSuperEllipseAvatar: boolean,
 }
 
+type CollabSidebarViewProps = {
+	headData: {
+		desc: string | null,
+		title: string,
+		imageUrl: string,
+		svg: string,
+		imageColor: string,
+	},
+	sidebarService: SidebarService,
+	widget: object,
+	dialogId: number | string,
+	restService: object,
+	guestCount: number | null,
+}
+
+type CollabSidebarViewState = {
+}
+
 type ChannelSidebarViewState = {
 }
 
@@ -84,6 +103,7 @@ type SidebarProfileInfoProps = {
 	isNotes: boolean,
 	isCopilot: boolean,
 	isBot: boolean,
+	dialogType?: string,
 	headData: {
 		desc: string | null,
 		title: string,
@@ -113,8 +133,25 @@ type SidebarProfileInfoState = {
 		statusSvg: string,
 		chevron: string,
 	},
+	dialogType: string | null,
+	title: string,
 	imageUrl: string,
 	desc: string,
+	guestCount: number,
+}
+
+type SidebarProfileCollabBtnProps = {
+	widget: object,
+	dialogId: DialogId,
+	sidebarService: SidebarService,
+}
+
+type SidebarProfileCollabBtnState = {
+	isMute: boolean,
+	collabId: number,
+	files: number,
+	calendar: number,
+	tasks: number,
 }
 
 type SidebarProfileBtnProps = {

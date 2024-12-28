@@ -95,10 +95,12 @@ final class SignGroupEntityProvider extends \Bitrix\Main\UI\Selector\EntityBase
 	{
 		try
 		{
+			/** @todo Use SiteTable::getDefaultSiteId() */
 			$site = SiteTable::getList(
 					[
-						'select' => ['LID', 'SERVER_NAME', 'NAME', 'CHARSET' => 'CULTURE.CHARSET'],
+						'select' => ['LID', 'LANGUAGE_ID'],
 						'filter' => ['=DEF' => 'Y', '=ACTIVE' => 'Y'],
+						'cache' => ['ttl' => 86400],
 					]
 				)
 				->fetch()

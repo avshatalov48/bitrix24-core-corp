@@ -1,5 +1,5 @@
-import DescktopMenu from './desctop-menu';
+import DesktopMenu from './desktop-menu';
 
 export {
-	DescktopMenu
+	DesktopMenu
 };

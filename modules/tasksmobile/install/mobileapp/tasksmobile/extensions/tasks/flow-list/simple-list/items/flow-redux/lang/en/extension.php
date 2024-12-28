@@ -1,6 +1,25 @@
 <?php
 $MESS["TASKSMOBILE_FLOWS_INFO_DESCRIPTION_TEXT"] = "Assign tasks, track employee workload and efficiency";
 $MESS["TASKSMOBILE_FLOWS_INFO_HEADER_TEXT"] = "Flows";
+$MESS["TASKSMOBILE_FLOW_AI_ADVICE_ADVICES_ADVICE"] = "I recommend";
+$MESS["TASKSMOBILE_FLOW_AI_ADVICE_FOOTNOTE"] = "* Replies provided by CoPilot may not always be accurate.";
+$MESS["TASKSMOBILE_FLOW_AI_ADVICE_FOOTNOTE_LINK"] = "Learn more";
+$MESS["TASKSMOBILE_FLOW_AI_ADVICE_HEADER_NOTE_HIGH"] = "Here's my take on the reasons the team is so efficient.";
+$MESS["TASKSMOBILE_FLOW_AI_ADVICE_HEADER_NOTE_LOW"] = "I have identified possible reasons for the decline in efficiency and come up with recommendations.";
+$MESS["TASKSMOBILE_FLOW_AI_ADVICE_HEADER_NOTE_NO_DATA"] = "Here's an example of my recommendations.";
+$MESS["TASKSMOBILE_FLOW_AI_ADVICE_HEADER_SUBTITLE_HIGH"] = "Flow efficiency is perfect, #ANCHOR_START##EFFICIENCY#%#ANCHOR_END#";
+$MESS["TASKSMOBILE_FLOW_AI_ADVICE_HEADER_SUBTITLE_LOW"] = "Efficiency dropped to #ANCHOR_START##EFFICIENCY#%#ANCHOR_END#";
+$MESS["TASKSMOBILE_FLOW_AI_ADVICE_HEADER_SUBTITLE_NO_DATA_PLURAL_0"] = "I'll be ready with my recommendations once the flow has at least #MIN_TASKS_COUNT_FOR_ADVICE# task.";
+$MESS["TASKSMOBILE_FLOW_AI_ADVICE_HEADER_SUBTITLE_NO_DATA_PLURAL_1"] = "I'll be ready with my recommendations once the flow has at least #MIN_TASKS_COUNT_FOR_ADVICE# tasks.";
+$MESS["TASKSMOBILE_FLOW_AI_ADVICE_HEADER_SUBTITLE_NO_DATA_PLURAL_2"] = "I'll be ready with my recommendations once the flow has at least #MIN_TASKS_COUNT_FOR_ADVICE# tasks.";
+$MESS["TASKSMOBILE_FLOW_AI_ADVICE_HEADER_TITLE"] = "Hello! I'm CoPilot";
+$MESS["TASKSMOBILE_FLOW_AI_ADVICE_MENU_ITEM_CREATE_CALENDAR_EVENT"] = "Create event";
+$MESS["TASKSMOBILE_FLOW_AI_ADVICE_MENU_ITEM_CREATE_TASK"] = "Create task";
+$MESS["TASKSMOBILE_FLOW_AI_ADVICE_WIDGET_TITLE"] = "CoPilot recommendations";
+$MESS["TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_HIGH"] = "Excellent efficiency";
+$MESS["TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_LOW"] = "Flow efficiency decreased. Learn #ANCHOR_START#how to fix the issue#ANCHOR_END#";
+$MESS["TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_NO_DATA"] = "CoPilot is collecting efficiency related data.";
+$MESS["TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_TOAST"] = "CoPilot is still working on recommendations. Please wait.";
 $MESS["TASKSMOBILE_FLOW_CONTENT_CREATE_TASK_BUTTON_TEXT"] = "Create task";
 $MESS["TASKSMOBILE_FLOW_CONTENT_DISABLED_TOAST"] = "This flow is disabled";
 $MESS["TASKSMOBILE_FLOW_CONTENT_ENABLE_FLOW_BUTTON_TEXT"] = "Enable flow";

@@ -10,10 +10,12 @@ class Button extends \Bitrix\Crm\Service\Timeline\Layout\Button
 
 	protected ?string $icon = null;
 	protected string $type;
+	protected ?array $menuItems = null;
 
 	public function __construct(string $title, string $type, string $icon = null)
 	{
 		parent::__construct($title);
+
 		$this->type = $type;
 		$this->icon = $icon;
 	}
@@ -42,6 +44,18 @@ class Button extends \Bitrix\Crm\Service\Timeline\Layout\Button
 		return $this;
 	}
 
+	public function setMenuItems(?array $menuItems): self
+	{
+		$this->menuItems = $menuItems;
+
+		return $this;
+	}
+
+	public function getMenuItems(): ?array
+	{
+		return $this->menuItems;
+	}
+
 	public function toArray(): array
 	{
 		return array_merge(
@@ -49,6 +63,7 @@ class Button extends \Bitrix\Crm\Service\Timeline\Layout\Button
 			[
 				'iconName' => $this->getIcon(),
 				'type' => $this->getType(),
+				'menuItems' => $this->getMenuItems(),
 			]
 		);
 	}

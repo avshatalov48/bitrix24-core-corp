@@ -12,6 +12,7 @@ return [
 		'main.core.events',
 		'sign.v2.blank-selector',
 		'sign.v2.api',
+		'sign.v2.sign-settings',
 		'ui.buttons',
 		'ui.alerts',
 	],

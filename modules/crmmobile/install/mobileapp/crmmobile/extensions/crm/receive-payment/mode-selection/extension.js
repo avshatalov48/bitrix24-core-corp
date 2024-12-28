@@ -287,8 +287,9 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 			}
 			qrauth.open({
 				title,
-				redirectUrl: redirectUrl,
+				redirectUrl,
 				layout: this.contextMenu.getActionParentWidget(),
+				analyticsSection: 'crm',
 			});
 		}
 

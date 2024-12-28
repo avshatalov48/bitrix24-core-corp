@@ -244,7 +244,13 @@ final class ObjectNameService
 		while (true)
 		{
 			$count++;
-			[$this->desiredName] = $this->getNextGeneratedName($mainPartName, $suffix, $underObjectId, $count > 2);
+			[$this->desiredName] = $this->getNextGeneratedName(
+				$mainPartName,
+				$suffix,
+				$underObjectId,
+				withoutLike: $count > 2,
+				fastWayById: $count === 1,
+			);
 
 			if ($this->lock(1) && $this->isUniqueName($this->excludeId ?? null)->isSuccess())
 			{
@@ -284,7 +290,13 @@ final class ObjectNameService
 		return [$mainPart, $suffix];
 	}
 
-	private function getNextGeneratedName(string $mainPartName, ?string $suffix, int $underObjectId, bool $withoutLike = false): array
+	private function getNextGeneratedName(
+		string $mainPartName,
+		?string $suffix,
+		int $underObjectId,
+		bool $withoutLike = false,
+		bool $fastWayById = false,
+	): array
 	{
 		$left = $mainPartName . ' (';
 		$right = ')';
@@ -310,6 +322,12 @@ final class ObjectNameService
 			"'^[1-9][[:digit:]]*$'"
 		);
 
+		$order = 'CHAR_LENGTH(NAME) DESC, NAME DESC';
+		if ($fastWayById)
+		{
+			$order = 'ID DESC';
+		}
+
 		$sql = "
 			SELECT NAME FROM b_disk_object 
 			WHERE 
@@ -318,7 +336,7 @@ final class ObjectNameService
 				LEFT(NAME, {$lengthL}) = '" . $sqlHelper->forSql($left) . "' AND
 				{$regexpCondition} AND
 				RIGHT(NAME, {$lengthR}) = '" . $sqlHelper->forSql($right) . "'
-			ORDER BY CHAR_LENGTH(NAME) DESC, NAME DESC
+			ORDER BY {$order}
 			LIMIT 1;
 		";
 

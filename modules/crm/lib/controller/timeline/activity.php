@@ -2,18 +2,19 @@
 
 namespace Bitrix\Crm\Controller\Timeline;
 
-use Bitrix\Crm\Activity\BindIdentifier;
 use Bitrix\Crm\Controller\Base;
 use Bitrix\Crm\Controller\ErrorCode;
-use Bitrix\Crm\Controller\Validator;
-use Bitrix\Crm\Controller\Validator\Validation;
-use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Controller\Timeline\trait\ActivityLoader;
+use Bitrix\Crm\Controller\Timeline\trait\ActivityPermissionsChecker;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Error;
 use CCrmActivity;
 
 class Activity extends Base
 {
+	use ActivityLoader;
+	use ActivityPermissionsChecker;
+
 	public function completeAction(int $activityId, int $ownerTypeId, int $ownerId): void
 	{
 		$activity = $this->loadActivity($activityId, $ownerTypeId, $ownerId);
@@ -142,51 +143,28 @@ class Activity extends Base
 		}
 	}
 
-	protected function loadActivity(int $activityId, int $ownerTypeId, int $ownerId): ?array
+	public function deleteTagAction(int $activityId, int $ownerTypeId, int $ownerId): void
 	{
-		$itemIdentifier = ItemIdentifier::createByParams($ownerTypeId, $ownerId);
-		if ($itemIdentifier === null)
+		$activity = $this->loadActivity($activityId, $ownerTypeId, $ownerId);
+		if (!$activity)
 		{
-			$this->addError(ErrorCode::getOwnerNotFoundError());
-
-			return null;
+			return;
 		}
 
-		$binding = new BindIdentifier($itemIdentifier, $activityId);
-
-		$validation = (new Validation())
-			->validate($binding->getActivityId(), [new Validator\Activity\ActivityExists()])
-			->validate($binding, [new Validator\Activity\BindingExists()])
-			->validate($itemIdentifier, [new Validator\Activity\ReadPermission()])
-		;
-
-		if (!$validation->isSuccess())
+		if (!$this->isUpdateEnable($ownerTypeId, $ownerId))
 		{
-			$this->addErrors($validation->getErrors());
-
-			return null;
+			return;
 		}
 
-		return Container::getInstance()->getActivityBroker()->getById($activityId);
-	}
+		unset($activity['SETTINGS']['TAGS']);
 
-	protected function isUpdateEnable(int $ownerTypeId, int $ownerId): bool
-	{
-		$itemIdentifier = ItemIdentifier::createByParams($ownerTypeId, $ownerId);
-		if ($itemIdentifier === null)
+		if (!CCrmActivity::Update($activity['ID'], $activity))
 		{
-			$this->addError(ErrorCode::getOwnerNotFoundError());
-
-			return false;
+			$this->addError(
+				new Error(
+					implode(', ', CCrmActivity::GetErrorMessages()),
+					'CAN_NOT_UPDATE')
+			);
 		}
-
-		$result = (new Validator\Activity\UpdatePermission())->validate($itemIdentifier);
-
-		if (!$result->isSuccess())
-		{
-			$this->addErrors($result->getErrors());
-		}
-
-		return $result->isSuccess();
 	}
 }

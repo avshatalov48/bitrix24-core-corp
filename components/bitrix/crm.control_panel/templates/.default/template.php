@@ -1,4 +1,5 @@
 <?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -27,6 +28,8 @@ if ($isBitrix24)
 	$this->EndViewTarget();
 }
 Bitrix\Main\UI\Extension::load(['crm.restriction.bitrix24']);
+
+print (\Bitrix\Crm\Tour\CopilotCallAssessment::getInstance())->build();
 
 if ($arResult["ENABLE_SEARCH"])
 {

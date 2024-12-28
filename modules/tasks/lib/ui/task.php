@@ -71,7 +71,7 @@ final class Task
 
 	/**
 	 * Returns path for url action.
-	 *
+	 * @deprecated
 	 * @return string
 	 */
 	public static function getActionPath(): string
@@ -94,7 +94,7 @@ final class Task
 			}
 
 			// todo: if $siteId is set, use its dir, not SITE_DIR
-			$urlPrefix = (defined(SITE_DIR) ? SITE_DIR : '/').'company/personal';
+			$urlPrefix = (defined('SITE_DIR') ? SITE_DIR : '/').'company/personal';
 		}
 
 		return "{$urlPrefix}/user/#user_id#/tasks/task/#action#/#task_id#/";

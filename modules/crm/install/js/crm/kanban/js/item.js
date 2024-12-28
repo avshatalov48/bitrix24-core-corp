@@ -330,6 +330,13 @@ BX.CRM.Kanban.Item.prototype = {
 		event.stopPropagation(event);
 
 		this.getGrid().toggleRest();
+
+		this.getGrid().registerAnalyticsSpecialItemCloseEvent(
+			this,
+			BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN,
+			BX.Crm.Integration.Analytics.Dictionary.ELEMENT_CLOSE_BUTTON,
+			BX.Crm.Integration.Analytics.Dictionary.TYPE_ITEM_INDUSTRY,
+		);
 	},
 
 	emitOnSpecialItemDraw(layout)

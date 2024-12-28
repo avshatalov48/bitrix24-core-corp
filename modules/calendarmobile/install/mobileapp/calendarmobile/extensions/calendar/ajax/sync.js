@@ -153,6 +153,5 @@ jn.define('calendar/ajax/sync', (require, exports, module) => {
 
 	module.exports = {
 		SyncAjax: new SyncAjax(),
-		SyncActions,
 	};
 });

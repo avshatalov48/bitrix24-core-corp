@@ -3,9 +3,9 @@
 namespace Bitrix\Intranet\Service;
 
 use Bitrix\Intranet\Contract\Repository\DepartmentRepository;
+use Bitrix\Intranet\Contract\Repository\InvitationLinkRepository;
 use Bitrix\Intranet\Repository\InvitationRepository;
 use Bitrix\Main\DI\ServiceLocator;
-use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectNotFoundException;
 use Psr\Container\ContainerInterface;
@@ -66,6 +66,11 @@ class ServiceContainer implements ContainerInterface
 		return $this->get('repository.invitation');
 	}
 
+	public function invitationLinkRepository(): InvitationLinkRepository
+	{
+		return $this->get('repository.invitation.link');
+	}
+
 	public function registrationService(): RegistrationService
 	{
 		return $this->get('service.registration');
@@ -79,5 +84,20 @@ class ServiceContainer implements ContainerInterface
 	public function inviteService(): InviteService
 	{
 		return $this->get('service.invitation');
+	}
+
+	public function inviteStatusService(): InviteStatusService
+	{
+		return $this->get('service.invite.status');
+	}
+
+	public function inviteTokenService(): InviteTokenService
+	{
+		return $this->get('service.invitation.token');
+	}
+
+	public function getUserService(): UserService
+	{
+		return $this->get('service.user');
 	}
 }

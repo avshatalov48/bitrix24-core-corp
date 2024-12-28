@@ -75,16 +75,16 @@ class EventHandler
 		{
 			$input['BASE_ENTITY_TYPE_ID'] = $baseEntities[0]['OWNER_TYPE_ID'];
 			$input['BASE_ENTITY_ID'] = $baseEntities[0]['OWNER_ID'];
+		}
 
-			if (isset($data['CALLER_ID']))
-			{
-				$input['BASE_SOURCE'] = $data['CALLER_ID'];
-			}
+		if (isset($data['CALLER_ID']))
+		{
+			$input['BASE_SOURCE'] = $data['CALLER_ID'];
+		}
 
-			if (isset($data['CALL_ID']))
-			{
-				$input['BASE_SOURCE_ID'] = $data['CALL_ID'];
-			}
+		if (isset($data['CALL_ID']))
+		{
+			$input['BASE_SOURCE_ID'] = $data['CALL_ID'];
 		}
 
 		LogMessageController::getInstance()->onCreate(

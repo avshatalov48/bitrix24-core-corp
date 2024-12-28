@@ -3,11 +3,12 @@
  */
 jn.define('im/messenger/provider/service/classes/analytics/chat-delete', (require, exports, module) => {
 	const { AnalyticsEvent } = require('analytics');
-	const { Type } = require('type');
 
 	const { Analytics, ComponentCode } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerParams } = require('im/messenger/lib/params');
+
+	const { AnalyticsHelper } = require('im/messenger/provider/service/classes/analytics/helper');
 
 	/**
 	 * @class ChatDelete
@@ -29,11 +30,11 @@ jn.define('im/messenger/provider/service/classes/analytics/chat-delete', (requir
 				.setTool(Analytics.Tool.im)
 				.setCategory(this.#getChatCategory())
 				.setEvent(Analytics.Event.clickDelete)
-				.setType(this.#getChatType(chatData))
+				.setType(AnalyticsHelper.getTypeByChatType(chatData.type))
 				.setSection(Analytics.Section.sidebar)
 				.setSubSection(Analytics.SubSection.contextMenu)
-				.setP1(this.#getChatP1(chatData))
-				.setP5(this.#getChatP5(chatData))
+				.setP1(AnalyticsHelper.getP1ByChatType(chatData.type))
+				.setP5(AnalyticsHelper.getFormattedChatId(chatData.chatId))
 			;
 
 			analyticsEvent.send();
@@ -49,10 +50,10 @@ jn.define('im/messenger/provider/service/classes/analytics/chat-delete', (requir
 				.setTool(Analytics.Tool.im)
 				.setCategory(this.#getChatCategory())
 				.setEvent(Analytics.Event.cancelDelete)
-				.setType(this.#getChatType(chatData))
+				.setType(AnalyticsHelper.getTypeByChatType(chatData.type))
 				.setSection(Analytics.Section.popup)
-				.setP1(this.#getChatP1(chatData))
-				.setP5(this.#getChatP5(chatData))
+				.setP1(AnalyticsHelper.getP1ByChatType(chatData.type))
+				.setP5(AnalyticsHelper.getFormattedChatId(chatData.chatId))
 			;
 
 			analyticsEvent.send();
@@ -68,10 +69,10 @@ jn.define('im/messenger/provider/service/classes/analytics/chat-delete', (requir
 				.setTool(Analytics.Tool.im)
 				.setCategory(this.#getChatCategory())
 				.setEvent(Analytics.Event.delete)
-				.setType(this.#getChatType(chatData))
+				.setType(AnalyticsHelper.getTypeByChatType(chatData.type))
 				.setSection(Analytics.Section.popup)
-				.setP1(this.#getChatP1(chatData))
-				.setP5(this.#getChatP5(chatData))
+				.setP1(AnalyticsHelper.getP1ByChatType(chatData.type))
+				.setP5(AnalyticsHelper.getFormattedChatId(chatData.chatId))
 			;
 
 			analyticsEvent.send();
@@ -86,8 +87,8 @@ jn.define('im/messenger/provider/service/classes/analytics/chat-delete', (requir
 				.setCategory(Analytics.Category.chatPopup)
 				.setEvent(Analytics.Event.view)
 				.setType(this.#getDeletingChatCategory())
-				.setP1(this.#getChatP1({ type: chatType })) // hack: chat is already deleted
-				.setP5(this.#getChatP5({ chatId }))
+				.setP1(AnalyticsHelper.getP1ByChatType(chatType))
+				.setP5(AnalyticsHelper.getFormattedChatId(chatId))
 			;
 
 			if (isChatOpened)
@@ -118,21 +119,6 @@ jn.define('im/messenger/provider/service/classes/analytics/chat-delete', (requir
 				case ComponentCode.imChannelMessenger: return 'deleted_channel';
 				default: return 'deleted_chat';
 			}
-		}
-
-		#getChatType(chatData)
-		{
-			return Analytics.Type[chatData.type] ?? Analytics.Type.custom;
-		}
-
-		#getChatP1(chatData)
-		{
-			return `chatType_${chatData.type}`;
-		}
-
-		#getChatP5(chatData)
-		{
-			return `chatId_${chatData.chatId}`;
 		}
 	}
 

@@ -394,6 +394,11 @@ class TimeLineManager
 			return $this;
 		}
 
+		if ($this->taskRepository->getTask() === null)
+		{
+			return $this;
+		}
+
 		$this->eventsController->addEvent(new OnTaskFilesUpdated($this->taskRepository->getTask(), $this->userId));
 
 		return $this;

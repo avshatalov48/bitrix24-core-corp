@@ -1,10 +1,10 @@
 import 'ui.design-tokens';
 import '../css/desk.css';
-import { mapGetters, mapMutations } from 'ui.vue3.vuex';
-import Row from './row';
-import { PermissionControl } from './permissioncontrol';
 import { Loc } from 'main.core';
+import { mapGetters, mapMutations } from 'ui.vue3.vuex';
 import { MAX_SORT_ORDER_ON_THE_DESK } from './../store';
+import { PermissionControl } from './permissioncontrol';
+import Row from './row';
 
 export const Desk = {
 	name: 'Desk',
@@ -71,7 +71,7 @@ export const Desk = {
 			</tr>
 
 			<Row v-for="permissionEntity of permissionEntitiesExpanded" :entity="permissionEntity" />
-
+			
 			<tr class="bx-crm-perms-desk-row bx-crm-perms-edit-desk__footer">
 				<td class="bx-crm-perms-desk-row-item" :colspan="columnsCount">
 					<label>

@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Intranet\Integration;
 
+use Bitrix\Extranet\Service\ServiceContainer;
 use Bitrix\Intranet\Secretary;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
@@ -69,6 +70,11 @@ final class Tasks
 	public static function createDemoTasksForUser(int $userId): void
 	{
 		if (!Loader::includeModule('tasks'))
+		{
+			return;
+		}
+
+		if (self::isCollaber($userId))
 		{
 			return;
 		}
@@ -250,5 +256,15 @@ final class Tasks
 		}
 
 		Secretary::updateChatUsers($chatId, $addedUsers, $deletedUsers);
+	}
+
+	private static function isCollaber(int $userId): bool
+	{
+		if (!Loader::includeModule('extranet'))
+		{
+			return false;
+		}
+
+		return ServiceContainer::getInstance()->getCollaberService()->isCollaberById($userId);
 	}
 }

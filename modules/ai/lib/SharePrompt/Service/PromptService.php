@@ -73,7 +73,20 @@ class PromptService
 
 		if (!empty($categories))
 		{
-			$this->categoryRepository->addCategoriesForPrompt($promptId, $categories);
+			$categoriesForInsert = [];
+			foreach ($categories as $category)
+			{
+				$category = trim($category);
+				if (!empty($category))
+				{
+					$categoriesForInsert[] = $category;
+				}
+			}
+		}
+
+		if (!empty($categoriesForInsert))
+		{
+			$this->categoryRepository->addCategoriesForPrompt($promptId, array_unique($categoriesForInsert));
 		}
 	}
 

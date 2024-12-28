@@ -2,6 +2,8 @@
 
 namespace Bitrix\HumanResources\Type;
 
+use Bitrix\HumanResources\Trait\ValuesTrait;
+
 enum MemberSubordinateRelationType: int
 {
 	case RELATION_ITSELF = 0;

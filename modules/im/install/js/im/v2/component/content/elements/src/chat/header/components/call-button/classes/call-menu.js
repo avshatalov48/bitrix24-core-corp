@@ -1,8 +1,8 @@
-import { Loc, Tag, Extension } from 'main.core';
+import { Loc, Tag } from 'main.core';
 
 import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
-import { ChatActionType, ChatType, RestMethod } from 'im.v2.const';
+import { ActionByRole, ChatType, RestMethod } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { BaseMenu } from 'im.v2.lib.menu';
 import { CallManager } from 'im.v2.lib.call';
@@ -257,7 +257,7 @@ export class CallMenu extends BaseMenu
 		}
 
 		const chatCanBeCalled = CallManager.getInstance().chatCanBeCalled(dialogId);
-		const chatIsAllowedToCall = PermissionManager.getInstance().canPerformAction(ChatActionType.call, dialogId);
+		const chatIsAllowedToCall = PermissionManager.getInstance().canPerformActionByRole(ActionByRole.call, dialogId);
 
 		return chatCanBeCalled && chatIsAllowedToCall;
 	}

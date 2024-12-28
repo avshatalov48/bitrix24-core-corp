@@ -91,7 +91,6 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 
 			const mainProps = mergeImmutable(
 				{
-					testId,
 					onLayout,
 					style: this.getMainStyle(),
 				},
@@ -102,6 +101,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 				mainProps,
 				View(
 					{
+						testId,
 						ref: forwardRef,
 						style: this.getButtonStyle(),
 						onClick: this.#handleOnClick,

@@ -5,6 +5,7 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 	const { Type } = require('type');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { ActionByUserType } = require('im/messenger/const');
 
 	class UserPermission
 	{
@@ -13,18 +14,16 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 		}
 
 		/**
-		 * @desc check is can call by user data ( use id user or user state object )
-		 * @param {UsersModelState||number} userData
-		 * @param {boolean} [verbose=false] - prop for verbose response, returns object with key
-		 * @return {boolean|object}
+		 * @desc Set data dialog
+		 * @param {UsersModelState|string} userData
+		 * @return {boolean}
 		 */
-		isCanCall(userData, verbose = false)
+		setUserData(userData)
 		{
 			if (Type.isNumber(userData))
 			{
 				this.store = serviceLocator.get('core').getStore();
 				const userState = this.store.getters['usersModel/getById'](userData);
-
 				if (Type.isUndefined(userState))
 				{
 					return false;
@@ -38,18 +37,32 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 				this.userData = userData;
 			}
 
-			const isHTTPS = this.isHTTPS();
+			return true;
+		}
+
+		/**
+		 * @desc check is can call by user data ( use id user or user state object )
+		 * @param {UsersModelState||number} userData
+		 * @param {boolean} [verbose=false] - prop for verbose response, returns object with key
+		 * @return {boolean|object}
+		 */
+		isCanCall(userData, verbose = false)
+		{
+			if (!this.setUserData(userData))
+			{
+				return false;
+			}
+
 			const isYou = this.isYou();
 			const isBot = this.isBot();
 			const isNetwork = this.isNetwork();
 			const isLive = this.isLive();
-			const isCanCall = isHTTPS && !isYou && !isBot && !isNetwork && isLive;
+			const isCanCall = !isYou && !isBot && !isNetwork && isLive;
 
 			if (verbose)
 			{
 				return {
 					isCanCall,
-					isHTTPS,
 					isYou,
 					isBot,
 					isNetwork,
@@ -113,12 +126,54 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 		}
 
 		/**
-		 * @desc check is https
-		 * @return {boolean}
+		 * @param actionType
+		 * @param {UsersModelState||number} userData
+		 * @return {*|boolean|boolean}
 		 */
-		isHTTPS()
+		canPerformActionByUserType(actionType, userData)
 		{
-			return currentDomain.startsWith('https://');
+			let userInfo = MessengerParams.getUserInfo();
+			if (userData && this.setUserData(userData))
+			{
+				userInfo = this.userData;
+			}
+
+			return this.getPermissionByUserType(userInfo)?.[actionType] ?? true;
+		}
+
+		/**
+		 * @param {UsersModelState||number} userData
+		 * @return {*|boolean|boolean}
+		 */
+		canLeaveFromCollab(userData)
+		{
+			if (!this.setUserData(userData))
+			{
+				return false;
+			}
+
+			const permissionsByUserType = this.getPermissionByUserType(this.userData);
+
+			return permissionsByUserType?.[ActionByUserType.leaveCollab] ?? false;
+		}
+
+		/**
+		 * @return {Permissions}
+		 */
+		getChatPermissions()
+		{
+			return MessengerParams.getPermissions();
+		}
+
+		/**
+		 * @return {UsersModelState} userData
+		 */
+		getPermissionByUserType(userData)
+		{
+			const userType = userData.type;
+			const chatPermissions = this.getChatPermissions();
+
+			return chatPermissions?.byUserType?.[userType] ?? {};
 		}
 	}
 

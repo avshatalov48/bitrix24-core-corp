@@ -1,14 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bitrix\Intranet\Entity\Type;
 
-class PhoneInvitation
+class PhoneInvitation extends BaseInvitation
 {
 	public function __construct(
-		private string $phone,
-		private ?string $name = null,
-		private ?string $lastName = null,
-		private ?string $phoneCountry = null
+		private readonly string $phone,
+		private readonly ?string $name = null,
+		private readonly ?string $lastName = null,
+		private readonly ?string $phoneCountry = null
 	)
 	{
 	}

@@ -180,5 +180,6 @@ namespace PHPSTORM_META
 		'crm.summary.summaryFactory' => \Bitrix\Crm\Summary\SummaryFactory::class,
 		'crm.binding.clientBinder' => \Bitrix\Crm\Binding\ClientBinder::class,
 		'crm.service.communication.rankingFactory' => \Bitrix\Crm\Service\Communication\Search\Ranking\RankingFactory::class,
+		'crm.service.integration.im' => \Bitrix\Crm\Integration\Im\ImService::class,
 	]));
 }

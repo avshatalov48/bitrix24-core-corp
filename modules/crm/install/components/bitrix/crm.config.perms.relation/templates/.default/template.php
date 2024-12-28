@@ -17,13 +17,14 @@ CUtil::InitJSCore();
 					<th><?=GetMessage("CRM_PERMS_PERM_ROLE")?></th>
 				</tr>
 				<? foreach ($arResult['RELATION'] as $arRelation): ?>
+				<? foreach ($arRelation['ROLE_IDS'] as $roleId): ?>
 				<tr data-roleId="<?=$arRelation['RELATION']?>">
 					<td><?=$arRelation['NAME']?></td>
 					<td class="last-child">
 						<div style="float:left">
 						<select name="PERMS[<?=$arRelation['RELATION']?>][]">
 						<? foreach ($arResult['ROLE'] as $arRole): ?>
-							<option <?=($arRole['ID'] == $arRelation['ROLE_ID'] ? 'selected="selected"' : '')?> value="<?=$arRole['ID']?>" title="<?=$arRole['NAME']?>"><?=$arRole['NAME']?></option>
+							<option <?=($arRole['ID'] == $roleId ? 'selected="selected"' : '')?> value="<?=$arRole['ID']?>" title="<?=$arRole['NAME']?>"><?=$arRole['NAME']?></option>
 						<? endforeach; ?>
 						</select>
 						</div>
@@ -34,6 +35,7 @@ CUtil::InitJSCore();
 						<?endif;?>
 					</td>
 				</tr>
+				<? endforeach; ?>
 				<? endforeach; ?>
 				<tr id="crmPermTableInsertTd" style="display:none">
 					<td id="crmPermTableInsertTdName"></td>

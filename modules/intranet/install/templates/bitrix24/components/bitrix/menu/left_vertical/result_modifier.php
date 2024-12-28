@@ -32,7 +32,9 @@ if ($presetId = \CUserOptions::GetOption("intranet", "left_menu_preset"))
 $defaultItems = $arResult;
 $menuUser = new LeftMenu\User();
 $menu = new LeftMenu\Menu($defaultItems, $menuUser);
-$activePreset = LeftMenu\Preset\Manager::getPreset();
+$isCollaber = Loader::includeModule('extranet')
+	&& \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById(\Bitrix\Intranet\CurrentUser::get()->getId());
+$activePreset = LeftMenu\Preset\Manager::getPreset($isCollaber ? 'collab' : null);
 $menu->applyPreset($activePreset);
 $visibleItems = $menu->getVisibleItems();
 $firstPageChanger = ToolsManager::getInstance()->getFirstPageChanger();

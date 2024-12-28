@@ -1,6 +1,7 @@
 <?
 
 use Bitrix\Main\Web\Uri;
+use Bitrix\Main\Loader;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
@@ -17,6 +18,19 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 	'clipboard',
 	'ui.alerts',
 ]);
+
+$hasBizprocData = false;
+$availabilityLock = null;
+if (!empty($arResult['BIZPROC_STARTER_DATA']) && Loader::includeModule('bizproc'))
+{
+	$hasBizprocData = true;
+
+	$availabilityLock = $arResult['BIZPROC_STARTER_DATA']['availabilityLock'] ?? null;
+	if (!$availabilityLock)
+	{
+		\Bitrix\Main\UI\Extension::load(['bp_starter']); // todo: replace bp_starter to bizproc.workflow.starter
+	}
+}
 
 if ($arResult['TODO_CREATE_NOTIFICATION_PARAMS'])
 {
@@ -157,7 +171,11 @@ $tabContainerId = "{$guid}_tabs";
 	if($entityID <= 0)
 	{
 		$tabContainerClassName .= ' crm-entity-stream-section-planned-above-overlay';
-	}?>
+	}
+
+	if ($hasBizprocData): ?>
+<div class="crm-entity-section-menu-wrap">
+	<?php endif; ?>
 	<div class="<?=$tabContainerClassName?>" data-role="crm-item-detail-container">
 		<?php
 		$mode = false;
@@ -207,8 +225,36 @@ $tabContainerId = "{$guid}_tabs";
 				"THEME" => 'flat-adaptive',
 			]
 		);
-		?>
+
+		if ($hasBizprocData): ?>
 	</div>
+	<div class="crm-entity-bizproc-container">
+		<button
+			id="crm_entity_bp_starter"
+			class="ui-btn ui-btn-sm ui-btn-round ui-btn-light-border ui-btn-no-caps bp_starter"
+			<?= $availabilityLock ? "onclick=\"{$availabilityLock}\"" : "" ?>
+		>
+			<?php $component->includeComponentTemplate('bp_starter_icon'); ?>
+			<?=\Bitrix\Main\Localization\Loc::getMessage('CRM_ENT_DETAIL_BIZPROC_STARTER_LABEL')?>
+		</button>
+		<?php if (!$availabilityLock): ?>
+		<script>
+			BX.Event.ready(() => {
+				const button = BX('crm_entity_bp_starter');
+				const config = <?= \Bitrix\Main\Web\Json::encode($arResult['BIZPROC_STARTER_DATA']) ?>;
+				if (button)
+				{
+					const starter = new BX.Bizproc.Starter(config);
+					BX.Event.bind(button, 'click', () => {
+						starter.showTemplatesMenu(button);
+					});
+				}
+			});
+		</script>
+		<?php endif;?>
+	</div>
+<?php endif; ?>
+</div>
 <?php
 //endregion
 	?><div id="<?=htmlspecialcharsbx($tabContainerId)?>" style="position: relative;"><?

@@ -150,7 +150,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/context-menu', (requi
 		{
 			logger.log(`${this.constructor.name}.openMessageInChat`, this.messageId, this.dialogId);
 
-			MessengerEmitter.emit('onDestroySidebar');
+			MessengerEmitter.emit(EventType.sidebar.destroy);
 			MessengerEmitter.emit(EventType.dialog.external.goToMessageContext, {
 				dialogId: this.dialogId,
 				messageId: this.messageId,

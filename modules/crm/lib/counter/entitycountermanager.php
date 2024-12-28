@@ -169,7 +169,14 @@ class EntityCounterManager
 
 	public static function prepareValue($code, $userID = 0)
 	{
-		$counter = EntityCounterFactory::createNamed($code);
+		try
+		{
+			$counter = EntityCounterFactory::createNamed($code);
+		} catch (Main\ArgumentOutOfRangeException $e)
+		{
+			$counter = null;
+		}
+
 		if($counter !== null)
 		{
 			return $counter->getValue();

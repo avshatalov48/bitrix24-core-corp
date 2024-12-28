@@ -18,6 +18,11 @@ abstract class AbstractMenuItem implements MenuItem
 		return false;
 	}
 
+	public function getMessageCode(): string
+	{
+		return 'AVA_MENU_NAME_' . mb_strtoupper($this->getId());
+	}
+
 	public function __construct(Context $context)
 	{
 		$this->context = $context;

@@ -2,11 +2,11 @@
 
 namespace Bitrix\Disk\Document\OnlyOffice;
 
-use Bitrix\Disk\Document;
 use Bitrix\Disk\Document\Contract\FileCreatable;
 use Bitrix\Disk\Document\DocumentHandler;
 use Bitrix\Disk\Document\FileData;
 use Bitrix\Disk\Document\IViewer;
+use Bitrix\Disk\Document\OnlyOffice\Clients\CommandService\CommandServiceClientFactory;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Main;
 use Bitrix\Main\DI\ServiceLocator;
@@ -242,53 +242,16 @@ class OnlyOfficeHandler extends DocumentHandler implements FileCreatable, IViewe
 
 	public static function renameDocument(string $documentKey, string $newName): Result
 	{
-		$result = new Result();
+		$commandServiceClient = CommandServiceClientFactory::createCommandServiceClient();
 
-		$http = new HttpClient([
-			'socketTimeout' => 5,
-			'streamTimeout' => 10,
-			'version' => HttpClient::HTTP_1_1,
-		]);
+		return $commandServiceClient->rename($documentKey, $newName);
+	}
 
-		$postBody = [
-			'c' => self::CMD_META,
-			'key' => $documentKey,
-			'meta' => [
-				'title' => $newName,
-			],
-		];
+	public static function disconnectUserFromDocument(string $documentKey, array $userIds): Result
+	{
+		$commandServiceClient = CommandServiceClientFactory::createCommandServiceClient();
 
-		$configuration = new Document\OnlyOffice\Configuration();
-		$cloudRegistrationData = $configuration->getCloudRegistrationData();
-		if ($cloudRegistrationData)
-		{
-			$renameDocument = new Document\OnlyOffice\Cloud\RenameDocument($cloudRegistrationData['serverHost']);
-
-			return $renameDocument->rename($postBody);
-		}
-
-		$http->setHeader('Content-Type', 'application/json');
-		$secretKey = ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getSecretKey();
-		$http->setHeader('Authorization', 'Bearer ' . JWT::encode($postBody, $secretKey));
-
-		$url = self::getApiUrlRoot() . '/coauthoring/CommandService.ashx';
-		$postFields = Json::encode($postBody);
-		if ($http->post($url, $postFields) === false)
-		{
-			return $result->addError(new Main\Error('Server is not available.'));
-		}
-		if ($http->getStatus() !== 200)
-		{
-			return $result->addError(new Main\Error('Server is not available. Status ' . $http->getStatus()));
-		}
-
-		$response = Json::decode($http->getResult());
-		if (isset($response['error']) && $response['error'] !== 0)
-		{
-			return $result->addError(new Main\Error("Server sent error code {{$response['error']}}"));
-		}
-
-		return $result;
+		return $commandServiceClient->drop($documentKey, $userIds);
 	}
 
 	public static function shouldRestrictedBySize(int $fileSize): bool

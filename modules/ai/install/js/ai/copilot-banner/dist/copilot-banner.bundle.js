@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_popup,main_core,ui_iconSet_api_core,ui_hint,main_core_events) {
+(function (exports,main_core,main_popup,ui_iconSet_api_core,ui_hint,main_core_events) {
 	'use strict';
 
 	let _ = t => t,
@@ -90,7 +90,8 @@ this.BX = this.BX || {};
 	}
 	function _createPopup2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = new main_popup.Popup({
-	    width: 854,
+	    maxWidth: 854,
+	    minWidth: 700,
 	    minHeight: 520,
 	    content: babelHelpers.classPrivateFieldLooseBase(this, _renderPopupContent)[_renderPopupContent](),
 	    padding: 0,
@@ -268,5 +269,5 @@ this.BX = this.BX || {};
 	exports.AppsInstallerBanner = AppsInstallerBanner;
 	exports.AppsInstallerBannerEvents = AppsInstallerBannerEvents;
 
-}((this.BX.AI = this.BX.AI || {}),BX.Main,BX,BX.UI.IconSet,BX,BX.Event));
+}((this.BX.AI = this.BX.AI || {}),BX,BX.Main,BX.UI.IconSet,BX,BX.Event));
 //# sourceMappingURL=copilot-banner.bundle.js.map

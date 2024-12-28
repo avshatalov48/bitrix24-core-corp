@@ -110,6 +110,7 @@ $MESS["INTRANET_USER_PROFILE_VIDEOCALL"] = "Video call";
 $MESS["INTRANET_USER_PROFILE_VIEW_ACCESS_DENIED"] = "Access to user profile is denied.";
 $MESS["INTRANET_USER_PROFILE_YES"] = "Yes";
 $MESS["INTRANET_USER_PROFILE_admin"] = "Administrator";
+$MESS["INTRANET_USER_PROFILE_collaber"] = "Guest";
 $MESS["INTRANET_USER_PROFILE_email"] = "Email user";
 $MESS["INTRANET_USER_PROFILE_employee"] = "Actions";
 $MESS["INTRANET_USER_PROFILE_extranet"] = "Extranet";

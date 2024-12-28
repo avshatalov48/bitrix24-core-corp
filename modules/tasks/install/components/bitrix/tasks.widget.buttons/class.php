@@ -14,6 +14,7 @@ class TasksWidgetButtonsComponent extends TasksBaseComponent
 		static::tryParseArrayParameter($this->arParams['SCHEME'], []);
 		static::tryParseBooleanParameter($this->arParams['IS_SCRUM_TASK']);
 		static::tryParseBooleanParameter($this->arParams['SHOW_AHA_START_FLOW_TASK']);
+		static::tryParseBooleanParameter($this->arParams['IS_COLLAB']);
 
 		$this->arResult['TASK_LIMIT_EXCEEDED'] = static::tryParseBooleanParameter(
 			$this->arParams['TASK_LIMIT_EXCEEDED']

@@ -5,6 +5,7 @@ use Bitrix\Intranet\Controller\Invite;
 use Bitrix\IntranetMobile\Dto\SortingDto;
 use Bitrix\IntranetMobile\Dto\FilterDto;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
+use Bitrix\Intranet\ActionFilter\IntranetUser;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\IntranetMobile\Provider\UserProvider;
 
@@ -16,6 +17,7 @@ class Employees extends Base
 			'getUserList' => [
 				'+prefilters' => [
 					new CloseSession(),
+					new IntranetUser(),
 				],
 			],
 		];
@@ -88,6 +90,11 @@ class Employees extends Base
 
 	public function updateDepartmentAction(array $newDepartmentsIds, int $userId): array|bool
 	{
+		if (!\Bitrix\Intranet\Util::isIntranetUser($userId))
+		{
+			return false;
+		}
+
 		$allDepartments = \CIntranetRestService::departmentGet([]);
 
 		foreach ($allDepartments as $department)

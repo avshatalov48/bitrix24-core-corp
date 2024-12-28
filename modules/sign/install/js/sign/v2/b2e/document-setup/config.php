@@ -1,4 +1,7 @@
-<?
+<?php
+
+use Bitrix\Main\Config\Option;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -15,6 +18,9 @@ return [
 		'sign.v2.sign-settings',
 		'main.core',
 		'main.date',
+	],
+	'settings' => [
+		'isSenderTypeAvailable' => Option::get("sign", "is_sender_type_available", 'N') === 'Y',
 	],
 	'skip_core' => false,
 ];

@@ -5,6 +5,7 @@ import { Backend } from 'sign.backend';
 import { Guide } from 'sign.tour';
 import { Api } from 'sign.v2.api';
 import 'spotlight';
+import type { DocumentInitiatedType } from 'sign.v2.document-setup';
 import { Button, ButtonColor } from 'ui.buttons';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import 'ui.info-helper';
@@ -51,6 +52,8 @@ export class BlocksManager
 	#api: Api;
 	#lastContainerSize;
 	#cache: Cache.MemoryCache = new Cache.MemoryCache();
+	isTemplateMode: boolean = false;
+	documentInitiatedByType: DocumentInitiatedType | null = null;
 
 	/**
 	 * Constructor.
@@ -58,7 +61,9 @@ export class BlocksManager
 	 */
 	constructor(options: DocumentOptions)
 	{
-		const { documentLayout, disableEdit } = options;
+		const { documentLayout, disableEdit, isTemplateMode, documentInitiatedByType } = options;
+		this.isTemplateMode = Boolean(isTemplateMode);
+		this.documentInitiatedByType = documentInitiatedByType;
 		this.#documentLayout = documentLayout;
 		this.#disableEdit = disableEdit;
 		if (!this.#disableEdit)
@@ -483,7 +488,7 @@ export class BlocksManager
 				onFieldSelectListener,
 			);
 		}
-		else if (['b2ereference', 'myb2ereference'].includes(newBlockCode))
+		else if (['b2ereference', 'myb2ereference', 'employeedynamic', 'hcmlinkreference'].includes(newBlockCode))
 		{
 			const onFieldSelectListener = (event: FieldSelectEvent) => this.#onB2eReferenceBlockFieldSelect(
 				newBlock,
@@ -525,13 +530,12 @@ export class BlocksManager
 		this.#unsubscribeFromBlocksEvents();
 		this.#blocks = [];
 		this.hideResizeArea();
-		blocks.map(block => this.#addBlock(block, true));
+		blocks.map((block) => this.#addBlock(block, true));
 	}
 
 	initRepository(repositoryItems: NodeList)
 	{
 		[...repositoryItems].forEach((item: HTMLElement) => {
-
 			const code = item.getAttribute('data-code');
 			const part = item.getAttribute('data-part');
 

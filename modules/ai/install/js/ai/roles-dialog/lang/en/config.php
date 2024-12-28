@@ -2,6 +2,9 @@
 $MESS["AI_COPILOT_ROLES_ADD_TO_FAVOURITE"] = "Add to Favorites";
 $MESS["AI_COPILOT_ROLES_ADD_TO_FAVOURITE_ACTION_FAILED"] = "Could not add role to Favorites, please try again.";
 $MESS["AI_COPILOT_ROLES_ADD_TO_FAVOURITE_NOTIFICATION_SUCCESS"] = "Role <b>#ROLE#</b> has been added to Favorites.";
+$MESS["AI_COPILOT_ROLES_CUSTOM_GROUP"] = "My roles";
+$MESS["AI_COPILOT_ROLES_EMPTY_CUSTOM_GROUP"] = "Create your own roles in the #LINK#Role library#/LINK# or use roles shared with you.";
+$MESS["AI_COPILOT_ROLES_EMPTY_CUSTOM_GROUP_TITLE"] = "Find your favorite roles here";
 $MESS["AI_COPILOT_ROLES_EMPTY_FAVOURITE_GROUP"] = "Add to Favorites the roles you frequently use and access them from this screen.";
 $MESS["AI_COPILOT_ROLES_EMPTY_FAVOURITE_GROUP_TITLE"] = "Favorite roles";
 $MESS["AI_COPILOT_ROLES_ERROR_TEXT"] = "CoPilot is unable to execute request. <br>Refresh the page or try again later.";
@@ -12,6 +15,7 @@ $MESS["AI_COPILOT_ROLES_GROUP_LIST_HEADER_HINT"] = "CoPilot roles are grouped by
 $MESS["AI_COPILOT_ROLES_GROUP_LIST_HEADER_HINT_2"] = "CoPilot roles are grouped by industry sector. Select the one that fits you most for more accurate responses.";
 $MESS["AI_COPILOT_ROLES_HELP_ITEM_DESCRIPTION"] = "Use the feedback form to let us know.";
 $MESS["AI_COPILOT_ROLES_HELP_ITEM_TITLE"] = "Can't find your role?";
+$MESS["AI_COPILOT_ROLES_LIBRARY_TITLE"] = "Role library";
 $MESS["AI_COPILOT_ROLES_MAIN_CONTENT_HEADER"] = "Roles";
 $MESS["AI_COPILOT_ROLES_MAIN_CONTENT_HEADER_HINT"] = "The role helps CoPilot come up with replies most pertinent to the selected area of expertise. You will get a more accurate reply while saving time on trying to find a correct wording for your query.";
 $MESS["AI_COPILOT_ROLES_RECENT_GROUP"] = "Recent items";

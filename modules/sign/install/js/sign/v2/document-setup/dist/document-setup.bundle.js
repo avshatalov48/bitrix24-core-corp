@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
-(function (exports,main_core,main_core_events,sign_v2_blankSelector,sign_v2_api,ui_buttons,ui_alerts) {
+(function (exports,main_core,main_core_events,sign_v2_blankSelector,sign_v2_api,sign_v2_signSettings,ui_buttons,ui_alerts) {
 	'use strict';
 
 	let _ = t => t,
@@ -16,9 +16,13 @@ this.BX.Sign = this.BX.Sign || {};
 	var _scenarioType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scenarioType");
 	var _api = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("api");
 	var _uids = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uids");
+	var _documentMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentMode");
+	var _chatId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatId");
 	var _initNotifications = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initNotifications");
+	var _isChatCreated = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isChatCreated");
+	var _appendChatWarningContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appendChatWarningContainer");
 	var _register = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("register");
-	var _change = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("change");
+	var _changeDocumentBlank = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("changeDocumentBlank");
 	var _getPages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPages");
 	var _convertToBase = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("convertToBase64");
 	var _setDocumentData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setDocumentData");
@@ -58,11 +62,17 @@ this.BX.Sign = this.BX.Sign || {};
 	    Object.defineProperty(this, _getPages, {
 	      value: _getPages2
 	    });
-	    Object.defineProperty(this, _change, {
-	      value: _change2
+	    Object.defineProperty(this, _changeDocumentBlank, {
+	      value: _changeDocumentBlank2
 	    });
 	    Object.defineProperty(this, _register, {
 	      value: _register2
+	    });
+	    Object.defineProperty(this, _appendChatWarningContainer, {
+	      value: _appendChatWarningContainer2
+	    });
+	    Object.defineProperty(this, _isChatCreated, {
+	      value: _isChatCreated2
 	    });
 	    Object.defineProperty(this, _initNotifications, {
 	      value: _initNotifications2
@@ -84,6 +94,14 @@ this.BX.Sign = this.BX.Sign || {};
 	      value: void 0
 	    });
 	    Object.defineProperty(this, _uids, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _documentMode, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _chatId, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -114,12 +132,16 @@ this.BX.Sign = this.BX.Sign || {};
 	    });
 	    const {
 	      type,
-	      portalConfig: _portalConfig
+	      portalConfig: _portalConfig,
+	      documentMode,
+	      chatId: _chatId2
 	    } = blankSelectorConfig;
 	    this.setupData = null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _scenarioType)[_scenarioType] = type;
 	    babelHelpers.classPrivateFieldLooseBase(this, _api)[_api] = new sign_v2_api.Api();
 	    babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids] = new Map();
+	    babelHelpers.classPrivateFieldLooseBase(this, _documentMode)[_documentMode] = documentMode;
+	    babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId] = _chatId2;
 	    this.initLayout();
 	    babelHelpers.classPrivateFieldLooseBase(this, _initNotifications)[_initNotifications](_portalConfig);
 	  }
@@ -179,22 +201,35 @@ this.BX.Sign = this.BX.Sign || {};
 	        }
 	        this.blankSelector.selectBlank(blankId);
 	      } else {
+	        var _this$setupData2;
 	        this.ready = false;
+	        const isBlankChanged = selectedBlankId || this.blankSelector.isFilesReadyForUpload();
 	        blankId = selectedBlankId || (await this.blankSelector.createBlank());
-	        const isRegistered = babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].has(blankId);
-	        const {
-	          uid,
-	          templateUid
-	        } = isRegistered ? await babelHelpers.classPrivateFieldLooseBase(this, _change)[_change](babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].get(blankId), blankId) : await babelHelpers.classPrivateFieldLooseBase(this, _register)[_register](blankId, isTemplateMode);
-	        babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].set(blankId, uid);
-	        await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].upload(uid);
-	        const [loadedData, blocks] = await Promise.all([babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadDocument(uid), babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadBlocksByDocument(uid)]);
+	        let documentUid = (_this$setupData2 = this.setupData) == null ? void 0 : _this$setupData2.uid;
+	        let documentTemplateUid = null;
+	        if (isBlankChanged && isTemplateMode && documentUid) {
+	          const {
+	            templateUid
+	          } = await babelHelpers.classPrivateFieldLooseBase(this, _changeDocumentBlank)[_changeDocumentBlank](documentUid, blankId);
+	          documentTemplateUid = templateUid;
+	        } else {
+	          const isRegistered = babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].has(blankId);
+	          const {
+	            uid,
+	            templateUid
+	          } = isRegistered ? await babelHelpers.classPrivateFieldLooseBase(this, _changeDocumentBlank)[_changeDocumentBlank](babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].get(blankId), blankId) : await babelHelpers.classPrivateFieldLooseBase(this, _register)[_register](blankId, isTemplateMode, babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId]);
+	          documentUid = uid;
+	          documentTemplateUid = templateUid;
+	        }
+	        babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].set(blankId, documentUid);
+	        await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].upload(documentUid);
+	        const [loadedData, blocks] = await Promise.all([babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadDocument(documentUid), babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadBlocksByDocument(documentUid)]);
 	        const isTemplate = Boolean(selectedBlankId);
 	        babelHelpers.classPrivateFieldLooseBase(this, _setDocumentData)[_setDocumentData]({
 	          ...loadedData,
 	          blocks,
 	          isTemplate,
-	          templateUid
+	          templateUid: documentTemplateUid
 	        });
 	      }
 	    } catch {
@@ -265,6 +300,9 @@ this.BX.Sign = this.BX.Sign || {};
 	      main_core.Dom.addClass(this.layout, '--pending');
 	    }
 	  }
+	  isTemplateMode() {
+	    return sign_v2_signSettings.isTemplateMode(babelHelpers.classPrivateFieldLooseBase(this, _documentMode)[_documentMode]);
+	  }
 	}
 	function _initNotifications2(portalConfig) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _notificationContainer)[_notificationContainer] = main_core.Tag.render(_t2 || (_t2 = _`<div></div>`));
@@ -275,6 +313,9 @@ this.BX.Sign = this.BX.Sign || {};
 	    isEdoRegion,
 	    isUnsecuredScheme
 	  } = portalConfig;
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isChatCreated)[_isChatCreated]() && babelHelpers.classPrivateFieldLooseBase(this, _scenarioType)[_scenarioType] !== 'b2e') {
+	    babelHelpers.classPrivateFieldLooseBase(this, _appendChatWarningContainer)[_appendChatWarningContainer]();
+	  }
 	  if (isDomainChanged) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _appendChangeDomainWarningContainer)[_appendChangeDomainWarningContainer]();
 	  }
@@ -285,14 +326,22 @@ this.BX.Sign = this.BX.Sign || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _appendEdoWarningContainer)[_appendEdoWarningContainer]();
 	  }
 	}
-	async function _register2(blankId, isTemplateMode = false) {
-	  const data = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].register(blankId, babelHelpers.classPrivateFieldLooseBase(this, _scenarioType)[_scenarioType], isTemplateMode);
+	function _isChatCreated2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId] > 0;
+	}
+	function _appendChatWarningContainer2() {
+	  const text = `<div>${main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_COLLAB_WARNING')}</div>`;
+	  const warning = babelHelpers.classPrivateFieldLooseBase(this, _getWarning)[_getWarning]();
+	  warning.setText(text);
+	  main_core.Dom.append(warning.getContainer(), babelHelpers.classPrivateFieldLooseBase(this, _notificationContainer)[_notificationContainer]);
+	}
+	async function _register2(blankId, isTemplateMode = false, chatId = 0) {
+	  const data = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].register(blankId, babelHelpers.classPrivateFieldLooseBase(this, _scenarioType)[_scenarioType], isTemplateMode, chatId);
 	  return data != null ? data : {};
 	}
-	async function _change2(uid, blankId) {
-	  var _data$uid;
+	async function _changeDocumentBlank2(uid, blankId) {
 	  const data = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].changeDocument(uid, blankId);
-	  return (_data$uid = data == null ? void 0 : data.uid) != null ? _data$uid : '';
+	  return data != null ? data : {};
 	}
 	async function _getPages2(uid) {
 	  var _data$pages;
@@ -378,5 +427,5 @@ this.BX.Sign = this.BX.Sign || {};
 	exports.DocumentInitiated = DocumentInitiated;
 	exports.DocumentSetup = DocumentSetup;
 
-}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX,BX.Event,BX.Sign.V2,BX.Sign.V2,BX.UI,BX.UI));
+}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX,BX.Event,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX.UI,BX.UI));
 //# sourceMappingURL=document-setup.bundle.js.map

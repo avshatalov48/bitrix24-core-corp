@@ -4,13 +4,16 @@ namespace Bitrix\Crm\UI\SettingsButtonExtender;
 
 use Bitrix\Crm\Activity\TodoCreateNotification;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
+use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Config;
-use Bitrix\Crm\Integration\AI\Operation\AutostartSettings;
+use Bitrix\Crm\Integration\AI\Operation\Autostart\FillFieldsSettings;
+use Bitrix\Crm\Security\Role\Manage\RoleManagerSelectionFactory;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use CUtil;
 
 final class SettingsButtonExtenderParams
@@ -23,6 +26,9 @@ final class SettingsButtonExtenderParams
 	private ?string $getRootMenuJsCallback = null;
 	private ?string $getKanbanRestrictionJsCallback = null;
 	private ?string $getKanbanSortSettingsControllerJsCallback = null;
+	private array $expandsBehindThan = [
+		PermissionItem::DELIMITER_ID,
+	];
 
 	public function __construct(private Factory $factory)
 	{
@@ -39,9 +45,9 @@ final class SettingsButtonExtenderParams
 		Extension::load('crm.toolbar-component');
 
 		$self->setGetRootMenuJsCallback(<<<JS
-const settingsButton = BX.Crm.ToolbarComponent.Instance.getSettingsButton();
-settingsButton ? settingsButton.getMenuWindow() : undefined;
-JS);
+			const settingsButton = BX.Crm.ToolbarComponent.Instance.getSettingsButton();
+			settingsButton ? settingsButton.getMenuWindow() : undefined;
+		JS);
 
 		return $self;
 	}
@@ -70,6 +76,13 @@ JS);
 	public function setTargetItemId(?string $targetItemId): self
 	{
 		$this->targetItemId = $targetItemId;
+
+		return $this;
+	}
+
+	public function expandsBehindThan(string $itemId): self
+	{
+		$this->expandsBehindThan[] = $itemId;
 
 		return $this;
 	}
@@ -179,7 +192,7 @@ JS;
 			AIManager::isAiCallProcessingEnabled()
 			&& in_array($entityTypeId, AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
 			&& !$this->isAllItemsCategory()
-			&& AutostartSettings::checkSavePermissions($entityTypeId, $this->categoryId)
+			&& FillFieldsSettings::checkSavePermissions($entityTypeId, $this->categoryId)
 		)
 		{
 			if (
@@ -187,12 +200,9 @@ JS;
 				&& AIManager::isBaasServiceAvailable()
 			)
 			{
-				$settings = AutostartSettings::get(
-					$entityTypeId,
-					$this->categoryId,
-				);
+				$settings = FillFieldsSettings::get($entityTypeId, $this->categoryId);
 
-				$params['aiAutostartSettings'] = \Bitrix\Main\Web\Json::encode($settings);
+				$params['aiAutostartSettings'] = Json::encode($settings);
 			}
 
 			$params['aiCopilotLanguageId'] = Config::getLanguageId(
@@ -201,6 +211,8 @@ JS;
 				$this->categoryId
 			);
 		}
+
+		$params['expandsBehindThan'] = $this->expandsBehindThan;
 
 		return $params;
 	}

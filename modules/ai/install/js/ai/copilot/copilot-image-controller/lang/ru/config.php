@@ -60,3 +60,4 @@ $MESS['AI_COPILOT_IMAGE_RESULT_MENU_REPEAT'] = 'Попробовать ещё р
 $MESS['AI_COPILOT_IMAGE_RESULT_MENU_CANCEL'] = 'Отменить';
 
 $MESS['AI_COPILOT_IMAGE_GENERATION_ERROR'] = 'Не удалось выполнить запрос, повторите попытку ещё раз';
+$MESS['AI_COPILOT_IMAGE_FETCH_NEW_ENGINE_PARAMS_ERROR'] = 'Не удалось получить параметры для выбранного провайдера';

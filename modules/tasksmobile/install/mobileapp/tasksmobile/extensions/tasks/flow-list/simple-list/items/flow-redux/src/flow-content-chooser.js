@@ -61,6 +61,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content-chooser
 			efficiencySuccess,
 			ownerId,
 			creatorId,
+			tasksTotal,
 			myTasksCounter,
 			myTasksTotal,
 			averagePendingTime,
@@ -69,6 +70,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content-chooser
 			pending,
 			atWork,
 			completed,
+			aiAdvice,
 		} = flow;
 
 		return {
@@ -85,6 +87,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content-chooser
 				efficiencySuccess,
 				ownerId,
 				creatorId,
+				tasksTotal,
 				myTasksCounter,
 				myTasksTotal,
 				averagePendingTime,
@@ -95,6 +98,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content-chooser
 				completed,
 				isLast,
 				type,
+				aiAdvice,
 			},
 		};
 	};

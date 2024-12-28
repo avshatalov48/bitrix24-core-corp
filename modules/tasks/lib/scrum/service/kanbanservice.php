@@ -799,7 +799,7 @@ class KanbanService implements Errorable
 
 	private function getDefaultStageTitle(string $systemType): string
 	{
-		return Loc::getMessage('TASKS_SCRUM_STAGE_' . $systemType);
+		return (string)Loc::getMessage('TASKS_SCRUM_STAGE_' . $systemType);
 	}
 
 	private function getTaskIds(array $filter): array

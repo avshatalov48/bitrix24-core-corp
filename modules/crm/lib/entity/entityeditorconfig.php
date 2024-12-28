@@ -28,7 +28,7 @@ class EntityEditorConfig
 		$this->setUserID($userID > 0 ? $userID : \CCrmSecurityHelper::GetCurrentUserID());
 		$this->setScope($scope);
 		$this->extras = $extras;
-		$this->configuration = new \Bitrix\UI\Form\EntityEditorConfiguration(self::CATEGORY_NAME);
+		$this->configuration = new \Bitrix\UI\Form\EntityEditorConfiguration(self::CATEGORY_NAME, $this->userID);
 	}
 
 	public static function createWithCurrentScope(int $entityTypeId, array $extras = [])
@@ -595,7 +595,7 @@ class EntityEditorConfig
 		$categoryId = $this->extras['CATEGORY_ID'] ?? $this->extras['DEAL_CATEGORY_ID'] ?? 0;
 
 		$isPersonalViewAllowed = Container::getInstance()
-			->getUserPermissions()
+			->getUserPermissions($this->userID)
 			->isPersonalViewAllowed($this->entityTypeID, $categoryId) ;
 
 		if ($configScope === EntityEditorConfigScope::PERSONAL && !$isPersonalViewAllowed)

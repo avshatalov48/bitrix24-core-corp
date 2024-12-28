@@ -284,7 +284,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        var marketUri = response.data;
 	        main_core.Event.bind(node, 'click', function () {
 	          var uri = new main_core.Uri(marketUri);
-	          uri.setQueryParam('tag', ['migrator', 'tasks']);
 	          _this6.sidePanel.openSidePanelByUrl(uri.toString());
 	          _this6.menu.close();
 	        });

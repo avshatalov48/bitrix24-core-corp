@@ -30,7 +30,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 Loader::includeModule('crm');
 
-class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
+class CrmItemListComponent extends Bitrix\Crm\Component\ItemList implements \Bitrix\Main\Engine\Contract\Controllerable
 {
 	protected const DEFAULT_PAGE_SIZE = 10;
 
@@ -52,6 +52,25 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	private ?array $gridColumns = null;
 	private ?Grid\Panel\Panel $panel = null;
 	private ?NearestActivity\Manager $nearestActivityManager = null;
+	private bool $enableNextPage = false;
+
+	public function configureActions()
+	{
+		return [];
+	}
+
+	public function getTotalCountAction(int $entityTypeId, array $listFilter = [])
+	{
+		$userPermission = Container::getInstance()->getUserPermissions();
+		if (!$userPermission->canReadType($entityTypeId))
+		{
+			return;
+		}
+		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		$totalCountRow = $factory->getItemsCountFilteredByPermissions($listFilter);
+
+		return new \Bitrix\Main\Engine\Response\Json(['DATA' => ['TEXT' => Loc::getMessage('CRM_LIST_ALL_COUNT', ['#COUNT#' => $totalCountRow])]]);
+	}
 
 	protected function init(): void
 	{
@@ -165,6 +184,33 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$this->arResult['restrictedFieldsEngine'] = $this->fieldRestrictionManager->fetchRestrictedFieldsEngine(...$params);
 		$this->arResult['restrictedFields'] = $this->fieldRestrictionManager->getFilterFields(...$params);
 
+		$url = $this->arParams['backendUrl'] ?? null;
+		if ($url)
+		{
+			$url->deleteParams(['sessid']);
+		}
+		$this->arResult['pagination'] = [
+			'PAGE_NUM' => $pageNavigation->getCurrentPage(),
+			'ENABLE_NEXT_PAGE' => $this->enableNextPage,
+			'URL' => $url,
+		];
+
+		$this->arResult['extension'] = [
+			'ID' => $this->getGridId() . '_MANAGER',
+			'CONFIG' => [
+				'gridId' => $this->getGridId(),
+				'serviceUrl' => \Bitrix\Main\Engine\UrlManager::getInstance()->createByBitrixComponent(
+					$this,
+					'getTotalCount',
+					[
+						'entityTypeId' => $this->factory->getEntityTypeId(),
+						'listFilter' => $listFilter,
+						'sessid' => bitrix_sessid(),
+					]
+				),
+			],
+		];
+
 		$this->includeComponentTemplate();
 	}
 
@@ -237,7 +283,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 					'select' => $this->getSelect(),
 					'order' => $order,
 					'offset' => $pageNavigation->getOffset(),
-					'limit' => $pageNavigation->getLimit(),
+					'limit' => $pageNavigation->getLimit() + 1,
 					'filter' => $listFilter,
 				],
 				$this->userPermissions->getUserId(),
@@ -245,16 +291,35 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 					? \Bitrix\Crm\Service\UserPermissions::OPERATION_EXPORT
 					: \Bitrix\Crm\Service\UserPermissions::OPERATION_READ
 			);
+			if (count($list) === $pageNavigation->getLimit() + 1)
+			{
+				$this->enableNextPage = true;
+				unset($list[$pageNavigation->getLimit()]);
+			}
 			$rows = $this->prepareGridRows($list);
-			$totalCount = $this->factory->getItemsCountFilteredByPermissions($listFilter);
 		}
+		$getTotalCountActionUrl = \Bitrix\Main\Engine\UrlManager::getInstance()->createByBitrixComponent(
+			$this,
+			'getTotalCount',
+			[
+				'entityTypeId' => $this->factory->getEntityTypeId(),
+				'listFilter' => $listFilter,
+				'sessid' => bitrix_sessid(),
+			]
+		);
+		$rowCountHtml = str_replace(
+			['%prefix%', '%all%', '%getTotalCountActionUrl%', '%show%'],
+			[
+				htmlspecialcharsbx(mb_strtolower($this->getGridId())),
+				Loc::getMessage('CRM_LIST_ALL'),
+				$getTotalCountActionUrl,
+				Loc::getMessage('CRM_LIST_SHOW_ROW_COUNT'),
+			],
+			'<div id="%prefix%_row_count_wrapper">%all%: <a id="%prefix%_row_count" onclick=\'BX.CrmUIGridExtension.getCountRow("%prefix%", "%getTotalCountActionUrl%")\' style="cursor: pointer">%show%</a></div>'
+		);
 
 		$grid['ROWS'] = $rows;
-		$pageNavigation->setRecordCount($totalCount);
-		$grid['NAV_PARAM_NAME'] = $pageNavigation->getId();
-		$grid['CURRENT_PAGE'] = $pageNavigation->getCurrentPage();
-		$grid['NAV_OBJECT'] = $pageNavigation;
-		$grid['TOTAL_ROWS_COUNT'] = $totalCount;
+		$grid['TOTAL_ROWS_COUNT_HTML'] = $rowCountHtml;
 		$grid['AJAX_MODE'] = ($this->arParams['ajaxMode'] ?? 'Y');
 		$grid['ALLOW_ROWS_SORT'] = false;
 		$grid['AJAX_OPTION_JUMP'] = 'N';
@@ -395,13 +460,39 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	protected function getPageNavigation(): PageNavigation
 	{
 		$pageNavigation = new PageNavigation($this->getPageNavigationId());
-		$pageNavigation
-			->allowAllRecords(false)
-			->setPageSize($this->getPageSize())
-			->initFromUri()
-		;
+		$pageNavigation->allowAllRecords(false)->setPageSize($this->getPageSize())->initFromUri();
+
+		if (isset($this->request['grid_action']) && $this->request['grid_action'] === 'pagination')
+		{
+			$pageNavigation->setCurrentPage($this->getPageFromRequest($this->request));
+		}
 
 		return $pageNavigation;
+	}
+
+	private function getPageFromRequest(\Bitrix\Main\Request|\Bitrix\Main\HttpRequest $request)
+	{
+		if (empty($request->get('page')) || (int)$request->get('page') === 0)
+		{
+			return 1;
+		}
+		$pageNum = (int)$request->get('page');
+
+		if ($pageNum < 0)
+		{
+			//Backward mode
+			$pageSize = $this->getPageSize();
+			$offset = -($pageNum + 1);
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($this->entityTypeId);
+			$total = $factory->getItemsCountFilteredByPermissions($this->getListFilter());
+			$pageNum = (int)(ceil($total / $pageSize)) - $offset;
+			if ($pageNum <= 0)
+			{
+				$pageNum = 1;
+			}
+		}
+
+		return $pageNum;
 	}
 
 	protected function getPageSize(): int

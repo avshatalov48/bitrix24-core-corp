@@ -57,7 +57,6 @@ class EfficiencyService
 			->setEfficiency($this->command->newEfficiency)
 			->disablePush();
 
-		/** @var FlowService $service */
 		$service = ServiceLocator::getInstance()->get('tasks.flow.service');
 		return $service->update($flowCommand);
 	}

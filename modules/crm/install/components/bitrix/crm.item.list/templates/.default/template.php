@@ -33,6 +33,7 @@ $assets = Asset::getInstance();
 $assets->addJs('/bitrix/js/crm/progress_control.js');
 $assets->addJs('/bitrix/js/crm/dialog.js');
 $assets->addCss('/bitrix/themes/.default/crm-entity-show.css');
+$assets->addJs('/bitrix/js/crm/interface_grid.js');
 
 if ($this->getComponent()->getErrors())
 {
@@ -85,6 +86,20 @@ $this->getComponent()->addToolbar($this);
 				);
 			}
 
+			$navigationHtml = '';
+			if(isset($arResult['pagination']) && is_array($arResult['pagination']))
+			{
+				ob_start();
+				$APPLICATION->IncludeComponent(
+					'bitrix:crm.pagenavigation',
+					'',
+					$arResult['pagination']
+				);
+				$navigationHtml = ob_get_contents();
+				ob_end_clean();
+			}
+
+			$arResult['grid']['NAV_STRING'] = $navigationHtml;
 			$arResult['grid']['HEADERS_SECTIONS'] = HeaderSections::getInstance()
 				->filterGridSupportedSections($arResult['grid']['HEADERS_SECTIONS'] ?? []);
 

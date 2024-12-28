@@ -103,6 +103,7 @@ jn.define('im/messenger/lib/element/recent/item/call', (require, exports, module
 						color: itemConfig.color,
 						useColor: true,
 					},
+					singleLine: true,
 					cornerRadius: 12,
 					backgroundColor: itemConfig.background,
 					padding: {

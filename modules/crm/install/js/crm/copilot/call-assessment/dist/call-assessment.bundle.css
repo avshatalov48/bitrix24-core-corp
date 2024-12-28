@@ -1,0 +1,500 @@
+.crm-copilot__call-assessment_container {
+	display: flex;
+	flex-direction: column;
+	min-height: 100%;
+}
+
+.crm-copilot__call-assessment_page-wrapper {
+	padding: 0 20px 27px 20px;
+	flex-grow: 1;
+	overflow: auto;
+	height: calc(100vh - 188px);
+}
+
+.crm-copilot__call-assessment_breadcrumbs-wrapper {
+	display: flex;
+	flex-direction: row;
+	padding: 18px 24px;
+	border-bottom: 1px solid var(--ui-color-palette-gray-05);
+}
+
+.crm-copilot__call-assessment_breadcrumbs-item {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	position: relative;
+}
+
+.crm-copilot__call-assessment_breadcrumbs-item span {
+	display: inline-block;
+	white-space: nowrap;
+}
+
+.crm-copilot__call-assessment_breadcrumbs-soon {
+	position: absolute;
+	top: 50%;
+	margin-top: -18px;
+	font-family: var(--ui-font-family-secondary);
+	font-size: var(--ui-font-size-6xs);
+	line-height: var(--ui-size-xs);
+	font-weight: var(--ui-font-weight-semi-bold);
+	color: var(--ui-color-palette-blue-50);
+	text-transform: var(--ui-text-transform-uppercase);
+	margin-left: 1px;
+}
+
+.crm-copilot__call-assessment_breadcrumbs-item-title {
+	color: var(--ui-color-palette-gray-50);
+	font-weight: var(--ui-font-weight-medium);
+	cursor: pointer;
+}
+
+.crm-copilot__call-assessment_breadcrumbs-item-title.--soon {
+	cursor: default;
+}
+
+.crm-copilot__call-assessment_breadcrumbs-item-title:hover {
+	color: var(--ui-color-palette-gray-70);
+	transition: color 300ms;
+}
+
+.crm-copilot__call-assessment_breadcrumbs-item-title.--soon:hover {
+	color: var(--ui-color-palette-gray-50);
+	transition: none;
+}
+
+.crm-copilot__call-assessment_breadcrumbs-item-title.--active {
+	color: var(--ui-color-palette-gray-90);
+	cursor: default;
+}
+
+.crm-copilot__call-assessment_breadcrumbs-divider {
+	width: 15px;
+	height: 15px;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='15' height='15' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M5.1 3.965l2.83 2.83.733.705-.733.706-2.83 2.83.999.998L10.633 7.5 6.099 2.966l-.999.999z' fill='%23DFE0E3'/%3E%3C/svg%3E");
+	margin: 0 12px;
+}
+
+.crm-copilot__call-assessment_page-section {
+	box-shadow: 0 6px 12px 0 #0000000F;
+	border-radius: var(--ui-border-radius-3xl);
+	background-color: var(--ui-color-palette-gray-02);
+	overflow: hidden;
+}
+
+.crm-copilot__call-assessment_page-section.--additional .crm-copilot__call-assessment_page-section-header-title {
+	font-weight: var(--ui-font-weight-bold);
+	font-size: var(--ui-font-size-lg);
+	color: var(--ui-color-palette-black-base);
+	display: flex;
+	justify-content: space-between;
+}
+
+.crm-copilot__call-assessment_page-section.--additional .crm-copilot__call-assessment_page-section-header-description {
+	border-bottom: 1px solid var(--ui-color-palette-gray-05);
+	padding-bottom: 8px;
+}
+
+.crm-copilot__call-assessment_page-section.--additional .crm-copilot__call-assessment_page-section-body {
+	background-color: inherit;
+	padding-top: 0;
+}
+
+.crm-copilot__call-assessment_page-section.--disabled {
+	opacity: var(--ui-opacity-60);
+}
+
+.crm-copilot__call-assessment_page-section.--notification-negative {
+	background-color: var(--ui-color-palette-red-10);
+}
+
+.crm-copilot__call-assessment_page-section.--notification-positive {
+	background-color: var(--ui-color-palette-green-10);
+}
+
+.crm-copilot__call-assessment_page-section + .crm-copilot__call-assessment_page-section {
+	margin-top: 16px;
+}
+
+.crm-copilot__call-assessment_page-section-header {
+	padding: 20px 24px 16px 24px;
+}
+
+.crm-copilot__call-assessment_page-section-header-title {
+	font-size: var(--ui-size-md2);
+	margin-bottom: 6px;
+}
+
+.crm-copilot__call-assessment_page-section-header-description {
+	color: var(--ui-color-palette-gray-90);
+}
+
+.crm-copilot__call-assessment_page-section-body {
+	background-color: var(--ui-color-palette-white-base);
+	padding: 20px 24px;
+}
+
+.crm-copilot__call-assessment_page-section-body-field {
+	position: relative;
+}
+
+.crm-copilot__call-assessment_page-section-body-field + .crm-copilot__call-assessment_page-section-body-field {
+	margin-top: 9px;
+}
+
+.crm-copilot__call-assessment_page-section-body-field.--inline {
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.crm-copilot__call-assessment_page-section-body-field label {
+	display: block;
+	margin: 0 5px 5px 0;
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-base-50);
+}
+
+.crm-copilot__call-assessment_page-section-body-field.--inline label {
+	color: var(--ui-color-palette-black-base);
+}
+
+.crm-copilot__call-assessment_page-section-body-field.--inline .ui-ctl-dropdown {
+	max-width: 203px;
+	margin-left: 40px;
+	flex-grow: 1;
+}
+
+.crm-copilot__call-assessment_page-section-body-field .readonly {
+	cursor: default;
+}
+
+.crm-copilot__call-assessment_page-section-body-field-error {
+	color: var(--ui-color-text-alert);
+	margin-top: 10px;
+}
+
+.crm-copilot__call-assessment_page-section-body-field-description {
+	background: var(--ui-color-palette-blue-15);
+	margin-top: 21px;
+	padding: 10px 12px;
+	color: var(--ui-color-palette-gray-70);
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.crm-copilot__call-assessment_page-section-body-field-textarea {
+	width: 100%;
+	border-radius: var(--ui-border-radius-xl);
+	resize: none;
+	padding: 20px;
+	font-size: var(--ui-size-md);
+	color: var(--ui-color-palette-black-base);
+	border: 1px solid var(--ui-color-palette-gray-50);
+	box-sizing: border-box;
+	height: 250px;
+}
+
+.crm-copilot__call-assessment_page-section-body-field-textarea:focus {
+	border-color: var(--ui-color-copilot-secondary);
+	outline: none;
+}
+
+.crm-copilot__call-assessment_page-section-body-field-client-type {
+	display: flex;
+	flex-direction: row;
+	padding: 6px 14px 10px 14px;
+	align-items: center;
+	border-radius: var(--ui-border-radius-lg);
+	cursor: pointer;
+	margin: var(--ui-space-inset-3xs) 0;
+}
+
+.crm-copilot__call-assessment_page-section-body-field-client-type:hover {
+	background-color: #F2F7FD;
+	transition: background-color 300ms;
+}
+
+.crm-copilot__call-assessment_page-section-body-field-client-type-avatar {
+	width: 42px;
+	height: 42px;
+	border-radius: var(--ui-border-radius-sm);
+	margin-right: 14px;
+}
+
+.crm-copilot__call-assessment_page-section-body-field-client-type.--client-1 .crm-copilot__call-assessment_page-section-body-field-client-type-avatar {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='40' height='40' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg clip-path='url(%23clip0_757_43948)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M28.84 31.412a1.745 1.745 0 00-.023-.098c-.749-2.917-2.623-4.73-4.97-5.8 1.627-.7 3.525-.95 5.34-.95 3.996 0 8.389 1.212 9.426 5.756.132.576-.337 1.092-.929 1.092H28.84zm.337-8.608c-5.39 0-6.657-8.394-2.84-11.36.633-.492 1.851-.956 2.84-.956 7.03 0 6.471 12.316 0 12.316z' fill='%237FDEFC'/%3E%3Cpath d='M14.981 22.486c-7.59 0-9.373-11.194-4-15.15.893-.657 2.608-1.275 4-1.275 9.9 0 9.112 16.425 0 16.425zM2.75 32.714c-.288 1.118.651 2.106 1.806 2.106h20.882c1.155 0 2.094-.988 1.806-2.106-1.448-5.64-7.1-7.152-12.247-7.152S4.198 27.075 2.75 32.714z' fill='%232FC6F6'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='clip0_757_43948'%3E%3Crect width='40' height='40' rx='8' fill='%23fff'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
+}
+
+.crm-copilot__call-assessment_page-section-body-field-client-type.--client-2 .crm-copilot__call-assessment_page-section-body-field-client-type-avatar {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='40' height='40' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg clip-path='url(%23clip0_757_54293)'%3E%3Cpath d='M15.981 22.486c-7.59 0-9.373-11.194-4-15.15.893-.657 2.608-1.275 4-1.275 9.9 0 9.112 16.425 0 16.425zM3.515 33.914c-.067.487.325.906.816.906h23.332c.49 0 .883-.419.816-.906-.917-6.628-6.987-8.352-12.482-8.352-5.495 0-11.565 1.724-12.482 8.352z' fill='%232FC6F6'/%3E%3Cmask id='a' maskUnits='userSpaceOnUse' x='23.056' y='19.91' width='15' height='18' fill='%23000'%3E%3Cpath fill='%23fff' d='M23.056 19.91h15v18h-15z'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M37 25.268h-.004c-.117 1.277-2.968 2.3-6.468 2.3s-6.351-1.023-6.468-2.3h-.004v-1.976c0-1.315 2.898-2.382 6.472-2.382 3.574 0 6.472 1.067 6.472 2.382v1.976zm-.003 2.19c-.945 1.115-3.484 1.913-6.47 1.913-2.984 0-5.523-.798-6.468-1.912a.907.907 0 00-.003.074v1.976h.004c.117 1.277 2.968 2.3 6.468 2.3s6.35-1.023 6.468-2.3H37v-1.976a.886.886 0 00-.003-.075zm0 4.241c-.945 1.114-3.485 1.912-6.47 1.912-2.984 0-5.523-.797-6.468-1.91a.957.957 0 00-.003.073v1.975h.004c.117 1.278 2.968 2.3 6.468 2.3s6.35-1.022 6.468-2.3H37v-1.975a.891.891 0 00-.003-.075z'/%3E%3C/mask%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M37 25.268h-.004c-.117 1.277-2.968 2.3-6.468 2.3s-6.351-1.023-6.468-2.3h-.004v-1.976c0-1.315 2.898-2.382 6.472-2.382 3.574 0 6.472 1.067 6.472 2.382v1.976zm-.003 2.19c-.945 1.115-3.484 1.913-6.47 1.913-2.984 0-5.523-.798-6.468-1.912a.907.907 0 00-.003.074v1.976h.004c.117 1.277 2.968 2.3 6.468 2.3s6.35-1.023 6.468-2.3H37v-1.976a.886.886 0 00-.003-.075zm0 4.241c-.945 1.114-3.485 1.912-6.47 1.912-2.984 0-5.523-.797-6.468-1.91a.957.957 0 00-.003.073v1.975h.004c.117 1.278 2.968 2.3 6.468 2.3s6.35-1.022 6.468-2.3H37v-1.975a.891.891 0 00-.003-.075z' fill='%237FDEFC'/%3E%3Cpath d='M36.996 25.268v-1h-.912l-.084.908.996.092zm.004 0v1h1v-1h-1zm-12.94 0l.995-.092-.083-.908h-.912v1zm-.004 0h-1v1h1v-1zm0-1.976h-1 1zm12.944 0h1-1zm-.003 4.166l.996-.083-.2-2.402-1.559 1.839.763.646zm-12.938.001l.762-.647-1.56-1.839-.199 2.404.997.082zm-.003 2.05h-1v1h1v-1zm.004 0l.995-.092-.083-.908h-.912v1zm12.936 0v-1h-.912l-.084.908.996.092zm.004 0v1h1v-1h-1zm-.003 2.19l.996-.084-.202-2.4-1.557 1.838.763.646zm-12.938.001l.762-.647-1.56-1.838-.199 2.402.997.083zm-.003.074h-1 1zm0 1.975h-1v1h1v-1zm.004 0l.995-.091-.083-.909h-.912v1zm12.936 0v-1h-.912l-.084.909.996.091zm.004 0v1h1v-1h-1zm0-1.975h1-1zm-.004-5.506H37v-2h-.004v2zm-6.468 2.3c1.835 0 3.541-.267 4.839-.729.645-.23 1.236-.525 1.693-.897.45-.367.869-.893.932-1.583L36 25.176c.005-.051.024.03-.203.215-.22.179-.583.379-1.102.564-1.033.369-2.502.613-4.167.613v2zm-7.464-3.21c.063.691.482 1.217.932 1.584.457.372 1.048.667 1.693.897 1.297.463 3.003.73 4.839.73v-2c-1.665 0-3.134-.245-4.167-.614-.52-.185-.882-.385-1.102-.564-.227-.185-.208-.266-.204-.215l-1.991.183zm.992.91h.004v-2h-.004v2zm-1-1.082v.082h2v-.082h-2zm0-1.894v1.894h2v-1.894h-2zm0 0h2-2zm7.472-3.382c-1.874 0-3.614.278-4.922.76-.65.239-1.246.547-1.698.94-.45.392-.852.957-.852 1.682h2c0 .068-.04.006.165-.173.203-.176.555-.381 1.076-.573 1.034-.38 2.53-.636 4.23-.636v-2zM38 23.292c0-.725-.403-1.29-.852-1.681-.452-.394-1.048-.702-1.698-.942-1.308-.481-3.049-.759-4.922-.759v2c1.7 0 3.196.255 4.23.636.522.192.874.397 1.077.573.205.18.165.24.165.173h2zm0 0h-2 2zm0 1.894v-1.894h-2v1.894h2zm0 .082v-.082h-2v.082h2zm-7.473 5.103c1.577 0 3.056-.21 4.288-.581 1.201-.361 2.29-.912 2.945-1.685l-1.526-1.293c-.29.341-.943.746-1.995 1.063-1.02.307-2.303.496-3.711.496v2zm-7.23-2.265c.655.772 1.743 1.323 2.944 1.684 1.231.37 2.71.58 4.287.58v-2c-1.409 0-2.691-.188-3.711-.495-1.052-.316-1.706-.721-1.996-1.063l-1.525 1.294zm1.759-.573v.009l-1.994-.165a1.888 1.888 0 00-.006.156h2zm0 0h-2 2zm0 1.893v-1.893h-2v1.893h2zm0 .083v-.083h-2v.083h2zm-.996-1h-.004v2h.004v-2zm6.468 2.3c-1.665 0-3.134-.245-4.167-.613-.52-.185-.882-.386-1.102-.565-.227-.184-.208-.265-.204-.214l-1.991.183c.063.69.483 1.216.933 1.583.457.372 1.047.667 1.693.897 1.297.462 3.003.729 4.838.729v-2zM36 29.417c.005-.052.024.03-.203.214-.22.18-.583.38-1.102.565-1.033.368-2.503.613-4.167.613v2c1.835 0 3.541-.267 4.838-.73.646-.23 1.236-.524 1.693-.896.45-.367.87-.892.933-1.583L36 29.417zm1-.908h-.004v2H37v-2zm-1 .917v.083h2v-.083h-2zm0-1.893v1.893h2v-1.893h-2zm0 0h2-2zm0 .009v-.009h2c0-.053-.002-.106-.007-.158L36 27.542zm-5.473 7.07c1.577 0 3.056-.21 4.288-.581 1.201-.361 2.29-.912 2.945-1.685l-1.526-1.293c-.29.341-.943.746-1.995 1.063-1.02.307-2.303.495-3.711.495v2zm-7.23-2.265c.655.773 1.743 1.323 2.944 1.684 1.231.37 2.71.58 4.287.58v-2c-1.409 0-2.691-.188-3.711-.495-1.052-.316-1.706-.721-1.996-1.063l-1.524 1.294zm1.759-.573v.009l-1.994-.166a1.944 1.944 0 00-.006.157h2zm0 0h-2 2zm0 1.893v-1.893h-2v1.893h2zm0 .082v-.082h-2v.082h2zm-.996-1h-.004v2h.004v-2zm6.468 2.3c-1.665 0-3.134-.244-4.167-.612-.52-.185-.882-.386-1.102-.564-.227-.185-.208-.266-.204-.215l-1.991.183c.063.69.482 1.216.932 1.582.457.373 1.048.668 1.693.898 1.297.462 3.003.729 4.839.729v-2zM36 33.659c.005-.051.024.03-.203.215-.22.178-.583.379-1.102.564-1.033.368-2.502.613-4.167.613v2c1.835 0 3.541-.267 4.838-.73.646-.23 1.237-.524 1.694-.897.45-.366.869-.892.932-1.582L36 33.658zm1-.909h-.004v2H37v-2zm-1 .918v.082h2v-.082h-2zm0-1.893v1.893h2v-1.893h-2zm0 0h2-2zm0 .009v-.009h2c0-.053-.002-.106-.007-.159L36 31.783z' fill='%23fff' mask='url(%23a)'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='clip0_757_54293'%3E%3Crect width='40' height='40' rx='8' fill='%23fff'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
+}
+
+.crm-copilot__call-assessment_page-section-body-field-client-type.--client-3 .crm-copilot__call-assessment_page-section-body-field-client-type-avatar {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='40' height='40' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M16.57 3.64c-2.584 1.985-1.727 7.6 1.922 7.6 4.381 0 4.76-8.24 0-8.24-.669 0-1.493.31-1.922.64zM24.53 17c.251 0 .45-.22.405-.468-.588-3.257-3.654-4.114-6.435-4.114-2.781 0-5.847.857-6.435 4.114a.403.403 0 00.406.468h12.058z' fill='%232FC6F6'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.707 29.523c-.153.247-.448.257-.625.026-.08-.106-.134-.23-.213-.337-.673-.91-1.016-1.268-1.693-2.175-.214-.325-.258-1.11.01-1.505.266-.395 2.346-3.174 3.265-4.372.92-1.198 1.953-1.405 2.786-.909.834.497 1.74.519 2.06.57.32.05 2.034.042 1.955.242-.078.2-.47.326-.708.483-.066.043-.143.067-.211.107-.367.215-.837.211-1.29.208-.453-.004-1.434-.092-2.177-.48-.742-.387-1.174.12-1.48.46-.307.34-2.954 3.956-3.001 4.025-.048.069-.271.63-.022 1.016.25.387.751.736 1.233 1.58.133.235.24.48.21.758a.74.74 0 01-.1.303zM27.463 29.5c.13.167.194.636.115 1.075-.137.758-.543 1.335-1.216 1.713-.1.056-.132.116-.144.227-.117 1.003-.648 1.703-1.59 2.064-.206.08-.306.174-.379.38-.246.689-.73 1.168-1.413 1.427-.528.2-1.069.203-1.602.001-.078-.03-.12-.025-.17.05a2.279 2.279 0 01-1.644 1.003 2.147 2.147 0 01-1.533-.366c-.376-.254-.509-.353-.502-.436.007-.084.49-.87.57-.84.08.032.136.106.51.37.681.48 1.616.102 1.86-.645l-.108-.077c-.881-.594-1.119-.778-2-1.37-.146-.098-.233-.222-.221-.403a.42.42 0 01.288-.384c.152-.06.291-.014.421.074.746.504.85.596 1.596 1.099.411.277.828.548 1.232.835.25.178.524.195.794.119.52-.147.844-.5.973-1.03.026-.106.003-.17-.093-.234-1.633-1.097-2.62-1.786-4.252-2.886-.202-.137-.284-.308-.24-.501a.426.426 0 01.634-.276c.04.023.077.05.115.075 1.655 1.116 2.67 1.818 4.318 2.943a.486.486 0 00.53.047c.52-.24.8-.649.836-1.222.006-.089-.027-.15-.107-.205-1.895-1.274-3.145-2.14-5.038-3.418-.31-.21-.296-.617.028-.774a.403.403 0 01.424.038l.912.615c1.573 1.06 2.504 1.706 4.073 2.77.118.08.206.08.325.024.71-.332.964-1.405.729-1.808-.235-.404.839-.243.97-.075zM16.302 33.409c.833.102 1.365.975 1.032 1.714-.086.192-.212.367-.323.547-.228.368-.437.75-.693 1.096-.888 1.093-3.412-.72-4.692-1.822-1.28-1.102-2.268-1.84-2.763-3.161-.118-.316-.11-.625.078-.917.226-.354.454-.707.676-1.064.303-.485 1.002-.686 1.565-.446.305.13.507.32.712.676.277-.247.6-.345.956-.327.266.013.512.105.722.269.425.33.688.892.405 1.567.606-.211 1.146-.12 1.565.371.423.497.418 1.036.037 1.606.255-.108.484-.139.723-.11z' fill='%232FC6F6'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M29.863 26.366c.098.208.27.361-.037.838-.307.476-1.507 1.509-1.868 1.638-.361.13-.346.135-.78.082-.433-.053-1.55-.869-2.013-1.146-.614-.369-1.228-.735-1.841-1.104-.532-.318-1.063-.639-1.594-.957l-1.853-1.108c-.179-.107-.354-.22-.537-.32a.212.212 0 00-.167-.002c-.723.339-1.433.71-2.17 1.019-.837.352-1.705.434-2.574.076-.445-.183-.794-.492-1.08-.873-.256-.34-.047-.782.24-.929 1.012-.515 1.974-1.116 2.944-1.703.353-.213.7-.437 1.058-.64.357-.2.746-.318 1.151-.373a.671.671 0 01.197.01c1.506.247 4.07.68 4.275.698.204.017.435-.004.515-.02.079-.017.842-.357 1.095-.483.254-.127.913-.457 1.366-.122.453.336.656.627 1.113 1.206 1.164 1.475 2.462 4.004 2.56 4.213z' fill='%232FC6F6'/%3E%3C/svg%3E");
+}
+
+.crm-copilot__call-assessment_page-section-body-field-client-type.--client-4 .crm-copilot__call-assessment_page-section-body-field-client-type-avatar {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='40' height='40' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M7.805 11C6.256 11 5 12.243 5 13.777v10.856c0 1.534 1.256 2.778 2.805 2.778h18.433c1.55 0 2.805-1.244 2.805-2.778V13.777c0-1.534-1.255-2.777-2.805-2.777H7.805zm9.233 11.952a.79.79 0 01-.508.91c-1.165.4-2.468.637-3.847.667H12.1a12.676 12.676 0 01-3.873-.676.773.773 0 01-.507-.866c.038-.22.08-.427.121-.587.174-.67 1.15-1.168 2.049-1.55.235-.101.377-.18.52-.262.14-.079.282-.158.513-.259.027-.123.037-.249.032-.375l.398-.047s.052.095-.032-.459c0 0-.447-.115-.468-.996 0 0-.336.11-.356-.423-.005-.107-.032-.209-.059-.307-.064-.235-.121-.446.17-.63l-.21-.553s-.22-2.14.747-1.967c-.393-.616 2.919-1.128 3.139.758a5.697 5.697 0 010 1.715s.494-.057.164.874c0 0-.182.67-.461.52 0 0 .045.847-.394.99 0 0 .031.452.031.482l.367.055s-.01.376.063.417c.335.214.702.376 1.089.481 1.14.287 1.72.779 1.72 1.21l.174.878zm.84-6.716c0-.563.462-1.02 1.03-1.02h5.002c.57 0 1.03.457 1.03 1.02 0 .564-.46 1.02-1.03 1.02H18.91c-.569 0-1.03-.456-1.03-1.02zm0 3.555c0-.563.462-1.02 1.03-1.02h3.531c.57 0 1.03.457 1.03 1.02s-.46 1.02-1.03 1.02h-3.53c-.569 0-1.03-.457-1.03-1.02z' fill='%232FC6F6'/%3E%3Cpath d='M8.968 28.474A2.795 2.795 0 0011.762 31h18.433C31.744 31 33 29.756 33 28.223V17.367c0-1.445-1.114-2.632-2.537-2.765v2.288c.338.253.557.655.557 1.108v9.594c0 .767-.628 1.388-1.402 1.388H12.34c-.437 0-.826-.197-1.084-.506H8.968z' fill='%237FDEFC'/%3E%3C/svg%3E");
+}
+
+.crm-copilot__call-assessment_page-section-body-field-client-type-title {
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-size-md);
+}
+
+.crm-copilot__call-assessment_page-section-body-field-client-type-description {
+	color: var(--ui-color-palette-gray-70);
+	font-size: var(--ui-size-sm);
+}
+
+.crm-copilot__call-assessment_page-section-body-field-client-type.--active {
+	background-color: #F2F7FD;
+	border-radius: var(--ui-border-radius-xl);
+}
+
+.crm-copilot__call-assessment_page-section-body-field-client-type.--readonly {
+	cursor: default;
+}
+
+.crm-copilot__call-assessment_page-section-body-field-client-type.--readonly:hover {
+	background-color: inherit;
+}
+
+.crm-copilot__call-assessment_page-section-body-field-client-type.--active.--readonly:hover {
+	background-color: #F2F7FD;
+}
+
+
+.crm-copilot__call-assessment_page-section-body-field-client-type input {
+	right: 14px;
+	position: absolute;
+	cursor: pointer;
+}
+
+.crm-copilot__call-assessment_page-section-body-field-client-type-divider {
+	height: 1px;
+	border: none;
+	padding: 0;
+	margin: 0 18px 0 70px;
+	background: var(--ui-color-palette-gray-05);
+}
+
+.crm-copilot__call-assessment_page-section-body-field.--target-head {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='42' height='42' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg clip-path='url(%23clip0_173_24338)'%3E%3Cpath fill='%23F4FCFE' d='M0 0h42v42H0z'/%3E%3Cpath d='M36.423 44.157a.506.506 0 00.505-.518C36.65 33.801 28.411 31.32 21 31.32c-7.411 0-15.65 2.481-15.928 12.32' fill='%23C3F0FF'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M9.987 33.18c3.182-1.95 7.248-2.577 11.013-2.577 3.765 0 7.83.627 11.013 2.576 3.232 1.979 5.486 5.283 5.632 10.44.02.69-.538 1.255-1.222 1.255H5.577a1.223 1.223 0 01-1.222-1.255c.146-5.157 2.4-8.461 5.632-10.44zm-4.19 10.26h30.407c-.188-4.551-2.173-7.344-4.94-9.038-2.859-1.75-6.618-2.364-10.264-2.364-3.646 0-7.405.613-10.264 2.364-2.767 1.694-4.751 4.487-4.94 9.038z' fill='%2311A9D9'/%3E%3Cpath d='M20.98 27.431c-9.598 0-11.853-14.157-5.058-19.16 1.129-.83 3.298-1.612 5.058-1.612 12.519 0 11.524 20.772 0 20.772z' fill='%23C3F0FF'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M18.666 8.515c-.806.267-1.484.61-1.893.912-2.812 2.07-3.9 6.204-3.069 9.993.82 3.736 3.36 6.577 7.276 6.577 2.397 0 4.218-1.06 5.491-2.693 1.3-1.667 2.035-3.952 2.091-6.293.056-2.342-.57-4.6-1.82-6.236-1.216-1.593-3.08-2.682-5.762-2.682-.686 0-1.513.156-2.314.422zm-2.744-.243c-6.795 5.002-4.54 19.16 5.058 19.16 11.524 0 12.519-20.773 0-20.773-1.76 0-3.93.782-5.058 1.613z' fill='%2311A9D9'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='clip0_173_24338'%3E%3Cpath fill='%23fff' d='M0 0h42v42H0z'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E") left bottom no-repeat;
+	padding-left: 52px;
+}
+
+.crm-copilot__call-assessment_page-section-body-field.--grade-type {
+	padding-left: 42px;
+}
+
+.crm-copilot__call-assessment_navigation-container {
+	display: flex;
+	padding: 15px 20px;
+	background: var(--ui-color-palette-white-base);
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	flex-grow: 0;
+	height: 35px;
+	/*box-shadow: 0 -6px 10px 3px var(--ui-color-palette-gray-05);*/
+	z-index: 10;
+}
+
+.crm-copilot__call-assessment_navigation-buttons-wrapper {
+	display: flex;
+	flex-direction: row;
+}
+
+.crm-copilot-call-assessment-button + .crm-copilot-call-assessment-button {
+	margin-left: 10px;
+}
+
+.crm-copilot-call-assessment-button .ui-btn-light-border.ui-btn-active {
+	background: none;
+}
+
+.crm-copilot-call-assessment-button .ui-btn-light-border.ui-btn-active:hover {
+	background: var(--ui-btn-background-hover);
+}
+
+.crm-copilot__call-assessment_article {
+	display: flex;
+	align-items: center;
+	opacity: var(--ui-opacity-70);
+	cursor: pointer;
+	transition: opacity 300ms;
+}
+
+.crm-copilot__call-assessment_article:hover {
+	opacity: var(--ui-opacity-full);
+}
+
+.crm-copilot__call-assessment_title-wrapper {
+	display: flex;
+	width: 100%;
+}
+
+.crm-copilot__call-assessment_title-item {
+	flex: 1;
+	display: inline-block;
+	box-sizing: border-box;
+	border: none;
+	border-bottom: 1px solid #cfd6da;
+	background-color: transparent;
+	color: var(--ui-color-palette-white-base);
+	word-wrap: break-word;
+	font: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
+	margin: -1px 0 0 -2px;
+}
+
+.crm-copilot__call-assessment-help-link {
+	color: var(--ui-color-palette-gray-50);
+	cursor: pointer;
+}
+
+.crm-copilot__call-assessment-help-link:hover {
+	color: var(--ui-color-palette-gray-60);
+	transition: color 300ms;
+}
+
+.crm-copilot__call-assessment-switcher {
+	position: relative;
+	width: 100%;
+	cursor: pointer;
+}
+
+.crm-copilot__call-assessment-switcher-runner {
+	position: absolute;
+	background: var(--ui-color-primary);
+	box-sizing: border-box;
+	border-radius: 26px;
+	text-align: center;
+	transition: all 0.3s ease;
+	width: calc(50% - 4px);
+	height: 30px;
+	top: 4px;
+	left: 4px;
+}
+
+.crm-copilot__call-assessment-switcher.--checked .crm-copilot__call-assessment-switcher-runner {
+	transform: translateX(100%);
+}
+
+.crm-copilot__call-assessment-switcher-text-item-1 {
+	z-index: 10;
+	color: var(--ui-color-palette-white-base);
+}
+
+.crm-copilot__call-assessment-switcher-text-item-2 {
+	z-index: 10;
+	color: var(--ui-color-palette-gray-50);
+}
+
+.crm-copilot__call-assessment-switcher.--checked .crm-copilot__call-assessment-switcher-text-item-1 {
+	color: var(--ui-color-palette-gray-50);
+}
+
+.crm-copilot__call-assessment-switcher.--checked .crm-copilot__call-assessment-switcher-text-item-2 {
+	color: var(--ui-color-palette-white-base);
+}
+
+.crm-copilot__call-assessment-switcher-text {
+	display: flex;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 4px;
+	border-radius: 26px;
+	height: 38px;
+	align-items: center;
+	border: 1px solid var(--ui-color-palette-gray-60);
+}
+
+.crm-copilot__call-assessment-switcher-text > div {
+	width: 50%;
+	text-align: center;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.crm-copilot__call-assessment_call_count {
+	color: var(--ui-color-palette-gray-90);
+	font-size: var(--ui-font-size-lg);
+	margin-top: 20px;
+}
+
+.crm-copilot__call-assessment_page-section-body-field.--control-call-count,
+.crm-copilot__call-assessment_page-section-body-field.--control-head {
+	padding-left: 24px;
+	margin: 20px 10px 12px 10px;
+}
+
+.crm-copilot__call-assessment_page-section-body-field.--control-call-count {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='18' height='18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M9 1.866a.794.794 0 00-.793.794v.55a.794.794 0 101.588 0v-.55A.794.794 0 009 1.866zm5.537 11.002c.129 0 .236-.1.232-.229a2.908 2.908 0 00-.426-1.423c-.121-.224-.369-.471-.623-.725-.283-.284-.575-.575-.708-.85-.201-.418-.322-.948-.45-1.507-.377-1.648-.81-3.548-3.538-3.548-2.731 0-3.197 1.843-3.609 3.472-.138.549-.27 1.074-.482 1.495-.167.332-.46.617-.746.893-.266.258-.525.509-.665.784-.22.435-.318.943-.285 1.433.008.119.11.206.23.206 1.848.005 3.697.002 5.546 0 1.842-.002 3.683-.005 5.524 0zm-6.666.605v.464a1.13 1.13 0 002.26 0v-.464H7.87z' fill='%23A8ADB4'/%3E%3C/svg%3E") left 2px no-repeat;
+	border-bottom: 1px solid var(--ui-color-palette-gray-05);
+	padding-bottom: 12px;
+}
+
+.crm-copilot__call-assessment_page-section-body-field.--control-head {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='18' height='18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.372 10.406v4.601l-.076.002h-.622a13.36 13.36 0 01-4.359-.808.572.572 0 01-.362-.628c.05-.322.108-.635.167-.863.185-.724 1.23-1.261 2.19-1.675.252-.108.403-.194.557-.281.15-.086.301-.172.548-.28.028-.133.04-.27.034-.405l.425-.05s.056.101-.033-.497c0 0-.479-.124-.5-1.076 0 0-.36.12-.382-.457-.004-.115-.034-.225-.063-.331-.068-.254-.129-.481.182-.68l-.224-.598s-.236-2.311.798-2.124c-.42-.665 3.121-1.218 3.356.819a6.214 6.214 0 010 1.851s.53-.06.176.945c0 0-.194.724-.493.562 0 0 .037.691-.262.973h-.057a1 1 0 00-1 1zm1.059-.172h5.315l-1.065 2.072 1.065 2.072h-4.118v1.506H9.431v-5.65z' fill='%23A8ADB4'/%3E%3Crect width='18' height='18' rx='3' fill='%23fff' fill-opacity='.01'/%3E%3C/svg%3E") left 2px no-repeat;
+	margin-top: 0;
+}
+
+.crm-copilot__call-assessment_page-section-body-field.--control-head > div {
+	display: flex;
+	align-items: center;
+}
+
+.crm-copilot__call-assessment-item-selector {
+	cursor: pointer;
+	color: var(--ui-color-link-primary-base);
+	font-weight: var(--ui-font-weight-bold);
+	border-bottom: 1px dashed var(--ui-color-link-primary-base);
+}
+
+.crm-copilot__call-assessment-item-selector.--inactive {
+	color: var(--ui-color-base-90);
+	font-weight: var(--ui-font-weight-bold);
+	cursor: default;
+	border-bottom: none;
+}
+
+.crm-copilot__call-assessment-head-label {
+	color: var(--ui-color-base-90);
+}
+
+.crm-copilot__call-assessment-head-title {
+	margin: 0 8px;
+	font-weight: var(--ui-font-weight-bold);
+	cursor: pointer;
+	color: var(--ui-color-link-primary-base);
+}
+
+.crm-copilot__call-assessment-head-title.--readonly {
+	cursor: default;
+	color: var(--ui-color-base-90);
+	font-weight: var(--ui-font-weight-bold);
+}
+
+.crm-copilot__call-assessment_page-section-body-field.--checkbox {
+	margin-top: 20px;
+	margin-left: 12px;
+}
+
+.crm-copilot__call-assessment_page-section-body-field.--checkbox label {
+	min-height: 0;
+	cursor: pointer;
+}
+
+.crm-copilot__call-assessment_page-section-body-field input[type="checkbox"] {
+	cursor: pointer;
+}
+
+.crm-copilot__call-assessment-head-info {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='14' height='14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M13.478 6.99A6.489 6.489 0 10.5 6.988a6.489 6.489 0 0012.978 0zm-8.996-1.7c0-.318.102-.64.306-.965.204-.326.502-.596.893-.81.39-.214.847-.32 1.368-.32.485 0 .912.089 1.283.267.371.18.658.422.86.73.202.307.303.641.303 1.002 0 .284-.057.533-.172.747a2.286 2.286 0 01-.412.554 30 30 0 01-.854.785 3.473 3.473 0 00-.273.273c-.069.079-.12.15-.153.215-.034.066-.06.13-.078.196-.019.065-.046.18-.083.343-.063.348-.262.522-.596.522a.61.61 0 01-.439-.17c-.119-.114-.178-.283-.178-.507 0-.28.043-.524.13-.73a1.85 1.85 0 01.346-.54 7.92 7.92 0 01.582-.555c.214-.187.368-.328.464-.423.095-.096.175-.202.24-.319a.77.77 0 00.098-.38c0-.268-.1-.494-.298-.677-.2-.184-.456-.276-.77-.276-.368 0-.638.093-.812.278-.174.186-.32.459-.441.82-.114.377-.33.566-.647.566a.635.635 0 01-.474-.198.606.606 0 01-.193-.428zm1.913 5.296c.152.132.33.198.534.198.197 0 .37-.067.521-.2.15-.134.226-.318.226-.552A.722.722 0 007.46 9.5a.722.722 0 00-.531-.216.745.745 0 00-.542.216.714.714 0 00-.22.53c0 .238.076.423.228.555z' fill='%23A8ADB4' opacity='.9'/%3E%3C/svg%3E") center center no-repeat;
+	width: 14px;
+	height: 14px;
+	display: inline-block;
+	cursor: pointer;
+}

@@ -34,6 +34,10 @@ function getUserName($row)
 	{
 		$userIcon = 'recyclebin-grid-avatar-crm';
 	}
+	if ($row["USER_IS_COLLABER"] ?? false)
+	{
+		$userIcon = 'recyclebin-grid-avatar-collaber';
+	}
 
 	$userAvatar = 'recyclebin-grid-avatar-empty';
 	if ($row['USER_AVATAR'])

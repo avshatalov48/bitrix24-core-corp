@@ -50,7 +50,8 @@ $phrases = Loc::loadLanguageFile(__FILE__);
 			multiSelect: <?= Json::encode($arResult['IS_MULTISELECT']) ?>,
 			items: <?= \CUtil::PhpToJSObject($arResult['ITEMS']) ?>,
 			filterId: "<?= \CUtil::JSEscape($arResult['FILTER_ID']) ?>",
-			title: '<?= \CUtil::JSEscape($arResult['TITLE']) . ': ' ?>',
+			title: '<?= \CUtil::JSEscape($arResult['TITLE']) ?>',
+			resetAllFields: <?= Json::encode((bool)($arParams['RESET_ALL_FIELDS'] ?? false)) ?>
 		});
 
 		counter.init();

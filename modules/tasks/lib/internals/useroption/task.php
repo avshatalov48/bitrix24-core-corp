@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Main;
 use Bitrix\Tasks\Internals\Task\UserOptionTable;
 use Bitrix\Tasks\Internals\UserOption;
+use Throwable;
 
 /**
  * Class Task
@@ -170,6 +171,26 @@ class Task
 			{
 				UserOption::deleteOnUserRoleChanged($taskId, $userId);
 			}
+		}
+	}
+
+	protected static function getExceptMuteAuditors(): array
+	{
+		$value = Main\Config\Option::get('tasks', 'tasks_except_mute_auditors');
+
+		try
+		{
+			$auditors = unserialize($value, ['allowed_classes' => false]);
+			if (is_array($auditors))
+			{
+				return $auditors;
+			}
+
+			return [];
+		}
+		catch (Throwable)
+		{
+			return [];
 		}
 	}
 }

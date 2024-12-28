@@ -8,6 +8,7 @@ jn.define('bbcode/formatter/shared', (require, exports, module) => {
 	const { StripTagFormatter } = require('bbcode/formatter/shared/node-formatters/strip-tag-formatter');
 	const { ListFormatter } = require('bbcode/formatter/shared/node-formatters/list-formatter');
 	const { ListItemFormatter } = require('bbcode/formatter/shared/node-formatters/list-item-formatter');
+	const { LinebreaksWrapper } = require('bbcode/formatter/shared/wrappers/linebreaks-wrapper');
 
 	module.exports = {
 		DiskNodeFormatter,
@@ -18,5 +19,6 @@ jn.define('bbcode/formatter/shared', (require, exports, module) => {
 		StripTagFormatter,
 		ListFormatter,
 		ListItemFormatter,
+		LinebreaksWrapper,
 	};
 });

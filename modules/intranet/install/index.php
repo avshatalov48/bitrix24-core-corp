@@ -284,6 +284,14 @@ Class intranet extends CModule
 				'onSocNetUserToGroupDeleteHandler'
 			);
 
+		$eventManager->registerEventHandler(
+			'socialservices',
+			'OnUserInitialize',
+			'intranet',
+			'CIntranetEventHandlers',
+			'OnAfterUserInitialize'
+		);
+
 		CAgent::AddAgent('\\Bitrix\\Intranet\\UStat\\UStat::recountHourlyCompanyActivity();', "intranet", "N", 60);
 		CAgent::AddAgent('\\Bitrix\\Intranet\\UStat\\UStat::recount();', "intranet", "N", 3600);
 

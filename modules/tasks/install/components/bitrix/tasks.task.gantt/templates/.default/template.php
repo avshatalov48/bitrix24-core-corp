@@ -4,6 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
@@ -43,6 +44,10 @@ if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
 
 	return;
 }
+
+$userId = (int)CurrentUser::get()->getId();
+$targetUserId = (int)$arParams['USER_ID'];
+$isSameUser = $userId === $targetUserId;
 
 $APPLICATION->AddHeadScript("/bitrix/components/bitrix/tasks.list/templates/.default/script.js");
 $APPLICATION->AddHeadScript("/bitrix/components/bitrix/tasks.list/templates/.default/gantt-view.js");
@@ -173,6 +178,8 @@ else
 				<?php echo (int)date("s", $ts); ?>
             ),
             {
+				isCollab:  '<?= $arResult['IS_COLLAB'] ? 'Y' : 'N' ?>',
+				groupId: '<?= $currentGroupId ?>',
                 disableItemNameClickHandler: true,
                 disableDetailClickHandler: true,
                 datetimeFormat: BX.message("FORMAT_DATETIME"),
@@ -656,8 +663,8 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 			'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT'] ?? null,
 			'SHOW_QUICK_FORM' => 'Y',
 			'USE_EXPORT' => 'Y',
-			'USE_GROUP_BY_SUBTASKS' => 'Y',
-			'USE_GROUP_BY_GROUPS' => ((isset($arParams['NEED_GROUP_BY_GROUPS']) && $arParams['NEED_GROUP_BY_GROUPS'] === 'Y') ? 'Y' : 'N'),
+			'USE_GROUP_BY_SUBTASKS' => $isSameUser ? 'Y' : 'N',
+			'USE_GROUP_BY_GROUPS' => ((isset($arParams['NEED_GROUP_BY_GROUPS']) && $arParams['NEED_GROUP_BY_GROUPS'] === 'Y' && $isSameUser) ? 'Y' : 'N'),
 			'GROUP_BY_PROJECT' => $arResult['GROUP_BY_PROJECT'] ?? null,
 			'SHOW_USER_SORT' => 'Y',
 			'SORT_FIELD' => $arParams['SORT_FIELD'] ?? null,
@@ -667,6 +674,7 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 			'DEFAULT_ROLEID' => $arParams['DEFAULT_ROLEID'] ?? null,
 			'USE_AJAX_ROLE_FILTER' => 'Y',
 			'SCOPE' => ScopeDictionary::SCOPE_TASKS_GANTT,
+			'CONTEXT' => $arResult['CONTEXT'] ?? null,
 		],
 		$component,
 		['HIDE_ICONS' => true]

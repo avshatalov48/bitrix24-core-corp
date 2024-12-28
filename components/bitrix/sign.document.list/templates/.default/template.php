@@ -19,6 +19,7 @@ global $APPLICATION;
 $APPLICATION->SetTitle($arResult['TITLE']);
 
 const COMPONENT_TYPE_SAFE = 'safe';
+const COMPONENT_TYPE_CURRENT = 'current';
 
 Extension::load([
 	'ui.icons.disk',
@@ -98,34 +99,34 @@ $getOpenSliderLinkTemplate = static function(string $templateText, ?string $link
 		$validatedLink = $getValidatedUrl($link);
 		ob_start();
 		?>
-			<div class="sign-grid-document-title">
-				<div class="sign-grid-document-title__icon_wrapper">
+		<div class="sign-grid-document-title">
+			<div class="sign-grid-document-title__icon_wrapper">
 				<span
-						class="ui-icon-set --file-2 sign-grid-document-title__icon"
-						style="--ui-icon-set__icon-size: 30px;"
+					class="ui-icon-set --file-2 sign-grid-document-title__icon"
+					style="--ui-icon-set__icon-size: 30px;"
 				></span>
-				</div>
-				<a class="sign-grid-document-title_text" target="_top"  href="<?= $validatedLink ?>">
-					<?= htmlspecialcharsbx($templateText) ?>
-				</a>
 			</div>
+			<a class="sign-grid-document-title_text" target="_top"  href="<?= $validatedLink ?>">
+				<?= htmlspecialcharsbx($templateText) ?>
+			</a>
+		</div>
 		<?php
 	}
 	else
 	{
 		ob_start();
 		?>
-			<div class="sign-grid-document-title">
-				<div class="sign-grid-document-title__icon_wrapper">
+		<div class="sign-grid-document-title">
+			<div class="sign-grid-document-title__icon_wrapper">
 				<span
-						class="ui-icon-set --file-2 sign-grid-document-title__icon"
-						style="--ui-icon-set__icon-size: 30px;"
+					class="ui-icon-set --file-2 sign-grid-document-title__icon"
+					style="--ui-icon-set__icon-size: 30px;"
 				></span>
-				</div>
-				<span class="sign-grid-document-title_text">
+			</div>
+			<span class="sign-grid-document-title_text">
 					<?= htmlspecialcharsbx($templateText) ?>
 				</span>
-			</div>
+		</div>
 		<?php
 	}
 
@@ -328,8 +329,7 @@ $prepareGridData = static function ($documentData) use (
 		$titleInfo = $documentData['TITLE_INFO'];
 		if (isset($titleInfo['DOCUMENT_LINK']))
 		{
-			$data['TITLE'] = $getOpenSliderLinkTemplate((string)$titleInfo['TEXT'],
-				(string)$titleInfo['DOCUMENT_LINK']);
+			$data['TITLE'] = $getOpenSliderLinkTemplate((string)$titleInfo['TEXT'], (string)$titleInfo['DOCUMENT_LINK']);
 		}
 		else
 		{
@@ -442,7 +442,7 @@ if (!empty($arResult['IS_SHOW_RESULT_STATUS_BUTTON']))
 		[
 			'TYPE' => $arResult['GRID_TYPE'],
 			'ITEMS' => $arResult['COUNTER_ITEMS'],
-			'TITLE' => Loc::getMessage('SIGN_DOCUMENT_COUNTER_ITEMS_TITLE'),
+			'TITLE' => Loc::getMessage('SIGN_DOCUMENT_COUNTER_ITEMS_TITLE_MSG_1'),
 			'FILTER_ID' => $arResult['FILTER_ID']
 		]
 	);

@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,market_listItem,market_categories,market_installStore,ui_vue3_pinia,main_core_events,market_marketLinks,ui_vue3) {
+(function (exports,market_listItem,market_categories,market_installStore,ui_vue3_pinia,main_core_events,market_marketLinks,ui_vue3,ui_ears) {
 	'use strict';
 
 	const ListApps = {
@@ -163,7 +163,7 @@ this.BX = this.BX || {};
 	      if (!this.$refs.marketCatalogCategories) {
 	        return;
 	      }
-	      new BX.UI.Ears({
+	      new ui_ears.Ears({
 	        container: this.$refs.marketCatalogCategories,
 	        smallSize: true,
 	        noScrollbar: true
@@ -480,4 +480,4 @@ this.BX = this.BX || {};
 
 	exports.ListApps = ListApps;
 
-}((this.BX.Market = this.BX.Market || {}),BX.Market,BX.Market,BX.Market,BX.Vue3.Pinia,BX.Event,BX.Market,BX.Vue3));
+}((this.BX.Market = this.BX.Market || {}),BX.Market,BX.Market,BX.Market,BX.Vue3.Pinia,BX.Event,BX.Market,BX.Vue3,BX.UI));

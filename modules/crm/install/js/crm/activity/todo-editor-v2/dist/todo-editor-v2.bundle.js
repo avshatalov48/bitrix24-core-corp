@@ -3457,6 +3457,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _getFileBlockSettings = /*#__PURE__*/new WeakSet();
 	var _getAddressBlockSettings = /*#__PURE__*/new WeakSet();
 	var _canUseAddressBlock = /*#__PURE__*/new WeakSet();
+	var _canUseCalendarBlock = /*#__PURE__*/new WeakSet();
 	var _getAnalyticsInstance = /*#__PURE__*/new WeakSet();
 	var _clearValue = /*#__PURE__*/new WeakSet();
 	var _shouldAnimateCollapse = /*#__PURE__*/new WeakSet();
@@ -3490,6 +3491,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$4(this, _shouldAnimateCollapse);
 	    _classPrivateMethodInitSpec$4(this, _clearValue);
 	    _classPrivateMethodInitSpec$4(this, _getAnalyticsInstance);
+	    _classPrivateMethodInitSpec$4(this, _canUseCalendarBlock);
 	    _classPrivateMethodInitSpec$4(this, _canUseAddressBlock);
 	    _classPrivateMethodInitSpec$4(this, _getAddressBlockSettings);
 	    _classPrivateMethodInitSpec$4(this, _getFileBlockSettings);
@@ -3931,7 +3933,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    const items = [{
 	      id: 'calendar',
 	      messageCode: 'CRM_ACTIVITY_TODO_ACTIONS_CALENDAR',
-	      svgData: '<svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.9907 10.3123H13.1133C13.3394 10.3123 13.5227 10.4944 13.5227 10.7191V11.8343C13.5227 12.0589 13.3394 12.241 13.1133 12.241H11.9907C11.7646 12.241 11.5813 12.0589 11.5813 11.8343V10.7191C11.5813 10.4944 11.7646 10.3123 11.9907 10.3123Z" fill="#A8ADB4"/><path d="M10.2021 10.3126H9.07947C8.85336 10.3126 8.67007 10.4947 8.67007 10.7193V11.8345C8.67007 12.0591 8.85336 12.2412 9.07947 12.2412H10.2021C10.4282 12.2412 10.6115 12.0591 10.6115 11.8345V10.7193C10.6115 10.4947 10.4282 10.3126 10.2021 10.3126Z" fill="#A8ADB4"/><path d="M10.2011 13.2054H9.07852C8.85242 13.2054 8.66912 13.3874 8.66912 13.6121V14.7273C8.66912 14.9519 8.85242 15.134 9.07852 15.134H10.2011C10.4272 15.134 10.6105 14.9519 10.6105 14.7273V13.6121C10.6105 13.3874 10.4272 13.2054 10.2011 13.2054Z" fill="#A8ADB4"/><path d="M13.1133 13.2054H11.9907C11.7646 13.2054 11.5813 13.3874 11.5813 13.6121V14.7273C11.5813 14.9519 11.7646 15.134 11.9907 15.134H13.1133C13.3394 15.134 13.5227 14.9519 13.5227 14.7273V13.6121C13.5227 13.3874 13.3394 13.2054 13.1133 13.2054Z" fill="#A8ADB4"/><path d="M14.9029 10.3123H16.0255C16.2516 10.3123 16.4349 10.4944 16.4349 10.7191V11.8343C16.4349 12.0589 16.2516 12.241 16.0255 12.241H14.9029C14.6768 12.241 14.4935 12.0589 14.4935 11.8343V10.7191C14.4935 10.4944 14.6768 10.3123 14.9029 10.3123Z" fill="#A8ADB4"/><path fill-rule="evenodd" clip-rule="evenodd" d="M17.1486 5.691V5.15946H18.3308C19.4103 5.2275 20.2467 6.16407 20.2272 7.28562V17.9164C20.2272 18.5032 19.7685 18.9795 19.201 18.9795H5.80482C5.23836 18.9795 4.77862 18.5032 4.77862 17.9164V7.28562C4.77451 7.23034 4.77246 7.17612 4.77246 7.12191C4.77451 6.03544 5.62627 5.15734 6.67505 5.15946H7.85724V5.691C7.85724 6.57123 8.54582 7.28562 9.39654 7.28562C10.2473 7.28562 10.9359 6.57123 10.9359 5.691V5.15946H14.07V5.691C14.07 6.57123 14.7596 7.28562 15.6093 7.28562C16.459 7.28562 17.1486 6.57123 17.1486 5.691ZM18.1748 16.8533H6.83106V8.40898H18.1748V16.8533Z" fill="#A8ADB4"/><path d="M10.1507 4.31111V5.4805C10.1507 5.91211 9.81308 6.26186 9.39644 6.26186C8.9798 6.26186 8.64218 5.91211 8.64218 5.4805V4.31111L8.64771 4.20959C8.69329 3.82206 9.01469 3.52246 9.40157 3.52442C9.81821 3.52762 10.1528 3.8795 10.1507 4.31111Z" fill="#A8ADB4"/><path d="M16.3215 4.33979V5.44858C16.3215 5.85574 16.0024 6.18636 15.6083 6.18636C15.2142 6.1853 14.8971 5.85468 14.8971 5.44752V4.33979C14.8971 3.93157 15.2163 3.60201 15.6093 3.60201C16.0024 3.60201 16.3215 3.93157 16.3215 4.33979Z" fill="#A8ADB4"/></svg>'
+	      svgData: '<svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.9907 10.3123H13.1133C13.3394 10.3123 13.5227 10.4944 13.5227 10.7191V11.8343C13.5227 12.0589 13.3394 12.241 13.1133 12.241H11.9907C11.7646 12.241 11.5813 12.0589 11.5813 11.8343V10.7191C11.5813 10.4944 11.7646 10.3123 11.9907 10.3123Z" fill="#A8ADB4"/><path d="M10.2021 10.3126H9.07947C8.85336 10.3126 8.67007 10.4947 8.67007 10.7193V11.8345C8.67007 12.0591 8.85336 12.2412 9.07947 12.2412H10.2021C10.4282 12.2412 10.6115 12.0591 10.6115 11.8345V10.7193C10.6115 10.4947 10.4282 10.3126 10.2021 10.3126Z" fill="#A8ADB4"/><path d="M10.2011 13.2054H9.07852C8.85242 13.2054 8.66912 13.3874 8.66912 13.6121V14.7273C8.66912 14.9519 8.85242 15.134 9.07852 15.134H10.2011C10.4272 15.134 10.6105 14.9519 10.6105 14.7273V13.6121C10.6105 13.3874 10.4272 13.2054 10.2011 13.2054Z" fill="#A8ADB4"/><path d="M13.1133 13.2054H11.9907C11.7646 13.2054 11.5813 13.3874 11.5813 13.6121V14.7273C11.5813 14.9519 11.7646 15.134 11.9907 15.134H13.1133C13.3394 15.134 13.5227 14.9519 13.5227 14.7273V13.6121C13.5227 13.3874 13.3394 13.2054 13.1133 13.2054Z" fill="#A8ADB4"/><path d="M14.9029 10.3123H16.0255C16.2516 10.3123 16.4349 10.4944 16.4349 10.7191V11.8343C16.4349 12.0589 16.2516 12.241 16.0255 12.241H14.9029C14.6768 12.241 14.4935 12.0589 14.4935 11.8343V10.7191C14.4935 10.4944 14.6768 10.3123 14.9029 10.3123Z" fill="#A8ADB4"/><path fill-rule="evenodd" clip-rule="evenodd" d="M17.1486 5.691V5.15946H18.3308C19.4103 5.2275 20.2467 6.16407 20.2272 7.28562V17.9164C20.2272 18.5032 19.7685 18.9795 19.201 18.9795H5.80482C5.23836 18.9795 4.77862 18.5032 4.77862 17.9164V7.28562C4.77451 7.23034 4.77246 7.17612 4.77246 7.12191C4.77451 6.03544 5.62627 5.15734 6.67505 5.15946H7.85724V5.691C7.85724 6.57123 8.54582 7.28562 9.39654 7.28562C10.2473 7.28562 10.9359 6.57123 10.9359 5.691V5.15946H14.07V5.691C14.07 6.57123 14.7596 7.28562 15.6093 7.28562C16.459 7.28562 17.1486 6.57123 17.1486 5.691ZM18.1748 16.8533H6.83106V8.40898H18.1748V16.8533Z" fill="#A8ADB4"/><path d="M10.1507 4.31111V5.4805C10.1507 5.91211 9.81308 6.26186 9.39644 6.26186C8.9798 6.26186 8.64218 5.91211 8.64218 5.4805V4.31111L8.64771 4.20959C8.69329 3.82206 9.01469 3.52246 9.40157 3.52442C9.81821 3.52762 10.1528 3.8795 10.1507 4.31111Z" fill="#A8ADB4"/><path d="M16.3215 4.33979V5.44858C16.3215 5.85574 16.0024 6.18636 15.6083 6.18636C15.2142 6.1853 14.8971 5.85468 14.8971 5.44752V4.33979C14.8971 3.93157 15.2163 3.60201 15.6093 3.60201C16.0024 3.60201 16.3215 3.93157 16.3215 4.33979Z" fill="#A8ADB4"/></svg>',
+	      hidden: !_classPrivateMethodGet$4(this, _canUseCalendarBlock, _canUseCalendarBlock2).call(this)
 	    },
 	    // temporary commented
 	    // {
@@ -3940,7 +3943,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    // 	svgData: '<svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.48621 17.5597H9.71158L8.73957 19.6426H5.48731C4.93592 19.6426 4.48842 19.1759 4.48842 18.601V8.18467C4.48442 8.13051 4.48242 8.07738 4.48242 8.02426C4.48442 6.95972 5.3135 6.09933 6.33437 6.10142H7.4851V6.62223C7.4851 7.4847 8.15536 8.18467 8.98344 8.18467C9.81152 8.18467 10.4818 7.4847 10.4818 6.62223V6.10142H13.5351V6.62223C13.5351 7.4847 14.2064 8.18467 15.0334 8.18467C15.8605 8.18467 16.5318 7.4847 16.5318 6.62223V6.10142H17.7853C18.8361 6.16808 19.6502 7.08575 19.6313 8.18467V11.9389L17.6335 10.274V9.28577H6.48621V17.5597ZM9.71763 6.41636V5.27057C9.71963 4.84767 9.39399 4.50289 8.98844 4.49977C8.58288 4.49768 8.25125 4.83829 8.24925 5.26015V5.27057V6.41636C8.24925 6.83926 8.57789 7.18196 8.98344 7.18196C9.38899 7.18196 9.71763 6.83926 9.71763 6.41636ZM15.7266 6.38426V5.29784C15.7266 4.89786 15.4159 4.57495 15.0333 4.57495C14.6507 4.57495 14.3401 4.89786 14.3401 5.29784V6.38322C14.3401 6.78216 14.6487 7.10611 15.0323 7.10715C15.4159 7.10715 15.7266 6.7832 15.7266 6.38426ZM8.77829 11.1139C8.50215 11.1139 8.27829 11.3377 8.27829 11.6139V12.5036C8.27829 12.7797 8.50215 13.0036 8.77829 13.0036H9.66803C9.94418 13.0036 10.168 12.7797 10.168 12.5036V11.6139C10.168 11.3377 9.94418 11.1139 9.66803 11.1139H8.77829ZM11.1129 11.6511C11.1129 11.375 11.3368 11.1511 11.6129 11.1511H12.5027C12.7788 11.1511 13.0027 11.375 13.0027 11.6511V12.5409C13.0027 12.817 12.7788 13.0409 12.5027 13.0409H11.6129C11.3368 13.0409 11.1129 12.817 11.1129 12.5409V11.6511ZM16.9787 12.1586C16.9787 11.9791 17.2088 11.8845 17.3531 12.0046L22.4009 16.205C22.5328 16.3148 22.5328 16.506 22.4009 16.6158L17.3531 20.8162C17.2088 20.9363 16.9787 20.8417 16.9787 20.6622V17.9552C16.9513 17.9654 16.9214 17.971 16.8903 17.971C13.9663 17.9713 11.4309 19.8957 10.3896 20.8119C10.23 20.9523 9.96759 20.8299 10.0157 20.6312C10.4226 18.9502 11.9512 14.6044 16.8959 14.4746C16.9249 14.4738 16.9529 14.4784 16.9787 14.4873V12.1586Z" fill="#A8ADB4"/></svg>',
 	    // },
 	    {
-	      type: 'delimiter'
+	      type: 'delimiter',
+	      hidden: !_classPrivateMethodGet$4(this, _canUseCalendarBlock, _canUseCalendarBlock2).call(this)
 	    }, {
 	      id: 'client',
 	      messageCode: 'CRM_ACTIVITY_TODO_ACTIONS_CLIENT',
@@ -3952,7 +3956,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      componentId: 'calendar',
 	      componentParams: {
 	        showUserSelector: true
-	      }
+	      },
+	      hidden: !_classPrivateMethodGet$4(this, _canUseCalendarBlock, _canUseCalendarBlock2).call(this)
 	    }, {
 	      type: 'delimiter'
 	    }, {
@@ -3969,10 +3974,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        showLocation: true,
 	        isLocked: !_classPrivateMethodGet$4(this, _isLocationFeatureEnabled, _isLocationFeatureEnabled2).call(this)
 	      },
-	      hidden: !_classPrivateMethodGet$4(this, _canUseAddressBlock, _canUseAddressBlock2).call(this)
+	      hidden: !_classPrivateMethodGet$4(this, _canUseAddressBlock, _canUseAddressBlock2).call(this) || !_classPrivateMethodGet$4(this, _canUseCalendarBlock, _canUseCalendarBlock2).call(this)
 	    }, {
 	      type: 'delimiter',
-	      hidden: !_classPrivateMethodGet$4(this, _canUseAddressBlock, _canUseAddressBlock2).call(this)
+	      hidden: !_classPrivateMethodGet$4(this, _canUseAddressBlock, _canUseAddressBlock2).call(this) || !_classPrivateMethodGet$4(this, _canUseCalendarBlock, _canUseCalendarBlock2).call(this)
 	    }, {
 	      id: 'link',
 	      messageCode: 'CRM_ACTIVITY_TODO_ACTIONS_LINK',
@@ -4174,7 +4179,11 @@ this.BX.Crm = this.BX.Crm || {};
 	  return analyticsLabel.getData();
 	}
 	function _getBlocks2() {
-	  const blocks = [_classPrivateMethodGet$4(this, _getCalendarBlockSettings, _getCalendarBlockSettings2).call(this), _classPrivateMethodGet$4(this, _getClientBlockSettings, _getClientBlockSettings2).call(this), _classPrivateMethodGet$4(this, _getLinkBlockSettings, _getLinkBlockSettings2).call(this), _classPrivateMethodGet$4(this, _getFileBlockSettings, _getFileBlockSettings2).call(this)];
+	  const blocks = [];
+	  if (_classPrivateMethodGet$4(this, _canUseCalendarBlock, _canUseCalendarBlock2).call(this)) {
+	    blocks.push(_classPrivateMethodGet$4(this, _getCalendarBlockSettings, _getCalendarBlockSettings2).call(this));
+	  }
+	  blocks.push(_classPrivateMethodGet$4(this, _getClientBlockSettings, _getClientBlockSettings2).call(this), _classPrivateMethodGet$4(this, _getLinkBlockSettings, _getLinkBlockSettings2).call(this), _classPrivateMethodGet$4(this, _getFileBlockSettings, _getFileBlockSettings2).call(this));
 	  if (_classPrivateMethodGet$4(this, _canUseAddressBlock, _canUseAddressBlock2).call(this)) {
 	    blocks.push(_classPrivateMethodGet$4(this, _getAddressBlockSettings, _getAddressBlockSettings2).call(this));
 	  }
@@ -4231,6 +4240,10 @@ this.BX.Crm = this.BX.Crm || {};
 	function _canUseAddressBlock2() {
 	  const settings = main_core.Extension.getSettings('crm.activity.todo-editor-v2');
 	  return (settings === null || settings === void 0 ? void 0 : settings.canUseAddressBlock) === true;
+	}
+	function _canUseCalendarBlock2() {
+	  const settings = main_core.Extension.getSettings('crm.activity.todo-editor-v2');
+	  return (settings === null || settings === void 0 ? void 0 : settings.canUseCalendarBlock) === true;
 	}
 	function _getAnalyticsInstance2() {
 	  var _babelHelpers$classPr3;

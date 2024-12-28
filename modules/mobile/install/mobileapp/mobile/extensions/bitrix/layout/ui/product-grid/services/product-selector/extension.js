@@ -25,6 +25,7 @@ jn.define('layout/ui/product-grid/services/product-selector', (require, exports,
 			this.enableCreation = Boolean(props.enableCreation);
 			this.isCatalogHidden = Boolean(props.isCatalogHidden);
 			this.isOnecRestrictedByPlan = Boolean(props.isOnecRestrictedByPlan);
+			this.analyticsSection = props.analyticsSection;
 
 			this.actionsOnClose = [];
 
@@ -150,6 +151,7 @@ jn.define('layout/ui/product-grid/services/product-selector', (require, exports,
 				title: Loc.getMessage('PRODUCT_SEARCH_IN_1C'),
 				hintText: Loc.getMessage('PRODUCT_SEARCH_IN_1C_HINT_TEXT'),
 				redirectUrl: '/crm/',
+				analyticsSection: this.analyticsSection,
 			});
 		}
 	}

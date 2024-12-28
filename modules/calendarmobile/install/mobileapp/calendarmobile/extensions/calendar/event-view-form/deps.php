@@ -1,0 +1,71 @@
+<?php
+
+return [
+	'extensions' => [
+		'loc',
+		'tokens',
+		'assets/icons',
+		'utils/date',
+		'utils/date/formats',
+		'utils/copy',
+		'utils/url',
+		'toast',
+		'alert',
+
+		'ui-system/layout/box',
+		'ui-system/layout/area',
+		'ui-system/layout/card',
+		'ui-system/blocks/link',
+		'ui-system/blocks/icon',
+		'ui-system/blocks/chips/chip',
+		'ui-system/form/buttons',
+
+		'layout/ui/form',
+		'layout/ui/user/avatar',
+		'layout/ui/scroll-view',
+		'layout/ui/fields/textarea/theme/air-description',
+		'layout/ui/fields/textarea/theme/air-title',
+		'layout/ui/fields/file-with-background-attach/theme/air',
+		'layout/ui/fields/user/theme/air',
+		'layout/ui/fields/base',
+		'layout/ui/loading-screen',
+		'layout/ui/fields/theme',
+		'layout/ui/fields/user',
+
+		'statemanager/redux/connect',
+
+		'calendar:ajax',
+		'calendar:enums',
+		'calendar:date-helper',
+		'calendar:event-edit-form',
+		'calendar:statemanager/redux/slices/events',
+		'calendar:data-managers/section-manager',
+		'calendar:data-managers/location-manager',
+		'calendar:data-managers/settings-manager',
+		'calendar:data-managers/user-manager',
+		'calendar:data-managers/collab-manager',
+
+		'calendar:layout/menu/recursion-mode',
+	],
+	'bundle' => [
+		'./src/form',
+		'./src/more-menu',
+		'./src/change-decision-menu',
+		'./src/collab-chat-menu',
+		'./src/data-loader',
+		'./src/delete-manager',
+
+		'./src/fields/name',
+		'./src/fields/location',
+		'./src/fields/date-time',
+		'./src/fields/decision-buttons',
+		'./src/fields/ics',
+		'./src/fields/recurrence-rule',
+		'./src/fields/reminders',
+		'./src/fields/user-with-chat-buttons',
+
+		'./src/layout/calendar-icon',
+		'./src/layout/icon-with-text',
+		'./src/layout/more-button',
+	],
+];

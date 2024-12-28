@@ -11,7 +11,7 @@ use Bitrix\Voximplant\Security\Permissions;
 
 class CallView extends Engine\Controller
 {
-	public function getCrmCardAction($entityType, $entityId)
+	public function getCrmCardAction($entityType, $entityId, $isEnableCopilotReplacement)
 	{
 		if(!Loader::includeModule("crm"))
 		{
@@ -34,6 +34,7 @@ class CallView extends Engine\Controller
 			array(
 				'ENTITY_TYPE' => $entityType,
 				'ENTITY_ID' => (int)$entityId,
+				'isEnableCopilotReplacement' => $isEnableCopilotReplacement === 'Y',
 			)
 		);
 	}

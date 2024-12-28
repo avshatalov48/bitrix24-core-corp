@@ -185,6 +185,11 @@ class EventHandler
 
 		foreach ($changed as $groupId)
 		{
+			if (!is_array($this->oldFields[$groupId]) || !$this->newFields[$groupId])
+			{
+				continue;
+			}
+
 			$changes = $this->getChanges($this->oldFields[$groupId], $this->newFields[$groupId]);
 			if (!array_intersect_key($changes, array_flip($realChanges)))
 			{

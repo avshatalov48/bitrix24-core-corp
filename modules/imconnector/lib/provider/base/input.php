@@ -151,6 +151,9 @@ class Input
 				case 'deactivateConnector':
 					$result = $this->deactivateConnector();
 					break;
+				case 'setChatName':
+					$result = $this->setChatName();
+					break;
 				default:
 					$result = $this->receivingDefault();
 			}
@@ -172,6 +175,55 @@ class Input
 		}
 
 		return $result;
+	}
+
+	protected function setChatName(): Result
+	{
+		$result = clone $this->result;
+
+		if ($result->isSuccess())
+		{
+			$lineStatus = Status::getInstance($this->connector, (int)$this->line);
+			if ($lineStatus->isStatus())
+			{
+				$resultData = $this->processingNewChatName($this->data);
+
+				$result->setResult($resultData);
+			}
+			else
+			{
+				$result->addError(new Error(
+					Loc::getMessage('IMCONNECTOR_NOT_ACTIVE_LINE'),
+					Library::ERROR_IMCONNECTOR_NOT_ACTIVE_LINE,
+					__METHOD__,
+					[
+						'$command' => $this->command,
+						'$connector' => $this->connector,
+						'$line' => $this->line,
+						'$data' => $this->data
+					]
+				));
+			}
+		}
+
+		return $result;
+	}
+
+	protected function processingNewChatName($data): Result
+	{
+		$result = clone $this->result;
+
+		if ($result->isSuccess())
+		{
+			$result = $this->sendEventNewChatName($data);
+		}
+
+		return $result;
+	}
+
+	protected function sendEventNewChatName($data): Result
+	{
+		return $this->sendEvent($data, Library::EVENT_NEW_CHAT_NAME);
 	}
 
 	/**

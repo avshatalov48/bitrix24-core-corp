@@ -122,6 +122,10 @@ export class PlainCall extends AbstractCall
 
 		this._reconnectionEventCount = 0;
 
+		this._isCopilotActive = false;
+		this._isCopilotFeaturesEnabled = false;
+		this._isRecordWhenCopilotActivePopupAlreadyShow = null;
+		this._isBoostExpired = false;
 
 		window.addEventListener("unload", this._onUnloadHandler);
 	};
@@ -129,6 +133,58 @@ export class PlainCall extends AbstractCall
 	get provider()
 	{
 		return Provider.Plain;
+	}
+
+	get isCopilotActive()
+	{
+		return this._isCopilotActive;
+	}
+
+	set isCopilotActive(isCopilotActive)
+	{
+		if (isCopilotActive !== this._isCopilotActive)
+		{
+			this._isCopilotActive = isCopilotActive;
+		}
+	}
+
+	get isBoostExpired()
+	{
+		return this._isBoostExpired;
+	}
+
+	set isBoostExpired(isBoostExpired)
+	{
+		if (isBoostExpired !== this._isBoostExpired)
+		{
+			this._isBoostExpired = isBoostExpired;
+		}
+	}
+
+	get isCopilotFeaturesEnabled()
+	{
+		return this._isCopilotFeaturesEnabled;
+	}
+
+	set isCopilotFeaturesEnabled(isCopilotFeaturesEnabled)
+	{
+		if (isCopilotFeaturesEnabled !== this._isCopilotFeaturesEnabled)
+		{
+			this._isCopilotFeaturesEnabled = isCopilotFeaturesEnabled;
+		}
+	}
+
+	get isRecordWhenCopilotActivePopupAlreadyShow()
+	{
+		return this._isRecordWhenCopilotActivePopupAlreadyShow;
+	}
+
+	set isRecordWhenCopilotActivePopupAlreadyShow(isRecordWhenCopilotActivePopupAlreadyShow)
+	{
+		if (isRecordWhenCopilotActivePopupAlreadyShow !== this._isRecordWhenCopilotActivePopupAlreadyShow)
+		{
+			this._isRecordWhenCopilotActivePopupAlreadyShow = isRecordWhenCopilotActivePopupAlreadyShow;
+		}
 	}
 
 	initPeers(userIds)

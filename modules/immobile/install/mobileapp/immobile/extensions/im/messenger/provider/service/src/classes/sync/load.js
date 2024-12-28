@@ -48,14 +48,7 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 		 * @param fromDate
 		 * @param fromId
 		 * @param fromServerDate
-		 * @return {Promise<{
-		 * hasMore: boolean,
-		 * lastId: ?number,
-		 * lastServerDate: ?string,
-		 * addedMessageIdList: ?Array<number>,
-		 * deletedChatIdList: ?Array<number>,
-		 * deletedMessageIdList: ?Array<number>,
-		 * }>}
+		 * @return {Promise<Partial<SyncLoadServiceLoadPageResult>>}
 		 */
 		async loadPage({ fromDate, fromId, fromServerDate })
 		{
@@ -96,14 +89,7 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 
 		/**
 		 * @param {SyncListResult} result
-		 * @return {Promise<{
-		 * hasMore: boolean,
-		 * lastId: number,
-		 * lastServerDate: string,
-		 * addedMessageIdList: Array<number>,
-		 * deletedChatIdList: Array<number>,
-		 * deletedMessageIdList: Array<number>,
-		 * }>}
+		 * @return {Promise<SyncLoadServiceLoadPageResult>}
 		 */
 		async handleSyncList(result)
 		{
@@ -148,6 +134,15 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 			}
 
 			const requestResultSavedIdList = [];
+			const noResponseCheckTimeout = setTimeout(() => {
+				if (!(isEqual(expectedRequestResultSavedIdList.sort(), requestResultSavedIdList.sort())))
+				{
+					const noResponseIdList = expectedRequestResultSavedIdList
+						.filter((id) => !requestResultSavedIdList.includes(id))
+					;
+					logger.warn('SyncService: no response from ', noResponseIdList, 'in 5 seconds');
+				}
+			}, 5000);
 			const fillCompleteHandler = (data) => {
 				const {
 					uuid,
@@ -165,6 +160,7 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 
 				if (isEqual(expectedRequestResultSavedIdList.sort(), requestResultSavedIdList.sort()))
 				{
+					clearTimeout(noResponseCheckTimeout);
 					BX.removeCustomEvent(EventType.sync.requestResultSaved, fillCompleteHandler);
 
 					resolveSyncListPromise({
@@ -239,9 +235,12 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 			options.shouldFillDatabase = Feature.isLocalStorageEnabled;
 
 			options.shouldFillChat = this.syncMode === AppStatus.sync;
-			options.shouldFillChannel = this.syncMode === AppStatus.sync;
+			options.shouldFillChannel = (
+				this.syncMode === AppStatus.sync
+				&& this.isEntityReady('channel-messenger')
+			);
 
-			options.shouldFillCopilot = Feature.isCopilotAvailable
+			options.shouldFillCopilot = Feature.isCopilotEnabled
 				&& this.syncMode === AppStatus.sync
 				&& this.isEntityReady('copilot-messenger')
 			;

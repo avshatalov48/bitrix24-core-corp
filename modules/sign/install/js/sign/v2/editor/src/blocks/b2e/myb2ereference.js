@@ -1,6 +1,7 @@
 import { Cache, Dom, Loc, Tag, Text as TextFormat, Type } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 import { FieldSelector } from 'sign.v2.b2e.field-selector';
+import { DocumentInitiated } from 'sign.v2.document-setup';
 import type { FieldSelectEvent, FieldSelectEventData } from '../../types/events/fieldSelectEvent';
 import Dummy from '../dummy';
 
@@ -42,7 +43,7 @@ export default class MyB2eReference extends Dummy
 		{
 			this.#content = Tag.render`
 				<div class="sign-document__block-content_member-nodata">
-					${Loc.getMessage('SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE')}
+					${Loc.getMessage('SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_MSG_VER_1')}
 				</div>
 			`;
 		}
@@ -61,7 +62,7 @@ export default class MyB2eReference extends Dummy
 									'#CATEGORY#': categoryCaption,
 									'#FIELD#': fieldCaption,
 								})
-								: Loc.getMessage('SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE'),
+								: Loc.getMessage('SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_MSG_VER_1'),
 						);
 						const blockLayout = this.block.getLayout();
 						const resizeNode = blockLayout.querySelector('.--myb2ereference');
@@ -118,7 +119,7 @@ export default class MyB2eReference extends Dummy
 		const actionButton = this.#actionButton.querySelector('button');
 		actionButton.textContent = Type.isStringFilled(label)
 			? label
-			: Loc.getMessage('SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE')
+			: Loc.getMessage('SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_MSG_VER_1')
 		;
 	}
 
@@ -130,6 +131,15 @@ export default class MyB2eReference extends Dummy
 		const { presetId } = member;
 
 		return this.#cache.remember('fieldSelector', () => {
+			const categories = [
+				'COMPANY',
+				'PROFILE',
+			];
+			if (this.block.blocksManager.documentInitiatedByType !== DocumentInitiated.employee)
+			{
+				categories.push('SMART_B2E_DOC');
+			}
+
 			const selector = new FieldSelector({
 				multiple: false,
 				controllerOptions: {
@@ -141,18 +151,13 @@ export default class MyB2eReference extends Dummy
 				languages: blocksManager.getLanguages(),
 				presetId,
 				filter: {
-					'+categories': [
-						'COMPANY',
-						'SMART_B2E_DOC',
-						'PROFILE',
-					],
+					'+categories': categories,
 					'+fields': [
 						'list',
 						'string',
-						// 'date',
+						'date',
 						'typed_string',
 						'text',
-						//'datetime',
 						'enumeration',
 						'address',
 						'url',
@@ -166,7 +171,7 @@ export default class MyB2eReference extends Dummy
 					],
 				},
 				categoryCaptions: {
-					'PROFILE': Loc.getMessage('SIGN_EDITOR_BLOCKS_REPRESENTATIVE_B2E')
+					'PROFILE': Loc.getMessage('SIGN_EDITOR_BLOCKS_REPRESENTATIVE_B2E'),
 				},
 			});
 
@@ -267,11 +272,11 @@ export default class MyB2eReference extends Dummy
 		{
 			return Promise.resolve({
 				categoryCaption: '',
-				fieldCaption: Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE'),
+				fieldCaption: Loc.getMessage('SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_MSG_VER_1'),
 			});
 		}
 
-		const defaultCaption = Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE');
+		const defaultCaption = Loc.getMessage('SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_MSG_VER_1');
 		if (MyB2eReference.#loadFieldsPromise === null)
 		{
 			const blocksManager = this.block.blocksManager;
@@ -341,7 +346,7 @@ export default class MyB2eReference extends Dummy
 		const text =
 			Type.isStringFilled(value)
 				? value
-				: Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE')
+				: Loc.getMessage('SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_MSG_VER_1')
 		;
 
 		this.#content.textContent = text;

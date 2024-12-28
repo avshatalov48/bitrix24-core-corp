@@ -110,7 +110,7 @@ final class Crm
 		return InvoiceSettings::getCurrent()->isSmartInvoiceEnabled();
 	}
 
-	public function redirectToFirstAvailableEntity(): void
+	public function redirectToFirstAvailableEntity(): never
 	{
 		LocalRedirect($this->getDefaultRedirectUrl());
 	}

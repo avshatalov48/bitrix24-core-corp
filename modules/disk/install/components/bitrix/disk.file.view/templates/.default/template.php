@@ -23,6 +23,7 @@ CJSCore::Init([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'ui.viewer',
+	'ui.avatar',
 	'disk.viewer.actions',
 	'disk.viewer.document-item',
 	'disk.document',
@@ -136,7 +137,7 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 
 				<div class="disk-detail-sidebar-owner-title"><?= Loc::getMessage('DISK_FILE_VIEW_FILE_OWNER') ?>:</div>
 				<div class="disk-detail-sidebar-owner">
-					<div class="disk-detail-sidebar-owner-avatar" style="background-image: url('<?= Uri::urnEncode($arResult['FILE']['CREATE_USER']['AVA']) ?>');"></div>
+					<?= $arResult['FILE']['CREATE_USER']['AVA_HTML'] ?>
 					<div class="disk-detail-sidebar-owner-name">
 						<a class="disk-detail-sidebar-owner-link" target="_top" href="<?= $arResult['FILE']['CREATE_USER']['LINK'] ?>"><?= htmlspecialcharsbx($arResult['FILE']['CREATE_USER']['NAME']) ?></a>
 						<div class="disk-detail-sidebar-owner-position"><?= htmlspecialcharsbx($arResult['FILE']['CREATE_USER']['WORK_POSITION']) ?></div>

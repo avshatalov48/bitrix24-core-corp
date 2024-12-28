@@ -10,8 +10,8 @@ jn.define('ui-system/layout/area-list', (require, exports, module) => {
 	 * @function AreaList
 	 * @param {Object} props
 	 * @param {boolean} [props.divided]
-	 * @param {Array<View>} children
-	 * @return {AreaList}
+	 * @param {boolean} [props.withScroll=true]
+	 * @param {...Area} children
 	 */
 	function AreaList(props = {}, ...children)
 	{
@@ -19,14 +19,14 @@ jn.define('ui-system/layout/area-list', (require, exports, module) => {
 
 		const {
 			divided,
+			withScroll,
 			...restProps
 		} = props;
 
-		const style = {
-			height: '100%',
-		};
+		const ViewElement = withScroll ? ScrollView : View;
+		const style = withScroll ? { height: '100%' } : {};
 
-		return ScrollView(
+		return ViewElement(
 			mergeImmutable(restProps, { style }),
 			...children.map((child, index) => {
 				const isFirst = index === 0;
@@ -50,10 +50,12 @@ jn.define('ui-system/layout/area-list', (require, exports, module) => {
 
 	AreaList.defaultProps = {
 		divided: false,
+		withScroll: true,
 	};
 
 	AreaList.propTypes = {
 		divided: PropTypes.bool,
+		withScroll: PropTypes.bool,
 	};
 
 	module.exports = { AreaList };

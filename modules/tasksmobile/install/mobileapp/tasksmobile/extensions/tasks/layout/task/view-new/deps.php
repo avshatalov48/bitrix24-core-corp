@@ -74,6 +74,8 @@ return [
 		'tasks:layout/fields/flow/theme/air-compact',
 		'tasks:layout/fields/date-plan/theme/air',
 		'tasks:layout/fields/date-plan/theme/air-compact',
+		'tasks:layout/fields/user-fields/theme/air',
+		'tasks:layout/fields/user-fields/theme/air-compact',
 		'tasks:layout/action-menu',
 		'tasks:layout/action-menu/actions',
 		'tasks:layout/online',

@@ -27,6 +27,7 @@ jn.define('sign/dialog/banners/request', (require, exports, module) => {
 				url,
 				isGoskey,
 				isExternal,
+				initiatedByType,
 			} = props;
 
 			this.documentTitle = documentTitle;
@@ -36,6 +37,7 @@ jn.define('sign/dialog/banners/request', (require, exports, module) => {
 			this.layoutWidget = layoutWidget;
 			this.isGoskey = isGoskey;
 			this.isExternal = isExternal;
+			this.initiatedByType = initiatedByType;
 		}
 
 		componentDidMount()
@@ -59,7 +61,7 @@ jn.define('sign/dialog/banners/request', (require, exports, module) => {
 				iconPathName: 'request.svg',
 				title: Loc.getMessage('SIGN_MOBILE_DIALOG_REQUEST_TITLE'),
 				description: Loc.getMessage(
-					'SIGN_MOBILE_DIALOG_REQUEST_DESCRIPTION',
+					'SIGN_MOBILE_DIALOG_REQUEST_DESCRIPTION_MSGVER_1',
 					{
 						'#DOCUMENT_TITLE#': parser.parse(this.documentTitle).toPlainText(),
 						'#COLOR_OF_HIGHLIGHTED_TEXT#': Color.base1.toHex(),
@@ -84,6 +86,7 @@ jn.define('sign/dialog/banners/request', (require, exports, module) => {
 									url: this.url,
 									isGoskey: this.isGoskey,
 									isExternal: this.isExternal,
+									initiatedByType: this.initiatedByType,
 								});
 							});
 						},

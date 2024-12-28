@@ -1,0 +1,3 @@
+<?php
+
+$MESS['TASKS_UI_ENTITY_SELECTOR_DISTRIBUTED_USER_FILTER_EMAIL_USERS'] = 'Почтовые пользователи';

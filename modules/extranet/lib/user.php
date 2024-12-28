@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bitrix Framework
  * @package bitrix
@@ -37,8 +38,7 @@ class User
 		global $USER;
 
 		$groups = ($USER instanceof \CUser && $USER->GetID() === $this->userId)
-			? $USER->GetUserGroupArray() : \CUser::GetUserGroup($this->userId)
-		;
+			? $USER->GetUserGroupArray() : \CUser::GetUserGroup($this->userId);
 
 		return array_map('intval', is_array($groups) ? $groups : []);
 	}
@@ -46,6 +46,7 @@ class User
 	public function getFields(): array
 	{
 		$result = \CUser::GetById($this->userId)->fetch();
+
 		return is_array($result) ? $result : [];
 	}
 }

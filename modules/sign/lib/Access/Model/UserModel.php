@@ -4,20 +4,14 @@ namespace Bitrix\Sign\Access\Model;
 
 use Bitrix\Crm\Security\Role\Model\RoleRelationTable;
 use Bitrix\Main;
-use Bitrix\Sign\Access\Permission\PermissionDictionary;
 use Bitrix\Sign\Access\Permission\PermissionTable;
-
-/**
- * Bitrix Framework
- * @package bitrix
- * @subpackage catalog
- * @copyright 2001-2022 Bitrix
- */
+use Bitrix\Intranet;
 
 class UserModel extends Main\Access\User\UserModel
 {
 	private ?array $permissions = null;
 	private ?array $departmentMembers = null;
+	private ?array $departmentWithSubsMembers = null;
 
 	/**
 	 * get user roles in system
@@ -44,7 +38,7 @@ class UserModel extends Main\Access\User\UserModel
 			;
 
 			$this->roles = array_unique(
-				array_column($relationRows, 'ROLE_ID')
+				array_column($relationRows, 'ROLE_ID'),
 			);
 		}
 
@@ -65,7 +59,7 @@ class UserModel extends Main\Access\User\UserModel
 	{
 		$permissions = $this->getPermissions();
 
-		$permissions[$permissionId] = $permissions[$permissionId] ?? null;
+		$permissions[$permissionId] ??= null;
 
 		if (is_array($permissions[$permissionId]))
 		{
@@ -112,8 +106,8 @@ class UserModel extends Main\Access\User\UserModel
 		{
 			$permissionId = $permission["PERMISSION_ID"];
 			$value = (int)$permission["VALUE"];
-			
-			$this->permissions[$permissionId] = $this->permissions[$permissionId] ?? 0;
+
+			$this->permissions[$permissionId] ??= 0;
 			if ($value > $this->permissions[$permissionId])
 			{
 				$this->permissions[$permissionId] = $value;
@@ -131,24 +125,44 @@ class UserModel extends Main\Access\User\UserModel
 		return \CUser::GetUserGroup($this->userId);
 	}
 
+	/**
+	 * @return array<int> Return user ids
+	 */
 	public function getUserDepartmentMembers(bool $withSubs = false): array
 	{
-		if ($this->departmentMembers === null)
+		if ($this->departmentMembers !== null && !$withSubs)
 		{
-			$departments = $this->getUserDepartments();
-			$res = \Bitrix\Intranet\Util::getDepartmentEmployees([
-				'DEPARTMENTS' 	=> $departments,
-				'RECURSIVE' 	=> !$withSubs ? 'N' : 'Y',
-				'ACTIVE' 		=> 'Y',
-				'SKIP' 			=> [],
-				'SELECT' 		=> null
-			]);
+			return $this->departmentMembers;
+		}
+		if ($this->departmentWithSubsMembers !== null && $withSubs)
+		{
+			return $this->departmentWithSubsMembers;
+		}
 
-			$this->departmentMembers = [];
+		$departments = $this->getUserDepartments();
+		$res = Intranet\Util::getDepartmentEmployees([
+			'DEPARTMENTS' => $departments,
+			'RECURSIVE' => !$withSubs ? 'N' : 'Y',
+			'ACTIVE' => 'Y',
+			'SKIP' => [],
+			'SELECT' => ['ID'],
+		]);
+
+		if ($withSubs)
+		{
+			$this->departmentWithSubsMembers = [];
 			while ($row = $res->GetNext())
 			{
-				$this->departmentMembers[] = (int) $row['ID'];
+				$this->departmentWithSubsMembers[] = (int)$row['ID'];
 			}
+
+			return $this->departmentWithSubsMembers;
+		}
+
+		$this->departmentMembers = [];
+		while ($row = $res->GetNext())
+		{
+			$this->departmentMembers[] = (int)$row['ID'];
 		}
 
 		return $this->departmentMembers;

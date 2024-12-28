@@ -1,6 +1,7 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Crm;
 use Bitrix\Crm\Agent\Search\InvoiceSearchContentRebuildAgent;
 
 /**
@@ -89,11 +90,6 @@ if ($isErrorOccured)
 		return;
 	}
 }
-
-use Bitrix\Main;
-use Bitrix\Crm;
-use Bitrix\Crm\Settings\LayoutSettings;
-
 
 $APPLICATION->AddHeadScript('/bitrix/js/crm/instant_editor.js');
 
@@ -1760,7 +1756,7 @@ if (!$isInExportMode)
 	{
 		if (COption::GetOptionString('crm', '~CRM_REBUILD_INVOICE_ATTR', 'N') === 'Y')
 		{
-			$arResult['PATH_TO_PRM_LIST'] = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_perm_list'));
+			$arResult['PATH_TO_PRM_LIST'] = (string)Crm\Service\Container::getInstance()->getRouter()->getPermissionsUrl();
 			$arResult['NEED_FOR_REBUILD_INVOICE_ATTRS'] = true;
 		}
 		if(COption::GetOptionString('crm', '~CRM_TRANSFER_PS_PARAMS_TO_REQUISITES', 'N') === 'Y')
@@ -1771,7 +1767,7 @@ if (!$isInExportMode)
 
 	if(!$bInternal && CCrmPerms::IsAdmin() && COption::GetOptionString('crm', '~CRM_REBUILD_INVOICE_ATTR', 'N') === 'Y')
 	{
-		$arResult['PATH_TO_PRM_LIST'] = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_perm_list'));
+		$arResult['PATH_TO_PRM_LIST'] = (string)Crm\Service\Container::getInstance()->getRouter()->getPermissionsUrl();
 		$arResult['NEED_FOR_REBUILD_INVOICE_ATTRS'] = true;
 	}
 

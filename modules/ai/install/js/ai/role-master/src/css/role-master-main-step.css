@@ -1,0 +1,49 @@
+.ai__role-master_main-step {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+}
+
+.ai__role-master_main-step .ui-form {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	padding: 0;
+	margin: 0;
+}
+
+.ai__role-master_main-step .ui-form .ui-ctl-element {
+	--ui-field-color-primary: var(--ui-color-copilot-primary);
+}
+
+.ai__role-master_main-step .ui-form .ui-ctl-element:focus-within {
+	border-color: var(--ui-field-color-primary);
+}
+
+.ai__role-master_main-step .ui-form-row,
+.ai__role-master_main-step .ui-form-row-inline {
+	margin-bottom: 23px;
+}
+
+.ai__role-master_main-step .ui-form-row:last-child,
+.ai__role-master_main-step .ui-form-row-inline:last-child {
+	margin-bottom: 0;
+}
+
+.ai__role-master_main-step .ui-form-row-inline .ui-form-row {
+	margin-bottom: 0;
+}
+
+
+.ai__role-master_main-step .ui-form-row.--with-textarea {
+	flex-grow: 9999;
+}
+
+.ui-form-row.--with-textarea .ui-form-content,
+.ui-form-row.--with-textarea .ui-ctl-textarea,
+.ui-form-row.--with-textarea .ui-ctl-element {
+	display: flex;
+	flex: 1;
+	height: auto;
+}

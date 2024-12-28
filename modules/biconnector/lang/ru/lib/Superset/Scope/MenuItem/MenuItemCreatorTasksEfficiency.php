@@ -1,0 +1,3 @@
+<?php
+
+$MESS['BIC_SCOPE_MENU_ITEM_TASKS_EFFICIENCY_TITLE'] = 'Эффективность';

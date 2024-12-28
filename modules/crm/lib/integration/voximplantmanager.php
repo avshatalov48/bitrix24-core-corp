@@ -86,4 +86,14 @@ class VoxImplantManager
 
 		return str_replace(self::ORIGIN_ID_PREFIX, '', $originId);
 	}
+
+	final public static function insertPrefix(string $callId): string
+	{
+		if (self::isVoxImplantOriginId($callId))
+		{
+			return $callId;
+		}
+
+		return self::ORIGIN_ID_PREFIX . $callId;
+	}
 }

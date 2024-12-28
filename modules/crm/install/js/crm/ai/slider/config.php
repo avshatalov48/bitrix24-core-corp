@@ -22,9 +22,9 @@ return [
 	'js' => 'dist/slider.bundle.js',
 	'rel' => [
 		'main.core',
+		'ui.buttons',
 		'ui.sidepanel',
 		'ui.sidepanel.layout',
-		'ui.buttons',
 	],
 	'skip_core' => false,
 	'lang_additional' => $langAdditional,

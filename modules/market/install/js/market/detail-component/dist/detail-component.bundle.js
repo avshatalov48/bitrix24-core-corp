@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,market_slider,market_listItem,market_rating,market_popupInstall,market_popupUninstall,market_scopeList,market_installStore,market_uninstallStore,main_core_events,main_popup,ui_designTokens,ui_vue3_pinia) {
+(function (exports,market_slider,market_listItem,market_rating,market_popupInstall,market_popupUninstall,market_scopeList,market_installStore,market_uninstallStore,main_core_events,main_popup,ui_ears,ui_designTokens,ui_vue3_pinia) {
 	'use strict';
 
 	const DetailComponent = {
@@ -168,7 +168,7 @@ this.BX = this.BX || {};
 	    },
 	    initOther: function () {
 	      if (this.showYouMayLike) {
-	        new BX.UI.Ears({
+	        new ui_ears.Ears({
 	          container: document.querySelector(".market-detail__catalog-elements"),
 	          smallSize: true,
 	          noScrollbar: true
@@ -235,16 +235,6 @@ this.BX = this.BX || {};
 	    },
 	    configApp: function () {
 	      BX.SidePanel.Instance.open(this.result.IMPORT_PAGE);
-	    },
-	    addUserReview: function (userReview) {
-	      if (BX.Type.isArray(this.result.APP.REVIEWS.ITEMS)) {
-	        this.result.APP.REVIEWS.ITEMS.unshift(userReview);
-	      }
-	    },
-	    updateRating: function (rating) {
-	      if (rating.hasOwnProperty('RATING_DETAIL')) {
-	        this.result.APP.REVIEWS.RATING = rating;
-	      }
 	    },
 	    createPopupMenu: function () {
 	      if (this.result.APP.MENU_ITEMS.length <= 0 && !this.showRightsButton) {
@@ -748,9 +738,7 @@ this.BX = this.BX || {};
 			<Rating
 				:appInfo="result.APP"
 				:showNoAccessInstallButton="showNoAccessInstallButton"
-				@can-review="result.APP.REVIEWS.CAN_REVIEW = $event"
-				@review-info="addUserReview"
-				@update-rating="updateRating"
+				@install-app="installApp"
 			/>
 
 			<div class="market-detail__catalog-element" v-if="showYouMayLike">
@@ -858,4 +846,4 @@ this.BX = this.BX || {};
 
 	exports.DetailComponent = DetailComponent;
 
-}((this.BX.Market = this.BX.Market || {}),BX.Market,BX.Market,BX.Market,BX.Market,BX.Market,BX.Market,BX.Market,BX.Market,BX.Event,BX.Main,BX,BX.Vue3.Pinia));
+}((this.BX.Market = this.BX.Market || {}),BX.Market,BX.Market,BX.Market,BX.Market,BX.Market,BX.Market,BX.Market,BX.Market,BX.Event,BX.Main,BX.UI,BX,BX.Vue3.Pinia));

@@ -81,7 +81,45 @@ class NodeMemberRoleTable extends ORM\Data\DataManager
 		return $connection->query(sprintf(
 			'DELETE FROM %s WHERE %s',
 			$connection->getSqlHelper()->quote($entity->getDbTableName()),
-			Query::buildFilterSql($entity, $filter)
+			Query::buildFilterSql($entity, $filter),
+		));
+	}
+
+	public static function deleteByNodeId(int $nodeId)
+	{
+		$entity = static::getEntity();
+		$connection = $entity->getConnection();
+
+		$nodeMemberTableName = $connection->getSqlHelper()
+			->quote(NodeMemberTable::getTableName())
+		;
+		$nodeMemberRoleTableName = $connection->getSqlHelper()
+			->quote(static::getTableName())
+		;
+
+		if ($connection->getType() === 'mysql')
+		{
+			$connection->query(sprintf(
+				"DELETE r FROM %s AS r INNER JOIN %s AS m ON r.%s = m.%s WHERE m.%s = %d",
+				$nodeMemberRoleTableName,
+				$nodeMemberTableName,
+				$connection->getSqlHelper()->quote('MEMBER_ID'),
+				$connection->getSqlHelper()->quote('ID'),
+				$connection->getSqlHelper()->quote('NODE_ID'),
+				$nodeId
+			));
+
+			return;
+		}
+
+		$connection->query(sprintf(
+			"DELETE FROM %s WHERE %s IN (SELECT %s FROM %s WHERE %s = %d)",
+			$nodeMemberRoleTableName,
+			$connection->getSqlHelper()->quote('MEMBER_ID'),
+			$connection->getSqlHelper()->quote('ID'),
+			$nodeMemberTableName,
+			$connection->getSqlHelper()->quote('NODE_ID'),
+			$nodeId
 		));
 	}
 }

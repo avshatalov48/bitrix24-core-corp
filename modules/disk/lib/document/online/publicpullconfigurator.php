@@ -4,6 +4,7 @@ namespace Bitrix\Disk\Document\Online;
 
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
+use Bitrix\Disk\Realtime;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\Loader;
 use Bitrix\Pull;
@@ -39,7 +40,7 @@ class PublicPullConfigurator implements Errorable
 
 	public function getChannel(int $objectId): Pull\Model\Channel
 	{
-		return (new ObjectChannel($objectId))->getPullModel();
+		return (new Realtime\Channels\ObjectChannel($objectId))->getPullModel();
 	}
 
 	public function getConfig(int $objectId): array

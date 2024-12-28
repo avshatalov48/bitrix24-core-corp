@@ -37,8 +37,7 @@ create table if not exists b_ai_history
 	CREATED_BY_ID int(18) not null,
 	PRIMARY KEY (ID),
 	INDEX IX_B_CREATED_BY (CREATED_BY_ID),
-	INDEX IX_B_CONTEXT_ID (CONTEXT_ID),
-	INDEX IX_B_CONTEXT (CONTEXT_MODULE, CONTEXT_ID, CREATED_BY_ID, GROUP_ID)
+	INDEX IX_B_AI_HISTORY_PERF_01 (CONTEXT_ID, CREATED_BY_ID, CONTEXT_MODULE, GROUP_ID)
 );
 
 create table if not exists b_ai_engine
@@ -95,15 +94,24 @@ create table if not exists b_ai_role
 	INDUSTRY_CODE varchar(100) default null,
 	NAME_TRANSLATES text null,
 	DESCRIPTION_TRANSLATES text null,
+	DEFAULT_NAME varchar(255) default '',
+	DEFAULT_DESCRIPTION varchar(255) default '',
+	AUTHOR_ID int not null default 0,
+	EDITOR_ID int not null default 0,
 	HASH char(32) not null,
 	INSTRUCTION text not null,
 	AVATAR text not null,
 	IS_NEW TINYINT(1) UNSIGNED default 0,
+	IS_ACTIVE TINYINT default 1,
 	IS_RECOMMENDED TINYINT(1) UNSIGNED default 0,
+	IS_SYSTEM char(1) not null default 'Y',
 	SORT int default null,
+	DATE_CREATE timestamp not null default current_timestamp,
 	DATE_MODIFY timestamp not null default current_timestamp,
 	PRIMARY KEY (ID),
 	INDEX IX_B_CODE (CODE),
+	INDEX IX_B_IS_NEW (IS_NEW),
+	INDEX IX_B_IS_RECOMMENDED (IS_RECOMMENDED),
 	INDEX IX_B_SORT (SORT),
 	INDEX IX_B_INDUSTRY_CODE (INDUSTRY_CODE)
 );
@@ -297,4 +305,55 @@ create table if not exists b_ai_image_style_prompt
 	DATE_MODIFY timestamp not null default current_timestamp,
 	PRIMARY KEY (ID),
 	INDEX IX_B_CODE (CODE)
+);
+
+create table if not exists b_ai_role_owner
+(
+	ID int not null auto_increment,
+	USER_ID int not null,
+	ROLE_ID int not null,
+	IS_DELETED tinyint default 0,
+	PRIMARY KEY (ID),
+	INDEX IX_B_USER_ID (USER_ID),
+	INDEX IX_B_ROLE_ID (ROLE_ID),
+	UNIQUE IX_B_ROLE_OWNER (USER_ID, ROLE_ID)
+);
+
+create table if not exists b_ai_role_share
+(
+	ID int not null auto_increment,
+	ROLE_ID int not null,
+	ACCESS_CODE varchar(100) not null ,
+	DATE_CREATE timestamp not null default current_timestamp,
+	CREATED_BY int not null,
+	PRIMARY KEY (ID),
+	INDEX IX_B_ACCESS_CODE (ACCESS_CODE),
+	INDEX IX_B_ROLE_ID (ROLE_ID),
+	UNIQUE IX_B_ROLE_ACCESSORS(ROLE_ID, ACCESS_CODE)
+);
+
+create table if not exists b_ai_role_translate_name
+(
+	ID bigint unsigned not null auto_increment,
+	ROLE_ID int not null,
+	LANG varchar(5) not null,
+	TEXT varchar(255) not null,
+
+	PRIMARY KEY (ID),
+
+	INDEX IX_B_ROLE_ID (ROLE_ID),
+	UNIQUE IX_B_ROLE_LANG (ROLE_ID, LANG)
+);
+
+create table if not exists b_ai_role_translate_description
+(
+	ID bigint unsigned not null auto_increment,
+	ROLE_ID int not null,
+	LANG varchar(5) not null,
+	TEXT varchar(255) not null,
+
+	PRIMARY KEY (ID),
+
+	INDEX IX_B_ROLE_ID (ROLE_ID),
+	UNIQUE IX_B_ROLE_LANG (ROLE_ID, LANG)
 );

@@ -27,7 +27,7 @@ $MESS["IM_M_ICON"] = "иконка";
 $MESS["IM_CHAT_CALL"] = "Телефонный звонок";
 $MESS["IM_CHAT_LINES"] = "Открытая линия";
 $MESS["IM_CHAT_GENERAL"] = "Общий чат";
-$MESS["IM_CHAT_OPEN_NEW"] = "Канал";
-$MESS["IM_CHAT_GROUP_NEW"] = "Групповой чат";
+$MESS["IM_CHAT_OPEN_NEW_MSGVER_1"] = "Открытый чат";
+$MESS["IM_CHAT_GROUP_NEW_MSGVER_1"] = "Групповой чат";
 $MESS["IM_M_CODE_BLOCK"] = "Фрагмент кода";
 ?>

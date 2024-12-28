@@ -3,6 +3,7 @@
 namespace Bitrix\Tasks\Components\Kanban\Services;
 
 use Bitrix\Main\Loader;
+use Bitrix\Tasks\Integration\Extranet\User;
 
 class Members
 {
@@ -106,6 +107,7 @@ class Members
 				'crm' => false,
 				'mail' => false,
 				'extranet' => false,
+				'collaber' => false,
 				'url' => "/company/personal/user/{$row['ID']}/",
 			];
 			if (isset($row[self::USER_CRM_CODE]) && $row[self::USER_CRM_CODE])
@@ -118,7 +120,14 @@ class Members
 			}
 			elseif (!isset($row[self::USER_DEPARTMENT_CODE][0]) || !$row[self::USER_DEPARTMENT_CODE][0])
 			{
-				$member['extranet'] = true;
+				if (User::isCollaber($row['ID']))
+				{
+					$member['collaber'] = true;
+				}
+				else
+				{
+					$member['extranet'] = true;
+				}
 			}
 			$result[$member['id']] = $member;
 			$this->cache[$member['id']] = $member;

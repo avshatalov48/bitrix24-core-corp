@@ -78,6 +78,26 @@
 	line-height: var(--ui-font-line-height-xl);
 }
 
+.tasks-flow__list-container {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+}
+
+.tasks-flow__list-info {
+	display: flex;
+	flex-direction: column;
+}
+
+.tasks-flow__list-name-wrapper {
+	display: flex;
+	align-items: center;
+}
+
+.tasks-flow_list_row_pinned td:not([style*="background-color"]) {
+	background-color: whitesmoke !important;
+}
+
 .tasks-flow__list-name_flow-name {
 	font-size: var(--ui-font-size-lg);
 	color: var(--ui-color-link-primary-base);
@@ -143,6 +163,11 @@
 	color: var(--ui-color-text-primary);
 }
 
+.tasks-flow__list-members_info.--link.--efficiency {
+	display: flex;
+	justify-content: center;
+}
+
 .tasks-flow__list-my-tasks-counter {
 	cursor: pointer;
 }
@@ -165,6 +190,7 @@
 	z-index: 1;
 	display: flex;
 	margin-left: 8px;
+	position: relative;
 }
 
 .tasks-flow__list-members-icon_element {
@@ -180,6 +206,85 @@
 	border-radius: var(--ui-border-radius-circle);
 	border: var(--ui-border-width-thin) solid var(--ui-color-background-primary);
 	background-size: 100% auto;
+
+	opacity: 1;
+	left: 0;
+	right: 0;
+
+	transition: 0.6s linear;
+}
+
+.tasks-flow__list-members-icon_element.--hidden {
+	opacity: 0;
+}
+
+.tasks-flow__list-members-icon_element.--start-invisible {
+	position: absolute;
+	left: -20px;
+	z-index: auto;
+}
+
+.tasks-flow__list-members-icon_element.--invisible {
+	position: absolute;
+	left: 0;
+	z-index: auto;
+}
+
+.tasks-flow__list-members-icon_element.--tiny-left {
+	left: -10px;
+}
+
+.tasks-flow__list-members-icon_element.--tiny-right {
+	left: 10px;
+}
+
+.tasks-flow__list-members-icon_element.--right {
+	left: 20px;
+}
+
+.tasks-flow__list-members-icon_element.--center:first-child {
+	left: 20px;
+}
+
+.tasks-flow__list-members-icon_element.--center:nth-child(2) {
+	left: 0;
+}
+
+.tasks-flow__list-members-icon_element.--center:last-child {
+	left: -20px;
+}
+
+.tasks-flow__list-members-icon_element.--blink:before {
+	z-index: -1;
+	content: '';
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: var(--ui-border-radius-circle);
+	background: var(--ui-color-palette-blue-40);
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	animation: member-blink .3s linear;
+}
+
+@keyframes member-blink {
+	0% {
+		opacity: 1;
+		width: calc(100%);
+		height: calc(100%);
+	}
+	80% {
+		opacity: 1;
+		width: calc(100% + 8px);
+		height: calc(100% + 8px);
+	}
+	100% {
+		opacity: 0;
+		width: calc(100% + 8px);
+		height: calc(100% + 8px);
+	}
 }
 
 .tasks-flow__list-members-icon_element.--count {
@@ -189,6 +294,10 @@
 	border-color: var(--ui-color-base-20);
 	color: var(--ui-color-base-70);
 	background-color: var(--ui-color-background-primary);
+}
+
+.tasks-flow__list-members-icon_element.--count.--blink {
+	z-index: auto;
 }
 
 .tasks-flow__list-members-icon_element.--count.--at-work {
@@ -231,6 +340,52 @@
 	background-image: url('./images/efficiency-chart_gray.svg');
 }
 
+.tasks-flow__not-enough-tasks-popup-title {
+	display: flex;
+	align-items: center;
+	padding-bottom: 4px;
+}
+
+.tasks-flow__not-enough-tasks-popup-icon.ui-icon-set {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-base-color: var(--ui-color-copilot-primary);
+}
+
+.tasks-flow__not-enough-tasks-popup-title-text {
+	color: var(--ui-color-copilot-primary);
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.tasks-flow__not-enough-tasks-popup-description {
+	font-size: var(--ui-font-size-xs);
+	padding-bottom: 8px;
+}
+
+.tasks-flow__not-enough-tasks-popup-example {
+	display: flex;
+	justify-content: flex-end;
+	padding-bottom: 2px;
+}
+
+.tasks-flow__not-enough-tasks-popup-example-text {
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-palette-gray-50);
+	cursor: pointer;
+	text-decoration: underline;
+	text-underline-position: under;
+	-webkit-text-decoration-style: dashed;
+	        text-decoration-style: dashed;
+	-webkit-text-decoration-color: var(--ui-color-palette-gray-50);
+	        text-decoration-color: var(--ui-color-palette-gray-50);
+}
+
+.tasks-flow__not-enough-tasks-popup-example-text:hover {
+	color: var(--ui-color-palette-gray-70);
+	-webkit-text-decoration-color: var(--ui-color-palette-gray-70);
+	        text-decoration-color: var(--ui-color-palette-gray-70);
+}
+
 .tasks-flow__list-owner-wrapper {
 	display: flex;
 }
@@ -261,6 +416,10 @@
 	height: 28px;
 	margin-right: 6px;
 	flex-shrink: 0;
+}
+
+.tasks-flow__bi-analytics-container {
+	padding-left: 13px;
 }
 
 .tasks-flow__list-analytics {
@@ -405,6 +564,31 @@
 	animation: highlightRowTd 900ms ease;
 }
 
+.tasks-flow__bi-analytics {
+	height: 27px;
+	background: rgba(255, 255, 255, .15);
+	line-height: 25px;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+}
+
+.tasks-flow__additional-items {
+	display: flex;
+	justify-content: space-between;
+}
+
+#tasks-flow-list .main-grid-cell-counter:empty {
+	display: none;
+}
+
+#tasks-flow-list .main-grid-cell-right .main-grid-cell-inner {
+	justify-content: flex-end;
+}
+
+#tasks-flow-list .main-grid-cell-right .main-grid-cell-inner .main-grid-cell-counter + .main-grid-cell-content {
+	flex-grow: inherit;
+}
+
 @keyframes highlightRow {
 	0% {
 		opacity: .2;
@@ -434,4 +618,46 @@
 	100% {
 		background-color: #ffffff;
 	}
+}
+
+.tasks-flow__efficiency-copilot {
+	display: flex;
+	justify-content: center;
+	margin-top: 11px;
+	font-size: var(--ui-font-size-xs);
+	letter-spacing: var(--ui-text-letter-spacing-neg-3);
+	white-space: normal;
+	color: var(--ui-color-palette-white-base);
+	cursor: default;
+}
+
+.tasks-flow__efficiency-copilot-pill {
+	position: relative;
+	display: flex;
+	justify-content: center;
+	background-color: var(--ui-color-copilot-primary);
+	align-items: center;
+	border-radius: var(--ui-border-radius-pill);
+	width: 60px;
+	height: 20px;
+	transition: 160ms background-color linear;
+	cursor: pointer;
+}
+
+.tasks-flow__efficiency-copilot-pill:hover {
+	background-color: var(--ui-color-copilot-dark);
+}
+
+.tasks-flow__efficiency-copilot-icon.ui-icon-set {
+	position: absolute;
+	top: 1px;
+	left: 1px;
+	--ui-icon-set__icon-size: 18px;
+	--ui-icon-set__icon-base-color: var(--ui-color-palette-white-base);
+	opacity: 0.8;
+}
+
+.tasks-flow__efficiency-copilot-text {
+	margin-left: 10px;
+	margin-top: -1px;
 }

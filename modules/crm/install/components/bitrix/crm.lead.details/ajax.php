@@ -34,7 +34,7 @@ if(!function_exists('__CrmLeadDetailsEndJsonResponse'))
 		Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 		if(!empty($result))
 		{
-			echo CUtil::PhpToJSObject($result);
+			echo Main\Web\Json::encode(\Bitrix\Crm\Component\Utils\JsonCompatibleConverter::convert((array)$result));
 		}
 		if(!defined('PUBLIC_AJAX_MODE'))
 		{
@@ -105,7 +105,6 @@ elseif($action === 'SAVE')
 		]);
 	}
 
-	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : array();
 	$sourceEntityID =  isset($params['LEAD_ID']) ? (int)$params['LEAD_ID'] : 0;
 
 	$enableRequiredUserFieldCheck = !isset($_POST['ENABLE_REQUIRED_USER_FIELD_CHECK'])

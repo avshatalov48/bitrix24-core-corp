@@ -13,7 +13,7 @@ class CopilotInCall extends Base
 	protected int $numberOfViewsLimit = 3;
 
 	private static bool $isWelcomeTourEnabled = false;
-	private ?int $entityTypeId = null;
+	protected ?int $entityTypeId = null;
 
 	public function setEntityTypeId(?int $entityTypeId): self
 	{
@@ -30,7 +30,7 @@ class CopilotInCall extends Base
 		}
 
 		static::$isWelcomeTourEnabled = true;
-		
+
 		return $this->isShowEnabled() && !$this->isUserSeenTour();
 	}
 
@@ -62,11 +62,11 @@ class CopilotInCall extends Base
 		return [
 			[
 				'id' => 'copilot-button-in-call',
-				'title' => Loc::getMessage('CRM_TOUR_COPILOT_IN_CALL_TITLE'),
+				'title' => Loc::getMessage('CRM_TOUR_COPILOT_IN_CALL_TITLE_MSGVER_1'),
 				'text' => sprintf(
 					'%s %s',
-					Loc::getMessage('CRM_TOUR_COPILOT_IN_CALL_BODY_MAIN'),
-					Loc::getMessage("CRM_TOUR_COPILOT_IN_CALL_BODY_$entityName"),
+					Loc::getMessage("CRM_TOUR_COPILOT_IN_CALL_BODY_{$entityName}_MSGVER_1"),
+					Loc::getMessage('CRM_TOUR_COPILOT_IN_CALL_BODY_MAIN_MSGVER_1'),
 				),
 				'position' => 'top',
 				'useDynamicTarget' => true,
@@ -82,6 +82,10 @@ class CopilotInCall extends Base
 			'hideTourOnMissClick' => true,
 			'numberOfViewsLimit' => $this->numberOfViewsLimit,
 			'isNumberOfViewsExceeded' => $this->isNumberOfViewsExceeded(),
+			'additionalTourIdsForDisable' => [
+				CopilotRunAutomatically::getInstance()->getOptionName(),
+				CopilotRunManually::getInstance()->getOptionName(),
+			],
 			'steps' => [
 				'popup' => [
 					'width' => 400,

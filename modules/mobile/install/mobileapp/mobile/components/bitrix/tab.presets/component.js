@@ -1,10 +1,20 @@
-/**
- * @bxjs_lang_path component.php
- * @var {Notify} notify
- */
+(() => {
+	const require = (ext) => jn.require(ext);
+	const { TabPresetsComponent } = require('tab.presets');
+	const { TabPresetsComponent: TabPresetsComponentNew } = require('tab-presets-new');
+	const { Tourist } = require('tourist');
+	const { Feature } = require('feature');
 
-(()=>{
-	const { TabPresetsComponent } = jn.require("tab.presets")
-	const component = new TabPresetsComponent({}, layout)
-	layout.showComponent(component)
+	Tourist.ready()
+		.then(() => {
+			const TabPresetsComponentClass = (
+				Feature.isListViewMoveRowToSectionEndSupported() ? TabPresetsComponentNew : TabPresetsComponent
+			);
+
+			layout.showComponent(
+				new TabPresetsComponentClass({ parentWidget: layout }),
+			);
+		})
+		.catch(console.error)
+	;
 })();

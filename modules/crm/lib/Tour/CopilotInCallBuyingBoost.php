@@ -21,8 +21,8 @@ final class CopilotInCallBuyingBoost extends CopilotInCall
 		return [
 			[
 				'id' => 'copilot-in-call-buying-boost',
-				'title' => Loc::getMessage('CRM_TOUR_COPILOT_IN_CALL_BUY_BOOST_TITLE'),
-				'text' => Loc::getMessage('CRM_TOUR_COPILOT_IN_CALL_BUY_BOOST_BODY'),
+				'title' => Loc::getMessage('CRM_TOUR_COPILOT_IN_CALL_BUY_BOOST_TITLE_MSGVER_1'),
+				'text' => Loc::getMessage('CRM_TOUR_COPILOT_IN_CALL_BUY_BOOST_BODY_MSGVER_1'),
 				'position' => 'top',
 				'useDynamicTarget' => true,
 				'eventName' => 'BX.Crm.Timeline.Call:onShowTourWhenNeedBuyBoost',
@@ -35,6 +35,7 @@ final class CopilotInCallBuyingBoost extends CopilotInCall
 	{
 		return [
 			'showOverlayFromFirstStep' => true,
+			'disableBannerDispatcher' => true,
 			'hideTourOnMissClick' => true,
 			'steps' => [
 				'popup' => [

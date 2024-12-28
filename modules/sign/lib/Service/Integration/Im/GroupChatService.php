@@ -3,6 +3,7 @@
 namespace Bitrix\Sign\Service\Integration\Im;
 
 use Bitrix\Im\V2\Chat\ChatFactory;
+use Bitrix\Im\V2\Relation\AddUsersConfig;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -78,7 +79,7 @@ class GroupChatService
 		}
 		else
 		{
-			$chat->addUsers([$adminId], [$adminId], hideHistory: false);
+			$chat->addUsers([$adminId], new AddUsersConfig([$adminId, false]));
 		}
 
 		return new Result();
@@ -101,7 +102,7 @@ class GroupChatService
 			));
 		}
 
-		$chat->addUsers($userIds, hideHistory: false);
+		$chat->addUsers($userIds, new AddUsersConfig(hideHistory: false));
 
 		return new Result();
 	}

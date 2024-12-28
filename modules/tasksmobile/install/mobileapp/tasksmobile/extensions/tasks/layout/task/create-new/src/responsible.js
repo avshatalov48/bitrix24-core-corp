@@ -2,16 +2,20 @@
  * @module tasks/layout/task/create-new/responsible
  */
 jn.define('tasks/layout/task/create-new/responsible', (require, exports, module) => {
-	const { Avatar } = require('layout/ui/user/avatar');
-	const { EmptyAvatar } = require('layout/ui/user/empty-avatar');
-	const { Text4 } = require('ui-system/typography/text');
+	const { Avatar } = require('ui-system/blocks/avatar');
 	const { EntitySelectorFactory, EntitySelectorFactoryType } = require('selector/widget/factory');
 	const { Color, Indent } = require('tokens');
 	const { Loc } = require('tasks/loc');
 	const { Haptics } = require('haptics');
-	const { Icon } = require('assets/icons');
+	const { UserName } = require('layout/ui/user/user-name');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { showToast, Position } = require('toast');
 	const { AnalyticsEvent } = require('analytics');
+
+	const store = require('statemanager/redux/store');
+	const { dispatch } = store;
+	const { usersAddedFromEntitySelector } = require('statemanager/redux/slices/users');
+	const { selectGroupById } = require('tasks/statemanager/redux/slices/groups');
 
 	class Responsible extends LayoutComponent
 	{
@@ -61,14 +65,13 @@ jn.define('tasks/layout/task/create-new/responsible', (require, exports, module)
 				},
 				this.renderAvatar(),
 				this.renderText(),
-				this.isEditable() && Image({
+				this.isEditable() && IconView({
+					size: 16,
 					style: {
-						width: 13,
-						height: 13,
 						marginLeft: 2,
 					},
-					tintColor: Color.base2.toHex(),
-					named: 'chevron_down',
+					color: Color.base2,
+					icon: Icon.CHEVRON_DOWN,
 				}),
 			);
 		}
@@ -77,6 +80,7 @@ jn.define('tasks/layout/task/create-new/responsible', (require, exports, module)
 		{
 			const editable = this.isEditable();
 			const disabled = !editable;
+			const { id: userId } = this.state;
 
 			return View(
 				{},
@@ -92,50 +96,43 @@ jn.define('tasks/layout/task/create-new/responsible', (require, exports, module)
 							alignItems: 'center',
 						},
 					},
-					Image({
-						named: 'person',
-						tintColor: Color.base4.toHex(),
-						style: {
-							width: 14,
-							height: 14,
-						},
+					IconView({
+						icon: Icon.PERSON,
+						color: Color.base5,
+						size: 20,
 					}),
 				),
-				editable && this.state.image && Avatar({
-					id: this.state.id,
-					name: this.state.name,
-					image: this.state.image,
+				editable && Avatar({
+					id: userId,
 					size: 24,
-					testId: `responsible_USER_${this.state.id}_ICON`,
-				}),
-				editable && !this.state.image && EmptyAvatar({
-					id: this.state.id,
-					name: this.state.name,
-					size: 24,
-					testId: `responsible_USER_${this.state.id}_LETTERS_ICON`,
+					withRedux: true,
+					testId: `responsible_USER_${userId}_ICON`,
 				}),
 			);
 		}
 
 		renderText()
 		{
+			const { id: userId } = this.state;
+
+			let textParams = {
+				id: userId,
+				color: Color.base2,
+				testId: `responsible_USER_${userId}_VALUE`,
+			};
+
 			if (!this.isEditable())
 			{
-				return Text4({
+				textParams = {
 					testId: 'responsible_USER_DISABLED_VALUE',
 					text: Loc.getMessage('M_TASKS_RESPONSIBLE_DISABLED_BY_FLOW'),
 					color: Color.base4,
-					style: {
-						flexShrink: 1,
-						marginLeft: Indent.M.toNumber(),
-					},
-				});
+					withRedux: false,
+				};
 			}
 
-			return Text4({
-				testId: `responsible_USER_${this.state.id}_VALUE`,
-				text: this.state.name,
-				color: Color.base2,
+			return UserName({
+				...textParams,
 				style: {
 					flexShrink: 1,
 					marginLeft: Indent.M.toNumber(),
@@ -151,6 +148,8 @@ jn.define('tasks/layout/task/create-new/responsible', (require, exports, module)
 				name: user.title,
 				image: (user.imageUrl || ''),
 			};
+
+			dispatch(usersAddedFromEntitySelector([user]));
 
 			if (newResponsible.id !== Number(this.state.id))
 			{
@@ -178,6 +177,8 @@ jn.define('tasks/layout/task/create-new/responsible', (require, exports, module)
 				return;
 			}
 
+			const { groupId, onSelectorHidden, parentWidget } = this.props;
+
 			let selectorWidget = null;
 			const selector = EntitySelectorFactory.createByType(EntitySelectorFactoryType.USER, {
 				provider: {
@@ -192,8 +193,8 @@ jn.define('tasks/layout/task/create-new/responsible', (require, exports, module)
 						{
 							id: 'tasks.userDataFilter',
 							options: {
+								groupId,
 								role: 'R',
-								groupId: this.props.groupId,
 							},
 						},
 					],
@@ -202,18 +203,26 @@ jn.define('tasks/layout/task/create-new/responsible', (require, exports, module)
 				allowMultipleSelection: false,
 				selectOptions: {
 					canUnselectLast: false,
-					nonSelectableErrorText: Loc.getMessage(
-						'M_TASKS_DENIED_SELECT_USER_AS_RESPONSIBLE',
-					),
+					getNonSelectableErrorText: (item) => {
+						const isCollaber = item.params.entityType === 'collaber';
+						const isCollab = selectGroupById(store.getState(), groupId)?.isCollab;
+
+						if (isCollaber && !isCollab)
+						{
+							return Loc.getMessage('M_TASKS_DENIED_SELECT_COLLABER_WITHOUT_COLLAB');
+						}
+
+						return Loc.getMessage('M_TASKS_DENIED_SELECT_USER_AS_RESPONSIBLE');
+					},
 				},
 				createOptions: {
-					enableCreation: true,
-					analytics: new AnalyticsEvent().setSection('task'),
+					enableCreation: !(env.isCollaber || env.extranet),
+					analytics: new AnalyticsEvent().setSection('tasks'),
 					getParentLayout: () => selectorWidget,
 				},
 				events: {
 					onClose: this.onChange,
-					onViewHiddenStrict: this.props.onSelectorHidden,
+					onViewHiddenStrict: onSelectorHidden,
 				},
 				widgetParams: {
 					title: Loc.getMessage('TASKSMOBILE_TASK_CREATE_FIELD_RESPONSIBLE_SELECTOR_TITLE'),
@@ -224,7 +233,7 @@ jn.define('tasks/layout/task/create-new/responsible', (require, exports, module)
 					},
 				},
 			});
-			void selector.show({}, this.props.parentWidget).then((widget) => {
+			void selector.show({}, parentWidget).then((widget) => {
 				selectorWidget = widget;
 			});
 		}

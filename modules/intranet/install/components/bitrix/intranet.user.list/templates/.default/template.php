@@ -38,8 +38,8 @@ Toolbar::addFilter(\Bitrix\Main\Filter\Component\ComponentParams::get($arResult[
 		'ENABLE_LABEL' => true,
 		'LAZY_LOAD' => [
 			'CONTROLLER' => [
-				'getList' => 'main.filter.user.getlist',
-				'getField' => 'main.filter.user.getfield',
+				'getList' => 'intranet.filter.user.getlist',
+				'getField' => 'intranet.filter.user.getfield',
 				'componentName' => 'intranet.user.list',
 				'signedParameters' => \Bitrix\Main\Component\ParameterSigner::signParameters('intranet.user.list', [
 					'USER_PROPERTY_LIST' => $arParams['USER_PROPERTY_LIST']

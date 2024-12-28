@@ -158,6 +158,10 @@ $trackedFields = CTaskLog::getTrackedFields();
 			$arParams["PATH_TO_USER_PROFILE"],
 			array("user_id" => $record["USER_ID"])
 		);
+
+		$authorType = \Bitrix\Tasks\Integration\Intranet\User::getType((int)$record['USER_ID']);
+		$authorTypeClass = $authorType ? "task-log-author-$authorType" : "";
+
 	?>
 	<tr>
 		<td class="task-log-date-column">
@@ -167,7 +171,7 @@ $trackedFields = CTaskLog::getTrackedFields();
 			<?
 			if ($authorUrl !== "")
 			{
-				?><a class="task-log-author" target="_top" href="<?=$authorUrl?>"><?=$authorName?></a><?
+				?><a class="task-log-author <?= $authorTypeClass ?>" target="_top" href="<?=$authorUrl?>"><?=$authorName?></a><?
 			}
 			else
 			{
@@ -178,7 +182,11 @@ $trackedFields = CTaskLog::getTrackedFields();
 		<td class="task-log-where-column">
 
 			<?
-			$fieldName = Loc::getMessage("TASKS_LOG_" . $record["FIELD"]);
+
+			$fieldName =
+				Loc::getMessage('TASKS_LOG_' . $record['FIELD'] . '_MSGVER_1')
+				?? Loc::getMessage('TASKS_LOG_' . $record['FIELD'])
+			;
 			if ($record['FIELD'] === \Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode())
 			{
 				$fieldName = Loc::getMessage('TASKS_LOG_FILES');
@@ -308,8 +316,11 @@ $trackedFields = CTaskLog::getTrackedFields();
 						array("user_id" => $userFrom["ID"])
 					);
 
+					$userFromType = \Bitrix\Tasks\Integration\Intranet\User::getType((int)$userFrom['ID']);
+					$userFromTypeClass = $userFromType ? "task-log-author-$userFromType" : "";
+
 					$userFromStr = $userFromUrl !== "" ?
-						'<a class="task-log-author" href="'.$userFromUrl.'" target="_top">'.$userFromName.'</a>' :
+						'<a class="task-log-author ' . $userFromTypeClass . '" href="'.$userFromUrl.'" target="_top">'.$userFromName.'</a>' :
 						$userFromName;
 				}
 
@@ -330,8 +341,11 @@ $trackedFields = CTaskLog::getTrackedFields();
 						array("user_id" => $userTo["ID"])
 					);
 
+					$userToType = \Bitrix\Tasks\Integration\Intranet\User::getType((int)$userTo['ID']);
+					$userToTypeClass = $userToType ? "task-log-author-$userToType" : "";
+
 					$userToStr = $userToUrl !== "" ?
-						'<a class="task-log-author" href="'.$userToUrl.'" target="_top">'.$userToName.'</a>' :
+						'<a class="task-log-author ' . $userToTypeClass . '" href="'.$userToUrl.'" target="_top">'.$userToName.'</a>' :
 						$userToName;
 				}
 				?>
@@ -382,10 +396,13 @@ $trackedFields = CTaskLog::getTrackedFields();
 							array("user_id" => $userFrom["ID"])
 						);
 
+						$userFromType = \Bitrix\Tasks\Integration\Intranet\User::getType((int)$userFrom['ID']);
+						$userFromTypeClass = $userFromType ? "task-log-link-$userFromType" : '';
+
 						if ($userFromUrl !== "")
 						{
 							$usersFromStr[] =
-								'<a class="task-log-link" href="'.$userFromUrl.'" target="_top">'.
+								'<a class="task-log-link ' . $userFromTypeClass . '" href="'.$userFromUrl.'" target="_top">'.
 								$userFromName.
 								'</a>';
 						}
@@ -421,10 +438,13 @@ $trackedFields = CTaskLog::getTrackedFields();
 							array("user_id" => $userTo["ID"])
 						);
 
+						$userToType = \Bitrix\Tasks\Integration\Intranet\User::getType((int)$userTo['ID']);
+						$userToTypeClass = $userToType ? "task-log-link-$userToType" : "";
+
 						if ($userToUrl !== "")
 						{
 							$usersToStr[] =
-								'<a class="task-log-link" href="'.$userToUrl.'" target="_top">'.
+								'<a class="task-log-link ' . $userToTypeClass . '" href="'.$userToUrl.'" target="_top">'.
 								$userToName.
 								'</a>';
 						}
@@ -453,10 +473,7 @@ $trackedFields = CTaskLog::getTrackedFields();
 					CSocNetGroup::CanUserViewGroup($USER->getId(), $record["FROM_VALUE"]))
 				{
 					$groupFrom = $groups[$record["FROM_VALUE"]];
-					$groupFrom["URL"] = CComponentEngine::makePathFromTemplate(
-						$arParams["PATH_TO_GROUP"],
-						array("group_id" => $groupFrom["ID"])
-					);
+					$groupFrom["URL"] = \Bitrix\Tasks\Integration\SocialNetwork\Collab\Url\UrlManager::getUrlByType((int)$groupFrom["ID"]);
 
 					if ($groupFrom["URL"] !== "")
 					{
@@ -472,10 +489,7 @@ $trackedFields = CTaskLog::getTrackedFields();
 					CSocNetGroup::CanUserViewGroup($USER->getId(), $record["TO_VALUE"]))
 				{
 					$groupTo = $groups[$record["TO_VALUE"]];
-					$groupTo["URL"] = CComponentEngine::makePathFromTemplate(
-						$arParams["PATH_TO_GROUP"],
-						array("group_id" => $groupTo["ID"])
-					);
+					$groupTo["URL"] = \Bitrix\Tasks\Integration\SocialNetwork\Collab\Url\UrlManager::getUrlByType((int)$groupTo["ID"]);
 
 					if ($groupTo["URL"] !== "")
 					{

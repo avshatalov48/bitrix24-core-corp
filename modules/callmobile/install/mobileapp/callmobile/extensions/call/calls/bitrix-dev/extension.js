@@ -1,11 +1,9 @@
 'use strict';
 
-(function()
-{
+(function() {
 	include('Calls');
 
-	BX.DoNothing = function()
-	{};
+	BX.DoNothing = function() {};
 
 	const ajaxActions = {
 		invite: 'im.call.invite',
@@ -22,6 +20,7 @@
 		hangup: 'Call::hangup',
 		userInviteTimeout: 'Call::userInviteTimeout',
 		repeatAnswer: 'Call::repeatAnswer',
+		switchTrackRecordStatus: 'Call::switchTrackRecordStatus',
 	};
 
 	const clientEvents = {
@@ -83,6 +82,7 @@
 			}
 
 			this.connectionData = params.connectionData || {};
+			this.isCopilotActive = Boolean(params.isCopilotActive);
 
 			this.bitrixCallDev = null;
 
@@ -244,6 +244,8 @@
 				isIncomingVideoAllowed: incomingVideoAllowed,
 
 				onStreamReceived: (e) => this.eventEmitter.emit(BX.Call.Event.onStreamReceived, [e.userId, e.stream]),
+				onUserVoiceStarted: (e) => this.eventEmitter.emit(BX.Call.Event.onUserVoiceStarted, [e.userId]),
+				onUserVoiceStopped: (e) => this.eventEmitter.emit(BX.Call.Event.onUserVoiceStopped, [e.userId]),
 				onStateChanged: this.__onPeerStateChanged.bind(this),
 				onInviteTimeout: this.__onPeerInviteTimeout.bind(this),
 				onInitialState: (e) => {
@@ -343,14 +345,16 @@
 			}
 		}
 
-		toggleSubscriptionRemoteVideo(toggleList) {
+		toggleSubscriptionRemoteVideo(toggleList)
+		{
 			if (this.bitrixCallDev && this.bitrixCallDev.toggleSubscriptionRemoteVideo)
 			{
 				this.bitrixCallDev.toggleSubscriptionRemoteVideo(toggleList);
 			}
 		}
 
-		onCentralUserSwitch(userId) {
+		onCentralUserSwitch(userId)
+		{
 			if (this.bitrixCallDev && this.bitrixCallDev.onCentralUserSwitch)
 			{
 				this.bitrixCallDev.onCentralUserSwitch(userId);
@@ -861,6 +865,7 @@
 				'Call::ping': this.__onPullEventPing.bind(this),
 				'Call::finish': this.__onPullEventFinish.bind(this),
 				[pullEvents.repeatAnswer]: this.__onPullEventRepeatAnswer.bind(this),
+				[pullEvents.switchTrackRecordStatus]: this.__onPullEventSwitchTrackRecordStatus.bind(this),
 			};
 
 			if (handlers[command])
@@ -1032,6 +1037,14 @@
 			}
 		}
 
+		__onPullEventSwitchTrackRecordStatus(e)
+		{
+			this.eventEmitter.emit(BX.Call.Event.onSwitchTrackRecordStatus, [{
+				senderId: e.senderId,
+				isTrackRecordOn: e.isTrackRecordOn,
+			}]);
+		}
+
 		__onLocalDevicesUpdated(e)
 		{
 			this.log('__onLocalDevicesUpdated', e);
@@ -1060,27 +1073,30 @@
 		{
 			let logData = {};
 
-			const evt = e && typeof e === 'object' ? e : {}
-			const {headers, leaveInformation} = evt;
+			const evt = e && typeof e === 'object' ? e : {};
+			const { headers, leaveInformation } = evt;
 
-			if (headers) {
+			if (headers)
+			{
 				logData = {
 					...logData,
 					headers,
-				}
+				};
 			}
 
-			if (leaveInformation) {
+			if (leaveInformation)
+			{
 				logData = {
 					...logData,
 					leaveInformation,
-				}
+				};
 			}
 
-			this.log("__onCallDisconnected", (Object.keys(logData).length ? logData : null));
+			this.log('__onCallDisconnected', (Object.keys(logData).length ? logData : null));
 
-			if (this.ready && leaveInformation) {
-				this.hangup(leaveInformation.code, leaveInformation.reason)
+			if (this.ready && leaveInformation)
+			{
+				this.hangup(leaveInformation.code, leaveInformation.reason);
 			}
 
 			this.ready = false;
@@ -1092,7 +1108,7 @@
 
 			this.joinStatus = BX.Call.JoinStatus.None;
 		}
-		
+
 		__onCallReconnected()
 		{
 			this.eventEmitter.emit(BX.Call.Event.onReconnected);
@@ -1193,19 +1209,22 @@
 			const eventName = message.eventName;
 			switch (eventName)
 			{
-				case clientEvents.voiceStarted: {
+				case clientEvents.voiceStarted:
+				{
 					this.eventEmitter.emit(BX.Call.Event.onUserVoiceStarted, [message.senderId]);
 
 					break;
 				}
 
-				case clientEvents.voiceStopped: {
+				case clientEvents.voiceStopped:
+				{
 					this.eventEmitter.emit(BX.Call.Event.onUserVoiceStopped, [message.senderId]);
 
 					break;
 				}
 
-				case clientEvents.microphoneState: {
+				case clientEvents.microphoneState:
+				{
 					this.eventEmitter.emit(BX.Call.Event.onUserMicrophoneState, [
 						message.senderId,
 						message.microphoneState === 'Y',
@@ -1214,7 +1233,8 @@
 					break;
 				}
 
-				case clientEvents.screenState: {
+				case clientEvents.screenState:
+				{
 					this.eventEmitter.emit(BX.Call.Event.onUserScreenState, [
 						message.senderId,
 						message.screenState === 'Y',
@@ -1223,7 +1243,8 @@
 					break;
 				}
 
-				case clientEvents.videoPaused: {
+				case clientEvents.videoPaused:
+				{
 					this.eventEmitter.emit(BX.Call.Event.onUserVideoPaused, [
 						message.senderId,
 						message.videoPaused === 'Y',
@@ -1232,7 +1253,8 @@
 					break;
 				}
 
-				case clientEvents.floorRequest: {
+				case clientEvents.floorRequest:
+				{
 					this.eventEmitter.emit(BX.Call.Event.onUserFloorRequest, [
 						message.senderId,
 						message.requestActive === 'Y',
@@ -1241,7 +1263,8 @@
 					break;
 				}
 
-				case clientEvents.emotion: {
+				case clientEvents.emotion:
+				{
 					this.eventEmitter.emit(BX.Call.Event.onUserEmotion, [
 						message.senderId,
 						message.toUserId,
@@ -1251,13 +1274,15 @@
 					break;
 				}
 
-				case 'scenarioLogUrl': {
+				case 'scenarioLogUrl':
+				{
 					CallUtil.warn(`scenario log url: ${message.logUrl}`);
 
 					break;
 				}
 
-				default: {
+				default:
+				{
 					this.log(`Unknown scenario event ${eventName}`);
 				}
 			}
@@ -1310,7 +1335,7 @@
 		}
 	}
 
-	const BXClientWrapper =		{
+	const BXClientWrapper = {
 		accessToken: null,
 		accessTokenTtl: null,
 
@@ -1416,11 +1441,11 @@
 		{
 			return new Promise((resolve, reject) => {
 				client.requestOneTimeKey(options.roomId, options.endpoint, options.token).then((oneTimeKey) => {
-						CallUtil.warn('ontimekey received');
-						CallUtil.warn('ontimekey signed');
+					CallUtil.warn('ontimekey received');
+					CallUtil.warn('ontimekey signed');
 
-						resolve(client);
-					})
+					resolve(client);
+				})
 					.catch((error) => {
 						reject(error);
 					});
@@ -1719,6 +1744,8 @@
 				onStateChanged: BX.type.isFunction(params.onStateChanged) ? params.onStateChanged : BX.DoNothing,
 				onInviteTimeout: BX.type.isFunction(params.onInviteTimeout) ? params.onInviteTimeout : BX.DoNothing,
 				onStreamReceived: BX.type.isFunction(params.onStreamReceived) ? params.onStreamReceived : BX.DoNothing,
+				onUserVoiceStarted: BX.type.isFunction(params.onUserVoiceStarted) ? params.onUserVoiceStarted : BX.DoNothing,
+				onUserVoiceStopped: BX.type.isFunction(params.onUserVoiceStopped) ? params.onUserVoiceStopped : BX.DoNothing,
 				onInitialState: BX.type.isFunction(params.onInitialState) ? params.onInitialState : BX.DoNothing,
 				onHandRaised: BX.type.isFunction(params.onHandRaised) ? params.onHandRaised : BX.DoNothing,
 			};
@@ -1726,6 +1753,8 @@
 			// event handlers
 			this.__onEndpointRemoteMediaAddedHandler = this.__onEndpointRemoteMediaAdded.bind(this);
 			this.__onEndpointRemoteMediaRemovedHandler = this.__onEndpointRemoteMediaRemoved.bind(this);
+			this.__onEndpointVoiceStartedHandler = this.__onEndpointVoiceStarted.bind(this);
+			this.__onEndpointVoiceStoppedHandler = this.__onEndpointVoiceStopped.bind(this);
 			this.__onEndpointRemovedHandler = this.__onEndpointRemoved.bind(this);
 			this.__onEndpointHandRaisedHandler = this.__onEndpointHandRaised.bind(this);
 
@@ -1848,6 +1877,8 @@
 		{
 			this.endpoint.on(JNBXEndpoint.Events.VideoStreamAdded, this.__onEndpointRemoteMediaAddedHandler);
 			this.endpoint.on(JNBXEndpoint.Events.VideoStreamRemoved, this.__onEndpointRemoteMediaRemovedHandler);
+			this.endpoint.on(JNBXEndpoint.Events.VoiceStarted, this.__onEndpointVoiceStartedHandler);
+			this.endpoint.on(JNBXEndpoint.Events.VoiceStopped, this.__onEndpointVoiceStoppedHandler);
 			this.endpoint.on(JNBXEndpoint.Events.Removed, this.__onEndpointRemovedHandler);
 			this.endpoint.on(JNBXEndpoint.Events.HandRaised, this.__onEndpointHandRaisedHandler);
 		}
@@ -1856,6 +1887,8 @@
 		{
 			this.endpoint.off(JNBXEndpoint.Events.VideoStreamAdded, this.__onEndpointRemoteMediaAddedHandler);
 			this.endpoint.off(JNBXEndpoint.Events.VideoStreamRemoved, this.__onEndpointRemoteMediaRemovedHandler);
+			this.endpoint.off(JNBXEndpoint.Events.VoiceStarted, this.__onEndpointVoiceStartedHandler);
+			this.endpoint.off(JNBXEndpoint.Events.VoiceStopped, this.__onEndpointVoiceStoppedHandler);
 			this.endpoint.off(JNBXEndpoint.Events.Removed, this.__onEndpointRemovedHandler);
 			this.endpoint.off(JNBXEndpoint.Events.HandRaised, this.__onEndpointHandRaisedHandler);
 		}
@@ -2002,6 +2035,22 @@
 			this.updateCalculatedState();
 		}
 
+		__onEndpointVoiceStarted(e)
+		{
+			this.log('Voice started');
+			this.callbacks.onUserVoiceStarted({
+				userId: this.userId,
+			});
+		}
+
+		__onEndpointVoiceStopped(e)
+		{
+			this.log('Voice stopped');
+			this.callbacks.onUserVoiceStopped({
+				userId: this.userId,
+			});
+		}
+
 		__onEndpointRemoved(e)
 		{
 			this.log('Endpoint removed');
@@ -2037,7 +2086,7 @@
 			{
 				return null;
 			}
-			let sharingStream = streams.findLast((stream) => stream.kind === "sharing");
+			let sharingStream = streams.findLast((stream) => stream.kind === 'sharing');
 			if (sharingStream === undefined)
 			{
 				return streams[streams.length - 1];
@@ -2063,6 +2112,8 @@
 
 			this.callbacks.onStateChanged = BX.DoNothing;
 			this.callbacks.onStreamReceived = BX.DoNothing;
+			this.callbacks.onUserVoiceStarted = BX.DoNothing;
+			this.callbacks.onUserVoiceStopped = BX.DoNothing;
 			this.callbacks.onInitialState = BX.DoNothing;
 			this.callbacks.onHandRaised = BX.DoNothing;
 

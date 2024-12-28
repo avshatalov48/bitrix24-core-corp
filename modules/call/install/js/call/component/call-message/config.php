@@ -16,6 +16,7 @@ return [
 		'im.v2.lib.call',
 		'im.public',
 		'im.v2.const',
+		'call.lib.analytics',
 	],
 	'skip_core' => false,
 ];

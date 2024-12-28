@@ -1,6 +1,10 @@
-<?
+<?php
+
 return [
 	'extensions' => [
-		'tab.presets'
+		'feature',
+		'tab-presets-new',
+		'tab.presets',
+		'tourist',
 	],
 ];

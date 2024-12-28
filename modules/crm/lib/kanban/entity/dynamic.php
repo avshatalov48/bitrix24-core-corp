@@ -342,13 +342,16 @@ class Dynamic extends Kanban\Entity
 		;
 	}
 
-	public function getItem(int $id): ?array
+	public function getItem(int $id, array $fieldsToSelect = []): ?array
 	{
-		$item = $this->factory->getItem($id);
+		$item = $this->factory->getItem($id, $fieldsToSelect);
 
-		if($item)
+		if ($item && Container::getInstance()->getUserPermissions()->canReadItem($item))
 		{
-			$this->loadedItems[$id] = $item;
+			if (empty($fieldsToSelect))
+			{
+				$this->loadedItems[$id] = $item;
+			}
 
 			return $item->getData();
 		}

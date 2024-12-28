@@ -263,10 +263,17 @@
 			this.onSeoAuth.bind(this)
 		);
 	};
-	Connector.prototype.requestProvider = function()
+	Connector.prototype.requestProvider = function(clientId = null)
 	{
 		this.clientSelector.disable();
-		this.request('getProvider', {}, this.updateProvider.bind(this));
+
+		const data = {};
+		if (clientId)
+		{
+			data.clientId = clientId;
+		}
+
+		this.request('getProvider', data, this.updateProvider.bind(this));
 	};
 	Connector.prototype.updateProvider = function(response)
 	{
@@ -334,8 +341,14 @@
 	};
 	Connector.prototype.onSeoAuth = function (eventData)
 	{
+		let clientId = null;
+		if (eventData.clientId)
+		{
+			clientId = eventData.clientId
+		}
+
 		eventData.reload = false;
-		this.requestProvider();
+		this.requestProvider(clientId);
 	};
 	Connector.prototype.changeAuthDisplay = function(mode)
 	{

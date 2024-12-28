@@ -1,4 +1,5 @@
 <?php
+$MESS["CRM_1C_HCMLINK_KEDO"] = "KEDO + 1C";
 $MESS["CRM_1C_START_BACKOFFICE"] = "1C:Backoffice- 2.0";
 $MESS["CRM_1C_START_BACKOFFICE_MSGVER_1"] = "Connector for 1C";
 $MESS["CRM_1C_START_CONNECT"] = "Connect";

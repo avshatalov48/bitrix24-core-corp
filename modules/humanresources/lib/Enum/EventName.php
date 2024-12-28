@@ -2,7 +2,9 @@
 
 namespace Bitrix\HumanResources\Enum;
 
-enum EventName
+use Bitrix\HumanResources\Contract;
+
+enum EventName implements Contract\Enum\EventName
 {
 	case MEMBER_ADDED;
 	case MEMBER_UPDATED;

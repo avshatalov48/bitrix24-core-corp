@@ -160,6 +160,7 @@ class tasks extends CModule
 		// ai
 		$eventManager->registerEventHandler('ai', 'onContextGetMessages', 'tasks', '\Bitrix\Tasks\Integration\AI\EventHandler', 'onContextGetMessages');
 		$eventManager->registerEventHandler('ai', 'onTuningLoad', 'tasks', '\Bitrix\Tasks\Integration\AI\Settings', 'onTuningLoad');
+		$eventManager->registerEventHandler('ai', 'onQueueJobExecute', 'tasks', '\Bitrix\Tasks\Flow\Integration\AI\Copilot\RequestHandler', 'onQueueJobExecute');
 
 		// flow
 		$eventManager->registerEventHandler(
@@ -208,6 +209,22 @@ class tasks extends CModule
 			'tasks',
 			'\Bitrix\Tasks\Flow\Internal\Event\FlowEventListener',
 			'onAfterUserDelete',
+		);
+
+		$eventManager->registerEventHandler(
+			'tasks',
+			'OnTaskAdd',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Integration\AI\Event\TaskEventListener',
+			'OnTaskAdd'
+		);
+
+		$eventManager->registerEventHandler(
+			'ai',
+			'onTuningLoad',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Integration\AI\FlowSettings',
+			'onTuningLoad',
 		);
 
 		$this->InstallTasks();
@@ -771,6 +788,7 @@ class tasks extends CModule
 		// ai
 		$eventManager->unRegisterEventHandler('ai', 'onContextGetMessages', 'tasks', '\Bitrix\Tasks\Integration\AI\EventHandler', 'onContextGetMessages');
 		$eventManager->unRegisterEventHandler('ai', 'onTuningLoad', 'tasks', '\Bitrix\Tasks\Integration\AI\Settings', 'onTuningLoad');
+		$eventManager->unRegisterEventHandler('ai', 'onQueueJobExecute', 'tasks', '\Bitrix\Tasks\Flow\Integration\AI\Copilot\RequestHandler', 'onQueueJobExecute');
 
 		// flow
 		$eventManager->unRegisterEventHandler(
@@ -809,6 +827,23 @@ class tasks extends CModule
 			'\Bitrix\Tasks\Flow\Internal\Event\FlowEventListener',
 			'onAfterUserDelete',
 		);
+
+		$eventManager->unRegisterEventHandler(
+			'tasks',
+			'OnTaskAdd',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Integration\AI\Event\TaskEventListener',
+			'OnTaskAdd'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'ai',
+			'onTuningLoad',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Integration\AI\FlowSettings',
+			'onTuningLoad',
+		);
+
 
 		// remove tasks from socnetlog table
 		if (

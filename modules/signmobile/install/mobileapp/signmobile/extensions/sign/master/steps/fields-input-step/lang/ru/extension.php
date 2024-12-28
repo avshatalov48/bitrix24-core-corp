@@ -1,0 +1,5 @@
+<?php
+$MESS['SIGN_MOBILE_MASTER_FIELDS_INPUT_STEP_TITLE'] = 'Документ на подпись';
+$MESS['SIGN_MOBILE_MASTER_FIELDS_INPUT_STEP_NEXT_STEP_BUTTON_TEXT'] = 'Перейти к подписанию';
+$MESS['SIGN_MOBILE_MASTER_INPUT_STEP_EMPTY_STATE_TITLE'] = 'Документ готов к отправке';
+$MESS['SIGN_MOBILE_MASTER_INPUT_STEP_EMPTY_STATE_DESCRIPTION'] = 'Документ #SELECTED_TEMPLATE_TITLE# создан по шаблону, можно перейти к подписанию';

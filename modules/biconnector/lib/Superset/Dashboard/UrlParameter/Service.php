@@ -108,7 +108,7 @@ final class Service
 		{
 			if (isset($fullMap[$scope]))
 			{
-				$scopeMap[] = $fullMap[$scope];
+				$scopeMap[] = array_map(static fn(Parameter $param) => $param->code(), $fullMap[$scope]);
 			}
 		}
 
@@ -118,10 +118,10 @@ final class Service
 			$availableParams = array_intersect(...$scopeMap);
 		}
 
-		$globalParams = ScopeMap::getGlobals();
+		$globalParams = array_map(static fn(Parameter $param) => $param->code(), ScopeMap::getGlobals());
 		$availableParams = array_merge($availableParams, $globalParams);
 
-		return array_map(static fn($item) => $item->code(), $availableParams);
+		return $availableParams;
 	}
 
 	/**

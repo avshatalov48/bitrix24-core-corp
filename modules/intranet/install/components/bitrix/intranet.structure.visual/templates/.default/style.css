@@ -482,3 +482,11 @@ tr.bx-str-l3 td.bx-str-last.bx-str-first {background-position: -59px center}
 
 .bx-popup-head {border-bottom: solid 1px #DADADA;}
 
+.ui-page-slider-wrapper.ui-page-slider-wrapper-hr {
+    overflow: hidden;
+    height: 100% !important;
+}
+
+.ui-page-slider-wrapper-hr .ui-slider-page {
+    height: 100%;
+}

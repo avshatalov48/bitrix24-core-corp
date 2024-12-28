@@ -1,4 +1,9 @@
 (() => {
+	if (env.isCollaber || env.extranet)
+	{
+		return;
+	}
+
 	const require = (extension) => jn.require(extension);
 
 	const { Loc } = require('loc');

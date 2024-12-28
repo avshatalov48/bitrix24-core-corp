@@ -67,6 +67,11 @@ class SendPingCommandHandler
 			return;
 		}
 
+		if ($task->getCreatedBy() === $task->getResponsibleId())
+		{
+			return;
+		}
+
 		$this->bizProc->runProc($item->getIntegrationId(), [$task->getId()]);
 	}
 }

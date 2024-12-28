@@ -16,6 +16,7 @@ use Bitrix\Sign\Item\Member;
 use Bitrix\Sign\Item\Mobile\Link;
 use Bitrix\Sign\Main\Application;
 use Bitrix\Sign\Operation\ChangeMemberStatus;
+use Bitrix\Sign\Operation\SigningStop;
 use Bitrix\Sign\Operation\SyncMemberStatus;
 use Bitrix\Sign\Result\Service\ExternalSigningUrlResult;
 use Bitrix\Sign\Service\Result\Mobile\LinkResult;
@@ -23,6 +24,7 @@ use Bitrix\Sign\Type\Member\Role;
 use Bitrix\Sign\Type\MemberStatus;
 use Bitrix\Sign\Type\ProviderCode;
 use Bitrix\SignMobile;
+use Bitrix\Sign\Type;
 
 class MobileService
 {
@@ -105,6 +107,7 @@ class MobileService
 			documentStatus: $document->status,
 			providerCode: $document->providerCode,
 			readyForDownload: false,
+			initiatedByType: $document->initiatedByType,
 		);
 
 		if (
@@ -155,6 +158,7 @@ class MobileService
 				documentStatus: $document->status,
 				providerCode: $document->providerCode,
 				readyForDownload: $url !== null,
+				initiatedByType: $document->initiatedByType,
 			),
 		);
 	}
@@ -270,6 +274,11 @@ class MobileService
 			return $resultWithRejectError;
 		}
 
+		if ($document->initiatedByType === Type\Document\InitiatedByType::EMPLOYEE)
+		{
+			return (new SigningStop($document->uid, $member->entityId))->launch();
+		}
+
 		$response = Container::instance()->getApiMobileService()
 			->refuseSigning(
 				new RefuseRequest(documentUid: $document->uid, memberUid: $member->uid),
@@ -278,11 +287,11 @@ class MobileService
 
 		if ($response->isSuccess())
 		{
-			$updateResult = (new ChangeMemberStatus($member, $document, MemberStatus::REFUSED))->launch();
+			$result = (new ChangeMemberStatus($member, $document, MemberStatus::REFUSED))->launch();
 
-			if (!$updateResult->isSuccess())
+			if (!$result->isSuccess())
 			{
-				return $updateResult;
+				return $result;
 			}
 		}
 

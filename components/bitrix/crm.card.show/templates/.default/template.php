@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Crm\Feature;
+use Bitrix\Crm\Feature\CopilotInCallGrading;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Uri;
@@ -16,6 +18,12 @@ Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 ]);
+
+$isCopilotCallAssessmentEnabled = $arResult['isEnableCopilotReplacement'] ?? true;
+if ($isCopilotCallAssessmentEnabled)
+{
+	Extension::load('crm.copilot.call-card-replacement');
+}
 
 Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 ?>
@@ -294,4 +302,14 @@ Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 			}
 		})
 	</script>
-<?endif?>
+<?php endif?>
+
+<script>
+	BX.ready(() => {
+		const isCopilotCallAssessmentEnabled = <?= $isCopilotCallAssessmentEnabled ? 'true' : 'false' ?>;
+		if (isCopilotCallAssessmentEnabled)
+		{
+			BX.Crm.Copilot.CallCardIntegrator.integrate();
+		}
+	});
+</script>

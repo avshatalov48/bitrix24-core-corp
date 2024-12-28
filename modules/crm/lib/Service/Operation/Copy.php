@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service\Operation;
 
+use Bitrix\Crm\Component\EntityDetails\Files\CopyFilesOnItemClone;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
@@ -128,6 +129,12 @@ class Copy extends Operation
 
 		// if stages are disabled, it doesn't present in a compatible data
 		$copy->setStageId($original->getStageId());
+
+		$factory = Container::getInstance()->getFactory($this->item->getEntityTypeId());
+		if ($factory)
+		{
+			CopyFilesOnItemClone::getInstance()->execute($copy, $factory);
+		}
 	}
 
 	protected function getCopyAddOperation(Factory $factory, Item $copy): Operation\Add

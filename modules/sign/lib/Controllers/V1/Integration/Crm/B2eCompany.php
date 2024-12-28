@@ -2,13 +2,13 @@
 
 namespace Bitrix\Sign\Controllers\V1\Integration\Crm;
 
-use Bitrix\Crm\ItemIdentifier;
-use Bitrix\Crm\Requisite\DefaultRequisite;
-use Bitrix\Main\Application;
+use Bitrix\Main\Context;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Sign\Access\ActionDictionary;
-use Bitrix\Sign\Attribute;
+use Bitrix\Sign\Attribute\Access\LogicOr;
+use Bitrix\Sign\Attribute\ActionAccess;
 use Bitrix\Sign\Connector;
 use Bitrix\Sign\Integration\Bitrix24\B2eTariff;
 use Bitrix\Sign\Item\CompanyCollection;
@@ -16,12 +16,27 @@ use Bitrix\Sign\Item\CompanyProvider;
 use Bitrix\Sign\Item\Integration\Crm\MyCompanyCollection;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Item\Company;
+use Bitrix\Sign\Type\Document\InitiatedByType;
 
 class B2eCompany extends \Bitrix\Sign\Engine\Controller
 {
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT)]
-	public function listAction(): array
+	#[LogicOr(
+		new ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT),
+		new ActionAccess(ActionDictionary::ACTION_B2E_TEMPLATE_EDIT),
+	)]
+	public function listAction(
+		?string $forDocumentInitiatedByType = null,
+	): array
 	{
+		$forDocumentInitiatedByType ??= InitiatedByType::COMPANY->value;
+		$initiatedByType = InitiatedByType::tryFrom($forDocumentInitiatedByType);
+		if ($initiatedByType === null)
+		{
+			$this->addError(new Error('Incorrect document initiated by type'));
+
+			return [];
+		}
+
 		if (B2eTariff::instance()->isB2eRestrictedInCurrentTariff())
 		{
 			$this->addB2eTariffRestrictedError();
@@ -40,13 +55,13 @@ class B2eCompany extends \Bitrix\Sign\Engine\Controller
 
 		return [
 			'showTaxId' => !$myCompanyService->isTaxIdIsCompanyId(),
-			'companies' => $this->getFilledRegisteredCompanies($companies)
+			'companies' => $this->getFilledRegisteredCompanies($companies, $initiatedByType)
 				->sortProviders()
 				->toArray(),
 		];
 	}
 
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT)]
+	#[ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT)]
 	public function deleteAction(string $id): array
 	{
 		$result = Container::instance()->getApiService()
@@ -58,9 +73,12 @@ class B2eCompany extends \Bitrix\Sign\Engine\Controller
 		return [];
 	}
 
-	private function getFilledRegisteredCompanies(MyCompanyCollection $myCompanies): CompanyCollection
+	private function getFilledRegisteredCompanies(
+		MyCompanyCollection $myCompanies,
+		InitiatedByType $forDocumentInitiatedByType = InitiatedByType::COMPANY,
+	): CompanyCollection
 	{
-		$registeredCompanies = $this->getRegistered($myCompanies);
+		$registeredCompanies = $this->getRegistered($myCompanies, $forDocumentInitiatedByType);
 
 		$companies = new CompanyCollection();
 
@@ -81,6 +99,14 @@ class B2eCompany extends \Bitrix\Sign\Engine\Controller
 			if (!empty($registeredByTaxId['register_url']) && is_string($registeredByTaxId['register_url']))
 			{
 				$company->registerUrl = $registeredByTaxId['register_url'];
+				$contextLang = Context::getCurrent()->getLanguage();
+				if ($contextLang)
+				{
+					$company->registerUrl = (new Uri($company->registerUrl))
+						->addParams(['lang' => Context::getCurrent()->getLanguage()])
+						->getUri()
+					;
+				}
 			}
 			if (empty($registeredByTaxId['providers']) || !is_array($registeredByTaxId['providers']))
 			{
@@ -115,7 +141,7 @@ class B2eCompany extends \Bitrix\Sign\Engine\Controller
 		return $companies;
 	}
 
-	private function getRegistered(MyCompanyCollection $myCompanies): array
+	private function getRegistered(MyCompanyCollection $myCompanies, InitiatedByType $forDocumentInitiatedByType): array
 	{
 		$taxIds = $myCompanies->listTaxIds();
 		if (empty($taxIds))
@@ -124,7 +150,14 @@ class B2eCompany extends \Bitrix\Sign\Engine\Controller
 		}
 
 		$result = Container::instance()->getApiService()
-			->post('v1/b2e.company.get', ['taxIds' => $taxIds]);
+			->post(
+				'v1/b2e.company.get',
+				[
+					'taxIds' => $taxIds,
+					'useProvidersWhereSignerSignFirst' => $forDocumentInitiatedByType === InitiatedByType::EMPLOYEE,
+				],
+			)
+		;
 		if ($result->isSuccess())
 		{
 			$data = $result->getData();
@@ -145,7 +178,7 @@ class B2eCompany extends \Bitrix\Sign\Engine\Controller
 		return [];
 	}
 
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT)]
+	#[ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT)]
 	public function registerAction(
 		string $taxId,
 		string $providerCode,

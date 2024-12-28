@@ -2,7 +2,7 @@
 
 namespace Bitrix\Tasks\Flow\Provider;
 
-use Bitrix\Tasks\Flow\Flow;
+use Bitrix\Tasks\Flow\Distribution\FlowDistributionType;
 use Bitrix\Tasks\Flow\FlowRegistry;
 use Bitrix\Tasks\Flow\Option\OptionDictionary;
 use Bitrix\Tasks\Flow\Option\OptionService;
@@ -13,7 +13,7 @@ final class OptionProvider
 	{
 		$flow = FlowRegistry::getInstance()->get($flowId);
 
-		if (!$flow || $flow->getDistributionType() !== Flow::DISTRIBUTION_TYPE_MANUALLY)
+		if (!$flow || $flow->getDistributionType() !== FlowDistributionType::MANUALLY->value)
 		{
 			return null;
 		}
@@ -33,7 +33,7 @@ final class OptionProvider
 	{
 		$flow = FlowRegistry::getInstance()->get($flowId);
 
-		if (!$flow || $flow->getDistributionType() !== Flow::DISTRIBUTION_TYPE_QUEUE)
+		if (!$flow || $flow->getDistributionType() !== FlowDistributionType::QUEUE->value)
 		{
 			return null;
 		}

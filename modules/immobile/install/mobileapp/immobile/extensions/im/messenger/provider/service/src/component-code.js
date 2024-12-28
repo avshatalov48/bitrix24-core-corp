@@ -4,7 +4,7 @@
 jn.define('im/messenger/provider/service/component-code', (require, exports, module) => {
 	const { ComponentCode, DialogType, UserRole } = require('im/messenger/const');
 	const { ChatService } = require('im/messenger/provider/service/chat');
-	const { serviceLocator, ServiceLocator } = require('im/messenger/lib/di/service-locator');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { Logger } = require('im/messenger/lib/logger');
 
@@ -19,7 +19,7 @@ jn.define('im/messenger/provider/service/component-code', (require, exports, mod
 
 		constructor()
 		{
-			this.#chatService = new ChatService(new ServiceLocator());
+			this.#chatService = new ChatService();
 			this.#core = serviceLocator.get('core');
 			this.#store = serviceLocator.get('core').getStore();
 		}

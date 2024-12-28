@@ -18,6 +18,8 @@ if (!function_exists('renderCompletedColumn'))
 		$flowId = $flow->getId();
 		$membersClass = '--completed';
 		$members = renderUsersAvatar($users, $membersClass);
+		$total = count($users);
+		$subsequence = implode(',', array_slice(array_column($users, 'id'), 0, 3));
 
 		$isEmpty = !$users;
 		$days = $isEmpty ? Loc::getMessage('TASKS_FLOW_LIST_NO_TASKS') : $data['date'];
@@ -30,7 +32,11 @@ if (!function_exists('renderCompletedColumn'))
 			<div class="tasks-flow__list-cell $disableClass">
 				<div class="tasks-flow__list-members_wrapper $linkClass" onclick="{$onclick}">
 					<div class="tasks-flow__list-cell_line --middle --end-line">
-						<div class="tasks-flow__list-members">
+						<div
+							class="tasks-flow__list-members"
+							data-total="{$total}"
+							data-subsequence="{$subsequence}"
+						>
 							$members
 						</div>
 					</div>

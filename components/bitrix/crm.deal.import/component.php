@@ -21,6 +21,8 @@ if (!CCrmDeal::CheckImportPermission($CrmPerms))
 
 global $USER_FIELD_MANAGER;
 use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Integration\Analytics\Builder\Block\LinkEvent;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 
 $CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmDeal::$sUFEntityID);
 $arResult['HEADERS'] = array(
@@ -1015,6 +1017,18 @@ for ($i = 1; $i <= 3; $i++):
 	if ($arResult['STEP'] != $i)
 		$arResult['FIELDS']['tab_'.$i] = array();
 endfor;
+
+preg_match('#/crm/deal/kanban#', $this->request->getHeaders()->get('referer'), $matches);
+if ($matches[0] && $this->request->getQuery('from') === 'kanban')
+{
+	LinkEvent::createDefault(CCrmOwnerType::Deal)
+		->setType(Dictionary::TYPE_CONTACT_CENTER)
+		->setSection(Dictionary::getAnalyticsEntityType(CCrmOwnerType::Deal) . '_section')
+		->setSubSection(Dictionary::SUB_SECTION_KANBAN)
+		->setElement(Dictionary::ELEMENT_CONTACT_CENTER_IMPORTEXCEL)
+		->buildEvent()
+		->send();
+}
 
 $this->IncludeComponentTemplate();
 

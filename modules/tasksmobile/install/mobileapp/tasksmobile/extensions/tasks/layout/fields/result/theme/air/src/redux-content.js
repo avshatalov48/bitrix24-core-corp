@@ -9,7 +9,7 @@ jn.define('tasks/layout/fields/result/theme/air/redux-content', (require, export
 	const { Loc } = require('loc');
 	const { Text4 } = require('ui-system/typography/text');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
-	const { ReduxAvatar } = require('layout/ui/user/avatar');
+	const { Avatar } = require('ui-system/blocks/avatar');
 	const { FileField } = require('layout/ui/fields/file');
 	const { Circle, Line } = require('utils/skeleton');
 	const { Menu } = require('tasks/layout/fields/result/menu');
@@ -17,12 +17,12 @@ jn.define('tasks/layout/fields/result/theme/air/redux-content', (require, export
 	const { CollapsibleText } = require('layout/ui/collapsible-text');
 	const { Date } = require('tasks/layout/fields/result/date');
 	const { dayMonth, longDate, shortTime } = require('utils/date/formats');
+	const { UserName } = require('layout/ui/user/user-name');
+	const { PlainTextFormatter } = require('bbcode/formatter/plain-text-formatter');
 
-	const store = require('statemanager/redux/store');
 	const { connect } = require('statemanager/redux/connect');
 	const { selectByTaskIdOrGuid } = require('tasks/statemanager/redux/slices/tasks');
 	const { selectLastResult } = require('tasks/statemanager/redux/slices/tasks-results');
-	const { usersSelector } = require('statemanager/redux/slices/users');
 
 	class ReduxContent extends PureComponent
 	{
@@ -199,7 +199,7 @@ jn.define('tasks/layout/fields/result/theme/air/redux-content', (require, export
 				);
 			}
 
-			const creator = usersSelector.selectById(store.getState(), this.#result.createdBy);
+			const userId = this.#result.createdBy;
 
 			return View(
 				{
@@ -209,17 +209,19 @@ jn.define('tasks/layout/fields/result/theme/air/redux-content', (require, export
 						alignItems: 'center',
 					},
 				},
-				ReduxAvatar({
-					id: creator.id,
+				Avatar({
+					id: userId,
 					size: 32,
 					testId: `${this.#testId}_CREATOR_AVATAR`,
+					withRedux: true,
 				}),
-				Text4({
+				UserName({
 					style: {
 						marginLeft: Indent.M.toNumber(),
 					},
-					text: creator.fullName,
+					id: userId,
 					testId: `${this.#testId}_CREATOR_NAME`,
+					withRedux: true,
 				}),
 			);
 		}
@@ -240,6 +242,14 @@ jn.define('tasks/layout/fields/result/theme/air/redux-content', (require, export
 				);
 			}
 
+			const plainTextFormatter = new PlainTextFormatter();
+			const plainAst = plainTextFormatter.format({
+				source: this.#result.text,
+				data: {
+					files: this.#result.files ?? [],
+				},
+			});
+
 			return new CollapsibleText({
 				containerStyle: {
 					marginTop: Indent.M.toNumber(),
@@ -249,8 +259,8 @@ jn.define('tasks/layout/fields/result/theme/air/redux-content', (require, export
 					fontWeight: '400',
 					color: Color.base2.toHex(),
 				},
-				value: this.#result.text,
-				bbCodeMode: true,
+				value: plainAst.toString(),
+				bbCodeMode: false,
 				canExpand: false,
 				testId: `${this.#testId}_TEXT`,
 				onClick: () => this.#openResult(),

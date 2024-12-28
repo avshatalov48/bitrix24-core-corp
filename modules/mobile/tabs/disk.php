@@ -8,6 +8,7 @@ use Bitrix\Mobile\Config\Feature;
 use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\Mobile\Tab\Utils;
 use Bitrix\MobileApp\Janative\Manager;
+use Bitrix\Disk\Integration\Bitrix24Manager;
 
 final class Disk implements Tabable
 {
@@ -38,9 +39,16 @@ final class Disk implements Tabable
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,
 			'color' => '#3CD162',
+			'imageName' => $this->getIconId(),
 			'imageUrl' => 'favorite/icon-disk.png',
 			'params' => [
-				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
+				'showHighlighted' => true,
+				'highlightWithCounter' => true,
+				'counter' => 'menu_disk_tabs',
+				'onclick' => (
+					$this->setUserVisitedDiskTabs() .
+					Utils::getComponentJSCode($this->getComponentParams())
+				),
 			],
 		];
 	}
@@ -76,6 +84,25 @@ final class Disk implements Tabable
 				'IS_EXTRANET' => $this->context->extranet,
 			],
 		];
+	}
+
+	private function setUserVisitedDiskTabs()
+	{
+		return <<<JS
+			(async () => {
+				const { Tourist } = await requireLazy('tourist');
+				await Tourist.ready();
+				if (Tourist.rememberFirstTime('visited_disk_tabs'))
+				{
+ 					BX.postComponentEvent('onSetUserCounters', [
+						{
+							[String(env.siteId)]: { menu_disk_tabs: 0 }
+	 					}
+					]);
+  				}
+			})();
+JS;
+
 	}
 
 	private function getRecentFilesTab(): ?array
@@ -149,12 +176,16 @@ final class Disk implements Tabable
 			return null;
 		}
 
+		$isCommonStorageRestricted = !Bitrix24Manager::isFeatureEnabled('disk_common_storage');
+
 		return [
 			'id' => 'disk.tabs.shared',
-			'title' => Loc::getMessage('TAB_DISK_NAVIGATION_TAB_SHARED_FILES'),
+			'title' => Loc::getMessage('TAB_DISK_NAVIGATION_TAB_COMPANY_FILES'),
+			'icon' => ($isCommonStorageRestricted ? 'lock' : null),
+			'selectable' => !$isCommonStorageRestricted,
 			'component' => [
 				'name' => 'JSStackComponent',
-				'title' => Loc::getMessage('TAB_DISK_NAVIGATION_TAB_SHARED_FILES'),
+				'title' => Loc::getMessage('TAB_DISK_NAVIGATION_TAB_COMPANY_FILES'),
 				'componentCode' => 'disk.tabs.shared',
 				'scriptPath' => Manager::getComponentPath('disk:disk.tabs.shared'),
 				'rootWidget' => [

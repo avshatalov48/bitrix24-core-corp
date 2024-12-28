@@ -4,16 +4,19 @@
 jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 	const { Color, Indent, Corner } = require('tokens');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
-	const { FileConverter } = require('files/converter');
-	const { getFile } = require('files/entry');
 	const { Loc } = require('loc');
 	const { isEmpty } = require('utils/object');
+	const { trim } = require('utils/string');
 	const { PureComponent } = require('layout/pure-component');
 	const { StringInput, InputSize, InputMode, InputDesign } = require('ui-system/form/inputs/string');
 	const { EmailInput, InputDomainIconPlace } = require('ui-system/form/inputs/email');
 	const { PhoneInput } = require('ui-system/form/inputs/phone');
+	const { Avatar, AvatarEntityType, AvatarShape } = require('ui-system/blocks/avatar');
+	const { AvatarPicker } = require('avatar-picker');
 	const { isPhoneNumber } = require('utils/phone');
 	const { isValidEmail } = require('utils/email');
+	const { AvaMenu } = require('ava-menu');
+	const { phoneUtils } = require('native/phonenumber');
 
 	class UserMiniProfileForm extends PureComponent
 	{
@@ -21,27 +24,29 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 		{
 			super(props);
 
+			const { ID, NAME = '', LAST_NAME = '', PERSONAL_MOBILE = '', EMAIL = '', PERSONAL_PHOTO = '' } = props.profileData;
+
+			this.state.profileData = { ID, NAME, LAST_NAME, PERSONAL_MOBILE, EMAIL };
+			this.state.photo = PERSONAL_PHOTO;
+
 			this.nameField = null;
 			this.lastNameField = null;
 			this.phoneField = null;
 			this.emailField = null;
-			this.profileData = {};
 			this.scrollToInput = props.scrollToInput;
-
-			this.state = {
-				profileData: props.profileData,
-			};
+			this.avatarPicker = new AvatarPicker();
+			this.focusedInputIndex = 0;
 		}
 
 		componentDidMount()
 		{
-			this.onContinue();
-		}
-
-		componentWillUnmount()
-		{
-			super.componentWillUnmount();
-			BX.postComponentEvent('userMiniProfileClosed', null);
+			this.inputs = [
+				this.nameField,
+				this.lastNameField,
+				this.phoneField,
+				this.emailField,
+			];
+			this.nameField.focus();
 		}
 
 		getProfileData = () => {
@@ -50,223 +55,207 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 			return profileData;
 		};
 
-		getImageButton()
+		getAvatarButton()
 		{
 			return View(
 				{
 					style: {
 						marginRight: Indent.XL3.toNumber(),
-						width: 84,
-						height: 84,
-						borderRadius: 42,
-						backgroundColorGradient: {
-							start: '#86ffc7',
-							middle: '#279def',
-							end: '#0175ff',
-							angle: 45,
-						},
-						display: 'flex',
-						alignItems: 'center',
-						justifyContent: 'center',
 					},
-					onClick: () => this.showImagePicker(),
 				},
-				this.props.photo || this.state.newPhoto
-					? Image({
-						resizeMode: 'cover',
-						uri: this.state.newPhoto ?? this.props.photo,
-						style: {
-							width: 77,
-							height: 77,
-							backgroundColor: Color.accentSoftBlue3.toHex(),
-							borderColor: Color.bgSecondary.toHex(),
-							borderWidth: 3,
-							borderRadius: 39,
-						},
-					})
-					: View(
-						{
-							style: {
-								width: 77,
-								height: 77,
-								borderColor: Color.bgSecondary.toHex(),
-								borderWidth: 3,
-								borderRadius: 39,
-								backgroundColor: Color.accentSoftBlue3.toHex(),
-								display: 'flex',
-								alignItems: 'center',
-								justifyContent: 'center',
-							},
-						},
-						IconView({
-							icon: Icon.CAMERA,
-							size: 47,
-							color: Color.accentMainPrimary,
-						}),
-					),
+				Avatar({
+					testId: 'MINI_PROFILE_AVATAR',
+					type: AvatarShape.CIRCLE,
+					accent: true,
+					size: 84,
+					entityType: env.isCollaber ? AvatarEntityType.COLLAB : AvatarEntityType.USER,
+					uri: this.state.newPhoto ?? this.state.photo,
+					onClick: this.showImagePicker,
+					withRedux: true,
+					icon: IconView({
+						testId: 'MINI_PROFILE_AVATAR_ICON',
+						size: 47,
+						color: env.isCollaber ? Color.collabAccentPrimary : Color.accentMainPrimary,
+						icon: Icon.CAMERA,
+					}),
+					backgroundColor: env.isCollaber ? Color.collabBgContent1 : Color.accentSoftBlue3,
+				}),
 			);
 		}
 
-		showImagePicker()
-		{
-			const items = [
-				{
-					id: 'mediateka',
-					name: BX.message('MOBILE_LAYOUT_UI_FIELDS_IMAGE_SELECT_MEDIATEKA'),
-				},
-				{
-					id: 'camera',
-					name: BX.message('MOBILE_LAYOUT_UI_FIELDS_IMAGE_SELECT_CAMERA'),
-				},
-			];
-
-			dialogs.showImagePicker(
-				{
-					settings: {
-						resize: {
-							targetWidth: -1,
-							targetHeight: -1,
-							sourceType: 1,
-							encodingType: 0,
-							mediaType: 0,
-							allowsEdit: true,
-							saveToPhotoAlbum: true,
-							cameraDirection: 1,
-						},
-						maxAttachedFilesCount: 1,
-						previewMaxWidth: 640,
-						previewMaxHeight: 640,
-						attachButton: { items },
-					},
-				},
-				(data) => this.onImageSelectFielded(data),
-			);
-		}
-
-		onImageSelectFielded = (data) => {
-			const image = data[0];
-
-			if (image)
-			{
-				this.setState(
+		showImagePicker = () => {
+			this.avatarPicker.open()
+				.then((image) => {
+					if (image)
 					{
-						newPhoto: image.previewUrl,
-					},
-					() => {
-						void this.convertImage(image);
-					},
-				);
-			}
+						this.setState({
+							newPhoto: image.previewUrl,
+						});
+						const personalPhoto = [
+							'avatar.png',
+							image.base64,
+						];
+						this.onChange('PERSONAL_PHOTO', personalPhoto);
+					}
+				})
+				.catch((err) => {
+					console.error(err);
+				});
 		};
 
-		async convertImage(image)
-		{
-			try
-			{
-				const converter = new FileConverter();
-				const path = await converter.resize('avatarResize', {
-					url: image.previewUrl,
-					width: 1000,
-					height: 1000,
-				});
-				const file = await getFile(path);
-				file.readMode = BX.FileConst.READ_MODE.DATA_URL;
-				const fileData = await file.readNext();
+		getInvalidField = (profileData) => {
+			const { PERSONAL_MOBILE, EMAIL } = profileData;
 
-				if (fileData.content)
+			if (!(isEmpty(PERSONAL_MOBILE) || this.isEmptyPhoneBody(PERSONAL_MOBILE)) && !isPhoneNumber(PERSONAL_MOBILE))
+			{
+				return this.phoneField;
+			}
+
+			if (!isEmpty(EMAIL) && !isValidEmail(EMAIL))
+			{
+				return this.emailField;
+			}
+
+			return null;
+		};
+
+		isEmptyPhoneBody = (phone) => {
+			return isEmpty(phone?.replace(`+${phoneUtils.getPhoneCode(phone)}`, ''));
+		};
+
+		getEmptyRequiredField = (profileData) => {
+			const { PERSONAL_MOBILE, EMAIL } = profileData;
+			const prefilledMobile = this.props.profileData.PERSONAL_MOBILE;
+			const prefilledEmail = this.props.profileData.EMAIL;
+
+			if (
+				!isEmpty(prefilledMobile)
+				&& (
+					isEmpty(PERSONAL_MOBILE) || this.isEmptyPhoneBody(PERSONAL_MOBILE)
+				)
+			)
+			{
+				return this.phoneField;
+			}
+
+			if (!isEmpty(prefilledEmail) && isEmpty(EMAIL))
+			{
+				return this.emailField;
+			}
+
+			return null;
+		};
+
+		getFieldToFocus = () => {
+			for (let index = this.focusedInputIndex + 1; index < this.inputs.length; index++)
+			{
+				const input = this.inputs[index];
+
+				if (
+					input?.isEmpty()
+					|| (
+						input === this.phoneField
+						&& this.isEmptyPhoneBody(input.getValue())
+					)
+				)
 				{
-					const content = fileData.content;
-					const personalPhoto = [
-						'avatar.png', content.slice(
-							content.indexOf('base64,') + 7,
-							content.length,
-						),
-					];
-					this.onChange('PERSONAL_PHOTO', personalPhoto);
+					return this.inputs[index];
 				}
 			}
-			catch (error)
-			{
-				console.error(error);
-			}
-		}
 
-		validate = (profileData) => {
-			const { NAME, LAST_NAME, PERSONAL_MOBILE, EMAIL } = profileData;
-
-			if (isEmpty(NAME))
-			{
-				this.nameField?.focus();
-
-				return false;
-			}
-
-			if (isEmpty(LAST_NAME))
-			{
-				this.lastNameField?.focus();
-
-				return false;
-			}
-
-			if (isEmpty(PERSONAL_MOBILE) || !isPhoneNumber(PERSONAL_MOBILE))
-			{
-				this.phoneField?.focus();
-
-				return false;
-			}
-
-			if (isEmpty(EMAIL) || !isValidEmail(EMAIL))
-			{
-				this.emailField?.focus();
-
-				return false;
-			}
-
-			return true;
+			return null;
 		};
 
 		onContinue = () => {
-			if (this.validate(this.getProfileData()))
+			const fieldToFocus = this.getFieldToFocus();
+
+			if (fieldToFocus)
 			{
+				fieldToFocus?.focus();
+			}
+			else
+			{
+				this.focusedInputIndex = -1;
 				Keyboard.dismiss();
 			}
 		};
 
-		submit()
+		submitForm()
 		{
 			const fields = this.getProfileData();
 
 			if (!fields.ID)
 			{
-				return;
+				return Promise.reject(new Error('id is null'));
 			}
 
-			if (this.validate(fields))
+			const invalidField = this.getInvalidField(fields) ?? this.getEmptyRequiredField(fields);
+
+			if (invalidField)
 			{
-				this.updateUser(fields);
+				invalidField?.focus();
+
+				return Promise.reject(new Error('invalid data'));
 			}
+
+			if (this.isEmptyPhoneBody(fields.PERSONAL_MOBILE))
+			{
+				fields.PERSONAL_MOBILE = '';
+			}
+
+			const submitPromise = BX.ajax.runAction('intranetmobile.userprofile.saveProfile', {
+				data: {
+					data: fields,
+				},
+			});
+
+			submitPromise
+				.then(this.#syncWithAvaMenu())
+				.catch((response) => {
+					this.onHandleSubmitErrors(response.errors ?? []);
+					throw response;
+				});
+
+			return submitPromise;
 		}
 
-		updateUser(fields)
+		onHandleSubmitErrors(errors) {
+			const errorMap = {
+				WRONG_EMAIL: { emailFieldError: true },
+				WRONG_PHONE: { phoneFieldError: true },
+				EMAIL_EXIST: {
+					emailFieldError: true,
+					emailFieldErrorMessage: Loc.getMessage('INTRANETMOBILE_USER_MINI_PROFILE_EMAIL_EXIST'),
+				},
+			};
+
+			const newState = errors.reduce((acc, error) => {
+				const errorState = errorMap[error.code ?? null];
+				if (errorState)
+				{
+					return { ...acc, ...errorState };
+				}
+
+				return acc;
+			}, {});
+
+			this.setState(newState);
+		}
+
+		async #syncWithAvaMenu()
 		{
-			BX.rest.callMethod('user.update', fields)
-				.then(() => {
-					layout.close();
-					BX.postComponentEvent('userMiniProfileClosed', null);
+			return BX.ajax.runAction('mobile.AvaMenu.getUserInfo', { data: { reloadFromDb: true } })
+				.then(({ data }) => {
+					AvaMenu.setUserInfo(data);
 				})
-				.catch((response) => {
-					console.error(response);
-					this.setState({
-						emailFieldError: Loc.getMessage('INTRANETMOBILE_USER_MINI_PROFILE_EMAIL_EXIST'),
-					});
-				});
+				.catch(console.error);
 		}
 
 		onChange = (id, value) => {
 			this.setState({
 				profileData: {
 					...this.getProfileData(),
-					[id]: value,
+					[id]: trim(value),
 				},
 			});
 		};
@@ -285,12 +274,6 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 
 		onChangeEmail = (value) => {
 			this.onChange('EMAIL', value);
-		};
-
-		setFocusPrimaryField = () => {
-			this.setState({
-				primaryFieldSelected: true,
-			});
 		};
 
 		setBlurPrimaryField = () => {
@@ -312,12 +295,22 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 				id: inputId,
 				placeholder: Loc.getMessage('INTRANETMOBILE_USER_MINI_PROFILE_PLACEHOLDER_NAME') ?? '',
 				value: this.getProfileData().NAME ?? '',
-				readOnly: false,
-				onFocus: this.setFocusPrimaryField,
+				onFocus: this.focusNameField,
 				onBlur: this.setBlurPrimaryField,
 				onChange: this.onChangeName,
 			});
 		}
+
+		focusNameField = () => {
+			this.setState(
+				{
+					primaryFieldSelected: true,
+				},
+				() => {
+					this.focusedInputIndex = this.inputs.indexOf(this.nameField);
+				},
+			);
+		};
 
 		handleOnSetNameRef = (ref) => {
 			this.nameField = ref;
@@ -336,12 +329,22 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 				id: inputId,
 				placeholder: Loc.getMessage('INTRANETMOBILE_USER_MINI_PROFILE_PLACEHOLDER_LAST_NAME') ?? '',
 				value: this.getProfileData().LAST_NAME ?? '',
-				readOnly: false,
-				onFocus: this.setFocusPrimaryField,
+				onFocus: this.focusLastNameField,
 				onBlur: this.setBlurPrimaryField,
 				onChange: this.onChangeLastName,
 			});
 		}
+
+		focusLastNameField = () => {
+			this.setState(
+				{
+					primaryFieldSelected: true,
+				},
+				() => {
+					this.focusedInputIndex = this.inputs.indexOf(this.lastNameField);
+				},
+			);
+		};
 
 		handleOnSetLastNameRef = (ref) => {
 			this.lastNameField = ref;
@@ -352,6 +355,9 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 			const inputId = 'PERSONAL_MOBILE';
 
 			return PhoneInput({
+				style: {
+					marginBottom: Indent.M.toNumber(),
+				},
 				validation: true,
 				id: inputId,
 				size: InputSize.L,
@@ -362,18 +368,43 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 				placeholder: Loc.getMessage('INTRANETMOBILE_USER_MINI_PROFILE_PLACEHOLDER_PHONE') ?? '',
 				value: this.getProfileData().PERSONAL_MOBILE ?? '',
 				onChange: this.onChangeMobile,
+				onFocus: this.focusPhoneField,
+				onValid: this.handleOnValidationPhone,
+				errorText: Loc.getMessage('INTRANETMOBILE_USER_MINI_PROFILE_WRONG_PHONE') ?? '',
+				error: this.state.phoneFieldError ?? false,
 			});
 		}
+
+		focusPhoneField = () => {
+			this.setState(
+				{
+					phoneFieldError: false,
+				},
+				() => {
+					this.focusedInputIndex = this.inputs.indexOf(this.phoneField);
+				},
+			);
+		};
+
+		handleOnValidationPhone = (value) => {
+			return isEmpty(value) || isPhoneNumber(value);
+		};
 
 		handleOnSetPhoneRef = (ref) => {
 			this.phoneField = ref;
 		};
 
 		focusEmailField = () => {
-			this.setState({
-				emailFieldError: null,
-			});
-			this.scrollToInput(this.emailField);
+			this.setState(
+				{
+					emailFieldErrorMessage: null,
+					emailFieldError: false,
+				},
+				() => {
+					this.scrollToInput(this.emailField);
+					this.focusedInputIndex = this.inputs.indexOf(this.emailField);
+				},
+			);
 		};
 
 		getEmailField()
@@ -381,6 +412,9 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 			const inputId = 'EMAIL';
 
 			return EmailInput({
+				style: {
+					marginBottom: Indent.M.toNumber(),
+				},
 				validation: true,
 				size: InputSize.L,
 				design: InputDesign.LIGHT_GREY,
@@ -390,17 +424,19 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 				id: inputId,
 				placeholder: Loc.getMessage('INTRANETMOBILE_USER_MINI_PROFILE_PLACEHOLDER_EMAIL') ?? '',
 				value: this.getProfileData().EMAIL ?? '',
-				errorText: this.state.emailFieldError,
-				error: !isEmpty(this.state.emailFieldError),
+				errorText: this.state.emailFieldErrorMessage,
+				error: this.state.emailFieldError,
 				onFocus: this.focusEmailField,
+				onValid: this.handleOnValidationEmail,
 				domainIconPlace: InputDomainIconPlace.LEFT,
 				leftContent: Icon.MAIL,
 				onChange: this.onChangeEmail,
-				onError: this.handleOnError,
 			});
 		}
 
-		handleOnError = (error, id) => {};
+		handleOnValidationEmail = (value) => {
+			return isEmpty(value) || isValidEmail(value);
+		};
 
 		handleOnSetEmailRef = (ref) => {
 			this.emailField = ref;
@@ -433,7 +469,7 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 							flexDirection: 'row',
 						},
 					},
-					this.getImageButton(),
+					this.getAvatarButton(),
 					View(
 						{
 							style: {
@@ -452,22 +488,8 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 						this.getLastNameField(),
 					),
 				),
-				View(
-					{
-						style: {
-							marginBottom: Indent.M.toNumber(),
-						},
-					},
-					this.getPhoneField(),
-				),
-				View(
-					{
-						style: {
-							marginBottom: Indent.M.toNumber(),
-						},
-					},
-					this.getEmailField(),
-				),
+				this.getPhoneField(),
+				this.getEmailField(),
 			);
 		}
 	}

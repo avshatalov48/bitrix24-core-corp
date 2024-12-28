@@ -77,6 +77,7 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 							title: Loc.getMessage('M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_REDIRECT_TITLE'),
 							redirectUrl: url,
 							layout,
+							analyticsSection: 'crm',
 						});
 					},
 				}),

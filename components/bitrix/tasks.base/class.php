@@ -105,7 +105,26 @@ abstract class TasksBaseComponent extends CBitrixComponent
 					$this->auxParams['REQUEST'] = $request;
 					$this->auxParams['DISPATCHER'] = $this->getDispatcher();
 					$this->arResult['ACTION_RESULT'] = static::dispatch($plan, $this->errors, $this->auxParams, $this->arParams);
-					$this->processAfterAction();
+
+					try
+					{
+						$this->processAfterAction();
+					}
+					catch (\TasksException $e)
+					{
+						if (array_key_exists('task_action', $this->arResult['ACTION_RESULT']))
+						{
+							$errors = \Bitrix\Tasks\Util\Type::unSerializeArray($e->getMessage());
+							$this->arResult['ERROR'] = [
+								[
+									'TYPE' => 'ERROR',
+									'CODE' => $errors[0]['id'],
+									'MESSAGE' => htmlspecialcharsBack($errors[0]["text"])
+								]
+							];
+						}
+					}
+
 				}
 			}
 

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports,main_core,ui_entitySelector) {
+(function (exports,main_core,main_core_events,ui_entitySelector) {
 	'use strict';
 
 	let _ = t => t,
@@ -13,11 +13,15 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _selector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selector");
 	var _selectedItemId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedItemId");
 	var _onSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSelect");
-	class SignDropdown {
-	  constructor(dialogOptions = {}) {
+	class SignDropdown extends main_core_events.EventEmitter {
+	  constructor(dialogOptions) {
+	    super();
 	    Object.defineProperty(this, _onSelect, {
 	      value: _onSelect2
 	    });
+	    this.events = {
+	      onSelect: 'onSelect'
+	    };
 	    Object.defineProperty(this, _dom, {
 	      writable: true,
 	      value: void 0
@@ -30,9 +34,11 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      writable: true,
 	      value: ''
 	    });
+	    this.setEventNamespace('BX.V2.B2e.SignDropdown');
 	    const {
 	      className,
-	      withCaption
+	      withCaption,
+	      isEnableSearch
 	    } = dialogOptions;
 	    const _titleNode = withCaption ? main_core.Tag.render(_t || (_t = _`
 				<div class="sign-b2e-dropdown__text">
@@ -58,7 +64,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      showAvatars: false,
 	      dropdownMode: true,
 	      multiple: false,
-	      enableSearch: true,
+	      enableSearch: isEnableSearch != null ? isEnableSearch : true,
 	      hideOnSelect: true,
 	      events: {
 	        'Item:OnSelect': ({
@@ -74,6 +80,18 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  }
 	  addItem(item) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _selector)[_selector].addItem(item);
+	  }
+	  addItems(items) {
+	    items.forEach(item => babelHelpers.classPrivateFieldLooseBase(this, _selector)[_selector].addItem(item));
+	  }
+	  removeItems() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _selector)[_selector].removeItems();
+	  }
+	  selectFirstItem() {
+	    const [firstItem] = babelHelpers.classPrivateFieldLooseBase(this, _selector)[_selector].getItems();
+	    if (!main_core.Type.isUndefined(firstItem)) {
+	      firstItem.select();
+	    }
 	  }
 	  selectItem(id) {
 	    const items = babelHelpers.classPrivateFieldLooseBase(this, _selector)[_selector].getItems();
@@ -102,14 +120,20 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  if (!caption) {
 	    titleNode.textContent = title;
 	    titleNode.title = title;
+	    this.emit(this.events.onSelect, {
+	      item
+	    });
 	    return;
 	  }
 	  titleNode.title = `${title} ${caption}`;
 	  titleNode.firstElementChild.textContent = title;
 	  titleNode.lastElementChild.textContent = caption;
+	  this.emit(this.events.onSelect, {
+	    item
+	  });
 	}
 
 	exports.SignDropdown = SignDropdown;
 
-}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX,BX.UI.EntitySelector));
+}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX,BX.Event,BX.UI.EntitySelector));
 //# sourceMappingURL=sign-dropdown.bundle.js.map

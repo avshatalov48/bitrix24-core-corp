@@ -45,7 +45,7 @@ class RolePermissionService implements \Bitrix\HumanResources\Contract\Service\A
 	 * @return void
 	 * @throws SqlQueryException
 	 */
-	public function saveRolePermissions(array $permissionSettings): void
+	public function saveRolePermissions(array &$permissionSettings): void
 	{
 		$roleIds = [];
 		$permissionCollection = new PermissionCollection();
@@ -91,6 +91,8 @@ class RolePermissionService implements \Bitrix\HumanResources\Contract\Service\A
 				throw new SqlQueryException(self::DB_ERROR_KEY);
 			}
 		}
+
+		Container::getCacheManager()->clean(Contract\Repository\NodeRepository::NODE_ENTITY_RESTRICTION_CACHE);
 	}
 
 	public function deleteRole(int $roleId): void
@@ -153,7 +155,7 @@ class RolePermissionService implements \Bitrix\HumanResources\Contract\Service\A
 		{
 			$roles[] = [
 				'id' => (int)$row['ID'],
-				'title' => RoleDictionary::getTitle($row['NAME']),
+				'title' => RoleDictionary::getRoleName($row['NAME']),
 				'accessRights' => $this->getRoleAccessRights((int)$row['ID']),
 				'members' => $this->getRoleMembers((int)$row['ID'])
 			];

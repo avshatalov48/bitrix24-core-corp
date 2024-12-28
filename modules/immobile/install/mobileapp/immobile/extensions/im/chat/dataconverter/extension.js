@@ -1043,7 +1043,7 @@ ChatDataConverter.getSearchElementFormat = function(element, recent)
 
 		item.title = element.chat.name;
 		item.shortTitle = element.chat.name;
-		item.subtitle = element.chat.type == 'open' ? BX.message('IM_LIST_CHAT_OPEN_NEW') : BX.message('IM_LIST_CHAT_NEW');
+		item.subtitle = element.chat.type == 'open' ? BX.message('IM_LIST_CHAT_OPEN_NEW_MSGVER_1') : BX.message('IM_LIST_CHAT_NEW_MSGVER_1');
 		item.imageUrl = ChatUtils.getAvatar(element.chat.avatar);
 		if (!item.imageUrl)
 		{
@@ -1153,7 +1153,7 @@ ChatDataConverter.getListElementByChat = function(element)
 
 	if (item.source.type == 'chat')
 	{
-		item.subtitle = BX.message('IM_LIST_CHAT_NEW');
+		item.subtitle = BX.message('IM_LIST_CHAT_NEW_MSGVER_1');
 	}
 	else if (item.source.type == 'open')
 	{

@@ -17,11 +17,14 @@ final class MenuItemCreatorFactory
 		{
 			ScopeService::BIC_SCOPE_CRM => new MenuItemCreatorCrm(),
 			ScopeService::BIC_SCOPE_TASKS => new MenuItemCreatorTasks(),
+			ScopeService::BIC_SCOPE_TASKS_EFFICIENCY => new MenuItemCreatorTasksEfficiency(),
 			ScopeService::BIC_SCOPE_BIZPROC => new MenuItemCreatorBizproc(),
-//			ScopeService::BIC_SCOPE_BIZPROC_TEMPLATE_ITEM => new MenuItemCreatorBizprocTemplateItem(),
+			ScopeService::BIC_SCOPE_WORKFLOW_TEMPLATE => new MenuItemCreatorWorkflowTemplate(),
 			ScopeService::BIC_SCOPE_PROFILE => new MenuItemCreatorProfile(),
 			ScopeService::BIC_SCOPE_SHOP => new MenuItemCreatorShop(),
 			ScopeService::BIC_SCOPE_STORE => new MenuItemCreatorStore(),
+			ScopeService::BIC_SCOPE_TASKS_FLOWS => new MenuItemCreatorTasksFlows(),
+			ScopeService::BIC_SCOPE_TASKS_FLOWS_FLOW => new MenuItemCreatorTasksFlowsFlow(),
 			default => null,
 		};
 	}

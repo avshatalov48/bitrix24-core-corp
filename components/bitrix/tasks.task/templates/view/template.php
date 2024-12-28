@@ -3,16 +3,17 @@
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\UI;
+use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Flow\FlowFeature;
 use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Intranet\Settings;
+use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 use Bitrix\Tasks\Util;
-use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -31,6 +32,7 @@ UI\Extension::load([
 	'ui.analytics',
 	'tasks.comment-action-controller',
 	'tasks.analytics',
+	'tasks.flow.entity-selector',
 ]);
 
 $templateData = $arResult["TEMPLATE_DATA"];
@@ -67,6 +69,8 @@ $isBitrix24Template = (SITE_TEMPLATE_ID === "bitrix24");
 $taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];
 $taskRecurrentRestrict = $arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'];
 
+$groupId = (int)($taskData['GROUP_ID'] ?? 0);
+
 $taskObserversParticipantsEnabled = Bitrix24::checkFeatureEnabled(
 	Bitrix24\FeatureDictionary::TASK_OBSERVERS_PARTICIPANTS
 );
@@ -75,7 +79,7 @@ $taskTimeElapsedEnabled = Bitrix24::checkFeatureEnabled(
 	Bitrix24\FeatureDictionary::TASK_TIME_ELAPSED
 );
 
-$isProjectLimitExceeded = !Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit::isFeatureEnabled();
+$isProjectLimitExceeded = !Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit::isFeatureEnabled($groupId);
 if (Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit::canTurnOnTrial())
 {
 	$isProjectLimitExceeded = false;
@@ -85,6 +89,12 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 {
 	UI\Extension::load('ui.info-helper');
 }
+
+$isCollab = Group::isCollab($templateData['GROUP']['TYPE'] ?? null);
+$taskLocationText =
+	($isCollab || $arResult['isCollaber'])
+		? Loc::getMessage("TASKS_TTDP_PROJECT_COLLAB_IN_MSGVER_1")
+		: Loc::getMessage("TASKS_TTDP_PROJECT_TASK_IN_IN_MSGVER_1");
 
 if (isset($arResult['CAN_SHOW_MOBILE_QR_POPUP']) && $arResult['CAN_SHOW_MOBILE_QR_POPUP'] === true)
 {
@@ -295,9 +305,11 @@ if (
 					<?php if($can["EDIT"] || !empty($templateData["GROUP"])):?>
 						<div class="task-detail-group-wrap">
 							<div class="task-detail-group --flex-center">
-								<span class="task-detail-group-label"><?=Loc::getMessage("TASKS_TTDP_PROJECT_TASK_IN")?>:</span>
+								<span id="task-<?= $taskData['ID'] ?>-group-title" class="task-detail-group-label">
+									<?=$taskLocationText;?>
+								</span>
 								<?php if ($isProjectLimitExceeded): ?>
-									<div class="tasks-detail-tariff-lock-container"">
+									<div class="tasks-detail-tariff-lock-container">
 										<span
 											class="tariff-lock"
 											onclick="<?=Util\Restriction\Bitrix24Restriction\Limit::getLimitLockClick(Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit::getFeatureId(), null)?>"
@@ -318,9 +330,19 @@ if (
 										'ENTITY_ROUTE' => 'task',
 										'PATH_TO_GROUP' => $arParams['PATH_TO_GROUP'],
 										'GROUP_ID' => (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0,
-										'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_AUDITOR,
 										'isProjectLimitExceeded' => $isProjectLimitExceeded,
 										'projectFeatureId' => Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit::getFeatureId(),
+										'projectLimitCode' => Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit::getLimitCode(),
+										'ROLE_KEY' => RoleDictionary::ROLE_AUDITOR,
+										'FLOW_ID' => (array_key_exists('FLOW_ID', $taskData)) ? $taskData['FLOW_ID'] : 0,
+										'isExtranetUser' => $arResult['isExtranetUser'],
+										'IS_COLLAB' => $isCollab,
+										'loc' => [
+											'type' => [
+												'group' => Loc::getMessage("TASKS_TTDP_PROJECT_TASK_IN_IN_MSGVER_1"),
+												'collab' => Loc::getMessage("TASKS_TTDP_PROJECT_COLLAB_IN_MSGVER_1"),
+											],
+										],
 									),
 									null,
 									array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -329,18 +351,6 @@ if (
 									</div>
 								<?php endif ?>
 							</div>
-						</div>
-					<?php endif;?>
-					<?php if (FlowFeature::isOn() && !empty($flowData)):?>
-						<div class="task-detail-group-wrap">
-							<div class="task-detail-group --flex-center">
-								<span class="task-detail-group-label">
-									<?=Loc::getMessage("TASKS_TTDP_PROJECT_FLOW_IN")?>
-								</span>
-							</div>
-							<a class="task-flow-field-label" href="<?=$flowData['URL']?>">
-								<?=htmlspecialcharsbx($flowData['NAME'])?>
-							</a>
 						</div>
 					<?php endif;?>
 				</div>
@@ -535,6 +545,7 @@ if (
 			"bitrix:tasks.widget.buttons",
 			"task",
 			array(
+				'IS_COLLAB' => $isCollab,
 				"GROUP_ID" => $arParams["GROUP_ID"],
 				"PATH_TO_TASKS_TASK" => $arParams["PATH_TO_TASKS_TASK"],
 				"PATH_TO_TASKS_TASK_COPY" => \Bitrix\Tasks\UI\Task::makeCopyUrl($arParams["PATH_TO_TASKS_TASK"], $taskData["ID"]),
@@ -702,7 +713,7 @@ if (
 				<span class="task-switcher" id="task-time-switcher" data-id="time">
 					<span class="task-switcher-text">
 						<span class="task-switcher-text-inner">
-							<?=Loc::getMessage("TASKS_ELAPSED_TIME_SHORT")?>
+							<?=Loc::getMessage("TASKS_ELAPSED_TIME_SHORT_MSGVER_1")?>
 							<?php if($taskTimeElapsedEnabled): ?>
 								<span
 									class="task-switcher-text-counter"
@@ -1079,6 +1090,22 @@ if (!empty($request->get('ta_sec')))
 			moduleId: 'tasks',
 			contextId: 'tasks_task_<?= $taskData["ID"] ?>',
 			category: 'readonly_livefeed',
+		},
+		canEditTask: <?= Json::encode($arResult['canEditTask']) ?>,
+		isExtranetUser: <?= $arResult['isExtranetUser'] ? 'true' : 'false' ?>,
+		flowParams: {
+			id: <?= (int)($arResult['DATA']['FLOW']['ID'] ?? 0) ?>,
+			name: '<?= $arResult['DATA']['FLOW']['NAME'] ?? '' ?>',
+			efficiency: <?= (int)($arResult['DATA']['FLOW']['EFFICIENCY'] ?? 0) ?>,
+
+			limitCode: '<?= FlowFeature::LIMIT_CODE ?>',
+			isFeatureEnabled: <?= Json::encode(FlowFeature::isFeatureEnabled() || FlowFeature::canTurnOnTrial()) ?>,
+			isFeatureTrialable: <?= Json::encode(FlowFeature::isFeatureEnabledByTrial()) ?>,
+		},
+		toggleFlowParams: {
+			scope: 'taskView',
+			taskId: <?= (int)$taskData["ID"] ?>,
+			flowId: <?= (int)($arResult['DATA']['FLOW']['ID'] ?? 0) ?>,
 		},
 		taskTimeElapsedEnabled: <?=CUtil::PhpToJSObject($taskTimeElapsedEnabled)?>,
 		taskTimeElapsedFeatureId: '<?= Bitrix24\FeatureDictionary::TASK_TIME_ELAPSED ?>',

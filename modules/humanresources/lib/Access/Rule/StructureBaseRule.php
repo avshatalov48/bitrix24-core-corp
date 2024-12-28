@@ -52,7 +52,7 @@ class StructureBaseRule extends AbstractRule
 			return $accessNodeRepository->isDepartmentUser($item->getId(), $this->user->getUserId());
 		}
 
-		if ($permissionValue === PermissionVariablesDictionary::VARIABLE_SELF_DEPARTMENTS_SUBDEPARTMENTS)
+		if ($permissionValue === PermissionVariablesDictionary::VARIABLE_SELF_DEPARTMENTS_SUB_DEPARTMENTS)
 		{
 			return $accessNodeRepository->isDepartmentUser($item->getId(), $this->user->getUserId(), true);
 		}

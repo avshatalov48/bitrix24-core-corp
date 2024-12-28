@@ -11,3 +11,5 @@ $MESS['TASKS_FLOW_VIEW_FORM_NO_SIMILAR_FLOWS'] = 'Нет похожих пото
 $MESS['TASKS_FLOW_VIEW_FORM_PROJECT_HIDDEN'] = 'Скрытый проект';
 $MESS['TASKS_FLOW_VIEW_FORM_PROJECT_DEMO'] = 'поток не настроен';
 $MESS['TASKS_FLOW_VIEW_FORM_SIMILAR_FLOWS_TITLE'] = 'Другие потоки этого владельца';
+$MESS['TASKS_FLOW_VIEW_FORM_TITLE_COPY_LINK'] = 'Ссылка скопирована';
+$MESS['TASKS_FLOW_VIEW_FORM_LINK_TITLE'] = 'Скопировать ссылку';

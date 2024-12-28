@@ -12,6 +12,9 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'ui.analytics',
+		'im.v2.const',
+		'im.v2.lib.analytics',
+		'call.const',
 	],
 	'skip_core' => true,
 ];

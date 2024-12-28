@@ -8,24 +8,25 @@ use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Factory;
+use Bitrix\Crm\Service\Timeline\Repository;
+use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\CrmMobile\Timeline\Controller;
 use Bitrix\CrmMobile\Timeline\HistoryItemsQuery;
 use Bitrix\CrmMobile\Timeline\Pagination;
 use Bitrix\CrmMobile\Timeline\PinnedItemsQuery;
 use Bitrix\CrmMobile\Timeline\ScheduledItemsQuery;
-use Bitrix\Crm\Service\Timeline\Repository;
-use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Mobile\Provider\UserRepository;
 
 class Timeline extends Controller
 {
 	public function loadTimelineAction(
-		Repository  $repository,
-		Item        $entity,
-		Factory     $factory,
-		Pagination  $pagination,
+		Repository $repository,
+		Item $entity,
+		Factory $factory,
+		Pagination $pagination,
 		CurrentUser $currentUser
 	): array
 	{
@@ -44,6 +45,7 @@ class Timeline extends Controller
 		$categoryId = $factory->isCategoriesSupported() ? $entity->getCategoryId() : null;
 
 		$reminders = (new TodoPingSettingsProvider($typeId, (int)$categoryId))->fetchForJsComponent();
+		$usersIds = [...$this->getUserIds($scheduled), ...$this->getUserIds($history['items'])];
 
 		return [
 			'entity' => [
@@ -61,6 +63,7 @@ class Timeline extends Controller
 			'pinned' => $pinned,
 			'history' => $history,
 			'user' => \CCrmViewHelper::getUserInfo(),
+			'users' => UserRepository::getByIds($usersIds),
 		];
 	}
 
@@ -104,6 +107,21 @@ class Timeline extends Controller
 		];
 	}
 
+	private function getUserIds(array $items): array
+	{
+		$usersIds = [];
+		foreach ($items as $item)
+		{
+			$authorId = $item->getModel()->getAuthorId();
+			if ($authorId > 0)
+			{
+				$usersIds[] = $authorId;
+			}
+		}
+
+		return $usersIds;
+	}
+
 	private function getDocumentGeneratorProvider(int $entityTypeId): ?string
 	{
 		$manager = DocumentGeneratorManager::getInstance();
@@ -113,6 +131,7 @@ class Timeline extends Controller
 		}
 
 		$providersMap = $manager->getCrmOwnerTypeProvidersMap();
+
 		return $providersMap[$entityTypeId] ?? null;
 	}
 }

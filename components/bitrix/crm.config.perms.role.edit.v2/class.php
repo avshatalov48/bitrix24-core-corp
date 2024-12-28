@@ -7,6 +7,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Engine\ActionFilter\ContentType;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Engine\Response\AjaxJson;
+use Bitrix\Crm\Security\Role\Utils\RolePermissionLogContext;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -42,11 +43,15 @@ class CrmConfigPermsRoleEditV2 extends CBitrixComponent implements Controllerabl
 			return;
 		}
 
-		$roleId = (int) $this->arParams['ROLE_ID'] ?? 0;
+		$roleId = (int)($this->arParams['ROLE_ID'] ?? 0);
 
 		if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['delete']) && check_bitrix_sessid() && $roleId)
 		{
+			RolePermissionLogContext::getInstance()->set([
+				'component' => 'crm.config.perms.role.edit.v2',
+			]);
 			$this->manage->delete($roleId);
+			RolePermissionLogContext::getInstance()->clear();
 			LocalRedirect('/crm/configs/perms/');
 
 			return;
@@ -96,7 +101,11 @@ class CrmConfigPermsRoleEditV2 extends CBitrixComponent implements Controllerabl
 
 		try
 		{
+			RolePermissionLogContext::getInstance()->set([
+				'component' => 'crm.config.perms.role.edit.v2',
+			]);
 			$result = $this->manage->save($values);
+			RolePermissionLogContext::getInstance()->clear();
 
 			$roleId = (int)($result->getData()['id'] ?? null);
 

@@ -39,6 +39,7 @@ type Options = {
 	size: ?Size;
 	contentTypes: ?Array<string>;
 	maxSizeMb: ?Number;
+	readonly: ?boolean;
 };
 
 let DefaultOptions: Options = {

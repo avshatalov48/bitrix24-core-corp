@@ -189,6 +189,15 @@
 
 			this.changeHistory(params);
 		},
+		botmarketButtonAction : function(e)
+		{
+			e.preventDefault();
+			BX.SidePanel.Instance.open('/market/collection/openline_bot/', {allowChangeHistory: false});
+			top.BX.addCustomEvent(top, 'Rest:AppLayout:ApplicationInstall', function(installed, eventResult){
+				eventResult.redirect = false;
+				BX.OpenLinesConfigEdit.botAddHandler();
+			});
+		},
 		botButtonAction : function(e)
 		{
 			e.preventDefault();

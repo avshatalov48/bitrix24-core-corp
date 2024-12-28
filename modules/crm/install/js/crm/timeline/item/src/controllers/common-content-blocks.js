@@ -21,10 +21,12 @@ import { RestAppLayoutBlocks } from '../components/content-blocks/rest-app-layou
 import { SmsMessage } from '../components/content-blocks/sms-message';
 import TextBlock from '../components/content-blocks/text';
 import { TimelineAudio } from '../components/content-blocks/timeline-audio';
-
+import { CallScoringPill } from '../components/content-blocks/copilot/call-scoring-pill';
+import { CallScoring } from '../components/content-blocks/copilot/call-scoring.js';
 import DeadlineAndPingSelector from '../components/content-blocks/todo/deadline-and-ping-selector';
 import PingSelector from '../components/content-blocks/todo/ping-selector';
 import WithTitle from '../components/content-blocks/with-title';
+import WorkflowEfficiency from '../components/content-blocks/workflow-efficiency';
 import ConfigurableItem from '../configurable-item';
 import { Base } from './base';
 
@@ -58,6 +60,9 @@ export class CommonContentBlocks extends Base
 			ItemSelector,
 			PingSelector,
 			DeadlineAndPingSelector,
+			WorkflowEfficiency,
+			CallScoringPill,
+			CallScoring,
 		};
 	}
 
@@ -66,7 +71,7 @@ export class CommonContentBlocks extends Base
 	 */
 	onItemAction(item: ConfigurableItem, actionParams: ActionParams): void
 	{
-		const {action, actionType, actionData} = actionParams;
+		const { action, actionType, actionData } = actionParams;
 		if (actionType !== 'jsEvent')
 		{
 			return;
@@ -77,11 +82,13 @@ export class CommonContentBlocks extends Base
 			this.#openEntityDetailTab(actionData.tabId);
 		}
 
-		if(action === 'Note:StartEdit') {
+		if (action === 'Note:StartEdit')
+		{
 			this.#editNote(item);
 		}
 
-		if(action === 'Note:FinishEdit') {
+		if (action === 'Note:FinishEdit')
+		{
 			this.#cancelEditNote(item);
 		}
 	}

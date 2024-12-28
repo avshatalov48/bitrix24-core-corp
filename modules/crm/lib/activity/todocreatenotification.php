@@ -23,7 +23,8 @@ class TodoCreateNotification
 	public function isSkipped(): bool
 	{
 		$value = \CUserOptions::GetOption('crm', $this->getOptionName(), '');
-		if ($value === '' || mb_strpos($value, '.') === false)
+
+		if ($value === '' || !str_contains($value, '.'))
 		{
 			$skipFrom = 0;
 			$period = '';

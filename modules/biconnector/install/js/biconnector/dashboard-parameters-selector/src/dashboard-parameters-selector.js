@@ -157,7 +157,7 @@ export class DashboardParametersSelector
 					this.#scopes.delete(tag.getId());
 					this.#onChange();
 				},
-				onAfterTagRemove: (event) => {
+				onAfterTagRemove: () => {
 					this.#onScopeRemove();
 				},
 			},
@@ -297,17 +297,20 @@ export class DashboardParametersSelector
 			const scopeParams = new Set(
 				(this.#scopeParamsMap[scope] ?? []).map((item: Parameter) => item.code) ?? [],
 			);
-			availableParamsWithOldScopes = availableParamsWithOldScopes.intersection(scopeParams);
+			availableParamsWithOldScopes = this.#getIntersection(availableParamsWithOldScopes, scopeParams);
 		});
 
-		const intersection = availableParamsWithOldScopes.intersection(newParamCodes);
+		const intersection = this.#getIntersection(availableParamsWithOldScopes, newParamCodes);
 		const currentParamCodes = this.#params;
 		const globalParams = this.#getGlobalParamsCodes();
 
 		// Don't delete and save global params even if they are not in the intersection.
-		const paramsToDelete = currentParamCodes.difference(intersection).difference(globalParams);
-		const paramsToSave = intersection.difference(currentParamCodes).union(newParamCodes.intersection(globalParams));
-		const paramsNotToSave = newParamCodes.difference(intersection).difference(globalParams);
+		const paramsToDelete = this.#getDifference(currentParamCodes, intersection, globalParams);
+		const paramsToSave = this.#getUnion(
+			this.#getDifference(intersection, currentParamCodes),
+			this.#getIntersection(newParamCodes, globalParams),
+		);
+		const paramsNotToSave = this.#getDifference(newParamCodes, intersection, globalParams);
 
 		return {
 			paramsToDelete,
@@ -340,7 +343,9 @@ export class DashboardParametersSelector
 		if (compatibilityResult.paramsNotToSave.size > 0)
 		{
 			const paramsNotToSaveNames = [];
-			compatibilityResult.paramsNotToSave.forEach((param) => paramsNotToSaveNames.push(this.#getItemTitle(param).title));
+			compatibilityResult.paramsNotToSave.forEach(
+				(param) => paramsNotToSaveNames.push(this.#getItemTitle(param).title),
+			);
 			paramsNotToSaveText = Tag.render`
 				<li>
 					${Loc.getMessagePlural(
@@ -414,7 +419,7 @@ export class DashboardParametersSelector
 			}
 		});
 
-		compatibilityResult.paramsToSave.values().forEach((param) => {
+		[...compatibilityResult.paramsToSave.values()].forEach((param) => {
 			const item = this.#paramsSelector.getDialog().getItem(['biconnector-superset-params', param]);
 			if (item)
 			{
@@ -436,7 +441,7 @@ export class DashboardParametersSelector
 			}
 		});
 
-		compatibilityResult.paramsNotToSave.values().forEach((param) => {
+		[...compatibilityResult.paramsNotToSave.values()].forEach((param) => {
 			const itemText = this.#getItemTitle(param);
 			this.#paramsSelector.getDialog().addItem({
 				id: param,
@@ -456,7 +461,7 @@ export class DashboardParametersSelector
 	{
 		const availableParams = this.#getAvailableParamsByScope(this.#scopes);
 
-		availableParams.values().forEach((param) => {
+		[...availableParams.values()].forEach((param) => {
 			const item = this.#paramsSelector.getDialog().getItem(['biconnector-superset-params', param]);
 			if (item)
 			{
@@ -502,11 +507,14 @@ export class DashboardParametersSelector
 			}
 			else
 			{
-				availableParams = availableParams.intersection(new Set((this.#scopeParamsMap[scope] ?? []).map((item) => item.code)));
+				availableParams = this.#getIntersection(
+					availableParams,
+					new Set((this.#scopeParamsMap[scope] ?? []).map((item) => item.code)),
+				);
 			}
 		});
 
-		globalParamsCodes.values().forEach((globalParam) => availableParams.add(globalParam));
+		[...globalParamsCodes.values()].forEach((globalParam) => availableParams.add(globalParam));
 
 		return availableParams;
 	}
@@ -594,5 +602,71 @@ export class DashboardParametersSelector
 				allowChangeHistory: false,
 			},
 		);
+	}
+
+	/**
+	 * Returns set of elements which are both in set1 and set2.
+	 * @param set1
+	 * @param set2
+	 * @returns Set
+	 */
+	#getIntersection(set1: Set, set2: Set): Set
+	{
+		const result = new Set();
+		set1.forEach((item) => {
+			if (set2.has(item))
+			{
+				result.add(item);
+			}
+		});
+
+		return result;
+	}
+
+	/**
+	 * Returns set of elements which are contained in set1 but not contained in set2 and set3.
+	 * @param set1
+	 * @param set2
+	 * @param set3
+	 * @returns Set
+	 */
+	#getDifference(set1: Set, set2: Set, set3: ?Set): Set
+	{
+		const result = new Set();
+		set1.forEach((item) => {
+			if (!set2.has(item))
+			{
+				if (!set3)
+				{
+					result.add(item);
+				}
+				else if (set3 && !set3.has(item))
+				// eslint-disable-next-line sonarjs/no-duplicated-branches
+				{
+					result.add(item);
+				}
+			}
+		});
+
+		return result;
+	}
+
+	/**
+	 * Returns summary of elements in set1 and set2.
+	 * @param set1
+	 * @param set2
+	 * @returns Set
+	 */
+	#getUnion(set1: Set, set2: Set): Set
+	{
+		const result = new Set();
+		set1.forEach((item) => {
+			result.add(item);
+		});
+		set2.forEach((item) => {
+			result.add(item);
+		});
+
+		return result;
 	}
 }

@@ -1,0 +1,20 @@
+.bx-imol-message-start-dialog__container {
+	--imol-message-start-dialog__background-color: rgba(82, 92, 105, 0.4);
+	--imol-message-start-dialog__font-color: var(--ui-color-palette-white-base);
+}
+
+.bx-imol-message-start-dialog__container .bx-im-message-base__body {
+	min-height: auto;
+}
+
+.bx-imol-message-start-dialog__text {
+	padding: 4px 12px;
+	border-radius: 20px;
+	font: 12px / 1.5 var(--ui-font-family-system);
+	background-color: var(--imol-message-start-dialog__background-color);
+	color: var(--imol-message-start-dialog__font-color);
+}
+
+.bx-imol-message-start-dialog__text > a {
+	color: var(--imol-message-start-dialog__font-color);
+}

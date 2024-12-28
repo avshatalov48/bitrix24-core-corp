@@ -23,8 +23,7 @@ use Bitrix\Tasks\Internals\Dto\AbstractBaseDto;
  * @method self setName(string $name)
  * @method self setDescription(string $description)
  * @method self setDistributionType(string $distributionType)
- * @method self setManualDistributorId(int $manualDistributorId)
- * @method self setResponsibleQueue(array $responsibleQueue)
+ * @method self setResponsibleList(array $responsibleList)
  * @method self setTaskCreators(array $taskCreators)
  * @method self setNotifyOnQueueOverflow(int $notifyOnQueueOverflow)
  * @method self setNotifyAtHalfTime(bool $notifyAtHalfTime)
@@ -33,6 +32,7 @@ use Bitrix\Tasks\Internals\Dto\AbstractBaseDto;
  * @method self setTaskControl(bool $taskControl)
  *
  * @method bool hasTaskCreators()
+ * @method bool hasResponsibleList()
  *
  * @method void validateName(bool $required = false)
  */
@@ -66,13 +66,15 @@ final class FlowDto extends AbstractBaseDto
 
 	public ?string $distributionType = null;
 
-	public ?int $manualDistributorId = null;
-
-	public ?array $responsibleQueue = null;
+	#[Required]
+	#[EntitySelector]
+	public array $responsibleList = [];
 
 	public bool $responsibleCanChangeDeadline = true;
 
 	public bool $matchWorkTime = true;
+
+	public bool $matchSchedule = false;
 
 	public bool $notifyAtHalfTime = false;
 

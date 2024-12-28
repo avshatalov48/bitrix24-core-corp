@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Security\Role\Manage\Permissions;
 
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\BaseControlType;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\DependentVariables;
 use Bitrix\Main\Access\Permission\PermissionDictionary;
 use Bitrix\Main\Localization\Loc;
 
@@ -9,8 +11,10 @@ class Transition extends Permission
 {
 	public const CODE = 'TRANSITION';
 
-	const TRANSITION_ANY = 'ANY';
-	const TRANSITION_INHERIT = 'INHERIT';
+	public const TRANSITION_ANY = 'ANY';
+	public const TRANSITION_INHERIT = 'INHERIT';
+	public const TRANSITION_BLOCKED = 'BLOCKED';
+
 	public function code(): string
 	{
 		return self::CODE;
@@ -46,7 +50,7 @@ class Transition extends Permission
 		return [self::TRANSITION_ANY];
 	}
 
-	public function controlType(): string
+	public function getControlTypeCode(): string
 	{
 		return PermissionDictionary::TYPE_MULTIVARIABLES;
 	}
@@ -58,6 +62,11 @@ class Transition extends Permission
 
 	public function getMinSettingsValue(): array
 	{
-		return [];
+		return [self::TRANSITION_BLOCKED];
+	}
+
+	protected function createDefaultControlType(): BaseControlType
+	{
+		return (new DependentVariables());
 	}
 }

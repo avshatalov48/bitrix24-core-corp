@@ -505,6 +505,7 @@ class Task
 
 		$deleteEventParameters = [
 			'FLOW_ID' => $taskObject->fillFlowTask()?->getFlowId(),
+			'USER_ID' => $this->userId,
 		];
 
 		$this->onTaskDelete($deleteEventParameters);
@@ -623,15 +624,18 @@ class Task
 	{
 		$application = Application::getInstance();
 
+		$taskData = $this->getFullTaskData();
+
 		if (
-			Loader::includeModule('im')
+			$taskData
+			&& Loader::includeModule('im')
 			&& method_exists(Messenger::class, 'unregisterTask')
 		)
 		{
 			$application
 			&& $application->addBackgroundJob(
-				function () use ($saveDelete) {
-					Locator::getMessenger()->unregisterTask($this->getFullTaskData(), $saveDelete);
+				function () use ($taskData, $saveDelete) {
+					Locator::getMessenger()->unregisterTask($taskData, $saveDelete);
 				}
 			);
 		}
@@ -1829,11 +1833,15 @@ class Task
 
 	private function onTaskAdd(array $fields): array
 	{
+		$parameters = [
+			'USER_ID' => $this->userId,
+		];
+
 		try
 		{
 			foreach (GetModuleEvents('tasks', 'OnTaskAdd', true) as $arEvent)
 			{
-				ExecuteModuleEventEx($arEvent, [$this->taskId, &$fields]);
+				ExecuteModuleEventEx($arEvent, [$this->taskId, &$fields, $parameters]);
 			}
 		}
 		catch (Exception $exception)

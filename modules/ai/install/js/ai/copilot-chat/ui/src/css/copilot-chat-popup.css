@@ -1,0 +1,19 @@
+.ai__copilot-chat-popup {
+	display: flex;
+	flex-direction: column;
+}
+
+.ai__copilot-chat-popup .popup-window-content {
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.ai__copilot-chat-popup-content {
+	max-height: 100%;
+	width: 100%;
+	display: flex;
+	flex: 1;
+	border-radius: var(--ui-border-radius-2xl);
+	overflow: hidden;
+}

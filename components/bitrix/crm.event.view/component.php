@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
@@ -694,8 +695,8 @@ foreach ($loadedItems as $loadedItemId)
 	}
 	else
 	{
-		$arEvent['EVENT_TEXT_1'] = strip_tags($arEvent['~EVENT_TEXT_1'], '<br><br/>');
-		$arEvent['EVENT_TEXT_2'] = strip_tags($arEvent['~EVENT_TEXT_2'], '<br><br/>');
+		$arEvent['EVENT_TEXT_1'] = TextHelper::convertHtmlToText($arEvent['~EVENT_TEXT_1'], true);
+		$arEvent['EVENT_TEXT_2'] = TextHelper::convertHtmlToText($arEvent['~EVENT_TEXT_2'], true);
 	}
 
 	$arEvent['EVENT_DESC'] = $this->compileEventDesc($arEvent);

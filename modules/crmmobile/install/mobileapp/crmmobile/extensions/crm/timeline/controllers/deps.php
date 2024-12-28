@@ -15,6 +15,7 @@ return [
 		'haptics',
 		'user/profile',
 		'analytics',
+		'in-app-url',
 	],
 	'bundle' => [
 		'./base',
@@ -33,5 +34,6 @@ return [
 		'./task',
 		'./clipboard',
 		'./visit',
+		'./bizproc',
 	]
 ];

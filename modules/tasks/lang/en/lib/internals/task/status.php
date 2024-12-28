@@ -6,3 +6,4 @@ $MESS["TASKS_STATUS_4"] = "Pending review";
 $MESS["TASKS_STATUS_5"] = "Completed";
 $MESS["TASKS_STATUS_6"] = "Deferred";
 $MESS["TASKS_STATUS_7"] = "Declined";
+$MESS["TASKS_STATUS_TITLE"] = "Status";

@@ -24,13 +24,11 @@ jn.define('im/messenger/provider/pull/chat/user', (require, exports, module) => 
 
 			logger.info('ChatUserPullHandler.handleUserInvite', params);
 
-			const user = ChatDataConverter.getElementByEntity('user', params.user);
-			user.avatar = user.avatar.url;
-			user.invited = params.invited;
+			const recentModel = RecentConverter.fromPushUserInviteToModel(params);
 
-			this.store.dispatch('usersModel/set', user)
+			this.store.dispatch('usersModel/set', [params.user])
 				.catch((err) => logger.error('ChatUserPullHandler.handleUserInvite.usersModel/set.catch:', err));
-			this.store.dispatch('recentModel/set', [user])
+			this.store.dispatch('recentModel/set', [recentModel])
 				.catch((err) => logger.error('ChatUserPullHandler.handleUserInvite.recentModel/set.catch:', err));
 		}
 

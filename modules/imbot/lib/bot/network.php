@@ -3239,8 +3239,12 @@ class Network extends Base implements NetworkBot
 			$result['chatId'] = (int)$chatWithBot['ID'];
 
 			$chat = \Bitrix\Im\V2\Chat::getInstance($chatWithBot['ID']);
-			$lastMessageResult = Im\Model\MessageTable::getById($chat->getLastMessageId())->fetch();
-			$result['dateMessage'] = $lastMessageResult['DATE_CREATE'];
+			$lastMessageId = $chat->getLastMessageId();
+			if ($lastMessageId)
+			{
+				$lastMessageResult = Im\Model\MessageTable::getById($lastMessageId)->fetch();
+				$result['dateMessage'] = $lastMessageResult['DATE_CREATE'];
+			}
 		}
 
 		return $result;

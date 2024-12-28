@@ -27,13 +27,16 @@ $enableMoreButton = false;
 
 foreach($arParams['BUTTONS'] as $item)
 {
-	if(!$enableMoreButton && isset($item['NEWBAR']) && $item['NEWBAR'] === true)
+	$newBar = $item['NEWBAR'] ?? false;
+	$isSettingsItem = $item['IS_SETTINGS_BUTTON'] ?? false;
+
+	if(!$enableMoreButton && $newBar)
 	{
 		$enableMoreButton = true;
 		continue;
 	}
 
-	if($enableMoreButton)
+	if($enableMoreButton || $isSettingsItem)
 	{
 		$settingsItems[] = $item;
 	}
@@ -41,28 +44,6 @@ foreach($arParams['BUTTONS'] as $item)
 	{
 		$items[] = $item;
 	}
-}
-
-if(!empty($settingsItems))
-{
-	$settingsButtonId = htmlspecialcharsbx($toolbarId);
-	$settingsMenuId = htmlspecialcharsbx("{$toolbarId}_settings_menu");
-	$settingsButtonItems = Bitrix\Crm\UI\Tools\ToolBar::mapItems(
-		$settingsItems,
-		$toolbarId,
-		$arParams['TOOLBAR_PARAMS'] ?? []
-	);
-	$settingsButton = new SettingsButton([
-		'id' => $settingsButtonId,
-		'menu' => [
-			'id' => $settingsMenuId,
-			'items' => $settingsButtonItems,
-			'offsetLeft' => 20,
-			'closeByEsc' => true,
-			'angle' => true,
-		],
-	]);
-	Toolbar::addButton($settingsButton);
 }
 
 $itemCount = count($items);
@@ -76,6 +57,9 @@ for($i = 0; $i < $itemCount; $i++)
 	$onClick = (isset($item['ONCLICK']) && $item['ONCLICK']) ? new JsCode($item['ONCLICK']) : '';
 	$type = $item['TYPE'] ?? '';
 	$buttonId = "{$toolbarId}_button_{$i}";
+	$location = $item['LOCATION'] ?? ButtonLocation::AFTER_TITLE;
+	$color = $item['COLOR'] ?? Color::SUCCESS;
+	$attributes = $item['ATTRIBUTES'] ?? [];
 
 	// disabled button configuration
 	$disabledButtonDataset = [];
@@ -99,7 +83,7 @@ for($i = 0; $i < $itemCount; $i++)
 			'id' => htmlspecialcharsbx($buttonId),
 			'link' => $link,
 			'text' => $text,
-			'color' => Color::SUCCESS,
+			'color' => $color,
 			'click' => new JsCode('
 				var popup = this.menuWindow.popupWindow;
 				if (popup) {popup.setOffset({offsetLeft: BX.pos(popup.bindElement).width - 17});}
@@ -112,7 +96,12 @@ for($i = 0; $i < $itemCount; $i++)
 			]
 		]);
 
-		Toolbar::addButton($menuButton, ButtonLocation::AFTER_TITLE);
+		foreach ($attributes as $attribute => $value)
+		{
+			$menuButton->addAttribute($attribute, $value);
+		}
+
+		Toolbar::addButton($menuButton, $location);
 	}
 	elseif($type === 'crm-btn-double')
 	{
@@ -123,7 +112,7 @@ for($i = 0; $i < $itemCount; $i++)
 			'icon' => '',
 			'title' => $title,
 			'text' => $text,
-			'color' => Color::SUCCESS,
+			'color' => $color,
 			'menuButton' => [
 				'click' => new JsCode('
 					var popup = this.getSplitButton().menuWindow.popupWindow;
@@ -144,22 +133,62 @@ for($i = 0; $i < $itemCount; $i++)
 			'className' => $disabledButtonClass,
 		]);
 
-		Toolbar::addButton($splitButton, ButtonLocation::AFTER_TITLE);
+		foreach ($attributes as $attribute => $value)
+		{
+			$splitButton->addAttribute($attribute, $value);
+		}
+
+		Toolbar::addButton($splitButton, $location);
 	}
 	elseif(!isset($item['SEPARATOR']))
 	{
-		$addButton = new AddButton([
+		$params = [
 			'id' => htmlspecialcharsbx($buttonId),
 			'icon' => '',
-			'text' => $text,
+			'color' => $color,
 			'link' => $link,
 			'onclick' => $onClick,
 			'dataset' => $disabledButtonDataset,
-			'className' => $disabledButtonClass
-		]);
+			'className' => $disabledButtonClass,
+		];
 
-		Toolbar::addButton($addButton, ButtonLocation::AFTER_TITLE);
+		if (!empty($text))
+		{
+			$params['text'] = $text;
+		}
+
+		$addButton = new AddButton($params);
+
+		foreach ($attributes as $attribute => $value)
+		{
+			$addButton->addAttribute($attribute, $value);
+		}
+
+		Toolbar::addButton($addButton, $location);
 	}
+}
+
+if (!empty($settingsItems))
+{
+	$settingsButtonId = htmlspecialcharsbx($toolbarId);
+	$settingsMenuId = htmlspecialcharsbx("{$toolbarId}_settings_menu");
+	$settingsButtonItems = Bitrix\Crm\UI\Tools\ToolBar::mapItems(
+		$settingsItems,
+		$toolbarId,
+		$arParams['TOOLBAR_PARAMS'] ?? []
+	);
+	$settingsButton = new SettingsButton([
+		'id' => $settingsButtonId,
+		'menu' => [
+			'id' => $settingsMenuId,
+			'items' => $settingsButtonItems,
+			'offsetLeft' => 20,
+			'closeByEsc' => true,
+			'angle' => true,
+		],
+	]);
+
+	Toolbar::addButton($settingsButton);
 }
 ?>
 

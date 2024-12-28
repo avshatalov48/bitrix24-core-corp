@@ -127,6 +127,7 @@ export class Copilot extends EventEmitter
 	#useText: boolean;
 	#useImage: boolean;
 	#showResultInCopilot: ?boolean;
+	#windowResizeHandler: Function;
 
 	static #staticEulaRestrictCallback: Function | false = null;
 
@@ -485,6 +486,12 @@ export class Copilot extends EventEmitter
 					this.#inputField.stopRecording();
 					this.#getBaasPopup()?.close();
 					this.emit(CopilotEvents.HIDE);
+					Event.unbind(window, 'resize', this.#windowResizeHandler);
+				},
+				onPopupShow: () => {
+					this.#windowResizeHandler = () => (this.#inputField.adjustHeight());
+					Event.bind(window, 'resize', this.#windowResizeHandler);
+					this.#inputField.clearErrors();
 				},
 			},
 		});

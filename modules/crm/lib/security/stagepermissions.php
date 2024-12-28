@@ -84,13 +84,13 @@ final class StagePermissions
 		$isAdmin = Container::getInstance()->getUserPermissions($userId)->isAdmin();
 		$canWriteConfig = Container::getInstance()->getUserPermissions($userId)->canWriteConfig();
 
-		$entityPermissions = $userPermissions['settings'][$entityTypeName][(new Transition([]))->code()] ?? [];
+		$entityPermissions = $userPermissions['settings'][$entityTypeName][(new Transition())->code()] ?? [];
 		$stageId = Container::getInstance()->getUserPermissions()->getStageFieldName($this->entityTypeId);
 
 		$permissions = [];
 		foreach ($allStatusIds as $statusId)
 		{
-			if ((new ApproveCustomPermsToExistRole())->hasWaitingPermission((new Transition([]))->code()))
+			if ((new ApproveCustomPermsToExistRole())->hasWaitingPermission(new Transition()))
 			{
 				$permissions[$statusId] = $allStatusIds;
 

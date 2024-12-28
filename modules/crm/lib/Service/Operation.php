@@ -318,6 +318,19 @@ abstract class Operation
 	}
 
 	/**
+	 * Sometimes we need to skip the required check only for user fields that are marked as MANDATORY on
+	 * User Field declaration level, while stage-dependent system and user fields should still be checked for emptiness
+	 *
+	 * Returns false if required check should be skipped for not-stage-dependent-required user fields
+	 *
+	 * @return bool
+	 */
+	protected function isCheckRequiredByAttributeUserFields(): bool
+	{
+		return true;
+	}
+
+	/**
 	 * This method checks that user fields filled properly according to their types and settings.
 	 * Also here checks that required fields are not empty.
 	 *
@@ -386,7 +399,10 @@ abstract class Operation
 
 			if ($field->isRequired())
 			{
-				if ($field->isUserField() && !$this->isCheckRequiredUserFields())
+				if (
+					$field->isUserField()
+					&& (!$this->isCheckRequiredUserFields() || !$this->isCheckRequiredByAttributeUserFields())
+				)
 				{
 					continue;
 				}

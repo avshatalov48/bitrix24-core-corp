@@ -14,6 +14,13 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/type', (r
 		inviteReviewerWithInitiator: 'inviteReviewerWithInitiator',
 		inviteEditor: 'inviteEditor',
 		inviteEditorWithInitiator: 'inviteEditorWithInitiator',
+		inviteB2bDocumentSigning: 'inviteB2bDocumentSigning',
+
+		// initiated by employee
+		byEmployeeInviteCompany: 'byEmployeeInviteCompany',
+		byEmployeeInviteReviewer: 'byEmployeeInviteReviewer',
+		byEmployeeInviteEmployee: 'byEmployeeInviteEmployee',
+		byEmployeeSignedByEmployee: 'byEmployeeSignedByEmployee',
 	});
 
 	const Success = Object.freeze({
@@ -23,6 +30,13 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/type', (r
 		doneFromAssignee: 'doneFromAssignee',
 		doneFromEditor: 'doneFromEditor',
 		doneFromReviewer: 'doneFromReviewer',
+		doneB2bDocumentSigning: 'doneB2bDocumentSigning',
+
+		// initiated by employee
+		byEmployeeDoneEmployee: 'byEmployeeDoneEmployee',
+		byEmployeeDoneEmployeeM: 'byEmployeeDoneEmployeeM',
+		byEmployeeDoneEmployeeF: 'byEmployeeDoneEmployeeF',
+		byEmployeeDoneCompany: 'byEmployeeDoneCompany',
 	});
 
 	const Failure = Object.freeze({
@@ -53,6 +67,11 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/type', (r
 		stoppedToEmployeeF: 'stoppedToEmployeeF',
 		signingError: 'signingError',
 		repeatSigning: 'repeatSigning',
+
+		// initiated by employee
+		byEmployeeStoppedToEmployee: 'byEmployeeStoppedToEmployee',
+		byEmployeeStoppedToEmployeeM: 'byEmployeeStoppedToEmployeeM',
+		byEmployeeStoppedToEmployeeF: 'byEmployeeStoppedToEmployeeF',
 	});
 
 	const ImageName = Object.freeze({

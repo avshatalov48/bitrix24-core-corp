@@ -2678,7 +2678,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            label: main_core.Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_EPIC_ADD')
 	          }
 	        },
-	        hideOnDeselect: true,
+	        hideOnSelect: false,
+	        hideOnDeselect: false,
 	        events: {
 	          'Search:onItemCreateAsync': function SearchOnItemCreateAsync(event) {
 	            return new Promise(function (resolve) {
@@ -2703,6 +2704,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            var selectedItem = event.getData().item;
 	            _this3.getEpic(selectedItem.getId()).then(function (epic) {
 	              _this3.emit('updateItemEpic', epic);
+	              _this3.epicDialog.hide();
 	            });
 	          },
 	          'Item:onDeselect': function ItemOnDeselect() {
@@ -2710,6 +2712,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	              choiceWasMade = true;
 	              if (_this3.epicDialog.getSelectedItems().length === 0) {
 	                _this3.emit('updateItemEpic', null);
+	                _this3.epicDialog.hide();
 	              }
 	            }, 50);
 	          }

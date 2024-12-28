@@ -159,7 +159,7 @@ class FieldCollection implements ItemCollection, \Iterator, \Countable
 			$newItem = clone $item;
 
 			$newItem->values = $item->values?->filter(
-				static fn(Field\Value $value) => $value->memberId === $memberId
+				static fn(Field\Value $value) => $value->memberId === $memberId,
 			);
 
 			if (!empty($newItem->values))
@@ -200,5 +200,20 @@ class FieldCollection implements ItemCollection, \Iterator, \Countable
 		}
 
 		return $this;
+	}
+
+	/**
+	 * @return array<string, Field>
+	 */
+	public function getNameMap(): array
+	{
+		$map = [];
+
+		foreach ($this->items as $field)
+		{
+			$map[$field->name] = $field;
+		}
+
+		return $map;
 	}
 }

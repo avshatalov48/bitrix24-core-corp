@@ -227,6 +227,8 @@ class Task extends Dataset
 					$fieldsInfo['MARK']['values'] ?? [],
 					$this->getMessage('TASK_FIELD_MARK_NULL_VALUE')
 				)
+				->setDescription($this->getMessage('TASK_FIELD_MARK_MSGVER_1'))
+				->setDescriptionFull($this->getMessage('TASK_FIELD_MARK_FULL_MSGVER_1'))
 			,
 			(new StringField('PRIORITY'))
 				->setDictionary($fieldsInfo['PRIORITY']['values'] ?? [])
@@ -515,7 +517,10 @@ class Task extends Dataset
 			(new DateTimeField('END_DATE_PLAN')),
 			(new StringField('ALLOW_CHANGE_DEADLINE')),
 			(new StringField('ALLOW_TIME_TRACKING')),
-			(new StringField('TASK_CONTROL')),
+			(new StringField('TASK_CONTROL'))
+				->setDescription($this->getMessage('TASK_FIELD_TASK_CONTROL_MSGVER_1'))
+				->setDescriptionFull($this->getMessage('TASK_FIELD_TASK_CONTROL_FULL_MSGVER_1'))
+			,
 			(new StringField('ADD_IN_REPORT')),
 			(new IntegerField('TIME_ESTIMATE')),
 			(new StringField('MATCH_WORK_TIME')),

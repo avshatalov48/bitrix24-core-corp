@@ -14,6 +14,16 @@ jn.define('in-app-url/url', (require, exports, module) => {
 			this.value = value;
 		}
 
+		withHttp(url)
+		{
+			return `http://${url.split('//')[1]}`;
+		}
+
+		withHttps(url)
+		{
+			return `https://${url.split('//')[1]}`;
+		}
+
 		/**
 		 * @return {boolean}
 		 */
@@ -23,6 +33,8 @@ jn.define('in-app-url/url', (require, exports, module) => {
 				'bitrix24://',
 				'/',
 				currentDomain,
+				this.withHttp(currentDomain),
+				this.withHttps(currentDomain),
 			];
 
 			return startingPoints.some(item => this.value.startsWith(item));

@@ -2,10 +2,14 @@
  * @module im/messenger/lib/permission-manager/chat-permission
  */
 jn.define('im/messenger/lib/permission-manager/chat-permission', (require, exports, module) => {
-	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Type } = require('type');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { UserRole, DialogActionType, DialogType } = require('im/messenger/const');
+	const {
+		UserRole,
+		DialogActionType,
+		DialogType,
+	} = require('im/messenger/const');
 
 	const MinimalRoleForAction = {
 		[DialogActionType.readMessage]: UserRole.member,
@@ -45,19 +49,17 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 				return false;
 			}
 
-			const isHTTPS = this.isHTTPS();
 			const userLimit = this.getCallUsersLimit();
 			const isMoreOne = this.dialogData.userCounter > 1;
 			const isLimit = this.dialogData.userCounter > userLimit;
 			const isEntityType = this.isCanCallByEntityType(this.dialogData.entityType);
 			const isDialogType = this.isCanCallByDialogType(this.dialogData.type);
-			const isCanCall = isHTTPS && isMoreOne && !isLimit && isEntityType && isDialogType;
+			const isCanCall = isMoreOne && !isLimit && isEntityType && isDialogType;
 
 			if (verbose)
 			{
 				return {
 					isCanCall,
-					isHTTPS,
 					isMoreOne,
 					isLimit,
 					isEntityType,
@@ -123,6 +125,11 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		getPermissionByChatType(chatType)
 		{
 			const chatPermissions = this.getChatPermissions();
+			if (!chatPermissions?.byChatType)
+			{
+				return {};
+			}
+
 			// we can have a "user" type for "private" chats
 			const currentChatType = chatType === DialogType.user ? DialogType.private : chatType;
 
@@ -132,6 +139,10 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		getActionGroupsByChatType(chatType)
 		{
 			const chatPermissions = this.getChatPermissions();
+			if (!chatPermissions?.actionGroupsDefaults)
+			{
+				return {};
+			}
 
 			return chatPermissions.actionGroupsDefaults[chatType] ?? chatPermissions.actionGroupsDefaults[DialogType.default];
 		}
@@ -174,9 +185,68 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		isCanRemoveByTypeChat()
 		{
 			const rolesByChatType = this.getDefaultRolesByChatType();
-			const installedMinimalRole = rolesByChatType[DialogActionType.leave]; // leave equal kick
+			const installedMinimalRole = rolesByChatType[DialogActionType.kick];
 
 			return this.getRightByLowRole(installedMinimalRole);
+		}
+
+		/**
+		 * @desc Check is can edit chat
+		 * @param {DialoguesModelState|string} dialogData
+		 * @return {boolean}
+		 */
+		isCanEditDialog(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+			const rolesByChatType = this.getDefaultRolesByChatType();
+			const installedMinimalRoleForEdit = rolesByChatType[DialogActionType.rename];
+			if (installedMinimalRoleForEdit === UserRole.none)
+			{
+				return false;
+			}
+
+			if (this.iaCanUpdateDialogByRole(dialogData))
+			{
+				return true;
+			}
+
+			return this.iaCanManageUIDialog(dialogData);
+		}
+
+		/**
+		 * @param {DialoguesModelState|string} dialogData
+		 * @return {boolean}
+		 */
+		iaCanUpdateDialogByRole(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+			const rolesByChatType = this.getDefaultRolesByChatType();
+			const installedMinimalRole = rolesByChatType[DialogActionType.update];
+
+			return this.getRightByLowRole(installedMinimalRole);
+		}
+
+		/**
+		 * @desc Check is can edit dialog UI
+		 * @param {DialoguesModelState|string} dialogData
+		 * @return {boolean}
+		 */
+		iaCanManageUIDialog(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+
+			const editUIRole = this.dialogData?.permissions.manageUi;
+
+			return this.getRightByLowRole(editUIRole);
 		}
 
 		/**
@@ -306,7 +376,6 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			{
 				this.store = serviceLocator.get('core').getStore();
 				const dialogState = this.store.getters['dialoguesModel/getById'](dialogData);
-
 				if (Type.isUndefined(dialogState))
 				{
 					return false;
@@ -329,15 +398,6 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		}
 
 		/**
-		 * @desc check is https
-		 * @return {boolean}
-		 */
-		isHTTPS()
-		{
-			return currentDomain.startsWith('https://');
-		}
-
-		/**
 		 * @desc Returns count max user for call
 		 * @return {number} userLimit
 		 */
@@ -357,12 +417,12 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			return userChatOptions;
 		}
 
+		/**
+		 * @return {Permissions}
+		 */
 		getChatPermissions()
 		{
-			// eslint-disable-next-line no-undef
-			const { permissions = {} } = jnExtensionData.get('im:messenger/lib/permission-manager');
-
-			return permissions;
+			return MessengerParams.getPermissions();
 		}
 
 		/**

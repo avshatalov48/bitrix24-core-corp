@@ -1,11 +1,12 @@
 import { Selector } from 'ui.form-elements.view';
-import { Dom, Event, Tag } from 'main.core';
+import { Dom, Event, Tag, Loc, Runtime } from 'main.core';
+import { SelectorFieldItemOption, SelectorFieldOptions } from 'types.js';
 import './css/main.css';
 
 export class SelectorField extends Selector
 {
-	#items: Array = [];
-	#additionalItems: Array = [];
+	#items: [SelectorFieldItemOption] = [];
+	#additionalItems: [] = [];
 	#hintTitleElement: HTMLElement;
 	#hintDescElement: HTMLElement;
 	#inputNode: HTMLElement;
@@ -15,11 +16,18 @@ export class SelectorField extends Selector
 	static extraHeightOffset = 70;
 	static popupOffset = 5;
 
-	constructor(params)
+	constructor(params: SelectorFieldOptions)
 	{
 		super(params);
 		this.#items = params.items;
-		this.#additionalItems = params.additionalItems;
+		this.#additionalItems = params.additionalItems || [];
+		this.#items = this.#items.map(item => {
+			const newItem = item;
+			newItem.recommended = (params.recommendedItems || []).includes(item.value);
+
+			return newItem;
+		});
+
 		this.#hintTitleElement = Tag.render`<div class="ui-section__title"></div>`;
 		this.#hintDescElement = Tag.render`<div class="ui-section__description"></div>`;
 		this.#inputNode = this.#buildSelector();
@@ -90,26 +98,45 @@ export class SelectorField extends Selector
 	#getContentItems(): []
 	{
 		const selectContentItems = [];
-		for (const { value, name, selected } of this.#items)
+		for (const { value, name, selected, recommended } of this.#items)
 		{
 			let selectedClass = '';
 			if (selected === true)
 			{
 				selectedClass = 'selected';
 			}
+
+			const recommendedLabel =
+				recommended
+					? Tag.render`
+						<span class="select-label-recommended">
+							${Loc.getMessage('AI_SELECTORFIELD_RECOMMENDED_LABEL')}
+						</span>
+					`
+					: ''
+			;
+
 			const contentItemLabel = Tag.render`
 				<div class="select-label-container ${selectedClass}">
 					<label class="select-label" value="${value}">${name}</label>
+					${recommendedLabel}
 					<span class="select-label-icon ui-icon-set --check"></span>
 				</div>
 			`;
 			selectContentItems.push(contentItemLabel);
 		}
 
+		const loadedIconSets = [];
 		for (const { type, link, text, icon } of this.#additionalItems)
 		{
 			if (type === 'link')
 			{
+				const set = icon.set || 'ui.icon-set.main';
+				if (!loadedIconSets.includes(set))
+				{
+					Runtime.loadExtension(set);
+					loadedIconSets.push(set);
+				}
 				const contentItemLink = Tag.render`
 					<div class="select-link-container">
 						<span class="select-link-icon ui-icon-set ${icon.code}"></span>
@@ -232,7 +259,8 @@ export class SelectorField extends Selector
 		{
 			for (const label of selectLabels)
 			{
-				Event.bind(label, 'click', (event) => {
+				const labelContainer = label.parentNode;
+				Event.bind(labelContainer, 'click', () => {
 					selector.setAttribute('data-state', '');
 
 					setTimeout(() => {
@@ -242,8 +270,8 @@ export class SelectorField extends Selector
 
 					if (!Dom.hasClass(label.parentNode, 'selected'))
 					{
-						selectTitle.textContent = event.target.textContent;
-						selectInput.setAttribute('value', event.target.getAttribute('value'));
+						selectTitle.textContent = label.textContent;
+						selectInput.setAttribute('value', label.getAttribute('value'));
 						BX.UI.ButtonPanel.show();
 						const selectedItem = selector.querySelector('.select-label-container.selected');
 						if (selectedItem)

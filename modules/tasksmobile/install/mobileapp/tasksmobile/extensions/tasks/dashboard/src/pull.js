@@ -8,6 +8,7 @@ jn.define('tasks/dashboard/src/pull', (require, exports, module) => {
 		{
 			return {
 				USER_COUNTER: 'user_counter',
+				TASK_REMOVE: 'task_remove',
 			};
 		}
 

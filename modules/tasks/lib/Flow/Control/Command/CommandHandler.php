@@ -4,6 +4,8 @@ namespace Bitrix\Tasks\Flow\Control\Command;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\Connection;
+use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\UI\EntitySelector\Converter;
 use Bitrix\Tasks\AbstractCommand;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotFoundException;
 use Bitrix\Tasks\InvalidCommandException;
@@ -25,6 +27,7 @@ abstract class CommandHandler
 	protected OptionService $optionProvider;
 	protected Connection $connection;
 	protected MiddlewareInterface $middleware;
+	protected Converter $converter;
 
 	protected array $requiredObservers = [];
 	protected array $extraObservers = [];
@@ -50,6 +53,7 @@ abstract class CommandHandler
 
 	/**
 	 * @throws FlowNotFoundException
+	 * @throws \Bitrix\Tasks\Flow\Provider\Exception\FlowNotFoundException
 	 */
 	protected function loadFlow(int $id): Flow
 	{
@@ -63,13 +67,26 @@ abstract class CommandHandler
 
 		$flow = new Flow($this->flowEntity->collectValues());
 
-		$responsibleQueue = $this->queueProvider->getResponsibleQueue($flow->getId())->getUserIds();
+		$responsibleList = $this->getResponsibleList($flow);
 		$options = $this->optionProvider->getOptions($flow->getId());
 
 		return $flow
-			->setResponsibleQueue($responsibleQueue)
+			->setResponsibleList($responsibleList)
 			->setOptions($options)
 		;
+	}
+
+	/**
+	 * @throws \Bitrix\Tasks\Flow\Provider\Exception\FlowNotFoundException
+	 * @return string[]
+
+	 */
+	private function getResponsibleList(Flow $flow): array
+	{
+		$memberFacade = ServiceLocator::getInstance()->get('tasks.flow.member.facade');
+		$responsibleAccessCodes = $memberFacade->getResponsibleAccessCodes($flow->getId());
+
+		return $this->converter::convertFromFinderCodes($responsibleAccessCodes);
 	}
 
 	protected function init(): void
@@ -78,15 +95,16 @@ abstract class CommandHandler
 		$this->flowRegistry = FlowRegistry::getInstance();
 		$this->queueProvider = new ResponsibleQueueProvider();
 		$this->optionProvider = OptionService::getInstance();
+		$this->converter = new Converter();
 	}
 
 	protected function sendPush(Flow $flow, string $tag, string $pushCommand): void
 	{
 		if ($this->command->isNecessarySendPush())
 		{
-			$params = [
-				'FLOW_ID' => $flow->getId(),
-			];
+			$params = $this->command->getPushParams();
+
+			$params['FLOW_ID'] = $flow->getId();
 
 			PushService::addEventByTag($tag, [
 				'module_id' => 'tasks',

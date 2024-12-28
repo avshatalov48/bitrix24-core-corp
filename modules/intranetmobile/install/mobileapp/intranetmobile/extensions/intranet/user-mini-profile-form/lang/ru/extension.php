@@ -4,3 +4,4 @@ $MESS["INTRANETMOBILE_USER_MINI_PROFILE_PLACEHOLDER_LAST_NAME"] = "Фамили�
 $MESS["INTRANETMOBILE_USER_MINI_PROFILE_PLACEHOLDER_PHONE"] = "Телефон";
 $MESS["INTRANETMOBILE_USER_MINI_PROFILE_PLACEHOLDER_EMAIL"] = "E-mail";
 $MESS["INTRANETMOBILE_USER_MINI_PROFILE_EMAIL_EXIST"] = "Сотрудник с таким e-mail уже существует";
+$MESS["INTRANETMOBILE_USER_MINI_PROFILE_WRONG_PHONE"] = "Введите корректный номер телефона";

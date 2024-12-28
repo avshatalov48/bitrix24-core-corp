@@ -15,3 +15,5 @@ $MESS['TASKS_DEPENDS_ON_SELF'] = 'Задача не может зависеть 
 $MESS['TASKS_DEADLINE_OUT_OF_PROJECT_RANGE'] = 'Крайний срок задачи стоит за рамками проекта';
 $MESS['TASKS_PLAN_DATE_END_OUT_OF_PROJECT_RANGE'] = 'Планируемая дата завершения задачи стоит за рамками проекта';
 $MESS['TASKS_PLAN_DATE_START_OUT_OF_PROJECT_RANGE'] = 'Планируемая дата начала задачи стоит за рамками проекта';
+$MESS['TASKS_BAD_GROUP'] = 'Не выбран проект для задачи';
+$MESS['TASKS_BAD_ASSIGNEE_IN_GROUP'] = 'Исполнитель задачи не является участником в выбранном проекте';

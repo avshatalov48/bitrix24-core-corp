@@ -31,9 +31,23 @@ final class Status extends Task\Status
 	];
 
 	public const STATUSES_CHANGING_ACTIVITY = [
+		self::PENDING,
 		self::IN_PROGRESS,
 		self::SUPPOSEDLY_COMPLETED,
 		self::DEFERRED,
 		self::COMPLETED,
 	];
+
+	public static function getFlowStatus(int $taskStatus): string
+	{
+		foreach (self::STATUS_MAP as $flowStatus => $statuses)
+		{
+			if (in_array($taskStatus, $statuses, true))
+			{
+				return $flowStatus;
+			}
+		}
+
+		return '';
+	}
 }

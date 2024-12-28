@@ -42,6 +42,7 @@
 					forcedBannerOpening = false,
 					isGoskey = false,
 					isExternal = false,
+					initiatedByType,
 				} = payload;
 
 				result = {
@@ -53,6 +54,7 @@
 					url: '',
 					isGoskey,
 					isExternal,
+					initiatedByType,
 				};
 
 				const document = payload.document;
@@ -84,6 +86,7 @@
 					forcedBannerOpening,
 					isGoskey,
 					isExternal,
+					initiatedByType,
 				} = data;
 
 				switch (data.type)
@@ -97,6 +100,7 @@
 							goWithoutConfirmation: false,
 							isGoskey,
 							isExternal,
+							initiatedByType,
 						});
 						break;
 					case EVENT_NAME_REQUEST_FOR_SIGN_CONFIRMATION:
@@ -105,6 +109,7 @@
 							memberId,
 							title,
 							forcedBannerOpening,
+							initiatedByType,
 						});
 						break;
 					default:

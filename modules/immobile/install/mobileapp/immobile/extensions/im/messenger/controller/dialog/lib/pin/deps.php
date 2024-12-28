@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'loc',
+		'type',
 		'device/connection',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/parser',

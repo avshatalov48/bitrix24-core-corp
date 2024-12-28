@@ -4,6 +4,8 @@
 jn.define('im/messenger/lib/element/recent/item/action/action', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Theme } = require('im/lib/theme');
+	const { Icon } = require('assets/icons');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const InviteResendAction = {
 		title: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_ACTION_INVITE_RESEND'),
@@ -21,7 +23,7 @@ jn.define('im/messenger/lib/element/recent/item/action/action', (require, export
 		title: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_ACTION_PIN'),
 		identifier: 'pin',
 		color: Theme.colors.accentMainPrimaryalt,
-		iconName: 'action_pin',
+		iconName: Icon.PIN.getIconName(),
 		direction: 'leftToRight',
 	};
 
@@ -29,13 +31,13 @@ jn.define('im/messenger/lib/element/recent/item/action/action', (require, export
 		title: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_ACTION_UNPIN'),
 		identifier: 'unpin',
 		color: Theme.colors.accentMainPrimaryalt,
-		iconName: 'action_unpin',
+		iconName: Icon.UNPIN.getIconName(),
 		direction: 'leftToRight',
 	};
 
 	const ReadAction = {
 		title: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_ACTION_READ'),
-		iconName: 'action_read',
+		iconName: Icon.MESSAGES.getIconName(),
 		identifier: 'read',
 		color: Theme.colors.accentMainSuccess,
 		direction: 'leftToRight',
@@ -44,7 +46,7 @@ jn.define('im/messenger/lib/element/recent/item/action/action', (require, export
 
 	const UnreadAction = {
 		title: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_ACTION_UNREAD'),
-		iconName: 'action_unread',
+		iconName: Icon.CHATS_WITH_CHECK.getIconName(),
 		identifier: 'unread',
 		color: Theme.colors.accentMainSuccess,
 		direction: 'leftToRight',
@@ -54,14 +56,14 @@ jn.define('im/messenger/lib/element/recent/item/action/action', (require, export
 	const MuteAction = {
 		title: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_ACTION_MUTE'),
 		identifier: 'mute',
-		iconName: 'action_mute',
+		iconName: Icon.NOTIFICATION_OFF.getIconName(),
 		color: Theme.colors.base3,
 	};
 
 	const UnmuteAction = {
 		title: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_ACTION_UNMUTE'),
 		identifier: 'unmute',
-		iconName: 'action_unmute',
+		iconName: Icon.NOTIFICATION.getIconName(),
 		color: Theme.colors.base3,
 	};
 
@@ -69,12 +71,12 @@ jn.define('im/messenger/lib/element/recent/item/action/action', (require, export
 		title: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_ACTION_PROFILE'),
 		identifier: 'profile',
 		color: Theme.colors.accentMainPrimaryalt,
-		iconName: 'action_userlist',
+		iconName: Icon.PERSON.getIconName(),
 	};
 
 	const HideAction = {
 		title: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_ACTION_HIDE'),
-		iconName: 'action_delete',
+		iconName: Feature.isIconBoxWithLidAvailable ? Icon.BOX_WITH_LID.getIconName() : Icon.TRASHCAN.getIconName(),
 		identifier: 'hide',
 		color: Theme.colors.accentMainAlert,
 	};

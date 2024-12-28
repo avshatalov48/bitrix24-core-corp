@@ -66,4 +66,21 @@ class FileCollection implements Contract\ItemCollection, \Iterator, \Countable
 	{
 		$this->iterator = new \ArrayIterator($this->items);
 	}
+
+	/**
+	 * @return list<int>
+	 */
+	public function getIds(): array
+	{
+		$ids = [];
+		foreach ($this->items as $file)
+		{
+			if ($file->id !== null)
+			{
+				$ids[] = $file->id;
+			}
+		}
+
+		return $ids;
+	}
 }

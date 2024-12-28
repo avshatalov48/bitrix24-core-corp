@@ -7,7 +7,7 @@ use Bitrix\Calendar\Integration\Bitrix24Manager;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
 
-class TariffPlanRestrictionProvider
+final class TariffPlanRestrictionProvider
 {
 	/**
 	 * Handler for mobile event onTariffRestrictionsCollect

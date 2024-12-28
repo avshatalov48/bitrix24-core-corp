@@ -5,7 +5,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
 use Bitrix\Sign\Document;
+use Bitrix\Sign\Helper\JsonHelper;
 
 /** @var array $arResult */
 /** @var array $arParams */
@@ -60,15 +62,15 @@ $document = $arResult['DOCUMENT'] ?? null;
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'sign-master_slider');
-?>
-<?php
+
+//if new_sign_enable check start
 if ((!$document && \Bitrix\Sign\Config\Storage::instance()->isNewSignEnabled()) || $document?->getUid()):?>
 	<div id="sign-settings-container"></div>
 
 	<script>
 		BX.ready(function()
 		{
-			BX.message(<?php echo \Bitrix\Main\Web\Json::encode([
+			BX.message(<?php echo Json::encode([
 				'SIGN_CMP_MASTER_TPL_PREVIEW_PAGE' => Loc::getMessage('SIGN_CMP_MASTER_TPL_PREVIEW_PAGE'),
 				'SIGN_CMP_MASTER_TPL_PREVIEW_ZOOM' => Loc::getMessage('SIGN_CMP_MASTER_TPL_PREVIEW_ZOOM'),
 				'SIGN_CMP_MASTER_TPL_PREVIEW_REMOVE' => Loc::getMessage('SIGN_CMP_MASTER_TPL_PREVIEW_REMOVE'),
@@ -82,17 +84,28 @@ if ((!$document && \Bitrix\Sign\Config\Storage::instance()->isNewSignEnabled()) 
 		});
 	</script>
 
-		<script>
-			BX.ready(async () => {
-				await top.BX.Runtime.loadExtension('sign.v2.editor');
-				BX.Sign.V2.createSignSettings('sign-settings-container', {
-					uid: '<?=CUtil::JSEscape($document?->getUid() ?? '')?>',
-					config: <?= \Bitrix\Main\Web\Json::encode($arResult["WIZARD_CONFIG"], false, false, true) ?>,
-					type: '<?= CUtil::JSEscape($arResult['SCENARIO']) ?>',
-					documentMode: '<?= CUtil::JSEscape($arResult['DOCUMENT_MODE']) ?>'
-				});
-			});
-		</script>
+	<script>
+		BX.ready(async () => {
+			await top.BX.Runtime.loadExtension('sign.v2.editor');
+			BX.Sign.V2.createSignSettings('sign-settings-container', {
+				uid: '<?=CUtil::JSEscape($document?->getUid() ?? '')?>',
+				config: <?= JsonHelper::encodeOrDefault(
+					'{}',
+					$arResult["WIZARD_CONFIG"],
+					false,
+					false,
+					true,
+				) ?>,
+				type: '<?= CUtil::JSEscape($arResult['SCENARIO'] ?? '') ?>',
+				documentMode: '<?= CUtil::JSEscape($arResult['DOCUMENT_MODE']) ?>',
+				templateUid: '<?= CUtil::JSEscape($arResult['TEMPLATE_UID'] ?? '') ?>',
+				initiatedByType: '<?= CUtil::JSEscape($arResult['INITIATED_BY_TYPE'] ?? '' )?>',
+				chatId: <?= (int)($arResult['CHAT_ID'] ?? 0) ?>,
+			},
+				<?= JsonHelper::encodeOrDefault('{}', $arResult['ANALYTIC_CONTEXT'] ?? '') ?>
+			);
+		});
+	</script>
 <?php
 
 	if (!$arResult['IS_SES_COM_AGREEMENT_ACCEPTED'])
@@ -100,8 +113,10 @@ if ((!$document && \Bitrix\Sign\Config\Storage::instance()->isNewSignEnabled()) 
 		$APPLICATION->IncludeComponent('bitrix:sign.b2e.sescom.agreement', '', []);
 	}
 
-	return; endif;?>
-<?php
+	return;
+endif;
+//if new_sign_enabled check end
+
 // redirect to the next step
 if ($currentStep['nextCode'])
 {

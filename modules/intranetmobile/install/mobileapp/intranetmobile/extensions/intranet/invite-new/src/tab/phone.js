@@ -4,7 +4,7 @@
 jn.define('intranet/invite-new/src/tab/phone', (require, exports, module) => {
 	const { BaseTab } = require('intranet/invite-new/src/tab/base');
 	const { EmployeeStatus } = require('intranet/enum');
-	const { openNameChecker } = require('intranet/invite-new/src/name-checker');
+	const { openNameChecker } = require('layout/ui/name-checker-box');
 	const { Loc } = require('loc');
 	const { Color, Indent, Component } = require('tokens');
 	const { Alert } = require('alert');
@@ -16,6 +16,11 @@ jn.define('intranet/invite-new/src/tab/phone', (require, exports, module) => {
 	const { H3 } = require('ui-system/typography/heading');
 	const { SmartphoneContactSelector } = require('layout/ui/smartphone-contact-selector');
 	const { showErrorMessage } = require('intranet/invite-new/src/error');
+	const { getFormattedNumber } = require('utils/phone');
+	const store = require('statemanager/redux/store');
+	const { usersUpserted } = require('statemanager/redux/slices/users');
+	const { showToast } = require('toast');
+	const { Icon } = require('assets/icons');
 
 	class PhoneTab extends BaseTab
 	{
@@ -52,7 +57,6 @@ jn.define('intranet/invite-new/src/tab/phone', (require, exports, module) => {
 					{
 						style: {
 							flex: 1,
-							width: '100%',
 						},
 					},
 					this.renderGraphics('phone'),
@@ -121,7 +125,7 @@ jn.define('intranet/invite-new/src/tab/phone', (require, exports, module) => {
 					},
 					Button({
 						testId: `${this.testId}-open-contacts-list-button`,
-						text: Loc.getMessage('INTRANET_OPEN_CONTACTS_LIST_BUTTON_TEXT'),
+						text: Loc.getMessage('INTRANET_OPEN_CONTACTS_LIST_BUTTON_TEXT_MSGVER_1'),
 						design: ButtonDesign.FILLED,
 						size: ButtonSize.L,
 						stretched: true,
@@ -276,10 +280,20 @@ jn.define('intranet/invite-new/src/tab/phone', (require, exports, module) => {
 					openNameChecker({
 						parentLayout: this.props.layout,
 						usersToInvite: notInvitedContacts,
-						department: this.department,
 						analytics: this.analytics,
-						onInviteSentHandler: this.onInviteSentHandler,
-						onInviteError: this.onInviteError,
+						labelText: this.department?.title,
+						inviteButtonText: Loc.getMessage('INTRANET_INVITE_BUTTON_TEXT'),
+						boxTitle: Loc.getMessage('INTRANET_INVITE_NAME_CHECKER_TITLE'),
+						description: Loc.getMessage('INTRANET_INVITE_NAME_CHECKER_DESCRIPTION'),
+						subdescription: Loc.getMessage('INTRANET_INVITE_NAME_CHECKER_SUB_DESCRIPTION'),
+						onSendInviteButtonClick: this.onSendInviteButtonClick,
+						getItemFormattedSubDescription: this.getItemFormattedSubDescription,
+						dismissAlert: {
+							title: Loc.getMessage('INTRANET_INVITE_NAME_CHECKER_CLOSE_ALERT_TITLE'),
+							description: Loc.getMessage('INTRANET_INVITE_NAME_CHECKER_CLOSE_ALERT_DESCRIPTION'),
+							destructiveButtonText: Loc.getMessage('INTRANET_INVITE_NAME_CHECKER_CLOSE_ALERT_DESTRUCTIVE_BUTTON'),
+							defaultButtonText: Loc.getMessage('INTRANET_INVITE_NAME_CHECKER_CLOSE_ALERT_CONTINUE_BUTTON'),
+						},
 					});
 				}, 500);
 
@@ -287,6 +301,94 @@ jn.define('intranet/invite-new/src/tab/phone', (require, exports, module) => {
 			}
 
 			selectorInstance.enableSendButtonLoadingIndicator(false);
+		};
+
+		getItemFormattedSubDescription = (user) => {
+			return Loc.getMessage('INTRANET_INVITE_FORMATTED_PHONE_TEXT', {
+				'#phone#': getFormattedNumber(user.formattedPhone),
+			});
+		};
+
+		onSendInviteButtonClick = async (usersToInvite) => {
+			const multipleInvitation = usersToInvite.length > 1;
+			const response = await this.inviteUsersByPhoneNumbers(usersToInvite);
+			const preparedUsers = this.getUsersFromResponse(response);
+
+			if (response
+				&& response.errors
+				&& response.errors.length === 0
+				&& preparedUsers.length > 0)
+			{
+				this.analytics.sendInvitationSuccessEvent(multipleInvitation, preparedUsers.map((user) => user.id));
+				this.showSuccessInvitationToast(multipleInvitation);
+				store.dispatch(usersUpserted(preparedUsers));
+				this.onInviteSentHandler?.(preparedUsers);
+				this.closeInviteBox();
+
+				return;
+			}
+
+			this.analytics.sendInvitationFailedEvent(multipleInvitation, preparedUsers.map((user) => user.id));
+			if (response && response.errors && response.errors.length > 0)
+			{
+				await showErrorMessage(response.errors[0]);
+				this.onInviteError?.(response.errors);
+			}
+
+			this.closeInviteBox();
+		};
+
+		getUsersFromResponse = (response) => {
+			if (response.data?.userList?.length > 0)
+			{
+				return response.data.userList.map((user) => {
+					return {
+						id: user.ID,
+						name: user.NAME,
+						lastName: user.LAST_NAME,
+						fullName: user.FULL_NAME,
+						personalMobile: user.PERSONAL_MOBILE,
+					};
+				});
+			}
+
+			return [];
+		};
+
+		closeInviteBox = () => {
+			this.props.layout?.close();
+		};
+
+		showSuccessInvitationToast = (multipleInvitation) => {
+			const message = multipleInvitation
+				? Loc.getMessage('INTRANET_INVITE_MULTIPLE_SEND_SUCCESS_TOAST_TEXT')
+				: Loc.getMessage('INTRANET_INVITE_SINGLE_SEND_SUCCESS_TOAST_TEXT');
+			showToast(
+				{
+					message,
+					icon: Icon.CHECK,
+				},
+			);
+		};
+
+		inviteUsersByPhoneNumbers = (usersToInvite) => {
+			const preparedUsers = usersToInvite.map((user) => {
+				return {
+					phone: user.phone,
+					firstName: user.firstName ?? null,
+					lastName: user.secondName ?? null,
+					countryCode: user.countryCode,
+				};
+			});
+
+			return new Promise((resolve) => {
+				new RunActionExecutor('intranetmobile.invite.inviteUsersByPhoneNumbers', {
+					users: preparedUsers,
+					departmentId: this.department ? this.department.id : null,
+				})
+					.setHandler((result) => resolve(result))
+					.call(false);
+			});
 		};
 
 		getEqualContactsFromSelected(selectedContacts, contactsFromServer)

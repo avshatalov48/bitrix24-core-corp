@@ -11,12 +11,12 @@ use Bitrix\Main\Localization\Loc;
 
 class Settings
 {
-	private const TEXT_CATEGORY = 'text';
-	private const IMAGE_CATEGORY = 'image';
-	private const TUNING_CODE_IMAGE = 'tasks_allow_image_generate';
-	private const TUNING_CODE_TEXT = 'tasks_allow_text_generate';
-	private const TUNING_CODE_IMAGE_COMMENT = 'tasks_comment_allow_image_generate';
-	private const TUNING_CODE_TEXT_COMMENT = 'tasks_comment_allow_text_generate';
+	protected const TEXT_CATEGORY = 'text';
+	protected const IMAGE_CATEGORY = 'image';
+	protected const TUNING_CODE_IMAGE = 'tasks_allow_image_generate';
+	protected const TUNING_CODE_TEXT = 'tasks_allow_text_generate';
+	protected const TUNING_CODE_IMAGE_COMMENT = 'tasks_comment_allow_image_generate';
+	protected const TUNING_CODE_TEXT_COMMENT = 'tasks_comment_allow_text_generate';
 
 	public static function isTextAvailable(): bool
 	{
@@ -66,7 +66,7 @@ class Settings
 		return $item ? $item->getValue() : true;
 	}
 
-	private static function checkEngineAvailable(string $type): bool
+	protected static function checkEngineAvailable(string $type): bool
 	{
 		if (!Loader::includeModule('ai'))
 		{

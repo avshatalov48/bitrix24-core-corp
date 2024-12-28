@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,market_ratingStars,market_marketLinks,main_core) {
+(function (exports,market_ratingStars,market_marketLinks,main_core,ui_ears) {
 	'use strict';
 
 	const CollectionTop = {
@@ -14,7 +14,7 @@ this.BX = this.BX || {};
 	    };
 	  },
 	  mounted: function () {
-	    new BX.UI.Ears({
+	    new ui_ears.Ears({
 	      container: document.querySelector('#item_' + this.item.CAROUSEL_ID),
 	      smallSize: true,
 	      noScrollbar: true,
@@ -233,4 +233,4 @@ this.BX = this.BX || {};
 
 	exports.CollectionTop = CollectionTop;
 
-}((this.BX.Market = this.BX.Market || {}),BX.Market,BX.Market,BX));
+}((this.BX.Market = this.BX.Market || {}),BX.Market,BX.Market,BX,BX.UI));

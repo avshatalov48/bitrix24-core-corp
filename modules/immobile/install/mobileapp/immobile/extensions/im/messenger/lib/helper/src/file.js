@@ -4,6 +4,9 @@
 jn.define('im/messenger/lib/helper/file', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { FileType } = require('im/messenger/const');
+	const {
+		FileType: FileIconType,
+	} = require('assets/icons');
 
 	function formatFileSize(fileSize)
 	{
@@ -94,10 +97,121 @@ jn.define('im/messenger/lib/helper/file', (require, exports, module) => {
 		return type;
 	}
 
+	/**
+	 * @param {string} extension
+	 * @return {number}
+	 */
+	function getFileIconTypeByExtension(extension)
+	{
+		if (extension === 'heic' && Application.getPlatform() === 'ios')
+		{
+			return FileType.IMAGE;
+		}
+
+		switch (extension)
+		{
+			case 'jpe':
+			case 'jpg':
+			case 'jpeg':
+			case 'png':
+			case 'webp':
+			case 'gif':
+			case 'bmp':
+			case 'heic':
+				return FileIconType.IMAGE;
+
+			case 'avi':
+			case 'wmv':
+			case 'mp4':
+			case 'mov':
+			case 'webm':
+			case 'flv':
+			case 'm4v':
+			case 'mkv':
+			case 'vob':
+			case '3gp':
+			case 'ogv':
+			case 'h264':
+				return FileIconType.VIDEO;
+
+			case 'doc':
+			case 'docx':
+			case 'ppt':
+			case 'pptx':
+			case 'xls':
+			case 'xlsx':
+			case 'txt':
+			case 'odt':
+			case 'ods':
+			case 'rtf':
+				return FileIconType.DOCUMENT;
+
+			case 'pdf':
+				return FileIconType.PDF;
+
+			case 'zip':
+			case 'rar':
+			case 'tar':
+			case 'gz':
+			case 'bz2':
+			case 'tgz':
+			case '7z':
+				return FileIconType.ARCHIVE;
+
+			case 'php':
+			case 'js':
+			case 'css':
+			case 'sql':
+			case 'pl':
+			case 'sh':
+				return FileIconType.SCRIPT;
+
+			case 'mp3':
+			case 'ogg':
+			case 'wav':
+				return FileIconType.AUDIO;
+
+			case 'vsd':
+			case 'vsdx':
+			case 'eps':
+			case 'ps':
+			case 'ai':
+			case 'svg':
+			case 'svgz':
+			case 'cdr':
+			case 'swf':
+			case 'sketch':
+				return FileIconType.VECTOR_IMAGE;
+
+			case 'html':
+			case 'htm':
+			case 'xml':
+			case 'csv':
+			case 'fb2':
+			case 'djvu':
+			case 'epub':
+			case 'msg':
+			case 'eml':
+			case 'tif':
+			case 'tiff':
+			case 'psd':
+			case 'ttf':
+			case 'otf':
+			case 'eot':
+			case 'woff':
+			case 'pfa':
+				return FileIconType.KNOWN;
+
+			default:
+				return FileIconType.UNKNOWN;
+		}
+	}
+
 	module.exports = {
 		formatFileSize,
 		getShortFileName,
 		getFileExtension,
 		getFileTypeByExtension,
+		getFileIconTypeByExtension,
 	};
 });

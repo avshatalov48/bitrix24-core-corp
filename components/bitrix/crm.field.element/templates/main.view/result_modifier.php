@@ -50,7 +50,10 @@ if(is_array($arResult['value']) && count($arResult['value']))
 		else
 		{
 			$ar = explode('_', $value);
-			$values[ElementType::getLongEntityType($ar[0])][] = (int)$ar[1];
+			if (count($ar) > 1)
+			{
+				$values[ElementType::getLongEntityType($ar[0])][] = (int)$ar[1];
+			}
 		}
 	}
 

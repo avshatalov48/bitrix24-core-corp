@@ -7,12 +7,13 @@ use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Result;
 use Bitrix\Main\Security\Random;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Sign\Internal\Document\EO_Template_Query;
 use Bitrix\Sign\Internal\Document\Template as TemplateModel;
 use Bitrix\Sign\Internal\Document\TemplateCollection as TemplateCollectionModel;
 use Bitrix\Sign\Internal\Document\TemplateTable;
 use Bitrix\Sign\Item;
 use Bitrix\Sign\Type;
+use Bitrix\Sign\Type\Template\Status;
+use Bitrix\Sign\Type\Template\Visibility;
 
 class TemplateRepository
 {
@@ -87,11 +88,19 @@ class TemplateRepository
 		return $this->extractItemCollectionFromModelCollection($models);
 	}
 
-	public function listWithStatuses(Type\Template\Status... $statuses): Item\Document\TemplateCollection
+	/**
+	 * @param Status[] $statuses
+	 * @param Visibility[] $visibilities
+	 */
+	public function listWithStatusesAndVisibility(
+		array $statuses,
+		array $visibilities
+	): Item\Document\TemplateCollection
 	{
 		$query = TemplateTable::query()
 			->setSelect(['*'])
 			->whereIn('STATUS', array_map(static fn($status) => $status->toInt(), $statuses))
+			->whereIn('VISIBILITY', array_map(static fn($visibility) => $visibility->toInt(), $visibilities))
 		;
 
 		$models = $query->fetchCollection();
@@ -101,6 +110,9 @@ class TemplateRepository
 
 	public function getB2eEmployeeTemplateList(ConditionTree $filter, int $limit = 10, int $offset = 0): Item\Document\TemplateCollection
 	{
+		$limit = max(0, $limit);
+		$offset = max(0, $offset);
+
 		$query = $this->prepareB2eEmployeeTemplateListQuery($filter, $limit, $offset);
 
 		$models = $query->fetchCollection();
@@ -141,6 +153,7 @@ class TemplateRepository
 			->setDateModify($item->dateModify)
 			->setModifiedById($item->modifiedById)
 			->setTitle($item->title)
+			->setVisibility($item->visibility->toInt())
 		;
 	}
 
@@ -155,6 +168,7 @@ class TemplateRepository
 			uid: $model->getUid(),
 			dateModify: Type\DateTime::createFromMainDateTimeOrNull($model->getDateModify()),
 			modifiedById: $model->getModifiedById(),
+			visibility: Type\Template\Visibility::tryFromInt($model->getVisibility()) ?? Type\Template\Visibility::VISIBLE,
 		);
 	}
 
@@ -196,5 +210,27 @@ class TemplateRepository
 	public function updateTitle(int $templateId, string $title): Result
 	{
 		return TemplateTable::update($templateId, ['TITLE' => $title]);
+	}
+
+	public function updateVisibility(int $templateId, Type\Template\Visibility $visibility): Result
+	{
+		return TemplateTable::update($templateId, ['VISIBILITY' => $visibility->toInt()]);
+	}
+
+	public function getById(int $id): ?Item\Document\Template
+	{
+		$model = TemplateTable::getByPrimary($id)->fetchObject();
+
+		if ($model === null)
+		{
+			return null;
+		}
+
+		return $this->extractItemFromModel($model);
+	}
+
+	public function deleteById(int $id): Result
+	{
+		return TemplateTable::delete($id);
 	}
 }

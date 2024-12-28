@@ -1,9 +1,15 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 use Bitrix\Tasks\Util;
+use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 
+$isCollab = isset($arResult['CONTEXT']) && $arResult['CONTEXT'] === Context::getCollab();
 //region TITLE
-if ($arParams['PROJECT_VIEW'] === 'Y')
+if ($isCollab)
+{
+	$sTitle = $sTitleShort = GetMessage("TASKS_TITLE");
+}
+elseif ($arParams['PROJECT_VIEW'] === 'Y')
 {
 	$sTitle = $sTitleShort = GetMessage("TASKS_TITLE_PROJECT");
 }

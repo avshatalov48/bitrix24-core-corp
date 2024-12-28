@@ -8,7 +8,7 @@
 	const { clone, get, has, isEqual } = require('utils/object');
 	const { isRegExp } = require('utils/type');
 	const { replaceAll } = require('utils/string');
-	const { Moment } = require('utils/date');
+	const { formatFileSize } = require('utils/file');
 
 	describe('global utils objects', () => {
 
@@ -514,6 +514,44 @@
 			expect(isRegExp({})).toBeFalse();
 			expect(isRegExp('hello')).toBeFalse();
 
+		});
+	});
+
+	describe('file utils test', () => {
+		const precision = 1;
+		const phrases = formatFileSize.defaultPhrases;
+
+		test('filesize format falsy values', () => {
+			expect(formatFileSize(undefined, precision, phrases)).toBe('0 bytes');
+			expect(formatFileSize(0, precision, phrases)).toBe('0 bytes');
+			expect(formatFileSize('', precision, phrases)).toBe('0 bytes');
+			expect(formatFileSize(-1, precision, phrases)).toBe('0 bytes');
+		});
+
+		test('filesize format string values', () => {
+			expect(formatFileSize('123', precision, phrases)).toBe('123 bytes');
+			expect(formatFileSize('-1', precision, phrases)).toBe('0 bytes');
+			expect(formatFileSize('0', precision, phrases)).toBe('0 bytes');
+		});
+
+		test('filesize format numbers', () => {
+			expect(formatFileSize(1024, precision, phrases)).toBe('1 KB');
+			expect(formatFileSize(2048, precision, phrases)).toBe('2 KB');
+			expect(formatFileSize(2049, precision, phrases)).toBe('2 KB');
+			expect(formatFileSize(3500, precision, phrases)).toBe('3.4 KB');
+
+			expect(formatFileSize(2_000_000, precision, phrases)).toBe('1.9 MB');
+			expect(formatFileSize(2_000_000_000, precision, phrases)).toBe('1.9 GB');
+			expect(formatFileSize(2_000_000_000_000, precision, phrases)).toBe('1.8 TB');
+			expect(formatFileSize(2_000_000_000_000_000, precision, phrases)).toBe('1819 TB');
+		});
+
+		test('filesize format precision', () => {
+			expect(formatFileSize(2560, 0, phrases)).toBe('3 KB');
+			expect(formatFileSize(2560, 1, phrases)).toBe('2.5 KB');
+
+			expect(formatFileSize(2561, 2, phrases)).toBe('2.5 KB');
+			expect(formatFileSize(2561, 3, phrases)).toBe('2.501 KB');
 		});
 	});
 })();

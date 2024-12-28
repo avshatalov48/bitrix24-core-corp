@@ -3,12 +3,17 @@
 namespace Bitrix\Tasks\Flow\Demo;
 
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Control\Template;
 use Bitrix\Tasks\Flow\Control\Command\AddDemoCommand;
+use Bitrix\Tasks\Flow\Control\Exception\CommandNotFoundException;
+use Bitrix\Tasks\Flow\Control\Exception\FlowNotAddedException;
+use Bitrix\Tasks\Flow\Control\Exception\FlowNotFoundException;
 use Bitrix\Tasks\Flow\Control\FlowService;
-use Bitrix\Tasks\Flow\Flow;
+use Bitrix\Tasks\Flow\Distribution\FlowDistributionType;
 use Bitrix\Tasks\Internals\Log\Logger;
+use Bitrix\Tasks\InvalidCommandException;
 
 class Service
 {
@@ -66,13 +71,13 @@ class Service
 	}
 
 	/**
-	 * @throws \Bitrix\Main\DB\SqlQueryException
-	 * @throws \Bitrix\Tasks\Flow\Control\Exception\CommandNotFoundException
-	 * @throws \Bitrix\Tasks\Flow\Control\Exception\FlowNotAddedException
-	 * @throws \Bitrix\Tasks\Flow\Control\Exception\FlowNotFoundException
-	 * @throws \Bitrix\Tasks\Flow\Control\Exception\InvalidCommandException
+	 * @throws FlowNotFoundException
+	 * @throws InvalidCommandException
+	 * @throws CommandNotFoundException
+	 * @throws SqlQueryException
+	 * @throws FlowNotAddedException
 	 */
-	private function createFlow(FlowService $flowService, AddDemoCommand $addCommand, int $templateId, int $count)
+	private function createFlow(FlowService $flowService, AddDemoCommand $addCommand, int $templateId, int $count): void
 	{
 		$addCommand->setGroupId(0);
 		$addCommand->setTemplateId($templateId);
@@ -81,7 +86,8 @@ class Service
 		$addCommand->setCreatorId($this->creatorId);
 		$addCommand->setOwnerId($this->creatorId);
 
-		$addCommand->setDistributionType(Flow::DISTRIBUTION_TYPE_QUEUE);
+		$addCommand->setDistributionType(FlowDistributionType::MANUALLY->value);
+		$addCommand->setResponsibleList(['U' . $this->creatorId]);
 
 		$addCommand->setTaskControl(true);
 		$addCommand->setNotifyAtHalfTime(true);

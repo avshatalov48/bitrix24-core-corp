@@ -39,7 +39,7 @@ final class AutomatedSolution extends Base
 
 	private function checkPermissions(): bool
 	{
-		if (!$this->userPermissions->canWriteConfig())
+		if (!$this->userPermissions->canEditAutomatedSolutions())
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 
@@ -170,6 +170,10 @@ final class AutomatedSolution extends Base
 		}
 
 		$fieldsToAdd = $this->prepareFieldsFromRequest($fields);
+		if (!$this->checkAccessToTypeIds($fieldsToAdd['TYPE_IDS'] ?? []))
+		{
+			return null;
+		}
 
 		$addResult = $this->manager->addAutomatedSolution($fieldsToAdd);
 		if (!$addResult->isSuccess())
@@ -250,6 +254,10 @@ final class AutomatedSolution extends Base
 		$fieldsToUpdate = $this->prepareFieldsFromRequest(
 			$fields + $currentAutomatedSolutionResponse['automatedSolution'],
 		);
+		if (!$this->checkAccessToTypeIds($fieldsToUpdate['TYPE_IDS'] ?? []))
+		{
+			return null;
+		}
 
 		$updateResult = $this->manager->updateAutomatedSolution($id, $fieldsToUpdate);
 		if (!$updateResult->isSuccess())
@@ -414,5 +422,34 @@ final class AutomatedSolution extends Base
 			array_map($this->converter->toJson(...), $solutions),
 			fn() => AutomatedSolutionTable::getCount($snakeCaseFilter),
 		);
+	}
+
+	private function checkAccessToTypeIds(array $typeIds): bool
+	{
+		$this->dynamicTypesMap->load([
+			'isLoadStages' => false,
+			'isLoadCategories' => false,
+		]);
+
+		$types = $this->dynamicTypesMap->getBunchOfTypesByIds($typeIds);
+		foreach ($types as $type)
+		{
+			$hasPermission = false;
+			if (!$type->getCustomSectionId())
+			{
+				$hasPermission = $this->userPermissions->isCrmAdmin();
+			}
+			else{
+				$hasPermission = $this->userPermissions->canEditAutomatedSolutions();
+			}
+			if (!$hasPermission)
+			{
+				$this->addError(ErrorCode::getAccessDeniedError());
+
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

@@ -2,6 +2,7 @@
  * @module im/messenger/provider/service/classes/message/action
  */
 jn.define('im/messenger/provider/service/classes/message/action', (require, exports, module) => {
+	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Loc } = require('loc');
 	const { Logger } = require('im/messenger/lib/logger');
@@ -16,6 +17,7 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 	{
 		constructor()
 		{
+			/** @type {MessengerCoreStore} */
 			this.store = serviceLocator.get('core').getStore();
 			/** @type {QueueService} */
 			this.queueServiceInstanse = null;
@@ -38,6 +40,14 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 		 */
 		async delete(modelMessage, dialogId)
 		{
+			if (modelMessage.error)
+			{
+				this.fullDeleteMessage(modelMessage, dialogId)
+					.catch((error) => Logger.error(error));
+
+				return;
+			}
+
 			await this.saveMessage(modelMessage);
 
 			this.#localDelete(modelMessage, dialogId)
@@ -272,8 +282,24 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 		 */
 		async fullDeleteMessage(modelMessage, dialogId)
 		{
+			const messages = this.store.getters['messagesModel/getByChatId'](modelMessage.chatId);
+
+			if (!Type.isArrayFilled(messages))
+			{
+				return;
+			}
+
+			const lastMessage = messages.length > 1 ? messages[messages.length - 1] : null;
+			const newLastMessage = messages.length > 2 ? messages[messages.length - 2] : null;
+
 			this.store.dispatch('messagesModel/delete', { id: modelMessage.id })
-				.catch((err) => Logger.error('ActionService.fullDeleteMessage messagesModel catch', err));
+				.catch((err) => Logger.error('ActionService.fullDeleteMessage messagesModel catch', err))
+			;
+
+			if (lastMessage?.id !== modelMessage.id)
+			{
+				return;
+			}
 
 			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
 			if (!recentItem)
@@ -281,12 +307,17 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 				return;
 			}
 
-			const dialogItem = this.store.getters['dialoguesModel/getById'](dialogId);
-			const messages = this.store.getters['messagesModel/getByChatId'](modelMessage.chatId);
-			const newLastMessage = messages.length > 1 ? messages[messages.length - 1] : null;
-			if (newLastMessage)
+			let newRecentItem = recentItem;
+			if (recentItem.uploadingState?.message?.id === modelMessage.id)
 			{
-				recentItem.message = {
+				newRecentItem = {
+					...recentItem,
+					uploadingState: null,
+				};
+			}
+			else if (newLastMessage)
+			{
+				newRecentItem.message = {
 					text: newLastMessage.text,
 					date: newLastMessage.date,
 					author_id: newLastMessage.authorId,
@@ -294,13 +325,14 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 					file: newLastMessage.files ? (newLastMessage.files.length > 0) : false,
 				};
 
-				recentItem.date_update = new Date();
+				newRecentItem.lastActivityDate = newLastMessage.date;
 			}
 			else
 			{
 				return;
 			}
 
+			const dialogItem = this.store.getters['dialoguesModel/getById'](dialogId);
 			await this.updateDialog(
 				dialogItem,
 				{
@@ -308,19 +340,16 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 						senderId: newLastMessage.authorId,
 						id: newLastMessage.id,
 					},
-					counter: dialogItem.counter === 0 ? 0 : dialogItem.counter - 1,
 				},
 			);
 
 			try
 			{
-				// eslint-disable-next-line promise/catch-or-return
-				this.store.dispatch('recentModel/set', [recentItem])
+				await this.store.dispatch('recentModel/set', [newRecentItem])
 					.then(() => {
-						Counters.update();
-
 						this.saveShareDialogCache();
-					});
+					})
+				;
 			}
 			catch (error)
 			{
@@ -356,8 +385,6 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 				dialogFieldsToUpdate.lastId = params.message.id;
 			}
 
-			dialogFieldsToUpdate.counter = params.counter;
-
 			if (Object.keys(dialogFieldsToUpdate).length > 0)
 			{
 				return this.store.dispatch('dialoguesModel/update', {
@@ -369,6 +396,15 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 			}
 
 			return Promise.resolve(false);
+		}
+
+		/**
+		 * @param {RecentModelState} recentItem
+		 * @returns {Promise<any>}
+		 */
+		async updateRecentItem(recentItem)
+		{
+			return this.store.dispatch('recentModel/set', [recentItem]);
 		}
 
 		/**

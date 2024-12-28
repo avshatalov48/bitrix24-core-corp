@@ -9,7 +9,6 @@ return [
 	'js' => 'dist/sign-settings.bundle.js',
 	'rel' => [
 		'main.core',
-		'sign.feature-storage',
 		'sign.v2.api',
 		'sign.v2.b2e.company-selector',
 		'sign.v2.b2e.document-send',

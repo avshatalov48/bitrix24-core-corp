@@ -7,16 +7,13 @@ use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\Security\Sign\BadSignatureException;
 use Bitrix\Main\Security\Sign\Signer;
+use Bitrix\Sign\Operation\Member\MakeB2eSignedFileName;
 use Bitrix\Sign\Service;
 use Bitrix\Sign\Operation\GetSignedB2eFileUrl;
 use Bitrix\Sign\Type\EntityFileCode;
-use Bitrix\Sign\Util\Request\File;
 
 class B2eSignedFile extends \Bitrix\Sign\Engine\Controller
 {
-	const FILE_NAME_SEPARATOR = '. ';
-	const FILE_NAME_DATE_FORMAT = 'Y-m-d';
-
 	public function configureActions(): array
 	{
 		$actionsConfiguration = parent::configureActions();
@@ -91,55 +88,10 @@ class B2eSignedFile extends \Bitrix\Sign\Engine\Controller
 			return [];
 		}
 
-		$title = $this->getDocumentName($member);
-		$dateSigned = $this->getDateSigned($member);
-		$memberName = $this->getMemberName($member);
-		$ext = $this->getFileExtension($entity);
-		$separator = self::FILE_NAME_SEPARATOR;
+		$result = (new MakeB2eSignedFileName($member, $entity))->launch();
 
-		$name = "{$title}{$separator}{$dateSigned}{$separator}{$memberName}.{$ext}";
-
-		return Main\Engine\Response\BFile::createByFileId($entity->fileId, $name)
+		return Main\Engine\Response\BFile::createByFileId($entity->fileId, $result->fileName)
 			->showInline(false)
-			;
-	}
-
-	private function getFileExtension(\Bitrix\Sign\Item\EntityFile $entity): string
-	{
-		$file = \CFile::GetFileArray($entity->fileId);
-
-		return \Bitrix\Main\IO\Path::getExtension($file['ORIGINAL_NAME']);
-	}
-
-	private function getMemberName(?\Bitrix\Sign\Item\Member $member): string
-	{
-		if ($member === null)
-		{
-			return '';
-		}
-
-		$memberService = Service\Container::instance()->getMemberService();
-		$memberRepresentedName = $memberService->getMemberRepresentedName($member);
-
-		return File::sanitizeFilename($memberRepresentedName) ?? '';
-	}
-
-	private function getDateSigned(?\Bitrix\Sign\Item\Member $member): string
-	{
-		$member->dateSigned->setDefaultTimeZone();
-
-		return $member->dateSigned->format(self::FILE_NAME_DATE_FORMAT);
-	}
-
-	private function getDocumentName(?\Bitrix\Sign\Item\Member $member): ?string
-	{
-		$document = Service\Container::instance()->getDocumentRepository()->getById($member->documentId);
-		$title = File::sanitizeFilename($document?->title ?? '');
-		if ($title === null)
-		{
-			$title = Main\Localization\Loc::getMessage('SIGN_DEFAULT_FILE_NAME') . '_' . File::getRandomName(5);
-		}
-
-		return $title;
+		;
 	}
 }

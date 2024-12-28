@@ -1,5 +1,5 @@
 import { Engine, type Role, RoleIndustry } from 'ai.engine';
-import { Type, Loc, BaseError, Runtime } from 'main.core';
+import { Type, Loc, BaseError, Runtime, Text } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { UI } from 'ui.notification';
 import { type EntityCatalog as EntityCatalogClass, type ItemData, type GroupData } from 'ui.entity-catalog';
@@ -14,6 +14,7 @@ import { getRolesDialogRoleItemWithStates } from './components/roles-dialog-role
 import { RolesDialogGroupItem } from './components/roles-dialog-group-item';
 import { RolesDialogSearchStub, RolesDialogSearchStubEvents } from './components/roles-dialog-search-stub';
 import { getRolesDialogEmptyGroupStubWithStates } from './components/roles-dialog-empty-group-stub';
+import { RolesDialogRolesLibrary } from './components/roles-dialog-roles-library';
 
 import './css/roles-dialog.css';
 
@@ -64,6 +65,7 @@ export type RolesDialogGroupDataEmptyStub = {
 const RECOMMENDED_GROUP_CODE = 'recommended';
 const RECENT_GROUP_CODE = 'recents';
 const FAVOURITE_GROUP_CODE = 'favorites';
+const CUSTOM_GROUP_CODE = 'customs';
 
 export class RolesDialog extends EventEmitter
 {
@@ -73,9 +75,11 @@ export class RolesDialog extends EventEmitter
 	#roles: Role[];
 	#recentRoles: Role[];
 	#favouriteRoles: Role[];
+	#customRoles: Role[];
 	#defaultRoleCode: string;
 	#industries: RoleIndustry[];
 	#selectedDefaultRoleHandler: Function | null;
+	#reloadDialogHandler: Function | null;
 	#selectedRoleCode: ?string;
 	#universalRole: Role;
 	#title: ?string;
@@ -218,6 +222,44 @@ export class RolesDialog extends EventEmitter
 			RolesDialogSearchStubEvents.CHOOSE_STANDARD_ROLE,
 			this.#selectedDefaultRoleHandler,
 		);
+
+		this.#reloadDialogHandler = this.#reloadDialog.bind(this);
+
+		EventEmitter.subscribe(
+			'update',
+			this.#reloadDialogHandler,
+		);
+	}
+
+	async #reloadDialog() {
+		const loader = new RolesDialogLoaderPopup();
+		let isShowLoader = true;
+
+		setTimeout(() => {
+			if (isShowLoader)
+			{
+				loader.show();
+			}
+		}, 300);
+		try
+		{
+			this.#entityCatalog.setItems([]);
+			this.#entityCatalog.setGroups([]);
+			await this.#loadData();
+		}
+		catch (e)
+		{
+			showRolesDialogErrorPopup();
+			console.error(e);
+		}
+		finally
+		{
+			isShowLoader = false;
+			loader.hide();
+			this.#entityCatalog.setItems(this.#getItemsData());
+			this.#entityCatalog.setGroups(this.#getItemGroupsFromIndustries());
+			EventEmitter.emit('update-complete');
+		}
 	}
 
 	#unsubscribeEvents(): void
@@ -232,6 +274,11 @@ export class RolesDialog extends EventEmitter
 			document,
 			RolesDialogSearchStubEvents.CHOOSE_STANDARD_ROLE,
 			this.#selectedDefaultRoleHandler,
+		);
+
+		EventEmitter.unsubscribe(
+			'update',
+			this.#reloadDialogHandler,
 		);
 	}
 
@@ -287,6 +334,7 @@ export class RolesDialog extends EventEmitter
 				RolesDialogGroupListFooter,
 				RolesDialogSearchStub,
 				RolesDialogEmptyGroupStub: getRolesDialogEmptyGroupStubWithStates(States),
+				RolesDialogRolesLibrary,
 			},
 			popupOptions: {
 				className: 'ai_roles-dialog_popup ui-entity-catalog__scope',
@@ -318,6 +366,7 @@ export class RolesDialog extends EventEmitter
 			[EntityCatalog.SLOT_GROUP]: '<RolesDialogGroupItem :groupData="groupSlotProps" />',
 			[EntityCatalog.SLOT_GROUP_LIST_HEADER]: '<RolesDialogGroupListHeader />',
 			[EntityCatalog.SLOT_MAIN_CONTENT_EMPTY_GROUP_STUB]: '<RolesDialogEmptyGroupStub />',
+			[EntityCatalog.SLOT_GROUP_LIST_FOOTER]: '<RolesDialogRolesLibrary />',
 		};
 
 		if (EntityCatalog.SLOT_MAIN_CONTENT_SEARCH_STUB)
@@ -335,7 +384,7 @@ export class RolesDialog extends EventEmitter
 			id: 'info-item-data',
 			title: Loc.getMessage('AI_COPILOT_ROLES_HELP_ITEM_TITLE'),
 			subtitle: Loc.getMessage('AI_COPILOT_ROLES_HELP_ITEM_DESCRIPTION'),
-			groupIds: this.#getAllIndustryCodesWithExcludes([FAVOURITE_GROUP_CODE]),
+			groupIds: this.#getAllIndustryCodesWithExcludes([FAVOURITE_GROUP_CODE, CUSTOM_GROUP_CODE]),
 			customData: {
 				isInfoItem: true,
 			},
@@ -416,6 +465,7 @@ export class RolesDialog extends EventEmitter
 		this.#industries.unshift(
 			this.#getRecentRoleIndustry(),
 			this.#getFavouriteRoleIndustry(),
+			this.#getCustomRoleIndustry(),
 			this.#getRecommendedRoleIndustry(),
 		);
 
@@ -427,8 +477,9 @@ export class RolesDialog extends EventEmitter
 
 		this.#recentRoles = result.data.recents;
 		this.#favouriteRoles = result.data.favorites;
+		this.#customRoles = result.data.customs;
 
-		this.#roles = [...this.#roles];
+		this.#roles = [...this.#roles, ...this.#customRoles];
 
 		this.#selectedRoleCode = this.#selectedRoleCode || null;
 	}
@@ -457,6 +508,14 @@ export class RolesDialog extends EventEmitter
 		};
 	}
 
+	#getCustomRoleIndustry(): RoleIndustry
+	{
+		return {
+			code: CUSTOM_GROUP_CODE,
+			name: Loc.getMessage('AI_COPILOT_ROLES_CUSTOM_GROUP'),
+		};
+	}
+
 	#getItemsData(): RolesDialogItemData[]
 	{
 		let selectedRole = null;
@@ -477,6 +536,11 @@ export class RolesDialog extends EventEmitter
 			if (this.#favouriteRoles.findIndex((favouriteRole) => favouriteRole.code === role.code) > -1)
 			{
 				groupIds.push(FAVOURITE_GROUP_CODE);
+			}
+
+			if (this.#customRoles.findIndex((customRole) => customRole.code === role.code) > -1)
+			{
+				groupIds.push(CUSTOM_GROUP_CODE);
 			}
 
 			if (role.code === this.#selectedRoleCode)
@@ -506,7 +570,7 @@ export class RolesDialog extends EventEmitter
 	#getUniversalRoleItemData(): ItemData
 	{
 		const role = this.#universalRole;
-		const groupIds = [...this.#getAllIndustryCodesWithExcludes([FAVOURITE_GROUP_CODE])];
+		const groupIds = [...this.#getAllIndustryCodesWithExcludes([FAVOURITE_GROUP_CODE, CUSTOM_GROUP_CODE])];
 
 		return this.#getItemDataFromRole(role, groupIds);
 	}
@@ -526,6 +590,11 @@ export class RolesDialog extends EventEmitter
 			if (industry.code === FAVOURITE_GROUP_CODE)
 			{
 				return this.#getFavouriteItemGroupData(isSelectedRole);
+			}
+
+			if (industry.code === CUSTOM_GROUP_CODE)
+			{
+				return this.#getCustomItemGroupData(isSelectedRole);
 			}
 
 			return this.#getItemGroupDataFromIndustry(industry, isSelectedRole);
@@ -584,6 +653,19 @@ export class RolesDialog extends EventEmitter
 				emptyStubData: {
 					title: Loc.getMessage('AI_COPILOT_ROLES_EMPTY_FAVOURITE_GROUP_TITLE'),
 					description: Loc.getMessage('AI_COPILOT_ROLES_EMPTY_FAVOURITE_GROUP'),
+				},
+			},
+		};
+	}
+
+	#getCustomItemGroupData(isSelected: boolean = false): RolesDialogGroupData
+	{
+		return {
+			...this.#getItemGroupDataFromIndustry(this.#getCustomRoleIndustry(), isSelected),
+
+			customData: {
+				emptyStubData: {
+					title: Loc.getMessage('AI_COPILOT_ROLES_EMPTY_CUSTOM_GROUP_TITLE'),
 				},
 			},
 		};
@@ -699,7 +781,7 @@ export class RolesDialog extends EventEmitter
 
 				UI.Notification.Center.notify({
 					content: Loc.getMessage('AI_COPILOT_ROLES_ADD_TO_FAVOURITE_NOTIFICATION_SUCCESS', {
-						'#ROLE#': roleName,
+						'#ROLE#': Text.encode(roleName),
 					}),
 				});
 			})
@@ -722,7 +804,7 @@ export class RolesDialog extends EventEmitter
 
 				UI.Notification.Center.notify({
 					content: Loc.getMessage('AI_COPILOT_ROLES_REMOVE_FROM_FAVOURITE_NOTIFICATION_SUCCESS', {
-						'#ROLE#': roleName,
+						'#ROLE#': Text.encode(roleName),
 					}),
 				});
 			})

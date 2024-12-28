@@ -2,6 +2,8 @@
 
 namespace Bitrix\BIConnector\Superset\Filter\Provider;
 
+use Bitrix\BIConnector\Superset\Dashboard\UrlParameter\ScopeMap;
+use Bitrix\BIConnector\Superset\Scope\ScopeService;
 use Bitrix\Main\Filter\EntityDataProvider;
 use Bitrix\Main\Filter\Settings;
 use Bitrix\Main\Localization\Loc;
@@ -93,6 +95,12 @@ class DashboardDataProvider extends EntityDataProvider
 			]),
 			'SCOPE' => $this->createField('SCOPE.SCOPE_CODE', [
 				'name' => Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_FILTER_TITLE_SCOPE'),
+				'default' => true,
+				'partial' => true,
+				'type' => 'entity_selector',
+			]),
+			'URL_PARAMS' => $this->createField('URL_PARAMS.CODE', [
+				'name' => Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_FILTER_TITLE_URL_PARAMS'),
 				'default' => true,
 				'partial' => true,
 				'type' => 'entity_selector',
@@ -213,6 +221,66 @@ class DashboardDataProvider extends EntityDataProvider
 						],
 						'dropdownMode' => true,
 						'compactView' => true,
+						'showAvatars' => false,
+						'height' => 200,
+					],
+				],
+			];
+		}
+
+		if ($fieldID === 'URL_PARAMS.CODE')
+		{
+			$items = [];
+			foreach (ScopeMap::getAvailableParameters() as $parameter)
+			{
+				$parameterScopes = ScopeMap::getParameterScopeCodes($parameter);
+
+				if (in_array(ScopeMap::GLOBAL_SCOPE, $parameterScopes, true))
+				{
+					$supertitle = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_FILTER_PARAMS_SCOPE_SELECTOR_GLOBAL');
+				}
+				else
+				{
+					$copeNames = [];
+					foreach ($parameterScopes as $parameterScope)
+					{
+						$copeNames[] = ScopeService::getInstance()->getScopeName($parameterScope);
+					}
+
+					$supertitle = implode(', ', $copeNames);
+				}
+
+				$items[] = [
+					'id' => $parameter->code(),
+					'entityId' => 'biconnector-superset-params',
+					'title' => $parameter->title(),
+					'supertitle' => $supertitle,
+					'tabs' => 'params',
+				];
+				$preselectedItems[] = ['biconnector-superset-params', $parameter->code()];
+			}
+
+			return [
+				'params' => [
+					'multiple' => 'Y',
+					'dialogOptions' => [
+						'context' => 'filter-biconnector-superset-params',
+						'multiple' => 'Y',
+						'entities' => [
+							[
+								'id' => 'biconnector-superset-params',
+							],
+						],
+						'tabs' => [
+							[
+								'id' => 'params',
+								'title' => Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_FILTER_TITLE_URL_PARAMS'),
+							]
+						],
+						'items' => $items,
+						'preselectedItems' => $preselectedItems,
+						'dropdownMode' => true,
+						'compactView' => false,
 						'showAvatars' => false,
 						'height' => 200,
 					],

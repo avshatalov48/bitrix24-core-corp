@@ -3,11 +3,12 @@
 return [
 	'extensions' => [
 		'alert',
+		'bbcode/formatter/plain-text-formatter',
 		'layout/ui/collapsible-text',
 		'layout/ui/fields/file',
 		'layout/ui/fields/theme',
 		'layout/ui/fields/theme/air/elements/add-button',
-		'layout/ui/user/avatar',
+		'layout/ui/user/user-name',
 		'loc',
 		'statemanager/redux/connect',
 		'statemanager/redux/slices/users',
@@ -16,6 +17,7 @@ return [
 		'tasks:statemanager/redux/slices/tasks',
 		'tasks:statemanager/redux/slices/tasks-results',
 		'tokens',
+		'ui-system/blocks/avatar',
 		'ui-system/blocks/icon',
 		'ui-system/layout/card',
 		'ui-system/typography/text',

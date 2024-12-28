@@ -18,6 +18,7 @@ use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
 use Bitrix\Crm\Tracking;
 use Bitrix\Main;
 use Bitrix\Main\Application;
+use Bitrix\Main\Web\Json;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -42,7 +43,7 @@ if(!function_exists('__CrmDealDetailsEndJsonResonse'))
 		Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 		if(!empty($result))
 		{
-			echo CUtil::PhpToJSObject($result);
+			echo Json::encode(\Bitrix\Crm\Component\Utils\JsonCompatibleConverter::convert((array)$result));
 		}
 		if(!defined('PUBLIC_AJAX_MODE'))
 		{
@@ -282,7 +283,7 @@ elseif($action === 'SAVE')
 	{
 		try
 		{
-			$clientData = Main\Web\Json::decode($_POST['CLIENT_DATA']);
+			$clientData = Json::decode($_POST['CLIENT_DATA']);
 		}
 		catch (Main\SystemException $e)
 		{
@@ -492,7 +493,7 @@ elseif($action === 'SAVE')
 	{
 		try
 		{
-			$productRows = \Bitrix\Main\Web\Json::decode($_POST['DEAL_PRODUCT_DATA']);
+			$productRows = Json::decode($_POST['DEAL_PRODUCT_DATA']);
 		}
 		catch (\Bitrix\Main\ArgumentException $e)
 		{
@@ -566,7 +567,7 @@ elseif($action === 'SAVE')
 		{
 			try
 			{
-				$settings = \Bitrix\Main\Web\Json::decode($_POST['DEAL_PRODUCT_DATA_SETTINGS']);
+				$settings = Json::decode($_POST['DEAL_PRODUCT_DATA_SETTINGS']);
 			}
 			catch (\Bitrix\Main\ArgumentException $e)
 			{
@@ -1095,15 +1096,18 @@ elseif($action === 'SAVE')
 
 			if (
 				$ID > 0
-				&& \CCrmSaleHelper::isProcessInventoryManagement()
-				&& isset($itemBeforeSave, $inventoryManagementCheckResult)
-				&& $inventoryManagementCheckResult->isSuccess()
+				&& isset($itemBeforeSave)
+				&& $factory
 			)
 			{
-				if ($factory)
+				$itemAfterSave = $factory->getItem($ID);
+				if ($itemAfterSave)
 				{
-					$itemAfterSave = $factory->getItem($ID);
-					if ($itemAfterSave)
+					if (
+						isset($inventoryManagementCheckResult)
+						&& \CCrmSaleHelper::isProcessInventoryManagement()
+						&& $inventoryManagementCheckResult->isSuccess()
+					)
 					{
 						$processInventoryManagementResult =
 							(new Crm\Reservation\Component\InventoryManagement($itemBeforeSave, $itemAfterSave))
@@ -1116,18 +1120,7 @@ elseif($action === 'SAVE')
 							]);
 						}
 					}
-				}
-			}
 
-			if (
-				$ID > 0
-				&& isset($itemBeforeSave)
-				&& $factory
-			)
-			{
-				$itemAfterSave = $factory->getItem($ID);
-				if ($itemAfterSave)
-				{
 					(new Crm\Service\Operation\Action\CreateFinalSummaryTimelineHistoryItem())
 						->setItemBeforeSave($itemBeforeSave)
 						->process($itemAfterSave)

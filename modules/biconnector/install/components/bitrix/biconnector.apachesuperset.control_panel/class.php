@@ -7,13 +7,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\BIConnector\Access\AccessController;
 use Bitrix\BIConnector\Access\ActionDictionary;
+use Bitrix\BIConnector\Configuration\Feature;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
 use Bitrix\BIConnector\Superset\MarketDashboardManager;
-use Bitrix\BIConnector\Superset\UI\UIHelper;
-use Bitrix\Bitrix24\Feature;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\UI\Buttons\JsCode;
 
 class ApacheSupersetControlPanel extends CBitrixComponent
 {
@@ -52,6 +50,27 @@ class ApacheSupersetControlPanel extends CBitrixComponent
 			],
 		];
 
+		if (!Feature::isExternalEntitiesEnabled())
+		{
+			$menuItems[] = [
+				'ID' => 'BI_ANALYTICS',
+				'TEXT' => Loc::getMessage('BICONNECTOR_CONTROL_PANEL_MENU_ITEM_ANALYTICS'),
+				'IS_LOCKED' => true,
+				'ON_CLICK' => <<<JS
+						top.BX.UI.InfoHelper.show('limit_BI_analyst_workplace');
+					JS,
+			];
+		}
+		elseif (AccessController::getCurrent()->check(ActionDictionary::ACTION_BIC_EXTERNAL_DASHBOARD_CONFIG))
+		{
+			$menuItems[] = [
+				'ID' => 'BI_ANALYTICS',
+				'TEXT' => Loc::getMessage('BICONNECTOR_CONTROL_PANEL_MENU_ITEM_ANALYTICS'),
+				'ON_CLICK' => 'BX.BIConnector.DashboardManager.openDatasetListSlider()',
+				'IS_DISABLED' => false,
+			];
+		}
+
 		$settingsItems = [];
 		if (AccessController::getCurrent()->check(ActionDictionary::ACTION_BIC_SETTINGS_ACCESS))
 		{
@@ -65,7 +84,7 @@ class ApacheSupersetControlPanel extends CBitrixComponent
 		if (AccessController::getCurrent()->check(ActionDictionary::ACTION_BIC_SETTINGS_EDIT_RIGHTS))
 		{
 			$menuTitle = Loc::getMessage('BICONNECTOR_CONTROL_PANEL_MENU_ITEM_RIGHTS_SETTINGS');
-			if (Loader::includeModule('bitrix24') && !Feature::isFeatureEnabled('bi_constructor_rights'))
+			if (!Feature::isBiBuilderRightsEnabled())
 			{
 				$settingsItems[] = [
 					'ID' => 'RIGHTS_SETTINGS',

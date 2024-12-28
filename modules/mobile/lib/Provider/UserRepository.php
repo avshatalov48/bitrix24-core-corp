@@ -2,11 +2,16 @@
 
 namespace Bitrix\Mobile\Provider;
 
-use Bitrix\Main\UserTable;
+use Bitrix\Extranet\Service\ServiceContainer;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Type\Collection;
+use Bitrix\Main\UserTable;
 
 class UserRepository
 {
+	static private ?array $intranetUsers = null;
+	static private array $usersData = [];
+
 	public static function getDefaultFieldsForSelect(): array
 	{
 		return [
@@ -19,6 +24,7 @@ class UserRepository
 			'WORK_POSITION',
 			'EMAIL',
 			'WORK_PHONE',
+			'UF_DEPARTMENT',
 		];
 	}
 
@@ -26,7 +32,7 @@ class UserRepository
 	 * @param int[] $userIds
 	 * @return CommonUserDto[]
 	 */
-	public static function getByIds(array $userIds, ?array $selectByFields = null): array
+	public static function getByIds(array $userIds): array
 	{
 		$userIds = array_values(array_unique(array_filter(array_map('intval', $userIds))));
 
@@ -35,37 +41,29 @@ class UserRepository
 			return [];
 		}
 
-		$selectByFields ??= static::getDefaultFieldsForSelect();
-
-		$usersData = [];
-		$userResult = UserTable::getList([
-			'select' => $selectByFields,
-			'filter' => ['ID' => $userIds],
-		]);
-		while ($user = $userResult->fetch())
+		$userIdsToFetch = array_diff($userIds, array_keys(static::$usersData));
+		if (!empty($userIdsToFetch))
 		{
-			$usersData[] = self::createUserDto($user);
+			$userResult = UserTable::getList([
+				'select' => static::getDefaultFieldsForSelect(),
+				'filter' => ['ID' => $userIdsToFetch],
+			]);
+			while ($user = $userResult->fetch())
+			{
+				static::$usersData[(int)$user['ID']] = $user;
+			}
 		}
 
-		return $usersData;
-	}
-
-	static private function isAdmin($userId)
-	{
-		if (
-			Loader::IncludeModule('bitrix24')
-			&& class_exists('CBitrix24')
-			&& method_exists('CBitrix24', 'IsPortalAdmin')
-		)
+		$users = [];
+		foreach ($userIds as $userId)
 		{
-			return \CBitrix24::IsPortalAdmin($userId);
+			if (isset(static::$usersData[$userId]))
+			{
+				$users[] = static::createUserDto(static::$usersData[$userId]);
+			}
 		}
 
-		$userGroups = \CUser::GetUserGroup($userId);
-
-		\Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($userGroups);
-
-		return in_array(1, $userGroups, true);
+		return $users;
 	}
 
 	public static function createUserDto(array $user): CommonUserDto
@@ -81,6 +79,7 @@ class UserRepository
 
 		// todo: remove mock
 		$user['actions'] = ['delete', 'fire'];
+		$mobileContext = new \Bitrix\Mobile\Context();
 
 		return new CommonUserDto(
 			id: $userId,
@@ -96,9 +95,56 @@ class UserRepository
 			avatarSizeOriginal: $originalAvatar,
 			avatarSize100: $resizedAvatar100,
 			isAdmin: self::isAdmin($userId),
+			isCollaber: self::isCollaber($userId),
+			isExtranet: self::isExtranet($userId),
 			personalMobile: $user['PERSONAL_MOBILE'] ?? null,
 			personalPhone: $user['PERSONAL_PHONE'] ?? null,
 		);
+	}
+
+	private static function isCollaber(int $userId): bool
+	{
+		if (!Loader::includeModule('extranet') || $userId <= 0)
+		{
+			return false;
+		}
+
+		$container = class_exists(ServiceContainer::class) ? ServiceContainer::getInstance() : null;
+
+		return $container?->getCollaberService()?->isCollaberById($userId) ?? false;
+	}
+
+	private static function isExtranet(int $userId): bool
+	{
+		if (!Loader::includeModule('extranet'))
+		{
+			return false;
+		}
+
+		if (!is_array(self::$intranetUsers))
+		{
+			self::$intranetUsers = \CExtranet::GetIntranetUsers();
+			Collection::normalizeArrayValuesByInt(self::$intranetUsers);
+		}
+
+		return !in_array($userId, self::$intranetUsers, true);
+	}
+
+	private static function isAdmin($userId): bool
+	{
+		if (
+			Loader::IncludeModule('bitrix24')
+			&& class_exists('CBitrix24')
+			&& method_exists('CBitrix24', 'IsPortalAdmin')
+		)
+		{
+			return \CBitrix24::IsPortalAdmin($userId);
+		}
+
+		$userGroups = \CUser::GetUserGroup($userId);
+		Collection::normalizeArrayValuesByInt($userGroups);
+
+		return in_array(1, $userGroups, true);
 	}
 
 	private static function getUserFullName(array $user): string

@@ -215,6 +215,11 @@ trait ActivityTrait
 		return EntityActivities::ACTIVITY_STAGE_ID;
 	}
 
+	public function getDbStageFieldName(): string
+	{
+		return 'STAGE_ID';
+	}
+
 	public function fillStageTotalSums(array $filter, array $runtime, array &$stages): void
 	{
 		foreach ($stages as &$stage)

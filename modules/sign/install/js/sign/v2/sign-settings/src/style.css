@@ -27,7 +27,7 @@
 .sign-settings {
 	display: flex;
 	position: relative;
-	padding: 20px 33px 33px 33px;
+	padding: 28px 21px 28px 24px;
 	min-height: 100vh;
 	box-sizing: border-box;
 	background: url(images/background-one.svg) top right no-repeat,
@@ -98,4 +98,8 @@
 	position: relative;
 	height: 100vh;
 	width: 100%;
+}
+
+.sign-settings .sign-preview {
+	max-width: 446px;
 }

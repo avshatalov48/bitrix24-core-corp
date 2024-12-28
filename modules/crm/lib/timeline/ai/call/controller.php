@@ -122,6 +122,50 @@ final class Controller extends Timeline\Controller
 		);
 	}
 
+	public function onStartCallScoring(ItemIdentifier $identifier, int $activityId, int $userId = null): void
+	{
+		LogMessageController::getInstance()->onCreate(
+			[
+				'ENTITY_TYPE_ID' => $identifier->getEntityTypeId(),
+				'ENTITY_ID' => $identifier->getEntityId(),
+				'ASSOCIATED_ENTITY_TYPE_ID' => CCrmOwnerType::Activity,
+				'ASSOCIATED_ENTITY_ID' => $activityId,
+			],
+			LogMessageType::AI_CALL_START_SCORING,
+			$userId
+		);
+	}
+
+	public function onFinishCallScoring(ItemIdentifier $identifier, int $activityId, array $settings = [], int $userId = null): void
+	{
+		$this->onCreate(
+			[
+				'ENTITY_TYPE_ID' => $identifier->getEntityTypeId(),
+				'ENTITY_ID' => $identifier->getEntityId(),
+				'ASSOCIATED_ENTITY_TYPE_ID' => CCrmOwnerType::Activity,
+				'ASSOCIATED_ENTITY_ID' => $activityId,
+				'SETTINGS' => $settings,
+			],
+			CategoryType::CALL_SCORING_FINISHED,
+			$userId
+		);
+	}
+
+	public function onCallScoringEmptyResult(ItemIdentifier $identifier, int $activityId, array $settings = [], int $userId = null): void
+	{
+		LogMessageController::getInstance()->onCreate(
+			[
+				'ENTITY_TYPE_ID' => $identifier->getEntityTypeId(),
+				'ENTITY_ID' => $identifier->getEntityId(),
+				'ASSOCIATED_ENTITY_TYPE_ID' => CCrmOwnerType::Activity,
+				'ASSOCIATED_ENTITY_ID' => $activityId,
+				'SETTINGS' => $settings,
+			],
+			LogMessageType::AI_CALL_SCORING_EMPTY,
+			$userId
+		);
+	}
+
 	public function onLaunchError(ItemIdentifier $identifier, int $activityId, array $settings = [], int $userId = null): void
 	{
 		LogMessageController::getInstance()->onCreate(

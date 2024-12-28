@@ -43,6 +43,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		ComponentCode,
 		OpenRequest,
 		MessengerInitRestMethod,
+		Analytics,
+		ViewName,
 	} = require('im/messenger/const');
 
 	const core = new ChatApplication({
@@ -67,8 +69,11 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	serviceLocator.add('messenger-init-service', chatInitService);
 
 	const { Feature } = require('im/messenger/lib/feature');
+	const { Counters } = require('im/messenger/lib/counters');
 
 	const {
+		ChatApplicationPullHandler,
+		ChatCounterPullHandler,
 		ChatMessagePullHandler,
 		ChatFilePullHandler,
 		ChatDialogPullHandler,
@@ -78,6 +83,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		NotificationPullHandler,
 		OnlinePullHandler,
 	} = require('im/messenger/provider/pull/chat');
+	const { CollabInfoPullHandler } = require('im/messenger/provider/pull/collab');
 	const { PlanLimitsPullHandler } = require('im/messenger/provider/pull/plan-limits');
 	const { SidebarPullHandler } = require('im/messenger/provider/pull/sidebar');
 
@@ -89,7 +95,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
 	const { ChatAssets } = require('im/messenger/controller/dialog/lib/assets');
 	const { ChatCreator } = require('im/messenger/controller/chat-creator');
-	const { Counters } = require('im/messenger/lib/counters');
 	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
 	const { Promotion } = require('im/messenger/lib/promotion');
 	const { PushHandler } = require('im/messenger/provider/push');
@@ -97,8 +102,14 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { RecentSelector } = require('im/messenger/controller/search/experimental');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
 	const { MessengerBase } = require('im/messenger/component/messenger-base');
-	const { SyncFillerChat, SyncFillerDatabase, ComponentCodeService } = require('im/messenger/provider/service');
-	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
+	const {
+		SyncFillerChat,
+		SyncFillerDatabase,
+		ComponentCodeService,
+		AnalyticsService,
+	} = require('im/messenger/provider/service');
+
+	const { CreateChannel } = require('im/messenger/controller/chat-composer');
 	/* endregion import */
 
 	class Messenger extends MessengerBase
@@ -215,6 +226,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.recent = new ChatRecent({
 				view: new RecentView({
 					ui: dialogList,
+					viewName: ViewName.recent,
 				}),
 			});
 
@@ -246,11 +258,10 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.closeChatSearch = this.closeChatSearch.bind(this);
 			this.openChatCreate = this.openChatCreate.bind(this);
 			this.openChannelCreate = this.openChannelCreate.bind(this);
+			this.openCollabCreate = this.openCollabCreate.bind(this);
 			this.openNotifications = this.openNotifications.bind(this);
 			this.refresh = this.refresh.bind(this);
 			this.destroyDialog = this.destroyDialog.bind(this);
-			this.uploadFiles = this.uploadFiles.bind(this);
-			this.cancelFileUpload = this.cancelFileUpload.bind(this);
 
 			this.onChatDialogInitComplete = this.onChatDialogInitComplete.bind(this);
 			this.onChatDialogCounterChange = this.onChatDialogCounterChange.bind(this);
@@ -292,11 +303,10 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.addCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
 			BX.addCustomEvent(EventType.messenger.createChat, this.openChatCreate);
 			BX.addCustomEvent(EventType.messenger.createChannel, this.openChannelCreate);
+			BX.addCustomEvent(EventType.messenger.createCollab, this.openCollabCreate);
 			BX.addCustomEvent(EventType.messenger.openNotifications, this.openNotifications);
 			BX.addCustomEvent(EventType.messenger.refresh, this.refresh);
 			BX.addCustomEvent(EventType.messenger.destroyDialog, this.destroyDialog);
-			BX.addCustomEvent(EventType.messenger.uploadFiles, this.uploadFiles);
-			BX.addCustomEvent(EventType.messenger.cancelFileUpload, this.cancelFileUpload);
 		}
 
 		unsubscribeMessengerEvents()
@@ -308,11 +318,11 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.removeCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
 			BX.removeCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
 			BX.removeCustomEvent(EventType.messenger.createChat, this.openChatCreate);
+			BX.removeCustomEvent(EventType.messenger.createChannel, this.openChannelCreate);
+			BX.removeCustomEvent(EventType.messenger.createCollab, this.openCollabCreate);
 			BX.removeCustomEvent(EventType.messenger.openNotifications, this.openNotifications);
 			BX.removeCustomEvent(EventType.messenger.refresh, this.refresh);
 			BX.removeCustomEvent(EventType.messenger.destroyDialog, this.destroyDialog);
-			BX.removeCustomEvent(EventType.messenger.uploadFiles, this.uploadFiles);
-			BX.removeCustomEvent(EventType.messenger.cancelFileUpload, this.cancelFileUpload);
 		}
 
 		/**
@@ -419,7 +429,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		initPullHandlers()
 		{
+			BX.PULL.subscribe(new ChatApplicationPullHandler());
 			BX.PULL.subscribe(new ChatMessagePullHandler());
+			BX.PULL.subscribe(new ChatCounterPullHandler());
 			BX.PULL.subscribe(new ChatFilePullHandler());
 			BX.PULL.subscribe(new ChatDialogPullHandler());
 			BX.PULL.subscribe(new ChatUserPullHandler());
@@ -429,6 +441,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.PULL.subscribe(new OnlinePullHandler());
 			BX.PULL.subscribe(new SidebarPullHandler());
 			BX.PULL.subscribe(new PlanLimitsPullHandler());
+			BX.PULL.subscribe(new CollabInfoPullHandler());
 		}
 
 		/**
@@ -743,7 +756,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					MessengerEmitter.emit(EventType.navigation.changeTab, componentCode, ComponentCode.imNavigation);
 				}
 
-				this.visibilityManager.checkIsDialogVisible(openDialogOptions.dialogId)
+				this.visibilityManager.checkIsDialogVisible({ dialogId: openDialogOptions.dialogId })
 					.then((isVisible) => {
 						if (isVisible)
 						{
@@ -836,6 +849,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		openChatCreate()
 		{
 			Logger.log('EventType.messenger.createChat');
+
 			if (this.dialogCreator !== null)
 			{
 				this.dialogCreator.open();
@@ -849,11 +863,39 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		openChannelCreate()
 		{
 			Logger.log('EventType.messenger.openChannelCreate');
+
+			AnalyticsService.getInstance().sendStartCreation({
+				section: Analytics.Section.channelTab,
+				category: Analytics.Category.channel,
+				type: Analytics.Type.channel,
+			});
+
+			if (Feature.isChatComposerSupported)
+			{
+				const createChannel = new CreateChannel();
+				createChannel.open();
+
+				return;
+			}
+
 			if (this.dialogCreator !== null)
 			{
 				this.dialogCreator.createChannelDialog();
+			}
+		}
 
-				return;
+		async openCollabCreate()
+		{
+			Logger.log('EventType.messenger.openCollabCreate');
+			if (this.dialogCreator !== null)
+			{
+				AnalyticsService.getInstance().sendStartCreation({
+					section: Analytics.Section.collabTab,
+					category: Analytics.Category.collab,
+					type: Analytics.Type.collab,
+				});
+
+				await this.dialogCreator.createCollab();
 			}
 		}
 
@@ -913,46 +955,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					Logger.error(error);
 				})
 			;
-		}
-
-		uploadFiles(options)
-		{
-			Logger.log('EventType.messenger.uploadFiles', options);
-
-			const { dialogId, fileList } = options;
-			const deviceFileList = [];
-			const diskFileList = [];
-			fileList.forEach((file) => {
-				if (file.dataAttributes)
-				{
-					diskFileList.push(file);
-
-					return;
-				}
-
-				deviceFileList.push(file);
-			});
-
-			if (dialogId && Type.isArrayFilled(deviceFileList))
-			{
-				this.sendingService.sendFilesFromDevice(dialogId, deviceFileList);
-			}
-
-			if (dialogId && Type.isArrayFilled(diskFileList))
-			{
-				this.sendingService.sendFilesFromDisk(dialogId, diskFileList);
-			}
-		}
-
-		cancelFileUpload(options)
-		{
-			Logger.log('EventType.messenger.cancelFileUpload', options);
-
-			const { messageId, fileId } = options;
-			if (Type.isStringFilled(messageId) && Type.isStringFilled(fileId))
-			{
-				this.sendingService.cancelFileUpload(messageId, fileId);
-			}
 		}
 
 		/**

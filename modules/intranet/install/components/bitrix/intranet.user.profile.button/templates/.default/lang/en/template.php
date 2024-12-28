@@ -50,6 +50,11 @@ $MESS["INTRANET_USER_PROFILE_QRCODE_BODY2"] = "Use your personal QR code for fas
 <br><br>
 <b>Never show this code to anyone.</b> It contains your personal login information.";
 $MESS["INTRANET_USER_PROFILE_QRCODE_TITLE2"] = "Log in to mobile Bitrix24";
+$MESS["INTRANET_USER_PROFILE_SIGNDOCUMENT_CREATE_DOCUMENT"] = "Create";
+$MESS["INTRANET_USER_PROFILE_SIGNDOCUMENT_HCMLINK_SALARY_VACATION"] = "View my payslips and vacation";
+$MESS["INTRANET_USER_PROFILE_SIGNDOCUMENT_HCMLINK_SALARY_VACATION_DISABLED"] = "To view your payslips and vacations, please ask that your supervisor or Bitrix24 administrator configure this area. [LINK]Learn more[/LINK]";
+$MESS["INTRANET_USER_PROFILE_SIGNDOCUMENT_TITLE"] = "My documents";
+$MESS["INTRANET_USER_PROFILE_SIGNDOCUMENT_TITLE_HINT"] = "Vacation requests and other documentation.";
 $MESS["INTRANET_USER_PROFILE_SOON"] = "Soon";
 $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_BUTTON"] = "How do I measure it?";
 $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT"] = "stress";
@@ -62,6 +67,7 @@ $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_SHARE_LINK"] = "copy to the Clip
 $MESS["INTRANET_USER_PROFILE_TURNED_ON"] = "Connected";
 $MESS["INTRANET_USER_PROFILE_TURN_ON"] = "Connect";
 $MESS["INTRANET_USER_PROFILE_admin"] = "Administrator";
+$MESS["INTRANET_USER_PROFILE_collaber"] = "Guest";
 $MESS["INTRANET_USER_PROFILE_email"] = "Email user";
 $MESS["INTRANET_USER_PROFILE_extranet"] = "Extranet";
 $MESS["INTRANET_USER_PROFILE_fired"] = "Dismissed";

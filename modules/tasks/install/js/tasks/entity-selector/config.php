@@ -30,6 +30,13 @@ return [
 				],
 			],
 			[
+				'id' => 'task-with-id',
+				'options' => [
+					'dynamicLoad' => true,
+					'dynamicSearch' => true,
+				],
+			],
+			[
 				'id' => 'task-tag',
 				'options' => [
 					'dynamicLoad' => true,

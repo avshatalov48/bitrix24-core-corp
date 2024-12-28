@@ -10,6 +10,7 @@ namespace Bitrix\Tasks\Access\Rule;
 
 use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Main\Loader;
+use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\Rule\Traits\SubordinateTrait;
 use Bitrix\Tasks\Internals\Task\Status;

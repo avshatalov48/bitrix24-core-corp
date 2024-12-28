@@ -1,0 +1,16 @@
+.intranet-header--with-controls .header-item {
+	margin-left: 15px;
+	display: flex;
+	align-items: center;
+}
+
+.intranet-header--with-controls .header-item .intranet-button-create-portal {
+	background: #14bfd5;
+	border-color: #14bfd5;
+}
+
+.intranet-header--with-controls .header-item .intranet-button-create-portal:hover,
+.intranet-header--with-controls .header-item .intranet-button-create-portal:active {
+	background: #2cd4ea;
+	border-color: #2cd4ea;
+}

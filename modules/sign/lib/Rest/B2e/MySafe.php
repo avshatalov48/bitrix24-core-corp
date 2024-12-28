@@ -124,7 +124,7 @@ final class MySafe extends IRestService
 			],
 		]);
 
-		$memberCollection = $memberRepository->listB2eMembersWithResultFiles(
+		$memberCollection = $memberRepository->listB2eMembersWithResultFilesForMySafe(
 			self::preparePermissionFilterForMySafe(),
 			$limit,
 			$offset

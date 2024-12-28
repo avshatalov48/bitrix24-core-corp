@@ -14,12 +14,14 @@ use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\Rule\Traits\AssignTrait;
+use Bitrix\Tasks\Access\Rule\Traits\FlowTrait;
+use Bitrix\Tasks\Flow\Access\FlowModel;
 use Bitrix\Tasks\Flow\Option\OptionDictionary;
 use Bitrix\Tasks\Flow\Option\OptionService;
 
 class TaskChangeResponsibleRule extends \Bitrix\Main\Access\Rule\AbstractRule
 {
-	use AssignTrait;
+	use AssignTrait, FlowTrait;
 
 	public function execute(AccessibleItem $task = null, $params = null): bool
 	{
@@ -105,6 +107,11 @@ class TaskChangeResponsibleRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			{
 				return true;
 			}
+		}
+
+		if ($this->canUserUpdateTaskAssigneeInFlow($task, $this->user->getUserId()))
+		{
+			return true;
 		}
 
 		return false;

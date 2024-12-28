@@ -49,7 +49,7 @@ $settings = CTimeManUser::instance()->GetSettings();
 	<span class="menu-user-timeman-status-title-expired"><?=GetMessage("TM_STATUS_EXPIRED")?></span>
 	<script>
 		BX.message({
-			TM_NOTIF_EXPIRED : '<?=GetMessageJS("TM_NOTIF_EXPIRED")?>',
+			TM_NOTIF_EXPIRED_MSGVER_1 : '<?=GetMessageJS("TM_NOTIF_EXPIRED_MSGVER_1")?>',
 			TM_NOTIF_START : '<?=GetMessageJS("TM_NOTIF_START")?>'
 		});
 		BX.ready(function(){

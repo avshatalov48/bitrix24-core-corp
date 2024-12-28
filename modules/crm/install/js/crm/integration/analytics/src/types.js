@@ -120,3 +120,40 @@ export type AICallParsingEvent = {
 	p2: 'callDirection_incoming' | 'callDirection_outgoing',
 	p4: 'duration_',
 };
+
+export type BlockCloseEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_KANBAN_OPERATIONS,
+	event: Dictionary.EVENT_BLOCK_CLOSE,
+	type: Dictionary.TYPE_CONTACT_CENTER | Dictionary.TYPE_ITEM_INDUSTRY,
+	c_section: Dictionary.SECTION_LEAD | Dictionary.SECTION_DEAL,
+	c_sub_section: Dictionary.SUB_SECTION_KANBAN | Dictionary.SUB_SECTION_GRID_ROW_MENU,
+	c_element: Dictionary.ELEMENT_HIDE_CONTACT_CENTER | Dictionary.ELEMENT_CLOSE_BUTTON,
+	p1: CrmMode,
+}
+
+export type BlockEnableEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_KANBAN_OPERATIONS,
+	event: Dictionary.EVENT_BLOCK_ENABLE,
+	type: Dictionary.TYPE_CONTACT_CENTER,
+	c_section: Dictionary.SECTION_LEAD | Dictionary.SECTION_DEAL,
+	c_sub_section: Dictionary.SUB_SECTION_GRID_ROW_MENU,
+	c_element: Dictionary.ELEMENT_ENABLE_CONTACT_CENTER,
+	p1: CrmMode,
+}
+
+export type BlockLinkEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_KANBAN_OPERATIONS,
+	event: Dictionary.EVENT_BLOCK_LINK,
+	type: Dictionary.TYPE_CONTACT_CENTER | Dictionary.TYPE_ITEM_INDUSTRY,
+	c_section: Dictionary.SECTION_LEAD | Dictionary.SECTION_DEAL,
+	c_sub_section: Dictionary.SUB_SECTION_KANBAN,
+	c_element: Dictionary.ELEMENT_ITEM_INDUSTRY_BUTTON
+		| Dictionary.ELEMENT_CONTACT_CENTER_MARKETPLACE
+		| Dictionary.ELEMENT_CONTACT_CENTER_IMPORTEXCEL
+		| Dictionary.ELEMENT_ITEM_CONTACT_CENTER
+	,
+	p1: CrmMode,
+}

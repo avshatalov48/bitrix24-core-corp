@@ -6,6 +6,7 @@ import { Filter } from './filter';
 export class DocumentCounter extends CounterPanel
 {
 	#filter: Filter;
+	#resetAllFields: boolean;
 
 	constructor(options: Object)
 	{
@@ -20,14 +21,15 @@ export class DocumentCounter extends CounterPanel
 			filterId: options.filterId,
 		});
 
-		this.active = false;
-
 		EventEmitter.subscribe('BX.UI.CounterPanel.Item:activate', this.#onActivateItem.bind(this));
 		EventEmitter.subscribe('BX.UI.CounterPanel.Item:deactivate', this.#onDeactivateItem.bind(this));
 		EventEmitter.subscribe('BX.Main.Filter:apply', this.#onFilterApply.bind(this));
+		EventEmitter.subscribe('BX.Sign.DocumentCounter.Item:updateCounter', this.#onCounterUpdate.bind(this));
+
+		this.#resetAllFields = Boolean(options?.resetAllFields);
 	}
 
-	static getCounterItems(items: Array)
+	static getCounterItems(items: Array): Object[]
 	{
 		return items.map((item) => {
 			return {
@@ -37,6 +39,7 @@ export class DocumentCounter extends CounterPanel
 				isRestricted: item.isRestricted,
 				color: item.color === 'THEME' ? 'GRAY' : item.color,
 				hideValue: item.hideValue || false,
+				isActive: item?.isActive === true,
 			};
 		});
 	}
@@ -61,7 +64,7 @@ export class DocumentCounter extends CounterPanel
 
 	#processItemSelection(name: string, value: string): boolean
 	{
-		this.#filter.toggleField(name, value);
+		this.#filter.toggleField(name, value, this.#resetAllFields);
 
 		return true;
 	}
@@ -114,5 +117,21 @@ export class DocumentCounter extends CounterPanel
 				item.activate(false);
 			}
 		});
+	}
+
+	#onCounterUpdate(event: BaseEvent): void
+	{
+		const { id, count } = event.getData();
+		for (const item: CounterItem of this.getItems())
+		{
+			if (item.id === id)
+			{
+				item.updateValue(count);
+				const color = count > 0 ? 'DANGER' : 'GRAY';
+				item.updateColor(color);
+
+				break;
+			}
+		}
 	}
 }

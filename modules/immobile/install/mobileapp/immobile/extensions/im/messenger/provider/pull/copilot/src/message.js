@@ -90,11 +90,10 @@ jn.define('im/messenger/provider/pull/copilot/message', (require, exports, modul
 						const dialogTitle = ChatTitle.createFromDialogId(dialogId).getTitle();
 						const userName = ChatTitle.createFromDialogId(userData.id).getTitle();
 						const avatar = ChatAvatar.createFromDialogId(dialogId).getAvatarUrl();
-
 						Notifier.notify({
 							dialogId: dialog.dialogId,
 							title: dialogTitle,
-							text: (userName ? `${userName}: ` : '') + recentItem.message.text,
+							text: this.createMessageChatNotifyText(recentItem.message.text, userName),
 							avatar,
 						});
 					}

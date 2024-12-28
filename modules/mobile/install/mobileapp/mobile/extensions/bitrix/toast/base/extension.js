@@ -91,7 +91,7 @@ jn.define('toast/base', (require, exports, module) => {
 		if (preparedParams.onTimerOver)
 		{
 			toast.on('close', (data, senderId) => {
-				if (senderId === 'timer')
+				if (senderId === 'timer' || senderId === 'default')
 				{
 					preparedParams.onTimerOver();
 				}

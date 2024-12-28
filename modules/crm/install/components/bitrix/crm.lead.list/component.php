@@ -785,11 +785,6 @@ if ($isBizProcInstalled)
 		}
 		$arResult['HEADERS'][] = array('id' => 'BIZPROC_'.$arBP['ID'], 'name' => $arBP['NAME'], 'sort' => false, 'default' => false, 'editable' => false);
 	}
-
-	if ($arBPData)
-	{
-		CJSCore::Init('bp_starter');
-	}
 }
 
 //region Check and fill fields restriction
@@ -1836,7 +1831,10 @@ if ($arResult['ENABLE_BIZPROC'] && !empty($arResult['LEAD']))
 	);
 	foreach ($documentStates as $stateId => $documentState)
 	{
-		$allDocumentStates[$documentState['DOCUMENT_ID'][2]][$stateId] = $documentState;
+		if (isset($documentState['DOCUMENT_ID']))
+		{
+			$allDocumentStates[$documentState['DOCUMENT_ID'][2]][$stateId] = $documentState;
+		}
 	}
 }
 
@@ -2331,9 +2329,9 @@ if (isset($arResult['LEAD_ID']) && !empty($arResult['LEAD_ID']))
 		if ($arResult['LEAD'][$iLeadId]['DELETE'])
 			$arResult['LEAD'][$iLeadId]['DELETE'] = $userPermissions->CheckEnityAccess('LEAD', 'DELETE', $arLeadAttr[$iLeadId]);
 
-		$arResult['LEAD'][$iLeadId]['BIZPROC_LIST'] = array();
+		$arResult['LEAD'][$iLeadId]['BIZPROC_LIST'] = [];
 
-		if ($isBizProcInstalled)
+		if ($isBizProcInstalled && !class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
 		{
 			foreach ($arBPData as $arBP)
 			{
@@ -2447,7 +2445,7 @@ if (!$isInExportMode)
 			}
 			if(COption::GetOptionString('crm', '~CRM_REBUILD_LEAD_ATTR', 'N') === 'Y')
 			{
-				$arResult['PATH_TO_PRM_LIST'] = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_perm_list'));
+				$arResult['PATH_TO_PRM_LIST'] = (string)Crm\Service\Container::getInstance()->getRouter()->getPermissionsUrl();
 				$arResult['NEED_FOR_REBUILD_LEAD_ATTRS'] = true;
 			}
 		}

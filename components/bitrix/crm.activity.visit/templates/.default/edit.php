@@ -72,10 +72,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			<? $APPLICATION->IncludeComponent(
 				"bitrix:crm.card.show",
 				"",
-				array(
+				[
 					'ENTITY_TYPE' => $arResult['OWNER_ENTITY_TYPE'] ?? '',
-					'ENTITY_ID' => $arResult['OWNER_ENTITY_ID'] ?? null
-				)
+					'ENTITY_ID' => $arResult['OWNER_ENTITY_ID'] ?? null,
+					'isEnableCopilotReplacement' => false,
+				],
 			) ?>
 		</div>
 

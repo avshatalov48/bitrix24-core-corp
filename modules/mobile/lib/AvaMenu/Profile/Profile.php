@@ -2,10 +2,33 @@
 
 namespace Bitrix\Mobile\AvaMenu\Profile;
 
+use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Mobile\AvaMenu\Profile\Type\BaseType;
+use Bitrix\Mobile\Context;
 
 class Profile
 {
+	private Context $context;
+	private BaseType $type;
+
+	public function __construct()
+	{
+		$this->context = new Context();
+		$this->type = $this->getType();
+	}
+
+	public function getUserType(): string
+	{
+		if ($this->context->isCollaber)
+		{
+			return 'collaber';
+		}
+
+		return "user";
+	}
+
 	public function getData($reloadFromDb = false): array
 	{
 		return [
@@ -19,12 +42,29 @@ class Profile
 		];
 	}
 
+	public function getAvatar(): array
+	{
+		return $this->type->getAvatar();
+	}
+
 	public function getMainData($reloadFromDb = false): array
 	{
-		return [
-			'title' => $this->getTitle($reloadFromDb),
-			'imageUrl' => $this->getImageUrl($reloadFromDb),
+
+		$title = $this->getTitle($reloadFromDb);
+		$imageUrl = $this->getImageUrl($reloadFromDb);
+
+		$mainData = [
+			'title' => $title,
+			'imageUrl' => $imageUrl,
 		];
+
+		$profileStyle = $this->type->getStyle();
+		if (is_array($profileStyle))
+		{
+			$mainData = [...$mainData, ...$profileStyle];
+		}
+
+		return $mainData;
 	}
 
 	private function getTitle($reloadFromDb = false): string
@@ -58,7 +98,7 @@ class Profile
 		return \CUser::FormatName(
 			\CSite::GetNameFormat(false),
 			$userFields,
-			false,
+			true,
 			false
 		);
 	}
@@ -84,7 +124,6 @@ class Profile
 			$selectFields
 		);
 		$curUser = $dbUser->Fetch();
-		$avatarSource = "";
 
 		if ((int)$curUser["PERSONAL_PHOTO"] > 0)
 		{
@@ -97,7 +136,11 @@ class Profile
 
 			if ($avatar && $avatar["src"] <> '')
 			{
-				$avatarSource = $avatar["src"];
+				$scr = $avatar["src"];
+				$url = str_starts_with($scr, 'http')
+					? $scr
+					: UrlManager::getInstance()->getHostUrl() . $scr;
+				$url = Uri::urnEncode($url);
 			}
 			else
 			{
@@ -106,10 +149,12 @@ class Profile
 				return $url;
 			}
 		}
+		else
+		{
+			$url = '';
 
-		$url = str_starts_with($avatarSource, 'http')
-			? $avatarSource
-			: \Bitrix\Main\Engine\UrlManager::getInstance()->getHostUrl() . $avatarSource;
+			return $url;
+		}
 
 		return $url;
 	}
@@ -163,6 +208,21 @@ class Profile
 				],
 			],
 		];
+	}
+
+	private function getType(): BaseType
+	{
+		$profileTypeClass = Type\User::class;
+		if ($this->context->isCollaber)
+		{
+			$profileTypeClass = Type\Collaber::class;
+		}
+		else if ($this->context->extranet)
+		{
+			$profileTypeClass = Type\Extranet::class;
+		}
+
+		return new $profileTypeClass($this->getTitle(), $this->getImageUrl());
 	}
 
 	private function shouldShowAhaMoment(): string

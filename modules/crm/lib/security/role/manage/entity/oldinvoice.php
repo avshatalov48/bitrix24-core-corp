@@ -25,11 +25,12 @@ class OldInvoice implements PermissionEntity
 			CCrmOwnerType::InvoiceName,
 			CCrmOwnerType::GetDescription(CCrmOwnerType::Invoice),
 			[],
-			$this->permissions()
+			$this->permissions(),
+			null,
+			'invoice',
+			'#0B66C3',
 		);
 
 		return [$entityDto];
 	}
 }
-
-

@@ -2,6 +2,9 @@
 
 namespace Bitrix\Intranet\Component;
 
+use Bitrix\HumanResources\Compatibility\Utils\DepartmentBackwardAccessCode;
+use Bitrix\HumanResources\Item\NodeMember;
+use Bitrix\HumanResources\Service\Container;
 use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Intranet\Util;
 use Bitrix\Main\Event;
@@ -221,7 +224,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		$params['PATH_TO_POST_EDIT_PROFILE'] ??= null;
 		$params['PATH_TO_POST_EDIT_GRAT'] ??= null;
 		$params['PATH_TO_USER_GRAT'] ??= null;
-		$params['CACHE_TIME'] ??= null;
+		$params['CACHE_TIME'] ??= 3600;
 		$params['PATH_TO_CONPANY_DEPARTMENT'] ??= null;
 		$params['PATH_TO_USER_SECURITY'] ??= null;
 		$params['PATH_TO_USER_PASSWORDS'] ??= null;
@@ -584,7 +587,10 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 					&& in_array($extranetGroupId, $arGroups)
 				)
 				{
-					$user["STATUS"] = "extranet";
+					$isCollaber = \Bitrix\Extranet\Service\ServiceContainer::getInstance()
+						->getCollaberService()
+						->isCollaberById((int)$user["ID"]);
+					$user["STATUS"] = $isCollaber ? "collaber" : "extranet";
 					$user["IS_EXTRANET"] = true;
 				}
 				else
@@ -666,56 +672,8 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			//departments and subordinate users
 			$user['DEPARTMENTS'] = [];
 			$user["SUBORDINATE"] = [];
-			$dbDepartments = \CIntranetUtils::GetSubordinateDepartmentsList($user["ID"]);
-			while ($department = $dbDepartments->GetNext())
-			{
-				$department['URL'] = str_replace('#ID#', $department['ID'], $this->arParams['PATH_TO_CONPANY_DEPARTMENT']);
-				$department['EMPLOYEE_COUNT'] = 0;
 
-				$user['DEPARTMENTS'][$department['ID']] = $department;
-
-				$dbUsers = \CUser::GetList(
-					"",
-					"",
-					[
-						'!ID' => $user['ID'],
-						'UF_DEPARTMENT' => $department['ID'],
-						'ACTIVE' => 'Y',
-						'CONFIRM_CODE' => false,
-						'IS_REAL_USER' => 'Y',
-					],
-					[
-						'FIELDS' => [ 'ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'WORK_POSITION', 'PERSONAL_PHOTO', 'PERSONAL_GENDER' ],
-					]
-				);
-
-				while($subUser = $dbUsers->GetNext())
-				{
-					if ((int)$subUser["PERSONAL_PHOTO"] <= 0)
-					{
-						switch($subUser["PERSONAL_GENDER"])
-						{
-							case "M":
-								$suffix = "male";
-								break;
-							case "F":
-								$suffix = "female";
-								break;
-							default:
-								$suffix = "unknown";
-						}
-						$subUser["PERSONAL_PHOTO"] = Option::get('socialnetwork', 'default_user_picture_'.$suffix, false, SITE_ID);
-					}
-
-					$subUser["FULL_NAME"] = \CUser::FormatName(\CSite::GetNameFormat(), $subUser, true, false);
-					$subUser["PHOTO"] = self::getUserPhoto($subUser["PERSONAL_PHOTO"], 100);
-					$subUser["LINK"] = \CComponentEngine::MakePathFromTemplate($this->arParams['PATH_TO_USER'], [
-						'user_id' => $subUser['ID'],
-					]);
-					$user["SUBORDINATE"][$subUser["ID"]] = $subUser;
-					$user['DEPARTMENTS'][$department['ID']]['EMPLOYEE_COUNT'] ++;
-				}
-			}
+			$this->prepareDepartmentAndSubordinate($user);
 
 			//managers
 			$user['MANAGERS'] = [];
@@ -1228,5 +1186,137 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		}
 
 		return $result;
+	}
+
+	private function prepareDepartmentAndSubordinate(array &$user)
+	{
+		if (!Loader::includeModule('humanresources'))
+		{
+			$dbDepartments = \CIntranetUtils::GetSubordinateDepartmentsList($user["ID"]);
+
+			while ($department = $dbDepartments->GetNext())
+			{
+				$department['URL'] =
+					str_replace('#ID#', $department['ID'], $this->arParams['PATH_TO_CONPANY_DEPARTMENT']);
+				$department['EMPLOYEE_COUNT'] = 0;
+
+				$user['DEPARTMENTS'][$department['ID']] = $department;
+
+				$dbUsers = \CUser::GetList(
+					"",
+					"",
+					[
+						'!ID' => $user['ID'],
+						'UF_DEPARTMENT' => $department['ID'],
+						'ACTIVE' => 'Y',
+						'CONFIRM_CODE' => false,
+						'IS_REAL_USER' => 'Y',
+					],
+					[
+						'FIELDS' => [
+							'ID',
+							'NAME',
+							'LAST_NAME',
+							'SECOND_NAME',
+							'LOGIN',
+							'WORK_POSITION',
+							'PERSONAL_PHOTO',
+							'PERSONAL_GENDER',
+						],
+					],
+				);
+
+				while ($subUser = $dbUsers->GetNext())
+				{
+					if ((int)$subUser["PERSONAL_PHOTO"] <= 0)
+					{
+						switch ($subUser["PERSONAL_GENDER"])
+						{
+							case "M":
+								$suffix = "male";
+								break;
+							case "F":
+								$suffix = "female";
+								break;
+							default:
+								$suffix = "unknown";
+						}
+						$subUser["PERSONAL_PHOTO"] =
+							Option::get('socialnetwork', 'default_user_picture_' . $suffix, false, SITE_ID);
+					}
+
+					$subUser["FULL_NAME"] = \CUser::FormatName(\CSite::GetNameFormat(), $subUser, true);
+					$subUser["PHOTO"] = self::getUserPhoto($subUser["PERSONAL_PHOTO"], 100);
+					$subUser["LINK"] = \CComponentEngine::MakePathFromTemplate(
+						$this->arParams['PATH_TO_USER'],
+						[
+							'user_id' => $subUser['ID'],
+						],
+					);
+					$user["SUBORDINATE"][$subUser["ID"]] = $subUser;
+					$user['DEPARTMENTS'][$department['ID']]['EMPLOYEE_COUNT']++;
+				}
+			}
+
+			return;
+		}
+
+		$roleRepository  = Container::getRoleRepository();
+		static $headRole = null;
+
+		if (!$headRole)
+		{
+			$headRole = $roleRepository->findByXmlId(NodeMember::DEFAULT_ROLE_XML_ID['HEAD']);
+		}
+
+		if (!$headRole)
+		{
+			return;
+		}
+
+		$relativeDepartments = Container::getNodeRepository()->findAllByUserIdAndRoleId($user["ID"], $headRole->id);
+		$nodeMemberService = Container::getNodeMemberService();
+		$userService = Container::getUserService();
+
+		foreach ($relativeDepartments as $relativeDepartment)
+		{
+			$departmentId = DepartmentBackwardAccessCode::extractIdFromCode($relativeDepartment->accessCode);
+			$employees = $nodeMemberService->getAllEmployees($relativeDepartment->id);
+
+			$department = [
+				'URL' => str_replace('#ID#', $departmentId, $this->arParams['PATH_TO_CONPANY_DEPARTMENT']),
+				'EMPLOYEE_COUNT' => 0,
+				'NAME' => $relativeDepartment->name,
+				'ID' => $departmentId,
+			];
+
+			$user['DEPARTMENTS'][$department['ID']] = $department;
+
+			$userCollection = $userService->getUserCollectionFromMemberCollection($employees);
+
+			foreach ($userCollection as $preparedUser)
+			{
+				if ($preparedUser->id === (int)$user["ID"])
+				{
+					continue;
+				}
+
+				$subUser = [];
+
+				$subUser["ID"] = $preparedUser->id;
+				$subUser["PERSONAL_PHOTO"] = $userService->getUserAvatar($preparedUser, 100);
+				$subUser["FULL_NAME"] = $userService->getUserName($preparedUser);
+				$subUser["PHOTO"] = $userService->getUserAvatar($preparedUser, 100);
+				$subUser["LINK"] = \CComponentEngine::MakePathFromTemplate(
+					$this->arParams['PATH_TO_USER'],
+					[
+						'user_id' => $preparedUser->id,
+					],
+				);
+				$user["SUBORDINATE"][$subUser["ID"]] = $subUser;
+			}
+
+			$user['DEPARTMENTS'][$departmentId]['EMPLOYEE_COUNT']++;
+		}
 	}
 }

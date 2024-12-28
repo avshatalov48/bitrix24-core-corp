@@ -5,9 +5,18 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 // define('NO_KEEP_STATISTIC', 'Y');
-define('NO_AGENT_STATISTIC','Y');
-define('NO_AGENT_CHECK', true);
-define('DisableEventsCheck', true);
+if (!defined('NO_AGENT_STATISTIC'))
+{
+	define("NO_AGENT_STATISTIC","Y");
+}
+if (!defined('NO_AGENT_CHECK'))
+{
+	define('NO_AGENT_CHECK', true);
+}
+if (!defined('DisableEventsCheck'))
+{
+	define('DisableEventsCheck', true);
+}
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
@@ -42,7 +51,7 @@ header('Pragma: public');
 
 $userCache = [];
 $groupCache = [];
-$columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
+$columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY', 'STAGE_ID'];
 $locMap = [
 	'PARENT_ID' => 'BASE_ID',
 	'PARENT_TITLE' => 'BASE_TITLE',
@@ -53,7 +62,7 @@ $locMap = [
 
 $columns = $arParams['COLUMNS'];
 
-if ($arResult['EXPORT_ALL'])
+if (array_key_exists('EXPORT_ALL', $arResult))
 {
 	$arParams['COLUMNS'] = array_unique($arParams['COLUMNS']);
 	$columns = array_unique($arResult['EXPORT_COLUMNS']);
@@ -200,7 +209,7 @@ if ($arResult['CURRENT_PAGE'] === 1):
 						if (!array_key_exists($groupId, $groupCache))
 						{
 							$group = Group::getData([$groupId]);
-							$groupCache[$groupId] = htmlspecialcharsbx($group[$groupId]['NAME']);
+							$groupCache[$groupId] = htmlspecialcharsbx($group[$groupId]['NAME'] ?? '');
 						}
 
 						$columnValue = $groupCache[$groupId];
@@ -323,7 +332,7 @@ if ($arResult['CURRENT_PAGE'] === 1):
 							if (mb_strpos($field, 'UF_CRM_TASK_') === 0 && Loader::includeModule('crm'))
 							{
 								$titles = [];
-								$values = $task['UF_CRM_TASK'];
+								$values = $task['UF_CRM_TASK'] ?? '';
 								$allNames = CCrmOwnerType::GetAllNames();
 								$currentName = str_replace('UF_CRM_TASK_', '', $field);
 
@@ -358,7 +367,7 @@ if ($arResult['CURRENT_PAGE'] === 1):
 										'0' => 'N',
 									];
 
-									$columnValue = Loc::getMessage('TASKS_EXCEL_COLUMN_'.$map[$columnValue]);
+									$columnValue = $columnValue ? Loc::getMessage('TASKS_EXCEL_COLUMN_'.$map[$columnValue]) : '';
 								}
 								elseif (is_array($columnValue))
 								{

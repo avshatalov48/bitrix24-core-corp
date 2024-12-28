@@ -21,6 +21,10 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 	const { DialogConverter } = require('im/messenger/lib/converter');
 
 	const QUOTE_DELIMITER = '-'.repeat(54);
+	const SHORT_NAME_SYMBOLS_LIMIT = 12;
+	const LONG_NAME_SYMBOLS_LIMIT = 8;
+	const TEXT_SYMBOLS_LIMIT = 35;
+	const NAME_SYMBOLS_LIMIT_ELLIPSIS = '...';
 
 	/**
 	 * @class ReplyManager
@@ -114,9 +118,20 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			return this.quoteMessage;
 		}
 
+		/**
+		* @return {ForwardMessage}
+		*/
 		getForwardMessage()
 		{
 			return this.forwardMessage;
+		}
+
+		/**
+		 * @return {ForwardMessageIds}
+		 */
+		getForwardMessageIds()
+		{
+			return this.forwardMessageIds;
 		}
 
 		getQuoteText(message = this.getQuoteMessage())
@@ -135,7 +150,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			if (!isSystemMessage && modelMessage.authorId)
 			{
 				const user = this.store.getters['usersModel/getById'](modelMessage.authorId);
-				quoteTitle = user.name;
+				quoteTitle = user.name || user.firstName;
 			}
 
 			const quoteDate = DateFormatter.getQuoteFormat(modelMessage.date);
@@ -193,8 +208,20 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		 */
 		setForwardMessage(message)
 		{
+			if (!Type.isObject(message))
+			{
+				const messageModel = this.store.getters['messagesModel/getById'](Number(message));
+
+				// eslint-disable-next-line no-param-reassign
+				message = DialogConverter.createMessage(messageModel);
+			}
+
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
-			const forwardMessage = clone(message);
+			const forwardMessage = {
+				id: modelMessage.id,
+			};
+
+			forwardMessage.username = message.username;
 			if (message.type === MessageType.systemText)
 			{
 				forwardMessage.username = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLY_MANAGER_FORWARD_DEFAULT_TITLE');
@@ -208,6 +235,148 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			];
 
 			this.forwardMessage = forwardMessage;
+			this.forwardMessageIds = [modelMessage.id];
+		}
+
+		/**
+		 *
+		 * @param {Array<string|number>} messageIds
+		 */
+		setForwardMessageFromIdList(messageIds)
+		{
+			const currentUserId = MessengerParams.getUserId();
+			const authorIdsSet = new Set();
+			const authorNames = [];
+			const sortedMessageIds = [];
+			const messagesModelCollection = this.store.getters['messagesModel/getListByIds'](messageIds);
+
+			messagesModelCollection.forEach((messageModel) => {
+				authorIdsSet.add(messageModel.authorId);
+				sortedMessageIds.push(messageModel.id);
+			});
+
+			const isHaveCurrentUser = authorIdsSet.has(currentUserId);
+			if (isHaveCurrentUser)
+			{
+				authorNames.push(Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLAY_MANAGER_FORWARDS_TEXT_CURRENT_USER'));
+			}
+
+			const filteredAuthorIds = [...authorIdsSet].filter((authorId) => authorId !== currentUserId && authorId !== 0);
+			const userModels = this.store.getters['usersModel/getByIdList'](filteredAuthorIds);
+			userModels.forEach((user) => {
+				if (user)
+				{
+					authorNames.push(user.firstName || user.name);
+				}
+			});
+
+			const usersName = this.truncateAuthorNames(authorNames);
+			const text = this.getForwardNamesText(usersName, filteredAuthorIds, isHaveCurrentUser);
+
+			const title = Loc.getMessagePlural(
+				'IMMOBILE_MESSENGER_DIALOG_REPLAY_MANAGER_FORWARDS_TITLE',
+				sortedMessageIds.length,
+				{
+					'#COUNT#': sortedMessageIds.length,
+				},
+			);
+
+			this.forwardMessage = {
+				id: sortedMessageIds[0],
+				username: title,
+				message: [
+					{
+						type: 'text',
+						text,
+					},
+				],
+			};
+
+			this.forwardMessageIds = sortedMessageIds;
+		}
+
+		/**
+		 * @desc truncate string with names depending on two conditions:
+		 * 1 - there are more than 3 names, then slice according to the limit.
+		 * 2 - there are less than 3 names, then the native slice
+		 * @param {Array<string>} authorNames
+		 * @return {string}
+		 */
+		truncateAuthorNames(authorNames) {
+			if (authorNames.length === 1)
+			{
+				return authorNames[0];
+			}
+
+			// this length truncation will make native
+			if (authorNames.length === 2)
+			{
+				return [authorNames[0], authorNames[1]].join(', ');
+			}
+
+			// this length truncation for text: 'and more'
+			if (authorNames.length > 2)
+			{
+				const stringNamesMaxLength = [authorNames[0], authorNames[1]].join(', ')?.length;
+				const limit = stringNamesMaxLength > TEXT_SYMBOLS_LIMIT
+					? LONG_NAME_SYMBOLS_LIMIT
+					: SHORT_NAME_SYMBOLS_LIMIT
+				;
+
+				const preparedNames = [authorNames[0], authorNames[1]].map((name) => {
+					if (name && name.length > limit)
+					{
+						return `${name.slice(0, limit)}${NAME_SYMBOLS_LIMIT_ELLIPSIS}`;
+					}
+
+					return name;
+				});
+
+				return preparedNames.join(', ');
+			}
+
+			return authorNames[0];
+		}
+
+		/**
+		 * @param {Array<string>} usersName
+		 * @param {Array<number>} filteredAuthorIds
+		 * @param {boolean} isHaveCurrentUser
+		 * @return {string}
+		 */
+		getForwardNamesText(usersName, filteredAuthorIds, isHaveCurrentUser)
+		{
+			let text = '';
+			if (isHaveCurrentUser && filteredAuthorIds.length > 1)
+			{
+				text = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLAY_MANAGER_FORWARDS_TEXT_MORE', {
+					'#USERS_NAME#': usersName,
+					'#USERS_COUNT#': filteredAuthorIds.length - 1,
+				});
+			}
+			else if (!isHaveCurrentUser && filteredAuthorIds.length > 2)
+			{
+				text = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLAY_MANAGER_FORWARDS_TEXT_MORE', {
+					'#USERS_NAME#': usersName,
+					'#USERS_COUNT#': filteredAuthorIds.length - 2,
+				});
+			}
+			else if (isHaveCurrentUser && filteredAuthorIds.length === 0)
+			{
+				const currentUserId = MessengerParams.getUserId();
+				const currentUserModels = this.store.getters['usersModel/getById'](currentUserId);
+				text = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLAY_MANAGER_FORWARDS_TEXT', {
+					'#USER_NAME#': currentUserModels.firstName || currentUserModels.name,
+				});
+			}
+			else
+			{
+				text = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLAY_MANAGER_FORWARDS_TEXT', {
+					'#USER_NAME#': usersName,
+				});
+			}
+
+			return text;
 		}
 
 		getEditMessage()
@@ -215,7 +384,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			return this.editMessage;
 		}
 
-		startQuotingMessage(message)
+		startQuotingMessage(message, openKeyboard = true)
 		{
 			this.setQuoteMessage(message);
 			if (this.isEditInProcess)
@@ -242,23 +411,23 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			if (this.isQuoteInProcess)
 			{
 				this.finishQuotingMessage().then(() => {
-					this._startQuotingMessage();
+					this._startQuotingMessage(openKeyboard);
 				});
 
 				return;
 			}
 
-			this._startQuotingMessage();
+			this._startQuotingMessage(openKeyboard);
 		}
 
-		_startQuotingMessage()
+		_startQuotingMessage(openKeyboard = true)
 		{
 			this._isQuoteInProcess = true;
 			this._isQuoteInBackground = false;
 
 			const quoteMessage = this.getQuoteMessage();
 
-			this.dialogView.setInputQuote(quoteMessage, InputQuoteType.reply);
+			this.dialogView.setInputQuote(quoteMessage, InputQuoteType.reply, openKeyboard);
 			if (this.draftManager)
 			{
 				this.draftManager.setQuotMessageInStore(quoteMessage, InputQuoteType.reply, this.dialogView.getInput());
@@ -303,19 +472,10 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 
 		/**
 		 *
-		 * @param {number ||string || Message} message
+		 * @param {Array<number || string || Message>} messageIds
 		 */
-		startForwardingMessage(message)
+		startForwardingMessages(messageIds)
 		{
-			if (!Type.isObject(message))
-			{
-				const messageModel = this.store.getters['messagesModel/getById'](Number(message));
-
-				message = DialogConverter.createMessage(messageModel);
-			}
-
-			this.setForwardMessage(message);
-
 			if (this.isEditInProcess)
 			{
 				this._isForwardInBackground = true;
@@ -324,7 +484,19 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			}
 			this._isForwardInProcess = true;
 
-			this.dialogView.setInputQuote(this.getForwardMessage(), InputQuoteType.forward, false);
+			if (messageIds.length === 1)
+			{
+				this.setForwardMessage(messageIds[0]);
+			}
+			else
+			{
+				this.setForwardMessageFromIdList(messageIds);
+			}
+
+			const message = this.getForwardMessage();
+			const title = message.username;
+			const text = message.message[0]?.text;
+			this.dialogView.setInputQuote(message, InputQuoteType.forward, false, title, text);
 			this.dialogView.enableAlwaysSendButtonMode(true);
 		}
 
@@ -357,7 +529,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 
 				if (this.isForwardInBackground)
 				{
-					this.startForwardingMessage(this.getForwardMessage());
+					this.startForwardingMessages(this.getForwardMessage());
 
 					return;
 				}

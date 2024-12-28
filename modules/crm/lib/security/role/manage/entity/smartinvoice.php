@@ -56,7 +56,15 @@ class SmartInvoice implements PermissionEntity
 			$stages = $this->prepareStages($smartInvoiceFactory, $category);
 			$perms = $this->permissions($isAutomationEnabled, $stages);
 
-			$result[] = new EntityDTO($entityName, $entityTitle, [Item::FIELD_NAME_STAGE_ID => $stages], $perms);
+			$result[] = new EntityDTO(
+				$entityName,
+				$entityTitle,
+				[Item::FIELD_NAME_STAGE_ID => $stages],
+				$perms,
+				null,
+				'invoice',
+				'#0B66C3',
+			);
 		}
 
 		return $result;

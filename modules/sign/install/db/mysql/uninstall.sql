@@ -12,3 +12,6 @@ drop table if exists b_sign_legal_log;
 drop table if exists b_sign_document_required_field;
 drop table if exists b_sign_document_chat;
 drop table if exists b_sign_document_template;
+drop table if exists b_sign_node_sync;
+drop table if exists b_sign_member_node;
+drop table if exists b_sign_field_value;

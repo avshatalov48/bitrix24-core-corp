@@ -248,10 +248,11 @@
 	}
 
 	const ActionPromiseWrapper = (promise) => {
-		return new Promise((resolve, reject) => promise
-			.then((result) => {
+		return new Promise((resolve, reject) => {
+			promise.then((result) => {
 				if (result.status === 'error')
 				{
+					console.error(result);
 					reject(result);
 				}
 				else
@@ -259,27 +260,31 @@
 					resolve(result);
 				}
 			})
-			.catch((result) => {
-				if (result && result.status && result.hasOwnProperty('data'))
-				{
-					reject(result);
-				}
-				else
-				{
-					reject({
-						status: 'error',
-						data: {
-							ajaxRejectData: result,
-						},
-						errors: [
-							{
-								code: 'NETWORK_ERROR',
-								message: 'Network error',
+				.catch((result) => {
+					if (result && result.status && Object.prototype.hasOwnProperty.call(result, 'data'))
+					{
+						console.error(result);
+						reject(result);
+					}
+					else
+					{
+						const networkErrorResult = {
+							status: 'error',
+							data: {
+								ajaxRejectData: result,
 							},
-						],
-					});
-				}
-			}));
+							errors: [
+								{
+									code: 'NETWORK_ERROR',
+									message: 'Network error',
+								},
+							],
+						};
+						console.error(networkErrorResult);
+						reject(networkErrorResult);
+					}
+				});
+		});
 	};
 
 	/**

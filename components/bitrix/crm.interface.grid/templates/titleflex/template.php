@@ -134,6 +134,7 @@ $APPLICATION->IncludeComponent(
 		'AJAX_OPTION_HISTORY' => $arParams['~AJAX_OPTION_HISTORY'],
 		"PRESERVE_HISTORY" => $arParams['~PRESERVE_HISTORY'] ?? false,
 		'MESSAGES' => $arParams['~MESSAGES'] ?? [],
+		'NAV_OBJECT' => $navigationObject,
 		"NAV_STRING" => $navigationHtml,
 		"NAV_PARAM_NAME" => 'page',
 		"CURRENT_PAGE" => isset($pagination['PAGE_NUM']) ? (int)$pagination['PAGE_NUM'] : 1,

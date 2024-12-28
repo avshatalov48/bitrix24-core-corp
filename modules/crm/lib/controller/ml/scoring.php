@@ -47,7 +47,11 @@ class Scoring extends Controller
 			return null;
 		}
 
-		if (!\Bitrix\Crm\Ml\Scoring::isMlAvailable() || !\Bitrix\Crm\Ml\Scoring::isEnabled())
+		if (
+			!\Bitrix\Crm\Ml\Scoring::isMlAvailable()
+			|| !\Bitrix\Crm\Ml\Scoring::isEnabled()
+			|| !\Bitrix\Crm\Ml\Scoring::isScoringAvailable()
+		)
 		{
 			$this->addError(new Error("Scoring is not available for this portal"));
 

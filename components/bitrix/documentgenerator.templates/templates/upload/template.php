@@ -164,7 +164,7 @@ if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 							foreach ($arResult["PRODUCTS_TABLE_VARIANT"] as $type) : ?>
 								<option value="<?= $type; ?>"
 									<?= ($arResult['TEMPLATE']['PRODUCTS_TABLE_VARIANT'] === $type) ? 'selected="selected"' : ''; ?>
-								> <?= Loc::getMessage('DOCGEN_TEMPLATE_ADD_PRODUCTS_TABLE_VARIANT'.($type ? '_'.ToUpper($type) : '')) ?> </option>
+								> <?= Loc::getMessage('DOCGEN_TEMPLATE_ADD_PRODUCTS_TABLE_VARIANT'.($type ? '_'.mb_strtoupper($type) : '')) ?> </option>
 							<?php
 							endforeach; ?>
 						</select>

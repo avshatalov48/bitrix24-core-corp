@@ -29,7 +29,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_POST['ACTION'] == 'save' && check_
 {
 	$arPerms = isset($_POST['PERMS'])? $_POST['PERMS']: array();
 	$CCrmRole = new CcrmRole();
+	\Bitrix\Crm\Security\Role\Utils\RolePermissionLogContext::getInstance()->set([
+		'component' => 'crm.config.perms.relation',
+		'scenario' => 'save relations',
+	]);
 	$CCrmRole->SetRelation($arPerms);
+	\Bitrix\Crm\Security\Role\Utils\RolePermissionLogContext::getInstance()->clear();
 
 	CCrmSaleHelper::updateShopAccess();
 
@@ -72,7 +77,14 @@ while ($arRelation = $obRes->Fetch())
 {
 	if (isset($arResult['ROLE'][$arRelation['ROLE_ID']]))
 	{
-		$arResult['RELATION'][$arRelation['RELATION']] = $arRelation;
+		if (!isset($arResult['RELATION'][$arRelation['RELATION']]))
+		{
+			$arResult['RELATION'][$arRelation['RELATION']] = [
+				'RELATION' => $arRelation['RELATION'],
+				'ROLE_IDS' => [],
+			];
+		}
+		$arResult['RELATION'][$arRelation['RELATION']]['ROLE_IDS'][] = $arRelation['ROLE_ID'];
 		$arResult['RELATION_ENTITY'][$arRelation['RELATION']] = true;
 	}
 }

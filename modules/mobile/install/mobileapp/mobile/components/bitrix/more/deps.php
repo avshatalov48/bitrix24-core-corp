@@ -9,8 +9,11 @@ return [
 		'stress/more',
 		'qrauth/utils',
 		'intent/handlers',
+		'utils/function',
 
 		'navigator/more-tab',
+		'tokens',
+		'require-lazy',
 	],
 	'components' => [
 		'users',

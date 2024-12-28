@@ -3,4 +3,5 @@ module.exports = {
 	output: 'dist/dashboard-parameters-selector.bundle.js',
 	namespace: 'BX.BIConnector',
 	minification: true,
+	sourceMaps: true,
 };

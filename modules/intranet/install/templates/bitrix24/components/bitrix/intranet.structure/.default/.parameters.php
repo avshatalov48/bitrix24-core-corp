@@ -46,7 +46,7 @@ $arTemplateParameters = array(
 	"VIS_STRUCTURE_URL" => array(
 		"NAME" => GetMessage('INTR_IS_TPL_PARAM_VIS_STRUCTURE'),
 		"TYPE" => "STRING",
-		"DEFAULT" => '/company/vis_structure.php',
+		"DEFAULT" => '/hr/structure/',
 	),
 ); 
 

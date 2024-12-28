@@ -4,21 +4,7 @@ namespace Bitrix\Crm\Security\Role\Manage;
 
 use Bitrix\Crm\Security\EntityPermission\DefaultPermission;
 use Bitrix\Crm\Security\Role\Manage\DTO\EntityDTO;
-use Bitrix\Crm\Security\Role\Manage\Entity\Button;
-use Bitrix\Crm\Security\Role\Manage\Entity\Company;
-use Bitrix\Crm\Security\Role\Manage\Entity\Contact;
-use Bitrix\Crm\Security\Role\Manage\Entity\CrmConfig;
-use Bitrix\Crm\Security\Role\Manage\Entity\Deal;
-use Bitrix\Crm\Security\Role\Manage\Entity\DynamicItem;
-use Bitrix\Crm\Security\Role\Manage\Entity\Exclusion;
-use Bitrix\Crm\Security\Role\Manage\Entity\Lead;
-use Bitrix\Crm\Security\Role\Manage\Entity\OldInvoice;
-use Bitrix\Crm\Security\Role\Manage\Entity\Order;
 use Bitrix\Crm\Security\Role\Manage\Entity\PermissionEntity;
-use Bitrix\Crm\Security\Role\Manage\Entity\Quote;
-use Bitrix\Crm\Security\Role\Manage\Entity\SaleTarget;
-use Bitrix\Crm\Security\Role\Manage\Entity\SmartInvoice;
-use Bitrix\Crm\Security\Role\Manage\Entity\WebForm;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Add;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Automation;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Delete;
@@ -41,6 +27,8 @@ class RoleManagementModelBuilder
 	use Singleton;
 
 	private ?array $entities = null;
+	private ?array $models = null;
+	private array $modelsByEntity = [];
 
 	/**
 	 * @return PermissionEntity[]
@@ -81,43 +69,40 @@ class RoleManagementModelBuilder
 	 */
 	public function buildModels(): array
 	{
-		$result = [];
+		if (is_array($this->models))
+		{
+			return $this->models;
+		}
+
+		$this->models = [];
 		foreach ($this->entities() as $permEntity)
 		{
 			foreach ($permEntity->make() as $entity)
 			{
-				$result[] = $entity;
+				$this->models[] = $entity;
+				foreach ($entity->permissions() as $permission)
+				{
+					$this->modelsByEntity[$entity->code()][$permission->code()] = $permission;
+				}
 			}
 		}
 
-		return $result;
+		return $this->models;
+	}
+
+	public function getPermissionByCode(string $entityCode, string $permissionCode): ?Permission
+	{
+		$this->buildModels();
+
+		return $this->modelsByEntity[$entityCode][$permissionCode] ?? null;
 	}
 
 	public static function allEntities(): array
 	{
-		$entities = [
-			new Contact(),
-			new Company(),
-			new Deal(),
-			new Lead(),
-			new Quote(),
-			new OldInvoice(),
-			new SmartInvoice(),
-			'order' => new Order(),
-			new WebForm(),
-			new Button(),
-			new SaleTarget(),
-			new Exclusion(),
-			new DynamicItem(),
-			new CrmConfig(),
-		];
-
-		if (!\CCrmSaleHelper::isWithOrdersMode())
-		{
-			unset($entities['order']);
-		}
-
-		return array_values($entities);
+		return (new PermissionEntityBuilder())
+			->includeAll()
+			->build()
+		;
 	}
 
 	/**
@@ -133,19 +118,28 @@ class RoleManagementModelBuilder
 		}
 
 		$all = [
-			new Read([]),
-			new Add([]),
-			new Write([]),
-			new Delete([]),
-			new Export([]),
-			new Import([]),
-			new Automation([]),
-			new HideSum([]),
-			new MyCardView([]),
-			new Transition([]),
+			new Read(),
+			new Add(),
+			new Write(),
+			new Delete(),
+			new Export(),
+			new Import(),
+			new Automation(),
+			new HideSum(),
+			new MyCardView(),
+			new Transition(),
+			new Permissions\CopilotCallAssessment\Write(),
+			new Permissions\CopilotCallAssessment\Read(),
 		];
 
 		return $all;
+	}
+
+	public function clearEntitiesCache(): void
+	{
+		$this->entities = null;
+		$this->models = null;
+		$this->modelsByEntity = [];
 	}
 
 	/**
@@ -156,12 +150,15 @@ class RoleManagementModelBuilder
 		$result = [];
 		foreach (self::allPermissions() as $permission)
 		{
-			$result[$permission->code()] = $permission->controlType();
+			$result[$permission->code()] = $permission->getControlTypeCode();
 		}
 
 		return $result;
 	}
 
+	/**
+	 * @deprecated
+	 */
 	public static function getControlTypeByPermType(string $permType): string
 	{
 		return self::permTypeControlTypeMap()[$permType] ?? '';

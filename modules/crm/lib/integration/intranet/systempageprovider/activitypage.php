@@ -15,14 +15,11 @@ use Bitrix\Main\Web\Uri;
 class ActivityPage extends SystemPageProvider
 {
 	protected const DEFAULT_SETTINGS = [];
-	protected const SORT = 999999;
+	protected const SORT = 999998;
 
 	public static function getComponent(string $pageSettings, Uri $url): ?Component
 	{
-		$sectionCode = explode(
-			CustomSectionProvider::PAGE_SETTINGS_SEPARATOR,
-			$pageSettings
-		)[1];
+		$sectionCode = explode(self::SEPARATOR, $pageSettings)[1];
 
 		$router = Container::getInstance()->getRouter();
 		$sefFolder = $router->getItemListUrlIntoCustomSection($sectionCode, \CCrmOwnerType::Activity);
@@ -51,10 +48,9 @@ class ActivityPage extends SystemPageProvider
 		$router = Container::getInstance()->getRouter();
 
 		$code = $router->getSystemPageCode(\CCrmOwnerType::Activity);
-		$settings = implode(
-			CustomSectionProvider::PAGE_SETTINGS_SEPARATOR,
-			array_merge([$code], [$section->getCode()], self::DEFAULT_SETTINGS)
-		);
+
+		$settingsArr = [$code, $section->getCode(), ...self::DEFAULT_SETTINGS];
+		$settings = implode(self::SEPARATOR, $settingsArr);
 
 		return (new CustomSectionPage())
 			->setCode($code)
@@ -64,16 +60,5 @@ class ActivityPage extends SystemPageProvider
 			->setModuleId('crm')
 			->setDisabledInCtrlPanel(true)
 		;
-	}
-
-	public static function isPageAvailable(DataStructures\CustomSection $section): bool
-	{
-		$pages = $section->getPages();
-		if (empty($pages))
-		{
-			return false;
-		}
-
-		return true;
 	}
 }

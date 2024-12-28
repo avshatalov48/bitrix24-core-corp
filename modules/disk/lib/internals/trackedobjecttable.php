@@ -36,6 +36,11 @@ final class TrackedObjectTable extends DataManager
 			new Entity\IntegerField('ID', ['primary' => true, 'autocomplete' => true]),
 			new Entity\IntegerField('USER_ID', ['required' => true]),
 			new Entity\IntegerField('OBJECT_ID', ['required' => true]),
+			new Entity\ReferenceField(
+				'FILE',
+				Disk\Internals\ObjectTable::class,
+				['=this.OBJECT_ID' => 'ref.ID']
+			),
 			new Entity\IntegerField('REAL_OBJECT_ID', ['required' => true]),
 			new Entity\IntegerField('ATTACHED_OBJECT_ID', ['required' => false]),
 			new Entity\DatetimeField('CREATE_TIME', ['default_value' => function(){return new DateTime();}]),

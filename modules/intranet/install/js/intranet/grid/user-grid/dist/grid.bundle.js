@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,ui_label,ui_formElements_field,main_popup,ui_cnt,intranet_reinvite,ui_iconSet_main,ui_dialogs_messagebox,im_public,ui_entitySelector,main_core) {
+(function (exports,ui_avatar,ui_label,ui_formElements_field,main_popup,ui_cnt,intranet_reinvite,ui_iconSet_main,ui_dialogs_messagebox,im_public,ui_entitySelector,main_core) {
 	'use strict';
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
@@ -57,7 +57,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return BaseField;
 	}();
 
-	var _templateObject;
 	var PhotoField = /*#__PURE__*/function (_BaseField) {
 	  babelHelpers.inherits(PhotoField, _BaseField);
 	  function PhotoField() {
@@ -67,32 +66,38 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  babelHelpers.createClass(PhotoField, [{
 	    key: "render",
 	    value: function render(params) {
-	      main_core.Dom.addClass(this.getFieldNode(), 'user-grid_user-photo');
-	      if (params.photoUrl) {
-	        main_core.Dom.style(this.getFieldNode(), {
-	          'background-image': "url(\"".concat(params.photoUrl, "\")")
-	        });
+	      var _avatar;
+	      var avatarOptions = {
+	        size: 40,
+	        userpicPath: params.photoUrl ? params.photoUrl : null
+	      };
+	      var avatar = null;
+	      if (params.role === 'collaber') {
+	        avatar = new ui_avatar.AvatarRoundGuest(avatarOptions);
+	      } else if (params.role === 'extranet') {
+	        avatar = new ui_avatar.AvatarRoundExtranet(avatarOptions);
 	      } else {
-	        var iconClass = params.isInvited || !params.isConfirmed && params.isInvited ? '--person-clock' : '--person';
-	        var photo = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-icon-set ", "\" style=\"--ui-icon-set__icon-size: 35px; --ui-icon-set__icon-color: #fff;\"></div>\n\t\t\t"])), iconClass);
-	        main_core.Dom.append(photo, this.getFieldNode());
+	        avatar = new ui_avatar.AvatarRound(avatarOptions);
 	      }
+	      (_avatar = avatar) === null || _avatar === void 0 ? void 0 : _avatar.renderTo(this.getFieldNode());
+	      main_core.Dom.addClass(this.getFieldNode(), 'user-grid_user-photo');
 	    }
 	  }]);
 	  return PhotoField;
 	}(BaseField);
 
-	var _templateObject$1, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7;
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _getFullNameLink = /*#__PURE__*/new WeakSet();
-	var _getInviteNotAcceptedContainer = /*#__PURE__*/new WeakSet();
-	var _getInviteNotConfirmedContainer = /*#__PURE__*/new WeakSet();
-	var _getPositionContainer = /*#__PURE__*/new WeakSet();
+	var _getInvitedLabelContainer = /*#__PURE__*/new WeakSet();
+	var _getWaitingConfirmationLabelContainer = /*#__PURE__*/new WeakSet();
+	var _getPositionLabelContainer = /*#__PURE__*/new WeakSet();
 	var _getIntegratorBalloonContainer = /*#__PURE__*/new WeakSet();
 	var _getAdminBalloonContainer = /*#__PURE__*/new WeakSet();
 	var _getExtranetBalloonContainer = /*#__PURE__*/new WeakSet();
+	var _getCollaberBalloonContainer = /*#__PURE__*/new WeakSet();
 	var FullNameField = /*#__PURE__*/function (_BaseField) {
 	  babelHelpers.inherits(FullNameField, _BaseField);
 	  function FullNameField() {
@@ -103,34 +108,48 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      args[_key] = arguments[_key];
 	    }
 	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(FullNameField)).call.apply(_babelHelpers$getProt, [this].concat(args)));
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getCollaberBalloonContainer);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getExtranetBalloonContainer);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getAdminBalloonContainer);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getIntegratorBalloonContainer);
-	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getPositionContainer);
-	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getInviteNotConfirmedContainer);
-	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getInviteNotAcceptedContainer);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getPositionLabelContainer);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getWaitingConfirmationLabelContainer);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getInvitedLabelContainer);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getFullNameLink);
 	    return _this;
 	  }
 	  babelHelpers.createClass(FullNameField, [{
 	    key: "render",
 	    value: function render(params) {
-	      var fullNameContainer = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"user-grid_full-name-container\">", "</div>\n\t\t"])), _classPrivateMethodGet(this, _getFullNameLink, _getFullNameLink2).call(this, params.fullName, params.profileLink));
+	      var fullNameContainer = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"user-grid_full-name-container\">", "</div>\n\t\t"])), _classPrivateMethodGet(this, _getFullNameLink, _getFullNameLink2).call(this, params.fullName, params.profileLink));
 	      if (params.position) {
-	        main_core.Dom.append(_classPrivateMethodGet(this, _getPositionContainer, _getPositionContainer2).call(this, main_core.Text.encode(params.position)), fullNameContainer);
+	        main_core.Dom.append(_classPrivateMethodGet(this, _getPositionLabelContainer, _getPositionLabelContainer2).call(this, main_core.Text.encode(params.position)), fullNameContainer);
 	      }
-	      if (!params.isInvited && params.isConfirmed) {
-	        if (params.isIntegrator) {
+	      switch (params.role) {
+	        case 'integrator':
 	          main_core.Dom.append(_classPrivateMethodGet(this, _getIntegratorBalloonContainer, _getIntegratorBalloonContainer2).call(this), fullNameContainer);
-	        } else if (params.isAdmin) {
+	          break;
+	        case 'admin':
 	          main_core.Dom.append(_classPrivateMethodGet(this, _getAdminBalloonContainer, _getAdminBalloonContainer2).call(this), fullNameContainer);
-	        } else if (params.isExtranet) {
+	          break;
+	        case 'extranet':
 	          main_core.Dom.append(_classPrivateMethodGet(this, _getExtranetBalloonContainer, _getExtranetBalloonContainer2).call(this), fullNameContainer);
-	        }
-	      } else if (params.isInvited && !params.isConfirmed) {
-	        main_core.Dom.append(_classPrivateMethodGet(this, _getInviteNotConfirmedContainer, _getInviteNotConfirmedContainer2).call(this), fullNameContainer);
-	      } else if (params.isInvited) {
-	        main_core.Dom.append(_classPrivateMethodGet(this, _getInviteNotAcceptedContainer, _getInviteNotAcceptedContainer2).call(this), fullNameContainer);
+	          break;
+	        case 'collaber':
+	          main_core.Dom.append(_classPrivateMethodGet(this, _getCollaberBalloonContainer, _getCollaberBalloonContainer2).call(this), fullNameContainer);
+	          break;
+	        default:
+	          break;
+	      }
+	      switch (params.inviteStatus) {
+	        case 'INVITE_AWAITING_APPROVE':
+	          main_core.Dom.append(_classPrivateMethodGet(this, _getWaitingConfirmationLabelContainer, _getWaitingConfirmationLabelContainer2).call(this), fullNameContainer);
+	          break;
+	        case 'INVITED':
+	          main_core.Dom.append(_classPrivateMethodGet(this, _getInvitedLabelContainer, _getInvitedLabelContainer2).call(this), fullNameContainer);
+	          break;
+	        default:
+	          break;
 	      }
 	      this.appendToFieldNode(fullNameContainer);
 	    }
@@ -138,9 +157,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return FullNameField;
 	}(BaseField);
 	function _getFullNameLink2(fullName, profileLink) {
-	  return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<a class=\"user-grid_full-name-label\" href=\"", "\">", "</a>"])), profileLink, fullName);
+	  return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"user-grid_full-name-label\" href=\"", "\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), profileLink, fullName);
 	}
-	function _getInviteNotAcceptedContainer2() {
+	function _getInvitedLabelContainer2() {
 	  var label = new ui_label.Label({
 	    text: main_core.Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_INVITATION_NOT_ACCEPTED'),
 	    color: ui_label.LabelColor.LIGHT_BLUE,
@@ -150,7 +169,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  });
 	  return label.render();
 	}
-	function _getInviteNotConfirmedContainer2() {
+	function _getWaitingConfirmationLabelContainer2() {
 	  var label = new ui_label.Label({
 	    text: main_core.Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_NOT_CONFIRMED'),
 	    color: ui_label.LabelColor.YELLOW,
@@ -160,7 +179,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  });
 	  return label.render();
 	}
-	function _getPositionContainer2(position) {
+	function _getPositionLabelContainer2(position) {
 	  return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"user-grid_position-label\">", "</div>"])), position);
 	}
 	function _getIntegratorBalloonContainer2() {
@@ -172,8 +191,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	function _getExtranetBalloonContainer2() {
 	  return main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span class=\"user-grid_role-label --extranet\">\n\t\t\t\t", "\n\t\t\t</span>\n\t\t"])), main_core.Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_EXTRANET'));
 	}
+	function _getCollaberBalloonContainer2() {
+	  return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span class=\"user-grid_role-label --collaber\">\n\t\t\t\t", "\n\t\t\t</span>\n\t\t"])), main_core.Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_COLLABER'));
+	}
 
-	var _templateObject$2, _templateObject2$1;
+	var _templateObject$1, _templateObject2$1;
 	var EmployeeField = /*#__PURE__*/function (_BaseField) {
 	  babelHelpers.inherits(EmployeeField, _BaseField);
 	  function EmployeeField() {
@@ -185,7 +207,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    value: function render(params) {
 	      var photoFieldId = main_core.Text.getRandom(6);
 	      var fullNameFieldId = main_core.Text.getRandom(6);
-	      this.appendToFieldNode(main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["<span id=\"", "\"></span>"])), photoFieldId));
+	      this.appendToFieldNode(main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<span id=\"", "\"></span>"])), photoFieldId));
 	      this.appendToFieldNode(main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["<span class=\"user-grid_full-name-wrapper\" id=\"", "\"></span>"])), fullNameFieldId));
 	      new PhotoField({
 	        fieldId: photoFieldId
@@ -430,7 +452,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}();
 	babelHelpers.defineProperty(GridManager, "instances", []);
 
-	var _templateObject$3;
+	var _templateObject$2;
 	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$3(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
@@ -474,7 +496,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          color = BX.UI.Button.Color.LIGHT_BORDER;
 	          break;
 	      }
-	      var counter = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-counter user-grid_invitation-counter\">\n\t\t\t\t<div class=\"ui-counter-inner\">1</div>\n\t\t\t</div>\n\t\t"])));
+	      var counter = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-counter user-grid_invitation-counter\">\n\t\t\t\t<div class=\"ui-counter-inner\">1</div>\n\t\t\t</div>\n\t\t"])));
 	      main_core.Dom.append(counter, this.getFieldNode());
 	      var button = new BX.UI.Button({
 	        text: title,
@@ -559,7 +581,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  });
 	}
 
-	var _templateObject$4, _templateObject2$2, _templateObject3$1;
+	var _templateObject$3, _templateObject2$2, _templateObject3$1;
 	var DepartmentField = /*#__PURE__*/function (_BaseField) {
 	  babelHelpers.inherits(DepartmentField, _BaseField);
 	  function DepartmentField() {
@@ -591,7 +613,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          });
 	          dialog.show();
 	        };
-	        var addButton = main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"user-grid_department-btn\" onclick=\"", "\">\n\t\t\t\t\t<div class=\"user-grid_department-icon-container\">\n\t\t\t\t\t\t<div class=\"ui-icon-set --plus-30\" style=\"--ui-icon-set__icon-size: 18px; --ui-icon-set__icon-color: #2fc6f6;\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"user-grid_department-name-container\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), onclick, main_core.Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_ADD_DEPARTMENT'));
+	        var addButton = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"user-grid_department-btn\" onclick=\"", "\">\n\t\t\t\t\t<div class=\"user-grid_department-icon-container\">\n\t\t\t\t\t\t<div class=\"ui-icon-set --plus-30\" style=\"--ui-icon-set__icon-size: 18px; --ui-icon-set__icon-color: #2fc6f6;\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"user-grid_department-name-container\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), onclick, main_core.Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_ADD_DEPARTMENT'));
 	        this.appendToFieldNode(addButton);
 	      } else {
 	        Object.values(params.departments).forEach(function (department) {
@@ -1064,6 +1086,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      } else if (skippedFiredUsers && Object.keys(skippedFiredUsers).length > 0) {
 	        this.showFiredUsersPopup(skippedFiredUsers);
 	      } else {
+	        var _BX$Bitrix, _BX$Bitrix$EmailConfi;
 	        BX.UI.Notification.Center.notify({
 	          content: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_REINVITE_SUCCESS'),
 	          autoHide: true,
@@ -1071,6 +1094,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          category: 'menu-self-item-popup',
 	          autoHideDelay: 3000
 	        });
+	        (_BX$Bitrix = BX.Bitrix24) === null || _BX$Bitrix === void 0 ? void 0 : (_BX$Bitrix$EmailConfi = _BX$Bitrix.EmailConfirmation) === null || _BX$Bitrix$EmailConfi === void 0 ? void 0 : _BX$Bitrix$EmailConfi.showPopupDispatched();
 	      }
 	      this.unselectRows(this.grid);
 	    }
@@ -1154,7 +1178,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return CreateChatAction;
 	}(BaseAction);
 
-	var _templateObject$5;
+	var _templateObject$4;
 	var ChangeDepartmentAction = /*#__PURE__*/function (_BaseAction) {
 	  babelHelpers.inherits(ChangeDepartmentAction, _BaseAction);
 	  function ChangeDepartmentAction() {
@@ -1190,7 +1214,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        },
 	        size: BX.UI.Button.Size.SMALL
 	      });
-	      var footer = main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["<span></span>"])));
+	      var footer = main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["<span></span>"])));
 	      saveButton.renderTo(footer);
 	      cancelButton.renderTo(footer);
 	      var dialog = new ui_entitySelector.Dialog({
@@ -1303,5 +1327,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 	exports.GridManager = GridManager;
 	exports.Panel = Panel;
 
-}((this.BX.Intranet.UserList = this.BX.Intranet.UserList || {}),BX.UI,BX.UI.FormElements,BX.Main,BX.UI,BX.Intranet.Reinvite,BX,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.UI.EntitySelector,BX));
+}((this.BX.Intranet.UserList = this.BX.Intranet.UserList || {}),BX.UI,BX.UI,BX.UI.FormElements,BX.Main,BX.UI,BX.Intranet.Reinvite,BX,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.UI.EntitySelector,BX));
 //# sourceMappingURL=grid.bundle.js.map

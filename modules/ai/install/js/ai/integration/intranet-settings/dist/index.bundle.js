@@ -135,7 +135,8 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	    title = item.title,
 	    header = item.header,
 	    value = item.value,
-	    options = item.options;
+	    options = item.options,
+	    recommended = item.recommended;
 	  var withOnSave = item.onSave && item.onSave.switcher;
 	  var row = new ui_formElements_field.SettingsRow({
 	    row: {
@@ -153,26 +154,27 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	    });
 	  } else if (type === 'list') {
 	    if (options && value) {
-	      var selectorItems = [];
-	      var additionalOptions = [];
+	      var items = [];
+	      var additionalItems = [];
 	      for (var option in options) {
 	        if (main_core.Type.isString(options[option])) {
-	          selectorItems.push({
+	          items.push({
 	            name: options[option],
 	            value: option,
 	            selected: option === value
 	          });
 	        } else if (main_core.Type.isPlainObject(options[option])) {
-	          additionalOptions.push(options[option]);
+	          additionalItems.push(options[option]);
 	        }
 	      }
-	      if (selectorItems.length > 0) {
+	      if (items.length > 0) {
 	        field = new ai_ui_field_selectorfield.SelectorField({
 	          inputName: code,
 	          label: title,
 	          name: code,
-	          items: selectorItems,
-	          additionalItems: additionalOptions,
+	          items: items,
+	          additionalItems: additionalItems,
+	          recommendedItems: recommended,
 	          current: value
 	        });
 	      }

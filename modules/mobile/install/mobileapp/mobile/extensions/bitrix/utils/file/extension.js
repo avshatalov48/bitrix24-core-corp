@@ -228,6 +228,44 @@ jn.define('utils/file', (require, exports, module) => {
 		return parseInt(objectId, 10);
 	}
 
+	/**
+	 * @param {number} bytes
+	 * @param {number} precision
+	 * @param {Object.<string, string>} phrases
+	 * @return {string}
+	 */
+	function formatFileSize(bytes, precision = 1, phrases = {})
+	{
+		let fileSize = (!bytes || bytes <= 0) ? 0 : Number(bytes);
+
+		const sizes = ['BYTE', 'KB', 'MB', 'GB', 'TB'];
+		const KILOBYTE_SIZE = 1024;
+
+		let position = 0;
+		while (fileSize >= KILOBYTE_SIZE && position < sizes.length - 1)
+		{
+			fileSize /= KILOBYTE_SIZE;
+			position++;
+		}
+
+		const phraseCode = `M_UTILS_FILE_SIZE_${sizes[position]}`;
+		const phrase = phrases[phraseCode]
+			?? Loc.getMessage(phraseCode)
+			?? formatFileSize.defaultPhrases[phraseCode];
+
+		const roundedSize = Number(fileSize.toFixed(precision));
+
+		return `${roundedSize} ${phrase}`;
+	}
+
+	formatFileSize.defaultPhrases = {
+		M_UTILS_FILE_SIZE_BYTE: 'bytes',
+		M_UTILS_FILE_SIZE_GB: 'GB',
+		M_UTILS_FILE_SIZE_KB: 'KB',
+		M_UTILS_FILE_SIZE_MB: 'MB',
+		M_UTILS_FILE_SIZE_TB: 'TB',
+	};
+
 	module.exports = {
 		NativeViewerMediaTypes,
 		getAbsolutePath,
@@ -240,5 +278,6 @@ jn.define('utils/file', (require, exports, module) => {
 		openNativeViewer,
 		prepareObjectId,
 		openNativeViewerByFileId,
+		formatFileSize,
 	};
 });

@@ -3,12 +3,17 @@
 namespace Bitrix\Intranet\Entity;
 
 use Bitrix\Intranet\Enum\InvitationStatus;
+use Bitrix\Intranet\Enum\UserRole;
+use Bitrix\Intranet\Service\ServiceContainer;
+use Bitrix\Intranet\UserTable;
+use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Socialnetwork\Collab\CollabFeature;
 
 class User
 {
 	public function __construct(
-		private ?int    $id = null,
+		private ?int $id = null,
 		private ?array  $departmetnsIds = null,
 		private ?string $login = null,
 		private ?string $email = null,
@@ -88,6 +93,82 @@ class User
 		{
 			return InvitationStatus::FIRED;
 		}
+	}
+
+	public function getRole(): UserRole
+	{
+		if ($this->isIntegrator())
+		{
+			return UserRole::INTEGRATOR;
+		}
+		elseif ($this->isAdmin())
+		{
+			return UserRole::ADMIN;
+		}
+		elseif ($this->isIntranet())
+		{
+			return UserRole::INTRANET;
+		}
+		elseif ($this->isCollaber())
+		{
+			return UserRole::COLLABER;
+		}
+		elseif (
+			$this->isExtranet()
+			&& (in_array(\CExtranet::getExtranetUserGroupId(), \CUser::GetUserGroup($this->getId())))
+			&& \Bitrix\Extranet\PortalSettings::getInstance()->isExtranetUsersAvailable()
+		)
+		{
+			return UserRole::EXTRANET;
+		}
+		elseif ($this->isEmail())
+		{
+			return UserRole::EMAIL;
+		}
+		elseif ($this->isShop())
+		{
+			return UserRole::SHOP;
+		}
+		elseif ($this->isExternal())
+		{
+			return UserRole::EXTERNAL;
+		}
+		else
+		{
+			return UserRole::VISITOR;
+		}
+	}
+
+	public function isIntegrator(): bool
+	{
+		return in_array($this->id, ServiceContainer::getInstance()->getUserService()->getIntegratorUserIds());
+	}
+
+	public function isAdmin(): bool
+	{
+		return in_array($this->id, ServiceContainer::getInstance()->getUserService()->getAdminUserIds());
+	}
+
+	public function isCollaber(): bool
+	{
+		return Loader::includeModule('socialnetwork')
+			&& CollabFeature::isOn()
+			&& \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById($this->id);
+	}
+
+	public function isEmail(): bool
+	{
+		return $this->externalAuthId === 'email';
+	}
+
+	public function isShop(): bool
+	{
+		return in_array($this->externalAuthId, ['shop', 'sale', 'saleanonymous']);
+	}
+
+	public function isExternal(): bool
+	{
+		return in_array($this->externalAuthId, UserTable::getExternalUserTypes());
 	}
 
 	public function getExternalAuthId(): ?string
@@ -233,5 +314,10 @@ class User
 					&& (int)$this->getDepartmetnsIds()[0] > 0
 				)
 			);
+	}
+
+	public function getAccessCode(): string
+	{
+		return 'U' . $this->getId();
 	}
 }

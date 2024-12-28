@@ -99,7 +99,7 @@ class TaskRepository implements BackGroundJob
 			'TITLE',
 			'DESCRIPTION',
 			'UF_CRM_TASK',
-			'STATUS',
+			'REAL_STATUS',
 			'SCENARIO',
 			'DEADLINE',
 			'RESPONSIBLE_ID',
@@ -125,6 +125,10 @@ class TaskRepository implements BackGroundJob
 		$task = $tasks[0] ?? null;
 		if (!is_null($task))
 		{
+			// STATUS gets \Bitrix\Tasks\Internals\Task\MetaStatus too. We need real status http://jabber.bx/view.php?id=193670
+			$task['STATUS'] = $task['REAL_STATUS'];
+			unset($task['REAL_STATUS']);
+
 			$this->task = new TaskObject($task);
 			$this->task->fillMemberList();
 		}

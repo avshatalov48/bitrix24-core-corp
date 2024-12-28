@@ -14,6 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @global CDatabase $DB
  */
 
+use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
@@ -601,6 +602,13 @@ if($arParams['TYPE'] === 'list')
 			'TITLE' => GetMessage('CRM_CONTACT_VERTICAL_CRM_TITLE'),
 			'ONCLICK' => 'BX.SidePanel.Instance.open(\''.$url.'\');'
 		];
+	}
+
+	$permissionItem = PermissionItem::createByEntity(CCrmOwnerType::Contact, $arResult['CATEGORY_ID']);
+	if ($permissionItem->canShow())
+	{
+		$arResult['BUTTONS'][] = $permissionItem->interfaceToolbarDelimiter();
+		$arResult['BUTTONS'][] = $permissionItem->toInterfaceToolbarButton();
 	}
 
 	if(count($arResult['BUTTONS']) > 1)

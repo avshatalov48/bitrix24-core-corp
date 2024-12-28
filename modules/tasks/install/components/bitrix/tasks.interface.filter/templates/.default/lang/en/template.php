@@ -21,6 +21,7 @@ $MESS["TASKS_BTN_IMPORT"] = "Import list";
 $MESS["TASKS_BTN_IMPORT_CSV"] = "from CSV";
 $MESS["TASKS_BTN_KANBAN_POPUP_TITLE_CONFIGURE_VIEW"] = "Configure view";
 $MESS["TASKS_BTN_LIST_TASK_TEMPLATE"] = "All templates";
+$MESS["TASKS_BTN_REPORTS"] = "Reports";
 $MESS["TASKS_BTN_SORT_ACTIVITY_DATE"] = "By activity state";
 $MESS["TASKS_BTN_SORT_ACTIVITY_DATE_MSGVER_1"] = "By last active date";
 $MESS["TASKS_BTN_SORT_ALLOW_TIME_TRACKING"] = "Track time spent";

@@ -2,6 +2,7 @@ import {Browser, Dom, Runtime, Text, Type} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 import {Popup} from 'main.popup';
 import {DesktopApi} from 'im.v2.lib.desktop-api';
+import { CopilotNotify, CopilotNotifyType } from './copilot-notify';
 
 import {UserModel, UserRegistry} from './user-registry'
 import * as Buttons from './buttons';
@@ -14,6 +15,7 @@ import {NotificationManager} from './notifications';
 import {DeviceSelector} from './device-selector';
 import {EndpointDirection, UserState} from '../engine/engine';
 import Util from '../util';
+import { CallAI } from '../call_ai';
 import { Utils } from 'im.v2.lib.utils';
 import {UserSelector} from './user-selector';
 
@@ -133,6 +135,8 @@ type ViewOptions = {
 	layout: string,
 	userStates: {},
 	showAddUserButtonInList?: boolean,
+	isCopilotFeaturesEnabled: boolean,
+	isCopilotActive: boolean,
 }
 
 export class View
@@ -161,6 +165,7 @@ export class View
 		this.showShareButton = (config.showShareButton !== false);
 		this.showRecordButton = (config.showRecordButton !== false);
 		this.showDocumentButton = (config.showDocumentButton !== false);
+		this.showCopilotButton = (config.showCopilotButton !== false);
 		this.showButtonPanel = (config.showButtonPanel !== false);
 		this.showAddUserButtonInList = config.showAddUserButtonInList || false;
 
@@ -277,6 +282,7 @@ export class View
 			share: null,
 			record: null,
 			document: null,
+			copilot: null,
 			microphone: null,
 			camera: null,
 			speaker: null,
@@ -400,6 +406,10 @@ export class View
 		}.bind(this), 100)*/
 
 		this.hideEarTimer = null;
+
+		this.isCopilotFeaturesEnabled = config.isCopilotFeaturesEnabled || false;
+		this.isCopilotActive = config.isCopilotActive || false;
+		this.copilotNotify = null;
 	};
 
 	openArticle(articleCode)
@@ -2102,10 +2112,12 @@ export class View
 
 		// We specifically disable the face improve feature to improve call quality.
 		this.disableFaceImprove();
+		this.checkPanelOverflow();
 	};
 
 	hide()
 	{
+		this.closeCopilotNotify();
 		if (this.overflownButtonsPopup)
 		{
 			this.overflownButtonsPopup.close();
@@ -2592,6 +2604,8 @@ export class View
 				return !this.showRecordButton || this.blockedButtons[buttonName] === true;
 			case 'document':
 				return !this.showDocumentButton || this.blockedButtons[buttonName] === true;
+			case 'copilot':
+				return !this.showCopilotButton || this.blockedButtons[buttonName] === true;
 			default:
 				return this.blockedButtons[buttonName] === true;
 		}
@@ -2618,7 +2632,7 @@ export class View
 	checkPanelOverflow()
 	{
 		const delta = this.elements.panel.scrollWidth - this.elements.panel.offsetWidth
-		const mediumButtonMinWidth = 55; // todo: move to constants maybe? or maybe even calculate dynamically somehow?
+		const mediumButtonMinWidth = 60; // todo: move to constants maybe? or maybe even calculate dynamically somehow?
 		if (delta > 0)
 		{
 			let countOfButtonsToHide = Math.ceil(delta / mediumButtonMinWidth);
@@ -2651,7 +2665,7 @@ export class View
 			if (hiddenButtonsCount > 0)
 			{
 				const unusedPanelSpace = this.calculateUnusedPanelSpace();
-				if (unusedPanelSpace > 240)
+				if (unusedPanelSpace > 320)
 				{
 					let countOfButtonsToShow = Math.min(Math.floor(unusedPanelSpace / mediumButtonMinWidth), hiddenButtonsCount);
 					let buttonsLeftHidden = hiddenButtonsCount - countOfButtonsToShow;
@@ -2883,6 +2897,11 @@ export class View
 			result.push('document');
 		}
 
+		if (this.layout !== Layouts.Mobile && CallAI.serviceEnabled)
+		{
+			result.push('copilot');
+		}
+
 		result = result.filter((buttonCode) =>
 		{
 			return !this.hiddenButtons.hasOwnProperty(buttonCode) && !this.overflownButtons.hasOwnProperty(buttonCode);
@@ -2970,7 +2989,7 @@ export class View
 			props: {className: "bx-messenger-videocall"},
 			children: [
 				this.elements.wrap = Dom.create("div", {
-					props: {className: "bx-messenger-videocall-wrap"},
+					props: {className: `bx-messenger-videocall-wrap ${this.isCopilotActive ? 'bx-messenger-videocall-wrap-with-copilot' : ''}`},
 					children: [
 						this.elements.container = Dom.create("div", {
 							props: {className: "bx-messenger-videocall-inner"},
@@ -4011,6 +4030,29 @@ export class View
 					}
 					center.appendChild(this.buttons.document.render());
 					break;
+				case "copilot":
+					if (!this.buttons.copilot)
+					{
+						this.buttons.copilot = new Buttons.SimpleButton({
+							class: "copilot",
+							backgroundClass: "bx-messenger-videocall-panel-background-copilot",
+							text: BX.message("CALL_BUTTON_COPILOT_TITLE"),
+							blocked: this.isButtonBlocked("copilot"),
+							onClick: this._onCopilotButtonClick.bind(this),
+							isComingSoon: !this.isCopilotFeaturesEnabled,
+						});
+					}
+					else
+					{
+						this.buttons.copilot.setBlocked(this.isButtonBlocked('copilot'));
+					}
+
+					if (this.isCopilotActive)
+					{
+						this.buttons.copilot.setActive(true);
+					}
+					center.appendChild(this.buttons.copilot.render());
+					break;
 				case "returnToCall":
 					this.buttons.returnToCall = new Buttons.SimpleButton({
 						class: "returnToCall",
@@ -4285,6 +4327,86 @@ export class View
 		}
 		return result;
 	};
+
+	updateCopilotState(isActive)
+	{
+		this.isCopilotActive = isActive;
+
+		this.setButtonActive('copilot', this.isCopilotActive);
+
+		if (this.elements.wrap)
+		{
+			this.elements.wrap.classList[this.isCopilotActive ? 'add' : 'remove']('bx-messenger-videocall-wrap-with-copilot')
+		}
+	}
+
+	updateCopilotFeatureState(isEnabled)
+	{
+		this.isCopilotFeaturesEnabled = isEnabled;
+
+		if (!this.buttons.copilot)
+		{
+			return;
+		}
+
+		this.buttons.copilot.setIsComingSoon(!this.isCopilotFeaturesEnabled);
+	}
+
+	showCopilotNotify()
+	{
+		this.copilotNotify = this.createCopilotNotify(
+			CopilotNotifyType[this.isCopilotActive ? 'COPILOT_ENABLED' : 'COPILOT_DISABLED']
+		);
+
+		if (this.copilotNotify)
+		{
+			this.copilotNotify.show();
+		}
+	}
+
+	closeCopilotNotify()
+	{
+		if (this.copilotNotify)
+		{
+			this.copilotNotify.close();
+		}
+	}
+
+	showCopilotResultNotify()
+	{
+		this.copilotNotify = this.createCopilotNotify(CopilotNotifyType.COPILOT_RESULT);
+
+		if (this.copilotNotify)
+		{
+			this.copilotNotify.show();
+		}
+	}
+
+	showCopilotErrorNotify(errorType)
+	{
+		this.copilotNotify = this.createCopilotNotify(CopilotNotifyType[errorType]);
+
+		if (this.copilotNotify)
+		{
+			this.copilotNotify.show();
+		}
+	}
+
+	createCopilotNotify(notifyType)
+	{
+		if (!this.buttons.copilot)
+		{
+			return null;
+		}
+
+		return new CopilotNotify({
+			type: notifyType,
+			bindElement: this.buttons.copilot.elements.root,
+			onClose: () => {
+				this.copilotNotify = null;
+			},
+		});
+	}
 
 	calculateUnusedPanelSpace(buttonList)
 	{
@@ -5259,6 +5381,15 @@ export class View
 		});
 	};
 
+	_onCopilotButtonClick(e)
+	{
+		e.stopPropagation();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: 'copilot',
+			node: e.target
+		});
+	};
+
 	_onGridButtonClick()
 	{
 		this.setLayout(this.layout == Layouts.Centered ? Layouts.Grid : Layouts.Centered);
@@ -5777,6 +5908,7 @@ export class View
 
 	destroy()
 	{
+		this.closeCopilotNotify();
 		if (this.overflownButtonsPopup)
 		{
 			this.overflownButtonsPopup.close();

@@ -171,6 +171,19 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		$pathToCalendar = \CCalendar::GetPathForCalendarEx($USER->GetID());
 		$pathToEvent = \CHTTP::urlAddParams($pathToCalendar, ['EVENT_ID' => $entry['ID']]);
 
+		$notDeclinedIds = null;
+		if (is_array($entry['ATTENDEE_LIST']))
+		{
+			// exclude decliners
+			$notDeclinedIds =  array_column(
+				array_filter(
+					$entry['ATTENDEE_LIST'],
+					static fn (array $attendee) => $attendee['status'] !== 'N'
+				),
+				'id'
+			);
+		}
+
 		$res = [
 			'ID' => $entry['ID'],
 			'TITLE' => $entry['NAME'],
@@ -180,12 +193,18 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 			'DATE_FROM' => $entry['DATE_FROM'],
 			'DT_SKIP_TIME' => $entry['DT_SKIP_TIME'],
 			'RECURRENCE_ID' => $entry['RECURRENCE_ID'],
-			'USER_IDS' => is_array($entry['ATTENDEE_LIST']) ? array_column($entry['ATTENDEE_LIST'], 'id') : [$entry['CREATED_BY']],
+			// TODO: not used if NOT_DECLINED_IDS presented
+			'USER_IDS' => is_array($entry['ATTENDEE_LIST'])
+				? array_column($entry['ATTENDEE_LIST'], 'id')
+				: [$entry['CREATED_BY']]
+			,
+			'NOT_DECLINED_IDS' => $notDeclinedIds ?: [$entry['CREATED_BY']],
 			'LINK' => $pathToEvent,
 			'URL' => $pathToEvent,
 		];
 
 		$this->checkUsers($res['USER_IDS']);
+		$this->checkUsers($res['NOT_DECLINED_IDS']);
 
 		return $res;
 	}
@@ -279,7 +298,7 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 				);
 				return null;
 			}
-			
+
 			$parentCalendarData = [];
 			if ($calendarData['RECURRENCE_ID'])
 			{

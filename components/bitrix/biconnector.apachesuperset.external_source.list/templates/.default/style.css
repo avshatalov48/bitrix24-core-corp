@@ -1,0 +1,91 @@
+.biconnector-grid-username-cell {
+	display: inline-flex;
+	align-items: center;
+	vertical-align: middle;
+	overflow: hidden;
+	height: 22px;
+	padding: 3px 12px 3px 3px;
+	margin-top: -4px;
+	white-space: nowrap;
+	border-radius: 14px;
+	transition: 0.1s linear all;
+	cursor: pointer;
+}
+
+.biconnector-grid-username-cell:hover {
+	background: #C0EDFD;
+	text-decoration: none !important;
+}
+
+.biconnector-grid-username-cell-active {
+	background: #C0EDFD;
+	text-decoration: none !important;
+}
+
+.biconnector-grid-avatar.ui-icon.ui-icon-common-user,
+.biconnector-grid-avatar.ui-icon.ui-icon-common-user-group {
+	width: 22px;
+	min-width: 22px;
+	height: 22px;
+}
+
+.biconnector-grid-username {
+	display: inline-block;
+	padding-left: 10px;
+	height: 20px;
+	line-height: 20px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.biconnector-grid-type-cell{
+	display: inline-flex;
+	align-items: center;
+	margin-top: -4px;
+}
+
+.biconnector-grid-type-cell-title {
+	padding-left: 10px;
+}
+
+.external-source-active-label-wrapper {
+	display: flex;
+}
+
+.ui-label-inner {
+	text-transform: uppercase;
+}
+
+.biconnector-grid-cell-comment{
+	color: #828B95;
+}
+
+.ui-page-slider-wrapper, .ui-slider-page{
+	height: 100% !important;
+}
+
+.biconnector-dataset-grid-stub-container{
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding-bottom: 90px;
+}
+
+.source-title-wrapper {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.ui-side-panel-wrap-workarea.ui-page-slider-workarea-content-padding {
+	background-color: inherit;
+	display: flex;
+	flex-direction: column;
+
+}
+
+#biconnector-external-source-grid {
+	flex-grow: 1;
+	background-color: #fff;
+	border-radius: var(--ui-alert-border-radius);
+}

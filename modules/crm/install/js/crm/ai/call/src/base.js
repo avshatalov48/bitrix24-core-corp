@@ -1,14 +1,20 @@
-import { Tag, Loc, Type, Text } from 'main.core';
-import { UI } from 'ui.notification';
 import { Slider } from 'crm.ai.slider';
-import { Textbox, Attention, AttentionPresets } from 'crm.ai.textbox';
+import { Attention, AttentionPresets, Textbox } from 'crm.ai.textbox';
 import { AudioPlayer } from 'crm.audio-player';
+import { Loc, Tag, Text, Type } from 'main.core';
+import { UI } from 'ui.notification';
 
-declare type aiCallData = {
+export type aiCallData = {
 	activityId: number,
+	activityCreated?: number,
 	ownerTypeId: number,
 	ownerId: number,
 	languageTitle ?: string,
+	clientDetailUrl ?: string,
+	clientFullName ?: string,
+	userPhotoUrl ?: string,
+	jobId ?: number,
+	assessmentSettingsId ?: number,
 };
 
 export class Base
@@ -17,6 +23,8 @@ export class Base
 	ownerTypeId: number;
 	ownerId: number;
 	languageTitle: ?string = null;
+
+	audioPlayerNode: HTMLElement;
 
 	id: string;
 	sliderTitle: string;
@@ -37,15 +45,15 @@ export class Base
 		this.ownerId = data.ownerId;
 		this.languageTitle = data.languageTitle ?? null;
 
-		const audioPlayerNode = Tag.render`<div id="crm-textbox-audio-player"></div>`;
+		this.audioPlayerNode = Tag.render`<div id="crm-textbox-audio-player"></div>`;
 
 		this.audioPlayerApp = new AudioPlayer({
-			rootNode: audioPlayerNode,
+			rootNode: this.audioPlayerNode,
 		});
 
 		this.textbox = new Textbox({
 			title: this.textboxTitle,
-			previousTextContent: audioPlayerNode,
+			previousTextContent: this.audioPlayerNode,
 			attentions: this.getTextboxAttentions(),
 		});
 
@@ -53,18 +61,45 @@ export class Base
 		this.wrapperSlider = new Slider({
 			url: this.sliderId,
 			sliderTitle: this.sliderTitle,
+			sliderContentClass: this.getSliderContentClass(),
 			width: this.sliderWidth,
-			extensions: ['crm.ai.textbox', 'crm.audio-player'],
-			events: {
-				onLoad: () => {
-					this.audioPlayerApp.attachTemplate();
-				},
-
-				onClose: () => {
-					this.audioPlayerApp.detachTemplate();
-				},
-			},
+			extensions: this.getExtensions(),
+			design: this.getSliderDesign(),
+			events: this.getSliderEvents(),
+			toolbar: this.getSliderToolbar(),
 		});
+	}
+
+	getExtensions(): Array<string>
+	{
+		return ['crm.ai.textbox', 'crm.audio-player'];
+	}
+
+	getSliderContentClass(): ?string
+	{
+		return null;
+	}
+
+	getSliderDesign(): ?Object
+	{
+		return null;
+	}
+
+	getSliderToolbar(): ?Function
+	{
+		return null;
+	}
+
+	getSliderEvents(): Object
+	{
+		return {
+			onLoad: () => {
+				this.audioPlayerApp.attachTemplate();
+			},
+			onClose: () => {
+				this.audioPlayerApp.detachTemplate();
+			},
+		};
 	}
 
 	open()

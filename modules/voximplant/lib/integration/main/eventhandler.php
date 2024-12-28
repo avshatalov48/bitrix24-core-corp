@@ -13,6 +13,11 @@ class EventHandler
 	 */
 	public static function onFileDelete(array $params): void
 	{
+		if (!in_array($params['MODULE_ID'], ['voximplant']))
+		{
+			return;
+		}
+
 		$fileId = (int)$params['ID'];
 		if ($fileId < 1)
 		{

@@ -6,6 +6,7 @@ jn.define('im/messenger/const/dialog-action-type', (require, exports, module) =>
 		avatar: 'avatar',
 		call: 'call',
 		extend: 'extend',
+		update: 'update',
 		leave: 'leave',
 		leaveOwner: 'leaveOwner',
 		kick: 'kick',

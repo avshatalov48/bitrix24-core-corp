@@ -34,6 +34,13 @@ return array(
 					],
 				],
 				[
+					'entityId' => 'task-with-id',
+					'provider' => [
+						'moduleId' => 'tasks',
+						'className' => EntitySelector\TaskWithIdProvider::class,
+					],
+				],
+				[
 					'entityId' => 'task-tag',
 					'provider' => [
 						'moduleId' => 'tasks',
@@ -82,6 +89,13 @@ return array(
 						'className' => EntitySelector\FlowProvider::class,
 					],
 				],
+				[
+					'entityId' => 'flow-user',
+					'provider' => [
+						'moduleId' => 'tasks',
+						'className' => EntitySelector\FlowUserProvider::class,
+					],
+				],
 			],
 			'filters' => [
 				[
@@ -94,6 +108,11 @@ return array(
 					'entityId' => 'project',
 					'className' => '\\Bitrix\\Tasks\\Integration\\UI\\EntitySelector\\ProjectDataFilter',
 				],
+				[
+					'id' => 'tasks.distributedUserDataFilter',
+					'entityId' => 'user',
+					'className' => '\\Bitrix\\Tasks\\Integration\\UI\\EntitySelector\\DistributedUserDataFilter',
+				],
 			],
 			'extensions' => ['tasks.entity-selector'],
 		],
@@ -101,6 +120,9 @@ return array(
 	],
 	'services' => [
 		'value' => [
+			'tasks.flow.member.facade' => [
+				'className' => \Bitrix\Tasks\Flow\Provider\FlowMemberFacade::class,
+			],
 			'tasks.flow.command.addCommandHandler' => [
 				'className' => \Bitrix\Tasks\Flow\Control\Command\AddCommandHandler::class,
 			],
@@ -128,7 +150,9 @@ return array(
 			'tasks.flow.service' => [
 				'className' => \Bitrix\Tasks\Flow\Control\FlowService::class,
 			],
-
+			'tasks.control.log.task.service' => [
+				'className' => \Bitrix\Tasks\Control\Log\TaskLogService::class,
+			],
 			'tasks.flow.efficiency.service' => [
 				'className' => \Bitrix\Tasks\Flow\Efficiency\EfficiencyService::class
 			],
@@ -139,7 +163,15 @@ return array(
 
 			'tasks.user.option.automute.service' => [
 				'className' => \Bitrix\Tasks\Internals\UserOption\Service\AutoMuteService::class,
-			]
+			],
+
+			'tasks.flow.copilot.collected.data.service' => [
+				'className' => \Bitrix\Tasks\Flow\Integration\AI\Control\CollectedDataService::class,
+			],
+
+			'tasks.flow.copilot.advice.service' => [
+				'className' => \Bitrix\Tasks\Flow\Integration\AI\Control\AdviceService::class,
+			],
 		],
 	],
 );

@@ -9,6 +9,9 @@ import { AddEvent as EntityAddEventBuilder } from './builders/entity/add-event';
 import { CloseEvent as EntityCloseEventBuilder } from './builders/entity/close-event';
 import { ConvertBatchEvent as EntityConvertBatchEventBuilder } from './builders/entity/convert-batch-event';
 import { ConvertEvent as EntityConvertEventBuilder } from './builders/entity/convert-event';
+import { CloseEvent as BlockCloseEvent } from './builders/block/close-event';
+import { EnableEvent as BlockEnableEvent } from './builders/block/enable-event';
+import { LinkEvent as BlockLinkEvent } from './builders/block/link-event';
 import { Dictionary } from './dictionary';
 import type {
 	AICallParsingEvent,
@@ -40,6 +43,11 @@ const Builder = Object.freeze({
 			EditEvent: EditTypeEvent,
 			DeleteEvent: DeleteTypeEvent,
 		},
+	},
+	Block: {
+		CloseEvent: BlockCloseEvent,
+		EnableEvent: BlockEnableEvent,
+		LinkEvent: BlockLinkEvent,
 	},
 });
 

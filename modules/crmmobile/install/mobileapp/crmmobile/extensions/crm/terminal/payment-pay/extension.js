@@ -366,6 +366,7 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 										title: Loc.getMessage('M_CRM_TL_PAYMENT_PAY_PHONE_CONFIRMATION_TITLE'),
 										redirectUrl: `/shop/stores/?force_verify_site_id=${this.connectedSiteId}`,
 										layout: this.phoneConfirmationWarningContexMenu.getActionParentWidget(),
+										analyticsSection: 'crm',
 									});
 								},
 							}),

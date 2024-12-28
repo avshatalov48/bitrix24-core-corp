@@ -2,14 +2,16 @@
  * @module im/messenger/lib/counters/chat-counters
  */
 jn.define('im/messenger/lib/counters/chat-counters', (require, exports, module) => {
+	const { EntityReady } = require('entity-ready');
+	const { Type } = require('type');
+
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { BaseCounters } = require('im/messenger/lib/counters/lib/base-counters');
 	const { Counter } = require('im/messenger/lib/counters/lib/counter');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { EventType } = require('im/messenger/const');
 	const { LoggerManager } = require('im/messenger/lib/logger');
-	const { Type } = require('type');
 	const logger = LoggerManager.getInstance().getLogger('chat-counters');
 
 	/**
@@ -20,11 +22,19 @@ jn.define('im/messenger/lib/counters/chat-counters', (require, exports, module) 
 		constructor()
 		{
 			super({ logger });
+
+			this.isCollabReady = false;
+			void EntityReady.wait('collab-messenger')
+				.then(() => {
+					this.isCollabReady = true;
+				})
+			;
 		}
 
 		initCounters()
 		{
 			this.chatCounter = new Counter();
+			this.collabCounter = new Counter();
 			this.openlinesCounter = new Counter();
 			this.notificationCounter = new Counter();
 		}
@@ -62,6 +72,13 @@ jn.define('im/messenger/lib/counters/chat-counters', (require, exports, module) 
 			this.notificationCounter.value = counters.type.notify;
 			this.setCommentCounters(counters.channelComment);
 
+			if (!this.isCollabReady)
+			{
+				Object.keys(counters.collab).forEach((chatId) => {
+					this.collabCounter.detail[`chat${chatId}`] = counters.collab[chatId];
+				});
+			}
+
 			MessengerEmitter.emit(EventType.notification.reload);
 			this.update();
 		}
@@ -72,13 +89,15 @@ jn.define('im/messenger/lib/counters/chat-counters', (require, exports, module) 
 
 			this.chatCounter.reset();
 			this.openlinesCounter.reset();
+			this.collabCounter.reset();
 
-			const userId = MessengerParams.getUserId();
+			const userId = serviceLocator.get('core').getUserId();
 
 			this.chatCounter.value = this.store.getters['recentModel/getCollection']()
 				.reduce((counter, item) => {
 					const dialog = this.store.getters['dialoguesModel/getById'](item.id)
-						|| this.store.getters['dialoguesModel/getByChatId'](item.id);
+						|| this.store.getters['dialoguesModel/getByChatId'](item.id)
+					;
 
 					if (!dialog)
 					{
@@ -127,6 +146,58 @@ jn.define('im/messenger/lib/counters/chat-counters', (require, exports, module) 
 				openlines: this.openlinesCounter.value,
 				notifications: this.notificationCounter.value,
 			};
+
+			if (!this.isCollabReady)
+			{
+				this.collabCounter.value = this.store.getters['recentModel/getCollection']()
+					.reduce((counter, item) => {
+						const dialog = this.store.getters['dialoguesModel/getById'](item.id)
+							|| this.store.getters['dialoguesModel/getByChatId'](item.id)
+						;
+
+						if (!dialog)
+						{
+							logger.error(`${this.getClassName()}.update: there is no dialog "${item.id}" in model`);
+
+							return counter;
+						}
+
+						if (dialog.chatId === 0)
+						{
+							logger.warn(`${this.getClassName()}.update: "${item.id}" fake dialog without chatId in model`, dialog);
+
+							return counter;
+						}
+
+						const isCollab = DialogHelper.createByModel(dialog)?.isCollab;
+						if (!isCollab)
+						{
+							return counter;
+						}
+
+						if (Type.isUndefined(this.collabCounter.detail[item.id]) && !item.id.includes('chat'))
+						{
+							delete this.collabCounter.detail[`chat${dialog.chatId}`];
+						}
+						else
+						{
+							delete this.collabCounter.detail[item.id];
+						}
+
+						const isChatMuted = dialog && dialog.muteList.includes(userId);
+						if (!isChatMuted)
+						{
+							return counter + this.calculateChatCounter(item, dialog);
+						}
+
+						return counter;
+					}, 0)
+				;
+
+				counters.collab = this.collabCounter.value;
+
+				this.collabCounter.update();
+			}
 
 			logger.log(`${this.getClassName()}.update`, counters);
 

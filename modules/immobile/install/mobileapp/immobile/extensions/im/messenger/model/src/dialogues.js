@@ -11,6 +11,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { clone, mergeImmutable, isEqual } = require('utils/object');
 	const { copilotModel } = require('im/messenger/model/dialogues/copilot');
+	const { collabModel } = require('im/messenger/model/dialogues/collab/collab');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const logger = LoggerManager.getInstance().getLogger('model--dialogues');
@@ -82,6 +83,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		}),
 		modules: {
 			copilotModel,
+			collabModel,
 		},
 		getters: {
 			/**
@@ -365,6 +367,58 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 					data: {
 						dialogId: payload.dialogId,
 						fields: validate(store, payload.fields),
+					},
+				});
+
+				return true;
+			},
+
+			/** @function dialoguesModel/updatePermissions */
+			updatePermissions: (store, payload) => {
+				const existingItem = store.state.collection[payload.dialogId];
+				if (!existingItem)
+				{
+					return false;
+				}
+
+				const newPermissions = preparePermissions(payload.fields);
+
+				const permissions = {
+					...ChatPermission.getActionGroupsByChatType(existingItem.type),
+					...existingItem.permissions,
+					...newPermissions,
+				};
+
+				store.commit('update', {
+					actionName: 'updatePermissions',
+					data: {
+						dialogId: payload.dialogId,
+						fields: { permissions },
+					},
+				});
+
+				return true;
+			},
+
+			/** @function dialoguesModel/updateType */
+			updateType: (store, payload) => {
+				const existingItem = store.state.collection[payload.dialogId];
+				if (!existingItem)
+				{
+					return false;
+				}
+
+				const newType = payload.type;
+				if (newType === existingItem.type)
+				{
+					return false;
+				}
+
+				store.commit('update', {
+					actionName: 'updateType',
+					data: {
+						dialogId: payload.dialogId,
+						fields: { type: payload.type },
 					},
 				});
 
@@ -698,13 +752,17 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				const newState = existingItem.participants.filter(
 					(userId) => !validUsersId.participants.includes(userId),
 				);
+				const newStateManager = existingItem.managerList.filter(
+					(userId) => !validUsersId.participants.includes(userId),
+				);
 				const userCounter = payload.userCounter || existingItem.userCounter;
+
 				store.commit('update', {
 					actionName: 'removeParticipants',
 					data: {
 						removeData: validUsersId.participants,
 						dialogId: payload.dialogId,
-						fields: { participants: newState, userCounter },
+						fields: { participants: newState, userCounter, managerList: newStateManager },
 					},
 				});
 			},

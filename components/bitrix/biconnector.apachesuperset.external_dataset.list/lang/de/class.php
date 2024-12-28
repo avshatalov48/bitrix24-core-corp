@@ -1,0 +1,6 @@
+<?php
+$MESS["BICONNECTOR_APACHE_SUPERSET_DATASET_GRID_ERROR_LOAD_MODULES"] = "Nicht alle erforderlichen Module wurden geladen.";
+$MESS["BICONNECTOR_APACHE_SUPERSET_DATASET_GRID_MENU_ITEM_EXTERNAL_CONNECTION"] = "Externe Datenquelle nutzen";
+$MESS["BICONNECTOR_APACHE_SUPERSET_DATASET_GRID_MENU_ITEM_IMPORT_CSV_MSGVER_1"] = "CSV-Datei importieren";
+$MESS["BICONNECTOR_APACHE_SUPERSET_DATASET_GRID_STUB_DESCRIPTION_MSGVER_1"] = "Importieren Sie eine CSV-Datei oder erstellen Sie eine externe Verbindung, um einen Datensatz zu erstellen.";
+$MESS["BICONNECTOR_APACHE_SUPERSET_DATASET_GRID_STUB_TITLE"] = "Es gibt keine Datensätze";

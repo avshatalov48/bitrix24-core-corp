@@ -35,6 +35,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/factory', (require, ex
 					showReaction: false,
 					showAvatarsInReaction: false,
 					canBeQuoted: false,
+					canBeChecked: false,
 					showAvatar: false,
 					showUsername: false,
 				};

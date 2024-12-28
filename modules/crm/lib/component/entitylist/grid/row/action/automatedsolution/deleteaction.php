@@ -73,7 +73,7 @@ final class DeleteAction extends BaseAction
 
 	private function delete(int $automatedSolutionId): Result
 	{
-		if (!$this->userPermissions->canWriteConfig())
+		if (!$this->userPermissions->canEditAutomatedSolutions())
 		{
 			return (new Result())->addError(ErrorCode::getAccessDeniedError());
 		}

@@ -29,7 +29,7 @@ class Secretary
 			'ENTITY_ID' => $calendarData['ID'],
 			'SKIP_ADD_MESSAGE' => 'Y',
 			'AUTHOR_ID' => $userId,
-			'USERS' => $calendarData['USER_IDS']
+			'USERS' => $calendarData['NOT_DECLINED_IDS'] ?? $calendarData['USER_IDS'],
 		];
 
 		$chatId = $chat->add($chatFields);

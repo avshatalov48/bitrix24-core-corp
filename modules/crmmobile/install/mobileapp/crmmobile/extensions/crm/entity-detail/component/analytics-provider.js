@@ -11,6 +11,7 @@ jn.define('crm/entity-detail/component/analytics-provider', (require, exports, m
 		return {
 			module: 'crm',
 			entityTypeId,
+			analyticsSection: 'crm',
 		};
 	};
 

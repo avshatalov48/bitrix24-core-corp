@@ -18,6 +18,7 @@ class When implements ValueObjectInterface
 	public const FORCED_FLOW_SWITCH_TO_MANUAL_DISTRIBUTION_ABSENT = 'forcedFlowSwitchToManualDistributionAbsent';
 	public const FORCED_FLOW_MANUAL_DISTRIBUTOR_CHANGE = 'forcedFlowManualDistributorChange';
 	public const FORCED_FLOW_MANUAL_DISTRIBUTOR_CHANGE_ABSENT = 'forcedFlowManualDistributorChangeAbsent';
+	public const HIMSELF_FLOW_TASK_NOT_TAKEN = 'himselfFlowTaskNotTaken';
 
 	private string $type;
 	private int $offset;
@@ -68,6 +69,7 @@ class When implements ValueObjectInterface
 			self::FORCED_FLOW_SWITCH_TO_MANUAL_DISTRIBUTION_ABSENT,
 			self::FORCED_FLOW_MANUAL_DISTRIBUTOR_CHANGE,
 			self::FORCED_FLOW_MANUAL_DISTRIBUTOR_CHANGE_ABSENT,
+			self::HIMSELF_FLOW_TASK_NOT_TAKEN,
 		];
 	}
 }

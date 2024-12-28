@@ -1,0 +1,23 @@
+<?php
+$MESS["TASKS_GRID_GROUP_ACTION_CANCELING"] = "Aborting group action...";
+$MESS["TASKS_GRID_GROUP_ACTION_COUNTING_ELEMENTS_PROGRESS"] = "Counting items";
+$MESS["TASKS_GRID_GROUP_ACTION_DESCRIPTION"] = "Group action may take a while for a large selection. Please wait until the action is completed, or cancel it.";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME"] = "Group action";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_ADDACCOMPLICE"] = "Adding participant to tasks...";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_ADDAUDITOR"] = "Adding observer to tasks...";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_ADDTOFAVORITE"] = "Adding tasks to Favorites...";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_ADJUSTDEADLINE"] = "Moving task deadlines...";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_COMPLETE"] = "Completing selected tasks...";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_DELETE"] = "Deleting selected tasks...";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_MUTE"] = "Muting tasks...";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_PING"] = "Pinging employees...";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_REMOVEFROMFAVORITE"] = "Removing tasks from Favorites…";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETDEADLINE"] = "Setting task deadlines...";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETFLOW"] = "Adding tasks to flow. Group action will stop if you close this browser tab or window.";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETGROUP"] = "Adding tasks to workgroup...";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETORIGINATOR"] = "Changing task creator...";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETRESPONSIBLE"] = "Changing task assignee...";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETTASKCONTROL"] = "Disabling review upon completion requirement...";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETTASKCONTROL_YES"] = "Enabling review upon completion requirement. Group action will stop if you close this browser tab or window.";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_UNMUTE"] = "Unmuting tasks...";
+$MESS["TASKS_GRID_GROUP_ACTION_NONE"] = "No action selected.";

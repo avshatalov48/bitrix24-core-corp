@@ -13,6 +13,7 @@ abstract class Actions
 		self::set(new Action\Edit());
 		self::set(new Action\Activate());
 		self::set(new Action\Remove());
+		self::set(new Action\Pin());
 	}
 
 	final public static function set(Action\Action $action): void

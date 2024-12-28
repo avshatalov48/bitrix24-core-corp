@@ -93,10 +93,11 @@ jn.define('intranet/invite-new/src/analytics', (require, exports, module) => {
 			}
 		}
 
-		sendShareLinkEvent()
+		sendShareLinkEvent(adminConfirm)
 		{
 			new AnalyticsEvent(this.analytics)
 				.setEvent('share_invitation_link')
+				.setP2(`askAdminToAllow_${adminConfirm === true ? 'Y' : 'N'}`)
 				.setP3(null)
 				.send();
 		}

@@ -20,4 +20,9 @@ abstract class Status extends Base
 	{
 		return Loc::getMessage("TASKS_STATUS_{$status}");
 	}
+
+	public static function getTitle(): ?string
+	{
+		return Loc::getMessage('TASKS_STATUS_TITLE');
+	}
 }

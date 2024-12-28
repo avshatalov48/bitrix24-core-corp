@@ -46,11 +46,12 @@ if ($postRight >= 'R'):
 		$allOptions[] = [
 			'check_limits',
 			Loc::getMessage('AI_OPT_CHECK_LIMITS') . ':',
-			['checkbox']
+			['checkbox'],
 		];
 
 		$clearLinkTitle = Loc::getMessage('AI_OPT_PROMPT_HOST_REMOTE_DB_CLEAR');
-		$clearLink = "<a href=\"{$APPLICATION->getCurPageParam('reload_prompts=Y&amp;'.bitrix_sessid_get())}\">{$clearLinkTitle}</a>";
+		$clearLink =
+			"<a href=\"{$APPLICATION->getCurPageParam('reload_prompts=Y&amp;'.bitrix_sessid_get())}\">{$clearLinkTitle}</a>";
 
 		$allOptions[] = [
 			'prompt_host_remote_db',
@@ -63,7 +64,7 @@ if ($postRight >= 'R'):
 		$allOptions[] = [
 			'public_url',
 			Loc::getMessage('AI_OPT_PUBLIC_URL') . ':',
-			['text', 50]
+			['text', 50],
 		];
 
 		$allOptions[] = [
@@ -74,13 +75,13 @@ if ($postRight >= 'R'):
 		$allOptions[] = [
 			'force_queue',
 			Loc::getMessage('AI_OPT_FORCE_QUEUE') . ':',
-			['checkbox']
+			['checkbox'],
 		];
 
 		$allOptions[] = [
 			'queue_url',
 			Loc::getMessage('AI_OPT_QUEUE_URL') . ':',
-			['text', 50]
+			['text', 50],
 		];
 
 		$allOptions[] = [
@@ -106,14 +107,14 @@ if ($postRight >= 'R'):
 			{
 				if (in_array($item->getCode(), $internalItemsCodes))
 				{
-				$title = $item->getTitle();
-				if (strpos($title, ':', -1) === false)
-				{
-					$title .= ':';
-				}
+					$title = $item->getTitle();
+					if (strpos($title, ':', -1) === false)
+					{
+						$title .= ':';
+					}
 					$allOptions[] = [
 						$item->getCode(),
-					$title,
+						$title,
 						['selectbox', $item->getOptions()],
 					];
 				}
@@ -123,13 +124,13 @@ if ($postRight >= 'R'):
 		$allOptions[] = [
 			'openai_bearer',
 			Loc::getMessage('AI_OPT_OPENAI_BEARER') . ':',
-			['text', 50]
+			['text', 50],
 		];
 
 		$allOptions[] = [
 			'stable_diffusion_bearer',
 			Loc::getMessage('AI_OPT_STABLE_DIFFUSION_BEARER') . ':',
-			['text', 50]
+			['text', 50],
 		];
 	}
 	else
@@ -147,10 +148,9 @@ if ($postRight >= 'R'):
 				[
 					'button',
 					Loc::getMessage('AI_OPT_CLOUD_BUTTON_UNREGISTER'),
-					'adm-btn'
+					'adm-btn',
 				],
 			];
-
 		}
 		else
 		{
@@ -160,13 +160,11 @@ if ($postRight >= 'R'):
 				[
 					'button',
 					Loc::getMessage('AI_OPT_CLOUD_BUTTON_REGISTER'),
-					'adm-btn-save'
+					'adm-btn-save',
 				],
 			];
-
 		}
 	}
-
 
 	$allOptions[] = [
 		'header',
@@ -205,7 +203,7 @@ if ($postRight >= 'R'):
 
 	// tabs
 	$tabControl = new CAdmintabControl('tabControl', [
-		['DIV' => 'edit1', 'TAB' => Loc::getMessage('MAIN_TAB_SET'), 'ICON' => '']
+		['DIV' => 'edit1', 'TAB' => Loc::getMessage('MAIN_TAB_SET'), 'ICON' => ''],
 	]);
 
 	$Update = $_POST['Update'] ?? '';
@@ -227,9 +225,9 @@ if ($postRight >= 'R'):
 
 	// post save
 	if (
-		$Update . $Apply <> '' &&
-		($postRight === 'W' || $postRight === 'X') &&
-		\check_bitrix_sessid()
+		$Update . $Apply <> ''
+		&& ($postRight === 'W' || $postRight === 'X')
+		&& \check_bitrix_sessid()
 	)
 	{
 		foreach ($allOptions as $arOption)
@@ -248,7 +246,7 @@ if ($postRight >= 'R'):
 				{
 					if (trim(${$name}[$j]) <> '')
 					{
-						$val .= ($val <> '' ? ',':'') . trim(${$name}[$j]);
+						$val .= ($val <> '' ? ',' : '') . trim(${$name}[$j]);
 					}
 				}
 			}
@@ -257,18 +255,18 @@ if ($postRight >= 'R'):
 				$val = ${$name . '_1'} . 'x' . ${$name . '_2'};
 			}
 			elseif (
-				$arOption[2][0] === 'selectbox' ||
-				$arOption[2][0] === 'selectboxtree'
+				$arOption[2][0] === 'selectbox'
+				|| $arOption[2][0] === 'selectboxtree'
 			)
 			{
 				$val = '';
 				if (isset($$name))
 				{
-					for ($j=0; $j<count($$name); $j++)
+					for ($j = 0; $j < count($$name); $j++)
 					{
 						if (trim(${$name}[$j]) <> '')
 						{
-							$val .= ($val <> '' ? ',':'') . trim(${$name}[$j]);
+							$val .= ($val <> '' ? ',' : '') . trim(${$name}[$j]);
 						}
 					}
 				}
@@ -282,7 +280,7 @@ if ($postRight >= 'R'):
 				$val = $$name ?? null;
 			}
 
-			if ($arOption[2][0] === 'checkbox' && $val<>'Y')
+			if ($arOption[2][0] === 'checkbox' && $val <> 'Y')
 			{
 				$val = 'N';
 			}

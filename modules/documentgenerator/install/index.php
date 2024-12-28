@@ -1,11 +1,11 @@
 <?php
-global $MESS;
-$PathInstall = str_replace("\\", "/", __FILE__);
-$PathInstall = mb_substr($PathInstall, 0, mb_strlen($PathInstall) - mb_strlen("/index.php"));
 
-IncludeModuleLangFile($PathInstall."/install.php");
+if(class_exists("documentgenerator"))
+{
+	return;
+}
 
-if(class_exists("documentgenerator")) return;
+IncludeModuleLangFile(__FILE__);
 
 class documentgenerator extends CModule
 {
@@ -38,7 +38,7 @@ class documentgenerator extends CModule
 		$step = intval($step);
 		if($step < 2)
 		{
-			if(!class_exists('\DOMDocument', true) || !class_exists('\ZipArchive', true))
+			if(!class_exists('\DOMDocument') || !class_exists('\ZipArchive'))
 			{
 				$APPLICATION->ThrowException(GetMessage('DOCUMENTGENERATOR_INSTALL_DEPENDENCIES_ERROR'));
 			}
@@ -52,7 +52,7 @@ class documentgenerator extends CModule
 			/**
 			 * @see \Bitrix\DocumentGenerator\Driver::installDefaultRoles()
 			 */
-			CAgent::AddAgent('\Bitrix\DocumentGenerator\Driver::installDefaultRoles();', 'documentgenerator', "N", 150, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+150, "FULL"));
+			CAgent::AddAgent('\Bitrix\DocumentGenerator\Driver::installDefaultRoles();', 'documentgenerator', "N", 150, "", "Y", ConvertTimeStamp(time()+CTimeZone::GetOffset()+150, "FULL"));
 
 			/**
 			 * @see \Bitrix\DocumentGenerator\Service\ActualizeQueue::process()
@@ -101,7 +101,7 @@ class documentgenerator extends CModule
 			300,
 			'',
 			'Y',
-			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 300, 'FULL')
+			ConvertTimeStamp(time() + CTimeZone::GetOffset() + 300, 'FULL')
 		);
 
 		RegisterModule($this->MODULE_ID);
@@ -134,18 +134,17 @@ class documentgenerator extends CModule
 
 	function DoUninstall()
 	{
-		global $DOCUMENT_ROOT, $APPLICATION, $step;
+		global $APPLICATION, $step;
 		$step = intval($step);
 		if($step<2)
 		{
-			$APPLICATION->IncludeAdminFile(GetMessage("DOCUMENTGENERATOR_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/".$this->MODULE_ID."/install/unstep1.php");
+			$APPLICATION->IncludeAdminFile(GetMessage("DOCUMENTGENERATOR_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/unstep1.php");
 		}
 		elseif($step==2)
 		{
 			$this->UnInstallDB(["savedata" => $_REQUEST["savedata"]]);
-			$this->UnInstallFiles();
 
-			$APPLICATION->IncludeAdminFile(GetMessage("DOCUMENTGENERATOR_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/".$this->MODULE_ID."/install/unstep2.php");
+			$APPLICATION->IncludeAdminFile(GetMessage("DOCUMENTGENERATOR_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/unstep2.php");
 		}
 
 		return true;
@@ -175,20 +174,5 @@ class documentgenerator extends CModule
 
 		UnRegisterModule($this->MODULE_ID);
 		return true;
-	}
-
-	function UnInstallFiles()
-	{
-		return true;
-	}
-
-	public function InstallEvents()
-	{
-		parent::InstallEvents();
-	}
-
-	public function UnInstallEvents()
-	{
-		parent::UnInstallEvents();
 	}
 }

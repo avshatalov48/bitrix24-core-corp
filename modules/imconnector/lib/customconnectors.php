@@ -372,6 +372,19 @@ class CustomConnectors
 	}
 
 	/**
+	 * @param $connector
+	 * @param $line
+	 * @param $data
+	 * @return Result
+	 */
+	public static function setChatName($connector, $line, $data): Result
+	{
+		self::getInstance();
+
+		return self::processingInProvider('setChatName', $connector, $line, $data);
+	}
+
+	/**
 	 * @param $type
 	 * @param $connector
 	 * @param $line

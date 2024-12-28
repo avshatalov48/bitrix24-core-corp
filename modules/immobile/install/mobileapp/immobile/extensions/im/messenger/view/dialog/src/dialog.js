@@ -5,13 +5,18 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Type } = require('type');
 	const { Loc } = require('loc');
+	const { isModuleInstalled } = require('module');
+
+	const { Icon } = require('ui-system/blocks/icon');
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { View } = require('im/messenger/view/base');
-	const { EventType, MessageType, MessageIdType } = require('im/messenger/const');
+	const { EventType, MessageType, MessageIdType, AttachPickerId, ViewName } = require('im/messenger/const');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { AnalyticsService } = require('im/messenger/provider/service/analytics');
 	const {
 		UnreadSeparatorMessage,
 	} = require('im/messenger/lib/element');
@@ -56,6 +61,11 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.dialogId = options.dialogId;
 			/**
 			 * @private
+			 * @type {string | number}
+			 */
+			this.dialogCode = options.dialogCode;
+			/**
+			 * @private
 			 * @type {number}
 			 */
 			this.chatId = options.chatId;
@@ -71,7 +81,23 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			 */
 			this.visibilityManager = VisibilityManager.getInstance();
 			this.resetState();
+			this.addCheckpointEventsToJNChatObjects();
 			this.subscribeEvents();
+		}
+
+		getJNChatObjectCollection()
+		{
+			return {
+				textField: ViewName.dialogTextField,
+				mentionPanel: ViewName.dialogMentionPanel,
+				pinPanel: ViewName.dialogPinPanel,
+				commentsButton: ViewName.dialogCommentsButton,
+				statusField: ViewName.dialogStatusField,
+				chatJoinButton: ViewName.dialogChatJoinButton,
+				actionPanel: ViewName.dialogActionPanel,
+				selector: ViewName.dialogSelector,
+				restrictions: ViewName.dialogRestrictions,
+			};
 		}
 
 		resetState()
@@ -126,13 +152,30 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.resetContextOptions();
 		}
 
+		addCheckpointEventsToJNChatObjects()
+		{
+			const JNChatObjectCollection = this.getJNChatObjectCollection();
+
+			Object.keys(JNChatObjectCollection).forEach((key) => {
+				if (Type.isNil(this[key]))
+				{
+					console.error(`${this.constructor.name}.addCheckpointEventsToJNChatObjects.${JNChatObjectCollection[key]} JNChatObject is missing from view`);
+
+					return;
+				}
+
+				this[key].on = this.eventsCheckpoint.addByView(this[key], JNChatObjectCollection[key]);
+				this[key].off = this.eventsCheckpoint.removeByView(this[key], JNChatObjectCollection[key]);
+			});
+		}
+
 		/* region nested objects */
 		/**
 		 * @return {DialogTextField}
 		 */
 		get textField()
 		{
-			return this.ui.textField;
+			return this.ui?.textField;
 		}
 
 		/**
@@ -140,7 +183,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		 */
 		get mentionPanel()
 		{
-			return this.ui.mentionPanel;
+			return this.ui?.mentionPanel;
 		}
 
 		/**
@@ -148,7 +191,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		 */
 		get pinPanel()
 		{
-			return this.ui.pinPanel;
+			return this.ui?.pinPanel;
 		}
 
 		get commentsButton()
@@ -156,29 +199,70 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			return this.ui?.commentsButton;
 		}
 
+		get actionPanel()
+		{
+			return this.ui?.actionPanel;
+		}
+
+		get statusField()
+		{
+			return this.ui?.statusField;
+		}
+
+		get chatJoinButton()
+		{
+			return this.ui?.chatJoinButton;
+		}
+
+		get selector()
+		{
+			return this.ui?.selector;
+		}
+
+		/**
+		 * @return {JNChatRestrictions}
+		 */
+		get restrictions()
+		{
+			return this.ui?.restrictions;
+		}
+
 		/* endregion nested objects */
 
 		/* region Events */
-
+		/**
+		 * @desc subscribe to events for ui.customUiEventEmitter
+		 */
 		subscribeEvents()
 		{
-			this.ui
-				.on(EventType.dialog.viewAreaMessagesChanged, this.onViewAreaMessagesChanged.bind(this))
-				.on(EventType.dialog.topReached, this.onTopReached.bind(this))
-				.on(EventType.dialog.bottomReached, this.onBottomReached.bind(this))
-				.on(EventType.view.show, this.onViewShown.bind(this))
-			;
+			this.subscribeCommonEvents();
+			this.subscribeReachedEvents();
 
-			if (this.ui.statusField)
+			if (this.statusField)
 			{
-				this.ui.statusField
+				this.statusField
 					.on(EventType.dialog.statusField.tap, this.onStatusFieldTap.bind(this))
 				;
 			}
 
-			this.ui.chatJoinButton
+			this.chatJoinButton
 				.on(EventType.dialog.chatJoinButton.tap, this.onChatJoinButtonTap.bind(this))
 			;
+		}
+
+		subscribeCommonEvents()
+		{
+			this.ui
+				.on(EventType.dialog.viewAreaMessagesChanged, this.onViewAreaMessagesChanged.bind(this))
+				.on(EventType.view.show, this.onViewShown.bind(this))
+			;
+		}
+
+		subscribeReachedEvents()
+		{
+			this.ui
+				.on(EventType.dialog.topReached, this.onTopReached.bind(this))
+				.on(EventType.dialog.bottomReached, this.onBottomReached.bind(this));
 		}
 
 		/**
@@ -213,7 +297,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			}
 
 			// eslint-disable-next-line promise/catch-or-return
-			this.visibilityManager.checkIsDialogVisible(this.dialogId).then((isDialogVisible) => {
+			this.visibilityManager.checkIsDialogVisible({ dialogCode: this.dialogCode }).then((isDialogVisible) => {
 				if (!isDialogVisible)
 				{
 					return;
@@ -478,8 +562,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 			await this.ui.addMessages(messageList);
 			this.addMessageList(messageList);
-
-			this.visibilityManager.checkIsDialogVisible(this.dialogId).then((isDialogVisible) => {
+			this.visibilityManager.checkIsDialogVisible({ dialogCode: this.dialogCode }).then((isDialogVisible) => {
 				if (isDialogVisible)
 				{
 					return;
@@ -736,61 +819,73 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 		clearInput()
 		{
-			this.ui.textField.clear();
+			this.textField.clear();
 		}
 
 		setInputPlaceholder(text)
 		{
-			this.ui.textField.setPlaceholder(text);
+			this.textField.setPlaceholder(text);
 		}
 
-		setInputQuote(message, type, openKeyboard = true)
+		/**
+		 * @param {object} message
+		 * @param {string} type
+		 * @param {boolean} [openKeyboard=true]
+		 * @param {string?} [title=null] (56+ API)
+		 * @param {string?} [text=null] (56+ API)
+		 */
+		setInputQuote(message, type, openKeyboard = true, title = null, text = null)
 		{
 			if (InputQuoteType[type])
 			{
-				this.ui.textField.setQuote(message, type, openKeyboard);
+				if (Feature.isMultiSelectAvailable && title && text)
+				{
+					this.textField.setQuote(message, type, openKeyboard, title, text);
+				}
+
+				this.textField.setQuote(message, type, openKeyboard);
 			}
 			else
 			{
-				this.ui.textField.setQuote(message);
+				this.textField.setQuote(message);
 			}
 		}
 
 		enableAlwaysSendButtonMode(enable)
 		{
-			this.ui.textField?.enableAlwaysSendButtonMode?.(enable);
+			this.textField?.enableAlwaysSendButtonMode?.(enable);
 		}
 
 		removeInputQuote()
 		{
 			return new Promise((resolve) => {
-				this.ui.textField.once(EventType.dialog.textField.quoteRemoveAnimationEnd, () => {
+				this.textField.once(EventType.dialog.textField.quoteRemoveAnimationEnd, () => {
 					resolve();
 				});
 
-				this.ui.textField.removeQuote();
+				this.textField.removeQuote();
 			});
 		}
 
 		setInput(text)
 		{
-			this.ui.textField.setText(text);
+			this.textField.setText(text);
 		}
 
 		getInput()
 		{
-			return this.ui.textField.getText();
+			return this.textField.getText();
 		}
 
 		// Input === textField
 		hideTextField(isAnimated = false)
 		{
-			this.ui.textField.hide({ animated: isAnimated });
+			this.textField.hide({ animated: isAnimated });
 		}
 
 		showTextField(isAnimated = false)
 		{
-			this.ui.textField.show({ animated: isAnimated });
+			this.textField.show({ animated: isAnimated });
 		}
 
 		/**
@@ -807,17 +902,17 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			textColor = AppTheme.colors.baseWhiteFixed,
 		})
 		{
-			this.ui.chatJoinButton.show({
+			this.chatJoinButton.show({
 				text,
 				backgroundColor,
 				textColor,
-				testId
+				testId,
 			});
 		}
 
 		hideChatJoinButton(isAnimated = false)
 		{
-			this.ui.chatJoinButton.hide({ animated: isAnimated });
+			this.chatJoinButton.hide({ animated: isAnimated });
 		}
 
 		/* endregion Input */
@@ -970,6 +1065,11 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.ui.setRightButtons(buttonList);
 		}
 
+		setLeftButtons(buttonList)
+		{
+			this.ui.setLeftButtons(buttonList);
+		}
+
 		setTitle(titleParams)
 		{
 			this.ui.setTitle(titleParams);
@@ -981,7 +1081,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {{imageUrl?: string, defaultIconSvg?: string}} currentUserAvatar
+		 * @param {{imageUrl?: string, defaultIconSvg?: string, avatar?: object}} currentUserAvatar
 		 */
 		setCurrentUserAvatar(currentUserAvatar)
 		{
@@ -1039,7 +1139,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.ui.hideLoader();
 		}
 
-		showAttachPicker(selectedFilesHandler = () => {})
+		showAttachPicker(selectedFilesHandler = () => {}, closeCallback = () => {}, itemSelectedCallback = () => {})
 		{
 			const imagePickerParams = {
 				settings: {
@@ -1063,16 +1163,16 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 					attachButton: {
 						items: [
 							{
-								id: 'camera',
+								id: AttachPickerId.camera,
 								name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_CAMERA'),
 							},
 							{
-								id: 'mediateka',
+								id: AttachPickerId.mediateka,
 								name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_GALLERY'),
 							},
 							{
-								id: 'disk',
-								name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_DISK_V2'),
+								id: AttachPickerId.disk,
+								name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_DISK'),
 								dataSource: {
 									multiple: false,
 									url: `${MessengerParams.getSiteDir()}mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${MessengerParams.getUserId()}`,
@@ -1089,7 +1189,29 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				},
 			};
 
-			dialogs.showImagePicker(imagePickerParams, selectedFilesHandler);
+			if (Feature.isImagePickerCustomFieldsSupported)
+			{
+				if (isModuleInstalled('tasks'))
+				{
+					imagePickerParams.settings.attachButton.items.push({
+						id: AttachPickerId.task,
+						name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_TASK'),
+						iconName: Icon.TASK.getIconName(),
+					});
+				}
+
+				if (isModuleInstalled('calendar'))
+				{
+					imagePickerParams.settings.attachButton.items.push({
+						id: AttachPickerId.meeting,
+						name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_MEETING'),
+						iconName: Icon.CALENDAR_WITH_SLOTS.getIconName(),
+					});
+				}
+			}
+
+			AnalyticsService.getInstance().sendShowImagePicker(this.dialogId);
+			dialogs.showImagePicker(imagePickerParams, selectedFilesHandler, closeCallback, itemSelectedCallback);
 		}
 
 		showWelcomeScreen()
@@ -1178,6 +1300,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		 * @param {number} data.currentBytes
 		 * @param {number} data.totalBytes
 		 * @param {string} data.textProgress
+		 * @param {string} data.mediaId
 		 * @return {boolean}
 		 */
 		updateUploadProgressByMessageId(data)
@@ -1192,6 +1315,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				data.currentBytes,
 				data.totalBytes,
 				data.textProgress,
+				data.mediaId,
 			);
 
 			return true;
@@ -1211,9 +1335,9 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				return false;
 			}
 
-			if (this.ui.statusField && this.checkShouldUpdateStatusField(iconType, text))
+			if (this.statusField && this.checkShouldUpdateStatusField(iconType, text))
 			{
-				this.ui.statusField.set({ iconType, text });
+				this.statusField.set({ iconType, text });
 				this.setStatusFieldState(iconType, text);
 			}
 
@@ -1249,9 +1373,9 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		 */
 		clearStatusField()
 		{
-			if (this.ui.statusField)
+			if (this.statusField)
 			{
-				this.ui.statusField.clear();
+				this.statusField.clear();
 				this.resetStatusFieldState();
 			}
 
@@ -1267,6 +1391,92 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				iconType: null,
 				text: null,
 			};
+		}
+
+		async enableSelectMessagesMode()
+		{
+			return this.selector.setEnabled(true);
+		}
+
+		async disableSelectMessagesMode()
+		{
+			return this.selector.setEnabled(false);
+		}
+
+		/**
+		 * @param {object} title
+		 */
+		async setActionPanelTitle(title)
+		{
+			return this.actionPanel.setTitle(title);
+		}
+
+		async actionPanelShow(titleData, buttons = [])
+		{
+			const title = Type.isStringFilled(titleData?.text) ? titleData : { text: '' };
+
+			return this.actionPanel.show(title, buttons);
+		}
+
+		async actionPanelHide()
+		{
+			return this.actionPanel.hide();
+		}
+
+		/**
+		 * @param {Array<ActionPanelButton>} buttons
+		 */
+		async setActionPanelButtons(buttons)
+		{
+			return this.actionPanel.setButtons(buttons);
+		}
+
+		/**
+		 * @param {Array<string>} messageIds
+		 */
+		async selectMessages(messageIds)
+		{
+			return this.selector.select(messageIds);
+		}
+
+		/**
+		 * @param {Array<string>} messageIds
+		 */
+		async unselectMessages(messageIds)
+		{
+			return this.selector.unselect(messageIds);
+		}
+
+		/**
+		 * @return {Array<string>} messageIds
+		 */
+		async getSelectedItems()
+		{
+			return this.selector.getSelectedItems();
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		getSelectEnable()
+		{
+			return this.selector.enabled;
+		}
+
+		/**
+		 * @param {number} count
+		 */
+		setSelectMaxCount(count)
+		{
+			this.selector.maxCount = count;
+		}
+
+		/**
+		 * @param {ChatRestrictionsParams} restrictions
+		 */
+		updateRestrictions(restrictions)
+		{
+			this.restrictions.update(restrictions);
 		}
 	}
 

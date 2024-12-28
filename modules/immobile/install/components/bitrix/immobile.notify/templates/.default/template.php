@@ -22,6 +22,25 @@ CJSCore::Init("fx");
 .bx-messenger-attach-message {
 	color: var(--base0);
 }
+
+.notif-title-user {
+	color: var(--base1);
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.notif-title-extranet {
+	color: var(--ui-color-extranet);
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.notif-title-collaber {
+	color: var(--collab-accent-primary-alt);
+	font-size: 16px;
+	font-weight: bold;
+}
+
 </style>
 <script>
 	console.warn('Notify page loaded');
@@ -30,9 +49,19 @@ CJSCore::Init("fx");
 
 		console.warn('isVisible check - '+data.status);
 		console.warn('isVisible check - skip reload '+result);
+		// A hack to use tokens from the Air design system instead of old tokens
+		const classList = document.documentElement.classList;
+		classList.forEach((className) => {
+			if (className === 'light' || className === 'dark')
+			{
+				classList.remove(className);
+				classList.add(`new${className}`);
+			}
+		});
 
 		window.skipReload = result;
 	}});
+
 </script>
 <?
 if(empty($arResult['NOTIFY'])):?>
@@ -134,6 +163,35 @@ if(empty($arResult['NOTIFY'])):?>
 				endif;
 			endif;
 			$firstNewFlag = false;
+
+			$sender = null;
+			foreach ($data['users'] as $user)
+			{
+				if ($user['id'] === (int)$data['userId'])
+				{
+					$sender = $user;
+					break;
+				}
+			}
+			$titleClass = 'notif-title-user';
+			if ($sender)
+			{
+				switch ($sender['type'])
+				{
+					case 'collaber': {
+						$titleClass = 'notif-title-collaber';
+						break;
+					}
+					case 'extranet': {
+						$titleClass = 'notif-title-extranet';
+						break;
+					}
+					default: {
+						$titleClass = 'notif-title-user';
+					}
+				}
+			}
+
 			?>
 			<div id="notify<?=$data['id']?>"  ontouchstart="onTouch(this, <?=$data['link']? "true":"false"?>, event)" class="notif-block">
 				<script>
@@ -183,10 +241,10 @@ if(empty($arResult['NOTIFY'])):?>
 				</div>
 				<div class="notif-cont">
 					<div class="notif-header">
-						<div class="notif-title">
+						<div class="<?=$titleClass?>">
 							<?=$data['userName']? $data['userName']: GetMessage('NM_SYSTEM_USER');?>
 							<?if ($moreUsersCount > 0):?>
-								<span style="font-weight: normal">
+								<span style="font-weight: normal; color: var(--base1)">
 									<?=$moreUsersText?>
 								</span>
 							<?endif;?>

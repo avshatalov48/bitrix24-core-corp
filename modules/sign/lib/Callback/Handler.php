@@ -10,13 +10,16 @@ use Bitrix\Sign\Document as DocumentCore;
 use Bitrix\Sign\File;
 use Bitrix\Sign\Integration\CRM\Model\EventData;
 use Bitrix\Sign\Item;
+use Bitrix\Sign\Operation\Document\SaveResultFile;
 use Bitrix\Sign\Operation\FillFields;
+use Bitrix\Sign\Operation;
 use Bitrix\Sign\Operation\SyncMemberStatus;
 use Bitrix\Sign\Repository\DocumentRepository;
 use Bitrix\Sign\Repository\EntityFileRepository;
 use Bitrix\Sign\Repository\MemberRepository;
 use Bitrix\Sign\Service\Container;
-use Bitrix\Sign\Service\Counter\B2e\UserToSignDocumentCounterService;
+use Bitrix\Sign\Service\Integration\Imbot\HrBot;
+use Bitrix\Sign\Service\B2e\MyDocumentsGrid;
 use Bitrix\Sign\Service\Sign\LegalLogService;
 use Bitrix\Sign\Service\Sign\MemberService;
 use Bitrix\Sign\Type;
@@ -32,18 +35,19 @@ class Handler
 	private PullService $pullService;
 	private MemberService $memberService;
 	private LegalLogService $legalLogService;
-	private readonly UserToSignDocumentCounterService $b2eUserToSignDocumentCounterService;
 	private EntityFileRepository $entityFileRepository;
+	private readonly MyDocumentsGrid\EventService $myDocumentGridService;
 
 	public function __construct(
 		private readonly DocumentRepository $documentRepository,
 		private readonly MemberRepository $memberRepository,
-	) {
+	)
+	{
 		$this->pullService = Container::instance()->getPullService();
 		$this->memberService = Container::instance()->getMemberService();
 		$this->legalLogService = Container::instance()->getLegalLogService();
-		$this->b2eUserToSignDocumentCounterService = Container::instance()->getB2eUserToSignDocumentCounterService();
 		$this->entityFileRepository = Container::instance()->getEntityFileRepository();
+		$this->myDocumentGridService = Container::instance()->getMyDocumentGridEventService();
 	}
 
 	public function execute(array $payload): Main\Result
@@ -206,27 +210,26 @@ class Handler
 
 	private function processSaveResultFile(Messages\ResultFile $message, Main\Result $result): void
 	{
-		$document = DocumentCore::getByHash($message->getDocumentCode());
-		if (!$document)
+		$file = $message->getData()['file'] ?? null;
+		if ($file === null)
 		{
-			$result->addError(new Main\Error('Invalid callback token.'));
+			$result->addError(new Main\Error('File is empty.'));
 
 			return;
 		}
 
-		if (!isset($message->getData()['file']))
+		if (!is_array($file))
 		{
 			$result->addError(new Main\Error('Invalid file data.'));
 
 			return;
 		}
 
-		$file = new File($message->getData()['file']);
-		$isDone = $document->setResultFile($file);
+		$saveResultFileResult = (new SaveResultFile($message->getDocumentCode(), $file))->launch();
 
-		if (!$isDone)
+		if (!$saveResultFileResult->isSuccess())
 		{
-			$result->addError(new Main\Error('Failed to save file'));
+			$result->addErrors($saveResultFileResult->getErrors());
 		}
 	}
 
@@ -235,7 +238,7 @@ class Handler
 		Main\Result $result
 	): void
 	{
-		$document = DocumentCore::getByHash($message->getDocumentUid());
+		$document = Container::instance()->getDocumentRepository()->getByUid($message->getDocumentUid());
 		if (!$document)
 		{
 			$result->addError(new Main\Error('Invalid callback token.'));
@@ -251,42 +254,19 @@ class Handler
 		}
 
 		$file = new File($message->getData()['file']);
-		$fsFile = \Bitrix\Sign\Item\Fs\File::createByLegacyFile($file);
+		$fsFile = Item\Fs\File::createByLegacyFile($file);
 		$fsFile->dir = '';
 
-		$fsRepo = Container::instance()->getFileRepository();
-		$saveResult = $fsRepo->put($fsFile);
-		if (!$saveResult->isSuccess())
-		{
-			$result->addErrors($saveResult->getErrors());
-
-			return;
-		}
-
 		$member = $this->memberRepository->getByUid($message->getMemberUid());
-
-		$isDone = $this->addFileItem(
-			$member,
-			$fsFile,
-			Type\EntityFileCode::SIGNED
-		);
-
-		if (!$isDone->isSuccess())
+		if (!$member)
 		{
-			$result->addError(new Main\Error('Failed to save file'));
+			$result->addError(new Main\Error('Member not found'));
 
 			return;
 		}
 
-		$documentItem = $this->documentRepository->getByUid($document->getUid());
-
-		$this->logMemberFileSaved(
-			$documentItem,
-			$member,
-			$fsFile,
-		);
-
-		$this->updateMemberDateSigned($member);
+		$saveResult = (new Operation\Member\ResultFile\Save($document, $member, $fsFile))->launch();
+		$result->addErrors($saveResult->getErrors());
 	}
 
 	private function processSavePrintVersionFileForMember(
@@ -468,10 +448,13 @@ class Handler
 			return;
 		}
 
+		$member->dateSend = new Type\DateTime();
+		$this->memberRepository->update($member);
+
 		$this->sendChatOnSendTimelineEvent($document, $member, $message);
 
 		$hrBotMessageService = Container::instance()->getHrBotMessageService();
-		if ($hrBotMessageService->isAvailable())
+		if (HrBot::isAvailable())
 		{
 			if ($message->isSecondarySigning() && $member->role === Type\Member\Role::ASSIGNEE)
 			{

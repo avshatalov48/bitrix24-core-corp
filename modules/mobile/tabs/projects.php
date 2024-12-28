@@ -10,6 +10,7 @@ use Bitrix\Mobile\Tab\Utils;
 use Bitrix\MobileApp\Janative\Manager;
 use Bitrix\Main\ORM\Query\Filter;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
+use Bitrix\MobileApp\Mobile;
 
 class Projects implements Tabable
 {
@@ -54,7 +55,7 @@ class Projects implements Tabable
 		return [
 			'id' => $this->getId(),
 			'sort' => $this->defaultSortValue(),
-			'imageName' => 'projects',
+			'imageName' => $this->getIconId(),
 			'badgeCode' => 'projects_all_no_list',
 			'component' => $this->getComponentParams(),
 		];
@@ -68,6 +69,7 @@ class Projects implements Tabable
 			'min_api_version' => self::MINIMAL_API_VERSION,
 			'color' => '#00ace3',
 			'imageUrl' => 'favorite/icon-projects.png',
+			'imageName' => $this->getIconId(),
 			'params' => [
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
 				'counter' => 'projects_all_no_list',
@@ -150,6 +152,6 @@ class Projects implements Tabable
 
 	public function getIconId(): string
 	{
-		return $this->getId();
+		return Mobile::getApiVersion() < 56 ? $this->getId() : 'folder_with_card';
 	}
 }

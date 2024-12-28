@@ -64,6 +64,7 @@ jn.define('communication/menu', (require, exports, module) => {
 
 			this.onCloseCommunicationMenu = this.handleOnCloseMenu.bind(this);
 			this.onClickCallback = this.handleOnClickCallback.bind(this);
+			this.analyticsSection = BX.prop.getString(props, 'analyticsSection', null);
 		}
 
 		handleOnClickCallback(params, connectionType)
@@ -482,6 +483,7 @@ jn.define('communication/menu', (require, exports, module) => {
 						number: typeof connectionValue === 'string' ? connectionValue : connectionValue.value,
 						params,
 						isNumberHidden: menuValue.hidden,
+						analyticsSection: this.analyticsSection,
 					};
 				}
 

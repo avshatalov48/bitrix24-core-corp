@@ -27,7 +27,6 @@ class UpdateObserver implements UpdateObserverInterface
 	{
 		if ($command->hasOwnerId() && $flowEntity->getOwnerId() !== $flowEntityBeforeUpdate->getOwnerId())
 		{
-			/** @var BizProcService $service */
 			$service = ServiceLocator::getInstance()->get('tasks.flow.kanban.bizproc.service');
 			$reinstallCommand = (new ReinstallFlowRobotsCommand())
 				->setFlowId($flowEntity->getId())

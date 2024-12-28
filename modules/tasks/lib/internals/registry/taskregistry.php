@@ -239,6 +239,11 @@ class TaskRegistry
 		while ($row = $res->fetch())
 		{
 			$taskData = $this->unserializeData($row['DATA']);
+			if (empty($taskData))
+			{
+				continue;
+			}
+
 			$taskData['ZOMBIE'] = 'Y';
 
 			$this->storage[$row['TASK_ID']] = $taskData;
@@ -252,6 +257,11 @@ class TaskRegistry
 	private function unserializeData(string $data): array
 	{
 		$data = unserialize($data, ['allowed_classes' => false]);
+
+		if ($data === false)
+		{
+			return [];
+		}
 
 		$fields = [
 			'ID',

@@ -1,5 +1,10 @@
 import { sendData } from 'ui.analytics';
 
+import { ChatType } from 'im.v2.const';
+import { getCollabId, getUserType } from 'im.v2.lib.analytics';
+
+import { CallTypes } from 'call.const';
+
 import {
 	AnalyticsEvent,
 	AnalyticsTool,
@@ -10,6 +15,7 @@ import {
 	AnalyticsStatus,
 	AnalyticsDeviceStatus,
 	AnalyticsSubSection,
+	AnalyticsAIStatus,
 } from './const';
 
 export class Analytics
@@ -121,6 +127,7 @@ export class Analytics
 			status: params.status,
 			p1: params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff,
 			p2: params.mediaParams.audio ? AnalyticsDeviceStatus.micOn : AnalyticsDeviceStatus.micOff,
+			p3: params.isCopilotActive ? AnalyticsAIStatus.aiOn : AnalyticsAIStatus.aiOff,
 			p5: `callId_${params.callId}`,
 		});
 	}
@@ -142,7 +149,7 @@ export class Analytics
 
 	onStartCall(params)
 	{
-		sendData({
+		const resultData = {
 			tool: AnalyticsTool.im,
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.startCall,
@@ -150,8 +157,16 @@ export class Analytics
 			status: params.status,
 			p1: params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff,
 			p2: params.mediaParams.audio ? AnalyticsDeviceStatus.micOn : AnalyticsDeviceStatus.micOff,
+			p3: params.isCopilotActive ? AnalyticsAIStatus.aiOn : AnalyticsAIStatus.aiOff,
 			p5: `callId_${params.callId}`,
-		});
+		};
+
+		if (params.associatedEntity.advanced.chatType === ChatType.collab)
+		{
+			resultData.p4 = getCollabId(this.normalizeChatId(params.associatedEntity.id));
+		}
+
+		sendData(resultData);
 	}
 
 	onJoinCall(params)
@@ -162,6 +177,7 @@ export class Analytics
 			event: AnalyticsEvent.connect,
 			type: params.callType,
 			status: params.status,
+			p3: getUserType(),
 			p5: `callId_${params.callId}`,
 		};
 
@@ -179,6 +195,12 @@ export class Analytics
 		{
 			sendParams.p1 = params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff;
 			sendParams.p2 = params.mediaParams.audio ? AnalyticsDeviceStatus.micOn : AnalyticsDeviceStatus.micOff;
+		}
+
+		if (params.associatedEntity.advanced.chatType === ChatType.collab)
+		{
+			const collabId = params.associatedEntity.advanced.entityId;
+			sendParams.p4 = `collabId_${collabId}`;
 		}
 
 		sendData(sendParams);
@@ -435,5 +457,204 @@ export class Analytics
 		}
 
 		return chatId;
+	}
+
+	onChatHeaderStartCallClick(params)
+	{
+		const resultData = {
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.messenger,
+			event: AnalyticsEvent.clickCallButton,
+			c_section: AnalyticsSection.chatWindow,
+			c_sub_section: AnalyticsSubSection.window,
+			p5: `chatId_${params.dialog.chatId}`,
+		};
+
+		resultData.type = this.#getCallTypeParam(params.dialog.type);
+		resultData.c_element = this.#getCallElementParam(params.callType);
+
+		if (params.dialog.type === ChatType.collab)
+		{
+			resultData.p4 = getCollabId(params.dialog.chatId);
+		}
+
+		sendData(resultData);
+	}
+
+	onContextMenuStartCallClick(params)
+	{
+		const resultData = {
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.messenger,
+			event: AnalyticsEvent.clickCallButton,
+			c_section: AnalyticsSection.chatWindow,
+			c_sub_section: AnalyticsSubSection.contextMenu,
+			p5: `chatId_${params.context.chatId}`,
+		};
+
+		resultData.type = this.#getCallTypeParam(params.context.type);
+		resultData.c_element = this.#getCallElementParam(params.callType);
+
+		if (params.context.type === ChatType.collab)
+		{
+			resultData.p4 = getCollabId(params.context.chatId);
+		}
+
+		sendData(resultData);
+	}
+
+	#getCallElementParam(callType)
+	{
+		return callType === CallTypes.video.id
+			? AnalyticsElement.videocall
+			: AnalyticsElement.audiocall;
+	}
+
+	#getCallTypeParam(type)
+	{
+		return type === ChatType.user
+			? AnalyticsType.private
+			: AnalyticsType.group;
+	}
+
+	onStartConferenceClick(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.clickStartConf,
+			type: AnalyticsType.videoconf,
+			c_section: AnalyticsSection.chatWindow,
+			c_element: AnalyticsElement.startButton,
+			p5: `chatId_${params.chatId}`,
+		});
+	}
+
+	onChatCreationMessageStartCallClick(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.messenger,
+			event: AnalyticsEvent.clickCallButton,
+			type: AnalyticsType.groupCall,
+			c_section: AnalyticsSection.chatWindow,
+			c_sub_section: AnalyticsSubSection.window,
+			c_element: AnalyticsElement.initialBanner,
+			p5: `chatId_${params.chatId}`,
+		});
+	}
+
+	onRecentStartCallClick(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.messenger,
+			event: AnalyticsEvent.clickCallButton,
+			type: params.isGroupChat
+				? AnalyticsType.groupCall
+				: AnalyticsType.privateCall,
+			c_section: AnalyticsSection.chatList,
+			c_sub_section: AnalyticsSubSection.contextMenu,
+			c_element: AnalyticsElement.videocall,
+			p5: `chatId_${params.chatId}`,
+		});
+	}
+
+	onChatStartConferenceClick(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.clickStartConf,
+			type: AnalyticsType.videoconf,
+			c_section: AnalyticsSection.chatWindow,
+			c_element: AnalyticsElement.initialBanner,
+			p5: `chatId_${params.chatId}`,
+		});
+	}
+
+	onJoinConferenceClick(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.clickJoin,
+			type: AnalyticsType.videoconf,
+			c_section: AnalyticsSection.chatList,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onStartCallMessageClick(params)
+	{
+		const resultData = {
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.messenger,
+			event: AnalyticsEvent.clickCallButton,
+			c_section: AnalyticsSection.callMessage,
+			c_element: AnalyticsElement.startMessage,
+			p5: `chatId_${params.dialog.chatId}`,
+		};
+
+		resultData.type = this.#getCallTypeParam(params.dialog.type);
+
+		if (params.dialog.type === ChatType.collab)
+		{
+			resultData.p4 = getCollabId(params.dialog.chatId);
+		}
+
+		sendData(resultData);
+	}
+
+	onFinishCallMessageClick(params)
+	{
+		const resultData = {
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.messenger,
+			event: AnalyticsEvent.clickCallButton,
+			c_section: AnalyticsSection.callMessage,
+			c_element: AnalyticsElement.finishMessage,
+			p5: `chatId_${params.dialog.chatId}`,
+		};
+
+		resultData.type = this.#getCallTypeParam(params.dialog.type);
+
+		if (params.dialog.type === ChatType.collab)
+		{
+			resultData.p4 = getCollabId(params.dialog.chatId);
+		}
+
+		sendData(resultData);
+	}
+
+	onAIRecordStart(params)
+	{
+		const errorCodes = {
+			AI_UNAVAILABLE_ERROR: AnalyticsStatus.errorB24,
+			AI_SETTINGS_ERROR: AnalyticsStatus.errorB24,
+			AI_AGREEMENT_ERROR: AnalyticsStatus.errorAgreement,
+			AI_NOT_ENOUGH_BAAS_ERROR: AnalyticsStatus.errorLimitBaas,
+		};
+
+		const resultData = {
+			tool: AnalyticsTool.ai,
+			category: AnalyticsCategory.callsOperations,
+			event: AnalyticsEvent.aiRecordStart,
+			type: params.callType,
+			c_section: AnalyticsSection.callFollowup,
+			p5: `callId_${params.callId}`,
+		};
+		
+		if (params?.userCount)
+		{
+			resultData.p3 = `userCount_${params.userCount}`;
+		}
+
+		resultData.status = params?.errorCode
+			? errorCodes[params.errorCode]
+			: AnalyticsStatus.success
+		;
+
+		sendData(resultData);
 	}
 }

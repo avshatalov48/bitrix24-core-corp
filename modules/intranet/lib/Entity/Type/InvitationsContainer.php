@@ -1,15 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bitrix\Intranet\Entity\Type;
 
 use Bitrix\Intranet\Entity\Collection\DepartmentCollection;
 use Bitrix\Intranet\Entity\Department;
+use Bitrix\Intranet\Entity\Type;
 
 class InvitationsContainer
 {
 	public function __construct(
-		private array $invitation = [],
-		private ?DepartmentCollection $departmentCollection = null
+		private readonly array|Type\Collection\InvitationCollection $invitation = [],
+		private readonly ?DepartmentCollection $departmentCollection = null
 	)
 	{}
 

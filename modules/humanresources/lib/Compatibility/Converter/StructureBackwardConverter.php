@@ -23,6 +23,7 @@ use Bitrix\HumanResources\Type\MemberEntityType;
 use Bitrix\HumanResources\Type\NodeEntityType;
 use Bitrix\HumanResources\Contract\Util\Logger;
 use Bitrix\HumanResources\Config;
+use Bitrix\Main\DB\DuplicateEntryException;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
@@ -202,8 +203,11 @@ class StructureBackwardConverter
 		{
 			if ($foundedNode->parentId !== $node->parentId)
 			{
-				$this->nodeRepository->update($node);
+				$foundedNode->parentId = $node->parentId;
+				$this->nodeRepository->update($foundedNode);
 			}
+			$this->newNodeMap[$oldDepartment['ID']] = $foundedNode->id;
+
 			return;
 		}
 
@@ -519,19 +523,92 @@ class StructureBackwardConverter
 
 				try
 				{
-					$this->nodeMemberRepository->create(
-						new NodeMember(
-							entityType: MemberEntityType::USER,
-							entityId: $employeeId,
-							nodeId: $node->id,
-							active: $employee['ACTIVE'] === 'Y',
-							role: $this->detectRole((int)$ufHead, $employeeId),
-						),
+					$nodeMember = new NodeMember(
+						entityType: MemberEntityType::USER,
+						entityId: $employeeId,
+						nodeId: $node->id,
+						active: $employee['ACTIVE'] === 'Y',
+						role: $this->detectRole((int)$ufHead, $employeeId),
 					);
+
+					$existed = $this->nodeMemberRepository->findByEntityTypeAndEntityIdAndNodeId(
+						$nodeMember->entityType,
+						$nodeMember->entityId,
+						$nodeMember->nodeId,
+					);
+
+					if ($existed)
+					{
+						continue;
+					}
+
+ 					$this->nodeMemberRepository->create($nodeMember);
 				}
-				catch (SqlQueryException)
+				catch (DuplicateEntryException | SqlQueryException)
 				{}
 			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param int $limit
+	 * @param int $offset
+	 *
+	 * @return bool
+	 * @throws \Bitrix\HumanResources\Exception\CompanyStructureNotFoundException
+	 * @throws \Bitrix\HumanResources\Exception\CreationFailedException
+	 * @throws \Bitrix\HumanResources\Exception\ElementNotFoundException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function updateInactiveEmployees(int $limit = 20, int $offset = 0): bool
+	{
+		$this->disableEvents();
+
+		$structureId = $this->getCompanyStructureId();
+
+		if (!$structureId)
+		{
+			throw new CompanyStructureNotFoundException();
+		}
+
+		$nodes = Container::getNodeRepository()->getAllPagedByStructureId($structureId, $limit, $offset);
+
+		if ($nodes->empty())
+		{
+			return false;
+		}
+		$employeesToUpdate = [];
+
+		foreach ($nodes as $node)
+		{
+			$employees = Container::getNodeMemberService()->getAllEmployees(
+				nodeId: $node->id,
+				onlyActive: false,
+			)->filter(static fn ($nodeMember) => $nodeMember->active === false );
+
+
+			foreach ($employees as $employee)
+			{
+				$user = \CUser::GetByID($employee->entityId)->Fetch();
+
+				if ($user['ACTIVE'] === 'Y')
+				{
+					$employeesToUpdate[$employee->entityId] = $employee->entityId;
+				}
+			}
+		}
+
+		if (!empty($employeesToUpdate))
+		{
+			Container::getNodeMemberRepository()->setActiveByEntityTypeAndEntityIds(
+				MemberEntityType::USER,
+				$employeesToUpdate,
+				true,
+			);
 		}
 
 		return true;
@@ -622,6 +699,42 @@ class StructureBackwardConverter
 			AddMessage2Log($e->getMessage(), self::MODULE_NAME);
 
 			return "Bitrix\\HumanResources\\Compatibility\\Converter\\StructureBackwardConverter::moveEmployees($limit, $offset);";
+		}
+
+		return '';
+	}
+
+	/**
+	 * @param int $limit
+	 * @param int $offset
+	 *
+	 * @return string
+	 */
+	public static function checkInactiveEmployees(int $limit = 20, int $offset = 0): string
+	{
+		try
+		{
+			if (
+				Container::getStructureBackwardConverter()
+					->updateInactiveEmployees($limit, $offset)
+			)
+			{
+				$offset += $limit;
+				\CAgent::AddAgent(
+					name: "Bitrix\\HumanResources\\Compatibility\\Converter\\StructureBackwardConverter::checkInactiveEmployees($limit, $offset);",
+					module: self::MODULE_NAME,
+					interval: 60,
+					existError: false,
+				);
+
+				return '';
+			}
+		}
+		catch (\Throwable $e)
+		{
+			AddMessage2Log($e->getMessage(), self::MODULE_NAME);
+
+			return "Bitrix\\HumanResources\\Compatibility\\Converter\\StructureBackwardConverter::checkInactiveEmployees($limit, $offset);";
 		}
 
 		return '';

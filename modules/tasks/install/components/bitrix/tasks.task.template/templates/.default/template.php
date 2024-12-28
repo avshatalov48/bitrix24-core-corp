@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Bitrix24\User;
+use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
 use Bitrix\Tasks\Util\Type;
@@ -145,6 +146,8 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 
 			$lockClass = 'tasks-btn-restricted';
 		}
+
+		$isCollab = Group::isCollab($arResult['DATA']['GROUP'][$template->get('GROUP_ID')]['TYPE'] ?? null);
 
 		$taskUrlTemplate = str_replace(
 			['#task_id#', '#action#'],
@@ -677,6 +680,7 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 								'ATTRIBUTE_PASS' => array(
 									'ID',
 								),
+								'ENTITY_ID' => $template->getId(),
 								'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_PROJECT'],
 								'SOLE_INPUT_IF_MAX_1' => 'Y',
 								'CONTEXT' => 'template',
@@ -684,6 +688,13 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 								'taskMailUserIntegrationFeatureId' => $taskMailUserIntegrationFeatureId,
 								'isProjectLimitExceeded' => !Limit\ProjectLimit::isFeatureEnabledOrTrial(),
 								'projectFeatureId' => Limit\ProjectLimit::getFeatureId(),
+								'loc' => [
+									'type' => [
+										'group' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_BLOCK_TITLE_PROJECT'),
+										'collab' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_BLOCK_TITLE_PROJECT_COLLAB'),
+									],
+								],
+								'IS_COLLAB' => $isCollab,
 							),
 							$helper->getComponent(),
 							array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -922,10 +933,23 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 				}
 				$html = ob_get_clean();
 
+				if ($blockCode === 'PROJECT')
+				{
+					$titleId = "task-{$template->getId()}-group-title-edit";
+					$title = $isCollab
+						? Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_BLOCK_TITLE_PROJECT_COLLAB')
+						: Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_BLOCK_TITLE_PROJECT');
+				}
+				else
+				{
+					$titleId = '';
+					$title = Loc::getMessage("TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_BLOCK_TITLE_{$blockCode}");
+				}
 				$blocks['DYNAMIC'][] = [
 					'CODE' => $blockCode,
-					'TITLE' => Loc::getMessage("TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_BLOCK_TITLE_{$blockCode}"),
+					'TITLE' => $title,
 					'TITLE_SHORT' => Loc::getMessage("TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_BLOCK_HEADER_{$blockCode}"),
+					'TITLE_ID' => $titleId,
 					'HTML' => $html,
 					'IS_PINABLE' => true,
 					'FILLED' => ($blockData[$blockCode]['FILLED'] ?? null),

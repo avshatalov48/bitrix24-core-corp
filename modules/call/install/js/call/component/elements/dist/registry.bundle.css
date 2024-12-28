@@ -1,0 +1,185 @@
+.bx-call-elements-loader__container {
+	position: relative;
+	margin: auto;
+}
+
+.bx-call-audio-player__scope {
+	--call-audio-player__background-image_play-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='9' height='14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.694 6.49L.941 1.006A.58.58 0 00.323.97a.62.62 0 00-.317.549v10.963c-.002.23.12.443.317.55a.578.578 0 00.618-.039L8.694 7.51A.622.622 0 008.956 7a.622.622 0 00-.262-.51z' fill='%23fff'/%3E%3C/svg%3E");
+	--call-audio-player__background-image_pause-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='10' height='12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.75.167H.835v11.666h2.917V.167zM10 .167H7.085v11.666h2.917V.167z' fill='%23fff'/%3E%3C/svg%3E");
+	--call-audio-player__background-image_loader-icon: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2018%2018%22%3E%0A%20%20%3Cpath%20fill%3D%22%23FFFFFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M9.25347735%2C0.131844352%20L9.25347735%2C1.65344535%20C9.1693359%2C1.65059411%209.08483578%2C1.64915697%209%2C1.64915697%20C4.9402415%2C1.64915697%201.64915697%2C4.9402415%201.64915697%2C9%20C1.64915697%2C13.0597585%204.9402415%2C16.350843%209%2C16.350843%20C13.0597585%2C16.350843%2016.350843%2C13.0597585%2016.350843%2C9%20C16.350843%2C8.91516422%2016.3494059%2C8.8306641%2016.3465546%2C8.74652265%20L17.8681556%2C8.74652265%20C17.870518%2C8.83072687%2017.8717071%2C8.91522457%2017.8717071%2C9%20C17.8717071%2C13.8997085%2013.8997085%2C17.8717071%209%2C17.8717071%20C4.10029146%2C17.8717071%200.128292901%2C13.8997085%200.128292901%2C9%20C0.128292901%2C4.10029146%204.10029146%2C0.128292901%209%2C0.128292901%20C9.08477543%2C0.128292901%209.16927313%2C0.129481974%209.25347735%2C0.131844352%20Z%22%20opacity%3D%22.6%22/%3E%0A%3C/svg%3E%0A');
+	--call-audio-player__color_timer-text: var(--ui-color-palette-gray-70, #828B95);
+}
+
+.bx-call-audio-player__container {
+	width: 100%;
+	height: 44px;
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+	gap: 15px;
+}
+
+.bx-call-audio-player__control-container {
+	position: relative;
+	width: 32px;
+	height: 32px;
+}
+
+.bx-call-audio-player__control-button {
+	width: 32px;
+	height: 32px;
+	border: none;
+	border-radius: 50%;
+	transition: 250ms linear background-color;
+	background-repeat: no-repeat;
+	background-position: center;
+	outline: none;
+	background-color: var(--ui-color-palette-blue-50, #2FC6F6);
+}
+
+.bx-call-audio-player__audio-source {
+	display: none;
+}
+
+.bx-call-audio-player__control-play {
+	background-image: var(--call-audio-player__background-image_play-icon);
+	background-position: calc(50% + 1px) 50%;
+	cursor: pointer;
+}
+
+.bx-call-audio-player__control-pause {
+	background-image: var(--call-audio-player__background-image_pause-icon);
+	background-position: calc(50% - 1px) 50%;
+	cursor: pointer;
+}
+
+.bx-call-audio-player__control-play:hover,
+.bx-call-audio-player__control-pause:hover {
+	background-color: var(--ui-color-palette-blue-60, #11a9d9);
+}
+
+.bx-call-audio-player__control-loader {
+	background-image: var(--call-audio-player__background-image_loader-icon);
+	animation: vueAudioPlayerControlLoader 1s infinite linear;
+	cursor: wait;
+}
+
+@keyframes vueAudioPlayerControlLoader {
+	from { transform: rotate(0) }
+	to { transform: rotate(360deg) }
+}
+
+.bx-call-audio-player__timeline-container {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 7px;
+	align-self: flex-end;
+}
+
+.bx-call-audio-player__track-container {
+	position: relative;
+	width: 100%;
+	height: 6px;
+	left: 0;
+	top: 0;
+	outline: none;
+	cursor: pointer;
+}
+
+.bx-call-audio-player__track-mask {
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	width: 100%;
+	height: 6px;
+	position: absolute;
+	z-index: 1;
+	top: 0;
+	left: 0;
+	border-radius: 33px;
+	opacity: 0.3;
+	background: rgba(var(--ui-color-palette-blue-50-rgb), 0.50);
+}
+
+.bx-call-audio-player__track-mask.--active {
+	z-index: 3;
+	opacity: 0.7;
+	background: var(--ui-color-palette-blue-50, #2FC6F6);
+}
+
+.bx-call-audio-player__track-mask-separator {
+	height: 4px;
+	width: 1px;
+	background-color: var(--ui-color-palette-blue-50, #2FC6F6);
+}
+
+.bx-call-audio-player__track-seek {
+	position: absolute;
+	width: auto;
+	height: auto;
+	border: none;
+	border-radius: 0;
+	background-color: transparent;
+	opacity: 1;
+	top: calc(-50% - 5px);
+	z-index: 4;
+}
+
+.bx-call-audio-player__track-seek-icon {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	box-shadow: 0 2px 3px rgba(0, 0, 0, 0.05);
+	background-color: var(--ui-color-palette-blue-50, #2fc6f6);
+	opacity: 0.94;
+	transition-property: opacity, border-color;
+	transition-duration: 0.2s;
+	transition-timing-function: ease;
+}
+
+.bx-call-audio-player__track-seek-icon:hover {
+	transition-duration: 0s;
+	background-color: var(--ui-color-palette-blue-60, #11a9d9);
+	opacity: 1;
+}
+
+.bx-call-audio-player__track-event {
+	width: 100%;
+	height: 6px;
+	position: absolute;
+	z-index: 5;
+	top: 0;
+	left: 0;
+}
+
+.bx-call-audio-player__timer-container {
+	display: flex;
+	justify-content: space-between;
+	font: var(--ui-font-size-4xs, 10px)/normal var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-normal, 400);
+	color: var(--call-audio-player__color_timer-text);
+}
+
+.bx-call-audio-player__playback-speed-menu-container {
+	align-self: flex-start;
+	margin-top: 10px;
+	min-width: 40px;
+	font: var(--ui-font-size-md, 14px)/normal var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-bold, 700);
+	color: var(--ui-color-palette-gray-70, #828B95);
+	text-align: left;
+	cursor: pointer;
+	letter-spacing: var(--ui-text-letter-spacing-neg-3, -0.03em);
+	transition: color 0.2s linear;
+}
+
+.bx-call-audio-player__playback-speed-menu-container:hover {
+	transition-duration: unset;
+	color: var(--ui-color-palette-gray-60, #959ca4);
+}
+
+.bx-call-audio-player__playback-speed-menu-item .menu-popup-item-text {
+	line-height: var(--ui-font-line-height-md, 1.4);
+	font-size: var(--ui-font-size-sm, 13px);
+}

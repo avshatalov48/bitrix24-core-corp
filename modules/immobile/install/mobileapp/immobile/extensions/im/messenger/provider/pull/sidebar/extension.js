@@ -4,7 +4,7 @@
 jn.define('im/messenger/provider/pull/sidebar', (require, exports, module) => {
 	const { BasePullHandler } = require('im/messenger/provider/pull/base/pull-handler');
 	const { LoggerManager } = require('im/messenger/lib/logger');
-	const { MessengerParams } = require('im/messenger/lib/params');
+	const { Feature } = require('im/messenger/lib/feature');
 	const logger = LoggerManager.getInstance().getLogger('pull-handler--sidebar');
 
 	/**
@@ -124,7 +124,7 @@ jn.define('im/messenger/provider/pull/sidebar', (require, exports, module) => {
 		 */
 		isFilesMigrated()
 		{
-			return MessengerParams.isFilesMigrated();
+			return Feature.isSidebarFilesEnabled;
 		}
 
 		/**
@@ -133,7 +133,7 @@ jn.define('im/messenger/provider/pull/sidebar', (require, exports, module) => {
 		 */
 		isLinksMigrated()
 		{
-			return MessengerParams.isLinksMigrated();
+			return Feature.isSidebarLinksEnabled;
 		}
 	}
 

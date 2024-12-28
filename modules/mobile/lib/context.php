@@ -2,6 +2,8 @@
 
 namespace Bitrix\Mobile;
 
+use Bitrix\Main\Loader;
+
 class Context
 {
 	public $userId;
@@ -9,6 +11,7 @@ class Context
 	public $siteId;
 	public $siteDir;
 	public $version;
+	public readonly bool $isCollaber;
 
 	private static $defaultContext;
 
@@ -26,6 +29,9 @@ class Context
 		$this->siteDir = $options['siteDir'] ?? SITE_DIR;
 		$this->extranet = isset($options['extranet']) ? (bool)$options['extranet'] : false;
 		$this->version = $options['version'] ?? '1';
+		$this->isCollaber = isset($options['isCollaber'])
+			? (bool)$options['isCollaber']
+			: self::autodetectCollaber();
 	}
 
 	public static function autodetectContext()
@@ -37,10 +43,11 @@ class Context
 			$siteId = SITE_ID;
 			$siteDir = SITE_DIR;
 			$isExtranetUser = false;
+			$isCollaber = self::autodetectCollaber();
 
 			if ($USER->isAuthorized())
 			{
-				$isExtranetModuleInstalled = \Bitrix\Main\Loader::includeModule('extranet');
+				$isExtranetModuleInstalled = Loader::includeModule('extranet');
 
 				if ($isExtranetModuleInstalled)
 				{
@@ -86,9 +93,27 @@ class Context
 				'siteId' => $siteId,
 				'siteDir' => $siteDir,
 				'version' => $moduleVersion,
+				'isCollaber' => $isCollaber,
 			];
 		}
 
 		return self::$defaultContext;
+	}
+
+	private static function autodetectCollaber(): bool
+	{
+		global $USER;
+		$userId = (int)$USER->GetID();
+
+		if (!Loader::includeModule('extranet') || $userId <= 0)
+		{
+			return false;
+		}
+
+		$container = class_exists(\Bitrix\Extranet\Service\ServiceContainer::class)
+			? \Bitrix\Extranet\Service\ServiceContainer::getInstance()
+			: null;
+
+		return $container?->getCollaberService()?->isCollaberById($userId) ?? false;
 	}
 }

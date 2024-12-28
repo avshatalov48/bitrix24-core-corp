@@ -6,6 +6,7 @@ jn.define('im/messenger/const/navigation-tab', (require, exports, module) => {
 		imMessenger: 'chats',
 		imCopilotMessenger: 'copilot',
 		imChannelMessenger: 'channel',
+		imCollabMessenger: 'collab',
 		imNotify: 'notifications',
 		imOpenlinesRecent: 'openlines',
 	};

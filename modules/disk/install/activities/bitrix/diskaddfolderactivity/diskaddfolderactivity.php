@@ -93,7 +93,7 @@ class CBPDiskAddFolderActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$folderName = \Bitrix\Disk\Ui\Text::correctFolderName($this->FolderName);
+		$folderName = \Bitrix\Disk\Ui\Text::correctFolderName(\CBPHelper::flatten($this->FolderName)[0] ?? null);
 		$urlManager = \Bitrix\Disk\Driver::getInstance()->getUrlManager();
 
 		$createdBy = CBPHelper::ExtractUsers($this->CreatedBy, $this->GetDocumentId(), true);

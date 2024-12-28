@@ -152,7 +152,13 @@ export class BitrixCall extends AbstractCall
 			'Call::ping': this.#onPullEventPing,
 			'Call::finish': this.#onPullEventFinish,
 			'Call::repeatAnswer': this.#onPullEventRepeatAnswer,
-		}
+			'Call::switchTrackRecordStatus': this.#onPullEventSwitchTrackRecordStatus,
+		};
+
+		this._isCopilotActive = config.isCopilotActive;
+		this._isCopilotFeaturesEnabled = true;
+		this._isRecordWhenCopilotActivePopupAlreadyShow = false;
+		this._isBoostExpired = false;
 	};
 
 	get provider()
@@ -163,6 +169,58 @@ export class BitrixCall extends AbstractCall
 	get screenShared()
 	{
 		return this._screenShared;
+	}
+
+	get isCopilotActive()
+	{
+		return this._isCopilotActive;
+	}
+
+	set isCopilotActive(isCopilotActive)
+	{
+		if (isCopilotActive !== this._isCopilotActive)
+		{
+			this._isCopilotActive = isCopilotActive;
+		}
+	}
+
+	get isBoostExpired()
+	{
+		return this._isBoostExpired;
+	}
+
+	set isBoostExpired(isBoostExpired)
+	{
+		if (isBoostExpired !== this._isBoostExpired)
+		{
+			this._isBoostExpired = isBoostExpired;
+		}
+	}
+
+	get isCopilotFeaturesEnabled()
+	{
+		return this._isCopilotFeaturesEnabled;
+	}
+
+	set isCopilotFeaturesEnabled(isCopilotFeaturesEnabled)
+	{
+		if (isCopilotFeaturesEnabled !== this._isCopilotFeaturesEnabled)
+		{
+			this._isCopilotFeaturesEnabled = isCopilotFeaturesEnabled;
+		}
+	}
+
+	get isRecordWhenCopilotActivePopupAlreadyShow()
+	{
+		return this._isRecordWhenCopilotActivePopupAlreadyShow;
+	}
+
+	set isRecordWhenCopilotActivePopupAlreadyShow(isRecordWhenCopilotActivePopupAlreadyShow)
+	{
+		if (isRecordWhenCopilotActivePopupAlreadyShow !== this._isRecordWhenCopilotActivePopupAlreadyShow)
+		{
+			this._isRecordWhenCopilotActivePopupAlreadyShow = isRecordWhenCopilotActivePopupAlreadyShow;
+		}
 	}
 
 	set screenShared(screenShared)
@@ -1415,6 +1473,11 @@ export class BitrixCall extends AbstractCall
 		{
 			this.signaling.sendAnswer({userId: this.userId}, true);
 		}
+	}
+
+	#onPullEventSwitchTrackRecordStatus = (e) =>
+	{
+		this.runCallback(CallEvent.onSwitchTrackRecordStatus, { isTrackRecordOn: e.isTrackRecordOn });
 	}
 
 	#onLocalMediaRendererAdded = (e) =>

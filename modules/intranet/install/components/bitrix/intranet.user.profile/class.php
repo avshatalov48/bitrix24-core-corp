@@ -101,6 +101,10 @@ class CIntranetUserProfileComponent extends UserProfile
 			? $this->userFieldDispatcher->getCreateSignature(array("ENTITY_ID" => $this->arResult["UserFieldEntityId"]))
 			: '';
 		$this->arResult["EnableUserFieldMandatoryControl"] = false;
+		$this->arResult['SHOW_FACEBOOK_RESTRICTIONS'] = LANGUAGE_ID === 'ru'
+			&& method_exists(\Bitrix\Main\Application::getInstance(), 'getLicense')
+			&& ($region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion())
+			&& (is_null($region) || mb_strtolower($region) === 'ru');
 
 		if ($this->arResult["User"]["STATUS"] === "email")
 		{
@@ -143,6 +147,8 @@ class CIntranetUserProfileComponent extends UserProfile
 		$this->arResult["isExtranetSite"] = (Loader::includeModule("extranet") && \CExtranet::isExtranetSite());
 
 		$this->arResult["IS_CURRENT_USER_INTEGRATOR"] = false;
+		$this->arResult["IS_CURRENT_USER_COLLABER"] = $this->arResult["isExtranetSite"]
+			&& \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById($currentUserId);
 		$this->arResult["isFireUserEnabled"] = true;
 
 		if ($this->arResult["isCloud"])
@@ -157,6 +163,7 @@ class CIntranetUserProfileComponent extends UserProfile
 
 		$this->arResult['ADDITIONAL_BLOCKS'] = $this->getAdditionalBlocks();
 		$this->arResult['IS_ADDITIONAL_BLOCK'] = !empty($this->arResult['ADDITIONAL_BLOCKS']);
+
 
 		$this->processShowYear();
 

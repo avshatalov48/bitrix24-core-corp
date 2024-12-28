@@ -1172,7 +1172,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 			return $result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_ACCESS_DENIED')));
 		}
 
-		$item = $this->getEntity()->getItem($id);
+		$item = $this->getEntity()->getItem($id, [$this->getEntity()->getDbStageFieldName()]);
 		if(!$item)
 		{
 			return $result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_ACCESS_DENIED')));

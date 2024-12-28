@@ -32,13 +32,13 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { EntityReady } = require('entity-ready');
 	const { Logger } = require('im/messenger/lib/logger');
-	const { MessengerInitService } = require('im/messenger/provider/service/messenger-init');
 	const {
 		AppStatus,
 		EventType,
 		RestMethod,
 		ComponentCode,
 		NavigationTab,
+		ViewName,
 	} = require('im/messenger/const');
 
 	const core = new ChannelApplication({
@@ -57,6 +57,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	}
 	serviceLocator.add('core', core);
 
+	const { MessengerInitService } = require('im/messenger/provider/service/messenger-init');
 	const channelInitService = new MessengerInitService({
 		actionName: RestMethod.immobileTabChannelLoad,
 	});
@@ -163,6 +164,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.recent = new ChannelRecent({
 				view: new RecentView({
 					ui: DialogList,
+					viewName: ViewName.recent,
 				}),
 			});
 			await this.recent.init();
@@ -181,8 +183,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.openChatSearch = this.openChatSearch.bind(this);
 			this.closeChatSearch = this.closeChatSearch.bind(this);
 			this.refresh = this.refresh.bind(this);
-			this.uploadFiles = this.uploadFiles.bind(this);
-			this.cancelFileUpload = this.cancelFileUpload.bind(this);
 
 			this.onChatDialogCounterChange = this.onChatDialogCounterChange.bind(this);
 			this.onTaskStatusSuccess = this.onTaskStatusSuccess.bind(this);
@@ -202,8 +202,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.addCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
 			BX.addCustomEvent(EventType.messenger.refresh, this.refresh);
 			BX.addCustomEvent(EventType.messenger.openDialog, this.openDialog);
-			BX.addCustomEvent(EventType.messenger.uploadFiles, this.uploadFiles);
-			BX.addCustomEvent(EventType.messenger.cancelFileUpload, this.cancelFileUpload);
 		}
 
 		unsubscribeMessengerEvents()
@@ -213,8 +211,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.removeCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
 			BX.removeCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
 			BX.removeCustomEvent(EventType.messenger.refresh, this.refresh);
-			BX.removeCustomEvent(EventType.messenger.uploadFiles, this.uploadFiles);
-			BX.removeCustomEvent(EventType.messenger.cancelFileUpload, this.cancelFileUpload);
 		}
 
 		/**
@@ -527,7 +523,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			}
 
 			PageManager.getNavigator().makeTabActive();
-			this.visibilityManager.checkIsDialogVisible(openDialogOptions.dialogId)
+			this.visibilityManager.checkIsDialogVisible({ dialogId: openDialogOptions.dialogId })
 				.then((isVisible) => {
 					if (isVisible)
 					{
@@ -537,52 +533,12 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					this.dialog = new Dialog();
 					this.dialog.open(openDialogOptions);
 
-					this.recent.view.initChatCreateButton();
+					this.recent.view.renderChatCreateButton();
 				})
 				.catch((error) => {
 					Logger.error(error);
 				})
 			;
-		}
-
-		uploadFiles(options)
-		{
-			Logger.log('EventType.messenger.uploadFiles', options);
-
-			const { dialogId, fileList } = options;
-			const deviceFileList = [];
-			const diskFileList = [];
-			fileList.forEach((file) => {
-				if (file.dataAttributes)
-				{
-					diskFileList.push(file);
-
-					return;
-				}
-
-				deviceFileList.push(file);
-			});
-
-			if (dialogId && Type.isArrayFilled(deviceFileList))
-			{
-				this.sendingService.sendFilesFromDevice(dialogId, deviceFileList);
-			}
-
-			if (dialogId && Type.isArrayFilled(diskFileList))
-			{
-				this.sendingService.sendFilesFromDisk(dialogId, diskFileList);
-			}
-		}
-
-		cancelFileUpload(options)
-		{
-			Logger.log('EventType.messenger.cancelFileUpload', options);
-
-			const { messageId, fileId } = options;
-			if (Type.isStringFilled(messageId) && Type.isStringFilled(fileId))
-			{
-				this.sendingService.cancelFileUpload(messageId, fileId);
-			}
 		}
 
 		openChatSearch()

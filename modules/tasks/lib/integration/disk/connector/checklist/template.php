@@ -8,6 +8,8 @@ use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Integration\Disk\Connector\Task as TaskConnector;
 use Bitrix\Tasks\Internals\Task\Template\CheckListTable;
 use Bitrix\Tasks\Item\Task\Template as TemplateItem;
+use Bitrix\Tasks\Access\TemplateAccessController;
+use Bitrix\Tasks\Access\ActionDictionary;
 
 /**
  * Class Template
@@ -46,6 +48,25 @@ class Template extends TaskConnector
 		}
 
 		return $this->taskPostData;
+	}
+
+	public function canRead($userId): bool
+	{
+		if($this->canRead !== null)
+		{
+			return $this->canRead;
+		}
+
+		$templateId = static::getTemplateIdByCheckList($this->entityId);
+
+		$this->canRead = TemplateAccessController::can($userId, ActionDictionary::ACTION_TEMPLATE_READ, $templateId);
+
+		return $this->canRead;
+	}
+
+	public function canUpdate($userId): bool
+	{
+		return $this->canRead($userId);
 	}
 
 	/**

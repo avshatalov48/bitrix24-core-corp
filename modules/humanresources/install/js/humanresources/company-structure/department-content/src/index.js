@@ -1,0 +1,1 @@
+export { DepartmentContent } from './components/department-content';

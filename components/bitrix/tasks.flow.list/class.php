@@ -28,6 +28,9 @@ use Bitrix\Tasks\Flow\Control\Exception\CommandNotFoundException;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotDeletedException;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotFoundException;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotUpdatedException;
+use Bitrix\Tasks\Flow\Grid\Preload\TotalTasksCountPreloader;
+use Bitrix\Tasks\Flow\Option\FlowUserOption\FlowUserOptionDictionary;
+use Bitrix\Tasks\Flow\Option\FlowUserOption\FlowUserOptionRepository;
 use Bitrix\Tasks\InvalidCommandException;
 use Bitrix\Tasks\Flow\Control\FlowService;
 use Bitrix\Tasks\Flow\Filter\Filter;
@@ -48,7 +51,6 @@ use Bitrix\Tasks\Flow\Grid\Preload\EfficiencyPreloader;
 use Bitrix\Tasks\Flow\Grid\Preload\PendingTaskPreloader;
 use Bitrix\Tasks\Flow\Grid\Preload\ProjectPreloader;
 use Bitrix\Tasks\Flow\Grid\Preload\TasksCountPreloader;
-use Bitrix\Tasks\Flow\Grid\Preload\TeamPreloader;
 use Bitrix\Tasks\Flow\Grid\Preload\UserPreloader;
 use Bitrix\Tasks\Flow\Grid\Row;
 use Bitrix\Tasks\Flow\Provider\Exception\ProviderException;
@@ -56,6 +58,8 @@ use Bitrix\Tasks\Flow\Provider\FlowProvider;
 use Bitrix\Tasks\Flow\Provider\Query\FlowQuery;
 use Bitrix\Tasks\Flow\Provider\TaskProvider;
 use Bitrix\Tasks\Integration\Pull\PushCommand;
+use Bitrix\Tasks\Internals\Routes\RouteDictionary;
+use Bitrix\Tasks\Integration\Extranet\User;
 
 final class TasksFlowListComponent extends CBitrixComponent implements Controllerable, Errorable
 {
@@ -65,6 +69,7 @@ final class TasksFlowListComponent extends CBitrixComponent implements Controlle
 	private CMain $application;
 	private ?FlowProvider $flowProvider = null;
 	private ?Filter $filter = null;
+	private ?FlowUserOptionRepository $flowUserOptionRepository = null;
 
 	private int $userId;
 	private int $currentPage = 1;
@@ -158,6 +163,7 @@ final class TasksFlowListComponent extends CBitrixComponent implements Controlle
 
 		$this->flowProvider = new FlowProvider();
 		$this->filter = Filter::getInstance($this->userId);
+		$this->flowUserOptionRepository = FlowUserOptionRepository::getInstance();
 
 		$this->arResult['gridId'] = self::GRID_ID;
 		$this->arResult['columns'] = $this->prepareColumns();
@@ -190,6 +196,7 @@ final class TasksFlowListComponent extends CBitrixComponent implements Controlle
 
 		$this->arResult['currentUserId'] = $this->userId;
 		$this->arResult['isAhaShownOnMyTasksColumn'] = $this->isAhaShownOnMyTasksColumn();
+		$this->arResult['isAhaShownCopilotAdvice'] = $this->isAhaShownCopilotAdvice();
 		$this->arResult['isFeatureEnabled'] = FlowFeature::isFeatureEnabled();
 		$this->arResult['isFeatureTrialable'] = FlowFeature::isFeatureEnabledByTrial();
 		$this->arResult['canTurnOnTrial'] = FlowFeature::canTurnOnTrial();
@@ -291,23 +298,24 @@ final class TasksFlowListComponent extends CBitrixComponent implements Controlle
 	{
 		$rows = [];
 
+		$this->fillPinnedIds();
+
 		$select = $this->prepareSelect($grid);
 
-		$flowQuery = new FlowQuery($this->userId);
+		$flows = $this->getPinnedFlows($select, $navigation);
 
-		$query = $flowQuery
-			->setSelect($select)
-			->setWhere($this->prepareFilter())
-			->setPageNavigation($navigation)
-			->setCountTotal(true)
-			->setOrderBy(['ACTIVITY' => 'DESC', 'ID' => 'DESC'])
-		;
+		$remainingLimit = $navigation->getLimit() - count($flows);
+		if ($remainingLimit > 0)
+		{
+			$unpinnedFlows = $this->completeFlowPage($select, $navigation, $remainingLimit);
 
-		$provider = new FlowProvider();
+			foreach ($unpinnedFlows as $flow)
+			{
+				$flows->add($flow);
+			}
+		}
 
-		$flows = $provider->getList($query);
-
-		$totalRowsCount = FlowProvider::getListCount();
+		$totalRowsCount = $this->getTotalFlowCount();
 
 		$this->preloadGridData($flows);
 
@@ -330,6 +338,7 @@ final class TasksFlowListComponent extends CBitrixComponent implements Controlle
 				$editable,
 				$actions,
 				$flow->isActive(),
+				$this->isFlowPinnedForUser($flow->getId()),
 				$counters,
 			);
 
@@ -339,6 +348,85 @@ final class TasksFlowListComponent extends CBitrixComponent implements Controlle
 		return [$rows, $totalRowsCount];
 	}
 
+	private function getTotalFlowCount()
+	{
+		$provider = new FlowProvider();
+
+		$query = new FlowQuery($this->userId);
+		$query
+			->setAccessCheck(true)
+			->setWhere($this->prepareFilter())
+		;
+
+		return $provider->getCount($query);
+	}
+
+	private function isFlowPinnedForUser(int $flowId)
+	{
+		return  in_array($flowId, $this->arResult['pinnedIds'], true);
+	}
+
+	private function getPinnedFlows($select, $navigation)
+	{
+		return $this->getFlows(
+			$select,
+			fn($filter) => $filter->whereIn('ID', $this->arResult['pinnedIds']),
+			$navigation->getLimit(),
+			$navigation->getOffset()
+		);
+	}
+
+	private function completeFlowPage($select, $navigation, $remainingLimit = 0)
+	{
+		$offset = max(0, $navigation->getOffset() - count($this->arResult['pinnedIds']));
+
+		return $this->getFlows(
+			$select,
+			fn($filter) => $filter->whereNotIn('ID', $this->arResult['pinnedIds']),
+			$remainingLimit > 0 ? $remainingLimit : $navigation->getLimit(),
+			$offset
+		);
+	}
+
+
+	private function getFlows($select, $filterCondition, $limit = 0, $offset = 0)
+	{
+		$provider = new FlowProvider();
+
+		$flowQuery = new FlowQuery($this->userId);
+		$filter = $this->prepareFilter();
+		$filterCondition($filter);
+
+		$flowQuery
+			->setSelect($select)
+			->setWhere($filter)
+			->setLimit($limit)
+			->setOffset($offset)
+			->setOrderBy(['ACTIVITY' => 'DESC', 'ID' => 'DESC']);
+
+		return $provider->getList($flowQuery);
+	}
+
+	private function fillPinnedIds(): void
+	{
+		try
+		{
+			$options = $this->flowUserOptionRepository->getOptions(
+				[
+					'USER_ID' => $this->userId,
+					'NAME' => FlowUserOptionDictionary::FLOW_PINNED_FOR_USER->value,
+					'VALUE' => 'Y',
+				]
+			);
+
+			$this->arResult['pinnedIds'] = array_map(static fn ($option) => $option->getFlowId(), $options);
+		}
+		catch (Throwable $e)
+		{
+			$this->arResult['pinnedIds'] = [];
+		}
+	}
+
 	private function getStub(): array
 	{
 		if ($this->filter->isUserFilterApplied())
@@ -346,6 +434,14 @@ final class TasksFlowListComponent extends CBitrixComponent implements Controlle
 			return [
 				'title' => Loc::getMessage('TASKS_FLOW_LIST_STUB_NO_DATA_TITLE'),
 				'description' => Loc::getMessage('TASKS_FLOW_LIST_STUB_NO_DATA_DESCRIPTION'),
+			];
+		}
+
+		if (User::isExtranet($this->userId))
+		{
+			return [
+				'title' => Loc::getMessage('TASKS_FLOW_LIST_STUB_DESCRIPTION'),
+				'description' => '',
 			];
 		}
 
@@ -395,14 +491,23 @@ final class TasksFlowListComponent extends CBitrixComponent implements Controlle
 		{
 			if ($grid->isColumnVisible($column))
 			{
-				$data[$column->getId()] = $column->prepareData($flow, ['userId' => $this->userId]);
+				$data[$column->getId()] = $column->prepareData(
+					$flow,
+					[
+						'userId' => $this->userId,
+						'isPinned' => $this->isFlowPinnedForUser($flow->getId())
+					],
+				);
 			}
 		}
 
 		return $data;
 	}
 
-	private function prepareActions(Flow $flow, SimpleFlowAccessController $accessController): array
+	private function prepareActions(
+		Flow $flow,
+		SimpleFlowAccessController $accessController,
+	): array
 	{
 		$actions = [];
 
@@ -432,7 +537,15 @@ final class TasksFlowListComponent extends CBitrixComponent implements Controlle
 				continue;
 			}
 
-			$action->prepareData($flow);
+			if (
+				$action->getId() === Action\Pin::ID
+				&& !$accessController->canRead()
+			)
+			{
+				continue;
+			}
+
+			$action->prepareData($flow, ['isPinned' => $this->isFlowPinnedForUser($flow->getId())]);
 
 			$actions[] = $action->toArray();
 		}
@@ -468,6 +581,11 @@ final class TasksFlowListComponent extends CBitrixComponent implements Controlle
 			$this->arParams['PATH_TO_USER_TASKS'],
 			['user_id' => $this->userId]
 		);
+
+		$this->arResult['pathToFlows'] = CComponentEngine::makePathFromTemplate(
+			RouteDictionary::PATH_TO_FLOWS,
+			['user_id' => $this->userId]
+		);
 	}
 
 	private function prepareFilterParams(): void
@@ -487,6 +605,15 @@ final class TasksFlowListComponent extends CBitrixComponent implements Controlle
 		return CUserOptions::getOption(
 			'ui-tour',
 			'view_date_my_tasks_' . $this->userId,
+			null
+		) !== null;
+	}
+
+	private function isAhaShownCopilotAdvice(): bool
+	{
+		return Loader::includeModule('ai') && CUserOptions::getOption(
+			'ui-tour',
+			'view_date_flow_copilot_advice',
 			null
 		) !== null;
 	}
@@ -589,9 +716,9 @@ final class TasksFlowListComponent extends CBitrixComponent implements Controlle
 		(new AverageCompletedTimePreloader())->preload(...$flowCollection->getIdList());
 
 		(new TasksCountPreloader())->preload($this->userId, ...$flowCollection->getIdList());
+		(new TotalTasksCountPreloader())->preload(...$flowCollection->getIdList());
 
 		(new UserPreloader())->preload(...$flowCollection->getOwnerIdList());
-		(new TeamPreloader())->preload($flowCollection);
 		(new ProjectPreloader())->preload($this->userId, ...$flowCollection->getGroupIdList());
 	}
 

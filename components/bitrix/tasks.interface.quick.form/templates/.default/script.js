@@ -698,7 +698,7 @@ BX.Tasks.QuickForm.UserSelector.prototype.initDialog = function()
 					extranetUsers: true,
 					inviteGuestLink: true,
 					myEmailUsers: true,
-					analyticsSource: 'task',
+					analyticsSource: 'tasks',
 				}
 			},
 			{

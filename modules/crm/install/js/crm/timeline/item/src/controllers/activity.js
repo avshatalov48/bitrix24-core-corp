@@ -1,10 +1,9 @@
-import { ajax as Ajax, Text, Type } from 'main.core';
+import { ajax as Ajax, Loc, Text, Type } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 import { ApplyButton, ButtonColor, ButtonSize, CancelButton } from 'ui.buttons';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { Dialog, Item } from 'ui.entity-selector';
 import { UI } from 'ui.notification';
-
 import { ActionParams, Base } from './base';
 import ConfigurableItem from '../configurable-item';
 
@@ -28,6 +27,11 @@ export class Activity extends Base
 		return 'crm.activity.binding.move';
 	}
 
+	getDeleteTagActionMethod(): string
+	{
+		return 'crm.timeline.activity.deleteTag';
+	}
+
 	getDeleteActionCfg(recordId: Number, ownerTypeId: Number, ownerId: Number): Object
 	{
 		return {
@@ -37,6 +41,30 @@ export class Activity extends Base
 				ownerId,
 			},
 		};
+	}
+
+	runDeleteTagAction(recordId: Number, ownerTypeId: Number, ownerId: Number): Promise
+	{
+		const deleteTagActionCfg = {
+			data: {
+				activityId: recordId,
+				ownerTypeId,
+				ownerId,
+			}
+		}
+		return Ajax.runAction(
+			this.getDeleteTagActionMethod(),
+			deleteTagActionCfg,
+		).then(() => {
+			return true;
+		}, (response) => {
+			UI.Notification.Center.notify({
+				content: response.errors[0].message,
+				autoHideDelay: 5000,
+			});
+
+			return true;
+		});
 	}
 
 	onItemAction(item: ConfigurableItem, actionParams: ActionParams): void
@@ -93,6 +121,43 @@ export class Activity extends Base
 					actionData.ownerId,
 				);
 			}
+		}
+
+		if (action === 'Activity:DeleteTag' && actionData && actionData.activityId)
+		{
+			const confirmationText = actionData.confirmationText ?? '';
+			if (confirmationText)
+			{
+				MessageBox.show({
+					message: Text.encode(confirmationText),
+					modal: true,
+					buttons: MessageBoxButtons.YES_CANCEL,
+					yesCaption: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_TODO_DELETE_TAG_CONFIRM_YES_CAPTION'),
+					onYes: () => {
+						return this.runDeleteTagAction(
+							actionData.activityId,
+							actionData.ownerTypeId,
+							actionData.ownerId,
+						);
+					},
+					onCancel: (messageBox) => {
+						messageBox.close();
+					},
+				});
+			}
+			else
+			{
+				this.runDeleteTagAction(
+					actionData.activityId,
+					actionData.ownerTypeId,
+					actionData.ownerId,
+				);
+			}
+		}
+
+		if (action === 'Activity:FilterRelated' && Type.isPlainObject(actionData))
+		{
+			this.#filterRelated(actionData);
 		}
 	}
 
@@ -287,5 +352,33 @@ export class Activity extends Base
 			itemType.indexOf('Activity:') === 0 // for items with type started from `Activity:`
 			|| itemType === 'TodoCreated' 		// TodoCreated can contain link to activity
 		);
+	}
+
+	#filterRelated(actionData: { activityId: Number, activityLabel: String, filterId: String }): void
+	{
+		if (!(Type.isNumber(actionData.activityId)
+			&& Type.isStringFilled(actionData.activityLabel)
+			&& Type.isStringFilled(actionData.filterId)
+		))
+		{
+			return;
+		}
+
+		const filterManager = BX.Main.filterManager.getById(actionData.filterId);
+		if (!filterManager)
+		{
+			return;
+		}
+
+		const filterApi = filterManager.getApi();
+
+		const fields = {
+			ACTIVITY: actionData.activityId,
+			ACTIVITY_label: actionData.activityLabel,
+		};
+
+		filterApi.extendFilter(fields, true);
+
+		BX.CrmTimelineManager.getDefault().getHistory().showFilter();
 	}
 }

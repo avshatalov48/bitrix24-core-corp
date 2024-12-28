@@ -27,7 +27,7 @@ jn.define('im/messenger/lib/logger/manager', (require, exports, module) => {
 		{
 			this.loggerCollection = new Map();
 
-			this.storageId = 'IMMOBILE_LOGGER_MANAGER';
+			this.storageId = 'IMMOBILE_LOGGER_MANAGER_V2';
 			this.storage = Application.storageById(this.storageId);
 			this.config = this.getConfig();
 			Object.entries(this.config).forEach(([loggerName, loggerConfig]) => {

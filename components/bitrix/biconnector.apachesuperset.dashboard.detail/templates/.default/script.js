@@ -16,7 +16,6 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	var _embeddedParams = /*#__PURE__*/new WeakMap();
 	var _embeddedLoader = /*#__PURE__*/new WeakMap();
 	var _embeddedDebugMode = /*#__PURE__*/new WeakMap();
-	var _pdfExportEnabled = /*#__PURE__*/new WeakMap();
 	var _canExport = /*#__PURE__*/new WeakMap();
 	var _canEdit = /*#__PURE__*/new WeakMap();
 	var _moreMenu = /*#__PURE__*/new WeakMap();
@@ -78,10 +77,6 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	    writable: true,
 	    value: void 0
 	  });
-	  _classPrivateFieldInitSpec(this, _pdfExportEnabled, {
-	    writable: true,
-	    value: void 0
-	  });
 	  _classPrivateFieldInitSpec(this, _canExport, {
 	    writable: true,
 	    value: void 0
@@ -104,7 +99,6 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	  babelHelpers.classPrivateFieldSet(this, _canEdit, config.canEdit === 'Y');
 	  babelHelpers.classPrivateFieldSet(this, _embeddedParams, config.dashboardEmbeddedParams);
 	  babelHelpers.classPrivateFieldSet(this, _embeddedDebugMode, config.embeddedDebugMode);
-	  babelHelpers.classPrivateFieldSet(this, _pdfExportEnabled, config.pdfExportEnabled);
 	  babelHelpers.classPrivateFieldSet(this, _frameNode, babelHelpers.classPrivateFieldGet(this, _dashboardNode).querySelector('.dashboard-iframe'));
 	  _classPrivateMethodGet(this, _subscribeEvents, _subscribeEvents2).call(this);
 	  _classPrivateMethodGet(this, _initHeaderButtons, _initHeaderButtons2).call(this);
@@ -212,9 +206,7 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	}
 	function _initHeaderButtons2() {
 	  _classPrivateMethodGet(this, _initMoreMenu, _initMoreMenu2).call(this);
-	  if (babelHelpers.classPrivateFieldGet(this, _pdfExportEnabled)) {
-	    _classPrivateMethodGet(this, _initDownloadButton, _initDownloadButton2).call(this);
-	  }
+	  _classPrivateMethodGet(this, _initDownloadButton, _initDownloadButton2).call(this);
 	  babelHelpers.classPrivateFieldSet(this, _editBtn, babelHelpers.classPrivateFieldGet(this, _dashboardNode).querySelector('.dashboard-header-buttons-edit'));
 	  main_core.Event.unbindAll(babelHelpers.classPrivateFieldGet(this, _editBtn));
 	  if (babelHelpers.classPrivateFieldGet(this, _canEdit)) {

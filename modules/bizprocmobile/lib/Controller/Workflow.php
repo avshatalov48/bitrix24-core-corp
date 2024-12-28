@@ -5,7 +5,10 @@ namespace Bitrix\BizprocMobile\Controller;
 use Bitrix\Bizproc\Api\Data\WorkflowStateService\WorkflowStateFilter;
 use Bitrix\Bizproc\Api\Request\WorkflowStateService\GetTimelineRequest;
 use Bitrix\Bizproc\Api\Service\WorkflowStateService;
+use Bitrix\Bizproc\Result\Entity\ResultTable;
+use Bitrix\Bizproc\Result\RenderedResult;
 use Bitrix\BizprocMobile\EntityEditor\Converter;
+use Bitrix\BizprocMobile\UI\BbCodeView;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
@@ -75,6 +78,8 @@ class Workflow extends BaseController
 		{
 			$data['documentDiskFile'] = $this->getDiskDocumentFile((int)$data['documentId'][2]);
 		}
+
+		$data['workflowResult'] = $this->getWorkflowResult($workflowId);
 
 		return $data;
 	}
@@ -294,6 +299,43 @@ class Workflow extends BaseController
 		}
 
 		return false;
+	}
+
+	private function getWorkflowResult(string $workflowId): ?BbCodeView
+	{
+		if (!(bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024'))
+		{
+			return null;
+		}
+		$currentUserId = (int)$this->getCurrentUser()->getId();
+		$result = ResultTable::getList([
+			'filter' => [
+				'=WORKFLOW_ID' => $workflowId,
+			],
+			'select' => ['ACTIVITY', 'RESULT'],
+		])->fetch();
+		if ($result)
+		{
+			$renderedResult = \CBPActivity::callStaticMethod(
+				$result['ACTIVITY'],
+				'renderResult',
+				[$result['RESULT'], $workflowId, $currentUserId]
+			);
+
+			switch ($renderedResult->status)
+			{
+				case RenderedResult::BB_CODE_RESULT:
+					return new BbCodeView($renderedResult->text ?? '');
+
+				case RenderedResult::USER_RESULT:
+					return new BbCodeView(Loc::getMessage('M_BP_LIB_CONTROLLER_WORKFLOW_RESULT_USER', ['#USER#' => $renderedResult->text]) ?? '');
+
+				case RenderedResult::NO_RIGHTS:
+					return new BbCodeView(Loc::getMessage('M_BP_LIB_CONTROLLER_WORKFLOW_RESULT_NO_RIGHTS') ?? '');
+			}
+		}
+
+		return null;
 	}
 
 	public function getFilterPresetsAction()

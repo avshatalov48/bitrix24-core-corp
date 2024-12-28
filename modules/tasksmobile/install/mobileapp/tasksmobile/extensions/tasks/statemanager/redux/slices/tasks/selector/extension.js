@@ -293,6 +293,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 			updateAccomplices: task.canUpdateAccomplices,
 			updateProject: task.canUpdate && !task.flowId,
 			delegate: task.canDelegate,
+			take: task.canTake,
 			updateMark: task.canUpdateMark,
 			updateReminder: task.canUpdateReminder,
 			updateElapsedTime: task.canUpdateElapsedTime,

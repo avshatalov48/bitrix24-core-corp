@@ -14,7 +14,7 @@ Extension::load(['ui.alerts', 'ui.icons', 'ui.fonts.opensans']);
 Loc::loadMessages(__FILE__);
 
 $isIFrame = (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y');
-$taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
+$taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'] ?? null;
 
 /** intranet-settings-support */
 if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
@@ -143,7 +143,7 @@ if ($taskLimitExceeded)
 <script>
 	BX.ready(function() {
 		new BX.Tasks.TasksReportEffectiveInProgress(<?=Json::encode([
-			'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
+			'taskLimitExceeded' => $taskLimitExceeded,
 			'pathToTasks' => str_replace('#user_id#', $arParams['USER_ID'], $arParams['PATH_TO_USER_TASKS']),
 		])?>);
 	});

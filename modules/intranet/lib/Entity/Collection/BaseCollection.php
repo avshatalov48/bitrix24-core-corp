@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bitrix\Intranet\Entity\Collection;
 
 use Bitrix\Main\ArgumentException;
@@ -142,6 +144,17 @@ abstract class BaseCollection implements Countable, IteratorAggregate
 	public function map(Closure $callback): array
 	{
 		return array_map($callback, $this->items);
+	}
+
+	/**
+	 * @param Closure(T):void $callback
+	 */
+	public function forEach(Closure $callback): void
+	{
+		foreach ($this->items as $item)
+		{
+			$callback($item);
+		}
 	}
 
 	public function __clone(): void

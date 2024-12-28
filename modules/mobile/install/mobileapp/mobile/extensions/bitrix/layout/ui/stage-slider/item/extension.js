@@ -39,15 +39,22 @@ jn.define('layout/ui/stage-slider/item', (require, exports, module) => {
 			return BX.prop.getNumber(this.props, 'initialOpacity', null);
 		}
 
+		constructor(props)
+		{
+			super(props);
+			this.animationTick = 0;
+		}
+
 		animateOnLoading(opacity)
 		{
-			if (this.stageRef && this.shouldAnimateOnLoading)
+			if (this.stageRef && this.shouldAnimateOnLoading && this.animationTick < 6)
 			{
 				const nextOpacity = opacity === 1 ? 0.3 : 1;
 				this.stageRef.animate({
 					opacity,
 					duration: 1000,
 				}, () => {
+					this.animationTick++;
 					this.animateOnLoading(nextOpacity);
 				});
 			}
@@ -233,7 +240,7 @@ jn.define('layout/ui/stage-slider/item', (require, exports, module) => {
 				color: menuIconColor,
 				size: 20,
 				style: {
-					opacity: 0.4,
+					opacity: 0.8,
 				},
 			});
 		}

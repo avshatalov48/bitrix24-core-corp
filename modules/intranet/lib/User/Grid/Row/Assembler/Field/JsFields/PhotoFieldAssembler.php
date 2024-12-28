@@ -3,7 +3,6 @@
 namespace Bitrix\Intranet\User\Grid\Row\Assembler\Field\JsFields;
 
 use Bitrix\Intranet\User\Grid\Row\Assembler\Field\Helpers\UserPhoto;
-use Bitrix\Intranet\User\Grid\Settings\UserSettings;
 
 class PhotoFieldAssembler extends JsExtensionFieldAssembler
 {
@@ -18,8 +17,7 @@ class PhotoFieldAssembler extends JsExtensionFieldAssembler
 	{
 		return [
 			'photoUrl' => $this->getUserPhotoUrl($rawValue),
-			'isInvited' => !empty($rawValue['CONFIRM_CODE']),
-			'isConfirmed' => $rawValue['ACTIVE'] === 'Y',
+			'role' => $this->getUserEntityById($rawValue['ID'])->getRole()->value,
 		];
 	}
 

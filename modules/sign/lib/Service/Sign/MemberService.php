@@ -3,15 +3,21 @@
 namespace Bitrix\Sign\Service\Sign;
 
 use Bitrix\Bizproc\Error;
+use Bitrix\HumanResources\Compatibility\Utils\DepartmentBackwardAccessCode;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sign\Config\Storage;
 use Bitrix\Sign\Connector\MemberDataPicker;
 use Bitrix\Sign\File;
 use Bitrix\Sign\Integration\Bitrix24\B2eTariff;
 use Bitrix\Sign\Integration\CRM;
+use Bitrix\Sign\Item\MemberCollection;
+use Bitrix\Sign\Operation\Member\GetSignedB2eFileUrlForDownload;
 use Bitrix\Sign\Repository\DocumentRepository;
 use Bitrix\Sign\Repository\FileRepository;
+use Bitrix\Sign\Repository\MemberNodeRepository;
 use Bitrix\Sign\Repository\MemberRepository;
+use Bitrix\Sign\Result\Operation\Member\GetSignedB2eFileUrlForDownloadResult;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Main;
 use Bitrix\Sign\Item;
@@ -22,12 +28,12 @@ use Bitrix\Sign\Type\DocumentScenario;
 use Bitrix\Sign\Type\Member\EntityType;
 use Bitrix\Sign\Type\Member\Role;
 use Bitrix\Sign\Type\MemberStatus;
-use function Amp\Iterator\map;
 
 class MemberService
 {
 	private MemberRepository $memberRepository;
 	private DocumentRepository $documentRepository;
+	private MemberNodeRepository $memberNodeRepository;
 	private FileRepository $fileRepository;
 	private Service\Integration\Crm\B2eDocumentService $b2eDocumentService;
 
@@ -52,12 +58,14 @@ class MemberService
 	public function __construct(
 		?MemberRepository $memberRepository = null,
 		?DocumentRepository $documentRepository = null,
+		?MemberNodeRepository $memberNodeRepository = null,
 		?FileRepository $fileRepository = null,
 		?Service\Integration\Crm\B2eDocumentService $b2eDocumentService = null,
 	)
 	{
 		$container = Container::instance();
 		$this->memberRepository = $memberRepository ?? $container->getMemberRepository();
+		$this->memberNodeRepository = $memberNodeRepository ?? $container->getMemberNodeRepository();
 		$this->documentRepository = $documentRepository ?? $container->getDocumentRepository();
 		$this->fileRepository = $fileRepository ?? $container->getFileRepository();
 		$this->communicationService = new CommunicationService(Main\Engine\CurrentUser::get()->getId());
@@ -65,18 +73,6 @@ class MemberService
 		$this->profileProvider = $container->getServiceProfileProvider();
 	}
 
-	/**
-	 * @param string $documentUid
-	 * @param string $entityType
-	 * @param int $entityId
-	 * @param int $party
-	 * @param int $presetId
-	 *
-	 * @return \Bitrix\Main\Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
 	public function addForDocument(
 		string $documentUid,
 		string $entityType,
@@ -85,6 +81,8 @@ class MemberService
 		int $presetId = 0,
 		?int $representativeId = null,
 		?string $role = null,
+		Type\Member\Notification\ReminderType $reminderType = Type\Member\Notification\ReminderType::NONE,
+		?int $employeeId = null
 	): Main\Result
 	{
 		$document = $this->documentRepository->getByUid($documentUid);
@@ -92,7 +90,7 @@ class MemberService
 		if (!$document)
 		{
 			return (new Main\Result())->addError(
-				new Main\Error(Loc::getMessage('SIGN_SERVICE_MEMBER_DOCUMENT_NOT_FOUND'))
+				new Main\Error(Loc::getMessage('SIGN_SERVICE_MEMBER_DOCUMENT_NOT_FOUND')),
 			);
 		}
 
@@ -101,7 +99,7 @@ class MemberService
 			return (new Main\Result())->addError(
 				new Main\Error(
 					Loc::getMessage('SIGN_SERVICE_MEMBER_ADD_ERROR'),
-					'MEMBER_ENTITY_TYPE_NOT_ALLOWED'
+					'MEMBER_ENTITY_TYPE_NOT_ALLOWED',
 				),
 			);
 		}
@@ -124,6 +122,12 @@ class MemberService
 			entityId: $entityId,
 			presetId: $presetId,
 			role: $role,
+			reminder: new Item\Member\Reminder(
+				lastSendDate: null,
+				plannedNextSendDate: null,
+				type: $reminderType,
+			),
+			employeeId: $employeeId,
 		));
 
 		if (!$addResult->isSuccess())
@@ -131,8 +135,8 @@ class MemberService
 			return (new Main\Result())->addError(
 				new Main\Error(
 					Loc::getMessage('SIGN_SERVICE_MEMBER_ADD_ERROR'),
-					'MEMBER_ADD_ERROR'
-				)
+					'MEMBER_ADD_ERROR',
+				),
 			);
 		}
 
@@ -171,7 +175,110 @@ class MemberService
 		$member->channelValue = $fakeMember->channelValue;
 	}
 
-	public function setupB2eMembers(string $documentUid, Item\MemberCollection $memberCollection, int $representativeId): Main\Result
+	public function prepareDepartmentsForSync(
+		string $documentUid,
+		Item\Hr\EntitySelector\EntityCollection $departments,
+	): Main\Result
+	{
+		$document = $this->documentRepository->getByUid($documentUid);
+		if (!$document)
+		{
+			return (new Main\Result())->addError(
+				new Main\Error(Loc::getMessage('SIGN_SERVICE_MEMBER_DOCUMENT_NOT_FOUND')),
+			);
+		}
+
+		if (!Type\DocumentScenario::isB2EScenario($document->scenario))
+		{
+			return (new Main\Result())->addError(
+				new Main\Error('Wrong document scenario'),
+			);
+		}
+
+		if (!\Bitrix\HumanResources\Config\Storage::instance()->isCompanyStructureConverted())
+		{
+			return (new Main\Result())->addError(
+				new Main\Error('Company structure is not converted'),
+			);
+		}
+
+		/** @var Item\Hr\EntitySelector\Entity $department */
+		foreach ($departments as $department)
+		{
+			$nodeId = $this->convertDepartmentIdToNodeId($department->entityId);
+
+			if ($nodeId === null)
+			{
+				return (new Main\Result())->addError(
+					new Main\Error('Department not found'),
+				);
+			}
+
+			$addResult = $this->memberNodeRepository->addNodeForSync(
+				documentId: $document->id,
+				nodeId: $nodeId,
+				isFlat: $department->entityType === Type\Hr\EntitySelector\EntityType::FlatDepartment,
+			);
+
+			if (!$addResult->isSuccess())
+			{
+				return $addResult;
+			}
+		}
+
+		return new Main\Result();
+	}
+
+	public function convertDepartmentIdToNodeId(int $departmentId): ?int
+	{
+		if (!\Bitrix\HumanResources\Config\Storage::instance()->isCompanyStructureConverted())
+		{
+			return null;
+		}
+
+		$node = \Bitrix\HumanResources\Service\Container::instance()
+			->getNodeRepository()
+			->getByAccessCode(DepartmentBackwardAccessCode::makeById($departmentId))
+		;
+		return $node?->id;
+	}
+
+	private function addNodeRelationsForSignersNotInDepartment(MemberCollection $members): Main\Result
+	{
+		$memberRelations = new Item\Hr\MemberNodeCollection();
+
+		foreach ($members as $member)
+		{
+			if ($member->entityType !== EntityType::USER || $member->role !== Role::SIGNER)
+			{
+				return (new Main\Result())->addError(
+					new Error('can\'t create relation to non-signer member'),
+				);
+			}
+
+			$memberRelations->add(
+				new Item\Hr\MemberNode(
+					documentId: $member->documentId,
+					memberId: $member->id,
+					nodeSyncId: MemberNodeRepository::NODE_WITHOUT_DEPT,
+					userId: $member->entityId,
+				),
+			);
+		}
+
+		if ($memberRelations->count() > 0)
+		{
+			return $this->memberNodeRepository->addRelationMultiple($memberRelations);
+		}
+
+		return new Main\Result();
+	}
+
+	public function setupB2eMembers(
+		string $documentUid,
+		Item\MemberCollection $memberCollection,
+		int $representativeId,
+	): Main\Result
 	{
 		$document = $this->documentRepository->getByUid($documentUid);
 		if (!$document)
@@ -230,13 +337,26 @@ class MemberService
 
 		foreach ($signers as $member)
 		{
-			if ($member->entityType !== EntityType::USER)
+			if (!in_array($member->entityType, [EntityType::USER, EntityType::DEPARTMENT, EntityType::DEPARTMENT_FLAT], true))
 			{
-				return $result->addError(new Main\Error('All signers `entityType` must be `user`'));
+				return $result->addError(new Main\Error('All signers `entityType` must be `user`, `department`, or `department_flat`'));
 			}
 		}
 
-		if (B2eTariff::instance()->isB2eSignersCountRestricted($signers->count()))
+		$signersCount = $signers->filter(fn(Item\Member $signer) => ($signer->entityType === EntityType::USER))->count();
+		if (!$memberCollection->filter(fn(Item\Member $member) => in_array($member->entityType, [EntityType::DEPARTMENT, EntityType::DEPARTMENT_FLAT], true))->isEmpty())
+		{
+			// count with department members
+			$entityCollection = Item\Hr\EntitySelector\EntityCollection::fromMemberCollection($signers);
+			$signersCountResult = $this->getUniqueSignersCount($entityCollection);
+			if (!$signersCountResult->isSuccess())
+			{
+				return $signersCountResult;
+			}
+			$signersCount = (int)$signersCountResult->getData()['count'];
+		}
+
+		if (B2eTariff::instance()->isB2eSignersCountRestricted($signersCount))
 		{
 			return $result->addError(B2eTariff::instance()->getSignersCountAccessError());
 		}
@@ -250,7 +370,7 @@ class MemberService
 			$assignee->presetId ??= $savedAssignee->presetId;
 		}
 
-		$result = $this->memberRepository->deleteAllByDocumentId($document->id);
+		$result = $this->cleanByDocumentId($document->id);
 		if (!$result->isSuccess())
 		{
 			return (new Main\Result())->addError(
@@ -258,9 +378,19 @@ class MemberService
 			);
 		}
 
+		Container::instance()
+			->getHcmLinkService()
+			->fillOneLinkedMembersWithEmployeeId($document, $memberCollection, $representativeId)
+		;
+
 		$userMembers = new Item\MemberCollection();
 		foreach ($memberCollection as $member)
 		{
+			if (EntityType::isDepartment($member->entityType))
+			{
+				continue; // departments will be synced later
+			}
+
 			if ($member->entityType === EntityType::USER)
 			{
 				$member->documentId = $document->id;
@@ -278,6 +408,8 @@ class MemberService
 					presetId: $member->presetId ?? 0,
 					representativeId: $representativeId,
 					role: $member->role,
+					reminderType: $member->reminder->type,
+					employeeId: $member->employeeId,
 				);
 
 				if (!$result->isSuccess())
@@ -293,6 +425,15 @@ class MemberService
 		{
 			$this->memberRepository->deleteAllByDocumentId($document->id);
 
+			return $result;
+		}
+
+		// add relations with the "without department" node
+		$selectedMembers = $this->memberRepository->listByDocumentIdWithRole($document->id, Type\Member\Role::SIGNER);
+		$result = $this->addNodeRelationsForSignersNotInDepartment($selectedMembers);
+		if (!$result->isSuccess())
+		{
+			$this->cleanByDocumentId($document->id);
 			return $result;
 		}
 
@@ -319,17 +460,72 @@ class MemberService
 		return new Main\Result();
 	}
 
+	public function getUniqueSignersCount(Item\Hr\EntitySelector\EntityCollection $entityCollection): Main\Result
+	{
+		if (!Loader::includeModule('humanresources'))
+		{
+			return (new Main\Result())->addError(
+				new \Bitrix\Main\Error("Module `humanresources` is not available"),
+			);
+		}
+
+		$hrNodeMemberService = \Bitrix\HumanResources\Service\Container::instance()->getNodeMemberService();
+
+		$uniqUsers = [];
+
+		/** @var \Bitrix\Sign\Item\Hr\EntitySelector\Entity $entity */
+		foreach ($entityCollection as $entity)
+		{
+			if ($entity->entityType->isDepartment())
+			{
+				$nodeId = $this->convertDepartmentIdToNodeId($entity->entityId);
+
+				if ($nodeId === null)
+				{
+					return (new Main\Result())->addError(
+						new \Bitrix\Main\Error("Department not found"),
+					);
+				}
+
+				$deptMembers = $hrNodeMemberService
+					->getAllEmployees(
+						$nodeId,
+						$entity->entityType !== Type\Hr\EntitySelector\EntityType::FlatDepartment,
+					)
+					->getIterator()
+				;
+
+				foreach ($deptMembers as $deptMember)
+				{
+					$uniqUsers[$deptMember->entityId] = true;
+				}
+
+				continue;
+			}
+
+			$uniqUsers[$entity->entityId] = true;
+		}
+
+		return (new Main\Result())->setData(['count' => count($uniqUsers)]);
+	}
+
+	public function cleanByDocumentId(int $documentId): Main\Result
+	{
+		$this->memberNodeRepository->resetMemberSyncForDocument($documentId);
+		return $this->memberRepository->deleteAllByDocumentId($documentId);
+	}
+
 	public function cleanByDocumentUid(string $documentUid): Main\Result
 	{
 		$document = $this->documentRepository->getByUid($documentUid);
 		if (!$document)
 		{
 			return (new Main\Result())->addError(
-				new Main\Error(Loc::getMessage('SIGN_SERVICE_MEMBER_DOCUMENT_NOT_FOUND'))
+				new Main\Error(Loc::getMessage('SIGN_SERVICE_MEMBER_DOCUMENT_NOT_FOUND')),
 			);
 		}
 
-		return $this->memberRepository->deleteAllByDocumentId($document->id);
+		return $this->cleanByDocumentId($document->id);
 	}
 
 	/**
@@ -355,7 +551,7 @@ class MemberService
 		if (!$document)
 		{
 			return (new Main\Result())->addError(
-				new Main\Error(Loc::getMessage('SIGN_SERVICE_MEMBER_DOCUMENT_NOT_FOUND'))
+				new Main\Error(Loc::getMessage('SIGN_SERVICE_MEMBER_DOCUMENT_NOT_FOUND')),
 			);
 		}
 
@@ -363,15 +559,15 @@ class MemberService
 			$document->id,
 			$party,
 			$entityType,
-			$entityId
+			$entityId,
 		);
 
 		if (!$member->id)
 		{
 			return (new Main\Result())->addError(new Main\Error(
 				Loc::getMessage('SIGN_SERVICE_MEMBER_NOT_FOUND',
-					'MEMBER_NOT_FOUND'
-				))
+					'MEMBER_NOT_FOUND',
+				)),
 			);
 		}
 
@@ -392,7 +588,7 @@ class MemberService
 		if (!$member->id)
 		{
 			return (new Main\Result())->addError(
-				new Main\Error(Loc::getMessage('SIGN_SERVICE_MEMBER_NOT_FOUND'))
+				new Main\Error(Loc::getMessage('SIGN_SERVICE_MEMBER_NOT_FOUND')),
 			);
 		}
 
@@ -412,7 +608,7 @@ class MemberService
 		if (!in_array($channelType, self::ALLOWED_CHANNEL_TYPES, true))
 		{
 			return (new Main\Result())->addError(
-				new Main\Error(Loc::getMessage('SIGN_SERVICE_MEMBER_CHANNEL_NOT_ALLOWED'))
+				new Main\Error(Loc::getMessage('SIGN_SERVICE_MEMBER_CHANNEL_NOT_ALLOWED')),
 			);
 		}
 
@@ -421,7 +617,7 @@ class MemberService
 		if (!$member?->id)
 		{
 			return (new Main\Result())->addError(
-				new Main\Error(Loc::getMessage('SIGN_SERVICE_MEMBER_NOT_FOUND'))
+				new Main\Error(Loc::getMessage('SIGN_SERVICE_MEMBER_NOT_FOUND')),
 			);
 		}
 
@@ -480,7 +676,7 @@ class MemberService
 			return CRM::createDefaultRequisite(
 				$document->entityId,
 				$member->entityId,
-				\CCrmOwnerType::ResolveID($member->entityType)
+				\CCrmOwnerType::ResolveID($member->entityType),
 			);
 		}
 		$addResult = new Main\ORM\Data\AddResult();
@@ -635,15 +831,10 @@ class MemberService
 
 		if (DocumentScenario::isB2EScenario($document->scenario))
 		{
-			$operation = new \Bitrix\Sign\Operation\GetSignedB2eFileUrl(
-				\Bitrix\Sign\Type\EntityType::MEMBER,
-				$member->id,
-				\Bitrix\Sign\Type\EntityFileCode::SIGNED,
-			);
-			$result = $operation->launch();
-			if ($result->isSuccess() && $operation->ready)
+			$result = (new GetSignedB2eFileUrlForDownload($member, $document))->launch();
+			if ($result instanceof GetSignedB2eFileUrlForDownloadResult)
 			{
-				$downloadUrl = $result->getData()['url'] ?? '';
+				$downloadUrl = $result->url;
 			}
 		}
 		else
@@ -697,6 +888,30 @@ class MemberService
 		return $result;
 	}
 
+	public function getCountForCurrentUserAction(int $userId): int
+	{
+		if ($userId < 1)
+		{
+			return 0;
+		}
+
+		return $this->memberRepository->getCountForCurrentUserAction($userId);
+	}
+
+	/**
+	 * @return list<int>
+	 */
+	public function getUserIdsByDocument(Item\Document $document): array
+	{
+		$memberUserIds = $this->memberRepository->listUserIdsByDocumentId($document->id);
+		if ($document->representativeId)
+		{
+			$memberUserIds[] = $document->representativeId;
+		}
+
+		return array_unique($memberUserIds);
+	}
+
 	public function getCurrentParticipantFromCompanySide(Item\Document $document): ?Item\Member
 	{
 		return $this->memberRepository
@@ -710,6 +925,14 @@ class MemberService
 	{
 		return $this->memberRepository
 			->listByDocumentIdWithRole($document->id, Type\Member\Role::ASSIGNEE, 1)
+			->getFirst()
+		;
+	}
+
+	public function getSigner(Item\Document $document): ?Item\Member
+	{
+		return $this->memberRepository
+			->listByDocumentIdWithRole($document->id, Type\Member\Role::SIGNER, 1)
 			->getFirst()
 		;
 	}
@@ -812,7 +1035,7 @@ class MemberService
 	{
 		return $this->memberRepository->countMembersByDocumentIdAndRoleAndStatus(
 				$documentId,
-				[MemberStatus::READY, MemberStatus::STOPPABLE_READY]
+				[MemberStatus::READY, MemberStatus::STOPPABLE_READY],
 			)
 		;
 	}

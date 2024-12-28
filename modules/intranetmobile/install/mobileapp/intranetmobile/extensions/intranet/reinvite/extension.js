@@ -20,7 +20,7 @@ jn.define('intranet/reinvite', (require, exports, module) => {
 	const { Chip } = require('ui-system/blocks/chips/chip');
 	const { Text4 } = require('ui-system/typography/text');
 	const { BBCodeText } = require('ui-system/typography/bbcodetext');
-	const { ReduxAvatar } = require('layout/ui/user/avatar');
+	const { Avatar } = require('ui-system/blocks/avatar');
 	const { InviteStatusBox } = require('intranet/invite-status-box');
 
 	const store = require('statemanager/redux/store');
@@ -194,6 +194,7 @@ jn.define('intranet/reinvite', (require, exports, module) => {
 						qrauth.open({
 							redirectUrl: adminInBoxRedirectLink,
 							showHint: true,
+							analyticsSection: 'userList',
 						});
 					}, 500);
 				},
@@ -219,7 +220,8 @@ jn.define('intranet/reinvite', (require, exports, module) => {
 			});
 		}
 
-		componentDidMount() {
+		componentDidMount()
+		{
 			super.componentDidMount();
 
 			Keyboard.on(Keyboard.Event.WillHide, () => {
@@ -227,9 +229,11 @@ jn.define('intranet/reinvite', (require, exports, module) => {
 			});
 		}
 
-		componentWillUnmount() {
+		componentWillUnmount()
+		{
 			super.componentWillUnmount();
-			Keyboard.on(Keyboard.Event.WillHide, () => {});
+			Keyboard.on(Keyboard.Event.WillHide, () => {
+			});
 		}
 
 		render()
@@ -332,7 +336,10 @@ jn.define('intranet/reinvite', (require, exports, module) => {
 				borderColor: Color.bgSeparatorPrimary,
 				compact: true,
 				children: [
-					ReduxAvatar({ id: this.userId }),
+					Avatar({
+						id: this.userId,
+						withRedux: true,
+					}),
 					Text4(
 						{
 							text: this.user.fullName,
@@ -402,14 +409,18 @@ jn.define('intranet/reinvite', (require, exports, module) => {
 		onChangeEmail = (newEmail) => {
 			this.setState({
 				email: newEmail,
-				inputError: Type.isStringFilled(newEmail) ? null : Loc.getMessage('M_INTRANET_REINVITE_EMAIL_INPUT_EMPTY_EMAIL'),
+				inputError: Type.isStringFilled(newEmail)
+					? null
+					: Loc.getMessage('M_INTRANET_REINVITE_EMAIL_INPUT_EMPTY_EMAIL'),
 			});
 		};
 
 		onChangePhone = (newPhone) => {
 			this.setState({
 				phone: newPhone,
-				inputError: Type.isStringFilled(newPhone) ? null : Loc.getMessage('M_INTRANET_REINVITE_PHONE_INPUT_EMPTY_NUMBER'),
+				inputError: Type.isStringFilled(newPhone)
+					? null
+					: Loc.getMessage('M_INTRANET_REINVITE_PHONE_INPUT_EMPTY_NUMBER'),
 			});
 		};
 

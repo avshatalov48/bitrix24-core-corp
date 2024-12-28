@@ -2,13 +2,20 @@
 
 namespace Bitrix\HumanResources\Controller\Structure;
 
-use Bitrix\HumanResources\Access\Rule\StructureBaseRule;
+use Bitrix\HumanResources\Access\Permission\PermissionDictionary;
+use Bitrix\HumanResources\Access\Permission\PermissionVariablesDictionary;
 use Bitrix\HumanResources\Access\StructureAccessController;
 use Bitrix\HumanResources\Access\StructureActionDictionary;
 use Bitrix\HumanResources\Attribute;
+use Bitrix\HumanResources\Contract\Repository\NodeMemberRepository;
+use Bitrix\HumanResources\Contract\Repository\NodeRepository;
+use Bitrix\HumanResources\Contract\Service\NodeMemberService;
+use Bitrix\HumanResources\Contract\Service\UserService;
 use Bitrix\HumanResources\Exception\CreationFailedException;
 use Bitrix\HumanResources\Exception\DeleteFailedException;
 use Bitrix\HumanResources\Exception\WrongStructureItemException;
+use Bitrix\HumanResources\Util\StructureHelper;
+use Bitrix\HumanResources\Contract\Repository\RoleRepository;
 use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Engine\Controller;
 use Bitrix\HumanResources\Contract\Service\NodeService;
@@ -25,11 +32,29 @@ use Bitrix\Main\SystemException;
 final class Node extends Controller
 {
 	private readonly NodeService $nodeService;
+	private readonly NodeMemberService $nodeMemberService;
+	private readonly UserService $userService;
+	private readonly NodeMemberRepository $nodeMemberRepository;
+	private readonly NodeRepository $nodeRepository;
+	private readonly RoleRepository $roleRepository;
+	private StructureAccessController $accessController;
 
 	public function __construct(Request $request = null)
 	{
-		$this->nodeService = Container::getNodeService();
+		$userId = CurrentUser::get()->getId();
+		if (!$userId)
+		{
+			throw new \Bitrix\Main\AccessDeniedException();
+		}
+
 		parent::__construct($request);
+		$this->nodeService = Container::getNodeService();
+		$this->nodeMemberService = Container::getNodeMemberService();
+		$this->userService = Container::getUserService();
+		$this->nodeRepository = Container::getNodeRepository(true);
+		$this->nodeMemberRepository = Container::getNodeMemberRepository();
+		$this->roleRepository = Container::getRoleRepository();
+		$this->accessController = StructureAccessController::getInstance($userId);
 	}
 
 	#[Attribute\StructureActionAccess(
@@ -38,17 +63,19 @@ final class Node extends Controller
 		itemParentIdRequestKey: 'parentId',
 	)]
 	public function addAction(
-		string $nodeName,
+		string $name,
 		int $parentId,
 		Item\Structure $structure,
 		NodeEntityType $entityType = NodeEntityType::DEPARTMENT,
+		?string $description = null,
 	): array
 	{
 		$node = new Item\Node(
-			name: $nodeName,
+			name: $name,
 			type: $entityType,
 			structureId: $structure->id,
 			parentId: $parentId,
+			description: $description,
 		);
 
 		try
@@ -101,18 +128,30 @@ final class Node extends Controller
 	)]
 	public function updateAction(
 		Item\Node $node,
-		?string $nodeName = null,
+		?string $name = null,
 		?int $parentId = null,
+		?string $description = null,
+		?int $sort = null,
 	): array
 	{
-		if ($nodeName)
+		if ($name)
 		{
-			$node->name = $nodeName;
+			$node->name = $name;
 		}
 
 		if ($parentId !== null && $parentId >= 0)
 		{
 			$node->parentId = $parentId;
+		}
+
+		if ($description !== null)
+		{
+			$node->description = $description;
+		}
+
+		if ($sort)
+		{
+			$node->sort = $sort;
 		}
 
 		try
@@ -121,11 +160,76 @@ final class Node extends Controller
 		}
 		catch (\Exception $e)
 		{
-			$this->addError(new Error(Loc::getMessage('HUMAN_RESOURCES_NODE_UPDATE_FAILED')));
+			$this->addError(new Error($e->getMessage()));
 		}
 
 		return [
 			$node,
 		];
+	}
+
+	public function currentAction(): array
+	{
+		$currentUserId = CurrentUser::get()->getId();
+		if (!$currentUserId)
+		{
+			return [];
+		}
+
+		$nodeCollection = $this->nodeService->getNodesByUserId($currentUserId);
+
+		return array_column($nodeCollection->getItemMap(), 'id');
+	}
+
+	#[Attribute\StructureActionAccess(
+		permission: StructureActionDictionary::ACTION_STRUCTURE_VIEW,
+		itemType: AccessibleItemType::NODE,
+		itemIdRequestKey: 'nodeId',
+	)]
+	public function getAction(Item\Node $node): array
+	{
+		return StructureHelper::getNodeInfo($node);
+	}
+
+	#[Attribute\StructureActionAccess(
+		permission: StructureActionDictionary::ACTION_STRUCTURE_VIEW_ACCESS
+	)]
+	public function getByIdsAction(array $nodeIds): array
+	{
+		$result = [];
+		$nodeCollection = $this->nodeRepository->findAllByIds($nodeIds);
+
+		foreach ($nodeCollection as $node)
+		{
+			$result[$node->id] = StructureHelper::getNodeInfo($node);
+		}
+
+		return $result;
+	}
+
+	#[Attribute\StructureActionAccess(
+		permission: StructureActionDictionary::ACTION_STRUCTURE_VIEW,
+		itemType: AccessibleItemType::NODE,
+		itemIdRequestKey: 'nodeId',
+	)]
+	public function getChildAction(Item\Node $node): array
+	{
+		$permissionValue = $this->accessController->getUser()->getPermission(
+			PermissionDictionary::HUMAN_RESOURCES_STRUCTURE_VIEW,
+		);
+
+		if (!$permissionValue || $permissionValue === PermissionVariablesDictionary::VARIABLE_SELF_DEPARTMENTS)
+		{
+			return [];
+		}
+
+		$childNodes = $this->nodeRepository->getChildOf($node);
+		$result = [];
+		foreach ($childNodes as $childNode)
+		{
+			$result[$childNode->id] = StructureHelper::getNodeInfo($childNode);
+		}
+
+		return $result;
 	}
 }

@@ -10,6 +10,7 @@ namespace Bitrix\Tasks\Internals\Counter\Event;
 
 use Bitrix\Main;
 use Bitrix\Main\Application;
+use Bitrix\Tasks\Integration\SocialNetwork\Collab\Counter\CollabListener;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Counter\Agent;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
@@ -161,6 +162,8 @@ class UserEventProcessor
 		{
 			(new Counter\Processor\EfficiencyProcessor())->recount($efficiencyUpdated);
 		}
+
+		(new CollabListener())->notify($this->getResourceCollection(), EventCollection::getInstance());
 	}
 
 	/**

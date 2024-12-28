@@ -1,13 +1,14 @@
 import { EventEmitter } from 'main.core.events';
-import { Cache, ajax, Event } from 'main.core';
+import { Cache, ajax, Event, Runtime } from 'main.core';
 import { PopupComponentsMaker } from 'ui.popupcomponentsmaker';
 import type { ConfigContent } from './types/content';
-import type { InvitationPopupOptions } from "./types/options";
-import { InvitationContent } from "./contents/invitation";
-import { StructureContent } from "./contents/structure";
-import { EmployeesContent } from "./contents/employees";
-import { ExtranetContent } from "./contents/extranet";
-import { UserOnlineContent } from "./contents/user-online";
+import type { InvitationPopupOptions } from './types/options';
+import { InvitationContent } from './contents/invitation';
+import { StructureContent } from './contents/structure';
+import { EmployeesContent } from './contents/employees';
+import { ExtranetContent } from './contents/extranet';
+import { CollabContent } from './contents/collab';
+import { UserOnlineContent } from './contents/user-online';
 
 export class InvitationPopup extends EventEmitter
 {
@@ -81,6 +82,7 @@ export class InvitationPopup extends EventEmitter
 					marginBottom: 24,
 				},
 				this.getOptions().isExtranetAvailable ? this.#getExtranetContent().getConfig() : null,
+				this.getOptions().isCollabAvailable ? this.#getCollabContent().getConfig() : null,
 				this.#getUserOnlineContent().getConfig(),
 			];
 		});
@@ -103,6 +105,7 @@ export class InvitationPopup extends EventEmitter
 		return this.#cache.remember('structure-content', () => {
 			return new StructureContent({
 				link: this.getOptions().params.structureLink,
+				shouldShowStructureCounter: this.getOptions().params.shouldShowStructureCounter,
 			});
 		});
 	}
@@ -127,6 +130,16 @@ export class InvitationPopup extends EventEmitter
 				awaitData: this.#getAwaitData(),
 				invitationLink: this.getOptions().params.invitationLink,
 				isInvitationAvailable: this.getOptions().isInvitationAvailable,
+			});
+		});
+	}
+
+	#getCollabContent(): CollabContent
+	{
+		return this.#cache.remember('collab-content', () => {
+			return new CollabContent({
+				isAdmin: this.getOptions().isAdmin,
+				awaitData: Runtime.loadExtension('im.public', 'im.v2.component.content.chat-forms.forms'),
 			});
 		});
 	}

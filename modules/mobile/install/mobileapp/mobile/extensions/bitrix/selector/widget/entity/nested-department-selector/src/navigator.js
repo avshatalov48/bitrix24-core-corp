@@ -1,7 +1,7 @@
 /**
- * @module selector/widget/entity/nested-department-selector/navigator
+ * @module selector/widget/entity/tree-selectors/shared/navigator
  */
-jn.define('selector/widget/entity/nested-department-selector/navigator', (require, exports, module) => {
+jn.define('selector/widget/entity/tree-selectors/shared/navigator', (require, exports, module) => {
 	const { clone } = require('utils/object');
 
 	/**

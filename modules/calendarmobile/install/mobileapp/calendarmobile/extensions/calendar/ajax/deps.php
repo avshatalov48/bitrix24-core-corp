@@ -8,5 +8,7 @@ return [
 		'./event',
 		'./sharing',
 		'./sync',
+		'./settings',
+		'./accessibility',
 	],
 ];

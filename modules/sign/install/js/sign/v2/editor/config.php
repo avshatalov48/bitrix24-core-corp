@@ -21,6 +21,7 @@ return [
 		'ui.stamp.uploader',
 		'crm.form.fields.selector',
 		'crm.requisite.fieldset-viewer',
+		'sign.v2.document-setup',
 		'sign.v2.b2e.field-selector',
 		'sign.ui',
 		'color_picker',

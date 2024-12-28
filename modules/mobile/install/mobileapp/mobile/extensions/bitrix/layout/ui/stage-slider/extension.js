@@ -64,6 +64,11 @@ jn.define('layout/ui/stage-slider', (require, exports, module) => {
 			return BX.prop.getArray(this.stageIdsBySemantics, 'failedStages', []);
 		}
 
+		get showLoadingAnimation()
+		{
+			return BX.prop.getBoolean(this.props, 'showLoadingAnimation', true);
+		}
+
 		/**
 		 * @param {object} stage
 		 */
@@ -207,7 +212,7 @@ jn.define('layout/ui/stage-slider', (require, exports, module) => {
 					id: 0,
 					activeIndex: 0,
 					showMenu: false,
-					shouldAnimateOnLoading: true,
+					shouldAnimateOnLoading: this.showLoadingAnimation,
 					initialOpacity: 1,
 				}),
 				new StageItemClass({
@@ -218,7 +223,7 @@ jn.define('layout/ui/stage-slider', (require, exports, module) => {
 					id: 1,
 					activeIndex: 0,
 					showMenu: false,
-					shouldAnimateOnLoading: true,
+					shouldAnimateOnLoading: this.showLoadingAnimation,
 					initialOpacity: 0.3,
 				}),
 			);
@@ -243,7 +248,7 @@ jn.define('layout/ui/stage-slider', (require, exports, module) => {
 			if (prevIndex < activeIndex)
 			{
 				// Moving forward
-				for (let i = prevIndex + 1; i <= activeIndex + 1; i++)
+				for (let i = prevIndex; i <= activeIndex + 1; i++)
 				{
 					if (allStages[i] && !newStages.includes(allStages[i]))
 					{

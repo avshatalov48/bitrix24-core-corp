@@ -36,7 +36,7 @@ $APPLICATION->SetTitle(GetMessage("TITLE1"));
 	),
 	"PATH_TO_USER" => "/company/personal/user/#user_id#/",
 	"PATH_TO_USER_EDIT" => "/company/personal/user/#user_id#/edit/",
-	"VIS_STRUCTURE_URL" => "/company/vis_structure.php",
+	"VIS_STRUCTURE_URL" => "/hr/structure/",
 	)
 );?>
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

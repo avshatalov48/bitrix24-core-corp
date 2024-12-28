@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Category;
 
 use Bitrix\Crm\Attribute\FieldAttributeManager;
+use Bitrix\Crm\CategoryIdentifier;
 use Bitrix\Crm\Color\PhaseColorScheme;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
@@ -526,10 +527,16 @@ class DealCategory
 		while($roleFields = $roleDbResult->Fetch())
 		{
 			$roleID = (int)$roleFields['ID'];
+			$roleGroupCode = (string)$roleFields['GROUP_CODE'];
 			if (in_array($roleID, $systemRolesIds, false)) // do not affect system roles
 			{
 				continue;
 			}
+			if ($roleGroupCode) // should affect only crm roles
+			{
+				continue;
+			}
+
 			$roleRelation = \CCrmRole::getRolePermissionsAndSettings($roleID);
 			if(isset($roleRelation[$permissionEntity]))
 			{
@@ -1107,6 +1114,16 @@ class DealCategory
 		return self::getPermissionRoleConfigurationsList(true);
 	}
 
+	public static function getPermissionRoleConfiguration(int $id): array
+	{
+		$configurationList = self::getPermissionRoleConfigurationsWithDefault();
+		$entityType = self::convertToPermissionEntityType($id);
+
+		return [
+			$entityType => $configurationList[$entityType] ?? [],
+		];
+	}
+
 	protected static function getPermissionRoleConfigurationsList(bool $enableDefault = false): array
 	{
 		$results = [];
@@ -1126,6 +1143,7 @@ class DealCategory
 			$results[$entityType] = [
 				'TYPE' => $entityType,
 				'NAME' =>  Loc::getMessage('CRM_DEAL_CATEGORY_PERMISSION_ENTITY', ['#CATEGORY#' => $name]),
+				'CATEGORY_NAME' => $name,
 				'FIELDS' => [
 					'STAGE_ID' => self::getStageList($id),
 				],
@@ -1165,7 +1183,6 @@ class DealCategory
 	 */
 	public static function setPermissionById(int $id, string $permission)
 	{
-		$permissionEntity = DealCategory::convertToPermissionEntityType($id);
 		$permission = in_array($permission, [BX_CRM_PERM_ALL, BX_CRM_PERM_SELF]) ? $permission : BX_CRM_PERM_NONE;
 		$permissionSet = \CCrmRole::GetDefaultPermissionSet();
 		foreach ($permissionSet as &$res)
@@ -1173,7 +1190,7 @@ class DealCategory
 			$res["-"] = $permission;
 		}
 		unset($res);
-		return RolePermission::setByEntityIdForAllNotAdminRoles($permissionEntity, $permissionSet);
+		return RolePermission::setByEntityIdForAllNotAdminRoles(new CategoryIdentifier(\CCrmOwnerType::Deal, $id), $permissionSet);
 	}
 
 	/**

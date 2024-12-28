@@ -330,6 +330,7 @@ export class TodoEditorV2
 					id: 'calendar',
 					messageCode: 'CRM_ACTIVITY_TODO_ACTIONS_CALENDAR',
 					svgData: '<svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.9907 10.3123H13.1133C13.3394 10.3123 13.5227 10.4944 13.5227 10.7191V11.8343C13.5227 12.0589 13.3394 12.241 13.1133 12.241H11.9907C11.7646 12.241 11.5813 12.0589 11.5813 11.8343V10.7191C11.5813 10.4944 11.7646 10.3123 11.9907 10.3123Z" fill="#A8ADB4"/><path d="M10.2021 10.3126H9.07947C8.85336 10.3126 8.67007 10.4947 8.67007 10.7193V11.8345C8.67007 12.0591 8.85336 12.2412 9.07947 12.2412H10.2021C10.4282 12.2412 10.6115 12.0591 10.6115 11.8345V10.7193C10.6115 10.4947 10.4282 10.3126 10.2021 10.3126Z" fill="#A8ADB4"/><path d="M10.2011 13.2054H9.07852C8.85242 13.2054 8.66912 13.3874 8.66912 13.6121V14.7273C8.66912 14.9519 8.85242 15.134 9.07852 15.134H10.2011C10.4272 15.134 10.6105 14.9519 10.6105 14.7273V13.6121C10.6105 13.3874 10.4272 13.2054 10.2011 13.2054Z" fill="#A8ADB4"/><path d="M13.1133 13.2054H11.9907C11.7646 13.2054 11.5813 13.3874 11.5813 13.6121V14.7273C11.5813 14.9519 11.7646 15.134 11.9907 15.134H13.1133C13.3394 15.134 13.5227 14.9519 13.5227 14.7273V13.6121C13.5227 13.3874 13.3394 13.2054 13.1133 13.2054Z" fill="#A8ADB4"/><path d="M14.9029 10.3123H16.0255C16.2516 10.3123 16.4349 10.4944 16.4349 10.7191V11.8343C16.4349 12.0589 16.2516 12.241 16.0255 12.241H14.9029C14.6768 12.241 14.4935 12.0589 14.4935 11.8343V10.7191C14.4935 10.4944 14.6768 10.3123 14.9029 10.3123Z" fill="#A8ADB4"/><path fill-rule="evenodd" clip-rule="evenodd" d="M17.1486 5.691V5.15946H18.3308C19.4103 5.2275 20.2467 6.16407 20.2272 7.28562V17.9164C20.2272 18.5032 19.7685 18.9795 19.201 18.9795H5.80482C5.23836 18.9795 4.77862 18.5032 4.77862 17.9164V7.28562C4.77451 7.23034 4.77246 7.17612 4.77246 7.12191C4.77451 6.03544 5.62627 5.15734 6.67505 5.15946H7.85724V5.691C7.85724 6.57123 8.54582 7.28562 9.39654 7.28562C10.2473 7.28562 10.9359 6.57123 10.9359 5.691V5.15946H14.07V5.691C14.07 6.57123 14.7596 7.28562 15.6093 7.28562C16.459 7.28562 17.1486 6.57123 17.1486 5.691ZM18.1748 16.8533H6.83106V8.40898H18.1748V16.8533Z" fill="#A8ADB4"/><path d="M10.1507 4.31111V5.4805C10.1507 5.91211 9.81308 6.26186 9.39644 6.26186C8.9798 6.26186 8.64218 5.91211 8.64218 5.4805V4.31111L8.64771 4.20959C8.69329 3.82206 9.01469 3.52246 9.40157 3.52442C9.81821 3.52762 10.1528 3.8795 10.1507 4.31111Z" fill="#A8ADB4"/><path d="M16.3215 4.33979V5.44858C16.3215 5.85574 16.0024 6.18636 15.6083 6.18636C15.2142 6.1853 14.8971 5.85468 14.8971 5.44752V4.33979C14.8971 3.93157 15.2163 3.60201 15.6093 3.60201C16.0024 3.60201 16.3215 3.93157 16.3215 4.33979Z" fill="#A8ADB4"/></svg>',
+					hidden: !this.#canUseCalendarBlock(),
 				},
 				// temporary commented
 				// {
@@ -339,6 +340,7 @@ export class TodoEditorV2
 				// },
 				{
 					type: 'delimiter',
+					hidden: !this.#canUseCalendarBlock(),
 				},
 				{
 					id: 'client',
@@ -353,6 +355,7 @@ export class TodoEditorV2
 					componentParams: {
 						showUserSelector: true,
 					},
+					hidden: !this.#canUseCalendarBlock(),
 				},
 				{
 					type: 'delimiter',
@@ -372,11 +375,11 @@ export class TodoEditorV2
 						showLocation: true,
 						isLocked: !this.#isLocationFeatureEnabled(),
 					},
-					hidden: !this.#canUseAddressBlock(),
+					hidden: !this.#canUseAddressBlock() || !this.#canUseCalendarBlock(),
 				},
 				{
 					type: 'delimiter',
-					hidden: !this.#canUseAddressBlock(),
+					hidden: !this.#canUseAddressBlock() || !this.#canUseCalendarBlock(),
 				},
 				{
 					id: 'link',
@@ -723,12 +726,18 @@ export class TodoEditorV2
 
 	#getBlocks(): BlockSettings[]
 	{
-		const blocks = [
-			this.#getCalendarBlockSettings(),
+		const blocks = [];
+
+		if (this.#canUseCalendarBlock())
+		{
+			blocks.push(this.#getCalendarBlockSettings());
+		}
+
+		blocks.push(
 			this.#getClientBlockSettings(),
 			this.#getLinkBlockSettings(),
 			this.#getFileBlockSettings(),
-		];
+		);
 
 		if (this.#canUseAddressBlock())
 		{
@@ -801,6 +810,13 @@ export class TodoEditorV2
 		const settings = Extension.getSettings('crm.activity.todo-editor-v2');
 
 		return settings?.canUseAddressBlock === true;
+	}
+
+	#canUseCalendarBlock(): boolean
+	{
+		const settings = Extension.getSettings('crm.activity.todo-editor-v2');
+
+		return settings?.canUseCalendarBlock === true;
 	}
 
 	getDeadline(): ?Date

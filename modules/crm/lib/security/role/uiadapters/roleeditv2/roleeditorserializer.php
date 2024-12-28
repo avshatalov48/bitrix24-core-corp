@@ -4,9 +4,9 @@ namespace Bitrix\Crm\Security\Role\UIAdapters\RoleEditV2;
 
 use Bitrix\Crm\Security\EntityPermission\ApproveCustomPermsToExistRole;
 use Bitrix\Crm\Security\Role\Manage\DTO\Restrictions;
-use Bitrix\Crm\Security\Role\Manage\RoleManagementModelBuilder;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Permission;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Transition;
+use Bitrix\Crm\Security\Role\Manage\RoleManagementModelBuilder;
 
 class RoleEditorSerializer
 {
@@ -33,18 +33,28 @@ class RoleEditorSerializer
 			$permissions = [];
 			foreach ($entity->permissions() as $permission)
 			{
-				if ((new ApproveCustomPermsToExistRole())->hasWaitingPermission($permission->code()))
+				if ((new ApproveCustomPermsToExistRole())->hasWaitingPermission($permission))
 				{
 					continue;
 				}
 
-				$permissions[$permission->code()] = $permission->variants();
+				$permissions[$permission->code()] = $permission->variants()?->toArray() ?? [];
+			}
+			if (empty($permissions))
+			{
+				continue;
+			}
+
+			$name = $entity->name();
+			if (!empty($entity->description()))
+			{
+				$name .= ' ' . $entity->description();
 			}
 
 			$hasStages = !empty($entity->fields());
 			$result[] = [
 				'entityCode' => $entity->code(),
-				'name' => $entity->name(),
+				'name' => $name,
 				'hasStages' => $hasStages,
 				'permissions' => $permissions,
 			];
@@ -77,7 +87,7 @@ class RoleEditorSerializer
 		$result = [];
 		foreach ($this->getAllAvailablePermissions() as $permission)
 		{
-			if ((new ApproveCustomPermsToExistRole())->hasWaitingPermission($permission->code()))
+			if ((new ApproveCustomPermsToExistRole())->hasWaitingPermission($permission))
 			{
 				continue;
 			}
@@ -164,7 +174,7 @@ class RoleEditorSerializer
 			$fieldValue = $item['FIELD_VALUE'] ?? null;
 			$settings = $item['SETTINGS'] ?? [];
 
-			if ($permType !== (new Transition([]))->code())
+			if ($permType !== (new Transition())->code())
 			{
 				continue;
 			}

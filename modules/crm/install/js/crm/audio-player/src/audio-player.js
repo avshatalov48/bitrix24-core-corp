@@ -1,7 +1,7 @@
-import { BitrixVue, BitrixVueComponentProxy, BitrixVueComponentProps, VueCreateAppResult } from 'ui.vue3';
-import { AudioPlayerProps } from './components-props/audio-player.js';
-import { AudioPlayer as UIAudioPlayer } from 'ui.vue3.components.audioplayer';
 import { Type } from 'main.core';
+import { BitrixVue, BitrixVueComponentProps, BitrixVueComponentProxy, VueCreateAppResult } from 'ui.vue3';
+import { AudioPlayer as UIAudioPlayer } from 'ui.vue3.components.audioplayer';
+import { AudioPlayerProps } from './components-props/audio-player.js';
 
 export class AudioPlayer
 {

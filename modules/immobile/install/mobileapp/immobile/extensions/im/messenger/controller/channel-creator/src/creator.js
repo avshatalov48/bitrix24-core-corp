@@ -7,7 +7,6 @@ jn.define('im/messenger/controller/channel-creator/creator', (require, exports, 
 	const {
 		EventType,
 		RestMethod,
-		Analytics,
 		OpenDialogContextType,
 	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -45,7 +44,6 @@ jn.define('im/messenger/controller/channel-creator/creator', (require, exports, 
 			this.settingStepWidget = null;
 			this.addSubscribersStepWidget = null;
 			this.#bindMethods();
-			this.sendAnalyticsStartCreateChannel();
 		}
 
 		#bindMethods()
@@ -53,24 +51,6 @@ jn.define('im/messenger/controller/channel-creator/creator', (require, exports, 
 			this.onAddSubscribersStepComplete = this.onAddSubscribersStepComplete.bind(this);
 			this.onEnterNameStepComplete = this.onEnterNameStepComplete.bind(this);
 			this.onSettingsStepComplete = this.onSettingsStepComplete.bind(this);
-		}
-
-		sendAnalyticsStartCreateChannel()
-		{
-			try
-			{
-				const analytics = this.options.analytics
-					.setTool(Analytics.Tool.im)
-					.setCategory(Analytics.Category.channel)
-					.setEvent(Analytics.Event.clickCreateNew)
-					.setType(Analytics.Type.channel);
-
-				analytics.send();
-			}
-			catch (e)
-			{
-				console.error(`${this.constructor.name}.sendCreateChannelAnalytics.catch:`, e);
-			}
 		}
 
 		async #openFirstStep()

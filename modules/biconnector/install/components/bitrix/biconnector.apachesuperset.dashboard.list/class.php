@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\BIConnector\Access\AccessController;
 use Bitrix\BIConnector\Access\ActionDictionary;
+use Bitrix\BIConnector\Configuration\DashboardTariffConfigurator;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
 use Bitrix\BIConnector\Integration\Superset\Model\Dashboard;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
@@ -282,6 +283,8 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 			$dashboardIds[$dashboard->getId()] = $index;
 			$urlService = new UrlParameter\Service($dashboard->getOrmObject());
 			$dashboardList[$index]['DETAIL_URL'] = $urlService->getEmbeddedUrl();
+			$appId = $dashboardList[$index]['APP_ID'];
+			$dashboardList[$index]['IS_TARIFF_RESTRICTED'] = !empty($appId)	&& !DashboardTariffConfigurator::isAvailableDashboard($appId);
 			$dashboardList[$index]['HAS_ZONE_URL_PARAMS'] = $urlService->isExistScopeParams();
 			$dashboardList[$index]['IS_AVAILABLE_DASHBOARD'] = $dashboard->isAvailableDashboard();
 			if ($dashboard->getOrmObject()->getSource())

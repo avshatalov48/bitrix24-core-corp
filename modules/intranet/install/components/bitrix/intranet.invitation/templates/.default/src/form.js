@@ -33,6 +33,7 @@ export default class Form extends EventEmitter
 		this.analyticsLabel = params.analyticsLabel;
 		this.projectLimitExceeded = Type.isBoolean(params.projectLimitExceeded) ? params.projectLimitExceeded : true;
 		this.projectLimitFeatureId = Type.isString(params.projectLimitFeatureId) ? params.projectLimitFeatureId : '';
+		this.isCollabEnabled = params.isCollabEnabled === 'Y';
 
 		if (Type.isDomNode(this.contentContainer))
 		{
@@ -75,6 +76,7 @@ export default class Form extends EventEmitter
 		});
 
 		this.analytics = new Analytics(this.analyticsLabel, this.isAdmin);
+		this.analytics.sendOpenSliderData(this.analyticsLabel.source);
 
 		if (this.isCloud)
 		{
@@ -124,7 +126,7 @@ export default class Form extends EventEmitter
 				}
 
 				this.activeDirectory.showForm();
-				this.analytics.sendTabData(Analytics.TAB_AD);
+				this.analytics.sendTabData(section, Analytics.TAB_AD);
 
 				return;
 			}
@@ -135,6 +137,11 @@ export default class Form extends EventEmitter
 					: 0
 			);
 
+			const departmentsId = (
+				(this.userOptions.hasOwnProperty('departmentsId') && Array.isArray(this.userOptions.departmentsId))
+					? this.userOptions.departmentsId.map((id) => parseInt(id, 10))
+					: []
+			);
 			for (let type in this.contentBlocks)
 			{
 				let block = this.contentBlocks[type];
@@ -166,6 +173,7 @@ export default class Form extends EventEmitter
 								department: true,
 								project: true,
 								projectId: projectId,
+								departmentsId: departmentsId,
 								isAdmin: this.isAdmin,
 								projectLimitExceeded: this.projectLimitExceeded,
 								projectLimitFeatureId: this.projectLimitFeatureId,
@@ -175,6 +183,7 @@ export default class Form extends EventEmitter
 					}
 					else if (action === 'extranet')
 					{
+						subSection = Analytics.TAB_EXTRANET;
 						row.renderInviteInputs(3);
 
 						const selectorParams = {
@@ -187,6 +196,7 @@ export default class Form extends EventEmitter
 								isAdmin: this.isAdmin,
 								projectLimitExceeded: this.projectLimitExceeded,
 								projectLimitFeatureId: this.projectLimitFeatureId,
+								showCreateButton: !this.isCollabEnabled,
 							}
 						};
 						this.renderSelector(selectorParams);
@@ -231,7 +241,7 @@ export default class Form extends EventEmitter
 				}
 			}
 
-			if (this.analytics)
+			if (this.analytics && section && subSection)
 			{
 				this.analytics.sendTabData(section, subSection);
 			}

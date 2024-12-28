@@ -15,7 +15,10 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 	const { Theme } = require('im/lib/theme');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { EventType } = require('im/messenger/const');
-	const { ChatTitle } = require('im/messenger/lib/element');
+	const {
+		ChatTitle,
+		ChatAvatar,
+	} = require('im/messenger/lib/element');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
@@ -48,11 +51,12 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 			this.items = [];
 			this.cache = cache;
 			this.setCache = setCache;
+			this.store = serviceLocator.get('core').getStore();
 			this.bindMethods();
 
-			const messageData = serviceLocator.get('core').getStore().getters['messagesModel/getById'](messageId);
+			const messageData = this.store.getters['messagesModel/getById'](messageId);
 
-			const { dialogId } = serviceLocator.get('core').getStore().getters['dialoguesModel/getByChatId'](messageData.chatId);
+			const { dialogId } = this.store.getters['dialoguesModel/getByChatId'](messageData.chatId);
 			this.dialogId = dialogId;
 		}
 
@@ -125,6 +129,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 		async prepareDataFromRest()
 		{
 			const restResult = await this.getUserReadMessageList();
+			await this.saveUsers(restResult.users);
 			if (this.setCache)
 			{
 				this.setCache(restResult);
@@ -169,6 +174,11 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 			;
 		}
 
+		async saveUsers(users)
+		{
+			return this.store.dispatch('usersModel/set', users);
+		}
+
 		/**
 		 * @desc Get users item data from rest call method result
 		 * @param {Object} restData
@@ -210,6 +220,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 					iconSubtitle: atomIcons.doubleCheck(),
 					avatarUri,
 					avatarColor: userData.color,
+					avatar: ChatAvatar.createFromDialogId(userData.id).getListItemAvatarProps(),
 
 					style: {
 						parentView: {

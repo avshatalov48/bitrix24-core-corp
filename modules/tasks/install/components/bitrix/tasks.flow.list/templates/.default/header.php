@@ -91,6 +91,7 @@ $isTrial = $arResult['isFeatureTrialable'] ? 'Y' : 'N';
 		?>
 		<div id="tasks-flow-switcher" class="task-interface-toolbar--item --visible"></div>
 
+	<div class="tasks-flow__additional-items pagetitle-align-right-container">
 		<div
 			class="tasks-flow__guide-btn"
 			onclick="BX.Tasks.Flow.Grid.showGuide('<?=$isTrial?>');"
@@ -108,7 +109,11 @@ $isTrial = $arResult['isFeatureTrialable'] ? 'Y' : 'N';
 				<?=Loc::getMessage("TASKS_FLOW_LIST_GUIDE_BTN")?>
 			</span>
 		</div>
+		<?php
+			include_once ('bi-analytics.php');
+		?>
 	</div>
+</div>
 
 <?php
 

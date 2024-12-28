@@ -851,57 +851,59 @@ class CCrmDealDetailsComponent
 					unset($checkAutomationTourGuideData);
 
 				}
-				if (CModule::IncludeModule('bizproc') && CBPRuntime::isFeatureEnabled())
+				if (Main\Loader::IncludeModule('bizproc') && CBPRuntime::isFeatureEnabled())
 				{
-					$bpTab = [
-						'id' => 'tab_bizproc',
-						'name' => Loc::getMessage('CRM_DEAL_TAB_BIZPROC'),
-						'loader' => [
-							'serviceUrl' => '/bitrix/components/bitrix/bizproc.document/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
-							'componentData' => [
-								'template' => 'frame',
-								'params' => [
-									'MODULE_ID' => 'crm',
-									'ENTITY' => 'CCrmDocumentDeal',
-									'DOCUMENT_TYPE' => 'DEAL',
-									'DOCUMENT_ID' => 'DEAL_'.$this->entityID
+					$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+					$bizprocAvailabilityLock =
+						$toolsManager->checkBizprocAvailability()
+							? null
+							: \Bitrix\Crm\Restriction\AvailabilityManager::getInstance()->getBizprocAvailabilityLock()
+					;
+
+					if (CCrmBizProcHelper::needShowBPTab())
+					{
+						$bpTab = [
+							'id' => 'tab_bizproc',
+							'name' => Loc::getMessage('CRM_DEAL_TAB_BIZPROC'),
+							'loader' => [
+								'serviceUrl' =>
+									'/bitrix/components/bitrix/bizproc.document/lazyload.ajax.php?&site='
+									. SITE_ID
+									. '&'
+									. bitrix_sessid_get()
+								,
+								'componentData' => [
+									'template' => 'frame',
+									'params' => [
+										'MODULE_ID' => 'crm',
+										'ENTITY' => 'CCrmDocumentDeal',
+										'DOCUMENT_TYPE' => 'DEAL',
+										'DOCUMENT_ID' => 'DEAL_'.$this->entityID
+									]
 								]
 							]
-						]
-					];
+						];
 
-					$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
-					if (!$toolsManager->checkBizprocAvailability())
-					{
-						$bpTab['availabilityLock'] = \Bitrix\Crm\Restriction\AvailabilityManager::getInstance()
-							->getBizprocAvailabilityLock()
-						;
-						unset($bpTab['loader']);
+						if ($bizprocAvailabilityLock !== null)
+						{
+							$bpTab['availabilityLock'] = $bizprocAvailabilityLock;
+							unset($bpTab['loader']);
+						}
+
+						$this->arResult['TABS'][] = $bpTab;
 					}
 
-					$this->arResult['TABS'][] = $bpTab;
-
-					if (isset($bpTab['availabilityLock']))
+					if ($bizprocAvailabilityLock !== null)
 					{
-						$this->arResult['BIZPROC_STARTER_DATA'] = [
-							'availabilityLock' => $bpTab['availabilityLock'],
-						];
+						$this->arResult['BIZPROC_STARTER_DATA'] = ['availabilityLock' => $bizprocAvailabilityLock];
 					}
 					else
 					{
 						$this->arResult['BIZPROC_STARTER_DATA'] = [
-							'templates' => CBPDocument::getTemplatesForStart(
-								$this->userID,
-								['crm', 'CCrmDocumentDeal', 'DEAL'],
-								['crm', 'CCrmDocumentDeal', 'DEAL_'.$this->entityID],
-								[
-									'DocumentStates' => []
-								]
-							),
 							'moduleId' => 'crm',
 							'entity' => 'CCrmDocumentDeal',
 							'documentType' => 'DEAL',
-							'documentId' => 'DEAL_'.$this->entityID
+							'documentId' => 'DEAL_' . $this->entityID
 						];
 					}
 				}

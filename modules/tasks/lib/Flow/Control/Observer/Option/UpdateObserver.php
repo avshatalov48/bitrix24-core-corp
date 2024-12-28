@@ -2,12 +2,12 @@
 
 namespace Bitrix\Tasks\Flow\Control\Observer\Option;
 
+use Bitrix\Main\LoaderException;
 use Bitrix\Tasks\Flow\Control\Command\UpdateCommand;
-use Bitrix\Tasks\Flow\Control\Observer\Trait\AddUsersToGroupTrait;
 use Bitrix\Tasks\Flow\Control\Observer\UpdateObserverInterface;
-use Bitrix\Tasks\Flow\Flow;
+use Bitrix\Tasks\Flow\Distribution\FlowDistributionType;
+use Bitrix\Tasks\Flow\Integration\HumanResources\AccessCodeConverter;
 use Bitrix\Tasks\Flow\Internal\Entity\FlowEntity;
-use Bitrix\Tasks\Flow\Notification\Exception\InvalidPayload;
 use Bitrix\Tasks\Flow\Notification\NotificationService;
 use Bitrix\Tasks\Flow\Option\OptionDictionary;
 use Bitrix\Tasks\Flow\Option\OptionService;
@@ -15,7 +15,6 @@ use Bitrix\Tasks\Flow\Option\OptionService;
 final class UpdateObserver implements UpdateObserverInterface
 {
 	use OptionTrait;
-	use AddUsersToGroupTrait;
 
 	protected UpdateCommand $command;
 	protected FlowEntity $flowEntity;
@@ -31,7 +30,7 @@ final class UpdateObserver implements UpdateObserverInterface
 	}
 
 	/**
-	 * @throws InvalidPayload
+	 * @throws LoaderException
 	 */
 	public function update(UpdateCommand $command, FlowEntity $flowEntity, FlowEntity $flowEntityBeforeUpdate): void
 	{
@@ -46,17 +45,21 @@ final class UpdateObserver implements UpdateObserverInterface
 
 		if ($this->command->distributionType !== null && $this->hasManualDistributor())
 		{
+			$manualDistributorAccessCode = $this->command->responsibleList[0];
+			$manualDistributorId = (new AccessCodeConverter($manualDistributorAccessCode))
+				->getAccessCodeIdList()[0]
+			;
+
 			$this->optionService->save(
 				$this->flowEntity->getId(),
 				OptionDictionary::MANUAL_DISTRIBUTOR_ID->value,
-				$this->command->manualDistributorId,
+				$manualDistributorId,
 			);
-			$this->addUsersToGroup($this->flowEntity->getGroupId(), [$this->command->manualDistributorId]);
 		}
 
-		if ($isDistributionTypeChanged && $flowEntityBeforeUpdate->getDistributionType() === Flow::DISTRIBUTION_TYPE_QUEUE)
+		if ($isDistributionTypeChanged)
 		{
-			$this->optionService->delete($flowId, OptionDictionary::RESPONSIBLE_QUEUE_LATEST_ID->value);
+			$this->onDistributionTypeChange($flowId, $flowEntityBeforeUpdate);
 		}
 
 		if ($this->command->responsibleCanChangeDeadline !== null)
@@ -74,6 +77,15 @@ final class UpdateObserver implements UpdateObserverInterface
 				$flowId,
 				OptionDictionary::MATCH_WORK_TIME->value,
 				$this->command->matchWorkTime,
+			);
+		}
+
+		if ($this->command->matchSchedule !== null)
+		{
+			$this->optionService->save(
+				$flowId,
+				OptionDictionary::MATCH_SCHEDULE->value,
+				$this->command->matchSchedule,
 			);
 		}
 
@@ -110,6 +122,19 @@ final class UpdateObserver implements UpdateObserverInterface
 			;
 		}
 
+		if ($this->flowEntity->getDistributionType() !== FlowDistributionType::HIMSELF->value)
+		{
+			$this->optionService->delete($flowId, OptionDictionary::NOTIFY_WHEN_TASK_NOT_TAKEN->value);
+		}
+		else
+		{
+			$this->optionService->save(
+				$flowId,
+				OptionDictionary::NOTIFY_WHEN_TASK_NOT_TAKEN->value,
+				$this->command->notifyWhenTaskNotTaken,
+			);
+		}
+
 		if ($this->command->taskControl !== null)
 		{
 			$this->optionService->save(
@@ -120,5 +145,20 @@ final class UpdateObserver implements UpdateObserverInterface
 		}
 
 		$this->notificationService->saveConfig($flowEntity->getId(), $this->optionService);
+	}
+
+	private function onDistributionTypeChange(int $flowId, FlowEntity $flowEntityBeforeUpdate): void
+	{
+		$flowDistributionTypeWasManually = $flowEntityBeforeUpdate->getDistributionType() === FlowDistributionType::MANUALLY->value;
+		if ($flowDistributionTypeWasManually)
+		{
+			$this->optionService->delete($flowId, OptionDictionary::MANUAL_DISTRIBUTOR_ID->value);
+		}
+
+		$flowDistributionTypeWasQueue = $flowEntityBeforeUpdate->getDistributionType() === FlowDistributionType::QUEUE->value;
+		if ($flowDistributionTypeWasQueue)
+		{
+			$this->optionService->delete($flowId, OptionDictionary::RESPONSIBLE_QUEUE_LATEST_ID->value);
+		}
 	}
 }

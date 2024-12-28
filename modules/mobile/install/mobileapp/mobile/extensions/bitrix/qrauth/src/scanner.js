@@ -24,10 +24,12 @@ jn.define('qrauth/src/scanner', (require, exports, module) => {
 				redirectUrl = '',
 				external = false,
 				url = null,
+				analyticsSection = '',
 			} = props;
 
 			this.redirectUrl = redirectUrl;
 			this.parentLayout = ui;
+			this.analyticsSection = analyticsSection;
 			this.url = url;
 			this.state = { external };
 		}
@@ -232,18 +234,16 @@ jn.define('qrauth/src/scanner', (require, exports, module) => {
 
 			qrauth.authorizeByUrl(value, this.redirectUrl)
 				.then(() => {
-					const host = currentDomain
-						.replaceAll('https://', '')
-						.replaceAll('http://', '')
-					;
 					const event = new AnalyticsEvent({
-						tool: 'qr_scanner',
-						category: 'qr_auth',
-						event: 'qr_web_auth',
-						p1: `redirectUrl_${this.redirectUrl}`,
-						p2: `domain_${host}`,
+						tool: 'intranet',
+						category: 'activation',
+						event: 'auth_complete',
+						type: 'auth',
+						c_section: this.analyticsSection,
+						c_sub_section: 'qrcode',
+						p1: 'platform_web',
+						p2: `redirectUrl_${this.redirectUrl}`,
 						p3: `userId_${env.userId}`,
-
 					});
 					event.send();
 					this.handleOnSuccess();

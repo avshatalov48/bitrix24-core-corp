@@ -21,6 +21,8 @@ $gUrl = \Bitrix\Tasks\UI::convertActionPathToBarNotation(
 	array('group_id' => 'ID')
 );
 
+$isCollab = $arParams['IS_COLLAB'] ?? false;
+
 $group = array();
 foreach($arParams['DATA'] as $i => $item)
 {
@@ -63,7 +65,10 @@ foreach($arParams['DATA'] as $i => $item)
 	$item['DISPLAY'] = $display;
 
 	// define URL
-	$item['URL'] = $item['ID'] ? str_replace('{{ID}}', $item['ID'], $url) : 'javascript:void(0);';
+	if (!$isCollab)
+	{
+		$item['URL'] = $item['ID'] ? str_replace('{{ID}}', $item['ID'], $url) : 'javascript:void(0);';
+	}
 
 	$group = $item;
 	break;
@@ -73,7 +78,9 @@ $arResult['DATA'] = $group;
 $arResult['JS_DATA'] = [
 	'path' => [
 		'SG' => $gUrl,
+		'collab' => SocialNetwork\Collab\Url\UrlManager::getCollabUrlTemplateDialogId(),
 	],
+	'loc' => $arParams['loc'] ?? null,
 	'entityId' => $arParams['ENTITY_ID'],
 	'entityRoute' => $arParams['ENTITY_ROUTE'],
 	'groupId' => (empty($group) ? 0 : $group['ID']),

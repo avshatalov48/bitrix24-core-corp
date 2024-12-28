@@ -87,14 +87,14 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 
 	    // these selectors contain types only if there were added here in the app lifetime by user interaction
 	    // selector states are not synced reactively in the app lifetime
-	    this.crmTypesTagSelector = this.initFilteredTagSelector(true, false);
+	    this.crmTypesTagSelector = this.initFilteredTagSelector(true, false, !this.$store.state.permissions.canMoveSmartProcessFromCrm);
 	    this.crmTypesTagSelector.renderTo(this.$refs.crmTypesTagSelectorContainer);
-	    this.externalTypesTagSelector = this.initFilteredTagSelector(false, true);
+	    this.externalTypesTagSelector = this.initFilteredTagSelector(false, true, !this.$store.state.permissions.canMoveSmartProcessFromAnotherAutomatedSolution);
 	    this.externalTypesTagSelector.renderTo(this.$refs.externalTypesTagSelectorContainer);
 	  },
 	  methods: {
-	    initFilteredTagSelector: function initFilteredTagSelector(isOnlyCrmTypes, isOnlyExternalTypes) {
-	      return new ui_entitySelector.TagSelector({
+	    initFilteredTagSelector: function initFilteredTagSelector(isOnlyCrmTypes, isOnlyExternalTypes, locked) {
+	      var tagSlector = new ui_entitySelector.TagSelector({
 	        multiple: true,
 	        addButtonCaption: this.$Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_TAG_SELECTOR_ADD_BUTTON_CAPTION'),
 	        addButtonCaptionMore: this.$Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_TAG_SELECTOR_ADD_BUTTON_CAPTION'),
@@ -120,6 +120,10 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	          onTagRemove: this.removeTypeIdByTagRemoveEvent
 	        }
 	      });
+	      if (locked) {
+	        tagSlector.setLocked(true);
+	      }
+	      return tagSlector;
 	    },
 	    addTypeIdByTagAddEvent: function addTypeIdByTagAddEvent(event) {
 	      var _event$getData = event.getData(),
@@ -519,10 +523,12 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	   * Sets new initial state for the store. Modification flag is reset
 	   */
 	  setState: function setState(state, stateToSet) {
-	    var _stateToSet$automated, _stateToSet$automated2, _stateToSet$automated3;
+	    var _stateToSet$automated, _stateToSet$automated2, _stateToSet$automated3, _stateToSet$permissio, _stateToSet$permissio2, _stateToSet$permissio3, _stateToSet$permissio4;
 	    state.automatedSolution.id = normalizeId((_stateToSet$automated = stateToSet.automatedSolution) === null || _stateToSet$automated === void 0 ? void 0 : _stateToSet$automated.id);
 	    state.automatedSolution.title = normalizeTitle((_stateToSet$automated2 = stateToSet.automatedSolution) === null || _stateToSet$automated2 === void 0 ? void 0 : _stateToSet$automated2.title);
 	    state.automatedSolution.typeIds = normalizeTypesIds((_stateToSet$automated3 = stateToSet.automatedSolution) === null || _stateToSet$automated3 === void 0 ? void 0 : _stateToSet$automated3.typeIds);
+	    state.permissions.canMoveSmartProcessFromCrm = main_core.Text.toBoolean((_stateToSet$permissio = (_stateToSet$permissio2 = stateToSet.permissions) === null || _stateToSet$permissio2 === void 0 ? void 0 : _stateToSet$permissio2.canMoveSmartProcessFromCrm) !== null && _stateToSet$permissio !== void 0 ? _stateToSet$permissio : false);
+	    state.permissions.canMoveSmartProcessFromAnotherAutomatedSolution = main_core.Text.toBoolean((_stateToSet$permissio3 = (_stateToSet$permissio4 = stateToSet.permissions) === null || _stateToSet$permissio4 === void 0 ? void 0 : _stateToSet$permissio4.canMoveSmartProcessFromAnotherAutomatedSolution) !== null && _stateToSet$permissio3 !== void 0 ? _stateToSet$permissio3 : false);
 	    state.dynamicTypesTitles = normalizeDynamicTypesTitles(stateToSet.dynamicTypesTitles);
 	    state.errors = normalizeErrors(stateToSet.errors);
 	    state.isModified = false;
@@ -579,6 +585,10 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	        id: null,
 	        title: null,
 	        typeIds: []
+	      },
+	      permissions: {
+	        canMoveSmartProcessFromCrm: false,
+	        canMoveSmartProcessFromAnotherAutomatedSolution: false
 	      },
 	      dynamicTypesTitles: {},
 	      errors: [],

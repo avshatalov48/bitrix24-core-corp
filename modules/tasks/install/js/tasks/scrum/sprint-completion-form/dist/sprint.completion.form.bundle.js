@@ -306,7 +306,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      plannedSprints.forEach(function (sprint) {
 	        sprintsOptions += "<option value=\"".concat(sprint.id, "\">").concat(main_core.Text.encode(sprint.name), "</option>");
 	      });
-	      return main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-select ", "\">\n\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t<select class=\"ui-ctl-element\">\n\t\t\t\t\t<option value=\"backlog\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</option>\n\t\t\t\t\t<option value=\"0\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</option>\n\t\t\t\t\t", "\n\t\t\t\t</select>\n\t\t\t</div>\n\t\t"])), uiClasses, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_SELECTOR_BACKLOG'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_SELECTOR_SPRINT'), sprintsOptions);
+	      return main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-select ", "\">\n\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t<select class=\"ui-ctl-element\">\n\t\t\t\t\t<option value=\"0\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</option>\n\t\t\t\t\t<option value=\"backlog\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</option>\n\t\t\t\t\t", "\n\t\t\t\t</select>\n\t\t\t</div>\n\t\t"])), uiClasses, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_SELECTOR_SPRINT'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_SELECTOR_BACKLOG'), sprintsOptions);
 	    }
 	  }, {
 	    key: "renderItem",

@@ -24,19 +24,13 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 	 */
 	class LoadService
 	{
-		/**
-		 *
-		 * @param {DialogLocator} dialogLocator
-		 */
-		constructor(dialogLocator)
+		constructor()
 		{
 			/**
 			 * @type {MessengerCoreStore}
 			 */
 			this.store = serviceLocator.get('core').getStore();
 			this.restManager = new RestManager();
-			/** @type {DialogLocator} */
-			this.dialogLocator = dialogLocator;
 			this.contextCreator = new MessageContextCreator();
 		}
 
@@ -128,6 +122,38 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 			return dialog.dialogId;
 		}
 
+		/**
+		 * @desc rest get member entity
+		 * @return {Promise<memberEntities:Array<*>>}
+		 */
+		loadChatMemberEntitiesList(dialogId)
+		{
+			if (!Type.isStringFilled(dialogId))
+			{
+				return Promise.reject(new Error('ChatService: loadChatMemberEntitiesList: dialogId is not provided'));
+			}
+
+			return runAction(RestMethod.imV2ChatMemberEntitiesList, {
+				data: {
+					dialogId,
+				},
+			})
+				.then(
+					(response) => {
+						if (response?.errors?.length > 0)
+						{
+							logger.error(`${this.constructor.name}.restMemberEntitiesList.error:`, response.errors);
+
+							return response.errors;
+						}
+						logger.log(`${this.constructor.name}.restMemberEntitiesList.memberEntities:`, response.memberEntities);
+
+						return response.memberEntities;
+					},
+				)
+				.catch((error) => logger.error(`${this.constructor.name}.restMemberEntitiesList.error:`, error))
+		}
+
 		async requestChat(actionName, params)
 		{
 			const { dialogId } = params;
@@ -212,11 +238,7 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 
 			void await this.store.dispatch('dialoguesModel/set', dialogList);
 
-			const dialog = this.store.getters['dialoguesModel/getByChatId'](extractor.getChatId());
-			if (this.dialogLocator.has('emitter'))
-			{
-				this.dialogLocator.get('emitter').emit('beforeFirstPageRenderFromServer', [dialog]);
-			}
+			const collabPromise = this.store.dispatch('dialoguesModel/collabModel/set', extractor.getCollabInfo());
 
 			const filesPromise = this.store.dispatch('filesModel/set', extractor.getFiles());
 			const reactionPromise = this.store.dispatch('messagesModel/reactionsModel/set', {
@@ -227,10 +249,12 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 			const messages = await this.contextCreator
 				.createMessageDoublyLinkedListForDialog(extractor.getMainChat(), extractor.getMessages())
 			;
+			const messagesWithUploadingMessages = this.addUploadingMessagesToMessageList(messages);
+
 			const messagesPromise = [
 				this.store.dispatch('messagesModel/store', extractor.getMessagesToStore()),
 				this.store.dispatch('messagesModel/setChatCollection', {
-					messages,
+					messages: messagesWithUploadingMessages,
 					clearCollection: true,
 				}),
 				this.store.dispatch('messagesModel/pinModel/setChatCollection', {
@@ -244,6 +268,7 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 				filesPromise,
 				reactionPromise,
 				commentPromise,
+				collabPromise,
 			]);
 
 			await Promise.all(messagesPromise);
@@ -269,12 +294,6 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 
 			void await this.store.dispatch('dialoguesModel/set', dialogData);
 
-			const dialog = this.store.getters['dialoguesModel/getByChatId'](extractor.getChatId());
-			if (this.dialogLocator.has('emitter'))
-			{
-				this.dialogLocator.get('emitter').emit('beforeFirstPageRenderFromServer', [dialog]);
-			}
-
 			const filesPromise = this.store.dispatch('filesModel/set', extractor.getFiles());
 			const reactionPromise = this.store.dispatch('messagesModel/reactionsModel/set', {
 				reactions: extractor.getReactions(),
@@ -283,10 +302,11 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 			const messages = await this.contextCreator
 				.createMessageDoublyLinkedListForDialog(extractor.getMainChat(), extractor.getMessages())
 			;
+			const messagesWithUploadingMessages = this.addUploadingMessagesToMessageList(messages);
 			const messagesPromise = [
 				this.store.dispatch('messagesModel/store', extractor.getMessagesToStore()),
 				this.store.dispatch('messagesModel/setChatCollection', {
-					messages,
+					messages: messagesWithUploadingMessages,
 					clearCollection: true,
 				}),
 				this.store.dispatch('messagesModel/pinModel/setChatCollection', {
@@ -425,6 +445,56 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 			MessengerEmitter.emit(EventType.messenger.renderRecent);
 
 			Counters.updateDelayed();
+		}
+
+		/**
+		 * @param {Array<RawMessage>} messageList
+		 * @returns {Array<MessagesModelState | RawMessage>}
+		 */
+		addUploadingMessagesToMessageList(messageList)
+		{
+			if (!Type.isArrayFilled(messageList))
+			{
+				return messageList;
+			}
+
+			const chatId = messageList[0].chat_id;
+			/** @type {Map<number, Array<MessagesModelState>>} */
+			const uploadingCollection = new Map();
+			const uploadingMessageList = this.store.getters['messagesModel/getUploadingMessages'](chatId);
+			if (!Type.isArrayFilled(uploadingMessageList))
+			{
+				return messageList;
+			}
+
+			for (const uploadingMessage of uploadingMessageList)
+			{
+				if (!uploadingCollection.has(uploadingMessage.previousId))
+				{
+					uploadingCollection.set(uploadingMessage.previousId, []);
+				}
+				uploadingCollection.get(uploadingMessage.previousId).push(uploadingMessage);
+			}
+
+			for (const [messageId, uploadingMessages] of uploadingCollection.entries())
+			{
+				const messageIndex = messageList.findIndex((message) => message.id === messageId);
+				if (messageIndex === -1)
+				{
+					continue;
+				}
+
+				if (messageIndex === messageList.length - 1)
+				{
+					messageList.push(...uploadingMessages);
+				}
+				else
+				{
+					messageList.splice(messageIndex + 1, 0, ...uploadingMessages);
+				}
+			}
+
+			return messageList;
 		}
 	}
 

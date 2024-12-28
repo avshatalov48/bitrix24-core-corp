@@ -35,6 +35,7 @@ class UserFilter extends Filter
 		'IN_COMPANY',
 		'PHONE_APPS',
 		'DESKTOP_APPS',
+		'COLLABER',
 	];
 
 	public function __construct(
@@ -73,6 +74,19 @@ class UserFilter extends Filter
 			$this->getId(),
 			$presetManager->getPresetsArrayData($defaultFieldsValues)
 		);
+
+		if (\CUserOptions::GetOption('intranet', 'isUserListPresetsUpdated') !== 'Y')
+		{
+			foreach ($presetManager->getPresets() as $preset)
+			{
+				$this->filterOptions->setFilterSettings(
+					$preset->getId(),
+					$preset->toArray()
+				);
+			}
+
+			\CUserOptions::SetOption('intranet', 'isUserListPresetsUpdated', 'Y');
+		}
 
 		foreach ($presetManager->getDisabledPresets() as $preset)
 		{

@@ -3,6 +3,7 @@
 namespace Bitrix\ImMobile\NavigationTab\Tab;
 
 use Bitrix\ImMobile\NavigationTab\MessengerComponentTitle;
+use Bitrix\ImMobile\Settings;
 use Bitrix\Main\Localization\Loc;
 
 class Collab extends BaseRecent
@@ -11,8 +12,7 @@ class Collab extends BaseRecent
 	
 	public function isAvailable(): bool
 	{
-		// TODO: Implement isAvailable() method
-		return false;
+		return Settings::getImFeatures()?->collabAvailable ?? false;
 	}
 	
 	protected function getParams(): array
@@ -30,7 +30,7 @@ class Collab extends BaseRecent
 	{
 		return [
 			'useSearch' => true,
-			'preload' => true,
+			'preload' => false,
 			'titleParams' => [
 				'useLargeTitleMode' => true,
 				'text' => $this->getTitle(),
@@ -45,9 +45,9 @@ class Collab extends BaseRecent
 
 	protected function getTabTitle(): ?string
 	{
-		return 'collab';
+		return Loc::getMessage('IMMOBILE_NAVIGATION_TAB_COLLAB_TAB_TITLE');
 	}
-	
+
 	protected function getComponentCode(): string
 	{
 		return 'im.collab.messenger';

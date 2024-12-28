@@ -26,6 +26,7 @@ use Bitrix\Tasks\Control\Tag;
 use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Tasks\Integration\SocialNetwork\Collab\CollabRegistry;
 use Bitrix\Tasks\Internals\Registry\TagRegistry;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\LabelTable;
@@ -219,7 +220,14 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 		}
 
 
-		if ($groupId > 0)
+		$canReadGroupTags = TagAccessController::can(
+			$this->userId,
+			ActionDictionary::ACTION_GROUP_TAG_READ,
+			null,
+			['GROUP_ID' => $groupId]
+		);
+
+		if ($groupId > 0 && $canReadGroupTags)
 		{
 			$this->tagService->addTagToGroup($newTag, $groupId);
 			$members = $this->getGroupMembers($groupId);
@@ -408,7 +416,14 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 			);
 		if (!empty($this->groupId))
 		{
-			if ($this->canSeeGroupTags($this->groupId))
+			$canReadGroupTags = TagAccessController::can(
+				$this->userId,
+				ActionDictionary::ACTION_GROUP_TAG_READ,
+				null,
+				['GROUP_ID' => $this->groupId]
+			);
+
+			if ($canReadGroupTags)
 			{
 				$query->setFilter(['=GROUP_ID' => $this->groupId]);
 			}
@@ -512,7 +527,12 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 		$this->arResult['GROUP_ID'] = $this->groupId;
 		if ($this->groupId > 0)
 		{
-			$this->arResult['CAN_SEE_GROUP_TAGS'] = $this->canSeeGroupTags($this->groupId);
+			$this->arResult['CAN_SEE_GROUP_TAGS'] = TagAccessController::can(
+				$this->userId,
+				ActionDictionary::ACTION_GROUP_TAG_READ,
+				null,
+				['GROUP_ID' => $this->groupId]
+			);
 			$this->arResult['GROUP_NAME'] = $this->getGroupName($this->groupId);
 		}
 		$this->arResult['GRID_ID'] = self::GRID_ID;
@@ -522,6 +542,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 		$this->arResult['ACTION_PANEL'] = $grid->prepareGroupActions();
 		$this->arResult['FILTER'] = $this->getFilterFields();
 		$this->arResult['USER_ID'] = $this->userId;
+		$this->arResult['IS_COLLAB'] = CollabRegistry::getInstance()->get($this->groupId) !== null;
 	}
 
 	public function getTasksByTagAction()
@@ -780,22 +801,6 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 		}
 
 		return false;
-	}
-
-	private function canSeeGroupTags(int $groupId): bool
-	{
-		if (!$this->isGroupExists($groupId))
-		{
-			return false;
-		}
-
-		if (CurrentUser::get()->isAdmin())
-		{
-			return true;
-		}
-		$permissions = Group::getUserPermissionsInGroup($groupId, $this->userId);
-
-		return $permissions['UserIsMember'];
 	}
 
 	private function isGroupExists(int $groupId): bool

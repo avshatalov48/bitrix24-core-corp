@@ -6,16 +6,22 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Flow\Efficiency\Command\EfficiencyCommand;
 use Bitrix\Tasks\Flow\Efficiency\Efficiency;
-use Bitrix\Tasks\Flow\Efficiency\EfficiencyService;
 use Bitrix\Tasks\Flow\Efficiency\LastMonth;
 use Bitrix\Tasks\Flow\Flow;
 use Bitrix\Tasks\Flow\FlowCollection;
+use Bitrix\Tasks\Flow\Grid\Preload\AtWorkTaskPreloader;
+use Bitrix\Tasks\Flow\Grid\Preload\AverageAtWorkTimePreloader;
+use Bitrix\Tasks\Flow\Grid\Preload\AverageCompletedTimePreloader;
+use Bitrix\Tasks\Flow\Grid\Preload\AveragePendingTimePreloader;
+use Bitrix\Tasks\Flow\Grid\Preload\CompletedTaskPreloader;
+use Bitrix\Tasks\Flow\Grid\Preload\PendingTaskPreloader;
 use Bitrix\Tasks\Flow\Internal\Entity\FlowOption;
 use Bitrix\Tasks\Flow\Internal\FlowTable;
 use Bitrix\Tasks\Flow\Internal\FlowTaskTable;
@@ -28,6 +34,7 @@ use Bitrix\Tasks\Flow\Provider\Query\FlowQueryBuilder;
 use Bitrix\Tasks\Flow\FlowRegistry;
 use Bitrix\Tasks\Flow\Provider\Query\FlowQueryEnrich;
 use Bitrix\Tasks\Internals\Log\Logger;
+use Bitrix\Tasks\Flow\Task\Status;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Exception;
 use Throwable;
@@ -100,7 +107,7 @@ final class FlowProvider
 		$flowEntity = $flowRegistry->get($flowId, $select);
 		if ($flowEntity === null)
 		{
-			throw new FlowNotFoundException('Flow not found');
+			throw new FlowNotFoundException(Loc::getMessage('TASKS_FLOW_PROVIDER_FLOW_NOT_FOUND'));
 		}
 
 		$values = $flowEntity->collectValues();
@@ -140,18 +147,12 @@ final class FlowProvider
 			return [];
 		}
 
-		$taskAssigneeField = MemberTable::query()
-			->setSelect(['TASK_ID'])
-			->where('USER_ID', $userId)
-			->where('TYPE', MemberTable::MEMBER_TYPE_RESPONSIBLE);
-
 		$taskMembersField = (new ReferenceField(
 			'TASK_ORIGINATOR',
 			MemberTable::getEntity(),
 			Join::on('this.TASK_ID', 'ref.TASK_ID')
 				->where('ref.USER_ID', $userId)
 				->where('ref.TYPE', MemberTable::MEMBER_TYPE_ORIGINATOR)
-				->whereNotIn('ref.TASK_ID', new SqlExpression($taskAssigneeField->getQuery()))
 		))->configureJoinType(Join::TYPE_INNER);
 
 
@@ -200,7 +201,6 @@ final class FlowProvider
 
 			try
 			{
-				/** @var EfficiencyService $service */
 				$service = ServiceLocator::getInstance()->get('tasks.flow.efficiency.service');
 				$service->update($command);
 			}
@@ -244,5 +244,97 @@ final class FlowProvider
 		$flows = $this->getList($query);
 
 		return !$flows->isEmpty();
+	}
+
+	public function preparePushParamsForActivity(
+		int $flowId,
+		string $newStatus,
+		string $oldStatus = ''
+	): array
+	{
+		list($total, $newQueueSubsequence, $newQueue) = $this->getDirectorsQueue($flowId, $newStatus);
+
+		$pushParams = [
+			'activity' => true,
+			'newStatus' => [
+				'id' => $newStatus,
+				'total' => $total,
+				'queueSubsequence' => $newQueueSubsequence,
+				'queue' => $newQueue,
+				'date' => $this->getStatusDate($flowId, $newStatus) ?? '',
+			],
+		];
+
+		if ($oldStatus)
+		{
+			list($total, $oldQueueSubsequence, $oldQueue) = $this->getDirectorsQueue($flowId, $oldStatus);
+
+			$pushParams['oldStatus'] = [
+				'id' => $oldStatus,
+				'total' => $total,
+				'queueSubsequence' => $oldQueueSubsequence,
+				'queue' => $oldQueue,
+				'date' => $this->getStatusDate($flowId, $oldStatus) ?? '',
+			];
+		}
+
+		return $pushParams;
+	}
+
+	private function getDirectorsQueue(int $flowId, string $status): array
+	{
+		$taskPreloader = null;
+		switch ($status)
+		{
+			case Status::FLOW_PENDING:
+				$taskPreloader = new PendingTaskPreloader();
+				break;
+			case Status::FLOW_AT_WORK:
+				$taskPreloader = new AtWorkTaskPreloader();
+				break;
+			case Status::FLOW_COMPLETED:
+				$taskPreloader = new CompletedTaskPreloader();
+				break;
+		}
+		if ($taskPreloader)
+		{
+			$taskPreloader->preload($flowId);
+
+			$queue = $taskPreloader->get($flowId);
+
+			return [
+				count($queue),
+				array_slice(array_column($queue, 'id'), 0, 3),
+				array_slice(array_values($queue), 0, 3)
+			];
+		}
+
+		return [];
+	}
+
+	private function getStatusDate(int $flowId, string $status): ?string
+	{
+		$timePreloader = null;
+		switch ($status)
+		{
+			case Status::FLOW_PENDING:
+				$timePreloader = new AveragePendingTimePreloader();
+				break;
+			case Status::FLOW_AT_WORK:
+				$timePreloader = new AverageAtWorkTimePreloader();
+				break;
+			case Status::FLOW_COMPLETED:
+				$timePreloader = new AverageCompletedTimePreloader();
+				break;
+		}
+
+		if ($timePreloader)
+		{
+			$timePreloader->preload($flowId);
+
+			return $timePreloader->get($flowId)?->getFormatted();
+		}
+
+		return '';
 	}
 }

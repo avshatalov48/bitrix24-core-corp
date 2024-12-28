@@ -71,6 +71,10 @@ if (Loader::includeModule('rest'))
 						'callback' => [__CLASS__, 'setErrorConnector'],
 						'options' => []
 					],
+					'imconnector.chat.name.set' => [
+						'callback' => [__CLASS__, 'setChatName'],
+						'options' => []
+					],
 					\CRestUtil::EVENTS => [
 						'OnImConnectorLineDelete' => [
 							'imconnector',
@@ -951,6 +955,91 @@ if (Loader::includeModule('rest'))
 			}
 
 			$result['DATA'] = $resultSend->getData();
+
+			return $result;
+		}
+
+		public static function setChatName($params, $n, \CRestServer $server): array
+		{
+			$result = [];
+
+			$params = array_change_key_case($params, CASE_UPPER);
+
+			if ($server->getAuthType() !== Auth::AUTH_TYPE)
+			{
+				throw new AuthTypeException("Application context required");
+			}
+
+			if (empty($params['CONNECTOR']))
+			{
+				throw new ArgumentNullException("CONNECTOR");
+			}
+
+			if (empty($params['LINE']))
+			{
+				throw new ArgumentNullException("LINE");
+			}
+
+			if (empty($params['CHAT_ID']))
+			{
+				throw new ArgumentNullException("CHAT_ID");
+			}
+
+			if (empty($params['NAME']))
+			{
+				throw new ArgumentNullException("NAME");
+			}
+
+			$converter = new Converter(Converter::TO_LOWER | Converter::KEYS | Converter::RECURSIVE);
+			$params = $converter->process($params);
+			$resultSend = CC::setChatName($params['connector'], $params['line'], $params);
+
+			if ($resultSend->isSuccess())
+			{
+				$result['SUCCESS'] = true;
+			}
+			else
+			{
+				if (!empty($resultSend->getErrors()))
+				{
+					foreach ($resultSend->getErrors() as $error)
+					{
+						throw new RestException($error->getMessage(), $error->getCode(), \CRestServer::STATUS_WRONG_REQUEST);
+					}
+				}
+
+				$result['SUCCESS'] = false;
+			}
+
+			$result['DATA'] = $resultSend->getData();
+			$dataResult = $result['DATA']['RESULT'] ?? null;
+
+			if ($dataResult instanceof \Bitrix\Main\Result)
+			{
+				$renameResultData = $dataResult->getData();
+				foreach ($renameResultData['RESULT'] as $data)
+				{
+					if (!($data instanceof \Bitrix\Main\EventResult))
+					{
+						continue;
+					}
+
+					$eventParams = $data->getParameters();
+					if (!($eventParams instanceof \Bitrix\Main\Result) || $eventParams->isSuccess())
+					{
+						continue;
+					}
+
+					foreach ($eventParams->getErrors() as $error)
+					{
+						throw new RestException(
+							$error->getMessage(),
+							$error->getCode(),
+							\CRestServer::STATUS_WRONG_REQUEST
+						);
+					}
+				}
+			}
 
 			return $result;
 		}

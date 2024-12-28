@@ -31,7 +31,8 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'ui.avatar-editor',
-	'avatar_editor'
+	'avatar_editor',
+	'ui.avatar',
 ]);
 
 CJSCore::Init("loader");
@@ -62,7 +63,7 @@ Page\Asset::getInstance()->addJs($templateFolder.'/js/tags-users-popup.js');
 Page\Asset::getInstance()->addJs($templateFolder.'/js/form-entity.js');
 Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/socialnetwork.blog.blog/templates/.default/style.css');
 
-if (!in_array($arResult["User"]["STATUS"], ['email', 'extranet']))
+if (!$arResult['IS_CURRENT_USER_COLLABER'] && !in_array($arResult["User"]["STATUS"], ['email', 'extranet', 'collaber']))
 {
 	$this->SetViewTarget('inside_pagetitle');
 	$APPLICATION->includeComponent(
@@ -227,44 +228,8 @@ if (
 			{
 				$classList[] = 'intranet-user-profile-userpic-edit';
 			}
-			?><div class="<?= implode(' ', $classList) ?>">
-				<?php
-				$style = (
-					isset($arResult["User"]["PHOTO"]) && !empty($arResult["User"]["PHOTO"])
-						? 'style="background-image: url(\'' . Uri::urnEncode($arResult["User"]["PHOTO"]) . '\'); background-size: cover"'
-						: ''
-				);
-				?>
-				<i id="intranet-user-profile-photo" <?= $style ?>></i>
-				<?php
-				if ($arResult["IsOwnProfile"] || $arResult["Permissions"]['edit'])
-				{
-					?>
-					<div class="intranet-user-profile-userpic-load">
-						<div class="intranet-user-profile-userpic-create" id="intranet-user-profile-photo-camera"><?=Loc::getMessage("INTRANET_USER_PROFILE_AVATAR_CAMERA")?></div>
-						<div class="intranet-user-profile-userpic-upload" id="intranet-user-profile-photo-file" <?=(
-							class_exists(UI\Avatar\Mask\Helper::class)
-							? UI\Avatar\Mask\Helper::getHTMLAttribute($arResult["User"]["PERSONAL_PHOTO"]) : ''
-						)?>><?=Loc::getMessage("INTRANET_USER_PROFILE_AVATAR_LOAD")?></div><?php
-
-						if (class_exists(Bitrix\UI\Avatar\Mask\Helper::class)
-							&&
-							\Bitrix\Main\Config\Option::get('ui', 'avatar-editor-availability', 'N') === 'Y'
-						)
-						{
-							?><div class="intranet-user-profile-userpic-mask" id="intranet-user-profile-photo-mask">
-								<?=Loc::getMessage("INTRANET_USER_PROFILE_AVATAR_MASK")?>
-							</div><?php
-						}
-						?>
-					</div>
-					<div class="intranet-user-profile-userpic-remove" id="intranet-user-profile-photo-remove"
-						<?= $arResult["User"]["PERSONAL_PHOTO"] ? '' : 'hidden' ?>>
-					</div>
-					<?php
-				}
-				?>
-			</div>
+			?>
+			<div class="<?= implode(' ', $classList) ?>" id="intranet-user-profile-userpic-avatar"></div>
 
 			<?php
 			if (!$arResult["IsOwnProfile"] && $arResult["User"]["STATUS"] !== "email")
@@ -343,7 +308,7 @@ if (
 		if (
 			$arResult["StressLevel"]['AVAILABLE'] === 'Y'
 			&& !$arResult["isExtranetSite"]
-			&& !in_array($arResult["User"]["STATUS"], ['email', 'extranet'])
+			&& !in_array($arResult["User"]["STATUS"], ['email', 'extranet', 'collaber'])
 		)
 		{
 			?>
@@ -445,7 +410,7 @@ if (
 		if (
 			!empty($arResult["Gratitudes"])
 			&& !$arResult["isExtranetSite"]
-			&& !in_array($arResult["User"]["STATUS"], ['email', 'extranet'])
+			&& !in_array($arResult["User"]["STATUS"], ['email', 'extranet', 'collaber'])
 		)
 		{
 			?><div class="intranet-user-profile-column-block">
@@ -513,15 +478,7 @@ if (
 		<?php
 		//region Ru-zone notification
 		$showRuNotification = false;
-		if (
-			LANGUAGE_ID === 'ru'
-			&&
-			method_exists(\Bitrix\Main\Application::getInstance(), 'getLicense')
-			&&
-			($region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion())
-			&&
-			(is_null($region) || mb_strtolower($region) === 'ru')
-		)
+		if ($arResult['SHOW_FACEBOOK_RESTRICTIONS'])
 		{
 			array_walk($arResult['FormFields'], function(&$item) use (&$showRuNotification) {
 				if (is_array($item) && $item['name'] === 'UF_FACEBOOK')
@@ -642,8 +599,8 @@ if (
 										<i <?= $style ?>></i>
 									</div>
 									<div class="intranet-user-profile-user-container">
-										<div class="intranet-user-profile-user-name"><?=$subUser["FULL_NAME"]?></div>
-										<div class="intranet-user-profile-user-position"><?=$subUser["WORK_POSITION"]?></div>
+										<div class="intranet-user-profile-user-name"><?=htmlspecialcharsbx($subUser["FULL_NAME"])?></div>
+										<div class="intranet-user-profile-user-position"><?=htmlspecialcharsbx($subUser["WORK_POSITION"] ?? '')?></div>
 									</div>
 								</a>
 								<?php
@@ -787,13 +744,14 @@ if (
 
 		if (
 			$arResult["CurrentUser"]["STATUS"] !== 'extranet'
+			&& $arResult["CurrentUser"]["STATUS"] !== 'collaber'
 			&& !empty($arResult["Tags"])
 			&& (
 				!empty($arResult["Tags"]["COUNT"])
 				|| $arResult["Permissions"]['edit']
 				|| (int)$USER->getId() === (int)$arResult["User"]["ID"]
 			)
-			&& !in_array($arResult["User"]["STATUS"], [ 'extranet', 'email', 'invited' ])
+			&& !in_array($arResult["User"]["STATUS"], [ 'extranet', 'email', 'invited', 'collaber' ])
 		)
 		{
 			?><div id="intranet-user-profile-tags-container" class="intranet-user-profile-container<?=(empty($arResult["Tags"]["COUNT"]) ? ' intranet-user-profile-container-empty' : '')?>">
@@ -981,6 +939,9 @@ if ($arResult["adminRightsRestricted"])
 		"INTRANET_USERPROFILE_ACTION_REFUSE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USERPROFILE_ACTION_REFUSE")) ?>",
 		"INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER_CLOSE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER_CLOSE")) ?>",
 		"INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER")) ?>",
+		'INTRANET_USER_PROFILE_AVATAR_CAMERA' : '<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_AVATAR_CAMERA")) ?>',
+		'INTRANET_USER_PROFILE_AVATAR_LOAD' : '<?= CUtil::JSEscape(Loc::getMessage('INTRANET_USER_PROFILE_AVATAR_LOAD')) ?>',
+		'INTRANET_USER_PROFILE_AVATAR_MASK' : '<?= CUtil::JSEscape(Loc::getMessage('INTRANET_USER_PROFILE_AVATAR_MASK')) ?>',
 	});
 
 	new BX.Intranet.UserProfile.Manager({
@@ -1012,7 +973,8 @@ if ($arResult["adminRightsRestricted"])
 		initialFields: <?=CUtil::PhpToJSObject($arResult["User"])?>,
 		gridId: '<?='INTRANET_USER_GRID_'.SITE_ID?>',
 		isCurrentUserAdmin: '<?=$arResult["IS_CURRENT_USER_ADMIN"] ? "Y" : "N"?>',
-		voximplantEnablePhones: <?=CUtil::PhpToJSObject($arResult["User"]["VOXIMPLANT_ENABLE_PHONES"])?>
+		voximplantEnablePhones: <?=CUtil::PhpToJSObject($arResult["User"]["VOXIMPLANT_ENABLE_PHONES"])?>,
+		userpicUploadAttribute: <?= \Bitrix\Main\Web\Json::encode(UI\Avatar\Mask\Helper::getHTMLAttribute($arResult["User"]["PERSONAL_PHOTO"])) ?>,
 	});
 </script>
 

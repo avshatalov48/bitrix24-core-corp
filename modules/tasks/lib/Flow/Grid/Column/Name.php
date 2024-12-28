@@ -5,14 +5,12 @@ namespace Bitrix\Tasks\Flow\Grid\Column;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Flow\Flow;
 use Bitrix\Tasks\Flow\Grid\Preload\ProjectPreloader;
-use Bitrix\Tasks\Flow\Grid\Preload\TeamPreloader;
 use Bitrix\Tasks\Flow\Time\DatePresenter;
 use Bitrix\Tasks\Util\View;
 use CTaskListState;
 
 final class Name extends Column
 {
-	private TeamPreloader $teamPreloader;
 	private ProjectPreloader $projectPreloader;
 
 	public function __construct()
@@ -22,12 +20,16 @@ final class Name extends Column
 
 	public function prepareData(Flow $flow, array $params = []): array
 	{
-		$teamCount = $this->teamPreloader->get($flow->getId());
 		$project = $this->projectPreloader->get($flow->getGroupId());
 
 		return [
 			'flowId' => $flow->getId(),
 			'flowName' => $flow->getName(),
+			'isPinned' => $params['isPinned'] ?? false,
+			'pinText' => ($params['isPinned']
+				? Loc::getMessage('TASKS_FLOW_LIST_COLUMN_NAME_UNPIN')
+				: Loc::getMessage('TASKS_FLOW_LIST_COLUMN_NAME_PIN')
+			),
 			'groupId' => $flow->getGroupId(),
 			'groupName' => (
 				$flow->isDemo()
@@ -40,16 +42,6 @@ final class Name extends Column
 					Loc::getMessage('TASKS_FLOW_LIST_COLUMN_NAME_DEMO_DATE')
 					: DatePresenter::createFromSeconds($flow->getPlannedCompletionTime())->getFormatted()
 			),
-			'teamLabel' => Loc::getMessage('TASKS_FLOW_LIST_COLUMN_NAME_LABEL_TEAM'),
-			'team' => (
-				$flow->isDemo()
-					? Loc::getMessage('TASKS_FLOW_LIST_COLUMN_NAME_DEMO_PROJECT')
-					: Loc::getMessagePlural(
-						'TASKS_FLOW_LIST_COLUMN_NAME_TEAM',
-						$teamCount,
-						['{number}' => $teamCount]
-					)
-				),
 			'groupLabel' => Loc::getMessage('TASKS_FLOW_LIST_COLUMN_NAME_LABEL_GROUP'),
 			'hidden' => $project['hidden'],
 			'view' => $this->getProjectView((int)$params['userId'], $flow->getGroupId()),
@@ -67,7 +59,6 @@ final class Name extends Column
 		$this->resizeable = true;
 		$this->width = 230;
 
-		$this->teamPreloader = new TeamPreloader();
 		$this->projectPreloader = new ProjectPreloader();
 	}
 

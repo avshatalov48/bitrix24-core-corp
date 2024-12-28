@@ -4,11 +4,15 @@ import { CompanySelector, type Provider } from 'sign.v2.b2e.company-selector';
 import { DocumentValidation } from 'sign.v2.b2e.document-validation';
 import { RepresentativeSelector } from 'sign.v2.b2e.representative-selector';
 import type { BlankSelectorConfig } from 'sign.v2.blank-selector';
+import type { DocumentInitiatedType } from 'sign.v2.document-setup';
 import { Hint } from 'sign.v2.helper';
+import { DocumentMode } from 'sign.v2.sign-settings';
+import { type DocumentModeType, isTemplateMode } from 'sign.v2.sign-settings';
 
 const blockWarningClass = 'sign-document-b2e-parties__item_content--warning';
 
 type PartiesData = { entityType: string, entityId: ?number, role?: Role };
+type Options = BlankSelectorConfig & { hideValidationParty?: boolean, documentInitiatedType?: DocumentInitiatedType, documentMode?: DocumentModeType };
 
 export class Parties
 {
@@ -26,12 +30,18 @@ export class Parties
 
 	#hideEditor: boolean;
 
-	constructor(blankSelectorConfig: BlankSelectorConfig & { hideValidationParty?: boolean })
+	constructor(blankSelectorConfig: Options, hcmLinkAvailable: boolean)
 	{
-		const { region, hideValidationParty = true } = blankSelectorConfig;
+		const { region, hideValidationParty = true, documentInitiatedType, documentMode } = blankSelectorConfig;
 		this.#hideEditor = hideValidationParty ?? false;
 		this.#representativeSelector = new RepresentativeSelector({});
-		this.#companySelector = new CompanySelector({ region });
+		const isTemplate = isTemplateMode(documentMode || DocumentMode.document);
+		this.#companySelector = new CompanySelector({
+			region,
+			documentInitiatedType,
+			hcmLinkAvailable,
+			needOpenCrmSaveAndEditCompanySliders: isTemplate,
+		});
 		this.#documentValidation = new DocumentValidation();
 	}
 
@@ -43,6 +53,11 @@ export class Parties
 	setInitiatedByType(initiatedByType: string): void
 	{
 		this.#companySelector.setInitiatedByType(initiatedByType);
+	}
+
+	setLastSavedIntegrationId(integrationId: number | null): void
+	{
+		this.#companySelector.setLastSavedIntegrationId(integrationId);
 	}
 
 	loadCompany(companyUid: string): void
@@ -150,6 +165,11 @@ export class Parties
 			this.#setWarning(this.#ui.blocks.companyContent);
 			throw e;
 		}
+	}
+
+	getSelectedIntegrationId(): number | null
+	{
+		return this.#companySelector.getIntegrationId();
 	}
 
 	getSelectedProvider(): Provider | null

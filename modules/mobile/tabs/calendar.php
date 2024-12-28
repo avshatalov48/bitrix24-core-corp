@@ -31,14 +31,12 @@ class Calendar implements Tabable
 			!$enabled
 			|| !Loader::includeModule('calendar')
 			|| !$this->isCalendarMobileEnabled()
-			|| !ModuleManager::isModuleInstalled('socialnetwork')
-			|| !(new SocNetFeatures($this->context->userId))->isEnabledForGroup('calendar')
 		)
 		{
 			return false;
 		}
 
-		return !$this->context->extranet;
+		return !$this->context->extranet || $this->context->isCollaber;
 	}
 
 	public function getData(): ?array
@@ -64,6 +62,7 @@ class Calendar implements Tabable
 			'useLetterImage' => true,
 			'color' => '#F5A200',
 			'imageUrl' => 'favorite/icon-calendar.png',
+			'imageName' => $this->getIconId(),
 			'params' => [
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
 				'counter' => $this->getId(),
@@ -116,6 +115,7 @@ class Calendar implements Tabable
 		if (Mobile::getApiVersion() < self::MINIMAL_API_VERSION)
 		{
 			return [
+				'title' => $this->getTitle(),
 				'type' => 'component',
 				'name' => 'JSStackComponent',
 				'componentCode' => $this->getId(),
@@ -136,6 +136,7 @@ class Calendar implements Tabable
 		}
 
 		return [
+			'title' => $this->getTitle(),
 			'type' => 'component',
 			'name' => 'JSStackComponent',
 			'componentCode' => self::INITIAL_COMPONENT,
@@ -151,7 +152,10 @@ class Calendar implements Tabable
 					'objectName' => 'layout',
 				],
 			],
-			'params' => [],
+			'params' => [
+				'CAL_TYPE' => 'user',
+				'OWNER_ID' => $this->context->userId,
+			],
 		];
 	}
 

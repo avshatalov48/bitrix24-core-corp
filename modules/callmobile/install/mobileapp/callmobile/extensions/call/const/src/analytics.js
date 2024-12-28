@@ -25,14 +25,17 @@ jn.define('call/const/analytics', (require, exports, module) => {
 		clickUserFrame: 'click_user_frame',
 		handOn: 'hand_on',
 		clickChat: 'click_chat',
+		aiRecordStart: 'ai_record_start',
 	});
 
 	const AnalyticsTool = Object.freeze({
 		im: 'im',
+		ai: 'ai',
 	});
 
 	const AnalyticsCategory = Object.freeze({
 		call: 'call',
+		callsOperations: 'calls_operations',
 	});
 
 	const AnalyticsType = Object.freeze({
@@ -46,6 +49,7 @@ jn.define('call/const/analytics', (require, exports, module) => {
 		callPopup: 'call_popup',
 		chatList: 'chat_list',
 		chatWindow: 'chat_window',
+		callFollowup: 'call_followup',
 	});
 
 	const AnalyticsSubSection = Object.freeze({
@@ -74,6 +78,9 @@ jn.define('call/const/analytics', (require, exports, module) => {
 		lastUserLeft: 'last_user_left',
 		finishedForAll: 'finished_for_all',
 		privateToGroup: 'private_to_group',
+		errorAgreement: 'error_agreement',
+		errorLimitBaas: 'error_limit_baas',
+		errorB24: 'error_b24',
 	});
 
 	const AnalyticsDeviceStatus = Object.freeze({
@@ -81,6 +88,11 @@ jn.define('call/const/analytics', (require, exports, module) => {
 		videoOff: 'video_off',
 		micOn: 'mic_on',
 		micOff: 'mic_off',
+	});
+
+	const AnalyticsAIStatus = Object.freeze({
+		aiOn: 'ai_on',
+		aiOff: 'ai_off',
 	});
 
 	const Analytics = Object.freeze({
@@ -93,6 +105,7 @@ jn.define('call/const/analytics', (require, exports, module) => {
 		AnalyticsElement,
 		AnalyticsStatus,
 		AnalyticsDeviceStatus,
+		AnalyticsAIStatus,
 	});
 
 	module.exports = { Analytics };

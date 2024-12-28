@@ -25,6 +25,7 @@ class Administrator extends Base
 			return [];
 		}
 
+		$groups = [];
 		$adminGroups = UserGroupTable::getList([
 			'filter' => [
 				'=GROUP_ID' => 1

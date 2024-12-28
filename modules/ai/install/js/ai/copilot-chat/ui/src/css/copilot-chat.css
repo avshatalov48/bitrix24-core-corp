@@ -1,0 +1,111 @@
+.ai__copilot-chat {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	background-color: rgb(122, 144, 182);
+	background-image: url(../../image/pattern-white.svg), url(../../image/background-gradient.png);
+	background-position: right top, center center;
+	background-repeat: repeat, no-repeat;
+	background-size: auto, cover;
+}
+
+.ai__copilot-chat_header {
+	min-height: 52px;
+	background-color: #fff;
+}
+
+.ai__copilot-chat_main {
+	padding: 12px 14px 0 20px;
+	margin-bottom: 4px;
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	background-color: transparent;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+.ai__copilot-chat_main * {
+	overflow-anchor: none;
+}
+
+#anchor {
+	overflow-anchor: auto;
+	min-height: 1px;
+	height: 1px;
+}
+
+.ai__copilot-chat_main::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+.ai__copilot-chat_main::-webkit-scrollbar-thumb {
+	background: rgba(var(--ui-color-base-30-rgb), 0.6);
+	border-radius: 5px;
+}
+
+.ai__copilot-chat_main::-webkit-scrollbar-thumb:hover {
+	background: rgba(var(--ui-color-base-30-rgb), 1);
+	border-radius: 5px;
+}
+
+.ai__copilot-chat_main::-webkit-scrollbar-track {
+	background-color: transparent;
+	border: none;
+	border-radius: 10px;
+}
+
+.ai__copilot-chat_main::-webkit-scrollbar-button {
+	display: none;
+}
+
+.ai__copilot-chat_main-loader-container {
+	width: 100%;
+	flex: 1;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+}
+
+.ai__copilot-chat_footer {
+	box-sizing: border-box;
+	width: 100%;
+	height: auto;
+	padding: 0 20px 14px 20px;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: stretch;
+	background-color: transparent;
+}
+
+.ai__copilot-chat_warning-message {
+	margin-top: 6px;
+	color: rgba(var(--ui-color-on-primary-rgb), 0.6);
+	font-size: var(--ui-font-size-xs);
+}
+
+.ai__copilot-chat_warning-message a {
+	color: inherit;
+	text-decoration: underline;
+	text-decoration-color: rgba(var(--ui-color-on-primary-rgb), 0.2);
+	text-underline-position: under;
+}
+
+.ai__copilot-chat_warning-message a:hover,
+.ai__copilot-chat_warning-message a:focus,
+.ai__copilot-chat_warning-message a:active {
+	text-decoration: underline;
+	color: inherit;
+}
+
+
+.ai__copilot-chat_warning-message a:hover {
+	text-decoration-color: rgba(var(--ui-color-on-primary-rgb), 0.6)
+}
+
+.ai__copilot-chat_warning-message a:active {
+	text-decoration-color: rgba(var(--ui-color-on-primary-rgb), 1)
+}

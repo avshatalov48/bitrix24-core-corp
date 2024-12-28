@@ -1314,7 +1314,17 @@ class Crm
 
 		$fields = $this->getFields();
 
-		$entity = CrmCommon::get($type, $id, true);
+		$entity = CrmCommon::get(
+			$type,
+			$id,
+			true,
+			[
+				'NAME',
+				'LAST_NAME',
+				'SECOND_NAME',
+				'SOURCE_DESCRIPTION',
+			]
+		);
 
 		if (!empty($entity))
 		{
@@ -1554,7 +1564,16 @@ class Crm
 
 				if (!empty($entityID) && !empty($entityType))
 				{
-					$entityData = CrmCommon::get($entityType, $entityID, false);
+					$entityData = CrmCommon::get(
+						$entityType,
+						$entityID,
+						false,
+						[
+							'NAME',
+							'LAST_NAME',
+							'SECOND_NAME'
+						]
+					);
 
 					if (!empty($entityData) && (!empty($entityData['NAME']) || !empty($entityData['LAST_NAME']) || !empty($entityData['SECOND_NAME'])))
 					{

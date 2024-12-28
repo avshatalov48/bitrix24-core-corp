@@ -9,7 +9,7 @@ import { CopilotMenuItems } from './copilot-menu-items';
 import type { CopilotMenuItem } from 'ai.copilot';
 import type { EngineInfo } from '../types/engine-info';
 import type { Prompt } from 'ai.engine';
-import { Extension, Loc } from 'main.core';
+import { Loc } from 'main.core';
 import { CopilotProvidersMenuItems } from './copilot-providers-menu-items';
 import { Main as MainIconSet, Main } from 'ui.icon-set.api.core';
 
@@ -38,11 +38,6 @@ export class CopilotGeneralMenuItems extends CopilotMenuItems
 			favouritePrompts,
 		} = options;
 
-		const usePromptLibrary = Extension
-			.getSettings('ai.copilot.copilot-text-controller')
-			.get('isPromptLibraryEnable')
-		;
-
 		const favouriteSectionSeparator = favouritePrompts.length > 0
 			? CopilotGeneralMenuItems.getFavouritePromptsSeparatorMenuItem()
 			: null
@@ -63,7 +58,7 @@ export class CopilotGeneralMenuItems extends CopilotMenuItems
 			...imageMenuItem,
 			favouriteSectionSeparator,
 			...getGeneralMenuItemsFromPrompts(favouritePrompts, copilotTextController, true),
-			...(usePromptLibrary && copilotTextController.isReadonly() === false ? [
+			...(copilotTextController.isReadonly() === false ? [
 				{
 					code: 'user-prompt-separator',
 					separator: true,
@@ -83,7 +78,7 @@ export class CopilotGeneralMenuItems extends CopilotMenuItems
 							copilotTextController.getAnalytics().setCategoryPromptSaving();
 							copilotTextController.getAnalytics().sendEventOpenPromptLibrary();
 
-							BX.SidePanel.Instance.open('/bitrix/components/bitrix/ai.prompt.library/templates/.default/template.php', {
+							BX.SidePanel.Instance.open('/bitrix/components/bitrix/ai.prompt.library.grid/slider.php', {
 								cacheable: false,
 								events: {
 									onCloseStart: () => {
@@ -95,7 +90,7 @@ export class CopilotGeneralMenuItems extends CopilotMenuItems
 						}
 						else
 						{
-							window.location.href = '/bitrix/components/bitrix/ai.prompt.library/templates/.default/template.php';
+							window.location.href = '/bitrix/components/bitrix/ai.prompt.library.grid/slider.php';
 						}
 					},
 				},

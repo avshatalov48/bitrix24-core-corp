@@ -1730,7 +1730,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 				if (!this.isHasPermissionToMoveFailureStages())
 				{
 					this.showMissPermissionError();
-					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR_PERMISSIONS);
 
 					return;
 				}
@@ -1749,7 +1749,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 				if (!this.isHasPermissionToMove(stepId))
 				{
 					this.showMissPermissionError();
-					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR_PERMISSIONS);
 
 					return;
 				}
@@ -1763,7 +1763,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 					const finalScript = this.getSetting('finalScript', '');
 					if (finalScript !== '')
 					{
-						this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+						this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
 						eval(finalScript);
 
 						return;
@@ -1772,7 +1772,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 					const finalUrl = this.getSetting('finalUrl', '');
 					if (finalUrl !== '')
 					{
-						this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+						this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
 						window.location = finalUrl;
 
 						return;

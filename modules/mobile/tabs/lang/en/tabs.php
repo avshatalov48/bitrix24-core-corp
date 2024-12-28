@@ -1,7 +1,7 @@
 <?php
+$MESS["TAB_DISK_NAVIGATION_TAB_COMPANY_FILES"] = "Company files";
 $MESS["TAB_DISK_NAVIGATION_TAB_MY_FILES"] = "My files";
 $MESS["TAB_DISK_NAVIGATION_TAB_RECENT"] = "Recent items";
-$MESS["TAB_DISK_NAVIGATION_TAB_SHARED_FILES"] = "Shared files";
 $MESS["TAB_NAME_CALENDAR"] = "Calendar";
 $MESS["TAB_NAME_CALENDAR_SHORT"] = "Calendar";
 $MESS["TAB_NAME_CATALOG_STORE"] = "Inventory management";
@@ -14,7 +14,8 @@ $MESS["TAB_NAME_IM_RECENT"] = "Chats";
 $MESS["TAB_NAME_IM_RECENT_FULL"] = "Chats and Calls";
 $MESS["TAB_NAME_IM_RECENT_SHORT"] = "Chats";
 $MESS["TAB_NAME_MORE"] = "Menu";
-$MESS["TAB_NAME_MORE_SHORT"] = "Menu";
+$MESS["TAB_NAME_MORE_SHORT"] = "More";
+$MESS["TAB_NAME_MORE_SHORT_MSGVER_1"] = "More";
 $MESS["TAB_NAME_NEWS"] = "Feed";
 $MESS["TAB_NAME_NEWS2"] = "Feed";
 $MESS["TAB_NAME_NEWS_SHORT"] = "Feed";

@@ -41,7 +41,7 @@ class DefaultTaskAdd implements FlowCommentInterface
 			return [[$messageKey, []]];
 		}
 
-		$replace = ['#NEW_VALUE#' => $this->parseUserToLinked($responsibleId)];
+		$replace = ['#NEW_VALUE#' => $this->getUserBBCodes($responsibleId)];
 
 		return [[$messageKey, $replace]];
 	}

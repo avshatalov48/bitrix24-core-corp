@@ -8,6 +8,7 @@ return [
 		'utils/validation',
 		'utils/enums/style',
 		'ui-system/blocks/icon',
+		'layout/pure-component',
 	],
 	'bundle' => [
 		'./src/design-enum',

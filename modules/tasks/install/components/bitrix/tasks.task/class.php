@@ -33,6 +33,7 @@ use Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\Integration\SocialNetwork\Collab\Provider\CollabProvider;
 use Bitrix\Tasks\Access\TemplateAccessController;
 use Bitrix\Tasks\AccessDeniedException;
 use Bitrix\Tasks\Action\Filter\BooleanFilter;
@@ -42,6 +43,7 @@ use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListConverterHelper;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
+use Bitrix\Tasks\Component\Task\TasksCollaberFormState;
 use Bitrix\Tasks\Control\Conversion\Converter;
 use Bitrix\Tasks\Flow\Access\FlowAccessController;
 use Bitrix\Tasks\Flow\Access\FlowAction;
@@ -56,7 +58,9 @@ use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Forum\Task\Comment;
 use Bitrix\Tasks\Integration\Forum\Task\Topic;
 use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Integration\SocialNetwork\Collab\Provider\CollabDefaultProvider;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Tasks\Integration\Extranet;
 use Bitrix\Tasks\Internals\Counter\Collector\UserCollector;
 use Bitrix\Tasks\Internals\Counter\EffectiveTable;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
@@ -104,6 +108,7 @@ use Bitrix\Main\Engine\CurrentUser;
 
 Loc::loadMessages(__FILE__);
 
+require_once(__DIR__ . '/class/taskscollaberformstate.php');
 require_once(__DIR__ . '/class/tasksflowformstate.php');
 require_once(__DIR__ . '/class/taskstaskformstate.php');
 require_once(__DIR__ . '/class/taskstaskhitstatestructure.php');
@@ -325,6 +330,11 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 					new BooleanFilter(),
 				],
 			],
+			'take' => [
+				'+prefilters' => [
+					new BooleanFilter(),
+				],
+			],
 		];
 	}
 
@@ -441,11 +451,18 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		if ($isFlowForm)
 		{
 			TasksFlowFormState::set($state);
+
+			return;
 		}
-		else
+
+		if(Extranet\User::isCollaber($this->userId))
 		{
-			TasksTaskFormState::set($state);
+			TasksCollaberFormState::set($state);
+
+			return;
 		}
+
+		TasksTaskFormState::set($state);
 	}
 
 	public function moveStageAction($taskId, $stageId, $before = 0, $after = 0)
@@ -822,6 +839,32 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		if ($timer->stop($taskId) === false)
 		{
 			$this->errorCollection->add('ACTION_FAILED', Loc::getMessage('TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE'));
+		}
+
+		return $result;
+	}
+
+	public function getTaskFromTimerAction()
+	{
+		$timer = CTaskTimerManager::getInstance($this->userId);
+		$lastTimer = $timer->getRunningTask();
+
+		$result = [];
+
+		if (isset($lastTimer['TASK_ID']))
+		{
+			$task = TaskRegistry::getInstance()
+				->load($lastTimer['TASK_ID'])
+				->get($lastTimer['TASK_ID'])
+			;
+
+			if (null !== $task)
+			{
+				$result = [
+					'id' => $task['ID'],
+					'title' => $task['TITLE'],
+				];
+			}
 		}
 
 		return $result;
@@ -1631,6 +1674,43 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		return $result;
 	}
 
+	public function takeAction($taskId, $parameters = [])
+	{
+		$taskId = (int)$taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_TAKE, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		try
+		{
+			$task = CTaskItem::getInstance($taskId, $this->userId);
+			$task->takeExecution();
+		}
+		catch (Bitrix\Tasks\Exception $e)
+		{
+			$this->errorCollection->add('ACTION_ERROR.UNEXPECTED_ERROR', $e->getFirstErrorMessage(), false,
+				['ui' => 'notification']);
+			return $result;
+		}
+
+		return $result;
+	}
+
+
 	public function completeAction($taskId, $parameters = [])
 	{
 		$taskId = (int)$taskId;
@@ -1875,6 +1955,8 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			'RETURN_ENTITY' => true,
 		]);
 
+		$result['DATA']['USER_TYPE'] = \Bitrix\Tasks\Integration\Intranet\User::getType($this->userId);
+
 		return [
 			'DATA' => $result['DATA'],
 			'CAN' => $result['CAN'],
@@ -1924,6 +2006,8 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			'ERRORS' => $this->errors,
 			'RETURN_ENTITY' => true,
 		]);
+
+		$result['DATA']['USER_TYPE'] = \Bitrix\Tasks\Integration\Intranet\User::getType($this->userId);
 
 		return [
 			'DATA' => $result['DATA'],
@@ -3068,7 +3152,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		if ($this->formData !== false) // is form submitted
 		{
 			// applying form data on top, what changed
-			$data['DATA'] = Task::mergeData($this->formData, $data['DATA']);
+			$data['DATA'] = Task::mergeData($this->formData, $data['DATA'], false);
 		}
 
 		$group = Workgroup::getById($data['DATA']['GROUP_ID']);
@@ -3130,7 +3214,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		if ($this->formData !== false) // is form submitted
 		{
 			// applying form data on top, what changed
-			$data['DATA'] = Task::mergeData($this->formData, $data['DATA']);
+			$data['DATA'] = Task::mergeData($this->formData, $data['DATA'], false);
 
 			$group = Workgroup::getById($data['DATA']['SE_PROJECT']['ID'] ?? 0);
 			$this->arParams['IS_SCRUM_TASK'] = ($group && $group->isScrumProject());
@@ -3291,12 +3375,39 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 	private function autoChangeTaskData(array $data): array
 	{
 		$data = $this->autoChangeOriginator($data);
+		$data = $this->autoChangeCollab($data);
 
 		if ($this->request['TEMPLATE'])
 		{
 			$data = $this->autoChangeResponsible($data);
 			$data = $this->autoChangeParent($data);
 			$data = $this->autoChangeGroup($data);
+		}
+
+		return $data;
+	}
+
+	private function autoChangeCollab(array $data): array
+	{
+		if (!empty($data[Task\Project::getCode(true)]))
+		{
+			return $data;
+		}
+
+		if (!$this->arResult['isCollaber'])
+		{
+			return $data;
+		}
+
+		$defaultCollabId = $this->arResult['defaultCollab']?->getId();
+		if ($defaultCollabId === null)
+		{
+			return $data;
+		}
+
+		if (Group::can($defaultCollabId, Group::ACTION_CREATE_TASKS, $this->userId))
+		{
+			$data[Task\Project::getCode(true)] = ['ID' => $defaultCollabId];
 		}
 
 		return $data;
@@ -3410,10 +3521,8 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		// todo: if we have not done any redirect after doing some actions, better re-check task accessibility here
 
 		//TasksTaskFormState::reset();
-		$this->arResult['COMPONENT_DATA']['STATE'] = $this->isFlowForm
-			? static::getFlowState()
-			: static::getState()
-		;
+		$this->arResult['COMPONENT_DATA']['STATE'] = $this->getComponentState();
+
 		$this->arResult['COMPONENT_DATA']['OPEN_TIME'] = (new DateTime())->getTimestamp();
 		$this->arResult['COMPONENT_DATA']['CALENDAR_EVENT_ID'] = $this->request->get('CALENDAR_EVENT_ID');
 		$this->arResult['COMPONENT_DATA']['CALENDAR_EVENT_DATA'] = $this->request->get('CALENDAR_EVENT_DATA');
@@ -3507,6 +3616,21 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		{
 			$this->collectFlowData();
 		}
+	}
+
+	private function getComponentState(): array
+	{
+		if ($this->isFlowForm)
+		{
+			return static::getFlowState();
+		}
+
+		if (Extranet\User::isCollaber($this->userId))
+		{
+			return static::getCollaberState();
+		}
+
+		return static::getState();
 	}
 
 	/**
@@ -3695,7 +3819,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		$this->arResult['AUX_DATA']['MAIL'] = [
 			//'FORWARD' => \Bitrix\Tasks\Integration\Mail\Task::getReplyTo($this->userId, $this->arResult['DATA']['TASK']['ID'], 'dummy', SITE_ID)
 		];
-		$this->arResult['AUX_DATA']['DISK_FOLDER_ID'] = Integration\Disk::getFolderForUploadedFiles($this->userId)->getData()['FOLDER_ID'];
+		$this->arResult['AUX_DATA']['DISK_FOLDER_ID'] = Integration\Disk::getFolderForUploadedFiles($this->userId)->getData()['FOLDER_ID'] ?? null;
 		$this->arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'] = TaskLimit::isLimitExceeded();
 
 		$taskRecurringEnabled = Bitrix24::checkFeatureEnabled(
@@ -3951,13 +4075,24 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			$this->userId,
 			$this->users2Get
 		);
-		$this->arResult['DATA']['GROUP'] = Group::getData($this->groups2Get, ['IMAGE_ID', 'AVATAR_TYPE']);
+		$this->arResult['DATA']['GROUP'] = Group::getData($this->groups2Get, ['IMAGE_ID', 'AVATAR_TYPE', 'TYPE'], ['WITH_CHAT' => true]);
 		$this->arResult['DATA']['USER'] = User::getData($this->users2Get);
-		$this->arResult['DATA']['FLOW'] = $this->getFlowData($this->arResult['DATA']['TASK']['FLOW_ID'] ?? 0);
+
+		$taskId = $this->task?->getId() ?? 0;
+		$flowId = $this->getFlowId($taskId);
+		$this->arResult['DATA']['FLOW'] = $this->getFlowData($flowId);
+
 		$this->arResult['DATA']['FLOWS'] = $this->getFlowsData();
 
 		$this->getCurrentUserData();
 		$this->checkIsNetworkTask();
+	}
+
+	private function getFlowId(int $taskId = 0): int
+	{
+		$request = \Bitrix\Main\Context::getCurrent()?->getRequest();
+
+		return (new FlowRequestService($request))->getFlowIdFromRequest($taskId);
 	}
 
 	protected function getFlowData(int $flowId): ?array
@@ -3972,9 +4107,13 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			return null;
 		}
 
-		$flow = \Bitrix\Tasks\Flow\FlowRegistry::getInstance()->get($flowId);
+		$flowProvider = new FlowProvider();
 
-		if (!$flow)
+		try
+		{
+			$flow = $flowProvider->getFlow($flowId);
+		}
+		catch (FlowNotFoundException)
 		{
 			return null;
 		}
@@ -4012,6 +4151,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			'ID' => $flow->getId(),
 			'URL' => $flowUri->getUri(),
 			'SHOW_AHA_START_FLOW_TASK' => $showAhaStartFlowTask,
+			'EFFICIENCY' => $flowProvider->getEfficiency($flow),
 		];
 	}
 
@@ -4137,6 +4277,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		$this->prepareBackUrl();
 		$this->prepareCopilotParams();
 		$this->prepareFlowParams();
+		$this->prepareCollabParams();
 		$this->prepareImmutableParams();
 	}
 
@@ -4526,6 +4667,11 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		return TasksFlowFormState::get();
 	}
 
+	public static function getCollaberState(): array
+	{
+		return TasksCollaberFormState::get();
+	}
+
 	/**
 	 * @param int $taskId
 	 * @param array $data
@@ -4786,9 +4932,17 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			->whereId($this->flows2Get, 'in');
 		$provider = new FlowProvider();
 
+		$pathToFlows = CComponentEngine::makePathFromTemplate(
+			RouteDictionary::PATH_TO_FLOWS,
+			['user_id' => $this->userId]
+		);
+
 		try
 		{
-			return $provider->getList($query)->toArray();
+			$flowsData = $provider->getList($query)->toArray();
+			$flowsData['pathToFlows'] = $pathToFlows;
+
+			return $flowsData;
 		}
 		catch (ProviderException)
 		{
@@ -4804,10 +4958,65 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 	private function prepareFlowParams(): void
 	{
 		$flowId = (new FlowRequestService($this->request))->getFlowIdFromRequest((int)$this->task?->getId());
-		$this->isFlowForm = $flowId > 0 && !$this->isView();
+		$this->isFlowForm = $flowId > 0;
 		$this->arResult['flowId'] = $flowId;
 		$this->arResult['isFlowForm'] = $this->isFlowForm;
+		$this->arResult['isExtranetUser'] = Extranet\User::isExtranet($this->userId);
 		$this->arResult['noFlow'] = (bool)$this->request->get('NO_FLOW');
+
+		$this->arResult['canEditTask'] = true;
+
+		$taskId = (int)$this->task?->getId();
+		$isNewTask = $taskId === 0;
+		if (!$isNewTask)
+		{
+			$this->arResult['canEditTask'] = TaskAccessController::can(
+				$this->userId,
+				ActionDictionary::ACTION_TASK_EDIT,
+				$taskId
+			);
+		}
+	}
+
+	private function prepareCollabParams(): void
+	{
+		$this->arResult['isCollaber'] = Integration\Extranet\User::isCollaber($this->userId);
+		$this->arResult['isNeedShowPreselectedCollabHint'] = false;
+		$this->arResult['defaultCollab'] = null;
+
+		if ($this->arResult['isCollaber'])
+		{
+			$this->arResult['defaultCollab'] = CollabDefaultProvider::getInstance()?->getCollab($this->userId);
+			$this->arResult['isNeedShowPreselectedCollabHint'] = $this->isNeedShowPreselectedCollabHint();
+		}
+	}
+
+	private function isNeedShowPreselectedCollabHint(): bool
+	{
+		if (!$this->arResult['defaultCollab'])
+		{
+			return false;
+		}
+
+		$isNewTask = (int)$this->task?->getId() <= 0;
+		if (!$isNewTask)
+		{
+			return false;
+		}
+
+		$canCreateTaskInDefaultCollab = Group::can(
+			$this->arResult['defaultCollab']->getId(),
+			Group::ACTION_CREATE_TASKS,
+			$this->userId
+		);
+		if (!$canCreateTaskInDefaultCollab)
+		{
+			return false;
+		}
+
+		$countCollabByCollaber = (int)CollabProvider::getInstance()?->getCountByUserId($this->userId);
+
+		return $countCollabByCollaber > 1;
 	}
 
 	private function prepareImmutableParams(): void

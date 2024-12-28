@@ -7,6 +7,7 @@ abstract class DatasetField
 	protected const TYPE = null;
 	protected bool $isPrimary = false;
 	protected bool $isMultiple = false;
+	protected bool $isSystem = true;
 	protected bool $metric = false;
 	protected string $separator = ', ';
 	protected mixed $callback = null;
@@ -121,6 +122,19 @@ abstract class DatasetField
 	}
 
 	/**
+	 * Mark field as `system` to differentiate from user fields. It`s true by default.
+	 *
+	 * @param bool $isSystem
+	 * @return $this
+	 */
+	public function setSystem(bool $isSystem = true): static
+	{
+		$this->isSystem = $isSystem;
+
+		return $this;
+	}
+
+	/**
 	 * Mark field as multiple for concatenation field values. It`s false by default
 	 *
 	 * @param bool $multiple
@@ -152,7 +166,7 @@ abstract class DatasetField
 	 * @param string $separator
 	 * @return $this
 	 */
-	public function setConcatenationSeparator(string $separator): static
+	public function setSeparator(string $separator): static
 	{
 		$this->separator = $separator;
 
@@ -220,6 +234,7 @@ abstract class DatasetField
 			'FIELD_TYPE' => static::TYPE,
 			'FIELD_DESCRIPTION' => $this->getDescription(),
 			'FIELD_DESCRIPTION_FULL' => $this->getDescriptionFull(),
+			'IS_SYSTEM' => $this->isSystem ? 'Y' : 'N',
 		];
 
 		if ($this->isPrimary)

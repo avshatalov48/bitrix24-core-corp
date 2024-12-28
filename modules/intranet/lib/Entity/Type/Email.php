@@ -5,7 +5,7 @@ namespace Bitrix\Intranet\Entity\Type;
 class Email
 {
 	public function __construct(
-		private string $email
+		private readonly string $email
 	)
 	{}
 

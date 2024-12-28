@@ -42,7 +42,7 @@ export default class B2eReference extends Dummy
 		{
 			this.#content = Tag.render`
 				<div class="sign-document__block-content_member-nodata">
-					${Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE')}
+					${Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E')}
 				</div>
 			`;
 		}
@@ -60,7 +60,7 @@ export default class B2eReference extends Dummy
 									'#CATEGORY#': categoryCaption,
 									'#FIELD#': fieldCaption,
 								})
-								: Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE'),
+								: Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E'),
 						);
 						const blockLayout = this.block.getLayout();
 						const resizeNode = blockLayout.querySelector('.--b2ereference');
@@ -89,7 +89,7 @@ export default class B2eReference extends Dummy
 		const text =
 			Type.isStringFilled(value)
 				? value
-				: Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE')
+				: Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1')
 		;
 		this.#content.textContent = text;
 		this.#content.title = text;
@@ -101,11 +101,11 @@ export default class B2eReference extends Dummy
 		{
 			return Promise.resolve({
 				categoryCaption: '',
-				fieldCaption: Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE'),
+				fieldCaption: Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1'),
 			});
 		}
 
-		const defaultCaption = Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE');
+		const defaultCaption = Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1');
 		if (B2eReference.#loadFieldsPromise === null)
 		{
 			B2eReference.#loadFieldsPromise = FieldSelector.loadFieldList({});
@@ -157,7 +157,7 @@ export default class B2eReference extends Dummy
 		const actionButton = this.#actionButton.querySelector('button');
 		actionButton.textContent = Type.isStringFilled(label)
 			? label
-			: Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE')
+			: Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1')
 		;
 	}
 
@@ -178,28 +178,16 @@ export default class B2eReference extends Dummy
 					'+categories': [
 						'PROFILE',
 					],
-					'+fields': [
-						'list',
-						'string',
-						// 'date',
-						'typed_string',
-						'text',
-						//'datetime',
-						'enumeration',
-						'address',
-						'url',
-						'double',
-						'integer',
-						'snils',
-					],
+					'+fields': this.#getSelectorFieldTypes(),
 					'-fields': [
 						({ entity_field_name: fieldName }) => this.#getFieldsNameBlackList().has(fieldName),
 					],
 				},
-				title: Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE'),
+				title: Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1'),
 				categoryCaptions: {
 					'PROFILE': Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E')
 				},
+				fieldsFactory: this.#getSelectorFieldsFactory(),
 			});
 			selector.subscribe('onSliderCloseComplete', (event) => this.#onFieldSelectorCloseComplete(event));
 
@@ -274,5 +262,43 @@ export default class B2eReference extends Dummy
 	getStyles(): { [p: string]: string }
 	{
 		return { ...super.getStyles(), ...B2eReference.defaultTextBlockPaddingStyles };
+	}
+
+	#getSelectorFieldTypes(): string[]
+	{
+		const types = [
+			'list',
+			'string',
+			'date',
+			'typed_string',
+			'text',
+			'datetime',
+			'enumeration',
+			'url',
+			'double',
+			'integer',
+			'snils',
+		];
+
+		if (!this.block.blocksManager.isTemplateMode)
+		{
+			types.push('address');
+		}
+
+		return types;
+	}
+
+	#getSelectorFieldsFactory(): Object | null
+	{
+		if (this.block.blocksManager.isTemplateMode)
+		{
+			return {
+				filter: (fields) => fields.filter((field) => Type.isObject(field)
+					&& Type.isStringFilled(field.name)
+					&& ['list', 'string', 'date', 'enumeration'].includes(field.name)),
+			};
+		}
+
+		return null;
 	}
 }

@@ -2,6 +2,9 @@
 $MESS["MAIN_KANBAN_NOTIFY_CHANGE_DEADLINE"] = "Task deadline changed to #date#";
 $MESS["MAIN_KANBAN_NOTIFY_REMOVE_DEADLINE"] = "Task deadline was removed";
 $MESS["MAIN_KANBAN_TITLE_PLACEHOLDER"] = "Name #tag";
+$MESS["TASKS_KANBAN_COLLAB_NOTIFY_BUTTON"] = "OK";
+$MESS["TASKS_KANBAN_COLLAB_NOTIFY_HEADER"] = "Insufficient permission";
+$MESS["TASKS_KANBAN_COLLAB_NOTIFY_TEXT"] = "Insufficient permission to edit stages. Ask the collab owner to add or change the kanban stages.";
 $MESS["TASKS_KANBAN_DIABLE_SORT_TOOLTIP"] = "You don't have permissions to edit project preferences";
 $MESS["TASKS_KANBAN_ITEM_STORY_POINTS_TITLE"] = "Story Points";
 $MESS["TASKS_KANBAN_ME_DISABLE_COMPLETE"] = "Task has been closed. Resume it to move it to another column.";

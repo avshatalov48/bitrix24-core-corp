@@ -23,12 +23,12 @@ class RegistrationService
 			"UF_DEPARTMENT" => $user->getDepartmetnsIds() ? $user->getDepartmetnsIds()[0] : "",
 			"SITE_ID" => SITE_ID
 		]);
-		$arGroups = \CIntranetInviteDialog::getUserGroups($siteIdByDepartmentId, $user->isExtranet());
+		$groupsIds = \CIntranetInviteDialog::getUserGroups($siteIdByDepartmentId, $user->isExtranet());
 		$user->setConfirmCode(Random::getString(8, true));
-		$user->setGroupIds($arGroups);
+		$user->setGroupIds($groupsIds);
 
 		//TODO: extract to UserRepository class
-		$arUser = [
+		$userData = [
 			'LOGIN' => $user->getLogin() ?? $user->getEmail(),
 			'EMAIL' => $user->getEmail() ?? null,
 			'PASSWORD' => \CUser::GeneratePasswordByPolicy($user->getGroupIds()),
@@ -43,26 +43,26 @@ class RegistrationService
 
 		if ($user->getPhoneNumber())
 		{
-			$arUser['PHONE_NUMBER'] = $user->getPhoneNumber();
-			$arUser['PERSONAL_MOBILE'] = $user->getPhoneNumber();
+			$userData['PHONE_NUMBER'] = $user->getPhoneNumber();
+			$userData['PERSONAL_MOBILE'] = $user->getPhoneNumber();
 		}
 
 		if ($user->getActive())
 		{
-			$arUser['ACTIVE'] = $user->getPhoneNumber() ? 'Y' : 'N';
+			$userData['ACTIVE'] = $user->getPhoneNumber() ? 'Y' : 'N';
 		}
 
 		if($user->getXmlId())
 		{
-			$arUser['XML_ID'] = $user->getXmlId();
+			$userData['XML_ID'] = $user->getXmlId();
 		}
 
-		$obUser = new \CUser;
-		$res = $obUser->Add($arUser);
+		$oldUserApi = new \CUser;
+		$result = $oldUserApi->Add($userData);
 		$errorCollection = new ErrorCollection();
-		if ($res === false)
+		if ($result === false)
 		{
-			foreach(explode('<br>', $obUser->LAST_ERROR) as $message)
+			foreach(explode('<br>', $oldUserApi->LAST_ERROR) as $message)
 			{
 				$errorCollection->setError(new Error($message));
 			}
@@ -70,12 +70,12 @@ class RegistrationService
 			throw new CreationFailedException($errorCollection);
 		}
 
-		$userFields = $arUser;
-		$userFields['ID'] = $res;
-		$user->setId((int)$res);
-		foreach (GetModuleEvents('intranet', 'OnRegisterUser', true) as $arEvent)
+		$userFields = $userData;
+		$userFields['ID'] = $result;
+		$user->setId((int)$result);
+		foreach (GetModuleEvents('intranet', 'OnRegisterUser', true) as $event)
 		{
-			ExecuteModuleEventEx($arEvent, [ $userFields ]);
+			ExecuteModuleEventEx($event, [ $userFields ]);
 		}
 
 		return $user;
@@ -87,7 +87,7 @@ class RegistrationService
 		$invitationService = new InviteService();
 		try
 		{
-			$invitation = $invitationService->inviteUser($user, InvitationType::EMAIL, $formType);
+			$invitation = $invitationService->inviteUser($user, $type, $formType);
 			(new Event(
 				'intranet',
 				'onAfterUserRegistration',

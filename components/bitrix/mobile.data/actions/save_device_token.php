@@ -54,9 +54,9 @@ elseif ($_REQUEST["mobile_action"] == "save_device_token")
 				: null;
 			$tokenVoip = $_REQUEST["device_token_voip"] ?? null;
 			$token = $_REQUEST["device_token"] ?? null;
-
-			$dbres = CPullPush::GetList(array(), array("DEVICE_ID" => $uuid));
-			$arToken = $dbres->Fetch();
+			$tokenData = PushTable::getList([
+				"filter" => ["=DEVICE_ID" => $uuid]
+			])->fetch();
 			$baseAppId = "Bitrix24";
 			if( \Bitrix\Main\Config\Option::get('mobile', 'ru_app_enable', 'N') == 'Y')
 			{
@@ -87,9 +87,9 @@ elseif ($_REQUEST["mobile_action"] == "save_device_token")
 				$data["type"] = $voipType;
 			}
 
-			if (!empty($arToken["ID"]))
+			if (!empty($tokenData["ID"]))
 			{
-				$res = CPullPush::Update($arToken["ID"], $fields);
+				$res = CPullPush::Update($tokenData["ID"], $fields);
 				$data["register_token"] = "updated";
 			}
 			else

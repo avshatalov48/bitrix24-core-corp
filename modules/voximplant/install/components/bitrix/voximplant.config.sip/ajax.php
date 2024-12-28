@@ -91,6 +91,13 @@ class VoximplantSipAjaxController extends \Bitrix\Main\Engine\Controller
 
 	public function deleteSipConnectionAction($configId)
 	{
+		$permissions = \Bitrix\Voximplant\Security\Permissions::createWithCurrentUser();
+		if(!$permissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_LINE,\Bitrix\Voximplant\Security\Permissions::ACTION_MODIFY))
+		{
+			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage("VI_CONFIG_SIP_ACCESS_DENIED"));
+			return null;
+		}
+
 		$viSip = new CVoxImplantSip();
 		$viSip->Delete($configId);
 	}

@@ -22,10 +22,12 @@ return [
 		'im:messenger/lib/feature',
 		'im:messenger/lib/permission-manager',
 		'im:messenger/lib/helper',
+		'im:messenger/lib/emitter',
 		'im:messenger/lib/ui/notification',
 		'im:messenger/lib/ui/alert',
 		'im:messenger/controller/dialog/lib/message-create-menu',
 		'im:messenger/controller/dialog/lib/helper/text',
+		'im:messenger/controller/dialog/lib/select-manager',
 		'im:messenger/provider/service',
 	],
 	'bundle' => [

@@ -160,8 +160,7 @@ abstract class Base extends Crm\Controller\Base
 		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
 
 		return
-			!$payment->isPaid()
-			&& Crm\Order\Permissions\Payment::checkReadPermission($payment->getId(), $userPermissions)
+			Crm\Order\Permissions\Payment::checkReadPermission($payment->getId(), $userPermissions)
 		;
 	}
 

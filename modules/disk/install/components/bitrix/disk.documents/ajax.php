@@ -193,15 +193,22 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 			return $result;
 		}
 
-		foreach ($trackedObjectIds as $trackedObjectId => $actions)
+		/** @var Disk\Document\TrackedObject[] $batchById */
+		$batchById = Disk\Document\TrackedObject::loadBatchById(
+			array_keys($trackedObjectIds),
+			[Disk\Document\TrackedObject::REF_OBJECT],
+		);
+		foreach ($batchById as $trackedObject)
 		{
+			$trackedObjectId = $trackedObject->getId();
+			$actions = $trackedObjectIds[$trackedObjectId] ?? [];
+
 			$result[$trackedObjectId] = [
 				'shared' => null,
 				'externalLink' => null,
 			];
 
-			$trackedObject = Disk\Document\TrackedObject::getById((int)$trackedObjectId);
-			if (!$trackedObject || !$trackedObject->canRead($userId))
+			if (!$trackedObject->canRead($userId))
 			{
 				continue;
 			}

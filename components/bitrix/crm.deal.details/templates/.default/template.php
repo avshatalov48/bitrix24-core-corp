@@ -82,7 +82,6 @@ $APPLICATION->IncludeComponent(
 		'CONVERSION_LABEL_ID' => $arResult['CONVERSION_LABEL_ID'],
 		'CONVERSION_BUTTON_ID' => $arResult['CONVERSION_BUTTON_ID'],
 		'IS_RECURRING' => $isRecurring ? 'Y' : 'N' ,
-		'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'] ?? [],
 		'TYPE' => 'details',
 		'SCRIPTS' => array(
 			'DELETE' => 'BX.Crm.EntityDetailManager.items["'.CUtil::JSEscape($guid).'"].processRemoval();',
@@ -154,7 +153,8 @@ $APPLICATION->IncludeComponent(
 			'ANALYTICS' => $arParams['EXTRAS']['ANALYTICS'] ?? [],
 		],
 		'ANALYTIC_PARAMS' => ['deal_category' => $arResult['CATEGORY_ID']],
-		'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE'] ?? ''
+		'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE'] ?? '',
+		'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'] ?? [],
 	]
 );
 

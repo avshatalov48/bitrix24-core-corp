@@ -9,18 +9,17 @@ use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
 
 class ProjectLimit extends Limit
 {
-	public static function isFeatureEnabled()
+	public static function isFeatureEnabled(int $groupId = 0): bool
 	{
 		if (!Loader::includeModule('socialnetwork'))
 		{
 			return true;
 		}
 
-		if (Feature::isFeatureEnabled(Feature::PROJECTS_GROUPS))
+		if (Feature::isFeatureEnabled(Feature::PROJECTS_GROUPS, $groupId))
 		{
 			return true;
 		}
-
 
 		return false;
 	}

@@ -94,6 +94,7 @@ class Crm implements Tabable
 			'min_api_version' => self::MINIMAL_API_VERSION,
 			'color' => '#00ace3',
 			'imageUrl' => 'favorite/icon-crm.png',
+			'imageName' => $this->getIconId(),
 			'params' => [
 				'id' => 'crm_tabs',
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),

@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,ui_counterpanel,main_core,main_core_events) {
 	'use strict';
@@ -292,9 +293,6 @@ this.BX = this.BX || {};
 	  });
 	}
 	function _onPullEvent2(event) {
-	  if (!babelHelpers.classPrivateFieldGet(this, _isTabActive)) {
-	    return;
-	  }
 	  var _event$getData = event.getData(),
 	    _event$getData2 = babelHelpers.slicedToArray(_event$getData, 2),
 	    command = _event$getData2[0],
@@ -303,6 +301,9 @@ this.BX = this.BX || {};
 	    return;
 	  }
 	  babelHelpers.classPrivateFieldSet(this, _lastPullEventData, params);
+	  if (!babelHelpers.classPrivateFieldGet(this, _isTabActive)) {
+	    return;
+	  }
 	  _classPrivateMethodGet$1(this, _tryRecalculate, _tryRecalculate2).call(this, params);
 	}
 	function _tryRecalculate2(params) {

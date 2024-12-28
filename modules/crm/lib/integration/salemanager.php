@@ -1,8 +1,7 @@
 <?php
 namespace Bitrix\Crm\Integration;
-use Bitrix\Main;
-use Bitrix\Sale;;
-use Bitrix\Crm;
+
+use Bitrix\Catalog;
 use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\RequisiteAddress;
@@ -252,26 +251,27 @@ class SaleManager
 		if ($languageID == 'ru')
 		{
 			\Bitrix\Main\Config\Option::set('crm', 'check_vat_zero', '-2', '');
-			$resVats = \CCatalogVat::GetListEx(
-				array(),
-				array('RATE' => 0),
-				false,
-				false,
-				array('ID')
-			);
-			if (!($vatInfo = $resVats->Fetch()))
+			$vat = Catalog\Model\Vat::getRow([
+				'select' => [
+					'ID',
+				],
+				'filter' => [
+					'=EXCLUDE_VAT' => 'Y',
+				],
+			]);
+			if ($vat === null)
 			{
 				\Bitrix\Main\Config\Option::set('crm', 'check_vat_zero', '-3', '');
-				$fields = array(
+				$result = Catalog\Model\Vat::add([
 					'ACTIVE' => 'Y',
 					'SORT' => '100',
 					'NAME' => Loc::getMessage('CRM_VAT_ZERO', null, $languageID),
-					'RATE' => '0.0'
-				);
-				$vatID = \CCatalogVat::Add($fields);
-				if ($vatID)
+					'EXCLUDE_VAT' => 'Y',
+					'RATE' => null,
+				]);
+				if ($result->isSuccess())
 				{
-					$vatID = (int)$vatID;
+					$vatID = (int)$result->getId();
 				}
 				else
 				{

@@ -125,6 +125,11 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 				result.color = user.color;
 			}
 
+			if (Type.isStringFilled(user.type))
+			{
+				result.type = user.type;
+			}
+
 			if (Array.isArray(user.departments))
 			{
 				result.departments = [];

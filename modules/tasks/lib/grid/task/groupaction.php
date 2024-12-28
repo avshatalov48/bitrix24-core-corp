@@ -15,6 +15,9 @@ use Bitrix\Main\Grid\Panel\Types;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
+use Bitrix\Tasks\Flow\FlowFeature;
+use Bitrix\Tasks\Integration\Extranet\User;
+use Bitrix\Main\Engine\CurrentUser;
 
 Loc::loadMessages(__FILE__);
 
@@ -37,6 +40,7 @@ class GroupAction
 	public const ACTION_REMOVE_FAVORITE = 'removefromfavorite';
 	public const ACTION_SET_GROUP = 'setgroup';
 	public const ACTION_DELETE = 'delete';
+	public const ACTION_SET_FLOW = 'setflow';
 
 
 	public function __construct()
@@ -103,6 +107,7 @@ class GroupAction
 	 */
 	private function getFullList(): array
 	{
+		$isCollaber = User::isCollaber((int)CurrentUser::get()->getId());
 		$actionList = [];
 
 		$actionList[] = [
@@ -122,6 +127,7 @@ class GroupAction
 			'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_PING'),
 			'VALUE' => self::ACTION_PING,
 			'ONCHANGE' => [
+				['ACTION' => Actions::RESET_CONTROLS],
 				[
 					'ACTION' => Actions::CALLBACK,
 					'DATA' => [
@@ -189,7 +195,7 @@ class GroupAction
 		if($taskControlEnabled)
 		{
 			$actionList[] = [
-				'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_V2'),
+				'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_V2_MSGVER_1'),
 				'VALUE' => self::ACTION_SET_TASK_CONTROL,
 				'ONCHANGE' => [
 					[
@@ -202,11 +208,11 @@ class GroupAction
 								'ITEMS' => [
 									[
 										'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_YES'),
-										'VALUE' => 'N',
+										'VALUE' => 'Y',
 									],
 									[
 										'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_NO'),
-										'VALUE' => 'Y',
+										'VALUE' => 'N',
 									],
 								],
 							],
@@ -325,8 +331,9 @@ class GroupAction
 
 		if (ProjectLimit::isFeatureEnabledOrTrial())
 		{
+			$name = $isCollaber ? 'TASKS_LIST_GROUP_ACTION_SET_COLLAB' : 'TASKS_LIST_GROUP_ACTION_SET_GROUP';
 			$actionList[] = [
-				'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SET_GROUP'),
+				'NAME' => Loc::getMessage($name),
 				'VALUE' => self::ACTION_SET_GROUP,
 				'ONCHANGE' => [
 					[
@@ -358,6 +365,43 @@ class GroupAction
 					],
 				],
 			];
+
+			if (FlowFeature::isOn() && !$isCollaber)
+			{
+				$actionList[] = [
+					'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SET_FLOW'),
+					'VALUE' => self::ACTION_SET_FLOW,
+					'ONCHANGE' => [
+						[
+							'ACTION' => Actions::CREATE,
+							'DATA' => [
+								[
+									'TYPE' => Types::TEXT,
+									'ID' => 'action_set_flow_search',
+									'NAME' => 'ACTION_SET_FLOW_SEARCH',
+								],
+								[
+									'TYPE' => Types::HIDDEN,
+									'ID' => 'action_set_flow_id',
+									'NAME' => 'flowId',
+								],
+							],
+						],
+						[
+							'ACTION' => Actions::CALLBACK,
+							'DATA' => [
+								['JS' => "BX.Tasks.GridActions.initPopupBalloon('flow','action_set_flow_search','action_set_flow_id');"],
+							],
+						],
+						[
+							'ACTION' => Actions::CALLBACK,
+							'DATA' => [
+								['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('setflow')"],
+							],
+						],
+					],
+				];
+			}
 		}
 
 		$actionList[] = [
@@ -402,7 +446,7 @@ class GroupAction
 								'VALUE' => 'day',
 							],
 							[
-								'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_MOVE_DEADLINE_AT_WEEK'),
+								'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_MOVE_DEADLINE_AT_WEEK_MSGVER_1'),
 								'VALUE' => 'week',
 							],
 							[

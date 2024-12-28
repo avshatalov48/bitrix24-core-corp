@@ -47,7 +47,7 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 
 	public function __construct(
 		ItemIdentifier $target, // item which fields will be filled
-		private string $summary, // summary of the call transcription
+		private readonly string $summary, // summary of the call transcription
 		?int $userId = null,
 		?int $parentJobId = null,
 	)
@@ -185,19 +185,7 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 
 	protected static function extractPayloadFromAIResult(\Bitrix\AI\Result $result, EO_Queue $job): Dto
 	{
-		try
-		{
-			$prettifiedData = $result->getPrettifiedData() ?: '';
-			$json = Json::decode($prettifiedData);
-		}
-		catch (ArgumentException)
-		{
-			$json = [];
-		}
-		if (!is_array($json))
-		{
-			$json = [];
-		}
+		$json = self::extractPayloadPrettifiedData($result);
 		if (empty($json))
 		{
 			return new FillItemFieldsFromCallTranscriptionPayload([]);
@@ -242,19 +230,11 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 				}
 			}
 		}
-		$comment = null;
-		if (!empty($json['comment']))
-		{
-			$comment = is_array($json['comment'])
-				? implode(PHP_EOL, $json['comment'])
-				: (string)$json['comment']
-			;
-		}
 
 		return new FillItemFieldsFromCallTranscriptionPayload([
 			'singleFields' => $singleFields,
 			'multipleFields' => $multipleFields,
-			'unallocatedData' => $comment,
+			'unallocatedData' => self::extractPayloadString($json['comment'] ?? ''),
 		]);
 	}
 
@@ -305,12 +285,11 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 		}
 	}
 
-	protected static function onAfterSuccessfulJobFinish(Result $result): void
+	protected static function onAfterSuccessfulJobFinish(Result $result, ?\Bitrix\AI\Context $context = null): void
 	{
-		if (
-			!$result->isSuccess()
-			|| !$result->getPayload()
-		)
+		/** @var FillItemFieldsFromCallTranscriptionPayload $payload */
+		$payload = $result->getPayload();
+		if (!$payload || !$result->isSuccess())
 		{
 			AIManager::logger()->error(
 				'{date}: {class}: Not updating item fields because of job error: {target}' . PHP_EOL,
@@ -337,8 +316,6 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 
 			return;
 		}
-
-		$payload = $result->getPayload();
 
 		self::calculateConflicts($payload, $factory, $item);
 
@@ -382,14 +359,13 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 			$item->setComments(self::appendComment((string)$item->getComments(), $payload->unallocatedData));
 		}
 
-		$context =
-			(new Context())
-				->setUserId($result->getUserId())
-				->setScope(Context::SCOPE_AI)
+		$userContext = (new Context())
+			->setUserId($result->getUserId())
+			->setScope(Context::SCOPE_AI)
 		;
 
 		$operation =
-			$factory->getUpdateOperation($item, $context)
+			$factory->getUpdateOperation($item, $userContext)
 				// disable all checks except check access
 				->disableAllChecks()
 				->enableCheckAccess()
@@ -398,7 +374,6 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 		;
 
 		$updateResult = $operation->launch();
-
 		if ($updateResult->isSuccess())
 		{
 			if (self::isPayloadHasAutoHandledFieldsWithConflicts($payload, $automaticallyHandledFields))
@@ -420,7 +395,6 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 			);
 
 			$saveResult = JobRepository::getInstance()->updateFillItemFieldsFromCallTranscriptionResult($result);
-
 			if ($saveResult->isSuccess())
 			{
 				AIManager::logger()->info(
@@ -586,7 +560,7 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 		}
 	}
 
-	private static function getParentActivityId(Result $result): int
+	public static function getParentActivityId(Result $result): int
 	{
 		if ($result->getParentJobId() <= 0)
 		{

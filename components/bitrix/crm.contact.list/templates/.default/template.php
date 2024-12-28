@@ -478,6 +478,8 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 
 			if($arResult['IS_BIZPROC_AVAILABLE'])
 			{
+				\Bitrix\Main\UI\Extension::load(['bp_starter']);
+
 				$arActions[] = array('SEPARATOR' => true);
 
 				if(isset($arContact['PATH_TO_BIZPROC_LIST']) && $arContact['PATH_TO_BIZPROC_LIST'] !== '')
@@ -486,7 +488,20 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 						'TEXT' => GetMessage('CRM_CONTACT_BIZPROC'),
 						'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arContact['PATH_TO_BIZPROC_LIST'])."');"
 					);
-				if(!empty($arContact['BIZPROC_LIST']))
+
+				if (class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
+				{
+					$starterConfig = \Bitrix\Main\Web\Json::encode(
+						CCrmBizProcHelper::getBpStarterConfig(CCrmOwnerType::Contact, $arContact['ID'])
+					);
+					$reloadGridAction = 'function(){BX.Main.gridManager.reload(\''.CUtil::JSEscape($arResult['GRID_ID']).'\');}';
+					$arActions[] = [
+						'TITLE' => \Bitrix\Main\Localization\Loc::getMessage('CRM_CONTACT_BIZPROC_LIST_TITLE'),
+						'TEXT' => \Bitrix\Main\Localization\Loc::getMessage('CRM_CONTACT_BIZPROC_LIST'),
+						'ONCLICK' => 'BX.Bizproc.Starter.showTemplates(' . $starterConfig . ', { callback:' . $reloadGridAction . '})',
+					];
+				}
+				elseif(!empty($arContact['BIZPROC_LIST']))
 				{
 					$arBizprocList = array();
 					foreach($arContact['BIZPROC_LIST'] as $arBizproc)

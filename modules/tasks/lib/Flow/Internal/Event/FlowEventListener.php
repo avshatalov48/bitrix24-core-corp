@@ -8,6 +8,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Flow\Internal\Event\Project\FlowProjectEventHandler;
 use Bitrix\Tasks\Flow\Internal\Event\Task\FlowTaskEventHandler;
 use Bitrix\Tasks\Flow\Internal\Event\Template\FlowTemplateEventHandler;
+use Bitrix\Tasks\Flow\Option\FlowUserOption\FlowUserOptionService;
 use Bitrix\Tasks\Flow\Responsible;
 use Exception;
 
@@ -37,9 +38,14 @@ class FlowEventListener
 	/**
 	 * @throws Exception
 	 */
-	public static function onTaskUpdate(int $taskId, array $changedFields, array $previousFields): void
+	public static function onTaskUpdate(int $taskId, array $changedFields, ?array $previousFields): void
 	{
 		if ($taskId <= 0)
+		{
+			return;
+		}
+
+		if ($previousFields === null)
 		{
 			return;
 		}
@@ -55,6 +61,7 @@ class FlowEventListener
 					->withCurrentFlowId($previousFlowId)
 					->withTaskId($taskId)
 					->withChangedFields($changedFields)
+					->withPreviousFields($previousFields)
 					->onFlowTaskUpdate();
 			}
 
@@ -131,6 +138,8 @@ class FlowEventListener
 		{
 			return;
 		}
+
+		FlowUserOptionService::deleteAllForUser($deletedUserId);
 
 		(new Responsible\EventHandler())->onAfterUserDelete($deletedUserId);
 	}

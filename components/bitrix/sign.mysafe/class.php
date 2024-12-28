@@ -487,6 +487,7 @@ class SignMySafeComponent extends SignBaseComponent
 			'USE_DEFAULT_STUB',
 			$this->getParam('USE_DEFAULT_STUB') ?? $this->getUseDefaultStubParamValue()
 		);
+		\Bitrix\Sign\Agent\FixB2bDoneDocumentsAgent::installOnce();
 	}
 
 	/**

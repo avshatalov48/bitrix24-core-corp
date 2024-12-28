@@ -111,6 +111,7 @@ jn.define('crm/timeline/scheduler', (require, exports, module) => {
 				qrauth.open({
 					title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_DESKTOP_VERSION'),
 					redirectUrl: this.entity.detailPageUrl,
+					analyticsSection: 'crm',
 				});
 			}
 		}

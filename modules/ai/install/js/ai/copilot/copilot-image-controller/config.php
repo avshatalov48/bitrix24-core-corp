@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'ai.engine',
 		'ai.ajax-error-handler',
+		'main.loader',
 		'ui.buttons',
 		'main.core.events',
 		'main.popup',

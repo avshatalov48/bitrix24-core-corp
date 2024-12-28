@@ -2,9 +2,11 @@
 
 namespace Bitrix\Sign\Controllers\V1\B2e\Member;
 
+use Bitrix\Main\Context;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserTable;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Sign\Access\ActionDictionary;
 use Bitrix\Sign\Attribute;
 use Bitrix\Sign\Config\Storage;
@@ -63,6 +65,11 @@ final class Link extends \Bitrix\Sign\Engine\Controller
 		}
 
 		$linkForSigning = $result->getData()['uri'] ?? null;
+		$lang = Context::getCurrent()->getLanguage();
+		if ($linkForSigning && $lang)
+		{
+			$linkForSigning = (new Uri($linkForSigning))->addParams(['lang' => $lang])->getUri();
+		}
 
 		return [
 			'uri' => $linkForSigning,

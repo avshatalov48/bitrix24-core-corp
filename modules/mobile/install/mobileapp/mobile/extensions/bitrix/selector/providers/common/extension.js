@@ -2,6 +2,7 @@
  * @module selector/providers/common
  */
 jn.define('selector/providers/common', (require, exports, module) => {
+	const { Loc } = require('loc');
 	const { withCurrentDomain } = require('utils/url');
 	const { mergeImmutable } = require('utils/object');
 	const { uniqBy, unique } = require('utils/array');
@@ -9,10 +10,8 @@ jn.define('selector/providers/common', (require, exports, module) => {
 	const { stringify } = require('utils/string');
 	const { BasePickerCache } = require('selector/utils/picker-cache');
 	const { BaseSelectorProvider } = require('selector/providers/base');
-	const { Color } = require('selector/providers/common/src/entity-color');
+	const { getEntityColor } = require('selector/providers/common/src/entity-color');
 	const { getColor, getBackgroundColorStyles } = require('layout/ui/user/empty-avatar');
-	const { Loc } = require('loc');
-
 	const specialChars = '!"#$%&\'()*+,-.\/:;<=>?@[\\]^_`{|}';
 	const specialCharsRegExp = new RegExp(`[${specialChars}]`, 'g');
 
@@ -37,9 +36,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			this.context = context;
 			this.setOptions(options);
 
-			this.preselectedItems = [];
 			this.emptyResults = [];
-			this.canUseRecent = true;
 			this.recentLoaded = false;
 			this.searchFields = ['position', 'secondName', 'lastName', 'name'];
 			this.entityWeight = {
@@ -68,22 +65,32 @@ jn.define('selector/providers/common', (require, exports, module) => {
 
 		getColor(entityId, entityType)
 		{
-			if (this.options.useLettersForEmptyAvatar && entityType === 'user')
+			if (this.useLettersForEmptyAvatar() && entityType === 'user')
 			{
 				return getColor(entityId);
 			}
 
-			return Color(entityType);
+			return this.getEntityColor(entityType);
+		}
+
+		getEntityColor(entityType)
+		{
+			return getEntityColor(entityType);
 		}
 
 		getColorGradient(entityId, entityType)
 		{
-			if (this.options.useLettersForEmptyAvatar && entityType === 'user')
+			if (this.useLettersForEmptyAvatar() && entityType === 'user')
 			{
 				return getBackgroundColorStyles(entityId).backgroundColorGradient;
 			}
 
 			return null;
+		}
+
+		resetQuery()
+		{
+			this.queryString = '';
 		}
 
 		setQuery(value)
@@ -123,18 +130,6 @@ jn.define('selector/providers/common', (require, exports, module) => {
 		setHandlerPrepareItem(handlerPrepareItem)
 		{
 			this.handlerPrepareItem = handlerPrepareItem;
-		}
-
-		setPreselectedItems(preselectedItems)
-		{
-			this.preselectedItems = preselectedItems;
-
-			return this;
-		}
-
-		setCanUseRecent(canUseRecent)
-		{
-			this.canUseRecent = canUseRecent;
 		}
 
 		cacheId()
@@ -370,45 +365,46 @@ jn.define('selector/providers/common', (require, exports, module) => {
 
 			const queryWords = this.splitQueryByWords(query);
 
-			BX.ajax.runAction('ui.entityselector.doSearch', {
-				json: {
-					dialog: this.getAjaxDialog(),
-					searchQuery: {
-						query,
-						queryWords,
-						dynamicSearchEntities: [],
+			BX.ajax.runAction(
+				'ui.entityselector.doSearch',
+				{
+					json: {
+						dialog: this.getAjaxDialog(),
+						searchQuery: {
+							query,
+							queryWords,
+							dynamicSearchEntities: [],
+						},
 					},
+					getParameters: { context: this.context },
 				},
-				getParameters: { context: this.context },
-			})
-				.then((response) => {
-					const items = this.prepareItems(response.data.dialog.items);
-					if (items.length > 0)
+			).then((response) => {
+				const items = this.prepareItems(response.data.dialog.items);
+				if (items.length > 0)
+				{
+					this.addItems(items);
+				}
+				else
+				{
+					this.emptyResults.push(query);
+				}
+
+				if (query === this.queryString)
+				{
+					const allItems = this.getAllItems();
+					let sortedItems = this.processResult(query, allItems);
+
+					if (this.useRawResult())
 					{
-						this.addItems(items);
-					}
-					else
-					{
-						this.emptyResults.push(query);
+						this.cache.save(items, 'result');
+						sortedItems = uniqBy([...sortedItems, ...items], 'id');
 					}
 
-					if (query === this.queryString)
-					{
-						const allItems = this.getAllItems();
-						let sortedItems = this.processResult(query, allItems);
-
-						if (this.useRawResult())
-						{
-							this.cache.save(items, 'result');
-							sortedItems = uniqBy([...sortedItems, ...items], 'id');
-						}
-
-						this.listener.onFetchResult(sortedItems);
-					}
-				})
-				.catch((e) => {
-					console.error(e);
-				});
+					this.listener.onFetchResult(sortedItems);
+				}
+			}).catch((e) => {
+				console.error(e);
+			});
 		}
 
 		addItems(items, saveDisk = false)
@@ -502,7 +498,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 					this.listener.onRecentResult(result, false);
 					this.recentLoaded = true;
 				}
-			});
+			}).catch(console.error);
 		}
 
 		getLoadingItem()
@@ -578,7 +574,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 								item.id = `${entityId}/${item.id}`;
 							}
 
-							if (!item.imageUrl && !this.options.useLettersForEmptyAvatar)
+							if (!item.imageUrl && !this.useLettersForEmptyAvatar())
 							{
 								item.imageUrl = this.getAvatarImage(entityId);
 							}
@@ -625,9 +621,10 @@ jn.define('selector/providers/common', (require, exports, module) => {
 						subtitle: item.subtitle,
 						shortTitle: item.shortTitle,
 						params: item.params,
-						imageUrl: isDefaultImage(item.imageUrl) && this.options.useLettersForEmptyAvatar ? null : item.imageUrl,
-						defaultImage: !this.options.useLettersForEmptyAvatar
-							&& item.imageUrl.includes(this.getAvatarImage(entityId)),
+						imageUrl: isDefaultImage(item.imageUrl) && this.useLettersForEmptyAvatar() ? null : item.imageUrl,
+						defaultImage: !this.useLettersForEmptyAvatar() && Boolean(item.imageUrl?.includes(
+							this.getAvatarImage(entityId),
+						)),
 					});
 				}
 
@@ -715,6 +712,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 					title: stringify(entity.title),
 					type: entity.entityId,
 					id: entity.id,
+					entityId: entity.entityId,
 					customData: entity.customData || {},
 				},
 				disabled: entity.customData?.isSelectable === false,
@@ -723,7 +721,16 @@ jn.define('selector/providers/common', (require, exports, module) => {
 				imageColor: entity.imageColor,
 				selectedImageColor: entity.selectedImageColor,
 				selectedTypeIconFrame: entity.selectedTypeIconFrame,
+				imageName: entity.imageName,
+				imageSize: entity.imageSize,
 			};
+
+			let useLettersForEmptyAvatar = this.useLettersForEmptyAvatar();
+
+			if (entity.entityType)
+			{
+				item.params.entityType = entity.entityType;
+			}
 
 			switch (entity.entityId)
 			{
@@ -731,16 +738,20 @@ jn.define('selector/providers/common', (require, exports, module) => {
 				{
 					if (entity.entityType === 'extranet')
 					{
-						item.styles.title.font = { color: Color('userExtranet', 'title') };
+						item.styles.title.font = {
+							color: this.getEntityColor('userExtranet', 'title'),
+						};
 						item.color = this.getColor(entity.id, 'userExtranet');
 						item.colorGradient = this.getColorGradient(entity.id, 'userExtranet');
 					}
 
 					item.subtitle = stringify(entity.customData?.position);
-					item.shortTitle = stringify(entity.customData?.name);
+					item.shortTitle = stringify(entity.customData?.name || entity.title);
 					item.lastName = stringify(entity.customData?.lastName);
 					item.name = stringify(entity.customData?.name);
 					item.position = stringify(entity.customData?.position);
+
+					useLettersForEmptyAvatar = true;
 
 					break;
 				}
@@ -748,6 +759,15 @@ jn.define('selector/providers/common', (require, exports, module) => {
 				case 'project':
 				{
 					item.subtitle = Loc.getMessage('PROVIDER_COMMON_PROJECT');
+					if (entity.customData?.isCollab)
+					{
+						item.subtitle = Loc.getMessage('PROVIDER_COMMON_COLLAB');
+					}
+					else if (entity.customData?.project)
+					{
+						item.subtitle = Loc.getMessage('PROVIDER_COMMON_PROJECT_NEW');
+					}
+
 					item.shortTitle = entity.title;
 					item.name = entity.title;
 
@@ -756,9 +776,11 @@ jn.define('selector/providers/common', (require, exports, module) => {
 
 					if (entity.entityType === 'extranet')
 					{
-						item.styles.subtitle.font.color = Color('groupExtranet', 'title');
-						item.color = Color('groupExtranet');
+						item.styles.subtitle.font.color = this.getColor('groupExtranet', 'title');
+						item.color = this.getEntityColor('groupExtranet');
 					}
+
+					useLettersForEmptyAvatar = true;
 
 					break;
 				}
@@ -806,9 +828,9 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			}
 
 			// Note: Android doesn't support svg images in selector widget
-			if (!item.imageUrl || item.imageUrl.endsWith('.svg'))
+			if ((!item.imageUrl || item.imageUrl.endsWith('.svg')) && !useLettersForEmptyAvatar)
 			{
-				item.imageUrl = this.options.useLettersForEmptyAvatar ? null : this.getAvatarImage(entity.entityId);
+				item.imageUrl = this.getAvatarImage(entity.entityId);
 			}
 
 			if (this.isSingleChoose())
@@ -824,6 +846,11 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			}
 
 			return item;
+		}
+
+		useLettersForEmptyAvatar()
+		{
+			return Boolean(this.options.useLettersForEmptyAvatar);
 		}
 
 		addToRecentCache(item)
@@ -848,7 +875,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 				const preparedItem = this.prepareItems([item])[0];
 				const cache = this.cache.get('recent');
 
-				return Boolean(cache.find((item) => item.id === preparedItem.id));
+				return Boolean(cache.some((cacheItem) => cacheItem.id === preparedItem.id));
 			}
 
 			return false;

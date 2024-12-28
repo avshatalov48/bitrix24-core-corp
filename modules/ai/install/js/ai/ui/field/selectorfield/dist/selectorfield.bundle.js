@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.AI = this.BX.AI || {};
 this.BX.AI.UI = this.BX.AI.UI || {};
-(function (exports,ui_formElements_view,main_core) {
+(function (exports,ui_formElements_view,main_core,types_js) {
 	'use strict';
 
 	let _ = t => t,
@@ -12,7 +12,8 @@ this.BX.AI.UI = this.BX.AI.UI || {};
 	  _t4,
 	  _t5,
 	  _t6,
-	  _t7;
+	  _t7,
+	  _t8;
 	var _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items");
 	var _additionalItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("additionalItems");
 	var _hintTitleElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hintTitleElement");
@@ -86,7 +87,12 @@ this.BX.AI.UI = this.BX.AI.UI || {};
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _items)[_items] = params.items;
-	    babelHelpers.classPrivateFieldLooseBase(this, _additionalItems)[_additionalItems] = params.additionalItems;
+	    babelHelpers.classPrivateFieldLooseBase(this, _additionalItems)[_additionalItems] = params.additionalItems || [];
+	    babelHelpers.classPrivateFieldLooseBase(this, _items)[_items] = babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].map(item => {
+	      const newItem = item;
+	      newItem.recommended = (params.recommendedItems || []).includes(item.value);
+	      return newItem;
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _hintTitleElement)[_hintTitleElement] = main_core.Tag.render(_t || (_t = _`<div class="ui-section__title"></div>`));
 	    babelHelpers.classPrivateFieldLooseBase(this, _hintDescElement)[_hintDescElement] = main_core.Tag.render(_t2 || (_t2 = _`<div class="ui-section__description"></div>`));
 	    babelHelpers.classPrivateFieldLooseBase(this, _inputNode)[_inputNode] = babelHelpers.classPrivateFieldLooseBase(this, _buildSelector)[_buildSelector]();
@@ -149,20 +155,28 @@ this.BX.AI.UI = this.BX.AI.UI || {};
 	  for (const {
 	    value,
 	    name,
-	    selected
+	    selected,
+	    recommended
 	  } of babelHelpers.classPrivateFieldLooseBase(this, _items)[_items]) {
 	    let selectedClass = '';
 	    if (selected === true) {
 	      selectedClass = 'selected';
 	    }
-	    const contentItemLabel = main_core.Tag.render(_t6 || (_t6 = _`
+	    const recommendedLabel = recommended ? main_core.Tag.render(_t6 || (_t6 = _`
+						<span class="select-label-recommended">
+							${0}
+						</span>
+					`), main_core.Loc.getMessage('AI_SELECTORFIELD_RECOMMENDED_LABEL')) : '';
+	    const contentItemLabel = main_core.Tag.render(_t7 || (_t7 = _`
 				<div class="select-label-container ${0}">
 					<label class="select-label" value="${0}">${0}</label>
+					${0}
 					<span class="select-label-icon ui-icon-set --check"></span>
 				</div>
-			`), selectedClass, value, name);
+			`), selectedClass, value, name, recommendedLabel);
 	    selectContentItems.push(contentItemLabel);
 	  }
+	  const loadedIconSets = [];
 	  for (const {
 	    type,
 	    link,
@@ -170,7 +184,12 @@ this.BX.AI.UI = this.BX.AI.UI || {};
 	    icon
 	  } of babelHelpers.classPrivateFieldLooseBase(this, _additionalItems)[_additionalItems]) {
 	    if (type === 'link') {
-	      const contentItemLink = main_core.Tag.render(_t7 || (_t7 = _`
+	      const set = icon.set || 'ui.icon-set.main';
+	      if (!loadedIconSets.includes(set)) {
+	        main_core.Runtime.loadExtension(set);
+	        loadedIconSets.push(set);
+	      }
+	      const contentItemLink = main_core.Tag.render(_t8 || (_t8 = _`
 					<div class="select-link-container">
 						<span class="select-link-icon ui-icon-set ${0}"></span>
 						<a class="select-link" href="${0}">${0}</a>
@@ -261,15 +280,16 @@ this.BX.AI.UI = this.BX.AI.UI || {};
 	  const selectInput = selector.querySelector('.select-input');
 	  if (selectLabels && selectTitle && selectInput) {
 	    for (const label of selectLabels) {
-	      main_core.Event.bind(label, 'click', event => {
+	      const labelContainer = label.parentNode;
+	      main_core.Event.bind(labelContainer, 'click', () => {
 	        selector.setAttribute('data-state', '');
 	        setTimeout(() => {
 	          const selectContent = selector.querySelector('.select-content');
 	          babelHelpers.classPrivateFieldLooseBase(this, _prepareSelectContent)[_prepareSelectContent](selectContent);
 	        }, SelectorField.timeTransition);
 	        if (!main_core.Dom.hasClass(label.parentNode, 'selected')) {
-	          selectTitle.textContent = event.target.textContent;
-	          selectInput.setAttribute('value', event.target.getAttribute('value'));
+	          selectTitle.textContent = label.textContent;
+	          selectInput.setAttribute('value', label.getAttribute('value'));
 	          BX.UI.ButtonPanel.show();
 	          const selectedItem = selector.querySelector('.select-label-container.selected');
 	          if (selectedItem) {
@@ -292,5 +312,5 @@ this.BX.AI.UI = this.BX.AI.UI || {};
 
 	exports.SelectorField = SelectorField;
 
-}((this.BX.AI.UI.Field = this.BX.AI.UI.Field || {}),BX.UI.FormElements,BX));
+}((this.BX.AI.UI.Field = this.BX.AI.UI.Field || {}),BX.UI.FormElements,BX,BX));
 //# sourceMappingURL=selectorfield.bundle.js.map

@@ -7,9 +7,9 @@ return [
 		'haptics',
 		'layout/ui/fields/base',
 		'selector/widget/factory',
-		'utils',
-		'utils/object',
 		'utils/type',
+		'utils/prop',
+		'utils/object',
 		'utils/validation',
 	],
 ];

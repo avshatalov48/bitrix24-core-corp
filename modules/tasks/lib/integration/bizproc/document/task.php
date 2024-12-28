@@ -6,12 +6,15 @@ use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\UserTable;
+use Bitrix\Tasks\Flow\FlowRegistry;
+use Bitrix\Tasks\Flow\Path\FlowPathMaker;
 use Bitrix\Tasks\Integration\Bizproc\Automation\Factory;
 use Bitrix\Tasks\Internals\Task\Mark;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Internals\Task\Status;
+use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Socialnetwork;
 
@@ -378,20 +381,30 @@ class Task implements \IBPWorkflowDocument
 		{
 			return isset($type) ? self::filterUserFields($type, $fieldsCreatedByUser) : $fieldsCreatedByUser;
 		}
-		$fieldsCreatedByUser = array();
+		$fieldsCreatedByUser = [];
 
-		$userFieldsIds = \Bitrix\Main\UserFieldTable::getList([
-			'select' => array('ID'),
-			'filter' => array(
+		$fieldsCreatedByUserData = \Bitrix\Main\UserFieldTable::getList([
+			'select' => [
+				'ID',
+				'FIELD_NAME',
+				'USER_TYPE_ID',
+				'EDIT_IN_LIST',
+				'MANDATORY',
+				'MULTIPLE',
+				'EDIT_FORM_LABEL' => 'LABELS.EDIT_FORM_LABEL',
+			],
+			'filter' => [
 				'=ENTITY_ID' => 'TASKS_TASK',
 				'%=FIELD_NAME' => 'UF_AUTO_%'
-			)
+			],
+			'runtime' => [
+				\Bitrix\Main\UserFieldTable::getLabelsReference('LABELS', LANGUAGE_ID),
+			],
 		])->fetchAll();
 
-		foreach ($userFieldsIds as $fieldsId)
+		foreach ($fieldsCreatedByUserData as $field)
 		{
-			$field = Main\UserFieldTable::getFieldData($fieldsId['ID']);
-			$name = in_array(LANGUAGE_ID, $field['LANGUAGE_ID']) ? $field['EDIT_FORM_LABEL'][LANGUAGE_ID] : $field['FIELD_NAME'];
+			$name = $field['EDIT_FORM_LABEL'] ?: $field['FIELD_NAME'];
 
 			$fieldsCreatedByUser[$field['FIELD_NAME']] = [
 				'Name' => $name,
@@ -908,6 +921,12 @@ class Task implements \IBPWorkflowDocument
 			$fields['GROUP_ID'] = null;
 		}
 
+		if (isset($fields['FLOW_ID']) && $fields['FLOW_ID'] > 0)
+		{
+			$flowOwnerId = FlowRegistry::getInstance()->get($fields['FLOW_ID'])->getOwnerId();
+			$fields['FLOW_OWNER'] =  'user_' . $flowOwnerId;
+		}
+
 		if ((int)$fields['PARENT_ID'] <= 0) // issue: 0155930
 		{
 			$fields['PARENT_ID'] = null;
@@ -1036,15 +1055,49 @@ class Task implements \IBPWorkflowDocument
 
 	private static function setFlowMessages(array $fields): array
 	{
+		$flowId = (int)($fields['FLOW_ID'] ?? 0);
+
+		if ($flowId < 1)
+		{
+			return $fields;
+		}
+
 		$userLang = self::getUserLanguage((int)$fields['RESPONSIBLE_ID']);
+		$flowData = FlowRegistry::getInstance()->get($flowId, ['NAME', 'OWNER_ID']);
+
+		$taskId = $fields['ID'];
+		$groupId = $fields['GROUP_ID'] ?? null;
+		$taskUrl = TaskPathMaker::getPath([
+			'task_id' => $taskId,
+			'group_id' => $groupId,
+			'action' => 'view',
+		]);
 
 		$fields['HALF_TIME_BEFORE_EXPIRE_MESSAGE'] = Loc::getMessage(
 			'TASKS_FLOW_NOTIFICATION_MESSAGE_HALF_TIME_BEFORE_EXPIRE_MESSAGE',
 			[
-				'{groupId}' => $fields['GROUP_ID'] ?? null,
-				'{taskId}' => $fields['ID'],
-				'{taskTitle}' => $fields['TITLE'],
+				'#TASK_URL#' => $taskUrl,
+				'#TASK_TITLE#' => $fields['TITLE'],
+				'{taskId}' => $taskId,
+			],
+			$userLang
+		);
 
+		$flowOwnerId = $flowData?->getOwnerId() ?? 0;
+
+		$flowUrl = (new FlowPathMaker(ownerId: $flowOwnerId))
+			->addQueryParam('apply_filter', 'Y')
+			->addQueryParam('ID_numsel', 'exact')
+			->addQueryParam('ID_from', $flowId)
+			->makeEntitiesListPath()
+		;
+
+		$fields['HIMSELF_ADMIN_TASK_NOT_TAKEN_MESSAGE'] = Loc::getMessage(
+			'TASKS_FLOW_NOTIFICATION_MESSAGE_HIMSELF_ADMIN_TASK_NOT_TAKEN_MESSAGE',
+			[
+				'#FLOW_URL#' => $flowUrl,
+				'#FLOW_TITLE#' => $flowData?->getName() ?? '',
+				'{flowId}' => $flowId,
 			],
 			$userLang
 		);

@@ -1,0 +1,7 @@
+.dataset-properties .ui-form-row-inline {
+	align-items: normal;
+}
+
+.dataset-properties .ui-form-row {
+	flex: 1;
+}

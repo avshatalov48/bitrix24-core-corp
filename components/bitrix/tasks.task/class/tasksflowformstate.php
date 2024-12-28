@@ -239,8 +239,8 @@ final class TasksFlowFormState
 	private static function getFlags(): array
 	{
 		return [
-			'ALLOW_TIME_TRACKING' => 'N',
-			'TASK_CONTROL' => 'N',
+			'ALLOW_TIME_TRACKING' => false,
+			'TASK_CONTROL' => false,
 			'ALLOW_CHANGE_DEADLINE' => true,
 			'MATCH_WORK_TIME' => false,
 			'FORM_FOOTER_PIN' => false,

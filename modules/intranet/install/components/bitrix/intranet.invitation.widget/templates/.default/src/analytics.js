@@ -25,14 +25,14 @@ export class Analytics
 		});
 	}
 
-	sendLegacy(section: string)
+	static sendCreateCollab(): void
 	{
 		sendData({
-			tool: Analytics.TOOLS_LEGACY,
-			category: Analytics.CATEGORY_INVITATION_LEGACY,
-			event: Analytics.EVENT_NAME_LEGACY,
-			c_section: section,
-			p1: Analytics.isAdmin ? 'isAdmin_Y' : 'isAdmin_N',
+			tool: 'im',
+			category: 'collab',
+			event: 'click_create_new',
+			c_section: Analytics.SECTION_POPUP,
+			p2: 'user_intranet', // widget is available only for intranet users
 		});
 	}
 }

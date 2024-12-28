@@ -3,9 +3,11 @@
  */
 jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { Type } = require('type');
 	const { merge } = require('utils/object');
 
 	const { Theme } = require('im/lib/theme');
+	const { SubTitleIconType } = require('im/messenger/const');
 	const { RecentItem } = require('im/messenger/lib/element/recent/item/base');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -61,7 +63,7 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 				return this;
 			}
 
-			const message = item.message;
+			const message = this.getItemMessage();
 			if (message.id === 0)
 			{
 				this.subtitle = ChatTitle.createFromDialogId(item.id).getDescription();
@@ -76,27 +78,43 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 
 		createSubtitleStyle()
 		{
-			if (this.checkNeedsBirthdayPlaceholder() === false)
+			if (this.checkNeedsBirthdayPlaceholder())
 			{
+				this.styles.subtitle = {
+					font: {
+						size: '14',
+						color: Theme.colors.accentExtraGrass,
+						useColor: true,
+						fontStyle: 'medium',
+					},
+					singleLine: true,
+					cornerRadius: 12,
+					backgroundColor: Theme.colors.accentSoftGreen2,
+					padding: {
+						top: 3.5,
+						right: 12,
+						bottom: 3.5,
+						left: 12,
+					},
+				};
+
 				return this;
 			}
 
-			this.styles.subtitle = {
-				font: {
-					size: '14',
-					color: Theme.colors.accentExtraGrass,
-					useColor: true,
-					fontStyle: 'medium',
-				},
-				cornerRadius: 12,
-				backgroundColor: Theme.colors.accentSoftGreen2,
-				padding: {
-					top: 3.5,
-					right: 12,
-					bottom: 3.5,
-					left: 12,
-				},
-			};
+			const message = this.getItemMessage();
+			if (message.senderId === serviceLocator.get('core').getUserId())
+			{
+				let subtitleStyle = {};
+
+				if ([SubTitleIconType.wait, SubTitleIconType.error].includes(message?.subTitleIcon))
+				{
+					subtitleStyle = { image: { name: message.subTitleIcon, sizeMultiplier: 0.7 } };
+				}
+
+				this.styles.subtitle = subtitleStyle;
+
+				return this;
+			}
 
 			return this;
 		}

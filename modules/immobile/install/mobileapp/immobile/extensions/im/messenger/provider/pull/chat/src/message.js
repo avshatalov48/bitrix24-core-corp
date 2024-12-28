@@ -213,11 +213,10 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 				const dialogTitle = ChatTitle.createFromDialogId(dialogId).getTitle();
 				const userName = ChatTitle.createFromDialogId(userData.id).getTitle();
 				const avatar = ChatAvatar.createFromDialogId(dialogId).getAvatarUrl();
-
 				Notifier.notify({
 					dialogId: dialog.dialogId,
 					title: dialogTitle,
-					text: (userName ? `${userName}: ` : '') + messageText,
+					text: this.createMessageChatNotifyText(messageText, userName),
 					avatar,
 				});
 			}

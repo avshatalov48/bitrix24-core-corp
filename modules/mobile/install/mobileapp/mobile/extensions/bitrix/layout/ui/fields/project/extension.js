@@ -7,6 +7,8 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 	const { InfoHelper } = require('layout/ui/info-helper');
 	const { Icon } = require('assets/icons');
 	const AppTheme = require('apptheme');
+	const { dispatch } = require('statemanager/redux/store');
+	const { groupsUpsertedFromEntitySelector } = require('tasks/statemanager/redux/slices/groups');
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/project/images/default-avatar.png';
 	const DEFAULT_SELECTOR_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/selector/providers/common/images/project.png';
 
@@ -75,7 +77,8 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 
 		renderEntity(project = {}, showPadding = false)
 		{
-			const onClick = this.openEntity.bind(this, project.id);
+			const { id, title, imageUrl, isCollab, dialogId } = project;
+			const onClick = this.openEntity.bind(this, id, this.getParentWidget(), isCollab, dialogId);
 
 			return View(
 				{
@@ -87,7 +90,7 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 				},
 				Image({
 					style: this.styles.projectImage,
-					uri: this.getImageUrl(project.imageUrl || this.getDefaultAvatar()),
+					uri: this.getImageUrl(imageUrl || this.getDefaultAvatar()),
 					onClick,
 				}),
 				View(
@@ -96,7 +99,7 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 						style: this.styles.projectText,
 						numberOfLines: 1,
 						ellipsize: 'end',
-						text: project.title,
+						text: title,
 					}),
 				),
 			);
@@ -132,9 +135,9 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 			return true;
 		}
 
-		openEntity(projectId)
+		openEntity(projectId, isCollab = false, dialogId = '')
 		{
-			ProjectViewManager.open(env.userId, projectId, this.getParentWidget());
+			ProjectViewManager.open(env.userId, projectId, this.getParentWidget(), isCollab, dialogId);
 		}
 
 		async handleAdditionalFocusActions()
@@ -234,11 +237,12 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 		{
 			return BX.message('FIELDS_PROJECT_ADD_BUTTON_TEXT');
 		}
-	}
 
-	ProjectField.propTypes = {
-		...EntitySelectorFieldClass.propTypes,
-	};
+		setReduxState(projectsList)
+		{
+			dispatch(groupsUpsertedFromEntitySelector(projectsList));
+		}
+	}
 
 	ProjectField.defaultProps = {
 		...EntitySelectorFieldClass.defaultProps,

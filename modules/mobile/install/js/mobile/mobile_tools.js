@@ -165,7 +165,7 @@
 				{
 					exp: /\/company\/personal\/user\/(\d+)\/calendar\/\?EVENT_ID=(\d+).*/gi,
 					replace: '/mobile/calendar/view_event.php?event_id=$2',
-					useNewStyle: false,
+					useNewStyle: true,
 				},
 				{
 					exp: /\/company\/personal\/user\/(\d+)\/tasks\/task\/view\/(\d+)\//gi,
@@ -464,6 +464,20 @@
 						}
 					},
 				},
+				{
+					resolveFunction: BX.MobileTools.getOpenEventIdFromUrl,
+					openFunction(data) {
+						const { eventId, eventDate } = data;
+						BXMobileApp.Events.postToComponent('calendar::event::open', { eventId, eventDate });
+					},
+				},
+				{
+					resolveFunction: BX.MobileTools.getDownloadIcsEventIdFromUrl,
+					openFunction(data) {
+						const { eventId } = data;
+						BXMobileApp.Events.postToComponent('calendar::event::ics', { eventId });
+					},
+				},
 			];
 
 			resolveList.push(
@@ -690,15 +704,21 @@
 			const regExpMap = [
 				{
 					regExp: /\/bitrix\/tools\/disk\/focus.php\?.*(folderId|objectId)=(\d+)/i,
+					result: {
+						url,
+					},
 				},
 				{
 					regExp: /\/company\/personal\/user\/(\d+)\/disk\/path\//i,
-					result: {},
+					result: {
+						url,
+					},
 				},
 				{
 					regExp: /\/workgroups\/group\/(\d+)\/disk\/path\//i,
 					result: {
 						entityType: 'group',
+						url,
 					},
 					params: [
 						{
@@ -712,6 +732,7 @@
 					result: {
 						entityType: 'common',
 						ownerId: `shared_files_${BX.message('SITE_ID')}`,
+						url,
 					},
 				},
 			];
@@ -919,6 +940,47 @@
 			}
 
 			return null;
+		},
+		getOpenEventIdFromUrl(url)
+		{
+			const calendarRegs = [
+				/\/calendar\/\?EVENT_ID=(\d+)&EVENT_DATE=([^&]+)/i,
+				/\/calendar\/\?EVENT_ID=(\d+)/i,
+			];
+
+			for (const reg of calendarRegs)
+			{
+				const result = url.match(reg);
+				if (!result)
+				{
+					continue;
+				}
+
+				const eventId = result[1];
+				const eventDate = result[2];
+
+				return { eventId, eventDate };
+			}
+		},
+		getDownloadIcsEventIdFromUrl(url)
+		{
+			const regexp = /calendar\/ics\/\?EVENT_ID=(\d+)/i;
+			const isValid = regexp.test(url);
+
+			if (!isValid)
+			{
+				return null;
+			}
+
+			const result = url.match(regexp);
+			const eventId = parseInt(result[1], 10);
+
+			if (!eventId)
+			{
+				return null;
+			}
+
+			return { eventId };
 		},
 		createCardScanner(options)
 		{

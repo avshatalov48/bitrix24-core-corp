@@ -1,5 +1,5 @@
 /* root container */
-.crm-copilot-textbox{
+.crm-copilot-textbox {
 	display: flex;
 	flex-direction: column;
 	padding: 0 24px 28px;
@@ -14,13 +14,15 @@
 }
 
 /* header */
-.crm-copilot-textbox__header{
+.crm-copilot-textbox__header {
 	display: flex;
 	justify-content: space-between;
-	align-items: flex-end;
+	align-items: center;
 	padding: 11px 0 14px 0;
+	margin-inline: 0;
 	min-height: 35px;
 	color: var(--crm-copilot-font-color);
+	transition: background-color .3s;
 }
 
 .crm-copilot-textbox__title {
@@ -35,8 +37,13 @@
 	color: var(--crm-copilot-font-color);
 }
 
-.crm-copilot-textbox__title::first-letter{
+.crm-copilot-textbox__title::first-letter {
 	text-transform: capitalize;
+}
+
+.crm-copilot-textbox__title-icon-container{
+	display: flex;
+	align-items: center;
 }
 
 /* search */
@@ -48,7 +55,11 @@
 	--ui-field-size: 35px;
 }
 
-.crm-copilot-textbox__search-input{
+.crm-copilot-textbox__search.--hidden {
+	display: none;
+}
+
+.crm-copilot-textbox__search-input {
 	color: black;
 	font-size: var(--ui-font-size-md);
 	font-weight: var(--ui-font-weight-normal);
@@ -58,7 +69,7 @@
 	white-space: nowrap;
 }
 
-.crm-copilot-textbox__search-input::placeholder{
+.crm-copilot-textbox__search-input::placeholder {
 	color: #C4C4C4;
 	font-size: var(--ui-font-size-md);
 	font-weight: var(--ui-font-weight-normal);
@@ -69,7 +80,7 @@
 	opacity: 0.5;
 }
 
-.with-input-node{
+.with-input-node {
 	background: #F3F3F3;
 }
 
@@ -79,8 +90,7 @@
 }
 
 /* todo: maybe this should be removed*/
-.ui-ctl-icon-search,
-.ui-ctl-icon-clear{
+.ui-ctl-icon-search, .ui-ctl-icon-clear {
 	transition: 0.2s ease !important;
 }
 
@@ -93,15 +103,15 @@
 	scrollbar-color: #EDEEF0 transparent;
 }
 
-.crm-copilot-textbox__content::-webkit-scrollbar{
+.crm-copilot-textbox__content::-webkit-scrollbar {
 	width: 6px;
 }
 
-.crm-copilot-textbox__content::-webkit-scrollbar-track{
+.crm-copilot-textbox__content::-webkit-scrollbar-track {
 	background: transparent;
 }
 
-.crm-copilot-textbox__content::-webkit-scrollbar-thumb{
+.crm-copilot-textbox__content::-webkit-scrollbar-thumb {
 	background: #EDEEF0;
 	border-radius: 22px;
 }
@@ -120,25 +130,25 @@
 
 .crm-copilot-textbox__text-container::selection,
 .search-item::selection,
-.crm-copilot-textbox__text-container br::selection{
+.crm-copilot-textbox__text-container br::selection {
 	background: #B4D7FF;
 	caret-color: transparent;
 }
 
-.search-item{
+.search-item {
 	background: #FFEC91;
 	caret-color: transparent;
 }
 
 .crm-copilot-textbox__text-container:active,
-.crm-copilot-textbox__text-container:focus{
+.crm-copilot-textbox__text-container:focus {
 	border: none;
 	border-left: 1px solid #DED0F4;
 	outline: none;
 	caret-color: transparent;
 }
 
-.crm-copilot-textbox__attentions .crm-textbox-attention:not(:last-child){
+.crm-copilot-textbox__attentions .crm-textbox-attention:not(:last-child) {
 	margin-bottom: 6px;
 }
 
@@ -161,7 +171,7 @@
 }
 
 .crm-textbox-attention__content a,
-.crm-textbox-attention__content a:hover{
+.crm-textbox-attention__content a:hover {
 	text-decoration: underline;
 	color: inherit;
 }
@@ -192,4 +202,58 @@
 .crm-textbox-attention.--crm-textbox-attention-copilot .crm-textbox-attention__content a:hover,
 .crm-textbox-attention.--crm-textbox-attention-copilot .crm-textbox-attention__content a:active {
 	color: #8E52EC;
+}
+
+.crm-copilot-textbox__wrapper {
+	background-color: var(--ui-color-background-primary);
+	max-height: 100%;
+	display: flex;
+	flex-direction: column;
+	padding: 0;
+}
+
+.crm-copilot-textbox__body {
+	min-height: 0;
+	display: grid;
+	grid-template-rows: 0fr;
+}
+
+.crm-copilot-textbox__body-container {
+	display: flex;
+	flex-direction: column;
+}
+
+.crm-copilot-textbox__body.body-toggle-animation {
+	transition: grid-template-rows 0.4s ease-out;
+}
+
+.crm-copilot-textbox__body > * {
+	overflow: hidden;
+}
+
+.crm-copilot-textbox__wrapper.--body-expanded > .crm-copilot-textbox__body {
+	grid-template-rows: 1fr;
+	overflow: unset;
+}
+
+.crm-copilot-textbox__wrapper.--body-expanded {
+	padding-bottom: 0;
+}
+
+.crm-copilot-textbox__header .crm-copilot-textbox__collapse-icon {
+	margin-left: auto;
+	cursor: pointer;
+}
+
+.crm-copilot-textbox__collapse-icon.clickable.ui-icon-set.--chevron-up,
+.crm-copilot-textbox__collapse-icon.clickable.ui-icon-set.--chevron-down,
+.crm-copilot-textbox__collapse-icon.clickable.ui-icon-set.--search-1,
+.crm-copilot-textbox__collapse-icon.clickable.ui-icon-set.--cross-30 {
+	--ui-icon-set__icon-size: 18px;
+	--ui-icon-set__icon-color: var(--ui-color-base-60);
+}
+
+.crm-copilot-textbox__header .crm-copilot-textbox__collapse-icon {
+	margin-left: 15px;
+	cursor: pointer;
 }

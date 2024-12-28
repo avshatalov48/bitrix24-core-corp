@@ -6,15 +6,34 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory\SmartDocument;
+use Bitrix\Main\Application;
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Session\SessionInterface;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Sign\Access\ActionDictionary;
 use Bitrix\Sign\Config\Feature;
+use Bitrix\Sign\Item\B2e\KanbanCategory;
+use Bitrix\Sign\Item\B2e\KanbanCategoryCollection;
+use Bitrix\Sign\Service\Sign\UrlGeneratorService;
+use Bitrix\Sign\Type\CounterType;
+use Bitrix\UI\Buttons\Button;
+use Bitrix\UI\Toolbar\ButtonLocation;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\Sign\Service\Container as SignContainer;
 
 \CBitrixComponent::includeComponentClass('bitrix:sign.base');
 
 class SignStartComponent extends SignBaseComponent
 {
+	private const SIGN_B2E_SESSION_CATEGORY_ID_NAME = 'SIGN_B2E_SESSION_CATEGORY_ID_NAME';
+	private const SIGN_B2E_SESSION_PATH_VALUE = 'SIGN_B2E_SESSION_PATH_VALUE';
+	private const SIGN_B2E_EMPLOYEE_ITEM_CATEGORY_CODE = 'SIGN_B2E_EMPLOYEE_ITEM_CATEGORY';
+	private const SIGN_B2E_CRM_DIRECTION_BUTTON_CSS_CLASS = 'ui-toolbar-btn-dropdown';
+	private const SIGN_B2E_HIDDEN_BUTTON_CSS_CLASS = 'ui-btn-dropdown-hidden';
+	private const SIGN_B2E_CLASS_FOR_ONBOARDING_ROUTE = 'sign-b2e-onboarding-route';
+
 	/**
 	 * Section menu item index.
 	 * @var string|null
@@ -44,12 +63,13 @@ class SignStartComponent extends SignBaseComponent
 		'contact' => 'contact/',
 		'b2e_kanban' => 'b2e/',
 		'b2e_list' => 'b2e/list/',
-		'b2e_current' => 'b2e/current/',
+		'b2e_my_documents' => 'b2e/my-documents/',
 		'config_permissions' => 'config/permission/',
 		'document' => 'doc/#doc_id#/',
 		'b2e_document' => 'b2e/doc/#doc_id#/',
 		'edit' => 'edit/#doc_id#/',
 		'b2e_settings' => 'b2e/settings/',
+		'b2e_member_dynamic_settings' => 'b2e/member_dynamic_settings/',
 		'b2e_preview' => 'b2e/preview/#doc_id#/',
 	];
 
@@ -66,13 +86,14 @@ class SignStartComponent extends SignBaseComponent
 		'b2e_list' => [],
 		'b2e_mysafe' => [],
 		'b2e_employee_template_list' => [],
-		'b2e_current' => [],
+		'b2e_my_documents' => [],
 		'contact' => [],
 		'config_permissions' => [],
 		'document' => ['doc_id'],
 		'b2e_document' => ['doc_id'],
 		'edit' => ['doc_id'],
 		'b2e_settings' => [],
+		'b2e_member_dynamic_settings' => [],
 		'b2e_preview' => ['doc_id'],
 	];
 
@@ -85,6 +106,41 @@ class SignStartComponent extends SignBaseComponent
 		'bitrix:crm.item.kanban' => 'PAGE_URL_KANBAN',
 		'bitrix:crm.item.list' => 'PAGE_URL_LIST'
 	];
+
+	public function executeComponent(): void
+	{
+		if (!Loader::includeModule('sign'))
+		{
+			showError('Sign module is not installed');
+
+			return;
+		}
+
+		if ($this->isB2eKanbanOrList())
+		{
+			if (
+				!Feature::instance()->isSendDocumentByEmployeeEnabled()
+				&& $this->getCategory()?->code === self::SIGN_B2E_EMPLOYEE_ITEM_CATEGORY_CODE
+			)
+			{
+				showError('access denied');
+
+				return;
+			}
+
+			if ($this->getCategoryIdFromRequest())
+			{
+				$this->getSession()->set(self::SIGN_B2E_SESSION_PATH_VALUE, $this->getUrlPath());
+			}
+		}
+
+		parent::executeComponent();
+
+		if ($this->isB2eKanbanOrList() && $this->removeButtons())
+		{
+			$this->addCategorySelectButton();
+		}
+	}
 
 	/**
 	 * Resolves complex component's URLs.
@@ -273,10 +329,79 @@ class SignStartComponent extends SignBaseComponent
 			&& $page === '/sign/b2e/'
 		)
 		{
-			LocalRedirect('/sign/b2e/current/');
+			LocalRedirect("/sign/b2e/my-documents/");
+		}
+
+		$categoryIdFromRequest = $this->getCategoryIdFromRequest();
+		if (
+			$this->isB2eKanbanOrList()
+			&& !$categoryIdFromRequest
+			&& $this->getKanbanCategoryCollection()->isManyCategoriesAvailable()
+			&& Feature::instance()->isSendDocumentByEmployeeEnabled()
+		)
+		{
+			$categoryIdFromSession = (int)$this->getSession()->get(self::SIGN_B2E_SESSION_CATEGORY_ID_NAME);
+
+			$path = $this->getUrlPath();
+			if (!$this->isB2ePath($this->getRefererPath()))
+			{
+				$path = (string)$this->getSession()->get(self::SIGN_B2E_SESSION_PATH_VALUE);
+			}
+
+			$this->getSession()->set(self::SIGN_B2E_SESSION_PATH_VALUE, '');
+			$category = $this->getKanbanCategoryCollection()->findById($categoryIdFromSession);
+			if (!$category)
+			{
+				$category = $this->getKanbanCategoryCollection()->getDefaultCategory();
+			}
+
+			$categoryId = $category?->id ?? 0;
+			if ($categoryId)
+			{
+				$redirectUrl = $this->getB2eUrl($path, $categoryId);
+				LocalRedirect($redirectUrl);
+			}
 		}
 
 		$this->arParams['MENU_ITEMS'] = $items;
+	}
+
+	private function isB2eKanbanOrList(): bool
+	{
+		return $this->isB2ePath($this->getUrlPath());
+	}
+
+	private function isB2ePath(string $path): bool
+	{
+		return in_array($path, [UrlGeneratorService::B2E_KANBAN_URL, UrlGeneratorService::B2E_LIST_URL], true);
+	}
+
+	private function getB2eUrl(string $path, int $categoryId): string
+	{
+		$urlGeneratorService = SignContainer::instance()->getUrlGeneratorService();
+
+		return match ($path)
+		{
+			UrlGeneratorService::B2E_LIST_URL => $urlGeneratorService->makeB2eListCategoryUrl($categoryId),
+			default => $urlGeneratorService->makeB2eKanbanCategoryUrl($categoryId),
+		};
+	}
+
+	private function getUrlPath(): string
+	{
+		$context = Application::getInstance()->getContext();
+		$request = $context->getRequest();
+		$page = $request->getRequestUri();
+
+		return (string)parse_url($page, PHP_URL_PATH);
+	}
+
+	private function getRefererPath(): string
+	{
+		$context = Application::getInstance()->getContext();
+		$referer = (string)$context->getServer()->getRaw('HTTP_REFERER');
+
+		return (string)parse_url($referer, PHP_URL_PATH);
 	}
 
 	/**
@@ -288,7 +413,6 @@ class SignStartComponent extends SignBaseComponent
 		$this->resolveTemplate();
 		$this->subscribeOnEventsToReplaceCrmUrls();
 		$this->prepareMenuItems();
-
 		$this->setParam('ENTITY_ID', \Bitrix\Sign\Document\Entity\Smart::getEntityTypeId());
 	}
 
@@ -381,32 +505,29 @@ class SignStartComponent extends SignBaseComponent
 	private function getB2eMenuItems(): array
 	{
 		$items = [];
-		if ($this->accessController->check(ActionDictionary::ACTION_B2E_DOCUMENT_READ))
+		if ($this->getAccessController()->check(ActionDictionary::ACTION_B2E_DOCUMENT_READ))
 		{
 			$items[] = [
 				'TEXT' => Loc::getMessage('SIGN_CMP_START_TPL_MENU_B2E_KANBAN_MSGVER_1'),
-				'URL' => $this->arParams['PAGE_URL_B2E_KANBAN'],
 				'ID' => 'sign_b2e_kanban',
+				'URL' => '/sign/b2e/',
 				'COUNTER' => 0,
 				'COUNTER_ID' => 'sign_b2e_kanban',
 			];
 		}
 
-		$counterId = \Bitrix\Sign\Service\Container::instance()
-			->getB2eUserToSignDocumentCounterService()
-			->getCounterId()
-		;
-		$counter = \Bitrix\Sign\Service\Container::instance()
-			->getB2eUserToSignDocumentCounterService()
-			->get()
+		$userId = (int)CurrentUser::get()->getId();
+		$counter = SignContainer::instance()
+			->getCounterService()
+			->get(CounterType::SIGN_B2E_MY_DOCUMENTS, $userId)
 		;
 
 		$items[] = [
-			'TEXT' => Loc::getMessage('SIGN_CMP_START_TPL_MENU_B2E_CURRENT_DOCUMENT'),
-			'URL' => $this->arParams['PAGE_URL_B2E_CURRENT'],
-			'ID' => 'sign_b2e_current',
+			'TEXT' => Loc::getMessage('SIGN_CMP_START_TPL_MENU_B2E_MY_DOCUMENTS'),
+			'URL' => $this->arParams['PAGE_URL_B2E_MY_DOCUMENTS'],
+			'ID' => 'sign_b2e_my_documents',
 			'COUNTER' => $counter,
-			'COUNTER_ID' => $counterId,
+			'COUNTER_ID' => CounterType::SIGN_B2E_MY_DOCUMENTS->value,
 		];
 
 		if ($this->accessController->check(ActionDictionary::ACTION_B2E_MY_SAFE))
@@ -421,8 +542,31 @@ class SignStartComponent extends SignBaseComponent
 		}
 
 		if (
+			SignContainer::instance()->getHcmLinkService()->isAvailable()
+			&& $this->accessController->check(ActionDictionary::ACTION_B2E_DOCUMENT_ADD)
+		)
+		{
+			$companyCounterService = \Bitrix\HumanResources\Service\Container::getHcmLinkCompanyCounterService();
+
+			$items[] = [
+				'TEXT' => Loc::getMessage('SIGN_CMP_START_TPL_MENU_B2E_HCMLINK_INTEGRATION'),
+				'URL' => '/hr/hcmlink/companies/',
+				'ID' => 'hr_hcmlink_companies',
+				'COUNTER' => $companyCounterService->get(),
+				'COUNTER_ID' => $companyCounterService->getCounterId(),
+				'TOUR' => [
+					'id' => 'sign-tour-guide-menu-hcmlink',
+					'targetId' => '#sign_hr_hcmlink_companies',
+					'title' => Loc::getMessage('SIGN_CMP_START_TPL_MENU_B2E_HCMLINK_INTEGRATION_TOUR_TITLE'),
+					'description' => Loc::getMessage('SIGN_CMP_START_TPL_MENU_B2E_HCMLINK_INTEGRATION_TOUR_DESCRIPTION'),
+					'articleCode' => '23264608',
+				],
+			];
+		}
+
+		if (
 			Feature::instance()->isSendDocumentByEmployeeEnabled()
-			&& $this->accessController->check(ActionDictionary::ACTION_B2E_DOCUMENT_READ)
+			&& $this->accessController->check(ActionDictionary::ACTION_B2E_TEMPLATE_READ)
 		)
 		{
 			$items[] = [
@@ -432,16 +576,15 @@ class SignStartComponent extends SignBaseComponent
 			];
 		}
 
-		if ($this->accessController->check(ActionDictionary::ACTION_B2E_PROFILE_FIELDS_DELETE))
+		if ($settingsSubitems = $this->getB2eSettingsItems())
 		{
 			$items[] = [
-				'TEXT' => Loc::getMessage('SIGN_CMP_START_TPL_MENU_B2E_SETTINGS'),
-				'URL' => $this->arParams['PAGE_URL_B2E_SETTINGS'],
-				'ID' => 'sign_b2e_settings',
-				'COUNTER' => 0,
-				'COUNTER_ID' => 'sign_b2e_settings',
+				'TEXT' => Loc::getMessage('SIGN_CMP_START_TPL_MENU_B2E_SETTINGS_MSGVER_1'),
+				'ID' => 'sign_b2e_settings_sub',
+				'ITEMS' => $settingsSubitems,
 			];
 		}
+
 		if ($this->accessController->check(ActionDictionary::ACTION_ACCESS_RIGHTS))
 		{
 			$items[] = [
@@ -459,5 +602,180 @@ class SignStartComponent extends SignBaseComponent
 	private function hasB2eKanbanMenuItem(array $items): bool
 	{
 		return !empty(array_filter($items, static fn (array $item): bool => $item['ID'] === 'sign_b2e_kanban'));
+	}
+
+	private function getB2eSettingsItems(): array
+	{
+		$items = [];
+
+		if ($this->accessController->check(ActionDictionary::ACTION_B2E_PROFILE_FIELDS_DELETE))
+		{
+			$items[] = [
+				'TEXT' => Loc::getMessage('SIGN_CMP_START_TPL_MENU_B2E_LEGAL_SETTINGS'),
+				'URL' => $this->arParams['PAGE_URL_B2E_SETTINGS'],
+				'ID' => 'sign_b2e_settings',
+				'COUNTER' => 0,
+				'COUNTER_ID' => 'sign_b2e_settings',
+			];
+		}
+
+		if (
+			Feature::instance()->isSendDocumentByEmployeeEnabled()
+			&& $this->accessController->check(ActionDictionary::ACTION_B2E_MEMBER_DYNAMIC_FIELDS_DELETE)
+		)
+		{
+			$items[] = [
+				'TEXT' => Loc::getMessage('SIGN_CMP_START_TPL_MENU_B2E_MEMBER_DYNAMIC_SETTINGS'),
+				'URL' => $this->arParams['PAGE_URL_B2E_MEMBER_DYNAMIC_SETTINGS'] ?? '',
+				'ID' => 'sign_b2e_member_dynamic_settings',
+			];
+		}
+
+		return $items;
+	}
+
+	private function removeButtons(): bool
+	{
+		$category = $this->getCategory();
+		$isNeedToRemove = ($category && !$category->isDefault());
+
+		Toolbar::deleteButtons(
+			fn(Button $button, string $location): bool => $location === ButtonLocation::AFTER_TITLE
+				&& ($button->hasClass(self::SIGN_B2E_CRM_DIRECTION_BUTTON_CSS_CLASS) || $isNeedToRemove)
+		);
+
+		foreach (Toolbar::getButtons() as $button)
+		{
+			if ($button->hasClass(self::SIGN_B2E_CRM_DIRECTION_BUTTON_CSS_CLASS))
+			{
+				$button->addClass(self::SIGN_B2E_HIDDEN_BUTTON_CSS_CLASS);
+
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private function addCategorySelectButton(): void
+	{
+		if (!Feature::instance()->isSendDocumentByEmployeeEnabled())
+		{
+			return;
+		}
+
+		if (!$this->getKanbanCategoryCollection()->isManyCategoriesAvailable())
+		{
+			return;
+		}
+
+		$category = $this->getCategory();
+		$code = $category?->code ?? '';
+		$title = $this->getCategoryButtonTranslationByCode($code);
+		$button = new Button();
+		$button->setText($title);
+		$button->addClass(self::SIGN_B2E_CLASS_FOR_ONBOARDING_ROUTE);
+		$button->addClass('ui-btn-light-border');
+		$button->addClass($this->getCategoryButtonIconClassByCode($code));
+		$button->setDropdown(true);
+		$button->setMenu($this->getB2eKanbanButtonMenuItems());
+
+		Toolbar::addButton($button, ButtonLocation::AFTER_TITLE);
+	}
+
+	private function getCategoryButtonIconClassByCode(string $code): string
+	{
+		return $code === self::SIGN_B2E_EMPLOYEE_ITEM_CATEGORY_CODE
+			? 'ui-btn-icon-kanban-employee-category'
+			: 'ui-btn-icon-kanban-category';
+	}
+
+	private function getB2eKanbanButtonMenuItems(): array
+	{
+		$categories = $this->getKanbanCategoryCollection();
+		$items = [];
+		$categoryCodesForMenu = SignContainer::instance()
+			->getB2eKanbanCategoryService()
+			->getSmartB2eDocumentCategoryCodesForMenu()
+		;
+
+		foreach ($categories as $category)
+		{
+			$categoryId = $category->id ?? 0;
+
+			if ($categoryId < 1)
+			{
+				continue;
+			}
+
+			$categoryCode = $category?->code ?? null;
+			if ($categoryCode === null)
+			{
+				continue;
+			}
+
+			if (!in_array($categoryCode, $categoryCodesForMenu, true))
+			{
+				continue;
+			}
+
+			$items[] = [
+				'text' => $this->getCategoryButtonTranslationByCode($categoryCode),
+				'href' => $this->getB2eUrl($this->getUrlPath(), $categoryId),
+				'id' => 'sign_b2e_kanban_' . $categoryId,
+			];
+		}
+
+		return ['items' => $items];
+	}
+
+	private function getCategoryButtonTranslationByCode(string $code): string
+	{
+		return Loc::getMessage('SIGN_KANBAN_BUTTON_TITLE_' . $code) ?? '';
+	}
+
+	private function getCategory(): ?KanbanCategory
+	{
+		$categoryIdFromRequest = $this->getCategoryIdFromRequest();
+		$categoryIdFromSession = (int)$this->getSession()->get(self::SIGN_B2E_SESSION_CATEGORY_ID_NAME);
+		$category = $this->getKanbanCategoryCollection()->findById($categoryIdFromRequest);
+		if (!$category)
+		{
+			$category = $this->getKanbanCategoryCollection()->getDefaultCategory();
+		}
+
+		if ($category && $categoryIdFromRequest && $category->id !== $categoryIdFromSession)
+		{
+			$this->getSession()->set(self::SIGN_B2E_SESSION_CATEGORY_ID_NAME, $category->id);
+		}
+
+		return $category;
+	}
+
+	private function getSession(): SessionInterface
+	{
+		return Application::getInstance()->getSession();
+	}
+
+	private function getCategoryIdFromRequest(): int
+	{
+		$context = Application::getInstance()->getContext();
+		$request = $context->getRequest();
+		$result = $request->get('categoryId');
+
+		return is_array($result) ? 0 : (int)$result;
+	}
+
+	private function getKanbanCategoryCollection(): KanbanCategoryCollection
+	{
+		return	SignContainer::instance()
+			->getB2eKanbanCategoryService()
+			->getSmartB2eDocumentCategories()
+		;
+	}
+
+	private function getUrlPartForGridPageByEmployeeMode(): string
+	{
+		return  Feature::instance()->isSendDocumentByEmployeeEnabled() ? 'my-documents' : 'current';
 	}
 }

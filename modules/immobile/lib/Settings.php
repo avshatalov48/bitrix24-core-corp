@@ -2,6 +2,8 @@
 
 namespace Bitrix\ImMobile;
 
+use Bitrix\Im\V2\Application\Features;
+
 class Settings
 {
 	public static function isBetaAvailable(): bool
@@ -31,8 +33,13 @@ class Settings
 
 	public static function isChatLocalStorageAvailable(): bool
 	{
-		$isAvailable = \Bitrix\Main\Config\Option::get('immobile', 'chat_local_storage_available', 'Y') === 'Y';
-		if (!$isAvailable)
+		if (!self::isChatM1Enabled())
+		{
+			return false;
+		}
+
+		$isChatLocalStorageAvailable = \Bitrix\Main\Config\Option::get('immobile', 'chat_local_storage_available', 'Y') === 'Y';
+		if (!$isChatLocalStorageAvailable)
 		{
 			return false;
 		}
@@ -60,16 +67,6 @@ class Settings
 		return \Bitrix\Main\Config\Option::get('immobile', 'should_show_chat_m1_update_hint', 'Y') === 'Y';
 	}
 
-	public static function isCopilotAvailable(): bool
-	{
-		if (!\Bitrix\Main\Loader::includeModule('im'))
-		{
-			return false;
-		}
-
-		return \Bitrix\Im\V2\Chat\CopilotChat::isActive();
-	}
-
 	public static function planLimits(): ?array
 	{
 		if (!\Bitrix\Main\Loader::includeModule('im'))
@@ -78,5 +75,25 @@ class Settings
 		}
 
 		return \Bitrix\Im\V2\TariffLimit\Limit::getInstance()->getRestrictions();
+	}
+
+	public static function getImFeatures(): ?Features
+	{
+		if (!\Bitrix\Main\Loader::includeModule('im'))
+		{
+			return null;
+		}
+
+		return Features::get();
+	}
+
+	public static function getMultipleActionMessageLimit(): ?int
+	{
+		if (!\Bitrix\Main\Loader::includeModule('im'))
+		{
+			return null;
+		}
+
+		return \Bitrix\Im\V2\Message\MessageService::getMultipleActionMessageLimit();
 	}
 }

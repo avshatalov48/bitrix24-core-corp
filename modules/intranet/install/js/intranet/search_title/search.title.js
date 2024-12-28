@@ -128,7 +128,7 @@ BX.Intranet.SearchTitle = function(arParams)
 										MODULE_ID: '',
 										NAME: _this.ITEMS.obClientDbData.sonetgroups[entityCode].name,
 										PARAM1: '',
-										URL: _this.arParams.GROUP_URL.replace('#group_id#', _this.ITEMS.obClientDbData.sonetgroups[entityCode].entityId),
+										URL: _this.getGroupUrl(_this.ITEMS.obClientDbData.sonetgroups[entityCode]),
 										TYPE: 'sonetgroups',
 										IS_MEMBER: (typeof _this.ITEMS.obClientDbData.sonetgroups[entityCode].isMember != 'undefined' && _this.ITEMS.obClientDbData.sonetgroups[entityCode].isMember == 'Y' ? 1 : 0)
 									});
@@ -165,6 +165,21 @@ BX.Intranet.SearchTitle = function(arParams)
 		}
 
 		return result;
+	};
+
+	this.getGroupUrl = function(group)
+	{
+		if (!group)
+		{
+			return '';
+		}
+
+		if (group?.groupType === 'collab' && group?.chatId > 0)
+		{
+			return _this.arParams.COLLAB_URL.replace('#DIALOG_ID#', group?.dialogId);
+		}
+
+		return _this.arParams.GROUP_URL.replace('#group_id#', group?.entityId);
 	};
 
 	this.resultCmp = function(a, b)

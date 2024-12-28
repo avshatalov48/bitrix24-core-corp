@@ -26,6 +26,7 @@ class IntranetUserProfileButton extends \CBitrixComponent implements Controllera
 	private bool $isCloud;
 	private bool $isExtranet;
 	private ?int $userId;
+	private bool $isCollaber;
 
 	public function __construct($component = null)
 	{
@@ -33,6 +34,11 @@ class IntranetUserProfileButton extends \CBitrixComponent implements Controllera
 		$this->userId = $this->currentUser->getId();
 		$this->isCloud = Loader::includeModule('bitrix24');
 		$this->isExtranet = Loader::includeModule('extranet') && \CExtranet::isExtranetSite();
+		$this->isCollaber = $this->isExtranet
+			&& \Bitrix\Extranet\Service\ServiceContainer::getInstance()
+				->getCollaberService()
+				->isCollaberById($this->userId)
+		;
 		parent::__construct($component);
 	}
 
@@ -76,6 +82,7 @@ class IntranetUserProfileButton extends \CBitrixComponent implements Controllera
 	{
 		$this->arResult['USER_ID'] = $this->userId;
 		$this->arResult['IS_EXTRANET'] = $this->isExtranet;
+		$this->arResult['IS_COLLABER'] = $this->isCollaber;
 		$this->arResult['IS_CLOUD'] = $this->isCloud;
 		$this->arResult['IS_ADMIN'] = $this->currentUser->isAdmin();
 		$this->arResult['USER_NAME'] = htmlspecialcharsbx($this->currentUser->getFormattedName());
@@ -89,6 +96,7 @@ class IntranetUserProfileButton extends \CBitrixComponent implements Controllera
 		$this->arResult['IS_SOCIALNETWORK_ADMIN'] = $this->isUserSocialnetworkAdmin();
 		$this->arResult['B24NET_PANEL_AVAILABLE'] = $this->isB24NetPanelAvailable();
 		$this->arResult['IS_SIGN_DOCUMENT_AVAILABLE'] = $this->isSignDocumentAvailable();
+		$this->arResult['IS_SIGN_DOCUMENT_LOCKED'] = $this->arResult['IS_SIGN_DOCUMENT_AVAILABLE'] && $this->isSignDocumentLocked();
 		$this->arResult['USER_PHOTO_ID'] = $this->currentUser->getPersonalPhotoId();
 		$this->arResult['USER_PERSONAL_PHOTO_SRC'] = $this->getUserPhotoSrc($this->arResult['USER_PHOTO_ID']);
 		$this->arResult['MASK'] = $this->getUserMaskData($this->arResult['USER_PHOTO_ID']);
@@ -250,5 +258,23 @@ class IntranetUserProfileButton extends \CBitrixComponent implements Controllera
 		}
 
 		return null;
+	}
+
+	private function isSignDocumentLocked(): bool
+	{
+		if (!Loader::includeModule('sign'))
+		{
+			return false;
+		}
+
+		if (
+			!class_exists(\Bitrix\Sign\Integration\Bitrix24\B2eTariff::class)
+			|| !method_exists(\Bitrix\Sign\Integration\Bitrix24\B2eTariff::class, 'isB2eRestrictedInCurrentTariff')
+		)
+		{
+			return false;
+		}
+
+		return \Bitrix\Sign\Integration\Bitrix24\B2eTariff::instance()->isB2eRestrictedInCurrentTariff();
 	}
 }

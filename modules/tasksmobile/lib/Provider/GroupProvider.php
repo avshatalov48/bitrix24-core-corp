@@ -2,8 +2,12 @@
 
 namespace Bitrix\TasksMobile\Provider;
 
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Socialnetwork\Helper\Workgroup;
+use Bitrix\Socialnetwork\Integration\Im;
+use Bitrix\Socialnetwork\Collab\Integration\IM\Dialog;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasksmobile\Dto\GroupDto;
 
@@ -22,9 +26,17 @@ final class GroupProvider
 		$avatarTypes = Loader::includeModule('socialnetwork') ? Workgroup::getAvatarTypes() : [];
 		$newGroupsData = SocialNetwork\Group::getData(
 			$groupIds,
-			['IMAGE_ID', 'AVATAR_TYPE', 'PROJECT_DATE_START', 'PROJECT_DATE_FINISH'],
-			['MODE' => 'mobile']
+			['SITE_ID', 'IMAGE_ID', 'AVATAR_TYPE', 'PROJECT_DATE_START', 'PROJECT_DATE_FINISH', 'TYPE'],
+			['MODE' => 'mobile'],
 		);
+
+		$extranetSiteId = Option::get('extranet', 'extranet_site');
+		$extranetSiteId = $extranetSiteId && ModuleManager::isModuleInstalled('extranet') ? $extranetSiteId : false;
+
+		$chatData = Im\Chat\Workgroup::getChatData([
+			'group_id' => $groupIds,
+			'skipAvailabilityCheck' => true,
+		]);
 
 		foreach ($newGroupsData as $group)
 		{
@@ -35,7 +47,7 @@ final class GroupProvider
 			{
 				[$originalImage, $resizedImage100] = self::getImages($group['IMAGE_ID']);
 			}
-			elseif (
+			else if (
 				!empty($group['AVATAR_TYPE'])
 				&& isset($avatarTypes[$group['AVATAR_TYPE']])
 			)
@@ -43,23 +55,21 @@ final class GroupProvider
 				$originalImage = $resizedImage100 = $avatarTypes[$group['AVATAR_TYPE']]['mobileUrl'];
 			}
 
-			if (empty($originalImage))
-			{
-				$originalImage = $resizedImage100 = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/project/images/default-avatar.png';
-			}
-			elseif (empty($resizedImage100))
-			{
-				$resizedImage100 = $originalImage;
-			}
+			$additionalData = [
+				...($group['ADDITIONAL_DATA'] ?? []),
+				'DIALOG_ID' => Dialog::getDialogId($chatData[$group['ID']] ?? 0),
+			];
 
 			$groups[] = new GroupDto(
 				id: $group['ID'],
 				name: $group['NAME'],
 				image: $originalImage,
 				resizedImage100: $resizedImage100,
-				additionalData: ($group['ADDITIONAL_DATA'] ?? []),
+				additionalData: $additionalData,
 				dateStart: $group['PROJECT_DATE_START']?->getTimestamp(),
 				dateFinish: $group['PROJECT_DATE_FINISH']?->getTimestamp(),
+				isCollab: $group['TYPE'] === 'collab',
+				isExtranet: $group['SITE_ID'] === $extranetSiteId,
 			);
 		}
 

@@ -1,11 +1,15 @@
 <?php
 IncludeModuleLangFile(__FILE__);
 
+use Bitrix\Crm\Feature;
+use Bitrix\Crm\Security\Role\Manage\DTO\PermissionModel;
 use Bitrix\Crm\Security\Role\Model\RolePermissionTable;
 use Bitrix\Crm\Security\Role\Model\RoleRelationTable;
 use Bitrix\Crm\Security\Role\RolePermission;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Crm\CategoryIdentifier;
+use Bitrix\Crm\Security\Role\Utils\RolePermissionLogContext;
 
 class CCrmRole
 {
@@ -121,6 +125,7 @@ class CCrmRole
 	public function SetRelation($arRelation, $ignoreSystem = true)
 	{
 		$this->log('SetRelation', $arRelation);
+		$logger = \Bitrix\Crm\Service\Container::getInstance()->getLogger('Permissions');
 		global $DB;
 
 		$sSql = $ignoreSystem
@@ -129,6 +134,12 @@ class CCrmRole
 		;
 
 		$DB->Query($sSql);
+		$logger->info(
+			"Removed all relations",
+			RolePermissionLogContext::getInstance()->appendTo([
+				'ignoreSystem' => $ignoreSystem ? 'Y' : 'N',
+			])
+		);
 		foreach ($arRelation as $sRel => $arRole)
 		{
 			foreach ($arRole as $iRoleID)
@@ -138,6 +149,14 @@ class CCrmRole
 					'RELATION' => $DB->ForSql($sRel)
 				);
 				$DB->Add('b_crm_role_relation', $arFields, array(), 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+
+				$logger->info(
+					"Add relation {RELATION} for role #{ROLE_ID}",
+					RolePermissionLogContext::getInstance()->appendTo([
+						'ROLE_ID' => $iRoleID,
+						'RELATION' => $sRel,
+					])
+				);
 			}
 		}
 
@@ -344,7 +363,15 @@ class CCrmRole
 		{
 			if (!isset($arFields['RELATION']) || !is_array($arFields['RELATION']))
 				$arFields['RELATION'] = array();
+
 			$ID = (int)$DB->Add('b_crm_role', $arFields, array(), 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+			\Bitrix\Crm\Service\Container::getInstance()->getLogger('Permissions')->info(
+				"Created role #{roleId} ({roleName})\nPermissions:\n".print_r($arFields['RELATION'], true),
+				RolePermissionLogContext::getInstance()->appendTo([
+					'roleId' => $ID,
+					'roleName' => $arFields['NAME'],
+				])
+			);
 			$this->SetRoleRelation($ID, $arFields['RELATION']);
 			$result = $arFields['ID'] = $ID;
 		}
@@ -359,7 +386,16 @@ class CCrmRole
 		$existedRelations = RolePermissionTable::query()->where('ROLE_ID', $ID)->setSelect(['*'])->exec()->fetchAll();
 		$relationComparer = new \Bitrix\Crm\Security\Role\RolePermissionComparer($existedRelations, $arRelation);
 
+		RolePermissionLogContext::getInstance()->disableOrmEventsLog();
+
 		\Bitrix\Crm\Security\Role\Repositories\PermissionRepository::getInstance()->applyRolePermissionData(
+			$ID,
+			$relationComparer->getValuesToDelete(),
+			$relationComparer->getValuesToAdd()
+		);
+		RolePermissionLogContext::getInstance()->enableOrmEventsLog();
+
+		$this->logRolePermissionsChange(
 			$ID,
 			$relationComparer->getValuesToDelete(),
 			$relationComparer->getValuesToAdd()
@@ -388,7 +424,17 @@ class CCrmRole
 				$arFields['RELATION'] = array();
 			$sUpdate = $DB->PrepareUpdate('b_crm_role', $arFields, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 			if ($sUpdate <> '')
+			{
 				$DB->Query("UPDATE b_crm_role SET $sUpdate WHERE ID = $ID");
+
+				$fieldsToLog = $arFields;
+				unset($fieldsToLog['RELATION']);
+				$fieldsToLog['ID'] = $ID;
+				\Bitrix\Crm\Service\Container::getInstance()->getLogger('Permissions')->info(
+					"Updated role #{ID}",
+					RolePermissionLogContext::getInstance()->appendTo($fieldsToLog)
+				);
+			}
 
 			$this->SetRoleRelation($ID, $arFields['RELATION']);
 			$arFields['ID'] = $ID;
@@ -408,6 +454,13 @@ class CCrmRole
 		$DB->Query($sSql);
 		$sSql = 'DELETE FROM b_crm_role WHERE ID = '.$ID;
 		$DB->Query($sSql);
+
+		\Bitrix\Crm\Service\Container::getInstance()->getLogger('Permissions')->info(
+			"Deleted role #{ID}",
+			RolePermissionLogContext::getInstance()->appendTo([
+				'ID' => $ID,
+			])
+		);
 
 		self::ClearCache();
 	}
@@ -431,6 +484,51 @@ class CCrmRole
 		$entity = $helper->forSql($entity);
 		(new self())->log('EraseEntityPermissons', ['Entity' => $entity]);
 		$connection->queryExecute("DELETE FROM b_crm_role_perms WHERE ENTITY = '{$entity}'");
+
+		\Bitrix\Crm\Service\Container::getInstance()->getLogger('Permissions')->info(
+			"Deleted all permissions for entity {entity}",
+			RolePermissionLogContext::getInstance()->appendTo([
+				'entity' => $entity,
+			])
+		);
+
+		self::ClearCache();
+	}
+
+	public static function EraseEntityPermissionsForNotAdminRoles(string $entity): void
+	{
+		if (Feature::enabled(\Bitrix\Crm\Feature\PermissionsLayoutV2::class))
+		{
+			$entityTypeId = \CCrmOwnerType::ResolveID((string)Container::getInstance()->getUserPermissions()->getEntityNameByPermissionEntityType($entity));
+			$adminRoleIds = \Bitrix\Crm\Security\Role\RolePermission::getAdminRolesIds($entityTypeId);
+		}
+		else
+		{
+			$adminRoleIds = \Bitrix\Crm\Security\Role\RolePermission::getAdminRolesIds();
+		}
+
+		if (empty($adminRoleIds))
+		{
+			$adminRoleIds = [0];
+		}
+		$adminRoleIds = array_map( 'intval', $adminRoleIds);
+		$adminRoleIds = implode(',', $adminRoleIds);
+
+		$connection = Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
+		$entity = $helper->forSql($entity);
+		(new self())->log('EraseEntityPermissons for non admin roles', ['Entity' => $entity, 'adminRoleIds' => $adminRoleIds]);
+
+		$connection->queryExecute("DELETE FROM b_crm_role_perms WHERE ENTITY = '{$entity}' AND ROLE_ID NOT IN ($adminRoleIds)");
+
+		\Bitrix\Crm\Service\Container::getInstance()->getLogger('Permissions')->info(
+			"Deleted all not admin roles permissions for entity {entity}",
+			RolePermissionLogContext::getInstance()->appendTo([
+				'adminRoles' => $adminRoleIds,
+				'entity' => $entity,
+			])
+		);
+
 		self::ClearCache();
 	}
 
@@ -613,5 +711,26 @@ class CCrmRole
 		}
 
 		return $permissionSet;
+	}
+
+	/**
+	 * @param int $roleId
+	 * @param PermissionModel[] $removedPermissions
+	 * @param PermissionModel[] $addedPermissions
+	 * @return void
+	 */
+	private function logRolePermissionsChange(int $roleId, array $removedPermissions, array $addedPermissions): void
+	{
+		array_walk($removedPermissions, fn (PermissionModel $item) => $item->toArray());
+		array_walk($addedPermissions, fn (PermissionModel $item) => $item->toArray());
+
+		\Bitrix\Crm\Service\Container::getInstance()->getLogger('Permissions')->info(
+			"Permissions changed in role #{roleId}",
+			RolePermissionLogContext::getInstance()->appendTo([
+				'roleId' => $roleId,
+				'removedItems' => $removedPermissions,
+				'addedItems' => $addedPermissions,
+			])
+		);
 	}
 }

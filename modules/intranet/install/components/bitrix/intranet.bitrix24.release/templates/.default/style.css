@@ -22,8 +22,8 @@
 	bottom: 100px;
 	display: flex;
 	align-items: center;
-	padding: 15px 25px 15px 15px;
-	background: linear-gradient(270deg, #4c00d5 0%, #3764d9 100%);
+	padding: 7px 25px 7px 15px;
+	background: #956FFF;
 	border-radius: 40px 0 0 40px;
 	transition: 0.2s transform;
 }
@@ -41,17 +41,15 @@
 	display: inline-flex;
 	justify-content: center;
 	align-items: center;
-	width: 40px;
-	height: 40px;
+	width: 63px;
+	height: 63px;
 	margin-right: 10px;
-	border-radius: 100%;
-	background: #b42cd9;
 	cursor: pointer;
 	transition: .25s;
 }
 
 .intranet-release-ear:hover .intranet-release-button {
-	background: #bd2ce3;
+
 }
 
 .intranet-release-button:last-child {
@@ -59,9 +57,9 @@
 }
 
 .intranet-release-button i {
-	width: 18px;
-	height: 12px;
-	background: url(images/arrow.svg) center no-repeat;
+	width: 63px;
+	height: 63px;
+	background: url(images/arrow-new.svg) center no-repeat;
 	background-size: contain;
 }
 

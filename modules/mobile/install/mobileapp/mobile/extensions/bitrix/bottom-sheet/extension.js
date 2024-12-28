@@ -6,6 +6,7 @@ jn.define('bottom-sheet', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { prepareHexColor } = require('utils/color');
 	const { mergeImmutable } = require('utils/object');
+	const { getMediumHeight } = require('utils/page-manager');
 
 	const DEFAULT_TOP_HEIGHT_OFFSET = 70;
 	const DEFAULT_MEDIUM_POSITION_PERCENT = 70;
@@ -325,16 +326,19 @@ jn.define('bottom-sheet', (require, exports, module) => {
 		/**
 		 * @public
 		 * @param {number} mediumPositionHeight
+		 * @param {boolean} [adjustHeight=false]
 		 * @return {BottomSheet}
 		 */
-		setMediumPositionHeight(mediumPositionHeight)
+		setMediumPositionHeight(mediumPositionHeight, adjustHeight = false)
 		{
 			if (!Type.isNumber(mediumPositionHeight))
 			{
 				throw new TypeError('mediumPositionHeight must be a number');
 			}
 
-			this.widgetOptions.backdrop.mediumPositionHeight = mediumPositionHeight;
+			this.widgetOptions.backdrop.mediumPositionHeight = adjustHeight
+				? getMediumHeight({ height: mediumPositionHeight })
+				: mediumPositionHeight;
 
 			return this;
 		}

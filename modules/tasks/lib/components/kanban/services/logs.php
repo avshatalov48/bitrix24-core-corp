@@ -64,7 +64,8 @@ class Logs
 				'=FIELD' => [
 					'COMMENT',
 					self::USER_WEBDAV_CODE,
-					'CHECKLIST_ITEM_CREATE'
+					'CHECKLIST_ITEM_CREATE',
+					'CHECKLIST_ITEM_REMOVE',
 				],
 				$filterLog
 			]
@@ -90,6 +91,10 @@ class Logs
 			elseif ($row['FIELD'] == 'CHECKLIST_ITEM_CREATE')
 			{
 				$log['checklist']++;
+			}
+			elseif ($row['FIELD'] === 'CHECKLIST_ITEM_REMOVE' && $log['checklist'] > 0)
+			{
+				$log['checklist']--;
 			}
 		}
 

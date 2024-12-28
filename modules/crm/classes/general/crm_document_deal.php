@@ -662,6 +662,23 @@ class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 		return $categories;
 	}
 
+	public static function getDocumentCategoryId(string $documentId): ?int
+	{
+		$documentInfo = self::GetDocumentInfo($documentId);
+		$factory = Crm\Service\Container::getInstance()->getFactory(CCrmOwnerType::Deal);
+
+		if ($factory && $factory?->isCategoriesSupported())
+		{
+			$entity = $factory->getItem($documentInfo['ID'], ['CATEGORY_ID']);
+			if ($entity)
+			{
+				return $entity->getCategoryId();
+			}
+		}
+
+		return null;
+	}
+
 	public static function normalizeDocumentId($documentId)
 	{
 		return parent::normalizeDocumentIdInternal(

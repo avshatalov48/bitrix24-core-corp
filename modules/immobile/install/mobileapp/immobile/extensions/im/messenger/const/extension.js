@@ -9,6 +9,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		AttachGridItemDisplay,
 		AttachColorToken,
 	} = require('im/messenger/const/attach');
+	const { AttachPickerId } = require('im/messenger/const/attach-picker');
 	const {
 		CacheNamespace,
 		CacheName,
@@ -20,7 +21,9 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		BotCommand,
 	} = require('im/messenger/const/bot');
 	const { ConnectionStatus } = require('im/messenger/const/connection-status');
+	const { CounterType } = require('im/messenger/const/counter');
 	const { EventType } = require('im/messenger/const/event-type');
+	const { EventsCheckpointType } = require('im/messenger/const/events-checkpoint');
 	const { FeatureFlag } = require('im/messenger/const/feature-flag');
 	const {
 		RestMethod,
@@ -31,8 +34,10 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		SubTitleIconType,
 	} = require('im/messenger/const/recent');
 	const {
+		UserType,
 		UserExternalType,
 		UserRole,
+		UserColor,
 	} = require('im/messenger/const/user');
 	const {
 		MessageType,
@@ -42,11 +47,17 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		MessageComponent,
 	} = require('im/messenger/const/message');
 	const { ReactionType } = require('im/messenger/const/reaction-type');
-	const { DialogType } = require('im/messenger/const/dialog-type');
-	const { DialogActionType } = require('im/messenger/const/dialog-action-type');
+	const {
+		DialogType,
+		DialogWidgetType,
+	} = require('im/messenger/const/dialog-type');
+	const {
+		DialogActionType,
+		ActionByUserType,
+	} = require('im/messenger/const/permission');
 	const {
 		SidebarActionType,
-		SidebarContextMenuActionType,
+		SidebarHeaderContextMenuActionType,
 	} = require('im/messenger/const/sidebar-action-type');
 	const { FileStatus } = require('im/messenger/const/file-status');
 	const {
@@ -69,7 +80,6 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { CopilotButtonType, CopilotPromptType } = require('im/messenger/const/copilot-button');
 	const { ComponentCode } = require('im/messenger/const/component-code');
 	const { Analytics } = require('im/messenger/const/analytics');
-	const { HeaderButton } = require('im/messenger/const/header-button');
 	const { NavigationTab } = require('im/messenger/const/navigation-tab');
 	const {
 		KeyboardButtonContext,
@@ -82,12 +92,18 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { OpenRequest } = require('im/messenger/const/open-request');
 	const { OpenDialogContextType } = require('im/messenger/const/context-type');
 	const { UrlGetParameter } = require('im/messenger/const/url-params');
+	const { CollabEntity } = require('im/messenger/const/collab');
 	const { MessengerInitRestMethod } = require('im/messenger/const/messenger-init-rest');
+	const { DialogPermissions, RightsLevel } = require('im/messenger/const/permission');
+	const { WidgetTitleParamsType } = require('im/messenger/const/widget');
+	const { EntitySelectorElementType} = require('im/messenger/const/entity-selector');
+	const { ViewName} = require('im/messenger/const/view');
 
 	module.exports = {
 		AppStatus,
 		Analytics,
 		AttachType,
+		AttachPickerId,
 		AttachDescription,
 		AttachGridItemDisplay,
 		AttachColorToken,
@@ -98,7 +114,9 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		BotCode,
 		BotCommand,
 		ConnectionStatus,
+		CounterType,
 		EventType,
+		EventsCheckpointType,
 		FeatureFlag,
 		ChatTypes,
 		MessageStatus,
@@ -111,15 +129,19 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		MessageParams,
 		ReactionType,
 		DialogType,
+		DialogWidgetType,
 		DialogActionType,
+		ActionByUserType,
 		SidebarActionType,
-		SidebarContextMenuActionType,
+		SidebarHeaderContextMenuActionType,
 		FileStatus,
 		FileType,
 		FileEmojiType,
 		FileImageType,
+		UserType,
 		UserExternalType,
 		UserRole,
+		UserColor,
 		Color,
 		Path,
 		DraftType,
@@ -135,7 +157,6 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		CopilotButtonType,
 		CopilotPromptType,
 		ComponentCode,
-		HeaderButton,
 		NavigationTab,
 		KeyboardButtonContext,
 		KeyboardButtonType,
@@ -146,6 +167,12 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		OpenRequest,
 		OpenDialogContextType,
 		UrlGetParameter,
+		CollabEntity,
 		MessengerInitRestMethod,
+		DialogPermissions,
+		RightsLevel,
+		WidgetTitleParamsType,
+		EntitySelectorElementType,
+		ViewName,
 	};
 });

@@ -54,6 +54,8 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			this.unreadSeparatorAdded = false;
 			this.idAfterUnreadSeparatorMessage = '0';
 			this.nextTickCallbackList = [];
+			/** @type {Set<string>} */
+			this.uploadingMessageCollection = new Set();
 			this.renderQueuePromise = Promise.resolve();
 		}
 
@@ -142,6 +144,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			}
 
 			await this.killDoubleMessage(messageList);
+			await this.killUploadingMessages(messageList);
 
 			const newMessageList = [];
 			const updateMessageList = [];
@@ -182,34 +185,82 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 			for (const id of messageIdList)
 			{
+				if (this.uploadingMessageCollection.has(id))
+				{
+					this.uploadingMessageCollection.delete(id);
+				}
+
 				const messageModel = this.getMessageModelByAnyId(id);
 				if (!messageModel)
 				{
 					return;
 				}
-				const messageViewItem = this.viewMessageCollection[id];
-				const packAuthorMessages = this.getPackAuthorNeighborMessages(messageModel);
-				const packWithoutDeletedMessage = packAuthorMessages.filter((message) => message.id !== messageViewItem.id);
-				const formattedMessages = this.processBottomNearbyMessages(packWithoutDeletedMessage.reverse());
+
+				const deletingMessages = [id];
+
+				// process delete unread separator
+				if (this.idAfterUnreadSeparatorMessage === String(id))
+				{
+					if (this.getBottomMessage()?.id === String(id))
+					{
+						delete this.viewMessageCollection[UnreadSeparatorMessage.getDefaultId()];
+						this.unreadSeparatorAdded = false;
+						this.idAfterUnreadSeparatorMessage = '0';
+
+						deletingMessages.push(UnreadSeparatorMessage.getDefaultId());
+					}
+					else
+					{
+						this.idAfterUnreadSeparatorMessage = this.getRealNextMessage(id).id;
+					}
+				}
+
+				let previousMessage = this.getPreviousMessage(id);
+				let nextMessage = this.getNextMessage(id);
 
 				delete this.viewMessageCollection[id];
 				this.messageIdCollection.delete(id);
 				this.deleteIdFromStack(messageModel);
 				this.messageList = this.messageList.filter((message) => message.id !== id);
 
-				await this.view.removeMessagesByIds(messageIdList);
-
-				const bottomMessage = this.getBottomMessage();
-
-				for (const message of formattedMessages)
+				// If the message you want to delete is between two separators, delete the previous separator.
+				if (
+					previousMessage instanceof DateSeparatorMessage
+					&& nextMessage instanceof DateSeparatorMessage
+				)
 				{
-					if (message.id === bottomMessage.id)
+					const previousMessageId = previousMessage.id;
+					delete this.viewMessageCollection[previousMessageId];
+					this.messageIdCollection.delete(previousMessageId);
+					this.deleteIdFromStackById(previousMessageId);
+					this.messageList = this.messageList.filter((message) => message.id !== previousMessageId);
+					previousMessage = null;
+
+					deletingMessages.push(previousMessageId);
+				}
+
+				await this.view.removeMessagesByIds(deletingMessages);
+
+				const updatedMessages = [];
+				if (previousMessage)
+				{
+					const previousMessageData = this.getMessageModelByAnyId(previousMessage.id);
+					if (previousMessageData)
 					{
-						message.setMarginBottom(4);
+						updatedMessages.push(previousMessageData);
 					}
 				}
 
-				await this.updateViewMessages(formattedMessages);
+				if (nextMessage)
+				{
+					const nextMessageData = this.getMessageModelByAnyId(nextMessage.id);
+					if (nextMessageData)
+					{
+						updatedMessages.push(nextMessageData);
+					}
+				}
+
+				await this.updateMessageList(updatedMessages, null, true);
 
 				if (this.view.isWelcomeScreenShown) // check when delete last message offline
 				{
@@ -218,6 +269,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			}
 
 			const bottomMessage = this.getBottomMessage();
+
 			if (bottomMessage && bottomMessage.type === MessageType.systemText)
 			{
 				const isSystemDateMessage = bottomMessage.id.includes(MessageIdType.templateSeparatorDate);
@@ -239,6 +291,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		{
 			logger.info('MessageRenderer.setMessageList:', messageList);
 			this.messageList = [...messageList];
+			this.markUploadingMessages(messageList);
 
 			this.updateMessageIndex(this.messageList);
 
@@ -250,6 +303,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 			const viewMessageListToSet = this.processNearbyMessagesList(viewMessageListWithTemplate);
 			this.view.unreadSeparatorAdded = this.unreadSeparatorAdded;
+
+			if (this.store.getters['messagesModel/isUploadingMessage'](viewMessageListToSet[0]?.id))
+			{
+				this.view.setMessageIdToScrollAfterSet(viewMessageListToSet[0]?.id);
+			}
 
 			await this.view.setMessages(viewMessageListToSet);
 			viewMessageListToSet.forEach((message) => {
@@ -274,6 +332,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			const messageListBelow = [];
 			/** @type {Map<MessageMapBetweenKey, Array<MessagesModelState>>} */
 			const messageMapBetween = new Map();
+			this.markUploadingMessages(messageList);
 			messageList.forEach((message) => {
 				if (this.checkIsMessageAbove(message))
 				{
@@ -319,6 +378,10 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			}
 		}
 
+		/**
+		 * @param {MessagesModelState} message
+		 * @returns {boolean}
+		 */
 		checkIsMessageAbove(message)
 		{
 			const isTemplateMessage = Uuid.isV4(message.id);
@@ -334,6 +397,10 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			);
 		}
 
+		/**
+		 * @param {MessagesModelState} message
+		 * @returns {boolean}
+		 */
 		checkIsMessageBelow(message)
 		{
 			const isTemplateMessage = Uuid.isV4(message.id);
@@ -343,6 +410,14 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			}
 
 			const size = this.messageList.length - 1;
+			const bottomMessage = this.messageList[size];
+			if (
+				this.uploadingMessageCollection.has(bottomMessage.id)
+				&& bottomMessage.previousId < message.id
+			)
+			{
+				return true;
+			}
 
 			return (
 				Type.isNumber(this.messageList[size].id)
@@ -807,6 +882,37 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			return indexId === -1 ? null : this.viewMessageCollection[this.messageIdsStack[indexId - 1]];
 		}
 
+		getRealPreviousMessage(currentMessageId)
+		{
+			const currentMessageIndex = this.messageIdsStack.indexOf(String(currentMessageId));
+
+			if (currentMessageIndex === -1)
+			{
+				return null;
+			}
+
+			/** @type{Message || null} */
+			let result = null;
+
+			for (const messageId of this.messageIdsStack.slice(0, currentMessageIndex).reverse())
+			{
+				const message = this.viewMessageCollection[messageId];
+				if (
+					!message
+					|| message instanceof DateSeparatorMessage
+					|| message instanceof UnreadSeparatorMessage
+				)
+				{
+					continue;
+				}
+
+				result = message;
+				break;
+			}
+
+			return result;
+		}
+
 		/**
 		 * @desc Returns next message by id
 		 * @param {number} currentMessageId
@@ -890,8 +996,9 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		/**
 		 * @param {Array<MessagesModelState>} messageList
 		 * @param {string} section
+		 * @param {boolean} skipCheckEquality
 		 */
-		async updateMessageList(messageList, section = null)
+		async updateMessageList(messageList, section = null, skipCheckEquality = false)
 		{
 			logger.info('MessageRenderer.updateMessageList:', messageList);
 
@@ -930,31 +1037,43 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					packAuthorMessages[indexPackMessage + 1] || this.getNextMessage(messageListItem.id),
 				);
 
-				const isMessageChanged = !isEqual(formattedMessage, this.viewMessageCollection[formattedMessage.id]);
-				if (isMessageChanged)
+				if (
+					this.viewMessageCollection[formattedMessage.id] instanceof Message
+					&& (skipCheckEquality || !isEqual(formattedMessage, this.viewMessageCollection[formattedMessage.id]))
+				)
 				{
+					logger.log(`${this.constructor.name}.updateMessageList update message by id`, formattedMessage.id);
+
 					await this.#updateMessageById(formattedMessage.id, formattedMessage, section);
 					this.viewMessageCollection[formattedMessage.id] = formattedMessage;
 				}
 
-				let isTemplateMessageChanged = false;
-				if (messageListItem.templateId.length > 0)
+				if (
+					messageListItem.templateId.length > 0
+					&& this.viewMessageCollection[messageListItem.templateId] instanceof Message
+					&& !isEqual(formattedMessage, this.viewMessageCollection[messageListItem.templateId])
+				)
 				{
-					isTemplateMessageChanged = !isEqual(
-						formattedMessage,
-						this.viewMessageCollection[messageListItem.templateId],
-					);
+					logger.log(`${this.constructor.name}.updateMessageList update message by template id`, messageListItem.templateId);
 
-					if (isTemplateMessageChanged)
+					await this.#updateMessageById(messageListItem.templateId, formattedMessage, section);
+
+					if (Type.isNumber(messageListItem.id))
 					{
-						await this.#updateMessageById(messageListItem.templateId, formattedMessage, section);
+						logger.log(
+							`${this.constructor.name}.updateMessageList replace templateId with id in viewMessageCollection`,
+							messageListItem.templateId,
+							messageListItem.id,
+						);
+
+						this.viewMessageCollection[messageListItem.id] = formattedMessage;
+
+						delete this.viewMessageCollection[messageListItem.templateId];
+					}
+					else
+					{
 						this.viewMessageCollection[messageListItem.templateId] = formattedMessage;
 					}
-				}
-
-				if (!isMessageChanged && !isTemplateMessageChanged)
-				{
-					logger.log('MessageRenderer.updateMessageList: Nothing changed');
 				}
 
 				if (this.isHistoryLimitExceeded() && !this.isHasPrevMorePage())
@@ -985,6 +1104,69 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 						logger.warn('MessageRenderer.killDoubleMessage: founded', doubleInMessageIdsStack);
 						await this.delete([message.templateId]);
 					}
+				}
+			}
+		}
+
+		/**
+		 *
+		 * @param {Array<MessagesModelState>} messageList
+		 * @returns {Promise<void>}
+		 */
+		async killUploadingMessages(messageList)
+		{
+			const messageListToDelete = [];
+			for (const message of messageList)
+			{
+				if (!Type.isNumber(message.id))
+				{
+					continue;
+				}
+
+				if (!this.uploadingMessageCollection.has(message.templateId))
+				{
+					continue;
+				}
+
+				const messageIndex = this.messageIdsStack.indexOf(message.templateId);
+				if (messageIndex === -1)
+				{
+					continue;
+				}
+
+				const messageListFromCurrentToBottom = this.messageIdsStack.slice(messageIndex, this.messageIdsStack.length);
+				if (
+					Type.isArrayFilled(messageListFromCurrentToBottom)
+					&& !messageListFromCurrentToBottom.every((messageId) => this.uploadingMessageCollection.has(messageId))
+				)
+				{
+					messageListToDelete.push(message.templateId);
+				}
+
+				this.uploadingMessageCollection.delete(message.templateId);
+			}
+
+			if (Type.isArrayFilled(messageListToDelete))
+			{
+				await this.delete(messageListToDelete);
+			}
+		}
+
+		/**
+		 * @param {Array<MessagesModelState>} messageList
+		 */
+		markUploadingMessages(messageList)
+		{
+			for (const message of messageList)
+			{
+				if (!Uuid.isV4(message.id))
+				{
+					continue;
+				}
+
+				if (this.store.getters['messagesModel/isUploadingMessage'](message.id))
+				{
+					this.uploadingMessageCollection.add(message.id);
 				}
 			}
 		}
@@ -1147,7 +1329,6 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					{
 						return;
 					}
-
 					const previousMessageDate = this.toDateCode(previousMessage.date);
 					const newestMessageDate = this.toDateCode(newestMessage.date);
 					if (previousMessageDate !== newestMessageDate)
@@ -1181,8 +1362,10 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					return;
 				}
 
-				const isReadPrevious = !Uuid.isV4(previousMessage.id)
-					&& dialogModelState.lastReadId >= previousMessage.id;
+				const isReadPrevious = (!Uuid.isV4(previousMessage.id)
+					&& dialogModelState.lastReadId >= previousMessage.id)
+					|| this.uploadingMessageCollection.has(previousMessage.id)
+				;
 				const isUnreadCurrent = !Uuid.isV4(currentMessage.id)
 					&& dialogModelState.lastReadId < currentMessage.id
 					&& currentMessage.unread;
@@ -1540,6 +1723,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		 */
 		getMessage(messageId)
 		{
+			if (Uuid.isV4(messageId))
+			{
+				return this.store.getters['messagesModel/getByTemplateId'](messageId) ?? {};
+			}
+
 			return this.store.getters['messagesModel/getById'](messageId);
 		}
 
@@ -1584,6 +1772,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					|| idFromStack === messageModel.templateId,
 			);
 			this.messageIdsStack = this.messageIdsStack.filter((el, index) => index !== indexDeletedMessage);
+		}
+
+		deleteIdFromStackById(messageId)
+		{
+			this.messageIdsStack = this.messageIdsStack.filter((id) => id !== messageId);
 		}
 
 		/**

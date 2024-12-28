@@ -43,7 +43,7 @@ this.BX = this.BX || {};
 	        if (counterId === 'tasks_effective' || counterId === 'invited_users') {
 	          continue;
 	        }
-	        var val = this.allCounters[counterId] ? parseInt(this.allCounters[counterId]) : 0;
+	        var val = this.allCounters[counterId] ? parseInt(this.allCounters[counterId], 10) : 0;
 	        sum += val;
 	      }
 	      return sum;
@@ -124,8 +124,9 @@ this.BX = this.BX || {};
 	    value: function viewDesktopUser() {
 	      var block = document.getElementsByClassName('intranet__desktop-menu_user')[0];
 	      var counters = this.getSumCounters();
+	      var countersView = counters > 99 ? '99+' : counters;
 	      this.removeElements('intranet__desktop-menu_user-block');
-	      var userData = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"intranet__desktop-menu_user-block ", "\">\n\t\t\t\t<span class=\"intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-desktop\">\n\t\t\t\t\t<i></i>\n\t\t\t\t\t<div class=\"intranet__desktop-menu_user-counter ui-counter ui-counter-md ui-counter-danger\">\n\t\t\t\t\t\t<div class=\"ui-counter-inner\" data-role=\"counter\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</span>\n\t\t\t\t<span class=\"intranet__desktop-menu_user-inner\">\n\t\t\t\t\t<span class=\"intranet__desktop-menu_user-name\">", "</span>\n\t\t\t\t\t<span class=\"intranet__desktop-menu_user-post\">", "</span>\n\t\t\t\t</span>\n\t\t\t</div>"])), counters > 0 ? 'intranet__desktop-menu_item_counters' : '', counters, this.currentUser.portal, this.currentUser.work_position);
+	      var userData = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"intranet__desktop-menu_user-block ", "\">\n\t\t\t\t<span class=\"intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-desktop\">\n\t\t\t\t\t<i></i>\n\t\t\t\t\t<div class=\"intranet__desktop-menu_user-counter ui-counter ui-counter-md ui-counter-danger\">\n\t\t\t\t\t\t<div class=\"ui-counter-inner\" data-role=\"counter\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</span>\n\t\t\t\t<span class=\"intranet__desktop-menu_user-inner\">\n\t\t\t\t\t<span class=\"intranet__desktop-menu_user-name\">", "</span>\n\t\t\t\t\t<span class=\"intranet__desktop-menu_user-post\">", "</span>\n\t\t\t\t</span>\n\t\t\t</div>"])), counters > 0 ? 'intranet__desktop-menu_item_counters' : '', countersView, this.currentUser.portal, this.currentUser.work_position);
 	      main_core.Dom.append(userData, block);
 	      var avatar = document.getElementsByClassName('ui-icon-common-user-desktop')[0];
 	      var previewImage = this.getAvatarUrl(this.currentUser);
@@ -170,7 +171,8 @@ this.BX = this.BX || {};
 	            counters = this.getSumCounters();
 	            currentUserClass = '--selected';
 	          }
-	          var _item = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<li class=\"intranet__desktop-menu_popup-item intranet__desktop-menu_popup-item-account ", " ", "\">\n\t\t\t\t\t<span class=\"intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-", "\">\n\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t<div class=\"intranet__desktop-menu_user-counter ui-counter ui-counter-md ui-counter-danger\">\n\t\t\t\t\t\t\t<div class=\"ui-counter-inner\">", "</div>\n\t\t\t\t\t\t</div>\t\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"intranet__desktop-menu_popup-user\">\n\t\t\t\t\t\t<span class=\"intranet__desktop-menu_popup-name\">", "</span>\n\t\t\t\t\t\t<span class=\"intranet__desktop-menu_popup-post\">", "</span>\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"intranet__desktop-menu_popup-btn ui-icon-set --more\" id=\"ui-icon-set-", "\"></span>\n\t\t\t\t</li>"])), counters > 0 ? 'intranet__desktop-menu_item_counters' : '', currentUserClass, index, counters, account.portal, account.work_position, index);
+	          var countersView = counters > 99 ? '99+' : counters;
+	          var _item = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<li class=\"intranet__desktop-menu_popup-item intranet__desktop-menu_popup-item-account ", " ", "\">\n\t\t\t\t\t<span class=\"intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-", "\">\n\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t<div class=\"intranet__desktop-menu_user-counter ui-counter ui-counter-md ui-counter-danger\">\n\t\t\t\t\t\t\t<div class=\"ui-counter-inner\">", "</div>\n\t\t\t\t\t\t</div>\t\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"intranet__desktop-menu_popup-user\">\n\t\t\t\t\t\t<span class=\"intranet__desktop-menu_popup-name\">", "</span>\n\t\t\t\t\t\t<span class=\"intranet__desktop-menu_popup-post\">", "</span>\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"intranet__desktop-menu_popup-btn ui-icon-set --more\" id=\"ui-icon-set-", "\"></span>\n\t\t\t\t</li>"])), counters > 0 ? 'intranet__desktop-menu_item_counters' : '', currentUserClass, index, countersView, account.portal, account.login, index);
 	          main_core.Dom.insertBefore(_item, block.children[index]);
 	          this.addContextMenu(account, index);
 	          var userAvatar = document.getElementsByClassName('ui-icon-common-user-' + index)[0];
@@ -201,7 +203,9 @@ this.BX = this.BX || {};
 	            var _BXDesktopSystem;
 	            var host = account.host;
 	            (_BXDesktopSystem = BXDesktopSystem) === null || _BXDesktopSystem === void 0 ? void 0 : _BXDesktopSystem.AccountDisconnect(host);
-	            this.contextPopup[index].close();
+	            if (this.contextPopup[index]) {
+	              this.contextPopup[index].close();
+	            }
 	            this.popup.close();
 	            window.location.reload();
 	          }
@@ -214,7 +218,9 @@ this.BX = this.BX || {};
 	              protocol = account.protocol;
 	            var userLang = navigator.language;
 	            (_BXDesktopSystem2 = BXDesktopSystem) === null || _BXDesktopSystem2 === void 0 ? void 0 : _BXDesktopSystem2.AccountConnect(host, login, protocol, userLang);
-	            this.contextPopup[index].close();
+	            if (this.contextPopup[index]) {
+	              this.contextPopup[index].close();
+	            }
 	            this.popup.close();
 	          }
 	        }, {
@@ -224,7 +230,9 @@ this.BX = this.BX || {};
 	            var host = account.host,
 	              login = account.login;
 	            (_BXDesktopSystem3 = BXDesktopSystem) === null || _BXDesktopSystem3 === void 0 ? void 0 : _BXDesktopSystem3.AccountDelete(host, login);
-	            this.contextPopup[index].close();
+	            if (this.contextPopup[index]) {
+	              this.contextPopup[index].close();
+	            }
 	            this.popup.close();
 	            window.location.reload();
 	          }
@@ -232,7 +240,9 @@ this.BX = this.BX || {};
 	      });
 	      main_core.Event.bind(button, 'click', function (event) {
 	        var index = parseInt(event.target.id.replace('ui-icon-set-', ''));
-	        _this2.contextPopup[index].show();
+	        if (_this2.contextPopup[index]) {
+	          _this2.contextPopup[index].show();
+	        }
 	      });
 	    }
 	  }, {
@@ -668,6 +678,9 @@ this.BX = this.BX || {};
 	      var _this = this;
 	      var i = 0;
 	      this.items.forEach(function (item) {
+	        if (i > 15) {
+	          return true;
+	        }
 	        var icoName = '';
 	        var title = '';
 	        if (main_core.Type.isStringFilled(item.title)) {
@@ -691,9 +704,6 @@ this.BX = this.BX || {};
 	        var li = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<li class=\"intranet__desktop-menu_item\">\n\t\t\t\t\t<a class=\"intranet__desktop-menu_item-link\" href=\"", "\">\n\t\t\t\t\t\t<span class=\"intranet__desktop-menu_item-icon --custom\">", "</span>\n\t\t\t\t\t\t<span class=\"intranet__desktop-menu_item-title\">", "</span>\n\t\t\t\t\t</a>\n\t\t\t\t</li>\n\t\t\t"])), url, icoName, title);
 	        _this.wrapper.appendChild(li);
 	        i++;
-	        if (i > 11) {
-	          return true;
-	        }
 	      });
 	    }
 	  }, {
@@ -732,9 +742,9 @@ this.BX = this.BX || {};
 	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _specialLiveFeedDecrement = /*#__PURE__*/new WeakMap();
-	var DescktopMenu = /*#__PURE__*/function () {
-	  function DescktopMenu(allCounters) {
-	    babelHelpers.classCallCheck(this, DescktopMenu);
+	var DesktopMenu = /*#__PURE__*/function () {
+	  function DesktopMenu(allCounters) {
+	    babelHelpers.classCallCheck(this, DesktopMenu);
 	    babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
 	    babelHelpers.defineProperty(this, "browserHistory", null);
 	    babelHelpers.defineProperty(this, "account", null);
@@ -753,7 +763,7 @@ this.BX = this.BX || {};
 	    this.showAccount(allCounters);
 	    this.runAPICounters();
 	  }
-	  babelHelpers.createClass(DescktopMenu, [{
+	  babelHelpers.createClass(DesktopMenu, [{
 	    key: "initTheme",
 	    value: function initTheme() {
 	      this.theme = new Theme();
@@ -840,10 +850,10 @@ this.BX = this.BX || {};
 	      BX.Intranet.Account.setCounters(counters);
 	    }
 	  }]);
-	  return DescktopMenu;
+	  return DesktopMenu;
 	}();
 
-	exports.DescktopMenu = DescktopMenu;
+	exports.DesktopMenu = DesktopMenu;
 
 }((this.BX.Intranet = this.BX.Intranet || {}),BX.Main,BX.Event,BX.Messenger.v2.Lib,BX));
 //# sourceMappingURL=script.js.map

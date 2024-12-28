@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ai_engine,ui_notification,main_popup,ui_vue3_components_hint,ui_label,ui_iconSet_animated,ui_iconSet_api_vue,ui_iconSet_api_core,main_core,main_core_events,ui_vue3_pinia) {
+(function (exports,ai_engine,ui_notification,main_popup,ui_vue3_components_hint,ui_label,ui_iconSet_animated,main_core_events,ui_vue3_pinia,ui_iconSet_api_vue,ui_iconSet_api_core,main_core) {
 	'use strict';
 
 	let _ = t => t,
@@ -273,7 +273,7 @@ this.BX = this.BX || {};
 	  return formattedExtraParams;
 	}
 	function _formatCSectionParam2(cSection) {
-	  return cSection.split('_').map(stringPart => {
+	  return cSection.replaceAll('-', '_').split('_').map(stringPart => {
 	    if (Number.isNaN(parseInt(stringPart, 10))) {
 	      return stringPart;
 	    }
@@ -529,14 +529,14 @@ this.BX = this.BX || {};
 	        return this.itemData.itemData;
 	      },
 	      subtitle() {
-	        const subtitle = this.item.subtitle;
+	        const subtitle = main_core.Text.encode(this.item.subtitle);
 	        if (this.searching && this.searchQuery !== '') {
 	          return subtitle.replaceAll(new RegExp(this.searchQuery, 'gi'), match => `<mark>${match}</mark>`);
 	        }
 	        return subtitle;
 	      },
 	      title() {
-	        const title = this.item.title;
+	        const title = main_core.Text.encode(this.item.title);
 	        if (this.searching && this.searchQuery !== '') {
 	          return title.replaceAll(new RegExp(this.searchQuery, 'gi'), match => `<mark>${match}</mark>`);
 	        }
@@ -675,6 +675,21 @@ this.BX = this.BX || {};
 	      return ui_iconSet_api_core.Actions.CHEVRON_RIGHT;
 	    }
 	  },
+	  created() {
+	    if (this.groupData.groupData.id === 'recents') {
+	      main_core_events.EventEmitter.subscribe('update-complete', this.onUpdate);
+	    }
+	  },
+	  beforeDestroy() {
+	    if (this.groupData.groupData.id === 'recents') {
+	      main_core_events.EventEmitter.unsubscribe('update-complete', this.onUpdate);
+	    }
+	  },
+	  methods: {
+	    onUpdate() {
+	      this.groupData.handleClick();
+	    }
+	  },
 	  template: `
 		<div @click="handleClick" class="ai__roles-dialog_group-item-wrapper">
 			<div :class="groupItemClassname">
@@ -725,6 +740,10 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const customDescription = main_core.Loc.getMessage('AI_COPILOT_ROLES_EMPTY_CUSTOM_GROUP', {
+	  '#LINK#': '<a @click.prevent="openRolesLibrary" href="#">',
+	  '#/LINK#': '</a>'
+	});
 	const getRolesDialogEmptyGroupStubWithStates = States => {
 	  return {
 	    computed: {
@@ -744,6 +763,40 @@ this.BX = this.BX || {};
 	        return this.emptyStubData.description;
 	      }
 	    },
+	    methods: {
+	      async sendAnalytics() {
+	        try {
+	          const {
+	            sendData
+	          } = await main_core.Runtime.loadExtension('ui.analytics');
+	          const sendDataOptions = {
+	            event: 'open_list',
+	            status: 'success',
+	            tool: 'ai',
+	            category: 'roles_saving',
+	            c_section: 'roles_picker'
+	          };
+	          sendData(sendDataOptions);
+	        } catch (e) {
+	          console.error('AI: RolesDialog: Can\'t send analytics', e);
+	        }
+	      },
+	      openRolesLibrary() {
+	        if (BX.SidePanel) {
+	          this.sendAnalytics();
+	          BX.SidePanel.Instance.open('/bitrix/components/bitrix/ai.role.library.grid/slider.php', {
+	            cacheable: false,
+	            events: {
+	              onCloseStart: () => {
+	                main_core.Event.EventEmitter.emit('update');
+	              }
+	            }
+	          });
+	        } else {
+	          window.location.href = '/bitrix/components/bitrix/ai.prompt.library.grid/slider.php';
+	        }
+	      }
+	    },
 	    template: `
 			<div class="ai__roles-dialog_empty-group-stub">
 				<div class="ai__roles-dialog_empty-group-stub-content">
@@ -754,13 +807,81 @@ this.BX = this.BX || {};
 					<h3 class="ai__roles-dialog_empty-group-stub-title">
 						{{ title }}
 					</h3>
-					<div class="ai__roles-dialog_empty-group-stub-text">
+					<div v-if="groupCode !== 'customs'" class="ai__roles-dialog_empty-group-stub-text">
 						{{ description }}
+					</div>
+					<div v-else class="ai__roles-dialog_empty-group-stub-text">
+						${customDescription}
 					</div>
 				</div>
 			</div>
 		`
 	  };
+	};
+
+	const RolesDialogRolesLibrary = {
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  computed: {
+	    chevronRightIconName() {
+	      return ui_iconSet_api_core.Actions.CHEVRON_RIGHT;
+	    },
+	    rolesLibraryIconName() {
+	      return ui_iconSet_api_core.Main.ROLES_LIBRARY;
+	    }
+	  },
+	  methods: {
+	    async sendAnalytics() {
+	      try {
+	        const {
+	          sendData
+	        } = await main_core.Runtime.loadExtension('ui.analytics');
+	        const sendDataOptions = {
+	          event: 'open_list',
+	          status: 'success',
+	          tool: 'ai',
+	          category: 'roles_saving',
+	          c_section: 'roles_picker'
+	        };
+	        sendData(sendDataOptions);
+	      } catch (e) {
+	        console.error('AI: RolesDialog: Can\'t send analytics', e);
+	      }
+	    },
+	    handleClick() {
+	      if (BX.SidePanel) {
+	        this.sendAnalytics();
+	        BX.SidePanel.Instance.open('/bitrix/components/bitrix/ai.role.library.grid/slider.php', {
+	          cacheable: false,
+	          events: {
+	            onCloseStart: () => {
+	              main_core.Event.EventEmitter.emit('update');
+	            }
+	          }
+	        });
+	      } else {
+	        window.location.href = '/bitrix/components/bitrix/ai.prompt.library.grid/slider.php';
+	      }
+	    }
+	  },
+	  template: `
+		<div @click="handleClick" class="ai__roles-dialog_roles-library-wrapper">
+			<div class="ai__roles-dialog_roles-library">
+				<div class="ai__roles-dialog_roles-library-inner">
+				<div class="ai__roles-dialog_roles-library-title-wrapper">
+					<b-icon :size="32" :name="rolesLibraryIconName"></b-icon>
+					<span class="ai__roles-dialog_roles-library-title">
+						{{ $Bitrix.Loc.getMessage('AI_COPILOT_ROLES_LIBRARY_TITLE') }}
+					</span>
+					<div class="ai__roles-dialog_roles-library-label-new">
+					</div>
+				</div>
+					<b-icon :size="16" :name="chevronRightIconName"></b-icon>
+				</div>
+			</div>
+		</div>
+	`
 	};
 
 	const RolesDialogEvents = {
@@ -770,15 +891,18 @@ this.BX = this.BX || {};
 	const RECOMMENDED_GROUP_CODE = 'recommended';
 	const RECENT_GROUP_CODE = 'recents';
 	const FAVOURITE_GROUP_CODE = 'favorites';
+	const CUSTOM_GROUP_CODE = 'customs';
 	var _entityCatalog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityCatalog");
 	var _engine = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("engine");
 	var _analytic = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytic");
 	var _roles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("roles");
 	var _recentRoles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("recentRoles");
 	var _favouriteRoles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("favouriteRoles");
+	var _customRoles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("customRoles");
 	var _defaultRoleCode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("defaultRoleCode");
 	var _industries = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("industries");
 	var _selectedDefaultRoleHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedDefaultRoleHandler");
+	var _reloadDialogHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("reloadDialogHandler");
 	var _selectedRoleCode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedRoleCode");
 	var _universalRole = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("universalRole");
 	var _title = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("title");
@@ -787,6 +911,7 @@ this.BX = this.BX || {};
 	var _validateOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("validateOptions");
 	var _showAfterInit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showAfterInit");
 	var _subscribeEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeEvents");
+	var _reloadDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("reloadDialog");
 	var _unsubscribeEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unsubscribeEvents");
 	var _selectRole = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectRole");
 	var _selectDefaultRole = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectDefaultRole");
@@ -799,6 +924,7 @@ this.BX = this.BX || {};
 	var _getRecommendedRoleIndustry = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRecommendedRoleIndustry");
 	var _getRecentRoleIndustry = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRecentRoleIndustry");
 	var _getFavouriteRoleIndustry = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFavouriteRoleIndustry");
+	var _getCustomRoleIndustry = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCustomRoleIndustry");
 	var _getItemsData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItemsData");
 	var _getUniversalRoleItemData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUniversalRoleItemData");
 	var _getItemGroupsFromIndustries = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItemGroupsFromIndustries");
@@ -806,6 +932,7 @@ this.BX = this.BX || {};
 	var _getRecentItemGroupData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRecentItemGroupData");
 	var _compareRecentItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("compareRecentItems");
 	var _getFavouriteItemGroupData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFavouriteItemGroupData");
+	var _getCustomItemGroupData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCustomItemGroupData");
 	var _compareFavouriteItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("compareFavouriteItems");
 	var _getItemDataFromRole = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItemDataFromRole");
 	var _getSelectedGroupIndex = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSelectedGroupIndex");
@@ -841,6 +968,9 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _compareFavouriteItems, {
 	      value: _compareFavouriteItems2
 	    });
+	    Object.defineProperty(this, _getCustomItemGroupData, {
+	      value: _getCustomItemGroupData2
+	    });
 	    Object.defineProperty(this, _getFavouriteItemGroupData, {
 	      value: _getFavouriteItemGroupData2
 	    });
@@ -861,6 +991,9 @@ this.BX = this.BX || {};
 	    });
 	    Object.defineProperty(this, _getItemsData, {
 	      value: _getItemsData2
+	    });
+	    Object.defineProperty(this, _getCustomRoleIndustry, {
+	      value: _getCustomRoleIndustry2
 	    });
 	    Object.defineProperty(this, _getFavouriteRoleIndustry, {
 	      value: _getFavouriteRoleIndustry2
@@ -898,6 +1031,9 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _unsubscribeEvents, {
 	      value: _unsubscribeEvents2
 	    });
+	    Object.defineProperty(this, _reloadDialog, {
+	      value: _reloadDialog2
+	    });
 	    Object.defineProperty(this, _subscribeEvents, {
 	      value: _subscribeEvents2
 	    });
@@ -931,6 +1067,10 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _customRoles, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _defaultRoleCode, {
 	      writable: true,
 	      value: void 0
@@ -940,6 +1080,10 @@ this.BX = this.BX || {};
 	      value: void 0
 	    });
 	    Object.defineProperty(this, _selectedDefaultRoleHandler, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _reloadDialogHandler, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1042,10 +1186,36 @@ this.BX = this.BX || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _selectedDefaultRoleHandler)[_selectedDefaultRoleHandler] = babelHelpers.classPrivateFieldLooseBase(this, _selectDefaultRole)[_selectDefaultRole].bind(this);
 	  main_core_events.EventEmitter.subscribe(document, RolesDialogGroupListFooterEvents.CHOOSE_STANDARD_ROLE, babelHelpers.classPrivateFieldLooseBase(this, _selectedDefaultRoleHandler)[_selectedDefaultRoleHandler]);
 	  main_core_events.EventEmitter.subscribe(document, RolesDialogSearchStubEvents.CHOOSE_STANDARD_ROLE, babelHelpers.classPrivateFieldLooseBase(this, _selectedDefaultRoleHandler)[_selectedDefaultRoleHandler]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _reloadDialogHandler)[_reloadDialogHandler] = babelHelpers.classPrivateFieldLooseBase(this, _reloadDialog)[_reloadDialog].bind(this);
+	  main_core_events.EventEmitter.subscribe('update', babelHelpers.classPrivateFieldLooseBase(this, _reloadDialogHandler)[_reloadDialogHandler]);
+	}
+	async function _reloadDialog2() {
+	  const loader = new RolesDialogLoaderPopup();
+	  let isShowLoader = true;
+	  setTimeout(() => {
+	    if (isShowLoader) {
+	      loader.show();
+	    }
+	  }, 300);
+	  try {
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityCatalog)[_entityCatalog].setItems([]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityCatalog)[_entityCatalog].setGroups([]);
+	    await babelHelpers.classPrivateFieldLooseBase(this, _loadData)[_loadData]();
+	  } catch (e) {
+	    showRolesDialogErrorPopup();
+	    console.error(e);
+	  } finally {
+	    isShowLoader = false;
+	    loader.hide();
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityCatalog)[_entityCatalog].setItems(babelHelpers.classPrivateFieldLooseBase(this, _getItemsData)[_getItemsData]());
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityCatalog)[_entityCatalog].setGroups(babelHelpers.classPrivateFieldLooseBase(this, _getItemGroupsFromIndustries)[_getItemGroupsFromIndustries]());
+	    main_core_events.EventEmitter.emit('update-complete');
+	  }
 	}
 	function _unsubscribeEvents2() {
 	  main_core_events.EventEmitter.unsubscribe(document, RolesDialogGroupListFooterEvents.CHOOSE_STANDARD_ROLE, babelHelpers.classPrivateFieldLooseBase(this, _selectedDefaultRoleHandler)[_selectedDefaultRoleHandler]);
 	  main_core_events.EventEmitter.unsubscribe(document, RolesDialogSearchStubEvents.CHOOSE_STANDARD_ROLE, babelHelpers.classPrivateFieldLooseBase(this, _selectedDefaultRoleHandler)[_selectedDefaultRoleHandler]);
+	  main_core_events.EventEmitter.unsubscribe('update', babelHelpers.classPrivateFieldLooseBase(this, _reloadDialogHandler)[_reloadDialogHandler]);
 	}
 	function _selectRole2(role) {
 	  const event = new main_core_events.BaseEvent({
@@ -1087,7 +1257,8 @@ this.BX = this.BX || {};
 	      RolesDialogGroupItem,
 	      RolesDialogGroupListFooter,
 	      RolesDialogSearchStub,
-	      RolesDialogEmptyGroupStub: getRolesDialogEmptyGroupStubWithStates(States)
+	      RolesDialogEmptyGroupStub: getRolesDialogEmptyGroupStubWithStates(States),
+	      RolesDialogRolesLibrary
 	    },
 	    popupOptions: {
 	      className: 'ai_roles-dialog_popup ui-entity-catalog__scope',
@@ -1117,7 +1288,8 @@ this.BX = this.BX || {};
 	    [EntityCatalog.SLOT_MAIN_CONTENT_ITEM]: '<RolesDialogRoleItem :itemData="itemSlotProps" />',
 	    [EntityCatalog.SLOT_GROUP]: '<RolesDialogGroupItem :groupData="groupSlotProps" />',
 	    [EntityCatalog.SLOT_GROUP_LIST_HEADER]: '<RolesDialogGroupListHeader />',
-	    [EntityCatalog.SLOT_MAIN_CONTENT_EMPTY_GROUP_STUB]: '<RolesDialogEmptyGroupStub />'
+	    [EntityCatalog.SLOT_MAIN_CONTENT_EMPTY_GROUP_STUB]: '<RolesDialogEmptyGroupStub />',
+	    [EntityCatalog.SLOT_GROUP_LIST_FOOTER]: '<RolesDialogRolesLibrary />'
 	  };
 	  if (EntityCatalog.SLOT_MAIN_CONTENT_SEARCH_STUB) {
 	    slots[EntityCatalog.SLOT_MAIN_CONTENT_NO_SELECTED_GROUP_STUB] = '<RolesDialogSearchStub />';
@@ -1130,7 +1302,7 @@ this.BX = this.BX || {};
 	    id: 'info-item-data',
 	    title: main_core.Loc.getMessage('AI_COPILOT_ROLES_HELP_ITEM_TITLE'),
 	    subtitle: main_core.Loc.getMessage('AI_COPILOT_ROLES_HELP_ITEM_DESCRIPTION'),
-	    groupIds: babelHelpers.classPrivateFieldLooseBase(this, _getAllIndustryCodesWithExcludes)[_getAllIndustryCodesWithExcludes]([FAVOURITE_GROUP_CODE]),
+	    groupIds: babelHelpers.classPrivateFieldLooseBase(this, _getAllIndustryCodesWithExcludes)[_getAllIndustryCodesWithExcludes]([FAVOURITE_GROUP_CODE, CUSTOM_GROUP_CODE]),
 	    customData: {
 	      isInfoItem: true
 	    },
@@ -1199,14 +1371,15 @@ this.BX = this.BX || {};
 	      isNew
 	    };
 	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _industries)[_industries].unshift(babelHelpers.classPrivateFieldLooseBase(this, _getRecentRoleIndustry)[_getRecentRoleIndustry](), babelHelpers.classPrivateFieldLooseBase(this, _getFavouriteRoleIndustry)[_getFavouriteRoleIndustry](), babelHelpers.classPrivateFieldLooseBase(this, _getRecommendedRoleIndustry)[_getRecommendedRoleIndustry]());
+	  babelHelpers.classPrivateFieldLooseBase(this, _industries)[_industries].unshift(babelHelpers.classPrivateFieldLooseBase(this, _getRecentRoleIndustry)[_getRecentRoleIndustry](), babelHelpers.classPrivateFieldLooseBase(this, _getFavouriteRoleIndustry)[_getFavouriteRoleIndustry](), babelHelpers.classPrivateFieldLooseBase(this, _getCustomRoleIndustry)[_getCustomRoleIndustry](), babelHelpers.classPrivateFieldLooseBase(this, _getRecommendedRoleIndustry)[_getRecommendedRoleIndustry]());
 	  babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles] = result.data.items.reduce((roles, roleIndustry) => {
 	    const industryRoles = roleIndustry.roles;
 	    return [...roles, ...industryRoles];
 	  }, []);
 	  babelHelpers.classPrivateFieldLooseBase(this, _recentRoles)[_recentRoles] = result.data.recents;
 	  babelHelpers.classPrivateFieldLooseBase(this, _favouriteRoles)[_favouriteRoles] = result.data.favorites;
-	  babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles] = [...babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles]];
+	  babelHelpers.classPrivateFieldLooseBase(this, _customRoles)[_customRoles] = result.data.customs;
+	  babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles] = [...babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles], ...babelHelpers.classPrivateFieldLooseBase(this, _customRoles)[_customRoles]];
 	  babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleCode)[_selectedRoleCode] = babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleCode)[_selectedRoleCode] || null;
 	}
 	function _getRecommendedRoleIndustry2() {
@@ -1227,6 +1400,12 @@ this.BX = this.BX || {};
 	    name: main_core.Loc.getMessage('AI_COPILOT_ROLES_FAVOURITE_GROUP')
 	  };
 	}
+	function _getCustomRoleIndustry2() {
+	  return {
+	    code: CUSTOM_GROUP_CODE,
+	    name: main_core.Loc.getMessage('AI_COPILOT_ROLES_CUSTOM_GROUP')
+	  };
+	}
 	function _getItemsData2() {
 	  let selectedRole = null;
 	  const items = babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles].map(role => {
@@ -1239,6 +1418,9 @@ this.BX = this.BX || {};
 	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _favouriteRoles)[_favouriteRoles].findIndex(favouriteRole => favouriteRole.code === role.code) > -1) {
 	      groupIds.push(FAVOURITE_GROUP_CODE);
+	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _customRoles)[_customRoles].findIndex(customRole => customRole.code === role.code) > -1) {
+	      groupIds.push(CUSTOM_GROUP_CODE);
 	    }
 	    if (role.code === babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleCode)[_selectedRoleCode]) {
 	      selectedRole = babelHelpers.classPrivateFieldLooseBase(this, _getItemDataFromRole)[_getItemDataFromRole](role, groupIds);
@@ -1254,7 +1436,7 @@ this.BX = this.BX || {};
 	}
 	function _getUniversalRoleItemData2() {
 	  const role = babelHelpers.classPrivateFieldLooseBase(this, _universalRole)[_universalRole];
-	  const groupIds = [...babelHelpers.classPrivateFieldLooseBase(this, _getAllIndustryCodesWithExcludes)[_getAllIndustryCodesWithExcludes]([FAVOURITE_GROUP_CODE])];
+	  const groupIds = [...babelHelpers.classPrivateFieldLooseBase(this, _getAllIndustryCodesWithExcludes)[_getAllIndustryCodesWithExcludes]([FAVOURITE_GROUP_CODE, CUSTOM_GROUP_CODE])];
 	  return babelHelpers.classPrivateFieldLooseBase(this, _getItemDataFromRole)[_getItemDataFromRole](role, groupIds);
 	}
 	function _getItemGroupsFromIndustries2() {
@@ -1266,6 +1448,9 @@ this.BX = this.BX || {};
 	    }
 	    if (industry.code === FAVOURITE_GROUP_CODE) {
 	      return babelHelpers.classPrivateFieldLooseBase(this, _getFavouriteItemGroupData)[_getFavouriteItemGroupData](isSelectedRole);
+	    }
+	    if (industry.code === CUSTOM_GROUP_CODE) {
+	      return babelHelpers.classPrivateFieldLooseBase(this, _getCustomItemGroupData)[_getCustomItemGroupData](isSelectedRole);
 	    }
 	    return babelHelpers.classPrivateFieldLooseBase(this, _getItemGroupDataFromIndustry)[_getItemGroupDataFromIndustry](industry, isSelectedRole);
 	  });
@@ -1307,6 +1492,16 @@ this.BX = this.BX || {};
 	      emptyStubData: {
 	        title: main_core.Loc.getMessage('AI_COPILOT_ROLES_EMPTY_FAVOURITE_GROUP_TITLE'),
 	        description: main_core.Loc.getMessage('AI_COPILOT_ROLES_EMPTY_FAVOURITE_GROUP')
+	      }
+	    }
+	  };
+	}
+	function _getCustomItemGroupData2(isSelected = false) {
+	  return {
+	    ...babelHelpers.classPrivateFieldLooseBase(this, _getItemGroupDataFromIndustry)[_getItemGroupDataFromIndustry](babelHelpers.classPrivateFieldLooseBase(this, _getCustomRoleIndustry)[_getCustomRoleIndustry](), isSelected),
+	    customData: {
+	      emptyStubData: {
+	        title: main_core.Loc.getMessage('AI_COPILOT_ROLES_EMPTY_CUSTOM_GROUP_TITLE')
 	      }
 	    }
 	  };
@@ -1386,7 +1581,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityCatalog)[_entityCatalog].setGroups(babelHelpers.classPrivateFieldLooseBase(this, _getItemGroupsFromIndustries)[_getItemGroupsFromIndustries]());
 	    ui_notification.UI.Notification.Center.notify({
 	      content: main_core.Loc.getMessage('AI_COPILOT_ROLES_ADD_TO_FAVOURITE_NOTIFICATION_SUCCESS', {
-	        '#ROLE#': roleName
+	        '#ROLE#': main_core.Text.encode(roleName)
 	      })
 	    });
 	  }).catch(err => {
@@ -1403,7 +1598,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityCatalog)[_entityCatalog].setGroups(babelHelpers.classPrivateFieldLooseBase(this, _getItemGroupsFromIndustries)[_getItemGroupsFromIndustries]());
 	    ui_notification.UI.Notification.Center.notify({
 	      content: main_core.Loc.getMessage('AI_COPILOT_ROLES_REMOVE_FROM_FAVOURITE_NOTIFICATION_SUCCESS', {
-	        '#ROLE#': roleName
+	        '#ROLE#': main_core.Text.encode(roleName)
 	      })
 	    });
 	  }).catch(err => {
@@ -1417,5 +1612,5 @@ this.BX = this.BX || {};
 	exports.RolesDialogEvents = RolesDialogEvents;
 	exports.RolesDialog = RolesDialog;
 
-}((this.BX.AI = this.BX.AI || {}),BX.AI,BX,BX.Main,BX.Vue3.Components,BX.UI,BX,BX.UI.IconSet,BX.UI.IconSet,BX,BX.Event,BX.Vue3.Pinia));
+}((this.BX.AI = this.BX.AI || {}),BX.AI,BX,BX.Main,BX.Vue3.Components,BX.UI,BX,BX.Event,BX.Vue3.Pinia,BX.UI.IconSet,BX.UI.IconSet,BX));
 //# sourceMappingURL=roles-dialog.bundle.js.map

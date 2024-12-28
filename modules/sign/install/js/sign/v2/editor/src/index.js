@@ -1,9 +1,12 @@
 import { Tag, Reflection, Loc, Dom } from 'main.core';
+import { DocumentInitiated } from 'sign.v2.document-setup';
+import type { DocumentInitiatedType } from 'sign.v2.document-setup';
 import { Hint } from 'sign.v2.helper';
 import { BlocksManager } from './blocks/blocksManager';
 import { EventEmitter } from 'main.core.events';
 import { MemberRole, type Role } from 'sign.v2.api';
 import './style.css';
+import type { BlockItem } from './types/document';
 
 const buttonClassList = [
 	'ui-btn',
@@ -16,11 +19,29 @@ export const SectionType = Object.freeze({
 	General: 0,
 	FirstParty: 1,
 	SecondParty: 2,
+	HcmLinkIntegration: 3,
 });
 
 type EditorOptions = {
 	languages: {[key: string]: { NAME: string; IS_BETA: boolean; }},
+	isTemplateMode: boolean,
+	documentInitiatedByType?: DocumentInitiatedType,
 }
+
+type DocumentData = {
+	entityId: number,
+	isTemplate: boolean,
+	uid: string,
+	blocks: Array<{
+		code: string,
+		data: Object,
+		id: number,
+		party: number,
+		position: Object,
+		style: Object,
+		type: string
+	}>
+};
 
 export class Editor extends EventEmitter
 {
@@ -31,7 +52,7 @@ export class Editor extends EventEmitter
 	#documentLayout: HTMLElement;
 	#blocksManager: BlocksManager;
 	#wizardType: string;
-	#documentData;
+	#documentData: DocumentData;
 	#urls: string[];
 	#totalPages: number;
 
@@ -55,6 +76,8 @@ export class Editor extends EventEmitter
 			documentLayout: this.#documentLayout,
 			disableEdit: false,
 			languages: options.languages,
+			isTemplateMode: Boolean(options.isTemplateMode),
+			documentInitiatedByType: options.documentInitiatedByType ?? DocumentInitiated.company,
 		});
 		this.#wizardType = wizardType;
 		this.#urls = [];
@@ -92,7 +115,7 @@ export class Editor extends EventEmitter
 		}
 	}
 
-	set documentData(documentData)
+	set documentData(documentData: DocumentData)
 	{
 		this.#documentData = documentData;
 		const { uid = '', isTemplate } = documentData;
@@ -139,7 +162,6 @@ export class Editor extends EventEmitter
 					entityId,
 				};
 			});
-
 		this.#blocksManager.addMembers(members);
 	}
 
@@ -185,7 +207,9 @@ export class Editor extends EventEmitter
 		EventEmitter.subscribeOnce('SidePanel.Slider:onOpenComplete', () => {
 			this.#blocksManager.initPagesRect();
 			this.#blocksManager.initBlocks(
-				this.#documentData.blocks.filter((block) => !this.#disabledSections.has(block.party)),
+				this.#documentData.blocks
+					.filter((block) => this.#isBlockCanBeInitialized(block))
+				,
 			);
 		});
 	}
@@ -329,7 +353,9 @@ export class Editor extends EventEmitter
 
 	#createSections(): HTMLElement
 	{
-		const sections = this.#getSectionsData();
+		const sections = this.#getSectionsData()
+			.filter(({ singleBlockSection }) => singleBlockSection !== true)
+		;
 		const sectionsNodes = sections.map((section) => {
 			const entries = Object.entries(section.blocks);
 			const blocks = entries.map(([code, block]) => {
@@ -341,7 +367,7 @@ export class Editor extends EventEmitter
 						data-code="${code}"
 						data-part="${section.part}"
 					>
-						<div>
+						<div class="sign-editor__section_block-subject">
 							<span>${Loc.getMessage(title)}</span>
 							<span data-hint="${Loc.getMessage(hint)}"></span>
 						</div>
@@ -355,8 +381,10 @@ export class Editor extends EventEmitter
 
 			const sectionElement = Tag.render`
 				<div class="sign-editor__section">
-					<p class="sign-editor__section_title">
-						${Loc.getMessage(section.title)}
+					<p class="sign-editor__section_title"
+						style="display: ${section.title ? 'block' : 'none'}"
+					>
+						${section.title ? Loc.getMessage(section.title) : ''}
 					</p>
 					${blocks}
 				</div>
@@ -442,25 +470,63 @@ export class Editor extends EventEmitter
 		{
 			Object.assign(firstPartyBlocks, {
 				myb2ereference: {
-					title: 'SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE',
+					title: 'SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_MSG_VER_1',
 					hint: 'SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_HINT',
 				},
 				myrequisites: {
-					title: 'SIGN_EDITOR_BLOCK_REQUISITES',
+					title: 'SIGN_EDITOR_BLOCK_REQUISITES_MSG_VER_1',
 					hint: 'SIGN_EDITOR_BLOCK_FIRST_PARTY_REQUISITES_HINT',
 				},
 			});
 			Object.assign(partnerBlocks, {
 				b2ereference: {
-					title: 'SIGN_EDITOR_BLOCK_B2E_REFERENCE',
+					title: 'SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1',
 					hint: 'SIGN_EDITOR_BLOCK_B2E_REFERENCE_HINT',
 				},
 			});
+
+			if (this.#isDynamicEmployeeFieldAvailable())
+			{
+				Object.assign(partnerBlocks, {
+					employeedynamic: {
+						title: 'SIGN_EDITOR_BLOCK_B2E_EMPLOYEE_DYNAMIC',
+						hint: 'SIGN_EDITOR_BLOCK_B2E_EMPLOYEE_DYNAMIC_HINT',
+					},
+				});
+			}
 
 			titles = {
 				firstParty: 'SIGN_EDITOR_BLOCKS_FIRST_PARTY_B2E',
 				partner: 'SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E',
 			};
+			return [
+				{
+					title: titles.firstParty,
+					blocks: firstPartyBlocks,
+					part: 1,
+				},
+				{
+					title: titles.partner,
+					blocks: partnerBlocks,
+					part: 2,
+				},
+				{
+					title: 'SIGN_EDITOR_BLOCKS_GENERAL',
+					blocks: generalBlocks,
+					part: 0,
+				},
+				{
+
+					title: null,
+					blocks: {
+						hcmlinkreference: {
+							title: 'SIGN_EDITOR_BLOCK_B2E_HCMLINK_TITLE',
+							hint: 'SIGN_EDITOR_BLOCK_B2E_HCMLINK_HINT',
+						}
+					},
+					part: 3,
+				},
+			];
 		}
 		else
 		{
@@ -470,7 +536,7 @@ export class Editor extends EventEmitter
 					hint: 'SIGN_EDITOR_BLOCK_CRM_HINT',
 				},
 				myrequisites: {
-					title: 'SIGN_EDITOR_BLOCK_REQUISITES',
+					title: 'SIGN_EDITOR_BLOCK_REQUISITES_MSG_VER_1',
 					hint: 'SIGN_EDITOR_BLOCK_FIRST_PARTY_REQUISITES_HINT',
 				},
 				mysign: {
@@ -497,25 +563,24 @@ export class Editor extends EventEmitter
 					hint: 'SIGN_EDITOR_BLOCK_PARTNER_STAMP_HINT',
 				},
 			});
+			return [
+				{
+					title: titles.firstParty,
+					blocks: firstPartyBlocks,
+					part: 1,
+				},
+				{
+					title: titles.partner,
+					blocks: partnerBlocks,
+					part: 2,
+				},
+				{
+					title: 'SIGN_EDITOR_BLOCKS_GENERAL',
+					blocks: generalBlocks,
+					part: 0,
+				},
+			];
 		}
-
-		return [
-			{
-				title: titles.firstParty,
-				blocks: firstPartyBlocks,
-				part: 1,
-			},
-			{
-				title: titles.partner,
-				blocks: partnerBlocks,
-				part: 2,
-			},
-			{
-				title: 'SIGN_EDITOR_BLOCKS_GENERAL',
-				blocks: generalBlocks,
-				part: 0,
-			},
-		];
 	}
 
 	#onSidePanelCloseStart(event: BX.SidePanel.Event): Promise<void>
@@ -541,5 +606,22 @@ export class Editor extends EventEmitter
 			this.#needToLockSidePanelClose = true;
 			this.emit('save', { blocks });
 		});
+	}
+
+	#isDynamicEmployeeFieldAvailable(): boolean
+	{
+		return this.#isB2e() && this.#blocksManager.isTemplateMode;
+	}
+
+	#isBlockCanBeInitialized(block: DocumentData['blocks'][number]): boolean
+	{
+		if (this.#disabledSections.has(block.party))
+		{
+			return false;
+		}
+
+		return !this.#blocksManager.isTemplateMode
+			|| !String(block.data.field).startsWith('SMART_B2E_DOC')
+		;
 	}
 }

@@ -221,6 +221,7 @@ jn.define('layout/ui/menu', (require, exports, module) => {
 									title: data.qrTitle || BX.message('UI_MENU_ITEM_TYPE_DESKTOP_MSGVER_1'),
 									redirectUrl: qrUrl || '',
 									showHint,
+									analyticsSection: data.analyticsSection || '',
 								});
 							});
 						},

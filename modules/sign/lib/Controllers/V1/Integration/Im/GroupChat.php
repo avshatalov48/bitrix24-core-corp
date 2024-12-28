@@ -36,8 +36,10 @@ class GroupChat extends \Bitrix\Sign\Engine\Controller
 			];
 	}
 
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_DOCUMENT_EDIT)]
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_ADD)]
+	#[Attribute\Access\LogicAnd(
+		new Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT),
+		new Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_ADD),
+	)]
 	public function createDocumentChatAction(int $chatType, int $documentId, bool $isEntityId = false): array
 	{
 		$documentRepository = Container::instance()->getDocumentRepository();

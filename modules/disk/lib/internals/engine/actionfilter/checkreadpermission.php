@@ -58,7 +58,7 @@ class CheckReadPermission extends ActionFilter\Base
 			}
 			elseif ($argument instanceof TrackedObject)
 			{
-				if (!$this->currentUser->getId() || !$argument->canRead($this->currentUser->getId()))
+				if (!$this->checkTrackedObject($argument))
 				{
 					$this->addReadError();
 
@@ -91,14 +91,41 @@ class CheckReadPermission extends ActionFilter\Base
 					}
 				}
 			}
+			elseif ($argument instanceof Type\TrackedObjectCollection)
+			{
+				foreach ($argument as $item)
+				{
+					if (!$this->checkTrackedObject($item))
+					{
+						return new EventResult(EventResult::ERROR, null, null, $this);
+					}
+				}
+			}
 		}
 
 		return null;
 	}
 
-	protected function checkObject(BaseObject $object)
+	protected function checkTrackedObject(TrackedObject $trackedObject): bool
 	{
-		$securityContext = $object->getStorage()->getSecurityContext($this->currentUser->getId());
+		if (!$this->currentUser->getId() || !$trackedObject->canRead($this->currentUser->getId()))
+		{
+			$this->addReadError();
+
+			return false;
+		}
+
+		return true;
+	}
+
+	protected function checkObject(BaseObject $object): bool
+	{
+		$securityContext = $object->getStorage()?->getSecurityContext($this->currentUser->getId());
+		if (!$securityContext)
+		{
+			return false;
+		}
+
 		if (!$object->canRead($securityContext))
 		{
 			$this->addReadError();
@@ -109,10 +136,10 @@ class CheckReadPermission extends ActionFilter\Base
 		return true;
 	}
 
-	protected function addReadError()
+	protected function addReadError(): void
 	{
 		$this->errorCollection[] = new Error(
-			Loc::getMessage("DISK_CHECK_READ_PERMISSION_ERROR_MESSAGE"), self::ERROR_COULD_NOT_READ_OBJECT
+			Loc::getMessage('DISK_CHECK_READ_PERMISSION_ERROR_MESSAGE'), self::ERROR_COULD_NOT_READ_OBJECT
 		);
 	}
 

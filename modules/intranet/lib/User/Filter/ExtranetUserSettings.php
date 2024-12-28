@@ -3,15 +3,20 @@
 namespace Bitrix\Intranet\User\Filter;
 
 use Bitrix\Intranet\CurrentUser;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Filter\UserSettings;
 use Bitrix\Main\Loader;
 use Bitrix\Socialnetwork\UserToGroupTable;
 
-class ExtranetUserSettings extends UserSettings
+class ExtranetUserSettings extends IntranetUserSettings
 {
-	public function getCurrentUserId(): int
+	public const COLLABER_FIELD = 'COLLABER';
+	public const EXTRANET_FIELD = 'EXTRANET';
+
+	public function __construct(array $params)
 	{
-		return CurrentUser::get()->getId();
+		parent::__construct($params);
+		$this->initFilterAvailability();
 	}
 
 	public function isCurrentUserExtranet(): bool
@@ -61,5 +66,19 @@ class ExtranetUserSettings extends UserSettings
 		}
 
 		return $publicUserIdList;
+	}
+
+	private function initFilterAvailability(): void
+	{
+		$this->filterAvailability[self::EXTRANET_FIELD] =
+			Option::get('extranet', 'extranet_site') !== ''
+			&& Loader::includeModule('extranet')
+			&& \Bitrix\Extranet\PortalSettings::getInstance()->isExtranetUsersAvailable()
+		;
+
+		$this->filterAvailability[self::COLLABER_FIELD] =
+			Loader::includeModule('extranet')
+			&& \Bitrix\Extranet\PortalSettings::getInstance()->isCollabEnabled()
+		;
 	}
 }

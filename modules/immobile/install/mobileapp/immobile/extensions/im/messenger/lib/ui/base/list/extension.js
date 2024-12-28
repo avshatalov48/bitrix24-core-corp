@@ -112,8 +112,8 @@ jn.define('im/messenger/lib/ui/base/list', (require, exports, module) => {
 				Text({
 					text: this.props.recentText,
 					style: {
-						color: Theme.colors.base2,
-						fontSize: 14,
+						color: Theme.colors.base4,
+						fontSize: 15,
 						fontWeight: 400,
 						textStyle: 'normal',
 						textAlign: 'start',

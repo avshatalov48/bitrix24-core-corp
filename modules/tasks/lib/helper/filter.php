@@ -72,7 +72,7 @@ class Filter extends Common
 				$filterSettings = $filterOptions->getFilterSettings($currentPresetId);
 
 				if (
-					is_array($filterSettings['fields'])
+					is_array($filterSettings['fields'] ?? null)
 					&& (
 						!array_key_exists('ROLEID', $filterSettings['fields'])
 						|| !$filterSettings['fields']['ROLEID']

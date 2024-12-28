@@ -120,6 +120,7 @@ if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 			'ATTRIBUTES' => [
 				'ANCHOR' => $analytics,
 				'TEXT_ANCHOR' => $analytics,
+				'ANALYTICS_DATA' => $arResult['ANALYTICS_LABEL'],
 			],
 		],
 		null,
@@ -162,4 +163,13 @@ if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 			]) ?>);
 		}
 	);
+
+	const classList = document.documentElement.classList;
+	classList.forEach((className) => {
+		if (className === 'light' || className === 'dark')
+		{
+			classList.remove(className);
+			classList.add(`new${className}`);
+		}
+	});
 </script>

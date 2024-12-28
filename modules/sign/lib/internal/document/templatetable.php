@@ -73,6 +73,9 @@ class TemplateTable extends Entity\DataManager
 			(new DatetimeField('DATE_MODIFY'))
 				->configureNullable()
 			,
+			(new IntegerField('VISIBILITY'))
+				->configureRequired()
+			,
 		];
 	}
 }

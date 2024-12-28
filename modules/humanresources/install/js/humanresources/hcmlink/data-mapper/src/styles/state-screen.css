@@ -1,0 +1,47 @@
+.hr-hcmlink-mapping-person__state-screen {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	padding: 40px 20px;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.hr-hcmlink-mapping-person__state-screen_icon {
+	display: block;
+	margin-bottom: 30px;
+	width: 220px;
+	height: 200px;
+	background: url(./../images/state-pending.svg) no-repeat;
+}
+
+.hr-hcmlink-mapping-person__state-screen.--pending .hr-hcmlink-mapping-person__state-screen_icon {
+	background: url(./../images/state-pending.svg) no-repeat;
+}
+
+.hr-hcmlink-mapping-person__state-screen.--done .hr-hcmlink-mapping-person__state-screen_icon {
+	background: url(./../images/state-done.svg) no-repeat;
+}
+
+.hr-hcmlink-mapping-person__state-screen_title {
+	display: block;
+	margin-bottom: 16px;
+	font: var(--ui-font-weight-medium) var(--ui-font-size-4xl) var(--ui-font-family-system);
+	color: var(--ui-color-base-90);
+	text-align: center;
+	max-width: 407px;
+}
+
+.hr-hcmlink-mapping-person__state-screen_desc {
+	display: block;
+	margin-bottom: 30px;
+	max-width: 407px;
+	font: var(--ui-font-size-xl) var(--ui-font-family-system);
+	color: var(--ui-color-base-60);
+	text-align: center;
+}

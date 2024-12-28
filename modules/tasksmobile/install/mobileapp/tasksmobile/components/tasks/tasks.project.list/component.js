@@ -773,6 +773,7 @@
 				onReady: (list) => {
 					new ProjectMemberList(list, this.list.userId, project.id, {
 						isOwner: project.isOwner(),
+						isExtranet: project.isExtranet,
 						canInvite: project.getActions().invite,
 						minSearchSize: 3,
 					});

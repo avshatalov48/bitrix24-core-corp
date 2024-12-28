@@ -17,7 +17,7 @@ class CheckIn extends AbstractMenuItem
 	public function isAvailable(): bool
 	{
 		return $this->isModuleIncluded()
-			&& !$this->context->extranet
+			&& !($this->context->extranet || $this->context->isCollaber)
 			&& Feature::isCheckInEnabled()
 		;
 	}

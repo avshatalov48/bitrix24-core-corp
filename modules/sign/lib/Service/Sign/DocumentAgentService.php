@@ -146,6 +146,12 @@ class DocumentAgentService
 			catch (ArgumentException|Main\ArgumentOutOfRangeException $e)
 			{
 			}
+
+			if (Type\DocumentScenario::isB2EScenario($documentItem->scenario))
+			{
+				$documentItem->status = DocumentStatus::UPLOADED;
+				$documentRepository->update($documentItem);
+			}
 		}
 	}
 	private function addAgent(string $agentName, int $interval = 1, string $nextDateExec = '')

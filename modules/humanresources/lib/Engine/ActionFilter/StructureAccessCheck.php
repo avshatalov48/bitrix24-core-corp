@@ -2,21 +2,32 @@
 
 namespace Bitrix\HumanResources\Engine\ActionFilter;
 
+use Bitrix\HumanResources\Attribute\Access\LogicAnd;
+use Bitrix\HumanResources\Attribute\Access\LogicOr;
+use Bitrix\HumanResources\Attribute\ActionAccess;
+use Bitrix\HumanResources\Attribute\StructureActionAccess;
 use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Access\Model\NodeModel;
 use Bitrix\HumanResources\Type\AccessibleItemType;
 use Bitrix\Main;
 use Bitrix\HumanResources\Access\StructureAccessController;
 use Bitrix\Main\Access\AccessibleItem;
+use Bitrix\Main\Localization\Loc;
 
 final class StructureAccessCheck extends Main\Engine\ActionFilter\Base
 {
+	public const RULE_OR = 'OR';
+	public const RULE_AND = 'AND';
+
 	public const PREFILTER_KEY = 'ACCESS_CHECK';
 	private const ERROR_ACCESS_DENIED = 'STRUCTURE_ACCESS_DENIED';
 
 	private StructureAccessController $accessController;
-	/** @var array<string, StructureRuleItem>  */
+	/** @var array<string, StructureRuleItem> */
 	private array $rules = [];
+
+	/** @var list<LogicRule> */
+	private array $logicRules = [];
 
 	public function __construct()
 	{
@@ -31,9 +42,25 @@ final class StructureAccessCheck extends Main\Engine\ActionFilter\Base
 		?string $itemParentIdRequestKey = null,
 	): self
 	{
-		$this->rules[$accessPermission] = new StructureRuleItem($accessPermission, $itemType, $itemIdRequestKey, $itemParentIdRequestKey);
+		$this->rules[$accessPermission] =
+			new StructureRuleItem($accessPermission, $itemType, $itemIdRequestKey, $itemParentIdRequestKey);
 
 		return $this;
+	}
+
+	public function addRuleFromAttribute(StructureActionAccess|LogicOr|LogicAnd $attribute): self
+	{
+		if ($attribute instanceof StructureActionAccess)
+		{
+			return $this->addRule(
+				$attribute->permission,
+				$attribute->itemType,
+				$attribute->itemIdRequestKey,
+				$attribute->itemParentIdRequestKey,
+			);
+		}
+
+		return $this->addLogicRuleFromAttribute($attribute);
 	}
 
 	public function onBeforeAction(\Bitrix\Main\Event $event): ?Main\EventResult
@@ -48,27 +75,49 @@ final class StructureAccessCheck extends Main\Engine\ActionFilter\Base
 
 	private function getAccessErrorResult(): Main\EventResult
 	{
-		$this->addError(new Main\Error(
-			'Access denied',
-				self::ERROR_ACCESS_DENIED)
+		$this->addError(
+			new Main\Error(
+				Loc::getMessage('HR_ACTION_ACCESS_DENIED'),
+				self::ERROR_ACCESS_DENIED,
+			),
 		);
 
 		return new Main\EventResult(Main\EventResult::ERROR, null, null, $this);
+	}
+
+	private function addLogicRuleFromAttribute(LogicAnd|LogicOr $logicAttribute): self
+	{
+		$rules = array_map(
+			fn(StructureActionAccess $condition) => new StructureRuleItem(
+				$condition->permission,
+				$condition->itemType,
+				$condition->itemIdRequestKey,
+				$condition->itemParentIdRequestKey,
+			),
+			$logicAttribute->conditions,
+		);
+
+		$this->logicRules[] = new LogicRule(
+			$logicAttribute instanceof LogicOr ? self::RULE_OR : self::RULE_AND,
+			...$rules,
+		);
+
+		return $this;
 	}
 
 	private function checkRules(): bool
 	{
 		foreach ($this->rules as $rule)
 		{
-			$acton = $rule->accessPermission;
-
-			$item = null;
-			if ($rule->itemType)
+			if (!$this->checkRule($rule))
 			{
-				$item = $this->createAccessibleItemByType($rule->itemType, $rule->itemIdRequestKey, $rule->itemParentIdRequestKey);
+				return false;
 			}
+		}
 
-			if (!$this->accessController->check($acton, $item))
+		foreach ($this->logicRules as $logicRule)
+		{
+			if (!$this->checkLogicRule($logicRule))
 			{
 				return false;
 			}
@@ -77,7 +126,60 @@ final class StructureAccessCheck extends Main\Engine\ActionFilter\Base
 		return true;
 	}
 
-	private function createAccessibleItemByType(AccessibleItemType $type, ?string $requestIdKey = null, ?string $requestParentIdKey = null): ?AccessibleItem
+	private function checkLogicRule(LogicRule $rule): bool
+	{
+		if ($rule->logicOperator === self::RULE_OR)
+		{
+			foreach ($rule->rules as $rule)
+			{
+				if ($this->checkRule($rule))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		foreach ($rule->rules as $rule)
+		{
+			if (!$this->checkRule($rule))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private function checkRule(StructureRuleItem $rule)
+	{
+		$acton = $rule->accessPermission;
+
+		$item = null;
+		if ($rule->itemType)
+		{
+			$item =
+				$this->createAccessibleItemByType(
+					$rule->itemType,
+					$rule->itemIdRequestKey,
+					$rule->itemParentIdRequestKey,
+				);
+		}
+
+		if (!$this->accessController->check($acton, $item))
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	private function createAccessibleItemByType(
+		AccessibleItemType $type,
+		?string $requestIdKey = null,
+		?string $requestParentIdKey = null,
+	): ?AccessibleItem
 	{
 		if ($type === AccessibleItemType::NODE)
 		{
@@ -100,7 +202,10 @@ final class StructureAccessCheck extends Main\Engine\ActionFilter\Base
 		return null;
 	}
 
-	private function createAccessibleItem(?string $requestIdKey = null, ?string $requestParentIdKey = null): AccessibleItem
+	private function createAccessibleItem(
+		?string $requestIdKey = null,
+		?string $requestParentIdKey = null,
+	): AccessibleItem
 	{
 		if (!$requestIdKey && !$requestParentIdKey)
 		{

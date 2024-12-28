@@ -1,0 +1,15 @@
+<?php
+
+$MESS['M_DISK_FILE_ACTIONS_SHARE'] = 'Поделиться';
+$MESS['M_DISK_FILE_ACTIONS_MOVE'] = 'Переместить';
+$MESS['M_DISK_FILE_ACTIONS_SEND_TO_CHAT'] = 'Отправить в чат';
+$MESS['M_DISK_FILE_ACTIONS_COPY'] = 'Копировать';
+$MESS['M_DISK_FILE_ACTIONS_RENAME'] = 'Переименовать';
+$MESS['M_DISK_FILE_ACTIONS_REMOVE'] = 'Удалить';
+$MESS['M_DISK_FILE_ACTIONS_REMOVE_FOLDER_CONFIRM_TITLE'] = 'Удалить папку?';
+$MESS['M_DISK_FILE_ACTIONS_REMOVE_FILE_CONFIRM_TITLE'] = 'Удалить файл?';
+$MESS['M_DISK_FILE_ACTIONS_REMOVE_CONFIRM_ACCEPT'] = 'Удалить';
+$MESS['M_DISK_FILE_ACTIONS_REMOVE_FILE_CONFIRM_DESCRIPTION'] = 'Он будет храниться в корзине 30 дней';
+$MESS['M_DISK_FILE_ACTIONS_REMOVE_FOLDER_CONFIRM_DESCRIPTION'] = 'Она будет храниться в корзине 30 дней';
+$MESS['M_DISK_FILE_ACTIONS_SHARE_ERROR_TITLE'] = 'Что-то пошло не так';
+$MESS['M_DISK_FILE_ACTIONS_SHARE_ERROR_DESCRIPTION'] = 'Не удалось поделиться файлом';

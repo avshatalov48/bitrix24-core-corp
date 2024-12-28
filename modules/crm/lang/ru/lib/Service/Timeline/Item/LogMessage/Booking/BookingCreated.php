@@ -1,0 +1,3 @@
+<?php
+$MESS['CRM_TIMELINE_LOG_BOOKING_CREATED_TITLE'] = 'Создана онлайн-запись';
+$MESS['CRM_TIMELINE_LOG_BOOKING_SCHEDULED_TIME_TITLE'] = 'Время записи:';

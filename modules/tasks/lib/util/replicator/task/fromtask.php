@@ -263,7 +263,7 @@ class FromTask extends \Bitrix\Tasks\Util\Replicator\Task
 				$dateDate->stripTime();
 
 				$diff = $createdDate->getDiff($dateDate);
-				$daysDiff = $diff->format('%d');
+				$daysDiff = $diff->days;
 				$daysDiff = ($diff->invert ? -$daysDiff : +$daysDiff);
 
 				($now = new DateTime())->addDay($daysDiff);

@@ -7,6 +7,7 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
 	const { InviteStatusBox } = require('intranet/invite-status-box');
+	const { Tourist } = require('tourist');
 
 	const ErrorCode = {
 		POSSIBILITIES_RESTRICTED: 'Invite possibilities restricted',
@@ -24,6 +25,11 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 	 * @param {Function} params.onViewHiddenWithoutInvitingHandler
 	 */
 	const openIntranetInviteWidget = (params) => {
+		if (env.isCollaber || env.extranet)
+		{
+			return;
+		}
+
 		Notify.showIndicatorLoading();
 		getInviteSettings().then(
 			(response) => processGetInviteSettingsFulfilled(response, params),
@@ -42,6 +48,8 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 	};
 
 	const processGetInviteSettingsFulfilled = (response, params) => {
+		setUserVisitedInvitations();
+
 		const responseHasErrors = response.errors && response.errors.length > 0;
 		if (responseHasErrors)
 		{
@@ -85,6 +93,28 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 		});
 	};
 
+	const setUserVisitedInvitations = () => {
+		Tourist.ready()
+			.then(() => {
+				if (Tourist.firstTime('visit_invitations'))
+				{
+					return Tourist.remember('visit_invitations')
+						.then(() => {
+							BX.postComponentEvent('onSetUserCounters', [
+								{
+									[String(env.siteId)]: { menu_invite: 0 },
+								},
+							]);
+						})
+						.catch(console.error);
+				}
+
+				// eslint-disable-next-line promise/no-return-wrap
+				return Promise.resolve();
+			})
+			.catch(console.error);
+	};
+
 	const handleAdminCanInviteInWeb = (onInviteError, adminInBoxRedirectLink, parentLayout = PageManager) => {
 		InviteStatusBox.open({
 			backdropTitle: Loc.getMessage('INTRANET_INVITE_OPENER_TITLE'),
@@ -98,6 +128,7 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 					qrauth.open({
 						redirectUrl: adminInBoxRedirectLink,
 						showHint: true,
+						analyticsSection: 'userList',
 					});
 				}, 500);
 			},
@@ -156,6 +187,7 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 
 	const extractResponseData = (data) => {
 		return {
+			adminConfirm: data.adminConfirm ?? false,
 			inviteLink: data.inviteLink ?? '',
 			creatorEmailConfirmed: data.creatorEmailConfirmed ?? false,
 			sharingMessage: data.sharingMessage ?? '',
@@ -195,6 +227,7 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 		creatorEmailConfirmed = false,
 		sharingMessage = '',
 		multipleInvite = true,
+		adminConfirm = false,
 	}) => {
 		const inviteAnalytics = new IntranetInviteAnalytics({ analytics });
 		inviteAnalytics.sendDrawerOpenEvent();
@@ -246,6 +279,7 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 					creatorEmailConfirmed,
 					sharingMessage,
 					multipleInvite,
+					adminConfirm,
 				}));
 
 				readyLayout.on('onViewRemoved', () => {

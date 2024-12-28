@@ -5,6 +5,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-user-counter', (
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sidebar--sidebar-profile-user-counter');
 	const { Loc } = require('loc');
+	const { EventType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
@@ -67,7 +68,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-user-counter', (
 		componentDidMount()
 		{
 			logger.log(`${this.constructor.name}.view.componentDidMount`);
-			this.bindListener();
+			this.bindMethods();
 			this.subscribeEvents();
 			this.buildUserCounterLocal();
 		}
@@ -76,9 +77,9 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-user-counter', (
 		 * @desc Method binding this for use in handlers
 		 * @void
 		 */
-		bindListener()
+		bindMethods()
 		{
-			this.unsubscribeEvents = this.unsubscribeEvents.bind(this);
+			this.onClose = this.onClose.bind(this);
 			this.onChangeProfileUserCounter = this.onChangeProfileUserCounter.bind(this);
 		}
 
@@ -87,7 +88,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-user-counter', (
 			logger.log(`${this.constructor.name}.view.subscribeStoreEvents`);
 			this.storeManager.on('dialoguesModel/update', this.onChangeProfileUserCounter);
 
-			BX.addCustomEvent('onCloseSidebarWidget', this.unsubscribeEvents);
+			BX.addCustomEvent(EventType.sidebar.closeWidget, this.onClose);
 		}
 
 		unsubscribeEvents()
@@ -95,7 +96,13 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-user-counter', (
 			logger.log(`${this.constructor.name}.view.unsubscribeStoreEvents`);
 			this.storeManager.off('dialoguesModel/update', this.onChangeProfileUserCounter);
 
-			BX.removeCustomEvent('onCloseSidebarWidget', this.unsubscribeEvents);
+			BX.removeCustomEvent(EventType.sidebar.closeWidget, this.onClose);
+		}
+
+		onClose()
+		{
+			logger.log(`${this.constructor.name}.onClose`);
+			this.unsubscribeEvents();
 		}
 
 		/**

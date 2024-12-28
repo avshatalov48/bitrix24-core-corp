@@ -304,6 +304,7 @@ jn.define('layout/ui/detail-card/floating-button/menu/item', (require, exports, 
 				qrauth.open({
 					title: Loc.getMessage('M_CRM_DETAIL_MENU_DESKTOP_VERSION'),
 					redirectUrl: qrUrl,
+					analyticsSection: this?.detailCard.getEntityAnalyticsData()?.analyticsSection || '',
 				});
 
 				return promise;

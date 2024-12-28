@@ -91,7 +91,7 @@ if ($forceShowCheckInCounter)
 							"TM_STATUS_CLOSED" : "<?=GetMessageJS("TM_STATUS_START")?>",
 							"TM_STATUS_PAUSED" : "<?=GetMessageJS("TM_STATUS_PAUSED")?>",
 							"TM_STATUS_COMPLETED" : "<?=GetMessageJS("TM_STATUS_COMPLETED")?>",
-							"TM_STATUS_EXPIRED" : "<?=GetMessageJS("TM_STATUS_EXPIRED_MSGVER_1")?>"
+							"TM_STATUS_EXPIRED" : "<?=GetMessageJS("TM_STATUS_EXPIRED")?>"
 						});
 
 						B24.Timemanager.init(<?=CUtil::PhpToJsObject($arResult["WORK_REPORT"]);?>);

@@ -148,6 +148,10 @@ class CategoryRepository
 			{
 				continue;
 			}
+			if ($role['GROUP_CODE'])
+			{
+				continue;
+			}
 
 			$rolePerms = \CCrmRole::getRolePermissionsAndSettings($role['ID']);
 

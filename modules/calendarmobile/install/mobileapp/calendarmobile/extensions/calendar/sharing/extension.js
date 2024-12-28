@@ -108,11 +108,6 @@ jn.define('calendar/sharing', (require, exports, module) => {
 			return this.model.getStatus() === ModelSharingStatus.ENABLE;
 		}
 
-		getFeatureCode()
-		{
-			return 'calendar_sharing';
-		}
-
 		resolveAjaxResponse(response)
 		{
 			return response.data;

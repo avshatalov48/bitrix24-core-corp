@@ -5,7 +5,7 @@ namespace Bitrix\BIConnector\Access\Component;
 use Bitrix\BIconnector\Access\Component\PermissionConfig\RoleMembersInfo;
 use Bitrix\BIconnector\Access\Permission\PermissionDictionary;
 use Bitrix\BIconnector\Access\Permission\PermissionTable;
-use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
+use Bitrix\BIConnector\Configuration\Feature;
 use Bitrix\BIConnector\Superset\MarketDashboardManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\BIconnector\Access\Role\RoleUtil;
@@ -91,17 +91,24 @@ final class PermissionConfig
 			$dashboardRights[] = PermissionDictionary::BIC_DASHBOARD_EXPORT;
 		}
 
+		$mainRights = [
+			PermissionDictionary::BIC_DASHBOARD_CREATE,
+			PermissionDictionary::BIC_DASHBOARD_TAG_MODIFY,
+			PermissionDictionary::BIC_SETTINGS_ACCESS,
+			PermissionDictionary::BIC_SETTINGS_EDIT_RIGHTS,
+			PermissionDictionary::BIC_DASHBOARD_EDIT_SCOPE,
+		];
+
+		if (Feature::isExternalEntitiesEnabled())
+		{
+			$mainRights[] = PermissionDictionary::BIC_EXTERNAL_DASHBOARD_CONFIG;
+		}
+
 		return [
 			self::SECTION_BIC_ACCESS => [
 				PermissionDictionary::BIC_ACCESS,
 			],
-			self::SECTION_MAIN_RIGHTS => [
-				PermissionDictionary::BIC_DASHBOARD_CREATE,
-				PermissionDictionary::BIC_DASHBOARD_TAG_MODIFY,
-				PermissionDictionary::BIC_SETTINGS_ACCESS,
-				PermissionDictionary::BIC_SETTINGS_EDIT_RIGHTS,
-				PermissionDictionary::BIC_DASHBOARD_EDIT_SCOPE,
-			],
+			self::SECTION_MAIN_RIGHTS => $mainRights,
 			self::SECTION_DASHBOARD_RIGHTS => $dashboardRights,
 		];
 	}

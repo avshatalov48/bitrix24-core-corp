@@ -26,7 +26,15 @@ class Quote implements PermissionEntity
 	{
 		$name = Container::getInstance()->getFactory(CCrmOwnerType::Quote)->getEntityDescription();
 		return [
-			new EntityDTO('QUOTE', $name, [], $this->permissions())
+			new EntityDTO(
+				'QUOTE',
+				$name,
+				[],
+				$this->permissions(),
+				null,
+				'commercial-offer',
+				'--ui-color-accent-aqua',
+			)
 		];
 	}
 }

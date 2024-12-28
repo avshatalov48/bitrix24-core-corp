@@ -1,3 +1,3 @@
-<?
+<?php
+$MESS["DISK_PROXY_TYPE_COLLAB_GROUP_TITLE"] = "Files";
 $MESS["DISK_PROXY_TYPE_GROUP_TITLE"] = "Drive";
-?>

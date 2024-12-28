@@ -7,6 +7,8 @@ const defaultRedirectValue = 'detail';
 
 export class Helpdesk
 {
+	static defaultRedirectValue = defaultRedirectValue;
+
 	static show(code: string, redirect: string = defaultRedirectValue): void
 	{
 		if (top.BX.Helper)
@@ -26,13 +28,18 @@ export class Helpdesk
 		});
 	}
 
-	static replaceLink(text: string, code: string, redirect: string = defaultRedirectValue): string
+	static replaceLink(
+		text: string,
+		code: string,
+		redirect: string = defaultRedirectValue,
+		extraClasses: Array<string> = [],
+	): string
 	{
 		return text
 			.replace(
 				`[${defaultHelpdeskTag}]`,
 				`
-					<a class="sign-v2e-helper__link" 
+					<a class="sign-v2e-helper__link ${extraClasses.join(' ')}"
 						href="javascript:top.BX.Helper.show('redirect=${Tag.safe`${redirect}`}&code=${Tag.safe`${code}`}');"
 					>
 				`,

@@ -5,9 +5,6 @@ namespace Bitrix\Intranet\User\Grid\Row\Assembler\Field;
 use Bitrix\Intranet\User\Grid\Settings\UserSettings;
 use Bitrix\Main\Grid\Settings;
 
-/**
- * @method UserSettings getSettings()
- */
 class TagsFieldAssembler extends CustomUserFieldAssembler
 {
 	private array $userTagsList;

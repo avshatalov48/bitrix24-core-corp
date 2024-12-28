@@ -1772,6 +1772,16 @@ GanttTask.prototype.isGroup = function()
 		   (this.childTasks.length > 0 || this.hasChildren);
 };
 
+GanttTask.prototype.isGroupMode = function()
+{
+	return Number(this.chart?.settings?.groupId) > 0;
+};
+
+GanttTask.prototype.isCollabMode = function()
+{
+	return this.isGroupMode() && this.chart?.settings?.isCollab === 'Y';
+};
+
 GanttTask.prototype.shiftChildren = function()
 {
 	var children = this.childTasks;
@@ -3951,12 +3961,22 @@ GanttTask.prototype.matchWorkingTime = function(startDate, endDate, duration)
 
 GanttTask.prototype.analytics = function (event, element)
 {
+	let section = 'tasks';
+	if (this.isCollabMode())
+	{
+		section = 'collab';
+	}
+	else if (this.isGroupMode())
+	{
+		section = 'project';
+	}
+
 	const analyticsData = {
 		tool: 'tasks',
 		category: 'task_operations',
 		event: event,
 		type: 'task',
-		c_section: this.isGroup() ? 'project' : 'tasks',
+		c_section: section,
 		c_element: element,
 		c_sub_section: 'gantt',
 	};

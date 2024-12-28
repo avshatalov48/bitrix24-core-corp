@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 if (!CModule::IncludeModule('intranet'))
@@ -15,6 +15,35 @@ if (!\Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabil
 	);
 
 	return;
+}
+
+if (!function_exists('getAuthorTimestamp'))
+{
+	function getAuthorTimestamp(?int $authorId, int $timestamp): int
+	{
+		if (!$authorId)
+		{
+			return $timestamp;
+		}
+
+		global $USER;
+
+		$currentUserId = 0;
+		if (isset($USER) && (($USER instanceof \CUser)))
+		{
+			$currentUserId = $USER->GetID();
+		}
+
+		$userUtcOffset = \CIntranetTime::getInstance()->getUserUtcOffset($currentUserId);
+		$authorUtcOffset = \CIntranetTime::getInstance()->getUserUtcOffset($authorId);
+		$authorTimeZone = \CIntranetTime::getInstance()->createTimezoneByOffset($authorUtcOffset);
+
+		$dateTime = new \DateTime();
+		$dateTime->setTimestamp($timestamp - $userUtcOffset + $authorUtcOffset);
+		$dateTime->setTimezone($authorTimeZone);
+
+		return $dateTime->getTimestamp();
+	}
 }
 
 $arParams['VIEW_START'] = isset($arParams['VIEW_START']) ? $arParams['VIEW_START'] : 'month';
@@ -292,6 +321,15 @@ if (isset($arParams['AJAX_CALL']) && $arParams['AJAX_CALL'] == 'DATA')
 									? $arResult['ABSENCE_TYPES'][$arEntry['PROPERTY_ABSENCE_TYPE_ENUM_ID']]['XML_ID']
 									: ''
 							;
+
+							$arEntry['DATE_ACTIVE_FROM'] = getAuthorTimestamp(
+								$arEntry['MODIFIED_BY'] ?? $arEntry['CREATED_BY'],
+								$arEntry['DATE_ACTIVE_FROM'],
+							);
+							$arEntry['DATE_ACTIVE_TO'] = getAuthorTimestamp(
+								$arEntry['MODIFIED_BY'] ?? $arEntry['CREATED_BY'],
+								$arEntry['DATE_ACTIVE_TO'],
+							);
 						}
 						elseif ($arEntry['ENTRY_TYPE'] == BX_INTRANET_ABSENCE_PERSONAL)
 						{
@@ -382,7 +420,18 @@ elseif (isset($arParams['AJAX_CALL']) && $arParams['AJAX_CALL'] == 'INFO')
 		if ($arParams['IBLOCK_ID'] <= 0)
 			$arParams['IBLOCK_ID'] = COption::GetOptionInt('intranet', $arParams['TYPE'] == 1 ? 'iblock_absence' : 'iblock_calendar');
 
-		$arSelect = array('ID', 'IBLOCK_ID', 'IBLOCK_SECTION_ID', 'DATE_ACTIVE_FROM', 'DATE_ACTIVE_TO', 'NAME', 'PREVIEW_TEXT', 'DETAIL_TEXT');
+		$arSelect = [
+			'ID',
+			'IBLOCK_ID',
+			'IBLOCK_SECTION_ID',
+			'DATE_ACTIVE_FROM',
+			'DATE_ACTIVE_TO',
+			'NAME',
+			'PREVIEW_TEXT',
+			'DETAIL_TEXT',
+			'CREATED_BY',
+			'MODIFIED_BY',
+		];
 
 		if ($arParams['TYPE'] == 1)
 		{
@@ -398,6 +447,15 @@ elseif (isset($arParams['AJAX_CALL']) && $arParams['AJAX_CALL'] == 'INFO')
 
 		$arResult['ENTRY']['DATE_ACTIVE_FROM'] = MakeTimeStamp($arResult['ENTRY']['DATE_ACTIVE_FROM']);
 		$arResult['ENTRY']['DATE_ACTIVE_TO'] = MakeTimeStamp($arResult['ENTRY']['DATE_ACTIVE_TO']);
+
+		$arResult['ENTRY']['DATE_ACTIVE_FROM'] = getAuthorTimestamp(
+			$arResult['ENTRY']['MODIFIED_BY'] ?? $arResult['ENTRY']['CREATED_BY'],
+			$arResult['ENTRY']['DATE_ACTIVE_FROM'],
+		);
+		$arResult['ENTRY']['DATE_ACTIVE_TO'] = getAuthorTimestamp(
+			$arResult['ENTRY']['MODIFIED_BY'] ?? $arResult['ENTRY']['CREATED_BY'],
+			$arResult['ENTRY']['DATE_ACTIVE_TO'],
+		);
 	}
 	else
 	{

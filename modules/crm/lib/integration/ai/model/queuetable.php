@@ -2,8 +2,10 @@
 
 namespace Bitrix\Crm\Integration\AI\Model;
 
+use Bitrix\Crm\Copilot\AiQualityAssessment\Entity\AiQualityAssessmentTable;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\JobRepository;
+use Bitrix\Crm\Integration\AI\Operation\ScoreCall;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlExpression;
@@ -19,6 +21,7 @@ use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
 use Bitrix\Main\ORM\Objectify\State;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
+use CCrmOwnerType;
 
 /**
  * Class QueueTable
@@ -150,6 +153,10 @@ final class QueueTable extends DataManager
 				->configureRequired()
 				->configureDefaultValue(0)
 			,
+			(new EnumField('NEXT_TYPE_ID'))
+				->configureNullable()
+				->configureValues(AIManager::getAllOperationTypes())
+			,
 		];
 	}
 
@@ -195,6 +202,37 @@ final class QueueTable extends DataManager
 		}
 	}
 
+	private static function getJobIds(array $params): array
+	{
+		if (empty($params))
+		{
+			return [];
+		}
+
+		return self::getList([
+			'select' => ['ID'],
+			'filter' => $params,
+		])->fetchCollection()->getList('ID');
+	}
+
+	private static function deleteRelated(ItemIdentifier $target, array $jobIds): void
+	{
+		if (empty($jobIds))
+		{
+			return;
+		}
+
+		// AiQualityAssessmentTable
+		if (in_array(
+			$target->getEntityTypeId(),
+			[CCrmOwnerType::Activity, CCrmOwnerType::SuspendedActivity],
+			true
+		))
+		{
+			AiQualityAssessmentTable::deleteByJobIds($jobIds);
+		}
+	}
+
 	public static function deletePending(ItemIdentifier $target): Result
 	{
 		$sqlQuery = new SqlExpression(
@@ -234,6 +272,12 @@ final class QueueTable extends DataManager
 
 	public static function deleteByItem(ItemIdentifier $target): Result
 	{
+		$jobIds = self::getJobIds([
+			'=ENTITY_TYPE_ID' => $target->getEntityTypeId(),
+			'=ENTITY_ID' => $target->getEntityId(),
+			'=TYPE_ID' => ScoreCall::TYPE_ID,
+		]);
+
 		$sqlQuery = new SqlExpression(
 			/** @lang text */
 			'DELETE FROM ?# WHERE ENTITY_TYPE_ID=?i AND ENTITY_ID=?i',
@@ -245,6 +289,7 @@ final class QueueTable extends DataManager
 		Application::getConnection()->query((string)$sqlQuery);
 
 		self::cleanCache();
+		self::deleteRelated($target, $jobIds);
 
 		return new Result();
 	}

@@ -17,6 +17,7 @@ use Bitrix\Crm\Timeline\SignDocument\MessageData;
 use Bitrix\Main\Loader;
 use Bitrix\Sign\Integration\CRM\Model\EventData;
 use Bitrix\Sign\Service\Container;
+use Bitrix\Sign\Type\Document\InitiatedByType;
 
 final class B2eEventCreator
 {
@@ -74,6 +75,7 @@ final class B2eEventCreator
 			case EventData::TYPE_ON_SIGNED_BY_EMPLOYEE:
 				$crmController->onSignedByEmployee($itemIdentifier, $documentData, $messageData);
 				$this->notifyActivityChange($crmController, $itemIdentifier);
+				$this->executeTriggerOnSignedByEmployee($documentData, $itemIdentifier);
 				break;
 			case EventData::TYPE_ON_SIGNED_BY_RESPONSIBILITY_PERSON:
 				$crmController->onSignedByResponsiblePerson($itemIdentifier, $documentData, $messageData);
@@ -81,7 +83,7 @@ final class B2eEventCreator
 				break;
 			case EventData::TYPE_ON_SIGNED_BY_REVIEWER:
 				$crmController->onSignedByReviewer($itemIdentifier, $documentData, $messageData);
-				$this->executeTriggerOnSignedByReviewer($documentData->getDocumentId(), $itemIdentifier->getEntityId());
+				$this->executeTriggerOnSignedByReviewer($documentData, $itemIdentifier);
 				$this->notifyActivityChange($crmController, $itemIdentifier);
 				break;
 			case EventData::TYPE_ON_SIGNED_BY_EDITOR:
@@ -98,7 +100,7 @@ final class B2eEventCreator
 			case EventData::TYPE_ON_STARTED:
 				$crmController->onSignStarted($itemIdentifier, $documentData);
 				SigningStartedTrigger::executeBySmartDocumentId($itemIdentifier->getEntityId());
-				$this->executeTriggerOnStart($documentData->getDocumentId(), $itemIdentifier->getEntityId());
+				$this->executeTriggerOnStart($documentData, $itemIdentifier);
 				$this->notifyActivityChange($crmController, $itemIdentifier);
 				break;
 			case EventData::TYPE_ON_READY_BY_REVIEWER_OR_EDITOR:
@@ -166,29 +168,62 @@ final class B2eEventCreator
 				}
 				break;
 			case EventData::TYPE_ON_SENDING:
+			case EventData::TYPE_ON_ASSIGNEE_DONE:
 				$this->notifyActivityChange($crmController, $itemIdentifier);
 				break;
 		}
 	}
 
-	private function executeTriggerOnSignedByReviewer(int $documentId, int $entityId): void
+	private function executeTriggerOnSignedByReviewer(DocumentData $documentData, ItemIdentifier $itemIdentifier): void
 	{
-		$hasEditor = Container::instance()->getMemberRepository()->isDocumentHasEditor($documentId);
+		$hasEditor = Container::instance()->getMemberRepository()->isDocumentHasEditor($documentData->getDocumentId());
 
 		if ($hasEditor === false)
 		{
-			SigningTrigger::executeBySmartDocumentId($entityId);
+			SigningTrigger::executeBySmartDocumentId($itemIdentifier->getEntityId());
 		}
 	}
 
-	private function executeTriggerOnStart(int $documentId, int $entityId): void
+	private function executeTriggerOnStart(DocumentData $documentData, ItemIdentifier $itemIdentifier): void
 	{
-		$hasReviewer = Container::instance()->getMemberRepository()->isDocumentHasReviewer($documentId);
-		$hasEditor = Container::instance()->getMemberRepository()->isDocumentHasEditor($documentId);
-
-		if ($hasReviewer === false && $hasEditor === false)
+		$initiatedByType = InitiatedByType::tryFrom($documentData->getInitiatedByType());
+		if ($initiatedByType !== InitiatedByType::COMPANY)
 		{
-			SigningTrigger::executeBySmartDocumentId($entityId);
+			return;
+		}
+
+		$hasReviewer = Container::instance()
+			->getMemberRepository()
+			->isDocumentHasReviewer($documentData->getDocumentId())
+		;
+
+		$hasEditor = Container::instance()
+			->getMemberRepository()
+			->isDocumentHasEditor($documentData->getDocumentId())
+		;
+
+		if (!$hasReviewer && !$hasEditor)
+		{
+			SigningTrigger::executeBySmartDocumentId($itemIdentifier->getEntityId());
+		}
+	}
+
+	private function executeTriggerOnSignedByEmployee(DocumentData $documentData, ItemIdentifier $itemIdentifier): void
+	{
+		$initiatedByType = InitiatedByType::tryFrom($documentData->getInitiatedByType());
+		if ($initiatedByType !== InitiatedByType::EMPLOYEE)
+		{
+			return;
+		}
+
+		$hasReviewer = Container::instance()
+			->getMemberRepository()
+			->isDocumentHasReviewer($documentData->getDocumentId())
+		;
+
+		if (!$hasReviewer)
+		{
+			SigningTrigger::executeBySmartDocumentId($itemIdentifier->getEntityId());
 		}
 	}
 

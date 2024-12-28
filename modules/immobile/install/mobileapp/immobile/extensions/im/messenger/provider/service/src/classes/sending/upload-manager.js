@@ -2,17 +2,17 @@
  * @module im/messenger/provider/service/classes/sending/upload-manager
  */
 jn.define('im/messenger/provider/service/classes/sending/upload-manager', (require, exports, module) => {
+	/* global include, MediaConverter */
 	include('MediaConverter');
 
 	const { Type } = require('type');
-
+	const { Filesystem } = require('native/filesystem');
+	const { UploaderClient } = require('uploader/client');
 	const {
 		FileType,
 		ComponentCode,
 	} = require('im/messenger/const');
-	const { UploaderClient } = require('uploader/client');
 	const { UploadTask } = require('im/messenger/provider/service/classes/sending/upload-task');
-	const { Filesystem } = require('native/filesystem');
 
 	const UploaderManagerEvent = Object.freeze({
 		done: 'done',
@@ -66,6 +66,10 @@ jn.define('im/messenger/provider/service/classes/sending/upload-manager', (requi
 			this.eventEmitter.emit(UploaderManagerEvent.error, [id, data]);
 		}
 
+		/**
+		 * @param {UploadingMessageWithFile} messageWithFile
+		 * @returns {Promise<{file: (*&{path, extension, size, name, start, end, type}), taskId}>}
+		 */
 		async addUploadTaskByMessage(messageWithFile)
 		{
 			const {
@@ -110,8 +114,18 @@ jn.define('im/messenger/provider/service/classes/sending/upload-manager', (requi
 
 			const fileType = fileInfo.type.split('/')[0];
 			if (
-				fileType === FileType.image
-				|| fileType === FileType.video
+				fileType === FileType.image && (deviceFile.height > 1080 && deviceFile.width > 1080)
+			)
+			{
+				taskOptions.resize = {
+					height: 1080,
+					width: 1920,
+					quality: 80,
+				};
+			}
+
+			if (
+				fileType === FileType.video
 			)
 			{
 				taskOptions.resize = {
@@ -141,10 +155,10 @@ jn.define('im/messenger/provider/service/classes/sending/upload-manager', (requi
 
 		/**
 		 * @desc Returns prepare file data and done task
-		 * @param {Object} messageWithFile
-		 * @return {object} {fileData,task}
+		 * @param {Object} file
+		 * @return {object} {fileData: object, task: UploadTask}
 		 */
-		async getFileDataAndTask(messageWithFile)
+		async getFileDataAndTask(file)
 		{
 			const {
 				dialogId,
@@ -152,7 +166,7 @@ jn.define('im/messenger/provider/service/classes/sending/upload-manager', (requi
 				temporaryFileId,
 				deviceFile,
 				diskFolderId,
-			} = messageWithFile;
+			} = file;
 
 			let deviceFileUrl = deviceFile.url;
 			const isiCloudFile = (
@@ -171,7 +185,6 @@ jn.define('im/messenger/provider/service/classes/sending/upload-manager', (requi
 			}
 
 			const fileInfo = await Filesystem.getFile(deviceFileUrl);
-
 			const taskOptions = {
 				taskId: temporaryFileId,
 				resize: false,
@@ -188,8 +201,18 @@ jn.define('im/messenger/provider/service/classes/sending/upload-manager', (requi
 
 			const fileType = fileInfo.type.split('/')[0];
 			if (
-				fileType === FileType.image
-				|| fileType === FileType.video
+				fileType === FileType.image && (deviceFile.height > 1080 && deviceFile.width > 1080)
+			)
+			{
+				taskOptions.resize = {
+					height: 1080,
+					width: 1920,
+					quality: 80,
+				};
+			}
+
+			if (
+				fileType === FileType.video
 			)
 			{
 				taskOptions.resize = {

@@ -147,6 +147,39 @@ export class CopilotImageController extends EventEmitter
 			this.completions();
 		});
 
+		this.#imageConfiguratorPopup.subscribe(ImageConfiguratorPopupEvents.selectEngine, (event) => {
+			const engineCode = event.getData();
+			const oldSelectedEngineCode = this.#imageConfiguratorPopup.getImageConfiguration().engine;
+			let isRequestComplete = false;
+
+			setTimeout(() => {
+				if (isRequestComplete === false)
+				{
+					this.#imageConfiguratorPopup.showLoader();
+				}
+			}, 300);
+
+			this.#engine.getImageEngineParams(engineCode)
+				.then((res) => {
+					const data = res.data;
+
+					this.#imageConfiguratorPopup.setFormats(data.formats);
+				})
+				.catch((error) => {
+					BX.UI.Notification.Center.notify({
+						content: Loc.getMessage('AI_COPILOT_IMAGE_FETCH_NEW_ENGINE_PARAMS_ERROR'),
+					});
+
+					this.#imageConfiguratorPopup.setSelectedEngine(oldSelectedEngineCode);
+
+					console.error(error);
+				})
+				.finally(() => {
+					isRequestComplete = true;
+					this.#imageConfiguratorPopup.hideLoader();
+				});
+		});
+
 		this.#imageConfiguratorPopup.subscribe(ImageConfiguratorPopupEvents.back, () => {
 			this.#unsubscribeFromInputFieldEvents();
 			this.emit('back');

@@ -2,24 +2,36 @@
 
 namespace Bitrix\Crm\Security\Role\UIAdapters\AccessRights\Queries;
 
-use Bitrix\Crm\Security\Role\Manage\RoleManagementModelBuilder;
+use Bitrix\Crm\Security\Role\Manage\RoleSelectionManager;
 use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\AccessRightsDTO;
 use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\AccessRightsEntitySerializer;
 use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\UserGroupBuilder;
-use Bitrix\Crm\Traits\Singleton;
 
 class QueryRoles
 {
-	use Singleton;
+	public function __construct(
+		private readonly RoleSelectionManager $manager,
+	)
+	{
+	}
 
 	public function execute(): AccessRightsDTO
 	{
-		$eb = RoleManagementModelBuilder::getInstance();
-		$entities = $eb->buildModels();
-
+		$entities = $this->manager->buildModels();
 		$accessRights = (new AccessRightsEntitySerializer())->serialize($entities);
 
-		$userGroups = UserGroupBuilder::getInstance()->build();
+		$userGroupsBuilder = (new UserGroupBuilder());
+		$userGroupsBuilder
+			->isFilterByAccessRightsCodes($accessRights)
+			->isExcludeRolesWithoutRights()
+		;
+
+		if ($this->manager->needShowRoleWithoutRights())
+		{
+			$userGroupsBuilder->includeRolesWithoutRightsForGroupCode((string)$this->manager->getGroupCode());
+		}
+
+		$userGroups = $userGroupsBuilder->build();
 
 		return new AccessRightsDTO($accessRights, $userGroups);
 	}

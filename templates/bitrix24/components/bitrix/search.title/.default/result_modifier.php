@@ -13,17 +13,21 @@ $arResult["IS_EXTRANET_SITE"] = (
 		? (SITE_ID == \CExtranet::getExtranetSiteID())
 		: false
 );
+$isCollaber = $arResult['IS_EXTRANET_SITE']
+	&& \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById($USER->GetID());
 
-$globalSearchCategories = array(
-	"stream" => array(
-		"url" => ($arResult["IS_EXTRANET_SITE"] ? SITE_DIR : SITE_DIR."stream/")."?".(\Bitrix\Main\Composite\Helper::isOn() ? "ncc=1&" : "")."apply_filter=Y&FIND=",
-		"text" => GetMessage("CT_BST_GLOBAL_SEARCH_NEWS")
-	),
-	"tasks" => array(
-		"url" => ($arResult["IS_EXTRANET_SITE"] ? SITE_DIR."contacts/" : SITE_DIR."company/")."personal/user/".$USER->GetID()."/tasks/?apply_filter=Y&with_preset=Y&FIND=",
-		"text" => GetMessage("CT_BST_GLOBAL_SEARCH_TASKS")
-	)
-);
+if (!$isCollaber)
+{
+	$globalSearchCategories['stream'] = [
+		'url' => ($arResult['IS_EXTRANET_SITE'] ? SITE_DIR : SITE_DIR . 'stream/') . '?' . (\Bitrix\Main\Composite\Helper::isOn() ? 'ncc=1&' : '').'apply_filter=Y&FIND=',
+		'text' => GetMessage('CT_BST_GLOBAL_SEARCH_NEWS')
+	];
+}
+
+$globalSearchCategories['tasks'] = [
+	'url' => ($arResult['IS_EXTRANET_SITE'] ? SITE_DIR. 'contacts/' : SITE_DIR . 'company/') . 'personal/user/' . $USER->GetID() . '/tasks/?apply_filter=Y&with_preset=Y&FIND=',
+	'text' => GetMessage('CT_BST_GLOBAL_SEARCH_TASKS'),
+];
 
 if (!$arResult["IS_EXTRANET_SITE"])
 {
@@ -162,12 +166,16 @@ if (\Bitrix\Main\Loader::includeModule("crm") && CCrmPerms::IsAccessEnabled())
 
 $globalSearchCategories = array_merge($globalSearchCategories, $globalCrmSearchCategories);
 
-if (CModule::IncludeModule("lists") && CLists::isFeatureEnabled())
+if (
+	!$isCollaber
+	&& CModule::IncludeModule("lists")
+	&& CLists::isFeatureEnabled()
+)
 {
-	$globalSearchCategories["processes"] = array(
+	$globalSearchCategories["processes"] = [
 		"url" => ($arResult["IS_EXTRANET_SITE"] ? SITE_DIR."contacts/" : SITE_DIR."company/")."personal/processes/?apply_filter=Y&with_preset=Y&FIND=",
 		"text" => GetMessage("CT_BST_GLOBAL_SEARCH_PROCESS")
-	);
+	];
 }
 
 if (\Bitrix\Main\ModuleManager::isModuleInstalled("disk"))

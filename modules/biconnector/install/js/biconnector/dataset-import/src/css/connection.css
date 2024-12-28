@@ -1,0 +1,22 @@
+.ui-form-label {
+	margin-bottom: 6px;
+}
+
+.connection-preview {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.connection-icon {
+	width: 26px;
+	height: 26px;
+	background-size: cover;
+	margin-right: 8px;
+}
+
+.connection-name {
+	color: var(--ui-color-link-primary-base);
+	border-bottom: 1px dashed;
+	cursor: pointer;
+}

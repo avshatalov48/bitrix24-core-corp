@@ -13,6 +13,8 @@ import type { DocumentSendConfig } from 'sign.v2.b2b.document-send';
 import { Hint } from 'sign.v2.helper';
 import { ProgressBar } from 'ui.progressbar';
 import './style.css';
+import { HcmLinkMapping } from 'sign.v2.b2e.hcm-link-mapping';
+import type { Analytics } from 'sign.v2.analytics';
 
 export type CommunicationType = 'idle' | 'phone' | 'email';
 
@@ -38,7 +40,10 @@ const idleCommunication: CommunicationType = 'idle';
 
 export class DocumentSend extends EventEmitter
 {
-	members: Array<Member> | null;
+	events = Object.freeze({
+		onTemplateComplete: 'onTemplateComplete',
+	});
+	// members: Array<Member> | null;
 
 	#ui = {
 		container: HTMLDivElement = null,
@@ -78,6 +83,10 @@ export class DocumentSend extends EventEmitter
 	#itemsToHide: Array<HTMLElement> = [];
 	#reminderSelectorByRole: Record<Role, ReminderSelector> = {};
 	#documentMode: DocumentModeType;
+	#isExistingTemplate: boolean = false;
+
+	#hcmLinkMapping: HcmLinkMapping;
+	#analytics: ?Analytics;
 
 	constructor(documentSendConfig: DocumentSendConfig)
 	{
@@ -98,9 +107,10 @@ export class DocumentSend extends EventEmitter
 				showEditor: (event: BaseEvent) => this.emit('showEditor'),
 			},
 		});
-		const { region, languages, documentMode } = documentSendConfig;
+		const { region, languages, documentMode, analytics } = documentSendConfig;
 		this.#langSelector = new LangSelector(region, languages);
 		this.#documentData = {};
+		this.#analytics = analytics;
 		this.#documentMode = documentMode;
 		this.#ui.employeesTitle = Tag.render`
 			<p class="sign-b2e-send__party_signing-employees">
@@ -116,6 +126,12 @@ export class DocumentSend extends EventEmitter
 		[MemberRole.assignee, MemberRole.signer].forEach((role: Role) => {
 			this.#getOrCreateReminderSelectorForRole(role);
 		});
+
+		this.#hcmLinkMapping = new HcmLinkMapping({
+			api: new Api(),
+		});
+
+		this.#hcmLinkMapping.subscribe('validUpdate', (event) => this.#onHcmLinkMappingValidUpdate(event))
 	}
 
 	get documentData(): DocumentData
@@ -132,6 +148,9 @@ export class DocumentSend extends EventEmitter
 		this.#documentSummary.setNumber(externalId);
 		this.#documentData = documentData;
 		this.#langSelector.setDocumentUid(uid);
+		this.#items.employees.setDocumentUid(uid);
+		this.#hcmLinkMapping.setEnabled(documentData.integrationId > 0);
+		this.#hcmLinkMapping.setDocumentUid(uid);
 	}
 
 	#getCompanyCommunication(): CommunicationType | null
@@ -175,7 +194,7 @@ export class DocumentSend extends EventEmitter
 	{
 		const layout = Tag.render`
 			<div class="sign-b2e-send">
-				<h1 class="sign-b2e-settings__header">${Loc.getMessage('SIGN_DOCUMENT_SEND_HEADER')}</h1>
+				<h1 class="sign-b2e-settings__header">${Loc.getMessage('SIGN_DOCUMENT_SEND_HEADER_1')}</h1>
 			</div>
 		`;
 
@@ -217,14 +236,19 @@ export class DocumentSend extends EventEmitter
 						${this.#getCommunicationsLayout('employee')}
 						${this.#getReminderSelectorLayout(MemberRole.signer)}
 					</div>
+					${this.#hcmLinkMapping.render()}
 				</div>
 			`;
 			this.#itemsToHide.push(usersLayout);
 		}
+		const itemTitleText = this.#isTemplateMode()
+			? Loc.getMessage('SIGN_DOCUMENT_SEND_FIRST_PARTY_TEMPLATE')
+			: Loc.getMessage('SIGN_DOCUMENT_SEND_FIRST_PARTY')
+		;
 		const companyLayout = Tag.render`
 			<div class="sign-b2e-settings__item">
 				<p class="sign-b2e-settings__item_title">
-					${Loc.getMessage('SIGN_DOCUMENT_SEND_FIRST_PARTY')}
+					${itemTitleText}
 				</p>
 				<div class="sign-b2e-send__company-items">
 					<div class="sign-b2e-send__company-items_flex">
@@ -252,9 +276,13 @@ export class DocumentSend extends EventEmitter
 		`;
 		this.#itemsToHide.push(companyLayout);
 		Dom.append(summaryLayout, layout);
+		const reviewerHeaderText = this.#isTemplateMode()
+			? Loc.getMessage('SIGN_SEND_SIGNING_VALIDATION_HEAD_REVIEWER_TEMPLATE')
+			: Loc.getMessage('SIGN_SEND_SIGNING_VALIDATION_HEAD_REVIEWER')
+		;
 		const validationTitles = {
 			[MemberRole.reviewer]: {
-				header: Loc.getMessage('SIGN_SEND_SIGNING_VALIDATION_HEAD_REVIEWER'),
+				header: reviewerHeaderText,
 				hint: Loc.getMessage('SIGN_SEND_SIGNING_VALIDATION_TITLE_REVIEWER'),
 			},
 			[MemberRole.editor]: {
@@ -289,7 +317,22 @@ export class DocumentSend extends EventEmitter
 
 		this.#progressContainer = Tag.render`<div class="send-b2e-progress-container"></div>`;
 		this.#progress.renderTo(this.#progressContainer);
-		this.#progressOverlay = Tag.render`
+
+		this.#progressOverlay = this.#isTemplateMode() ? this.#getTemplateProgressOverlay()
+			: this.#getProgressOverlay();
+
+		Dom.style(this.#progressOverlay, 'display', 'none');
+		this.emit('appendOverlay', { overlay: this.#progressOverlay });
+		Hint.create(layout);
+
+		return layout;
+	}
+
+	#getProgressOverlay(): HTMLElement
+	{
+		const closeDescriptionText = Loc.getMessage('SIGN_SEND_CLOSE_DESCRIPTION');
+
+		return Tag.render`
 			<div class="send-b2e-overlay">
 				<div class="sign-b2e-overlay-content">
 					${this.#getProgressAnimateLayout()}
@@ -297,31 +340,59 @@ export class DocumentSend extends EventEmitter
 						${Loc.getMessage('SIGN_SEND_PROGRESS_TITLE')}
 					</div>
 					<div class="sign-b2e-overlay-close-description">
-						${Loc.getMessage('SIGN_SEND_CLOSE_DESCRIPTION')}
+						${closeDescriptionText}
 					</div>
 					<div>
-						<button
-							class="ui-btn ui-btn-light-border ui-btn-round"
-							onclick="${() => this.emit('close')}"
-						>
-							${Loc.getMessage('SIGN_SEND_CLOSE_BTN')}
-						</button>
+						${this.#getCloseBtn()}
 					</div>
 				</div>
 				${this.#progressContainer}
 			</div>
 		`;
-		this.#progressOverlay.style.display = 'none';
-		this.emit('appendOverlay', { overlay: this.#progressOverlay });
-		Hint.create(layout);
+	}
 
-		return layout;
+	#getTemplateProgressOverlay(): HTMLElement
+	{
+		const templateTitle = this.#isExistingTemplate ? Loc.getMessage('SIGN_SETTINGS_TEMPLATE_CHANGED')
+			: Loc.getMessage('SIGN_SETTINGS_TEMPLATE_CREATED');
+
+		return Tag.render`
+			<div class="sign-b2e-template-status">
+				<div class="sign-b2e-template-status-inner">
+					<div class="sign-b2e-template-status-img"></div>
+					<div class="sign-b2e-template-status-title">${templateTitle}</div>
+					<div class="sign-b2e-template-status-info">${Loc.getMessage('SIGN_SETTINGS_TEMPLATE_CREATED_INFO')}</div>
+					<button class="ui-btn ui-btn-light-border ui-btn-round" onclick="BX.SidePanel.Instance.close();">${Loc.getMessage('SIGN_SETTINGS_TEMPLATES_LIST')}</button>
+				</div>
+			 </div>
+		`;
+	}
+
+	setExistingTemplate(): void
+	{
+		this.#isExistingTemplate = true;
+	}
+
+	#getCloseBtn(): HTMLElement
+	{
+		return Tag.render`
+			<button
+				class="ui-btn ui-btn-light-border ui-btn-round"
+				onclick="${() => this.emit('close')}">
+				${Loc.getMessage('SIGN_SEND_CLOSE_BTN')}
+			</button>
+		`;
+	}
+
+	resetUserPartyPopup(): DocumentSend
+	{
+		this.#items.employees.resetUserPartyPopup();
+		return this;
 	}
 
 	setPartiesData(parties: PartiesData): DocumentSend
 	{
 		this.#partiesData = parties;
-
 		if (Type.isNumber(parties?.company?.entityId))
 		{
 			this.#items.company.setItemData({
@@ -340,7 +411,9 @@ export class DocumentSend extends EventEmitter
 
 		if (Type.isArrayFilled(parties?.employees))
 		{
-			this.#items.employees.setUsersIds(parties?.employees.map((employee) => employee.entityId));
+			this.#items.employees.setSignersIds(parties?.employees.map((employee) => {
+				return { entityId: employee.entityId, entityType: employee.entityType };
+			}));
 		}
 
 		if (Type.isArrayFilled(parties?.validation))
@@ -361,54 +434,20 @@ export class DocumentSend extends EventEmitter
 		const api = new Api();
 		const { uid, templateUid } = this.#documentData;
 
-		/*
-		//disabled due absence of communication channels for b2e
-		const defaultCommunicationType = 'idle';
-		const employeeCommunicationType = this.#getEmployeeCommunication() ?? defaultCommunicationType;
-		const companyCommunicationType = this.#getCompanyCommunication() ?? defaultCommunicationType;
-		const validationCommunicationType = this.#getValidationCommunication() ?? defaultCommunicationType;
-		const assigneeMemberUid = this.members.find((member: Member) => member.role === MemberRole.assignee)?.uid;
-		const validationMembers = this.members.filter((member: Member) => {
-			return member.role === MemberRole.editor || member.role === MemberRole.reviewer;
-		});
-		const signerMemberUids = this.members
-			.filter((member: Member) => member.role === MemberRole.signer)
-			.map((member: Member) => member.uid);
-		 */
 		try
 		{
 			this.emit('disableBack');
-			/*if (employeeCommunicationType === companyCommunicationType)
-			{
-				await api.updateChannelTypeToB2eMembers(
-					[assigneeMemberUid, ...signerMemberUids],
-					employeeCommunicationType,
-				);
-			}
-			else
-			{
-				await Promise.all([
-					api.updateChannelTypeToB2eMembers(signerMemberUids, employeeCommunicationType),
-					api.updateChannelTypeToB2eMembers([assigneeMemberUid], companyCommunicationType),
-				]);
-			}
-
-			const validationMembersPromises = validationMembers.map((validationMember) => {
-				return api.updateChannelTypeToB2eMembers([validationMember.uid], validationCommunicationType);
-			});
-			await Promise.all(validationMembersPromises);
-*/
-
 			await this.#saveReminderTypesForRoles();
 
+			this.#showProgressOverlay();
 			if (this.#isTemplateMode())
 			{
-				await api.template.completeTemplate(templateUid);
+				const { template: { id: templateId } } = await api.template.completeTemplate(templateUid);
+				this.emit('onTemplateComplete', { templateId });
 			}
 			else
 			{
 				await api.configureDocument(uid);
-				this.#showProgressOverlay();
 				await this.#checkFillAndStartProgress(uid);
 			}
 
@@ -416,7 +455,7 @@ export class DocumentSend extends EventEmitter
 		}
 		catch (ex)
 		{
-			console.log(ex);
+			console.error(ex);
 			this.#hideProgressOverlay();
 			this.emit('enableBack');
 
@@ -521,5 +560,16 @@ export class DocumentSend extends EventEmitter
 	#isTemplateMode(): boolean
 	{
 		return isTemplateMode(this.#documentMode);
+	}
+
+	#onHcmLinkMappingValidUpdate(event: BaseEvent): void
+	{
+		const enableComplete = event?.data.value ?? false;
+
+		this.emit(
+			enableComplete
+				? 'enableComplete'
+				: 'disableComplete'
+		);
 	}
 }

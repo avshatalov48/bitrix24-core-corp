@@ -871,8 +871,7 @@ class CTasks
 								" .
 						$sAliasPrefix .
 						"T.DEADLINE < {$helper->addSecondsToDateTime(
-							$DB->CurrentTimeFunction(),
-							 Counter\Deadline::getDeadlineTimeLimit()
+							 Counter\Deadline::getDeadlineTimeLimit(),
 							 )}
 								AND " .
 						$sAliasPrefix .
@@ -3101,29 +3100,32 @@ class CTasks
 			'MARK' => [
 				'type' => 'enum',
 				'values' => [
-					Mark::NEGATIVE => Loc::getMessage('TASKS_FIELDS_MARK_NEGATIVE'),
-					Mark::POSITIVE => Loc::getMessage('TASKS_FIELDS_MARK_POSITIVE'),
+					Mark::NEGATIVE => Mark::getMessage(Mark::NEGATIVE),
+					Mark::POSITIVE => Mark::getMessage(Mark::POSITIVE),
 				],
+				'title' => Mark::getTitle(),
 				'default' => null,
 			],
 			'PRIORITY' => [
 				'type' => 'enum',
 				'values' => [
-					Priority::HIGH => Loc::getMessage('TASKS_FIELDS_PRIORITY_HIGH'),
-					Priority::AVERAGE => Loc::getMessage('TASKS_FIELDS_PRIORITY_AVERAGE'),
-					Priority::LOW => Loc::getMessage('TASKS_FIELDS_PRIORITY_LOW'),
+					Priority::HIGH => Priority::getMessage(Priority::HIGH),
+					Priority::AVERAGE => Priority::getMessage(Priority::AVERAGE),
+					Priority::LOW => Priority::getMessage(Priority::LOW),
 				],
+				'title' => Priority::getTitle(),
 				'default' => Priority::AVERAGE,
 			],
 			'STATUS' => [
 				'type' => 'enum',
 				'values' => [
-					Status::PENDING => Loc::getMessage('TASKS_FIELDS_STATUS_PENDING'),
-					Status::IN_PROGRESS => Loc::getMessage('TASKS_FIELDS_STATUS_IN_PROGRESS'),
-					Status::SUPPOSEDLY_COMPLETED => Loc::getMessage('TASKS_FIELDS_STATUS_SUPPOSEDLY_COMPLETED'),
-					Status::COMPLETED => Loc::getMessage('TASKS_FIELDS_STATUS_COMPLETED'),
-					Status::DEFERRED => Loc::getMessage('TASKS_FIELDS_STATUS_DEFERRED'),
+					Status::PENDING => Status::getMessage(Status::PENDING),
+					Status::IN_PROGRESS => Status::getMessage(Status::IN_PROGRESS),
+					Status::SUPPOSEDLY_COMPLETED => Status::getMessage(Status::SUPPOSEDLY_COMPLETED),
+					Status::COMPLETED => Status::getMessage(Status::COMPLETED),
+					Status::DEFERRED => Status::getMessage(Status::DEFERRED),
 				],
+				'title' => Status::getTitle(),
 				'default' => Status::PENDING,
 			],
 			'MULTITASK' => [
@@ -5493,7 +5495,6 @@ class CTasks
 			return '';
 		}
 
-		/** @var RegularTemplateTaskReplicator $replicator */
 		$replicator = Main\DI\ServiceLocator::getInstance()->get('tasks.regular.replicator');
 
 		return (string)$replicator->replicate($templateId)->getPayload();
@@ -5535,7 +5536,6 @@ class CTasks
 			$templateData = [];
 		}
 
-		/** @var RegularTemplateTaskReplicator $replicator */
 		$replicator = Main\DI\ServiceLocator::getInstance()->get('tasks.regular.replicator');
 
 		return $replicator->getNextTimeByTemplateId((int)$templateData['ID']);
@@ -5888,7 +5888,7 @@ class CTasks
 		}
 		else
 		{
-			$APPLICATION->ThrowException(GetMessage('TASKS_ERR_GROUP_IN_USE'));
+			$APPLICATION->ThrowException(GetMessage('TASKS_ERR_GROUP_IN_USE'), 'TASKS_NOT_EMPTY');
 		}
 
 		return ($bCanDelete);

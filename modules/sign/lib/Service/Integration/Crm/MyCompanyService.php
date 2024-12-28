@@ -10,15 +10,15 @@ use Bitrix\Sign\Item\Integration\Crm\MyCompanyCollection;
 
 final class MyCompanyService
 {
-	public function listWithTaxIds(array $inIds = []): MyCompanyCollection
+	public function listWithTaxIds(array $inIds = [], bool $checkRequisitePermissions = true): MyCompanyCollection
 	{
 		$companies = MyCompany::listItems(inIds: $inIds);
-		$this->appendRequisites($companies);
+		$this->appendRequisites($companies, $checkRequisitePermissions);
 
 		return $companies;
 	}
 
-	private function appendRequisites(MyCompanyCollection $myCompanies): void
+	private function appendRequisites(MyCompanyCollection $myCompanies, bool $checkRequisitePermissions = true): void
 	{
 		if (!$myCompanies->count())
 		{
@@ -40,6 +40,7 @@ final class MyCompanyService
 			$defaultRequisite = new DefaultRequisite(
 				new ItemIdentifier(\CCrmOwnerType::Company, $company->id)
 			);
+			$defaultRequisite->setCheckPermissions($checkRequisitePermissions);
 			$requisite = $defaultRequisite->get();
 			$company->taxId = $requisite['RQ_INN'] ?? null;
 		}

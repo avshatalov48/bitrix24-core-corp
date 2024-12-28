@@ -138,6 +138,9 @@ class Menu
 			(new MapSection('sonet_group', 'socialnetwork'))
 				->add(new MapItem('group_notifications', 'SONET_GROUP_TOOLBAR'))
 			,
+			(new MapSection('sonet_group', 'bizproc_automation'))
+				->add(new MapItem('task', 'SONET_GROUP_ROBOT_DESIGNER_TOOLBAR'))
+			,
 		]);
 	}
 

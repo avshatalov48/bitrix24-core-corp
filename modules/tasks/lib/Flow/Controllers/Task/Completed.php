@@ -81,8 +81,7 @@ class Completed extends Controller
 		];
 
 		$modifier = static function (array &$task) {
-			static $date = new DateTime();
-			$task['TIME_IN_STATUS'] = DatePresenter::get($date, $task['START_POINT']);
+			$task['TIME_IN_STATUS'] = DatePresenter::get($task['CLOSED_DATE'] ?? new DateTime(), $task['START_POINT']);
 		};
 
 		try
@@ -101,8 +100,8 @@ class Completed extends Controller
 		return new ExpressionField(
 			'START_POINT',
 			'CASE
-							WHEN DATE_START IS NOT NULL THEN DATE_START
 							WHEN CREATED_DATE IS NOT NULL THEN CREATED_DATE
+							WHEN DATE_START IS NOT NULL THEN DATE_START
 							ELSE NOW()
 						END'
 		);

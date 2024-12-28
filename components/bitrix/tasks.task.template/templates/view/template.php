@@ -12,6 +12,7 @@ use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TemplateAccessController;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Bitrix24;
+use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Item\Task\Template;
 use Bitrix\Tasks\UI\Task\Tag;
@@ -19,6 +20,7 @@ use Bitrix\Tasks\Update\TemplateConverter;
 use Bitrix\Tasks\Util\Result;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\UserField;
+use Bitrix\Tasks\Integration\SocialNetwork\Collab\CollabRegistry;
 
 Loc::loadMessages(__FILE__);
 
@@ -33,6 +35,11 @@ $taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'] ?? null;
 $templateSubtaskLimitExceeded = $arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'] ?? null;
 $templateTaskRecurrentLimitExceeded = $arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'] ?? null;
 
+$isCollab = Group::isCollab($arResult['DATA']['GROUP'][$template->get('GROUP_ID')]['TYPE'] ?? null);
+$taskLocationText = $isCollab
+	? Loc::getMessage('TASKS_TTDP_PROJECT_TASK_IN_IN_COLLAB')
+	: Loc::getMessage('TASKS_TTDP_PROJECT_TASK_IN_IN_MSGVER_1');
+
 $taskObserversParticipantsEnabled = Bitrix24::checkFeatureEnabled(
 	Bitrix24\FeatureDictionary::TASK_OBSERVERS_PARTICIPANTS
 );
@@ -45,7 +52,7 @@ $APPLICATION->SetPageProperty(
 	($bodyClass ? $bodyClass.' ' : '').'no-all-paddings'
 );
 
-Extension::load(['ui.design-tokens', 'ui.fonts.opensans']);
+Extension::load(['ui.design-tokens', 'ui.fonts.opensans', 'viewer']);
 $APPLICATION->SetAdditionalCSS('/bitrix/js/tasks/css/tasks.css');
 ?>
 
@@ -243,7 +250,7 @@ endif?>
 							<?php
 							if($canUpdate || $template['GROUP_ID']):?>
 								<div class="task-detail-group">
-									<span class="task-detail-group-label"><?=Loc::getMessage("TASKS_TTDP_PROJECT_TASK_IN")?>:</span>
+									<span class="task-detail-group-label" id="task-<?= $template->getId() ?>-group-title"><?= $taskLocationText ?></span>
 
 									<?php
 									$APPLICATION->IncludeComponent(
@@ -256,6 +263,13 @@ endif?>
 											'ENTITY_ID' => $template->getId(),
 											'ENTITY_ROUTE' => 'task.template',
 											'CONTEXT' => 'template',
+											'loc' => [
+												'type' => [
+													'group' => Loc::getMessage('TASKS_TTDP_PROJECT_TASK_IN_IN_MSGVER_1'),
+													'collab' => Loc::getMessage('TASKS_TTDP_PROJECT_TASK_IN_IN_COLLAB'),
+												],
+											],
+											'IS_COLLAB' => $isCollab,
 										),
 										$helper->getComponent(),
 										array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")

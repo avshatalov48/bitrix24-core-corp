@@ -168,7 +168,7 @@ class RegularTemplateTaskReplicator extends AbstractReplicator
 
 	protected function getRepository(): RepositoryInterface
 	{
-		return new TemplateRepository($this->entityId);
+		return TemplateRepository::getInstance($this->entityId);
 	}
 
 	protected function replicateImplementation(int $entityId, bool $force = false): ReplicationResult

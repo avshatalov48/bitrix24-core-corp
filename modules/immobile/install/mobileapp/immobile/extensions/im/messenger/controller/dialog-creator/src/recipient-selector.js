@@ -7,22 +7,20 @@ jn.define('im/messenger/controller/dialog-creator/recipient-selector', (require,
 	const { DialogInfo } = require('im/messenger/controller/dialog-creator/dialog-info');
 	const { RecipientSelectorView } = require('im/messenger/controller/dialog-creator/recipient-selector/view');
 	const { Theme } = require('im/lib/theme');
-	const { Analytics } = require('im/messenger/const');
+
 	class RecipientSelector
 	{
-
-		static open({ userList = [], dialogDTO, analytics = {} }, parentLayout = null)
+		static open({ userList = [], dialogDTO }, parentLayout = null)
 		{
-			const widget = new RecipientSelector(userList, dialogDTO, parentLayout, analytics);
+			const widget = new RecipientSelector(userList, dialogDTO, parentLayout);
 			widget.show();
 		}
 
-		constructor(userList, dialogDTO, parentLayout, analytics)
+		constructor(userList, dialogDTO, parentLayout)
 		{
 			this.userList = userList || [];
 			this.dialogDTO = dialogDTO;
 			this.layout = parentLayout || null;
-			this.analytics = analytics || {};
 
 			this.view = new RecipientSelectorView({
 				userList: userList,
@@ -41,8 +39,6 @@ jn.define('im/messenger/controller/dialog-creator/recipient-selector', (require,
 				},
 				onError: error => reject(error),
 			};
-
-			this.sendAnalyticsStartCreateChat();
 
 			if (this.layout !== null)
 			{
@@ -95,25 +91,6 @@ jn.define('im/messenger/controller/dialog-creator/recipient-selector', (require,
 		setRecipientList()
 		{
 			this.dialogDTO.setRecipientList(this.view.getSelectedItems());
-		}
-
-		sendAnalyticsStartCreateChat()
-		{
-			try
-			{
-				const analytics = this.analytics
-					.setTool(Analytics.Tool.im)
-					.setCategory(Analytics.Category.chat)
-					.setEvent(Analytics.Event.clickCreateNew)
-					.setType(Analytics.Type.chat)
-					.setSection(Analytics.Section.chatTab);
-
-				analytics.send();
-			}
-			catch (e)
-			{
-				console.error(`${this.constructor.name}.sendAnalyticsStartCreateChat.catch:`, e);
-			}
 		}
 	}
 

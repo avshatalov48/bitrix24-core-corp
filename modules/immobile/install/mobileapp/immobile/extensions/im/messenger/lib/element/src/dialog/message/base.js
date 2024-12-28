@@ -5,15 +5,20 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
-	const { Theme } = require('im/lib/theme');
+	const { Color } = require('tokens');
+
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { OwnMessageStatus, BotCode, DialogType } = require('im/messenger/const');
+	const { OwnMessageStatus, BotCode, DialogType, ErrorCode } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { parser } = require('im/messenger/lib/parser');
 	const { defaultUserIcon } = require('im/messenger/assets/common');
 	const { ColorUtils } = require('im/messenger/lib/utils');
-	const { ReactionType } = require('im/messenger/const');
+	const {
+		ReactionType,
+		UserColor,
+		UserType,
+	} = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { DeveloperSettings } = require('im/messenger/lib/dev/settings');
 	const { Attach } = require('im/messenger/lib/element/dialog/message/element/attach/attach');
@@ -21,6 +26,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	const { CommentInfo } = require('im/messenger/lib/element/dialog/message/element/comment-info/comment-info');
 
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 
 	const MessageAlign = Object.freeze({
 		center: 'center',
@@ -46,8 +52,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			this.type = this.getType();
 
 			this.id = '';
+			this.title = {};
 			this.username = '';
+			/** @deprecated use to this.avatar {AvatarDetail} */
 			this.avatarUrl = '';
+			this.avatar = null;
 			this.me = false;
 			this.time = '';
 			this.likeCount = 0;
@@ -56,6 +65,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			this.quoteMessage = null;
 			this.showReaction = true;
 			this.canBeQuoted = true;
+			this.canBeChecked = true;
 			this.align = null;
 			this.statusText = '';
 			this.forwardText = '';
@@ -79,7 +89,8 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 			this.showUsername = true;
 			// TODO change user color for message
-			this.userColor = '#428ae8';
+			/** @deprecated use to this.avatar {AvatarDetail} */
+			this.userColor = UserColor.default;
 			this.isAuthorBottomMessage = false;
 			this.isAuthorTopMessage = false;
 
@@ -88,6 +99,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			this
 				.setId(modelMessage.id)
 				.setTestId(modelMessage.id)
+				.setTitle(modelMessage)
 				.setUsername(modelMessage.authorId)
 				.setAvatar(modelMessage.authorId, modelMessage.chatId, modelMessage.id)
 				.setUserColor(modelMessage.authorId)
@@ -105,6 +117,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setIsBackgroundOn(options.isBackgroundOn)
 				.setShowReaction(options.showReaction)
 				.setCanBeQuoted(options.canBeQuoted)
+				.setCanBeChecked(options.canBeChecked)
 				.setRoundedCorners(true)
 				.setMarginTop(options.marginTop)
 				.setMarginBottom(options.marginBottom)
@@ -168,6 +181,34 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			return this;
 		}
 
+		setTitle(modelMessage)
+		{
+			const authorId = modelMessage.authorId;
+			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](authorId);
+			if (!user)
+			{
+				return this;
+			}
+
+			const username = user.name ?? '';
+
+			this.title = {
+				text: username,
+			};
+
+			if (user.type === UserType.collaber)
+			{
+				this.title.color = Color.collabAccentPrimaryAlt.toHex();
+			}
+
+			return this;
+		}
+
+		/**
+		 * @deprecated use setTitle instead
+		 * @param authorId
+		 * @return {Message}
+		 */
 		setUsername(authorId)
 		{
 			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](authorId);
@@ -180,17 +221,36 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		setAvatar(authorId)
 		{
 			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](authorId);
-
-			this.avatarUrl = (user && user.avatar) ? user.avatar : '';
+			this.avatarUrl = user?.avatar ?? '';
+			this.setAvatarDetail(user);
 
 			return this;
 		}
 
+		/**
+		 * @param {UsersModelState|null} user
+		 * @void
+		 */
+		setAvatarDetail(user)
+		{
+			if (Type.isNil(user))
+			{
+				this.avatar = null;
+			}
+			else
+			{
+				this.avatar = ChatAvatar.createFromDialogId(user.id).getMessageAvatarProps();
+			}
+		}
+
+		/**
+		 * @deprecated use to AvatarDetail
+		 */
 		setUserColor(authorId)
 		{
 			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](authorId);
 
-			this.userColor = (user && user.color) ? user.color : '#048bd0';
+			this.userColor = user?.color ?? UserColor.default;
 
 			return this;
 		}
@@ -205,6 +265,10 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		setAvatarUri(value)
 		{
 			this.avatarUrl = value;
+			if (Type.isObject(this.avatar))
+			{
+				this.avatar.uri = value;
+			}
 		}
 
 		setMe(authorId)
@@ -376,18 +440,23 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 									return result;
 								}
 
+								const chatAvatar = ChatAvatar.createFromDialogId(userModel.id);
 								if (userModel.avatar !== '')
 								{
+									result.avatar = chatAvatar.getReactionAvatarProps();
+
+									/** @deprecated */
 									result.imageUrl = userModel.avatar;
 
 									return result;
 								}
 
-								result.defaultIconSvg = defaultUserIcon(
-									userModel
-										? userModel.color
-										: colorUtils.getColorByNumber(userModel.id),
-								);
+								const color = Type.isStringFilled(chatAvatar.getColor())
+									? chatAvatar.getColor()
+									: colorUtils.getColorByNumber(userModel.id)
+								;
+
+								result.defaultIconSvg = defaultUserIcon(color);
 
 								return result;
 							})
@@ -397,6 +466,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 					reactions.push(reaction);
 				})
 			;
+
 			this.reactions = reactions;
 
 			return this;
@@ -437,8 +507,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			this.commentInfo = CommentInfo.createByMessagesModel({
 				messageId: modelMessage.id,
 				channelId: modelMessage.chatId,
-			}).toMessageFormat()
-			;
+			}).toMessageFormat();
 
 			return this;
 		}
@@ -649,6 +718,25 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			return this;
 		}
 
+		setCanBeChecked(canBeChecked)
+		{
+			if (this.status === OwnMessageStatus.error)
+			{
+				this.canBeChecked = false;
+
+				return this;
+			}
+
+			if (!Type.isBoolean(canBeChecked))
+			{
+				return this;
+			}
+
+			this.canBeChecked = canBeChecked;
+
+			return this;
+		}
+
 		setMessageAlign(align)
 		{
 			const availableAlign = [
@@ -749,7 +837,9 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 					dateThreeDayAgo.setDate(dateThreeDayAgo.getDate() - 3);
 
 					const isWaitExpired = dateSend.getTime() < dateThreeDayAgo.getTime();
-					const isServerError = modelMessage.errorReason === 0 || modelMessage.errorReason === 500;
+					const isServerError = modelMessage.errorReason === 0
+						|| modelMessage.errorReason === ErrorCode.INTERNAL_SERVER_ERROR
+					;
 					this.status = (isWaitExpired || isServerError) ? OwnMessageStatus.error : OwnMessageStatus.sending;
 
 					return this;
@@ -846,7 +936,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		{
 			if (!Type.isStringFilled(this.loadText) && this.status === OwnMessageStatus.sending)
 			{
-				this.loadText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_PROCESSING');
+				this.loadText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_PROCESSING_MSGVER_1');
 			}
 		}
 

@@ -87,6 +87,10 @@ if ($arResult['USER'] = $rsUser->Fetch())
 		$arResult['PHOTO'] = CIntranetUtils::InitImage($arResult['USER']['PERSONAL_PHOTO'], $arParams["AVATAR_SIZE"], 0, BX_RESIZE_IMAGE_EXACT);
 	}
 
+	$arResult['USER']['IS_COLLABER'] =
+		Bitrix\Tasks\Integration\Extranet\User::isCollaber((int)$arResult['USER']['ID'])
+	;
+
 	$arResult['PATH_TO_USER'] = CComponentEngine::MakePathFromTemplate(($arParams["PATH_TO_USER"] <> '' ? $arParams["PATH_TO_USER"] : COption::GetOptionString('intranet', 'path_user', '/company/personal/user/#USER_ID#/')), array("USER_ID" => $arResult['USER']["ID"], "user_id" => $arResult['USER']["ID"]));
 }
 

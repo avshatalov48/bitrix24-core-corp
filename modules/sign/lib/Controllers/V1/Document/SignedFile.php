@@ -6,11 +6,11 @@ use Bitrix\Main;
 use Bitrix\Sign\Access\ActionDictionary;
 use Bitrix\Sign\Access\Permission\PermissionDictionary;
 use Bitrix\Sign\Access\Permission\SignPermissionDictionary;
-use Bitrix\Sign\Type;
-use Bitrix\Sign\Service;
-use Bitrix\Sign\Operation;
 use Bitrix\Sign\Attribute;
 use Bitrix\Sign\Item;
+use Bitrix\Sign\Operation;
+use Bitrix\Sign\Service;
+use Bitrix\Sign\Type;
 use Bitrix\Sign\Type\Access\AccessibleItemType;
 
 class SignedFile extends \Bitrix\Sign\Engine\Controller
@@ -37,7 +37,7 @@ class SignedFile extends \Bitrix\Sign\Engine\Controller
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_MY_SAFE_DOCUMENTS,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'documentUid'
+		itemIdOrUidRequestKey: 'documentUid'
 	)]
 	public function loadAction(string $documentUid, ?string $memberUid = null): array
 	{

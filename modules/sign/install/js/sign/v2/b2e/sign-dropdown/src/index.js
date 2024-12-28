@@ -1,18 +1,31 @@
-import { Tag, Dom } from 'main.core';
+import { Tag, Dom, Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 import { Dialog, type ItemOptions } from 'ui.entity-selector';
 import './style.css';
 
 export type { ItemOptions };
 
-export class SignDropdown
+export class SignDropdown extends EventEmitter
 {
+	events = {
+		onSelect: 'onSelect',
+	};
+
 	#dom: HTMLElement;
 	#selector: Dialog;
 	#selectedItemId: string = '';
 
-	constructor(dialogOptions = {})
+	constructor(dialogOptions: {
+		className?: string,
+		entities: Array<{ id: string, searchFields: Array<{ id: string, system: boolean}> }>,
+		isEnableSearch?: boolean,
+		withCaption?: boolean,
+		tabs: Array<{ id: string, title: string }>})
 	{
-		const { className, withCaption } = dialogOptions;
+		super();
+		this.setEventNamespace('BX.V2.B2e.SignDropdown');
+
+		const { className, withCaption, isEnableSearch } = dialogOptions;
 		const titleNode = withCaption
 			? Tag.render`
 				<div class="sign-b2e-dropdown__text">
@@ -39,7 +52,7 @@ export class SignDropdown
 			showAvatars: false,
 			dropdownMode: true,
 			multiple: false,
-			enableSearch: true,
+			enableSearch: isEnableSearch ?? true,
 			hideOnSelect: true,
 			events: {
 				'Item:OnSelect': ({ data }) => this.#onSelect(data.item),
@@ -56,6 +69,25 @@ export class SignDropdown
 	addItem(item: ItemOptions): void
 	{
 		this.#selector.addItem(item);
+	}
+
+	addItems(items: ItemOptions[]): void
+	{
+		items.forEach((item) => this.#selector.addItem(item));
+	}
+
+	removeItems(): void
+	{
+		this.#selector.removeItems();
+	}
+
+	selectFirstItem(): void
+	{
+		const [firstItem] = this.#selector.getItems();
+		if (!Type.isUndefined(firstItem))
+		{
+			firstItem.select();
+		}
 	}
 
 	selectItem(id: string): void
@@ -89,6 +121,7 @@ export class SignDropdown
 		{
 			titleNode.textContent = title;
 			titleNode.title = title;
+			this.emit(this.events.onSelect, { item });
 
 			return;
 		}
@@ -96,5 +129,6 @@ export class SignDropdown
 		titleNode.title = `${title} ${caption}`;
 		titleNode.firstElementChild.textContent = title;
 		titleNode.lastElementChild.textContent = caption;
+		this.emit(this.events.onSelect, { item });
 	}
 }

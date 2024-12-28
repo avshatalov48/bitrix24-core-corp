@@ -5,4 +5,4 @@ $MESS['DISK_FILE_USER_TYPE_ERROR_INVALID_VALUE'] = "Неверное значе�
 $MESS['DISK_FILE_USER_TYPE_ERROR_USER_ID'] = "Пользователь не авторизован.";
 $MESS['DISK_FILE_USER_TYPE_ERROR_BAD_RIGHTS'] = "Недостаточно прав.";
 $MESS['DISK_FILE_USER_TYPE_NAME'] = "Файл (Диск)";
-?>
+$MESS['DISK_FILE_USER_TYPE_NEW_FILE_IN_COLLAB'] = 'Копия #NAME#';

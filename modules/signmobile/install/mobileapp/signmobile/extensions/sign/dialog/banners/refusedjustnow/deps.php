@@ -7,5 +7,6 @@ return [
 		'bbcode/parser',
 		'tokens',
 		'sign:dialog/banners/template',
+		'sign:type/initiated-by-type',
 	],
 ];

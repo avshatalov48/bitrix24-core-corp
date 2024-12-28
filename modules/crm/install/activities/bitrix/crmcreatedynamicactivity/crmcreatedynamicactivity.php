@@ -2,6 +2,7 @@
 
 use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Bizproc\FieldType;
+use Bitrix\Bizproc\Result\ResultDto;
 use Bitrix\Crm;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
@@ -89,7 +90,7 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		$fieldsValues = $this->externalizeDocumentFields();
 		$this->logDocumentFields($fieldsValues);
 
-		$documentType = CCrmBizProcHelper::ResolveDocumentType($this->DynamicTypeId);
+		$documentType = $this->getCreatedDocumentType();
 		try
 		{
 			$creationResult = static::getDocumentService()->CreateDocument($documentType, $fieldsValues);
@@ -127,7 +128,35 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			$this->preparedProperties['ItemId'] = $creationResult;
 		}
 
+		if ($this->ItemId)
+		{
+			$this->fixResult($this->makeResultFromId($this->ItemId));
+		}
+
 		return $errorCollection;
+	}
+
+	protected function getCreatedDocumentType(): array
+	{
+		return CCrmBizProcHelper::ResolveDocumentType($this->DynamicTypeId);
+	}
+
+	public function makeResultFromId($id): ResultDto
+	{
+		$documentType = $this->getCreatedDocumentType();
+		$documentId = $documentType;
+		$documentId[2] = $id;
+
+		/** @var CBPDocumentService $documentService */
+		$documentService = CBPRuntime::GetRuntime()->GetService('DocumentService');
+		$documentId = $documentService->normalizeDocumentId($documentId, $documentType[2]);
+
+		$resultValue = [
+			'DOCUMENT_ID' => $documentId,
+			'DOCUMENT_TYPE' => $documentType,
+		];
+
+		return new ResultDto(get_class($this), $resultValue);
 	}
 
 	private function externalizeDocumentFields(): array

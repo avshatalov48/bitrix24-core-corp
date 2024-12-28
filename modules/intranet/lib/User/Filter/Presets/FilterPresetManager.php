@@ -25,6 +25,7 @@ class FilterPresetManager
 			new AdminPreset(),
 			new ExtranetPreset(),
 			new FiredPreset(),
+			new CollaberPreset(),
 		];
 		$this->filterSettings = $filterSettings;
 

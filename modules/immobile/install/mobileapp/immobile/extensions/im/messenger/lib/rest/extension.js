@@ -3,7 +3,7 @@
 */
 jn.define('im/messenger/lib/rest', (require, exports, module) => {
 	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('network--ajax');
+	const logger = LoggerManager.getInstance().getLogger('network');
 
 	/**
 	 * @template T
@@ -30,7 +30,32 @@ jn.define('im/messenger/lib/rest', (require, exports, module) => {
 		});
 	};
 
+	/**
+	 * @param method
+	 * @param params
+	 * @returns {Promise<RestResult>}
+	 */
+	const callMethod = async (method, params) => {
+		logger.log('BX.rest.callMethod request >>', method, params);
+
+		return new Promise((resolve, reject) => {
+			BX.rest.callMethod(method, params)
+				.then((response) => {
+					logger.log('BX.rest.callMethod response <<', response, method, params);
+
+					return resolve(response);
+				})
+				.catch((response) => {
+					logger.log('BX.rest.callMethod catch:', response, method, params);
+
+					return reject(response);
+				})
+			;
+		});
+	};
+
 	module.exports = {
 		runAction,
+		callMethod,
 	};
 });

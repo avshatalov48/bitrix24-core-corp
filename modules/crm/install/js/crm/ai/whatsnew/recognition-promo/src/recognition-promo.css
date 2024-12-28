@@ -1,0 +1,137 @@
+.crm__ai-recognition-promo {
+	--outline-color: var(--ui-color-copilot-secondary);
+	padding: 10px;
+	display: flex;
+	align-items: stretch;
+	backdrop-filter: blur(20px);
+	background-color: rgba(var(--ui-color-background-primary-rgb), 0.8);
+	border-radius: var(--ui-border-radius-2xl);
+}
+
+.crm__ai-recognition-promo_inner {
+	padding: 20px 28px 32px 28px;
+	background-color: var(--ui-color-background-primary);
+	border-radius: var(--ui-border-radius-lg);
+}
+
+.crm__ai-recognition-promo_header {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	padding-bottom: 15px;
+}
+
+.crm__ai-recognition-promo_header-left {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.crm__ai-recognition-promo_header-icon {
+	position: relative;
+	left: -4px;
+	display: flex;
+}
+
+.crm__ai-recognition-promo_header-title {
+	margin: 0;
+	padding: 0;
+	color: var(--ui-color-text-primary);
+	font-feature-settings: 'liga' off, 'clig' off;
+	font-size: var(--ui-font-size-3xl);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+.crm__ai-recognition-promo_close-popup-button {
+	--ui-icon-set__icon-color: var(--ui-color-base-35);
+	width: 26px;
+	height: 26px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	margin: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+	outline-color: var(--outline-color);
+}
+
+.crm__ai-recognition-promo_close-popup-button:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-20);
+}
+
+.crm__ai-recognition-promo_close-popup-button:active {
+	--ui-icon-set__icon-color: var(--ui-color-base-30);
+}
+
+.crm__ai-recognition-promo_content {
+	padding-top: 19px;
+	padding-bottom: 29px;
+	border-top: var(--ui-border-width-thin) solid rgba(var(--ui-color-copilot-primary-rgb), 0.2);
+}
+
+.crm__ai-recognition-promo_video-container {
+	position: relative;
+	width: 480px;
+	height: 295px;
+	border-radius: var(--ui-border-radius-sm);
+	background-color: #D0CBD74D;
+	overflow: hidden;
+}
+
+.crm__ai-recognition-promo_video-container canvas {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	z-index: 1000;
+}
+
+.crm__ai-recognition-promo_content-confetti {
+	box-sizing: border-box;
+	position: absolute;
+	top: 0;
+	left: 30px;
+	display: flex;
+	width: 225px;
+	height: 100%;
+	z-index: 2;
+}
+
+.crm__ai-recognition-promo_content-description {
+	color: var(--ui-color-base-60);
+	font-feature-settings: 'liga' off, 'clig' off;
+	font-size: var(--ui-font-size-xl);
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+.crm__ai-recognition-promo_content-description p {
+	margin-top: 20px;
+	margin-bottom: 0;
+}
+.crm__ai-recognition-promo_content-description a,
+.crm__ai-recognition-promo_content-description a:hover {
+	outline-color: var(--outline-color);
+	color: var(--ui-color-copilot-secondary);
+	text-decoration: underline;
+	text-underline-position: under;
+	text-decoration-style: dashed;
+	text-decoration-thickness: 1px;
+}
+.crm__ai-recognition-promo_content-description a {
+	text-decoration-color: rgba(var(--ui-color-copilot-secondary-rgb), 1);
+}
+
+.crm__ai-recognition-promo_content-description a:hover,
+.crm__ai-recognition-promo_content-description a:focus {
+	color: rgba(var(--ui-color-copilot-secondary-rgb), 0.7);
+	text-decoration-color: rgba(var(--ui-color-copilot-secondary-rgb), 0.7);
+}
+
+.crm__ai-recognition-promo_content-description a:active {
+	color: rgba(var(--ui-color-copilot-secondary-rgb), 0.9);
+	text-decoration-color: rgba(var(--ui-color-copilot-secondary-rgb), 0.9);
+}

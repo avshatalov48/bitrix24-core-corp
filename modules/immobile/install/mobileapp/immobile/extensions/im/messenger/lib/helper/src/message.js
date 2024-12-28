@@ -185,7 +185,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			}
 
 			return this.filesModel.every((file) => {
-				return file.type === FileType.image || file.type === FileType.video;
+				return file?.type === FileType.image || file?.type === FileType.video;
 			});
 		}
 
@@ -199,7 +199,9 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 				return false;
 			}
 
-			return this.filesModel.findIndex((file) => file.type === FileType.file) !== -1;
+			return this.filesModel.every((file) => {
+				return file.type === FileType.file || file.type === FileType.audio;
+			});
 		}
 
 		get isVideo()

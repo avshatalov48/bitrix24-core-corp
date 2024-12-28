@@ -20,6 +20,8 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/action-type', (requir
 		feedback: 'feedback',
 		subscribe: 'subscribe',
 		unsubscribe: 'unsubscribe',
+		multiselect: 'multiselect',
+		resend: 'resend',
 	};
 
 	module.exports = { ActionType };

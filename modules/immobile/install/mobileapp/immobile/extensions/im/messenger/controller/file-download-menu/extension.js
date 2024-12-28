@@ -15,6 +15,7 @@ jn.define('im/messenger/controller/file-download-menu', (require, exports, modul
 	const { Logger } = require('im/messenger/lib/logger');
 	const { FileDownloadMenuSvg } = require('im/messenger/assets/file-download-menu');
 	const { DiskService } = require('im/messenger/provider/service');
+	const { Notification } = require('im/messenger/lib/ui/notification');
 
 	/**
 	 * @class FileDownloadMenu
@@ -120,10 +121,12 @@ jn.define('im/messenger/controller/file-download-menu', (require, exports, modul
 
 			this.diskService.save(file.id)
 				.then(() => {
-					InAppNotifier.showNotification({
-						title: Loc.getMessage('IMMOBILE_MESSENGER_FILE_DOWNLOAD_TO_DISK_SUCCESS'),
-						time: 2,
-					});
+					Notification.showToastWithParams(
+						{
+							message: Loc.getMessage('IMMOBILE_MESSENGER_FILE_DOWNLOAD_TO_DISK_SUCCESS'),
+							svgType: 'catalogueSuccess',
+						},
+					);
 				})
 				.catch((error) => {
 					Logger.error(`${this.constructor.name}.downloadFileToDisk`, error);

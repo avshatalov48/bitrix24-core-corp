@@ -8,6 +8,8 @@ use Bitrix\HumanResources\Contract\Repository\NodeRepository;
 use Bitrix\HumanResources\Contract\Repository\NodeRelationRepository;
 use Bitrix\HumanResources\Contract\Repository\NodeMemberRepository;
 use Bitrix\HumanResources\Contract\Repository\StructureRepository;
+use Bitrix\HumanResources\Service;
+use Bitrix\HumanResources\Service\HcmLink\JobKillerService;
 use Bitrix\Main\DI\ServiceLocator;
 use \Bitrix\HumanResources\Contract;
 use \Bitrix\HumanResources\Util;
@@ -33,9 +35,12 @@ class Container
 		;
 	}
 
-	public static function getNodeRepository(): NodeRepository
+	public static function getNodeRepository(bool $permissionRestricted = false): NodeRepository
 	{
-		return self::getService('humanresources.repository.node');
+		return !$permissionRestricted
+			? self::getService('humanresources.repository.node')
+			: self::getService('humanresources.repository.permission.restricted.node')
+		;
 	}
 
 	public static function getNodeAccessCodeRepository(): Contract\Repository\NodeAccessCodeRepository
@@ -161,5 +166,75 @@ class Container
 	public static function getAccessNodeRepository(): Contract\Repository\Access\AccessNodeRepository
 	{
 		return self::getService('humanresources.repository.access.accessNodeRepository');
+	}
+
+	public static function getHcmLinkCompanyRepository(): Contract\Repository\HcmLink\CompanyRepository
+	{
+		return self::getService('humanresources.repository.hcmlink.company');
+	}
+
+	public static function getHcmLinkFieldRepository(): Contract\Repository\HcmLink\FieldRepository
+	{
+		return self::getService('humanresources.repository.hcmlink.field');
+	}
+
+	public static function getHcmLinkEmployeeRepository(): Contract\Repository\HcmLink\EmployeeRepository
+	{
+		return self::getService('humanresources.repository.hcmlink.employee');
+	}
+
+	public static function getHcmLinkPersonRepository(): Contract\Repository\HcmLink\PersonRepository
+	{
+		return self::getService('humanresources.repository.hcmlink.person');
+	}
+
+	public static function getHcmLinkFieldValueRepository(): Contract\Repository\HcmLink\FieldValueRepository
+	{
+		return self::getService('humanresources.repository.hcmlink.field.value');
+	}
+
+	public static function getHcmLinkJobRepository(): Contract\Repository\HcmLink\JobRepository
+	{
+		return self::getService('humanresources.repository.hcmlink.job');
+	}
+
+	public static function getHcmLinkJobService(): Contract\Service\HcmLink\JobService
+	{
+		return self::getService('humanresources.service.hcmlink.job');
+	}
+
+	public static function getHcmLinkJobKillerService(): JobKillerService
+	{
+		return self::getService('humanresources.service.hcmlink.job.killer');
+	}
+
+	public static function getHcmLinkUserRepository(): Contract\Repository\HcmLink\UserRepository
+	{
+		return self::getService('humanresources.repository.hcmlink.user');
+	}
+
+	public static function getHcmLinkFieldValueService(): Contract\Service\HcmLink\FieldValueService
+	{
+		return self::getService('humanresources.service.hcmlink.field.value');
+	}
+
+	public static function getHcmLinkMapperService(): Contract\Service\HcmLink\MapperService
+	{
+		return self::getService('humanresources.service.hcmlink.mapper');
+	}
+
+	public static function getHcmLinkCompanyCounterService(): Service\HcmLink\Counter\CompanyCounterService
+	{
+		return self::getService('humanresources.service.hcmlink.counter.company');
+	}
+
+	public static function getHcmLinkAccessService(): Service\HcmLink\AccessService
+	{
+		return self::getService('humanresources.service.hcmlink.access');
+	}
+
+	public static function getHcmLinkSalaryAndVacationService(): Service\HcmLink\Placement\SalaryVacationService
+	{
+		return self::getService('humanresources.service.hcmlink.placement.salaryAndVacation');
 	}
 }

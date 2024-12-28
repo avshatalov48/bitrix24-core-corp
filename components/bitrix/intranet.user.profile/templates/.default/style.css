@@ -267,6 +267,10 @@
 	height: 100%;
 }
 
+.intranet-user-profile-photo {
+	height: 0;
+}
+
 .intranet-user-profile-userpic-load {
 	display: inline-block;
 	position: relative;
@@ -406,6 +410,11 @@
 
 .intranet-user-profile-rank-extranet {
 	background-color: #f7a701;
+}
+
+.intranet-user-profile-rank-collaber {
+	/* TODO: add design tokens */
+	background-color: #19CC45;
 }
 
 .intranet-user-profile-rank-visitor {

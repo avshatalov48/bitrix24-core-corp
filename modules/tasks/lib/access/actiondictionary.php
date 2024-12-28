@@ -22,6 +22,7 @@ class ActionDictionary
 	public const ACTION_TASK_APPROVE = 'task_approve';
 	public const ACTION_TASK_DISAPPROVE = 'task_disapprove';
 	public const ACTION_TASK_START = 'task_start';
+	public const ACTION_TASK_TAKE = 'task_take';
 	public const ACTION_TASK_DELEGATE = 'task_delegate';
 	public const ACTION_TASK_DEFER = 'task_defer';
 	public const ACTION_TASK_RENEW = 'task_renew';
@@ -68,6 +69,7 @@ class ActionDictionary
 	public const ACTION_TAG_DELETE = 'tag_delete';
 	public const ACTION_TAG_CREATE = 'tag_create';
 	public const ACTION_TAG_SEARCH = 'tag_search';
+	public const ACTION_GROUP_TAG_READ = 'group_tag_read';
 
 	public static function getLegacyActionMap(): array
 	{
@@ -96,6 +98,7 @@ class ActionDictionary
 			CTaskItem::ACTION_TOGGLE_FAVORITE => self::ACTION_TASK_FAVORITE,
 			CTaskItem::ACTION_READ => self::ACTION_TASK_READ,
 			CTaskItem::ACTION_RATE => self::ACTION_TASK_RATE,
+			CTaskItem::ACTION_TAKE => self::ACTION_TASK_TAKE,
 		];
 	}
 

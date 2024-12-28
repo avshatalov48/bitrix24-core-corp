@@ -11,7 +11,6 @@ use Bitrix\Sign\Access\ActionDictionary;
 use Bitrix\Sign\Service\Providers\LegalInfoProvider;
 use Bitrix\UI\Form\EntityEditorConfigScope;
 use Bitrix\UI\Form\EntityEditorConfiguration;
-use CUserTypeEntity;
 
 class LegalInfo
 {
@@ -33,7 +32,8 @@ class LegalInfo
 		$fields = (new LegalInfoProvider())->getUserFields();
 
 		if (
-			!(new Storage)->isB2eAvailable()
+			!Storage::instance()->isB2eAvailable()
+			|| !User::instance()->canUserParticipateInSigning($profileId)
 			|| !self::canView($userId)
 			|| empty($fields)
 		)

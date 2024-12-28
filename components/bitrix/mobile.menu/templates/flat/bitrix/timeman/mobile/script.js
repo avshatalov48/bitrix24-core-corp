@@ -66,7 +66,7 @@
 					if (BX.localStorage.get("timemanNSE") !== "hidden")
 					{
 						this.notificationBar["expired"] = (new BXMobileApp.UI.NotificationBar({
-							message: BX.message("TM_NOTIF_EXPIRED"),
+							message: BX.message("TM_NOTIF_EXPIRED_MSGVER_1"),
 							color: "#bbf23b3b",
 							textColor: "#ffffff",
 							maxLines: 2,

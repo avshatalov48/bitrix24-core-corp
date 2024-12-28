@@ -110,14 +110,20 @@
 	          _this.unreadComments = new Map(_this.commentsList.unreadComments);
 	        }
 	      });
-	      main_core_events.EventEmitter.subscribe('onUCFormSubmit', function () {
-	        return _this.resolveVisibility(Comments.block.comments);
+	      main_core_events.EventEmitter.subscribe('onUCFormSubmit', function (event) {
+	        var _event$getData3 = event.getData(),
+	          _event$getData4 = babelHelpers.slicedToArray(_event$getData3, 1),
+	          data = _event$getData4[0];
+	        if (data === "TASK_".concat(_this.taskId)) {
+	          _this.sendOnCommentWrittenEvent();
+	        }
+	        _this.resolveVisibility(Comments.block.comments);
 	      });
 	      main_core_events.EventEmitter.subscribe('OnUCCommentWasPulled', function (event) {
-	        var _event$getData3 = event.getData(),
-	          _event$getData4 = babelHelpers.slicedToArray(_event$getData3, 2),
-	          id = _event$getData4[0],
-	          data = _event$getData4[1];
+	        var _event$getData5 = event.getData(),
+	          _event$getData6 = babelHelpers.slicedToArray(_event$getData5, 2),
+	          id = _event$getData6[0],
+	          data = _event$getData6[1];
 	        if (id[0] === "TASK_".concat(_this.taskId)) {
 	          var author = data.messageFields.AUTHOR;
 	          if (Number(author.ID) !== Number(_this.userId)) {
@@ -127,10 +133,10 @@
 	        }
 	      });
 	      main_core_events.EventEmitter.subscribe('OnUCommentWasDeleted', function (event) {
-	        var _event$getData5 = event.getData(),
-	          _event$getData6 = babelHelpers.slicedToArray(_event$getData5, 2),
-	          xmlId = _event$getData6[0],
-	          id = _event$getData6[1];
+	        var _event$getData7 = event.getData(),
+	          _event$getData8 = babelHelpers.slicedToArray(_event$getData7, 2),
+	          xmlId = _event$getData8[0],
+	          id = _event$getData8[1];
 	        var commentId = id[1];
 	        if (xmlId === "TASK_".concat(_this.taskId)) {
 	          if (_this.commentsList.getCommentsCount() <= 0) {
@@ -140,10 +146,10 @@
 	        }
 	      });
 	      main_core_events.EventEmitter.subscribe('OnUCCommentWasRead', function (event) {
-	        var _event$getData7 = event.getData(),
-	          _event$getData8 = babelHelpers.slicedToArray(_event$getData7, 2),
-	          xmlId = _event$getData8[0],
-	          id = _event$getData8[1];
+	        var _event$getData9 = event.getData(),
+	          _event$getData10 = babelHelpers.slicedToArray(_event$getData9, 2),
+	          xmlId = _event$getData10[0],
+	          id = _event$getData10[1];
 	        var commentId = id[1];
 	        if (xmlId === "TASK_".concat(_this.taskId) && _this.unreadComments.has(commentId)) {
 	          _this.commentsToRead.set(commentId, _this.unreadComments.get(commentId));
@@ -201,6 +207,14 @@
 	          this.readComments();
 	        }
 	      }
+	    }
+	  }, {
+	    key: "sendOnCommentWrittenEvent",
+	    value: function sendOnCommentWrittenEvent() {
+	      var params = {
+	        taskId: this.taskId
+	      };
+	      BXMobileApp.Events.postToComponent('tasks.task.comments:onCommentWritten', params);
 	    }
 	  }, {
 	    key: "sendOnCommentsReadEvent",

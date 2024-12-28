@@ -3339,6 +3339,13 @@ a.td1:hover {
 	position: relative;
 }
 
+.feed-add-post-destination-new.feed-add-post-destination-new-collab,
+.feed-add-post-destination-new.feed-add-post-destination-new-collab:hover,
+.feed-com-name.feed-com-name-collaber,
+.feed-post-user-name.feed-post-user-name-collaber {
+	color: #19CC45;
+}
+
 .feed-add-post-destination-new-email {
 	padding-left: 17px;
 }
@@ -3783,6 +3790,20 @@ a.td1:hover {
 	position: relative;
 }
 
+.feed-workday-user-name.feed-workday-user-name-collaber {
+	color: rgb(0, 169, 78) !important;
+	position: relative;
+}
+
+.feed-user-avatar.feed-user-avatar-collaber {
+	box-shadow: 0 0 0 2px white, 0 0 0 3px rgb(0, 169, 78);
+}
+
+.feed-user-avatar.feed-user-avatar-collaber i {
+	background-image: url("data:image/svg+xml,%3Csvg width='28' height='28' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M14 0c7.732 0 14 6.268 14 14s-6.268 14-14 14S0 21.732 0 14 6.268 0 14 0z' fill='%23f2fee2'/%3E%3Cpath d='m21.174 20.29-.46-2.345c0-.653-.87-1.4-2.585-1.835a5.874 5.874 0 0 1-1.637-.731c-.11-.062-.094-.633-.094-.633l-.552-.083c0-.046-.047-.73-.047-.73.66-.219.593-1.504.593-1.504.42.228.692-.789.692-.789.497-1.413-.247-1.328-.247-1.328.13-.863.13-1.74 0-2.602-.33-2.863-5.306-2.086-4.716-1.15-1.455-.264-1.123 2.984-1.123 2.984l.316.841c-.438.279-.352.598-.256.955.04.149.082.304.088.466.03.81.536.642.536.642.031 1.338.703 1.512.703 1.512.127.84.048.697.048.697l-.598.072c.008.19-.008.382-.047.57-.348.151-.56.272-.771.392-.216.122-.43.244-.783.396-1.35.58-2.817 1.336-3.078 2.353-.122.474-.24 1.208-.33 1.857 1.98.827 4.275 1.322 6.73 1.375h.874c2.46-.053 4.762-.55 6.744-1.381z' fill='%2319cc45'/%3E%3C/svg%3E%0A");
+	background-color: #fff;
+}
+
 .feed-workday-user-name.feed-workday-user-name-extranet:before {
 	background: url("images/template_sprite.png?11") no-repeat -35px -1607px;
 	content: "";
@@ -3810,6 +3831,7 @@ a.td1:hover {
 	flex-grow: 1;
 	flex-shrink: 1;
 	flex-basis: auto;
+	margin-right: 12px;
 }
 
 .pagetitle-flexible-space .pagetitle-container-max {

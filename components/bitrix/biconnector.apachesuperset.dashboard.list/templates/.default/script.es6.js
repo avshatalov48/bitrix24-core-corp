@@ -591,27 +591,36 @@ class SupersetDashboardGridManager
 
 	deleteDashboard(dashboardId: number): void
 	{
-		MessageBox.confirm(
-			Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_TITLE'),
-			(messageBox, button) => {
-				button.setWaiting();
-				this.#dashboardManager.deleteDashboard(dashboardId)
-					.then(() => {
-						this.getGrid().reload();
-						messageBox.close();
-					})
-					.catch((response) => {
-						messageBox.close();
-						if (response.errors)
-						{
-							this.#notifyErrors(response.errors);
-						}
-					});
-			},
-			Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_YES'),
-			(messageBox) => messageBox.close(),
-			Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_NO'),
-		);
+		const messageBox = new MessageBox({
+			message: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_TITLE'),
+			buttons: [
+				new BX.UI.Button({
+					color: BX.UI.Button.Color.DANGER,
+					text: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_YES'),
+					onclick: (button) => {
+						button.setWaiting();
+						this.#dashboardManager.deleteDashboard(dashboardId)
+							.then(() => {
+								this.getGrid().reload();
+								messageBox.close();
+							})
+							.catch((response) => {
+								messageBox.close();
+								if (response.errors)
+								{
+									this.#notifyErrors(response.errors);
+								}
+							});
+					},
+				}),
+				new BX.UI.CancelButton({
+					text: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_NO'),
+					onclick: (button) => messageBox.close(),
+				}),
+			],
+		});
+
+		messageBox.show();
 	}
 
 	openCreationSlider()

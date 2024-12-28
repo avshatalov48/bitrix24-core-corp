@@ -11,12 +11,14 @@ jn.define('tasks/layout/task/view-new/services/comments-opener', (require, expor
 		#isComponentReady;
 		#widgetGuid;
 		#closingEventInterval;
+		#analyticsLabel;
 
-		constructor()
+		constructor(analyticsLabel = {})
 		{
 			this.#isComponentReady = false;
 			this.#widgetGuid = guid();
 			this.#closingEventInterval = 0;
+			this.#analyticsLabel = { ...analyticsLabel };
 
 			BX.addCustomEvent('tasks.task.comments:onComponentReady', () => {
 				this.#isComponentReady = true;
@@ -27,7 +29,7 @@ jn.define('tasks/layout/task/view-new/services/comments-opener', (require, expor
 		{
 			PageManager.openPage({
 				backgroundColor: Color.bgSecondary.toHex(),
-				url: `${env.siteDir}mobile/tasks/snmrouter/?routePage=comments&TASK_ID=${taskId}&IS_TABS_MODE=false&widgetGuid=${this.#widgetGuid}`,
+				url: this.prepareUrl(taskId),
 				titleParams: {
 					text: Loc.getMessage('M_TASK_DETAILS_COMMENTS_TITLE'),
 					type: 'dialog',
@@ -38,6 +40,26 @@ jn.define('tasks/layout/task/view-new/services/comments-opener', (require, expor
 				modal: false,
 				cache: true,
 			});
+		}
+
+		prepareUrl(taskId)
+		{
+			const urlParams = {
+				routePage: 'comments',
+				widgetGuid: this.#widgetGuid,
+				TASK_ID: taskId,
+				IS_TABS_MODE: false,
+			};
+			let url = `${env.siteDir}mobile/tasks/snmrouter/?`;
+
+			Object.entries(urlParams).forEach(([key, value]) => {
+				url += `${key}=${value}&`;
+			});
+			Object.entries(this.#analyticsLabel).forEach(([key, value]) => {
+				url += `ANALYTICS_LABEL[${key}]=${value}&`;
+			});
+
+			return url;
 		}
 
 		closeCommentsWidget(taskId)

@@ -45,7 +45,7 @@ final class DepartmentCreateRule extends AbstractRule
 			return $accessNodeRepository->isDepartmentUser($item->getTargetId(), $this->user->getUserId());
 		}
 
-		if ($permissionValue === PermissionVariablesDictionary::VARIABLE_SELF_DEPARTMENTS_SUBDEPARTMENTS)
+		if ($permissionValue === PermissionVariablesDictionary::VARIABLE_SELF_DEPARTMENTS_SUB_DEPARTMENTS)
 		{
 			return $accessNodeRepository->isDepartmentUser($item->getTargetId(), $this->user->getUserId(), checkSubdepartments: true);
 		}

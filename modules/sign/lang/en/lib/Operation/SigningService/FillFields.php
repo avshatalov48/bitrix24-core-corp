@@ -1,0 +1,2 @@
+<?php
+$MESS["SIGN_OPERATION_SIGNING_SERVICE_FILL_FIELDS_HCM_JOB_ERROR"] = "Could not get 1C field data.";

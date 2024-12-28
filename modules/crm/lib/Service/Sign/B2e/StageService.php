@@ -46,7 +46,8 @@ final class StageService
 	{
 		$result = StatusTable::query()
 			->where('ENTITY_ID', $this->getStageEntityId($documentCategoryId))
-			->whereIn('NAME', $stageNames)->fetchAll()
+			->whereIn('NAME', $stageNames)
+			->fetchAll()
 		;
 
 		return count($result) === count($stageNames);

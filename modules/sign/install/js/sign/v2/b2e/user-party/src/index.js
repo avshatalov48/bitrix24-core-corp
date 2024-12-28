@@ -1,10 +1,12 @@
-import { Dom, Loc, Tag, Text as TextFormat } from 'main.core';
+import { Dom, Loc, Tag, Text as TextFormat, Event } from 'main.core';
 import type { Loader } from 'main.loader';
 import { Helpdesk } from 'sign.v2.helper';
-import { Dialog, TagSelector } from 'ui.entity-selector';
+import { Dialog, TagSelector, TagItem } from 'ui.entity-selector';
 import type { UserPartyOptions } from './type';
 import type { CardItem } from './types/card-item';
 import { UserPartyCounters } from 'sign.v2.b2e.user-party-counters';
+import { UserPartyPopup } from 'sign.v2.b2e.user-party-popup';
+import { Api, CountMember } from 'sign.v2.api';
 import 'ui.icon-set.main';
 
 import './style.css';
@@ -13,28 +15,36 @@ export type UserPartyConfig = {
 	region: string,
 	b2eSignersLimitCount: number,
 }
+
+export type { CardItem };
+
 const Mode = Object.freeze({
 	view: 'view',
 	edit: 'edit',
 });
 
-const defaultAvatarLink = '/bitrix/js/socialnetwork/entity-selector/src/images/default-user.svg';
+const defaultAvatarLink = '/bitrix/js/sign/v2/b2e/user-party/images/user.svg';
+const departmentAvatarLink = '/bitrix/js/sign/v2/b2e/user-party/images/department.svg';
+
 const HelpdeskCodes = Object.freeze({
 	SignEdmWithEmployees: '19740792',
 });
 
 export class UserParty
 {
+	#api: Api;
+
 	#ui = {
 		container: HTMLDivElement = null,
 		itemContainer: HTMLDivElement = null,
 		header: HTMLSpanElement = null,
 		description: HTMLParagraphElement = null,
 		userPartyCounterContainer: HTMLDivElement = null,
+		showMoreSignersContainer: HTMLDivElement = null,
 	};
 
 	#items: Map<number, CardItem> = new Map();
-	#preselectedUserIds: Array<number> = [];
+	#preselectedUserData: Array<Object> = [];
 
 	#viewMode = Mode.edit;
 
@@ -42,8 +52,15 @@ export class UserParty
 	#loader: ?Loader = null;
 	#userPartyCounters: UserPartyCounters = null;
 
+	#documentUid: string = null;
+
+	#userPartyPopup: UserPartyPopup = null;
+
+	#counterDelayTimeout: ?number = null;
+
 	constructor(options: UserPartyOptions)
 	{
+		this.#api = new Api();
 		this.#viewMode = options.mode;
 		this.#init(options);
 	}
@@ -66,7 +83,7 @@ export class UserParty
 			events: {
 				onTagRemove: (event) => {
 					const { tag } = event.getData();
-					this.#removeItem(tag.id);
+					this.#removeItem(tag);
 				},
 				onTagAdd: (event) => {
 					const { tag } = event.getData();
@@ -78,14 +95,23 @@ export class UserParty
 				height: 363,
 				multiple: true,
 				targetNode: this.#ui.itemContainer,
+				context: 'sign_b2e_user_party',
 				entities: [
 					{
 						id: 'user',
 						options: { intranetUsersOnly: true },
 					},
+					{
+						id: 'department',
+						options: {
+							selectMode: 'usersAndDepartments',
+							fillRecentTab: true,
+							allowFlatDepartments: true,
+						},
+					},
 				],
-				dropdownMode: true,
-				hideOnDeselect: true,
+				dropdownMode: false,
+				hideOnDeselect: false,
 			},
 		});
 		this.#tagSelector.renderTo(this.#ui.itemContainer);
@@ -104,6 +130,27 @@ export class UserParty
 		if (this.#viewMode !== Mode.edit)
 		{
 			Dom.addClass(this.#ui.itemContainer, '--view');
+
+			const link = Tag.render`
+				<a href="#">${Loc.getMessage('SIGN_USER_PARTY_VIEW_SHOW_MORE', {
+					'#EMPLOYEE_COUNT#': '<span class="--count-placeholder">…</span>',
+				})}</a>
+			`;
+
+			this.#userPartyPopup = this.#createUserPartyPopup(link);
+
+			Event.bind(link, 'click', (event) => {
+				this.#userPartyPopup.setDocumentUid(this.#documentUid).show();
+				event.preventDefault();
+			});
+
+			this.#ui.showMoreSignersContainer = Tag.render`
+				<div class="sign-document-b2e-user-party__item-show_more">
+					${link}
+				</div>
+			`;
+			Dom.hide(this.#ui.showMoreSignersContainer);
+			Dom.append(this.#ui.showMoreSignersContainer, this.#ui.itemContainer);
 
 			return this.#ui.itemContainer;
 		}
@@ -135,6 +182,13 @@ export class UserParty
 		`;
 	}
 
+	#createUserPartyPopup(bindElement: HTMLElement): UserPartyPopup
+	{
+		return new UserPartyPopup({
+			bindElement,
+		});
+	}
+
 	async load(ids: number[]): Promise<void>
 	{
 		const { dialog } = this.#tagSelector;
@@ -146,16 +200,68 @@ export class UserParty
 		await promise;
 	}
 
-	setUsersIds(usersData: [number]): void
+	async setSignersIds(usersData: [Object]): void
 	{
 		this.#clean();
-		this.#preselectedUserIds = usersData;
-		this.#loadPreselectedUsersData();
+
+		const maxShownItems = this.#getViewModeItemsCount();
+
+		this.#preselectedUserData = usersData
+			.sort((a, b) => (a.entityType === 'department' ? -1 : 1))
+			.slice(0, maxShownItems)
+		;
+
+		if (this.#preselectedUserData.length < maxShownItems)
+		{
+			const membersResponse = await this.#api.getMembersForDocument(
+				this.#documentUid,
+				1,
+				maxShownItems,
+			);
+			const preselectedIds = new Set(
+				usersData
+					.filter((item) => item.entityType === 'user')
+					.map((item) => item.entityId)
+			);
+			const addMembers = membersResponse.members
+				.filter((member) => !preselectedIds.has(member.userId))
+				.slice(0, maxShownItems - this.#preselectedUserData.length)
+			;
+			this.#preselectedUserData = [...this.#preselectedUserData, ...addMembers.map((member) => {
+				return { entityType: 'user', entityId: member.userId };
+			})];
+		}
+
+		// workaround because prepend is used in the interface instead of append
+		this.#preselectedUserData.reverse();
+
+		await this.#loadPreselectedUsersData();
+		this.#displayShowMoreBtn();
+	}
+
+	async #displayShowMoreBtn(): void
+	{
+		const shownUsers = this.#preselectedUserData
+			.reduce((count, item) => (item.entityType === 'user' ? count + 1 : count), 0)
+		;
+		const signersCountResponse = await this.#api.getUniqUserCountForDocument(this.#documentUid);
+		const showMoreCount = signersCountResponse.count - shownUsers;
+		if (showMoreCount > 0)
+		{
+			this.#ui.showMoreSignersContainer.querySelector('.--count-placeholder').textContent = showMoreCount;
+			Dom.show(this.#ui.showMoreSignersContainer);
+		}
+		else
+		{
+			this.#ui.showMoreSignersContainer.querySelector('.--count-placeholder').textContent = 0;
+			Dom.hide(this.#ui.showMoreSignersContainer);
+		}
 	}
 
 	async #loadPreselectedUsersData(): Promise<void>
 	{
 		this.#showLoader();
+
 		await new Promise((resolve) => {
 			const dialog = new Dialog({
 				entities: [
@@ -169,12 +275,13 @@ export class UserParty
 						resolve();
 					},
 				},
-				preselectedItems: this.#preselectedUserIds.map((userId) => {
-					return ['user', userId];
+				preselectedItems: this.#preselectedUserData.map((entity) => {
+					return [entity.entityType, entity.entityId];
 				}),
 			});
 			dialog.load();
 		});
+
 		this.#hideLoader();
 	}
 
@@ -206,8 +313,9 @@ export class UserParty
 		return this.#loader;
 	}
 
-	#removeItem(userId: string)
+	#removeItem(tag: TagItem): void
 	{
+		const userId = tag.id;
 		const item = this.#items.get(userId);
 		if (item?.container)
 		{
@@ -215,33 +323,64 @@ export class UserParty
 		}
 
 		this.#items.delete(userId);
-		this.#userPartyCounters?.update(this.#items.size);
+
+		this.#updateEditModeCounter();
 	}
 
-	#addItem(tag): void
+	#addItem(tag: TagItem): void
 	{
 		const item = {
 			id: tag.id,
+			title: tag?.title.text,
 			name: tag.customData?.get('name'),
 			lastName: tag.customData?.get('lastName'),
 			avatar: tag?.avatar,
+			entityId: tag.id,
+			entityType: tag?.entityId,
 		};
 
 		const container = this.#viewMode === Mode.view
-			? this.#createItemLayout(item) : null;
+			? this.#createItemLayout(item)
+			: null
+		;
+
 		if (container)
 		{
-			Dom.append(container, this.#ui.itemContainer);
+			Dom.prepend(container, this.#ui.itemContainer);
 		}
 
 		item.container = container;
 		this.#items.set(item.id, item);
-		this.#userPartyCounters?.update(this.#items.size);
+
+		this.#updateEditModeCounter();
+	}
+
+	#updateEditModeCounter(): void
+	{
+		if (this.#viewMode === Mode.edit)
+		{
+			this.#updateCounterWithDelay(this.#tagSelector.getTags().map((member) => {
+				return {
+					entityId: member.id,
+					entityType: member.entityId,
+				};
+			}));
+		}
+	}
+
+	#updateCounterWithDelay(selectedMembers: CountMember[]): void
+	{
+		clearTimeout(this.#counterDelayTimeout);
+
+		this.#counterDelayTimeout = setTimeout(async () => {
+			const response = await this.#api.getUniqUserCountForMembers(selectedMembers);
+			this.#userPartyCounters?.update(response.count);
+		}, 100);
 	}
 
 	validate(): boolean
 	{
-		const isValid = this.#items.size > 0;
+		const isValid = this.#items.size > 0 && this.#userPartyCounters.getCount() > 0;
 		const tagSelectorContainer = this.#tagSelector.getOuterContainer();
 		if (isValid)
 		{
@@ -260,16 +399,66 @@ export class UserParty
 		return [...this.#items.keys()];
 	}
 
+	getEntities(): Array<CardItem>
+	{
+		return [...this.#items.values()];
+	}
+
+	resetUserPartyPopup(): void
+	{
+		this.#userPartyPopup.resetData();
+	}
+
+	setDocumentUid(uid: string): void
+	{
+		this.#documentUid = uid;
+	}
+
 	#createItemLayout(item: CardItem): HTMLElement
 	{
-		const name = TextFormat.encode(item.name) ?? '';
-		const lastName = TextFormat.encode(item.lastName) ?? '';
+		return item.entityType === 'department'
+			? this.#createDepartmentItemLayout(item)
+			: this.#createUserItemLayout(item)
+		;
+	}
+
+	#createDepartmentItemLayout(item: CardItem): HTMLElement
+	{
+		const title = TextFormat.encode(item.title);
 
 		return Tag.render`
-			<img
-				class="sign-document-b2e-user-party__item-list_item-avatar"
-				title="${name} ${lastName}" src='${item.avatar || defaultAvatarLink}'
-			/>
+			<div class="sign-document-b2e-user-party__item-list_item --department">
+				<div>
+					<img
+						class="sign-document-b2e-user-party__item-list_item-avatar"
+						title="${title}" src='${departmentAvatarLink}' alt="avatar"
+					/>
+				</div>
+				<div title="${title}" class="sign-document-b2e-user-party__item-list_item-text">
+					${title}
+				</div>
+			</div>
+		`;
+	}
+
+	#createUserItemLayout(item: CardItem): HTMLElement
+	{
+		const title = TextFormat.encode(item.title);
+		const itemAvatar = item.avatar || defaultAvatarLink;
+		const profileLink = `/company/personal/user/${TextFormat.encode(item.entityId)}/`;
+
+		return Tag.render`
+			<div class="sign-document-b2e-user-party__item-list_item --user">
+				<a href="${profileLink}">
+					<img
+						class="sign-document-b2e-user-party__item-list_item-avatar"
+						title="${title}" src='${TextFormat.encode(itemAvatar)}' alt="avatar"
+					/>
+				</a>
+				<div title="${title}" class="sign-document-b2e-user-party__item-list_item-text">
+					${title}
+				</div>
+			</div>
 		`;
 	}
 
@@ -278,5 +467,10 @@ export class UserParty
 		[...this.#items.values()].forEach((item) => Dom.remove(item.container));
 		this.#items.clear();
 		this.#userPartyCounters?.update(this.#items.size);
+	}
+
+	#getViewModeItemsCount(): number
+	{
+		return 7; // for fixed slider width
 	}
 }

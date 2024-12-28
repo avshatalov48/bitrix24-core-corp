@@ -6,6 +6,8 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Integration\Disk\Connector\Task as TaskConnector;
 use Bitrix\Tasks\Internals\Task\CheckListTable;
+use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\Access\ActionDictionary;
 
 use Bitrix\Main\Localization\Loc;
 use CTaskItem;
@@ -57,6 +59,25 @@ class Task extends TaskConnector
 		}
 
 		return $this->taskPostData;
+	}
+
+	public function canRead($userId): bool
+	{
+		if($this->canRead !== null)
+		{
+			return $this->canRead;
+		}
+
+		$taskId = static::getTaskIdByCheckList($this->entityId);
+
+		$this->canRead = TaskAccessController::can($userId, ActionDictionary::ACTION_TASK_READ, $taskId);
+
+		return $this->canRead;
+	}
+
+	public function canUpdate($userId): bool
+	{
+		return $this->canRead($userId);
 	}
 
 	/**

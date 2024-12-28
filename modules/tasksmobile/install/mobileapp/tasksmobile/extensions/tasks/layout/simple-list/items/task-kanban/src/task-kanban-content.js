@@ -6,7 +6,7 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 	const { PureComponent } = require('layout/pure-component');
 	const { CounterView } = require('layout/ui/counter-view');
 	const { FileField } = require('layout/ui/fields/file');
-	const { ReduxAvatar } = require('layout/ui/user/avatar');
+	const { Avatar } = require('ui-system/blocks/avatar');
 	const { connect } = require('statemanager/redux/connect');
 	const store = require('statemanager/redux/store');
 	const { dispatch } = store;
@@ -392,8 +392,10 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 
 		renderResponsible()
 		{
-			return ReduxAvatar({
+			return Avatar({
 				id: this.task?.responsible,
+				withRedux: true,
+				size: 24,
 				testId: `${this.testId}_RESPONSIBLE`,
 			});
 		}

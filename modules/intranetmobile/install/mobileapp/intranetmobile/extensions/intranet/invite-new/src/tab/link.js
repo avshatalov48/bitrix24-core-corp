@@ -22,6 +22,11 @@ jn.define('intranet/invite-new/src/tab/link', (require, exports, module) => {
 			return this.props.inviteLink ?? '';
 		}
 
+		get adminConfirm()
+		{
+			return this.props.adminConfirm ?? '';
+		}
+
 		get analytics()
 		{
 			return this.props.analytics ?? {};
@@ -88,7 +93,7 @@ jn.define('intranet/invite-new/src/tab/link', (require, exports, module) => {
 					},
 					leftIcon: Icon.SHARE,
 					onClick: () => {
-						this.analytics.sendShareLinkEvent();
+						this.analytics.sendShareLinkEvent(this.adminConfirm);
 						dialogs.showSharingDialog({
 							title: Loc.getMessage('INTRANET_SHARING_LINK_DIALOG_TITLE'),
 							message: this.getSharingMessageWithLink(),

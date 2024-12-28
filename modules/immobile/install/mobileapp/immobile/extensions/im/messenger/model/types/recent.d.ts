@@ -1,6 +1,7 @@
 import {MessengerModel, PayloadData} from "./base";
 import {DialogId} from "../../types/common";
 import {CommentModelCollection} from "./comment";
+import {MessagesModelState} from "./messages";
 
 export enum ChatType
 {
@@ -17,28 +18,25 @@ export enum MessageStatus
 	error = 'error',
 }
 
-export type RecentModelState = {
+declare type RecentMessage = {
 	id: number,
-	message: {
-		id: number,
-		senderId: string,
-		date: Date,
-		status: MessageStatus,
-		subTitleIcon: string,
-		sending: boolean,
-		text: string,
-		params: object,
-	},
+	senderId: string,
+	date: Date,
+	status: MessageStatus,
+	subTitleIcon: string,
+	sending: boolean,
+	text: string,
+	params: object,
+}
+
+export type RecentModelState = {
+	id: DialogId,
+	message: RecentMessage,
 	dateMessage: Date | null,
 	lastActivityDate: Date,
 	unread: boolean,
 	pinned: boolean,
 	liked: boolean,
-
-	avatar: string,
-	color: string,
-	title: string,
-	counter: number,
 	invitation?: {
 		isActive: boolean,
 		originator: number,
@@ -47,6 +45,10 @@ export type RecentModelState = {
 	options: {
 		defaultUserRecord?: boolean,
 		birthdayPlaceholder?: boolean,
+	},
+	uploadingState?: {
+		message: RecentMessage,
+		lastActivityDate: Date,
 	}
 };
 

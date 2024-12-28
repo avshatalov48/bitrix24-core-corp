@@ -276,7 +276,10 @@ class ContactCenter
 		{
 			$itemsList["call"] = $this->getCallFormListItem($filter);
 		}
-		if (WebForm\WhatsApp::canUse())
+		if (
+			WebForm\WhatsApp::canUse()
+			&& !($this->isCnZone() && Application::getInstance()->getContext()->getLanguage() === 'sc')
+		)
 		{
 			$itemsList["formWhatsapp"] = $this->getWhatsAppFormListItem($filter);
 		}
@@ -341,6 +344,20 @@ class ContactCenter
 			//TODO: End
 			$configList = $this->getImopenlinesConfigList();
 
+			$excludedConnectors = [];
+			if ($this->isCnZone() && Application::getInstance()->getContext()->getLanguage() === 'sc')
+			{
+				$excludedConnectors = [
+					'whatsappbytwilio',
+					'viber',
+					'facebook',
+					'facebookcomments',
+					'facebookads',
+					'fbinstagramdirect',
+					'whatsappbyedna',
+				];
+			}
+
 			foreach ($connectors as $code => $connector)
 			{
 				//TODO: Delete after exiting 92ee8cf838a0
@@ -349,6 +366,11 @@ class ContactCenter
 					continue;
 				}
 				//TODO: End
+
+				if (!empty($excludedConnectors) && in_array($code, $excludedConnectors))
+				{
+					continue;
+				}
 
 				$selected = false;
 				$selectedOrder = false;
@@ -464,7 +486,10 @@ class ContactCenter
 						}
 
 						$virtualWhatsAppStatus = Settings::getScenarioAvailability(Settings::SCENARIO_VIRTUAL_WHATSAPP);
-						if ($virtualWhatsAppStatus !== FeatureStatus::UNAVAILABLE)
+						if (
+							$virtualWhatsAppStatus !== FeatureStatus::UNAVAILABLE
+							&& !($this->isCnZone() && Application::getInstance()->getContext()->getLanguage() === 'sc')
+						)
 						{
 							$infoHelperCode = $virtualWhatsAppStatus === FeatureStatus::LIMITED
 								? Limit::getInfoHelperCodeForScenario(Settings::SCENARIO_VIRTUAL_WHATSAPP)
@@ -481,7 +506,10 @@ class ContactCenter
 							];
 						}
 
-						if (Settings::getScenarioAvailability(Settings::SCENARIO_REVERSE_WHATSAPP) !== FeatureStatus::UNAVAILABLE)
+						if (
+							Settings::getScenarioAvailability(Settings::SCENARIO_REVERSE_WHATSAPP) !== FeatureStatus::UNAVAILABLE
+							&& !($this->isCnZone() && Application::getInstance()->getContext()->getLanguage() === 'sc')
+						)
 						{
 							$uri = new Uri($link);
 							$uri->addParams(["scenario" => Settings::SCENARIO_REVERSE_WHATSAPP]);
@@ -1225,6 +1253,7 @@ class ContactCenter
 		$codeMap = \Bitrix\Crm\Ads\AdsForm::getAdsIconMap();
 		$cisCheck = $this->cisCheck() && (!isset($filter["CHECK_REGION"]) || $filter["CHECK_REGION"] !== "N");
 		$isRuPortal = $this->isRuZone() && (!isset($filter["CHECK_REGION"]) || $filter["CHECK_REGION"] !== "N");
+		$isCnPortal = $this->isCnZone() && (!isset($filter["CHECK_REGION"]) || $filter["CHECK_REGION"] !== "N");
 
 		$itemsList = [];
 		foreach (\Bitrix\Crm\Ads\AdsForm::getServiceTypes() as $type)
@@ -1234,9 +1263,17 @@ class ContactCenter
 				continue;
 			}
 
-			if ($isRuPortal && $type === \Bitrix\Seo\LeadAds\Service::TYPE_FACEBOOK)
+			if ($type === \Bitrix\Seo\LeadAds\Service::TYPE_FACEBOOK)
 			{
-				continue;
+				if ($isRuPortal)
+				{
+					continue;
+				}
+
+				if ($isCnPortal && Application::getInstance()->getContext()->getLanguage() === 'sc')
+				{
+					continue;
+				}
 			}
 
 			$linkedFormsIds = \Bitrix\Crm\Ads\AdsForm::getLinkedForms($type);
@@ -1491,6 +1528,22 @@ class ContactCenter
 	{
 		$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
 		if (is_null($region) || mb_strtolower($region) === 'ru')
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Checks if the portal is in CN zone.
+	 *
+	 * @return boolean
+	 */
+	public function isCnZone(): bool
+	{
+		$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
+		if (mb_strtolower($region) === 'cn')
 		{
 			return true;
 		}

@@ -4,6 +4,7 @@
 jn.define('im/messenger/controller/sidebar/chat/tabs/base/view', (require, exports, module) => {
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sidebar--base-tab-view');
+	const { EventType } = require('im/messenger/const');
 
 	/**
 	 * @class BaseSidebarTabView
@@ -13,7 +14,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/base/view', (require, expor
 		componentDidMount()
 		{
 			logger.log(`${this.constructor.name}.componentDidMount`);
-			this.bindListener();
+			this.bindMethods();
 			this.subscribeAllEvents();
 		}
 
@@ -28,7 +29,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/base/view', (require, expor
 			this.onClose();
 		}
 
-		bindListener()
+		bindMethods()
 		{
 			this.onCurrentTabSelected = this.onCurrentTabSelected.bind(this);
 			this.onClose = this.onClose.bind(this);
@@ -50,14 +51,14 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/base/view', (require, expor
 		{
 			logger.log(`${this.constructor.name}.subscribeCustomEvents`);
 			BX.addCustomEvent('onCurrentTabSelected', this.onCurrentTabSelected);
-			BX.addCustomEvent('onCloseSidebarWidget', this.onClose);
+			BX.addCustomEvent(EventType.sidebar.closeWidget, this.onClose);
 		}
 
 		unsubscribeCustomEvents()
 		{
-			logger.log(`${this.constructor.name}.unsubscribeCustomEvents`);
+			logger.log(`${this.constructor.name}.unsubscribeCustomEvents eeee`);
 			BX.removeCustomEvent('onCurrentTabSelected', this.onCurrentTabSelected);
-			BX.removeCustomEvent('onCloseSidebarWidget', this.onClose);
+			BX.removeCustomEvent(EventType.sidebar.closeWidget, this.onClose);
 		}
 
 		onCurrentTabSelected(id)

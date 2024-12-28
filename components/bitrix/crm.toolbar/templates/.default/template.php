@@ -133,4 +133,3 @@ $renderViews = static function(array $views): void {
 //endregion
 
 $APPLICATION->includeComponent('bitrix:crm.filterdependent.wrapper', '');
-?>

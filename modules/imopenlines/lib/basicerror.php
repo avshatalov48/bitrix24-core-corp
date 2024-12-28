@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
+use Bitrix\Main\Error;
+
 class BasicError
 {
 	public $method = '';
@@ -25,5 +27,14 @@ class BasicError
 
 			$this->error = true;
 		}
+	}
+
+
+	/**
+	 * @return \Bitrix\Main\Error
+	 */
+	public function getError(): Error
+	{
+		return (new Error($this->msg, $this->code, $this->params));
 	}
 }

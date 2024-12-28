@@ -32,7 +32,8 @@ final class Entry extends TimelineEntry
 				[
 					CategoryType::RECORD_TRANSCRIPT_FINISHED,
 					CategoryType::RECORD_TRANSCRIPT_SUMMARY_FINISHED,
-					CategoryType::FILLING_ENTITY_FIELDS_FINISHED
+					CategoryType::FILLING_ENTITY_FIELDS_FINISHED,
+					CategoryType::CALL_SCORING_FINISHED,
 				],
 				true
 			)

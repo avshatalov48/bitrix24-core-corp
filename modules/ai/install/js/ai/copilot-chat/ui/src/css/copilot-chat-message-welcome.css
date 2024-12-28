@@ -1,0 +1,81 @@
+.ai__copilot-chat-message-welcome {
+	margin-left: -50px;
+	margin-bottom: 8px;
+	border-radius: var(--ui-border-radius-2xl);
+	padding: 20px;
+	background-color: rgba(var(--ui-color-base-solid-rgb), 0.2);
+	color: var(--ui-color-background-primary);
+}
+
+.ai__copilot-chat-message-welcome_header {
+	display: flex;
+	align-items: center;
+	margin-bottom: 8px;
+	padding-bottom: 7px;
+	border-bottom: var(--ui-border-width-thin) solid rgba(var(--ui-color-background-primary-rgb), 0.1);
+}
+
+.ai__copilot-chat-message-welcome_header-left {
+	margin-right: 12px;
+}
+
+.ai__copilot-chat-message-welcome_avatar {
+	width: 42px;
+	height: 42px;
+	border-radius: var(--ui-border-radius-circle);
+}
+
+.ai__copilot-chat-message-welcome_header-right {
+}
+
+.ai__copilot-chat-message-welcome_title {
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-medium);
+	margin-top: 0;
+	margin-bottom: 4px;
+}
+
+.ai__copilot-chat-message-welcome_subtitle {
+	margin: 0;
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.ai__copilot-chat-message-welcome_main {
+
+}
+
+.ai__copilot-chat-message-welcome_content {
+	color: rgba(var(--ui-color-background-primary-rgb), 0.6);
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-3xs);
+}
+
+.ai__copilot-chat-message-welcome_content p:first-child {
+	margin-top: 0;
+}
+
+.ai__copilot-chat-message-welcome_content p:last-child {
+	margin-bottom: 0;
+}
+
+.ai__copilot-chat-message-welcome_content a {
+	color: var(--ui-color-on-primary);
+	text-decoration: underline;
+	text-decoration-color: rgba(var(--ui-color-on-primary-rgb), 0.4);
+	text-underline-position: under;
+}
+
+.ai__copilot-chat-message-welcome_content a.disabled {
+	pointer-events: none;
+	color: inherit;
+	text-decoration: underline;
+	text-decoration-color: rgba(var(--ui-color-on-primary-rgb), 0.4);
+	text-underline-position: under;
+}
+
+.ai__copilot-chat-message-welcome_content a:hover {
+	color: var(--ui-color-on-primary);
+	text-decoration: underline;
+	text-decoration-color: rgba(var(--ui-color-on-primary-rgb), 0.6);
+}

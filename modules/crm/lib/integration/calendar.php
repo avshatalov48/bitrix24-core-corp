@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Integration;
 
+use Bitrix\Calendar\Core\Managers\Accessibility;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -452,5 +453,21 @@ class Calendar
 		]);
 
 		return is_array($result) ? $result : null;
+	}
+
+	public static function getBusyUsersIds(array $userIds, int $fromTs, int $toTs, ?int $curEventId = null): array
+	{
+		if (!\Bitrix\Main\Loader::includeModule('calendar'))
+		{
+			return [];
+		}
+
+		$accessibility = (new Accessibility());
+		if ($curEventId !== null)
+		{
+			$accessibility->setSkipEventId($curEventId);
+		}
+
+		return array_unique($accessibility->getBusyUsersIds($userIds, $fromTs, $toTs));
 	}
 }

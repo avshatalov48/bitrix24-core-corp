@@ -123,11 +123,11 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 					}
 					else if (chat.customData.imChat.TYPE === 'open')
 					{
-						data.dialogTitleParams.description = Loc.getMessage('MOBILE_EXT_CHAT_SELECTOR_CHANNEL_SUBTITLE');
+						data.dialogTitleParams.description = Loc.getMessage('MOBILE_EXT_CHAT_SELECTOR_CHANNEL_SUBTITLE_MSGVER_1');
 					}
 					else
 					{
-						data.dialogTitleParams.description = Loc.getMessage('MOBILE_EXT_CHAT_SELECTOR_GROUP_SUBTITLE');
+						data.dialogTitleParams.description = Loc.getMessage('MOBILE_EXT_CHAT_SELECTOR_GROUP_SUBTITLE_MSGVER_1');
 					}
 				}
 

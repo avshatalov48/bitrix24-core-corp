@@ -56,7 +56,11 @@
 
 		bindEvents()
 		{
-			this.tabs.on('titleClick', () => ProjectViewManager.open(this.currentUserId, this.groupId));
+			this.tabs.on('titleClick', () => {
+				const { isCollab, dialogId } = this.item.params;
+
+				ProjectViewManager.open(this.currentUserId, this.groupId, PageManager, isCollab, dialogId);
+			});
 			this.tabs.on('onTabSelected', (tab) => {
 				this.onTabSelected({
 					tab,

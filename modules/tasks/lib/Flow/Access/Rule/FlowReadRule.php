@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Flow\Access\Rule;
 
 use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Main\Access\Rule\AbstractRule;
+use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Flow\Access\FlowAccessController;
 use Bitrix\Tasks\Flow\Access\FlowModel;
 use Bitrix\Tasks\Flow\Access\ValidationTrait;
@@ -14,6 +15,9 @@ class FlowReadRule extends AbstractRule
 
 	/** @var FlowAccessController */
 	protected $controller;
+
+	/** @var UserModel $user */
+	protected $user;
 
 	public function execute(AccessibleItem $item = null, $params = null): bool
 	{
@@ -28,7 +32,7 @@ class FlowReadRule extends AbstractRule
 		}
 
 		/** @var FlowModel $item */
-		if ($item->isForAll())
+		if (!$this->user->isExtranet() && $item->isForAll())
 		{
 			return true;
 		}

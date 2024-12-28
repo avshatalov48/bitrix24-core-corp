@@ -64,7 +64,7 @@ class Type extends Base
 	public function getAction(Dynamic\Type $type): ?array
 	{
 		$userPermissions = Container::getInstance()->getUserPermissions($this->getCurrentUser()->getId());
-		if (!$userPermissions->isAdminForEntity($type->getEntityTypeId()) && !$userPermissions->isCrmAdmin())
+		if (!$userPermissions->isAdminForEntity($type->getEntityTypeId()))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 			return null;
@@ -178,7 +178,9 @@ class Type extends Base
 	{
 		$entityTypeId = $fields['entityTypeId'] ?? 0;
 		$userPermissions = Container::getInstance()->getUserPermissions($this->getCurrentUser()->getId());
-		if (!$userPermissions->isCrmAdmin())
+		$automatedSolutionId = $fields['customSectionId'] ?? 0;
+		$hasPermissions = $automatedSolutionId ? $userPermissions->isAutomatedSolutionAdmin($automatedSolutionId) : $userPermissions->isCrmAdmin();
+		if (!$hasPermissions)
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 			return null;
@@ -247,8 +249,20 @@ class Type extends Base
 		{
 			return null;
 		}
+		$isNew = ($type->getId() <= 0);
+
 		$userPermissions = Container::getInstance()->getUserPermissions($this->getCurrentUser()->getId());
-		if (!$userPermissions->isAdminForEntity($type->getEntityTypeId()) && !$userPermissions->isCrmAdmin())
+		$automatedSolutionId = $fields['customSectionId'] ?? 0;
+		if ($isNew)
+		{
+			$hasPermissions = $automatedSolutionId ? $userPermissions->isAutomatedSolutionAdmin($automatedSolutionId) : $userPermissions->isCrmAdmin();
+		}
+		else
+		{
+			$hasPermissions = $userPermissions->isAdminForEntity($type->getEntityTypeId());
+		}
+
+		if (!$hasPermissions)
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 			return null;
@@ -258,7 +272,6 @@ class Type extends Base
 		$fieldKeysToUnset = ['ID', 'IS_EXTERNAL', 'CREATED_TIME', 'CREATED_BY', 'UPDATED_TIME', 'UPDATED_BY'];
 		$fieldKeysToNotSetToType = ['CUSTOM_SECTION_ID'];
 
-		$isNew = $type->getId() <= 0;
 		$restriction = RestrictionManager::getDynamicTypesLimitRestriction();
 		if ($isNew && $restriction->isCreateTypeRestricted())
 		{
@@ -272,8 +285,16 @@ class Type extends Base
 			return null;
 		}
 
-		$isAdmin = Container::getInstance()->getUserPermissions($this->getCurrentUser()->getId())->isCrmAdmin();
-		if ($type->getCustomSectionId() !== (int)$fields['CUSTOM_SECTION_ID'] && !$isAdmin)
+		// if try to change CustomSectionId in existed smart process, user must be both admins in old and new automated solutions
+		if (
+			!$isNew
+			&& (int)$type->getCustomSectionId() !== (int)$automatedSolutionId
+			&& (
+				(!$type->getCustomSectionId() && !$userPermissions->isCrmAdmin())
+				||
+				(!$type->getCustomSectionId() && !$userPermissions->isAutomatedSolutionAdmin($automatedSolutionId))
+			)
+		)
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 			return null;
@@ -330,11 +351,13 @@ class Type extends Base
 				$this->addErrors($relationsResult->getErrors());
 			}
 
-			$customSectionsResult = $this->saveCustomSections($type, $fields);
+			$typeFromContainer = Container::getInstance()->getDynamicTypesMap()->getTypesCollection()->getByPrimary($type->getId());  // to avoid inconsistent with data from \Bitrix\Crm\Service\Container::getTypeByEntityTypeId
+			$customSectionsResult = $this->saveCustomSections($typeFromContainer, $fields);
 			if (!$customSectionsResult->isSuccess())
 			{
 				$this->addErrors($customSectionsResult->getErrors());
 			}
+			$type->setCustomSectionId($typeFromContainer->getCustomSectionId());
 
 			$result = $this->getAction($type);
 			if (is_array($result) && ($this->getScope() === static::SCOPE_AJAX))

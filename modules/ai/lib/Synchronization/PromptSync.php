@@ -188,20 +188,22 @@ class PromptSync extends BaseSync
 			$result = $this->add($fields);
 			if ($result->isSuccess())
 			{
-				if (!is_array($result->getId()))
+				$resultId = $result->getId();
+				if (is_numeric($resultId))
 				{
-					$this->updatePromptRoles($result->getId(), $roles);
+					$resultId = (int)$resultId;
+					$this->updatePromptRoles($resultId, $roles);
 
 					$this->getPromptService()
-						->addCategoriesForPrompt($categories, (int)$result->getId())
+						->addCategoriesForPrompt($categories, $resultId)
 					;
 
 					$this->getPromptService()
-						->addTranslateNames($translateNames, (int)$result->getId())
+						->addTranslateNames($translateNames, $resultId)
 					;
 
 					$this->getPromptDisplayRuleService()
-						->updateRulesForPrompt((int)$result->getId(), $rules)
+						->updateRulesForPrompt($resultId, $rules)
 					;
 				}
 			}

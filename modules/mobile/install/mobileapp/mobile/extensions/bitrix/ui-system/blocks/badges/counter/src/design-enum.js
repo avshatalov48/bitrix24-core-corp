@@ -22,9 +22,20 @@ jn.define('ui-system/blocks/badges/counter/src/design-enum', (require, exports, 
 			backgroundColor: Color.accentMainAlert,
 		});
 
+		static WHITE_ALERT = new BadgeCounterDesign('WHITE_ALERT', {
+			color: Color.accentMainAlert,
+			backgroundColor: Color.baseWhiteFixed,
+		});
+
 		static SUCCESS = new BadgeCounterDesign('SUCCESS', {
 			color: Color.baseWhiteFixed,
 			backgroundColor: Color.accentMainSuccess,
+		});
+
+		// todo use proper tokens
+		static COLLAB_SUCCESS = new BadgeCounterDesign('COLLAB_SUCCESS', {
+			color: Color.baseWhiteFixed,
+			backgroundColor: new Color('collabSuccess', '#19CC45'),
 		});
 
 		static GREY = new BadgeCounterDesign('GREY', {

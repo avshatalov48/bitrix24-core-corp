@@ -38,7 +38,12 @@ jn.define('bbcode/formatter/shared/node-formatters/disk-formatter', (require, ex
 
 					if (options.renderType === 'text')
 					{
-						return scheme.createText(file.name);
+						return scheme.createText(
+							Loc.getMessage(
+								'BBCODE_PLAIN_TEXT_FORMATTER_DISK_TEXT',
+								{ '{{fileName}}': file.name },
+							),
+						);
 					}
 
 					if (options.renderType === 'placeholder')

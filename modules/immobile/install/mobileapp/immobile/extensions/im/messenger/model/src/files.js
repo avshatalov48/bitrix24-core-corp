@@ -17,6 +17,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 
 	const fileDefaultElement = Object.freeze({
 		id: 0,
+		templateId: '',
 		chatId: 0,
 		dialogId: '0',
 		name: 'File is deleted',
@@ -53,15 +54,33 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 			 * @return {boolean}
 			 */
 			hasFile: (state) => (fileId) => {
-				return Boolean(state.collection[fileId]);
+				if (state.collection[fileId])
+				{
+					return true;
+				}
+
+				return Object.values(state.collection).some((file) => file.templateId === fileId);
 			},
 
 			/**
 			 * @function filesModel/getById
-			 * @return {FilesModelState}
+			 * @return {FilesModelState | null}
 			 */
-			getById: (state) => (fileId) => {
-				return state.collection[fileId];
+			getById: (state, getters) => (fileId) => {
+				return state.collection[fileId] ?? getters.getByTemplateId(fileId);
+			},
+
+			/**
+			 * @function filesModel/getByTemplateId
+			 * @returns {FilesModelState | null}
+			 */
+			getByTemplateId: (state) => (fileId) => {
+				if (Type.isNumber(Number(fileId)))
+				{
+					return null;
+				}
+
+				return Object.values(state.collection).find((file) => file.templateId === fileId);
 			},
 
 			/**
@@ -80,8 +99,26 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 				{
 					return [];
 				}
+				const validFileIdList = [];
+				for (const fileId of fileIdList)
+				{
+					if (!getters.hasFile(fileId))
+					{
+						logger.error(
+							'filesModel: getListByMessageId error: the file is missing with fileId by messageId',
+							{
+								messageId,
+								fileId,
+							},
+						);
 
-				return rootGetters['filesModel/getByIdList'](fileIdList);
+						continue;
+					}
+
+					validFileIdList.push(fileId);
+				}
+
+				return rootGetters['filesModel/getByIdList'](validFileIdList);
 			},
 
 			/**
@@ -118,7 +155,6 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 				{
 					fileList = payload.map((file) => {
 						const result = validate(store, { ...file });
-						result.templateId = result.id;
 
 						return {
 							...fileDefaultElement,
@@ -129,7 +165,6 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 				else
 				{
 					const result = validate(store, { ...payload });
-					result.templateId = result.id;
 					fileList.push({
 						...fileDefaultElement,
 						...result,
@@ -177,7 +212,6 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 				{
 					fileList = payload.map((file) => {
 						const result = validate(store, { ...file });
-						result.templateId = result.id;
 
 						return {
 							...fileDefaultElement,
@@ -188,7 +222,6 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 				else
 				{
 					const result = validate(store, { ...payload });
-					result.templateId = result.id;
 					fileList.push({
 						...fileDefaultElement,
 						...result,
@@ -390,16 +423,10 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 		{
 			result.templateId = fields.templateId;
 		}
-		else if (Type.isString(fields.templateId))
+
+		if (Type.isString(fields.templateId))
 		{
-			if (fields.templateId.startsWith('temporary'))
-			{
-				result.templateId = fields.templateId;
-			}
-			else
-			{
-				result.templateId = Number(fields.templateId);
-			}
+			result.templateId = fields.templateId;
 		}
 
 		if (Type.isNumber(fields.chatId) || Type.isString(fields.chatId))

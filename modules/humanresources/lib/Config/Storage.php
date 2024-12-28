@@ -2,7 +2,9 @@
 
 namespace Bitrix\HumanResources\Config;
 
+use Bitrix\Bitrix24\Feature;
 use Bitrix\Main;
+use Bitrix\Main\Loader;
 
 class Storage
 {
@@ -82,11 +84,21 @@ class Storage
 
 	public function isIntranetUtilsDisabled(): bool
 	{
-		return Main\Config\Option::get(self::MODULE_NAME, self::STRUCT_DISABLE_INTRANET_UTILS, false);
+		return true;
 	}
 
 	public function isPublicStructureAvailable(): bool
 	{
-		return Main\Config\Option::get(self::MODULE_NAME, self::STRUCT_PUBLIC_IS_AVAILABLE_OPTION_NAME, false);
+		return true;
+	}
+
+	public static function canUsePermissionConfig()
+	{
+		if(!Loader::includeModule('bitrix24'))
+		{
+			return true;
+		}
+
+		return Feature::isFeatureEnabled('humanresources_security');
 	}
 }

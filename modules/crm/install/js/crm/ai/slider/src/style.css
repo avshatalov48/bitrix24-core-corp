@@ -1,8 +1,7 @@
 /* root container */
 .crm-copilot-wrapper{
-	background: url('./images/copilot-slider-bg.png') fixed 0 0 no-repeat;
+	background: url('./images/copilot-slider-bg.png?v=2') fixed 100% 0 no-repeat;
 	background-size: cover;
-	font-family: var(--ui-font-family-open-sans);
 
 	--copilot-icon-width: 32px;
 	--copilot-icon-height: 32px;
@@ -21,7 +20,6 @@
 	overflow: visible;
 	margin-left: calc(-1 * var(--copilot-icon-to-left));
 	padding-left: var(--copilot-icon-title-distance) !important;
-	font-family: var(--ui-font-family-open-sans);
 	font-size: var(--ui-font-size-5xl);
 	font-weight: var(--ui-font-weight-light);
 	font-style: normal;

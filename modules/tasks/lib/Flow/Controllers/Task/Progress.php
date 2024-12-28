@@ -47,7 +47,16 @@ class Progress extends Controller
 
 		$modifier = static function (array &$task) {
 			static $date = new DateTime();
-			$task['TIME_IN_STATUS'] = DatePresenter::get($date, $task['DATE_START']);
+			$dateStart = $task['DATE_START'] ?? null;
+
+			if ($dateStart instanceof DateTime)
+			{
+				$task['TIME_IN_STATUS'] = DatePresenter::get($date, $dateStart);
+			}
+			else
+			{
+				$task['TIME_IN_STATUS'] = 0;
+			}
 		};
 
 		try

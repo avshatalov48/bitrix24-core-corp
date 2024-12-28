@@ -54,7 +54,7 @@ jn.define('im/messenger/lib/element/recent/item/copilot', (require, exports, mod
 		createSubtitle()
 		{
 			const item = this.getModelItem();
-			const message = item.message;
+			const message = this.getItemMessage();
 			if (message.id === 0)
 			{
 				this.subtitle = ChatTitle.createFromDialogId(item.id).getDescription();
@@ -63,7 +63,7 @@ jn.define('im/messenger/lib/element/recent/item/copilot', (require, exports, mod
 			}
 
 			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](message.senderId);
-			const isYourMessage = item.message.senderId === serviceLocator.get('core').getUserId();
+			const isYourMessage = message.senderId === serviceLocator.get('core').getUserId();
 			if (isYourMessage)
 			{
 				this.subtitle = Loc.getMessage('IMMOBILE_ELEMENT_RECENT_YOU_WROTE') + this.getMessageText(item);
@@ -71,7 +71,7 @@ jn.define('im/messenger/lib/element/recent/item/copilot', (require, exports, mod
 				return this;
 			}
 
-			const hasAuthor = item.message.senderId;
+			const hasAuthor = message.senderId;
 			if (!hasAuthor)
 			{
 				this.subtitle = this.getMessageText(item);

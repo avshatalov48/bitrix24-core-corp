@@ -15,15 +15,10 @@ jn.define('im/messenger/provider/service/classes/chat/comments', (require, expor
 	 */
 	class CommentsService
 	{
-		/**
-		 *
-		 * @param {DialogLocator} dialogLocator
-		 */
-		constructor(dialogLocator)
+		constructor()
 		{
 			/** @type {MessengerCoreStore} */
 			this.store = serviceLocator.get('core').getStore();
-			this.dialogLocator = dialogLocator;
 		}
 
 		subscribe(dialogId)

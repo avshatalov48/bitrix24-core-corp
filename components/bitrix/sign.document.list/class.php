@@ -15,6 +15,7 @@ use Bitrix\Main\Context;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\ORM\Query\Filter\Condition;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\UserTable;
@@ -143,22 +144,36 @@ class SignUserDocumentListComponent extends SignBaseComponent implements Control
 			SignPermissionDictionary::SIGN_B2E_MY_SAFE_DOCUMENTS
 		);
 
-		if ($permission === CCrmPerms::PERM_SUBDEPARTMENT)
+		$condition = match ($permission)
 		{
-			$filter->whereIn('CREATED_BY_ID', $this->accessController->getUser()->getUserDepartmentMembers(true));
-		}
-		elseif ($permission === CCrmPerms::PERM_DEPARTMENT)
-		{
-			$filter->whereIn('CREATED_BY_ID', $this->accessController->getUser()->getUserDepartmentMembers());
-		}
-		elseif ($permission === CCrmPerms::PERM_SELF)
-		{
-			$filter->where('CREATED_BY_ID', '=', $this->accessController->getUser()->getUserId());
-		}
-		elseif ($permission === null)
-		{
-			$filter->where('CREATED_BY_ID', '=', null);
-		}
+			CCrmPerms::PERM_SUBDEPARTMENT => $this->preparePermissionFilterForMySafe(
+				$this->accessController->getUser()->getUserDepartmentMembers(true)
+			),
+			CCrmPerms::PERM_DEPARTMENT => $this->preparePermissionFilterForMySafe(
+				$this->accessController->getUser()->getUserDepartmentMembers()
+			),
+			CCrmPerms::PERM_SELF => $this->preparePermissionFilterForMySafe(
+				[$this->accessController->getUser()->getUserId()]
+			),
+			CCrmPerms::PERM_ALL => Query::filter(),
+			default => Query::filter()->where('CREATED_BY_ID', null),
+		};
+
+		$filter->where($condition);
+	}
+
+	private function preparePermissionFilterForMySafe(array $userIdList): ConditionTree
+	{
+		return Query::filter()
+			->logic(ConditionTree::LOGIC_OR)
+			->where(
+				Query::filter()
+					->where('DOCUMENT.INITIATED_BY_TYPE', '=', Type\Document\InitiatedByType::EMPLOYEE->toInt())
+					->whereIn('DOCUMENT.REPRESENTATIVE_ID', $userIdList)
+					->where('ENTITY_TYPE', '=', EntityType::COMPANY),
+			)
+			->whereIn('CREATED_BY_ID', $userIdList)
+		;
 	}
 
 	public function filterFilteredItems(array $items): array
@@ -603,7 +618,7 @@ class SignUserDocumentListComponent extends SignBaseComponent implements Control
 
 	private function getSafeMemberCollection(array $requestFilter): MemberCollection
 	{
-		return $this->memberRepository->listB2eMembersWithResultFiles(
+		return $this->memberRepository->listB2eMembersWithResultFilesForMySafe(
 			$this->getFilterForQuery($requestFilter),
 			$this->getLimitForQuery(),
 			$this->getOffsetForQuery()
@@ -845,7 +860,7 @@ class SignUserDocumentListComponent extends SignBaseComponent implements Control
 				$memberData['MEMBER_STATUS'] = self::calculateStatus($member, $document);
 			}
 
-			if (isset($this->arResult['COLUMNS']['dateSign']))
+			if (isset($this->arResult['COLUMNS']['dateSign']) && $this->isMemberSignDateAllowedToShow($member))
 			{
 				$memberData['DATE_SIGN_INFO'] = $this->getDateSignWithInfo($member->dateSigned, $currentCulture);
 			}
@@ -1377,7 +1392,13 @@ class SignUserDocumentListComponent extends SignBaseComponent implements Control
 			if (!isset($this->companyData[$document->entityId]))
 			{
 				$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(CCrmOwnerType::SmartB2eDocument);
-				$companyId = $factory->getItem($document->entityId)->getMycompanyId();
+				$companyId = $factory->getItem($document->entityId)?->getMycompanyId();
+				if ($companyId === null)
+				{
+					$this->companyData[$document->entityId] = null;
+
+					return null;
+				}
 
 				$companyName = MyCompany::getById($companyId)?->name;
 
@@ -1558,5 +1579,15 @@ class SignUserDocumentListComponent extends SignBaseComponent implements Control
 		return MemberStatus::isReadyForSigning($member->status)
 			&& !in_array($document->status, Type\DocumentStatus::getFinalStatuses(), true)
 			;
+	}
+
+	private function isMemberSignDateAllowedToShow(Item\Member $member): bool
+	{
+		if ($member->role === Role::ASSIGNEE && $member->status !== MemberStatus::DONE)
+		{
+			return false;
+		}
+
+		return true;
 	}
 }

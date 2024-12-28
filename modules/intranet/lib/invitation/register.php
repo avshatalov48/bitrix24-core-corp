@@ -2,6 +2,8 @@
 
 namespace Bitrix\Intranet\Invitation;
 
+use Bitrix\Bitrix24\Feature;
+use Bitrix\Bitrix24\Integration\Network\ProfileService;
 use Bitrix\Intranet\CurrentUser;
 use Bitrix\Intranet\Entity\Collection\InvitationCollection;
 use Bitrix\Intranet\Enum\InvitationType;
@@ -78,6 +80,16 @@ class Register
 				: 0 // unlimited
 		);
 
+		$dailyEmailLimit = 0;
+
+		if (
+			Loader::includeModule('bitrix24')
+			&& ((int)Feature::getVariable('intranet_emails_invitation_limit') > 0)
+		)
+		{
+			$dailyEmailLimit = (int)Feature::getVariable('intranet_emails_invitation_limit');
+		}
+
 		$date = new DateTime();
 		$date->add('-1 days');
 
@@ -94,7 +106,21 @@ class Register
 			])->getCount();
 		}
 
+		$pastEmailInvitationNumber = 0;
+		if ($dailyEmailLimit > 0)
+		{
+			$pastEmailInvitationNumber = InvitationTable::getList([
+				'select' => [ 'ID' ],
+				'filter' => [
+					'=INVITATION_TYPE' => \Bitrix\Intranet\Invitation::TYPE_EMAIL,
+					'>DATE_CREATE' => $date,
+				],
+				'count_total' => true,
+			])->getCount();
+		}
+
 		$dailyPhoneLimitExceeded = false;
+		$dailyEmailLimitExceeded = false;
 		foreach ($items as $item)
 		{
 			if (isset($item["PHONE"]))
@@ -125,8 +151,18 @@ class Register
 				$item["EMAIL"] = trim($item["EMAIL"]);
 				if (check_email($item["EMAIL"]))
 				{
-					$emailItems[] = $item;
-					$emailCnt++;
+					if (
+						$dailyEmailLimit <= 0
+						|| ($pastEmailInvitationNumber + $emailCnt) < $dailyEmailLimit
+					)
+					{
+						$emailItems[] = $item;
+						$emailCnt++;
+					}
+					else
+					{
+						$dailyEmailLimitExceeded = true;
+					}
 				}
 				else
 				{
@@ -139,6 +175,11 @@ class Register
 		if ($dailyPhoneLimitExceeded)
 		{
 			$result->addError(new Error(Loc::getMessage("INTRANET_INVITATION_DAILY_PHONE_LIMIT_EXCEEDED")));
+		}
+
+		if ($dailyEmailLimitExceeded)
+		{
+			$result->addError(new Error(Loc::getMessage("INTRANET_INVITATION_DAILY_EMAIL_LIMIT_EXCEEDED")));
 		}
 
 		if ($phoneCnt >= 5)
@@ -193,7 +234,7 @@ class Register
 		$filter = [];
 		if (!empty($phoneList))
 		{
-			$filter["=PHONE_NUMBER"] = $phoneList;
+			$filter["=USER.LOGIN"] = $phoneList;
 		}
 		if (!empty($externalAuthIdList))
 		{
@@ -313,7 +354,7 @@ class Register
 		$filter = [];
 		if (!empty($emailtList))
 		{
-			$filter["=EMAIL"] = $emailtList;
+			$filter["=LOGIN"] = $emailtList;
 		}
 		if (!empty($externalAuthIdList))
 		{
@@ -357,8 +398,8 @@ class Register
 					&& (
 						!$bExtranetInstalled
 						|| ( // both intranet
-							isset($item["UF_DEPARTMENT"])
-							&& !empty($item["UF_DEPARTMENT"])
+							(isset($item["UF_DEPARTMENT"])
+							&& !empty($item["UF_DEPARTMENT"]))
 							&& $arUser->isIntranet()
 						)
 						||
@@ -406,12 +447,13 @@ class Register
 				$user->setGroupIds($groupIds);
 			}
 
+			$user->setConfirmCode(\Bitrix\Main\Security\Random::getString(8));
 			$transferedUserId = \CIntranetInviteDialog::TransferEmailUser($user->getId(), array(
-				"CONFIRM_CODE" => \Bitrix\Main\Security\Random::getString(8),
+				"CONFIRM_CODE" => $user->getConfirmCode(),
 				"GROUP_ID" => $user->getGroupIds(), //$userGroups,
 				"UF_DEPARTMENT" => $user->getDepartmetnsIds(),
-				"SITE_ID" => SITE_ID
-			));
+				"SITE_ID" => SITE_ID,
+			), false);
 
 			if (!$transferedUserId)
 			{
@@ -423,7 +465,6 @@ class Register
 			}
 
 			$transferedUserIds[] = $transferedUserId;
-			$messageFactory->create($user)->sendImmediately();
 		}
 
 		if (!empty($transferedUserIds))
@@ -521,14 +562,17 @@ class Register
 			return $result;
 		}
 
-		$messageFactory = new InviteMessageFactory(Loc::getMessage("INTRANET_INVITATION_INVITE_MESSAGE_TEXT"));
+		$messageFactory = new InviteMessageFactory(
+			Loc::getMessage("INTRANET_INVITATION_INVITE_MESSAGE_TEXT"),
+			$fields['COLLAB_GROUP'] ?? null
+		);
 		EventManager::getInstance()->addEventHandler(
 			'intranet',
 			'onAfterUserRegistration',
-			function (Event $event) use($messageFactory) {
-				$ivitation = $event->getParameter('invitation');
+			function (Event $event) use ($messageFactory) {
+				$invitation = $event->getParameter('invitation');
 				$user = $event->getParameter('user');
-				if (InvitationType::EMAIL === $ivitation->getType())
+				if (InvitationType::EMAIL === $invitation->getType())
 				{
 					$messageFactory->create($user)->sendImmediately();
 				}
@@ -554,6 +598,14 @@ class Register
 		if (!empty($resEmail["TRANSFER_USER"]))
 		{
 			$errors = [];
+			EventManager::getInstance()->addEventHandler(
+				'intranet',
+				'OnAfterTransferEMailUser',
+				function ($arFields) use ($messageFactory) {
+					$user = \Bitrix\Intranet\Entity\User::initByArray($arFields);
+					$messageFactory->create($user)->sendImmediately();
+				}
+			);
 			$transferedUserIds = self::transferUser($resEmail["TRANSFER_USER"], $errors);
 			if (!empty($errors))
 			{
@@ -593,6 +645,21 @@ class Register
 		if (!$result->isSuccess())
 		{
 			return $result;
+		}
+
+		if (isset($fields['COLLAB_GROUP']) && Loader::includeModule('bitrix24'))
+		{
+			$profileService = ProfileService::getInstance();
+
+			// only new users
+			foreach ($emailUserIds as $userId)
+			{
+				$profileService->markUserAsCollaber($userId);
+			}
+			foreach ($phoneUserIds as $userId)
+			{
+				$profileService->markUserAsCollaber($userId);
+			}
 		}
 
 		return $result->setData(array_merge($phoneUserIds, $emailUserIds, $reinvitedUserIds, $transferedUserIds));

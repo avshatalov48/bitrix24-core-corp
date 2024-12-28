@@ -19,6 +19,21 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 	 */
 	class BaseDialogPullHandler extends BasePullHandler
 	{
+		handleChatUpdate(params, extra, command)
+		{
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			this.logger.info(`${this.getClassName()}.handleChatUpdate:`, params, extra, command);
+
+			this.store.dispatch('dialoguesModel/update', {
+				dialogId: params.chat.dialogId,
+				fields: params.chat,
+			}).catch((err) => this.logger.error(`${this.getClassName()}.handleChatUpdate.dialoguesModel/update.catch:`, err));
+		}
+
 		handleReadAllChats(params, extra, command)
 		{
 			if (this.interceptEvent(params, extra, command))
@@ -90,6 +105,8 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 				dialogId: params.dialogId,
 				isMute: params.muted,
 			}).catch((err) => this.logger.error(`${this.getClassName()}.handleChatMuteNotify.sidebarModel/changeMute.catch:`, err));
+
+			Counters.update();
 		}
 
 		handleChatHide(params, extra, command)
@@ -134,26 +151,6 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 				dialogId,
 				fields: { name },
 			}).catch((err) => this.logger.error(`${this.getClassName()}.handleChatRename.dialoguesModel/update.catch:`, err));
-		}
-
-		handleDialogChange(params, extra, command)
-		{
-			if (this.interceptEvent(params, extra, command))
-			{
-				return;
-			}
-
-			this.logger.info(`${this.getClassName()}.handleDialogChange`, params);
-			const dialogModelState = this.store.getters['dialoguesModel/getById'](params.dialogId);
-			if (Type.isUndefined(dialogModelState))
-			{
-				return;
-			}
-
-			const componentCode = dialogModelState.type === DialogType.copilot
-				? ComponentCode.imCopilotMessenger : ComponentCode.imMessenger;
-
-			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: params.dialogId }, componentCode);
 		}
 
 		handleGeneralChatId(params, extra, command)
@@ -261,6 +258,10 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 				// close and delete the comment chat linked to this channel
 				if (chatHelper.isChannel)
 				{
+					void this.store.dispatch('commentModel/deleteChannelCounters', {
+						channelId: params.chatId,
+					});
+
 					const commentChatData = this.store.getters['dialoguesModel/getByParentChatId'](chatData.chatId);
 
 					if (
@@ -418,6 +419,13 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 				return;
 			}
 			this.logger.warn(`${this.getClassName()}.handleChatDelete`, params, extra, command);
+
+			if ([DialogType.openChannel, DialogType.channel].includes(params.type))
+			{
+				void this.store.dispatch('commentModel/deleteChannelCounters', {
+					channelId: params.chatId,
+				});
+			}
 
 			if (params.type === DialogType.comment)
 			{

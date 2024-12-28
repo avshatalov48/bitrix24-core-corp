@@ -93,6 +93,11 @@ class Scoring
 			return $result->addError(new Error('Scoring is not enabled for your tariff'));
 		}
 
+		if (!static::isScoringAvailable())
+		{
+			return $result->addError(new Error("Scoring is not available for this portal"));
+		}
+
 		if ($model->getMlModel())
 		{
 			return $result->addError(new Error('ML model should be deleted prior to starting learning process'));
@@ -238,6 +243,7 @@ class Scoring
 		if (
 			!static::isMlAvailable()
 			|| !static::isEnabled()
+			|| !static::isScoringAvailable()
 			|| !$entityTypeId
 			|| !$entityId
 		)
@@ -328,6 +334,11 @@ class Scoring
 		if (!static::isEnabled())
 		{
 			return $result->addError(new Error('Scoring is not enabled for your tariff'));
+		}
+
+		if (!static::isScoringAvailable())
+		{
+			return $result->addError(new Error("Scoring is not available for this portal"));
 		}
 
 		$scoringModel = static::getScoringModel($entityTypeId, $entityId);
@@ -784,7 +795,12 @@ class Scoring
 	 */
 	public static function tryCreateFirstPrediction($entityTypeId, $entityId, $isImmediate = false): bool
 	{
-		if (!static::isMlAvailable() || !Loader::includeModule('ml') || !static::isEnabled())
+		if (
+			!static::isMlAvailable()
+			|| !Loader::includeModule('ml')
+			|| !static::isEnabled()
+			|| !static::isScoringAvailable()
+		)
 		{
 			return false;
 		}

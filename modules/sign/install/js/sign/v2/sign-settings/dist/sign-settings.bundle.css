@@ -27,7 +27,7 @@
 .sign-settings {
 	display: flex;
 	position: relative;
-	padding: 20px 33px 33px 33px;
+	padding: 28px 21px 28px 24px;
 	min-height: 100vh;
 	box-sizing: border-box;
 	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='544' height='521' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cmask id='a' style='mask-type:alpha' maskUnits='userSpaceOnUse' x='0' y='0' width='544' height='521'%3E%3Cpath fill='%23C4C4C4' d='M0 0h544v521H0z'/%3E%3C/mask%3E%3Cg mask='url(%23a)'%3E%3Cpath opacity='.2' fill-rule='evenodd' clip-rule='evenodd' d='M476.382-152.605c-112.15 0-203.066 90.873-203.066 202.97 0 112.096 90.916 202.968 203.066 202.968s203.066-90.872 203.066-202.969c0-112.096-90.916-202.969-203.066-202.969zm0 54.777c-81.844 0-148.192 66.348-148.192 148.192 0 81.844 66.348 148.192 148.192 148.192 81.844 0 148.192-66.348 148.192-148.192 0-81.844-66.348-148.191-148.192-148.191z' fill='url(%23paint0_angular_2_141)'/%3E%3C/g%3E%3Cdefs%3E%3CradialGradient id='paint0_angular_2_141' cx='0' cy='0' r='1' gradientUnits='userSpaceOnUse' gradientTransform='matrix(175.8681 101.5375 -101.5135 175.82654 476.382 50.364)'%3E%3Cstop stop-color='%232FC6F6'/%3E%3Cstop offset='1' stop-color='%23B7EB81'/%3E%3C/radialGradient%3E%3C/defs%3E%3C/svg%3E") top right no-repeat,
@@ -98,4 +98,8 @@
 	position: relative;
 	height: 100vh;
 	width: 100%;
+}
+
+.sign-settings .sign-preview {
+	max-width: 446px;
 }

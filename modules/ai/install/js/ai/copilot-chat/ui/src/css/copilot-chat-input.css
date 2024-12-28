@@ -1,0 +1,198 @@
+.ai__copilot-chat-input {
+	box-sizing: border-box;
+	position: relative;
+	width: 100%;
+	padding: 8px 8px 7px;
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: flex-end;
+	border-radius: var(--ui-border-radius-sm);
+	background-color: var(--ui-color-background-primary);
+}
+
+.ai__copilot-chat-input.--disabled::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(var(--ui-color-base-02-rgb), 0.5);
+	border-radius: var(--ui-border-radius-sm);
+	cursor: not-allowed;
+	z-index: 2;
+}
+
+.ai__copilot-chat-input_textarea-wrapper {
+	display: flex;
+	flex: 1;
+}
+
+.ai__copilot-chat-input_textarea {
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 32px;
+	max-height: 140px;
+	padding: 7px 0;
+	border: none;
+	outline: none;
+	resize: none;
+	font-family: inherit;
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-3xs);
+}
+
+.ai__copilot-chat-input_textarea::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+.ai__copilot-chat-input_textarea::-webkit-scrollbar-thumb {
+	background: var(--ui-color-base-30);
+	border-radius: 5px;
+}
+
+.ai__copilot-chat-input_textarea::-webkit-scrollbar-thumb:hover {
+	background: var(--ui-color-base-50);
+	border-radius: 5px;
+}
+.ai__copilot-chat-input_textarea::-webkit-scrollbar-track {
+	background-color: var(--ui-color-base-02);
+	border: none;
+	border-radius: 10px;
+}
+.ai__copilot-chat-input_textarea::-webkit-scrollbar-button {
+	display: none;
+}
+
+.ai__copilot-chat-input_textarea {
+	scrollbar-width: thin;
+	scrollbar-color: var(--ui-color-base-30) var(--ui-color-base-02);
+}
+
+.ai__copilot-chat-input_actions {
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+	gap: 4px;
+}
+
+.ai__copilot-chat-input_submit {
+	box-sizing: border-box;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	margin: 0;
+	background-image: url(../../image/send-button-icon.svg);
+	background-size: contain;
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-color: transparent;
+	border: none;
+	outline: none;
+	opacity: 1;
+	cursor: pointer;
+}
+
+.ai__copilot-chat-input_submit:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.ai__copilot-chat-input_submit:hover:not(:disabled),
+.ai__copilot-chat-input_submit:focus:not(:disabled) {
+	opacity: 0.8;
+}
+
+.ai__copilot-chat-input_voice-input {
+	position: relative;
+	padding: 0;
+	width: 24px;
+	height: 24px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background-color: transparent;
+	border: none;
+	outline: none;
+	cursor: pointer;
+	opacity: 0.8;
+}
+
+.ai__copilot-chat-input_voice-input:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
+.ai__copilot-chat-input_voice-input-no-record-icon-wrapper {
+	--ui-icon-set__icon-color: var(--ui-color-copilot-primary);
+
+	position: absolute;
+	width: 24px;
+	height: 24px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+
+.ai__copilot-chat-input_voice-input:hover:not(:disabled) .ai__copilot-chat-input_voice-input-no-record-icon-wrapper,
+.ai__copilot-chat-input_voice-input:focus:not(:disabled) .ai__copilot-chat-input_voice-input-no-record-icon-wrapper {
+	opacity: 0.65;
+}
+
+.ai__copilot-chat-input_voice-input-record-icon-wrapper {
+	position: relative;
+	width: 20px;
+	height: 20px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	border-radius: var(--ui-border-radius-circle);
+	background-color: #DED0F4;
+}
+
+.ai__copilot-chat-input_voice-input:hover:not(:disabled) .ai__copilot-chat-input_voice-input-record-icon-wrapper,
+.ai__copilot-chat-input_voice-input:focus:not(:disabled) .ai__copilot-chat-input_voice-input-record-icon-wrapper {
+	opacity: 0.65;
+}
+
+.ai__copilot-chat-input_voice-input-record-icon-wrapper::after {
+	position: absolute;
+	content: '';
+	width: 20px;
+	height: 20px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	border-radius: var(--ui-border-radius-circle);
+	background-color: #DED0F4;
+	animation: ease-in-out pulse 2s infinite;
+	z-index: -1;
+}
+
+.ai__copilot-chat-input_voice-input-record-icon {
+	width: 8px;
+	height: 8px;
+	border-radius: var(--ui-border-radius-3xs);
+	background-color: var(--ui-color-copilot-primary);
+}
+
+@keyframes pulse {
+	0% {
+		transform: scale(1) rotate(0deg);
+		border-radius: 50%;
+		box-shadow: 0 0 1px rgba(var(--ui-color-copilot-primary-rgb), 0.5);
+	}
+	50% {
+		transform: scale(1.1) rotate(180deg);
+		border-radius: 43%;
+		box-shadow: 0 0 3px rgba(var(--ui-color-copilot-primary-rgb), 0.8);
+	}
+	100% {
+		transform: scale(1) rotate(360deg);
+		border-radius: 50%;
+		box-shadow: 0 0 1px rgba(var(--ui-color-copilot-primary-rgb), 0.5);
+	}
+}
+

@@ -326,6 +326,7 @@
 						redirectUrl: `/company/personal/user/${this.userId}/tasks/scrum/`,
 						showHint: true,
 						title: BX.message('MOBILE_TASKS_TABS_TAB_SCRUM'),
+						analyticsSection: 'tasks',
 					});
 					break;
 
@@ -398,6 +399,8 @@
 						this.updateScrumCounter(scrumCounter);
 						scrumListStorage.set({ counterValue: scrumCounter });
 					}
+
+					this.updateEfficiencyCounter(counters.effective);
 				})
 				.call(false)
 			;

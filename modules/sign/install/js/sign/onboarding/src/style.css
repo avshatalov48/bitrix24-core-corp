@@ -1,0 +1,52 @@
+.sign__b2e_by_employee_onboarding_popup {
+	padding-bottom: 10px !important;
+}
+
+.sign__b2e_by_employee_onboarding_popup-title {
+	margin-bottom: 12px;
+	font-weight: var(--ui-font-weight-bold);
+	font-size: var(--ui-font-size-md);
+}
+
+.sign__b2e_by_employee_onboarding_popup-text {
+	font-size: var(--ui-font-size-sm);
+}
+
+.sign__b2e-onboarding-welcome-popup .popup-window-buttons {
+	text-align: left;
+}
+
+.sign__b2e-onboarding-welcome-popup .sign__onboarding-popup-content_footer {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-xl);
+	margin-top: 16px;
+}
+
+.sign__b2e-onboarding-welcome-popup .sign__onboarding-popup-content_header-title {
+	font-weight: var(--ui-font-weight-medium);
+	font-size: 20px; /* var(--ui-font-size-2xl); */
+	color: var(--ui-color-palette-black-base);
+}
+
+.sign__b2e-onboarding-welcome-popup .sign__onboarding-popup-content_promo-video-wrapper {
+	margin-top: 16px;
+}
+
+.sign__b2e-onboarding-welcome-popup .sign__onboarding-popup-content_header {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	margin-bottom: 10px;
+}
+
+.sign__b2e-onboarding-welcome-popup .sign__onboarding-popup-content_header-icon {
+	width: 32px;
+	height: 32px;
+	margin-right: 8px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	border-radius: var(--ui-border-radius-xs);
+	background-color: var(--ui-color-primary);
+}

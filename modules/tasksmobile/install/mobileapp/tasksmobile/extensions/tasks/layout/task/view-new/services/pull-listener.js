@@ -15,6 +15,7 @@ jn.define('tasks/layout/task/view-new/services/pull-listener', (require, exports
 		selectIsAccomplice,
 		selectIsPureCreator,
 		selectIsAuditor,
+		commentWritten,
 		taskRemoved,
 		tasksRead,
 	} = require('tasks/statemanager/redux/slices/tasks');
@@ -36,6 +37,7 @@ jn.define('tasks/layout/task/view-new/services/pull-listener', (require, exports
 			this.callbacks = options.callbacks;
 
 			this.unsubscribeCallback = null;
+			this.commentsCountToSkip = 0;
 		}
 
 		/**
@@ -46,6 +48,18 @@ jn.define('tasks/layout/task/view-new/services/pull-listener', (require, exports
 			this.unsubscribeCallback = BX.PULL.subscribe({
 				moduleId: 'tasks',
 				callback: this.#executePullEvent.bind(this),
+			});
+
+			BX.addCustomEvent('tasks.task.comments:onCommentWritten', (eventData) => {
+				if (Number(eventData.taskId) === Number(this.#task.id))
+				{
+					dispatch(
+						commentWritten({
+							taskId: this.#task.id,
+						}),
+					);
+					this.commentsCountToSkip += 1;
+				}
 			});
 		}
 
@@ -151,9 +165,20 @@ jn.define('tasks/layout/task/view-new/services/pull-listener', (require, exports
 			});
 		}
 
-		#onTaskCommentAdded()
+		#onTaskCommentAdded(data)
 		{
-			return this.#callEmptyHandler();
+			return new Promise((resolve, reject) => {
+				if (this.commentsCountToSkip > 0 && Number(data.ownerId) === this.userId)
+				{
+					this.commentsCountToSkip -= 1;
+
+					reject();
+
+					return;
+				}
+
+				resolve();
+			});
 		}
 
 		#onCommentsReadAll(data)

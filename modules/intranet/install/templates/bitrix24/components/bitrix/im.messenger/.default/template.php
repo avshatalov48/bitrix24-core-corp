@@ -11,6 +11,8 @@ $v2MessengerEnabled = isset($arResult['MESSENGER_V2']) && $arResult['MESSENGER_V
 $copilotAvailable = $v2MessengerEnabled && isset($arResult['COPILOT_AVAILABLE']) && $arResult['COPILOT_AVAILABLE'] === true;
 $copilotAvailableTab = $v2MessengerEnabled && isset($arResult['COPILOT_AVAILABLE_TAB']) && $arResult['COPILOT_AVAILABLE_TAB'] === true;
 $desktopDownloadLinks = \Bitrix\Intranet\Portal::getInstance()->getSettings()->getDesktopDownloadLinks();
+$isCollaber = \Bitrix\Main\Loader::includeModule('extranet')
+	&& \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById(\Bitrix\Intranet\CurrentUser::get()->getId());
 
 if ($v2MessengerEnabled)
 {
@@ -100,8 +102,10 @@ $this->SetViewTarget("im-fullscreen");
 $this->SetViewTarget("im", 100);
 
 $copilotClass = $copilotAvailableTab ? 'bx-im-bar-with-copilot' : '';
+$openLinesAvailableTab = !$isCollaber;
+$openLinesClass = $openLinesAvailableTab ? 'bx-im-bar-with-ol' : '';
 ?>
-<div class="bx-im-bar bx-im-bar-with-ol <?=$copilotClass?>" id="bx-im-bar">
+<div class="bx-im-bar <?=$openLinesClass?> <?=$copilotClass?>" id="bx-im-bar">
 	<div class="help-block bx-im-border-b" id="bx-help-block" title="<?=GetMessage("AUTH_HELP")?>">
 		<div class="help-icon-border"></div>
 		<div class="help-block-icon"></div>
@@ -135,11 +139,13 @@ $copilotClass = $copilotAvailableTab ? 'bx-im-bar-with-copilot' : '';
 				<div class="bx-im-informer-num"></div>
 			</div>
 		</div>
+		<?php if ($openLinesAvailableTab): ?>
 		<div id="bx-im-bar-ol" class="bx-im-informer bx-im-informer-ol">
 			<div class="bx-im-informer-ol-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_OL');?>">
 				<div class="bx-im-informer-num"></div>
 			</div>
 		</div>
+		<?php endif; ?>
 	</div>
 	<div id="bx-im-bar-search" class="bx-im-search bx-im-border-b" title="<?=GetMessage('IM_MESSENGER_OPEN_SEARCH');?>">
 		<div class="bx-im-informer-num"></div>

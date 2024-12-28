@@ -66,7 +66,6 @@
 			const settings = await this.loadSettingsPromise;
 
 			const isBetaAvailable = settings.IS_BETA_AVAILABLE === true;
-			const isChatM1Enabled = settings.IS_CHAT_M1_ENABLED === true;
 
 			let chatBetaOption = null;
 			if (isBetaAvailable)
@@ -123,7 +122,6 @@
 
 			if (
 				Application.getApiVersion() >= 52
-				&& isChatM1Enabled
 				&& isLocalStorageSupported
 				&& settings.IS_CHAT_LOCAL_STORAGE_AVAILABLE === true
 			)

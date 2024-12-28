@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Integration\Sign\Access\Service;
 
 use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\Security\Role\RolePermission;
+use Bitrix\Crm\Security\Role\Utils\RolePermissionLogContext;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory\SmartDocument;
 use Bitrix\Main\Access\AccessCode;
@@ -60,15 +61,14 @@ abstract class RolePermissionService
 			;
 
 			$smartDocumentCategory = $smartDocumentFactory->getDefaultCategory();
-			$smartB2eDocumentCategory = $smartB2eDocumentFactory->getDefaultCategory();
+			$smartB2eDocumentCategories = $smartB2eDocumentFactory->getCategories();
 
-			if (!$smartDocumentCategory || !$smartB2eDocumentCategory)
+			if (!$smartDocumentCategory || empty($smartB2eDocumentCategories))
 			{
 				continue;
 			}
 
 			$smartDocumentCategoryId = $smartDocumentCategory->getId();
-			$smartB2eDocumentCategoryId = $smartB2eDocumentCategory->getId();
 
 			$contactEntityName = CCrmOwnerType::ContactName;
 			$smartDocumentEntityName = CCrmOwnerType::SmartDocumentName;
@@ -87,17 +87,29 @@ abstract class RolePermissionService
 				$this->getPermissionEntity(CCrmOwnerType::SmartDocument, $smartDocumentCategoryId);
 			$rolePerms[$smartDocumentPermissionEntity] = $preparedValues[$smartDocumentEntityName];
 
-			$smartB2eDocumentPermissionEntity =
-				$this->getPermissionEntity(CCrmOwnerType::SmartB2eDocument, $smartB2eDocumentCategoryId);
-			$rolePerms[$smartB2eDocumentPermissionEntity] = $preparedValues[$smartB2eDocumentEntityName];
+			foreach($smartB2eDocumentCategories as $category)
+			{
+				$smartB2eDocumentCategoryId = $category->getId();
+				if ($smartB2eDocumentCategoryId === null)
+				{
+					continue;
+				}
 
+				$smartB2eDocumentPermissionEntity =
+					$this->getPermissionEntity(CCrmOwnerType::SmartB2eDocument, $smartB2eDocumentCategoryId);
+				$rolePerms[$smartB2eDocumentPermissionEntity] = $preparedValues[$smartB2eDocumentEntityName];
+			}
 			$fields = [
 				'RELATION' => $rolePerms,
 				'NAME' => $roleTitle,
 				'IS_SYSTEM' => 'Y',
 				'GROUP_CODE' => self::ROLE_GROUP_CODE,
 			];
-			
+
+			RolePermissionLogContext::getInstance()->set([
+				'scenario' => 'save sign permissions'
+			]);
+
 			if (!$roleId)
 			{
 				$roleId = (new CCrmRole())->Add($fields);
@@ -107,6 +119,8 @@ abstract class RolePermissionService
 				(new CCrmRole())->Update($roleId, $fields);
 			}
 			$setting['id'] = $roleId;
+
+			RolePermissionLogContext::getInstance()->clear();
 		}
 	}
 
@@ -152,7 +166,7 @@ abstract class RolePermissionService
 
 	/**
 	 * Get Crm role list with SIGN_GROUP_CODE
-	 * @return array
+	 * @return array<array{ID: string, NAME: string, IS_SYSTEM: "Y"|"N", CODE: string, GROUP_CODE: string}>
 	 */
 	public function getRoleList(): array
 	{
@@ -160,19 +174,19 @@ abstract class RolePermissionService
 		{
 			return static::$roles;
 		}
-		
+
 		$roles = [];
 		$roleListResult =  CCrmRole::GetList(
 			['ID' => 'ASC', ],
 			['=GROUP_CODE' => self::ROLE_GROUP_CODE,]
 		);
-		
+
 		while ($role = $roleListResult->Fetch())
 		{
 			$roles[] = $role;
 		}
 		static::$roles = $roles;
-		
+
 		return $roles;
 	}
 

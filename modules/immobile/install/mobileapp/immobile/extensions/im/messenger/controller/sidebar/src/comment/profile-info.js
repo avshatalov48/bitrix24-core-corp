@@ -21,7 +21,7 @@ jn.define('im/messenger/controller/sidebar/comment/profile-info', (require, expo
 			return View(
 				{
 					style: {
-						marginHorizontal: 42.5,
+						justifyContent: 'flex-start',
 						flexDirection: 'row',
 					},
 					onClick: () => this.props.callbacks.onClickInfoBLock(),
@@ -32,7 +32,7 @@ jn.define('im/messenger/controller/sidebar/comment/profile-info', (require, expo
 						fontSize: 14,
 						fontWeight: 400,
 						textStyle: 'normal',
-						textAlign: 'center',
+						textAlign: 'start',
 					},
 					numberOfLines: 1,
 					text: this.props.headData.desc,
@@ -45,7 +45,7 @@ jn.define('im/messenger/controller/sidebar/comment/profile-info', (require, expo
 						fontSize: 14,
 						fontWeight: 400,
 						textStyle: 'normal',
-						textAlign: 'center',
+						textAlign: 'start',
 					},
 					numberOfLines: 1,
 					ellipsize: 'end',

@@ -1,0 +1,30 @@
+<?php
+
+return [
+	'extensions' => [
+		'ui-system/blocks/chips/chip-status',
+		'layout/ui/simple-list/items/base',
+		'ui-system/form/buttons/button',
+		'ui-system/blocks/status-block',
+		'ui-system/layout/card',
+		'ui-system/blocks/icon',
+		'native/filesystem',
+		'ui-system/typography/heading',
+		'ui-system/typography/text',
+		'ui-system/blocks/avatar',
+		'notify-manager',
+		'user/profile',
+		'sign:opener',
+		'sign:download-file',
+		'sign:type/initiated-by-type',
+		'sign:type/action-status',
+		'sign:type/member-status',
+		'sign:type/document-status',
+		'sign:type/member-role',
+		'layout/ui/friendly-date',
+		'utils/date/formats',
+		'utils/date',
+		'tokens',
+		'loc',
+	],
+];

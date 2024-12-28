@@ -4,15 +4,15 @@ namespace Bitrix\Disk;
 
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk;
+use Bitrix\Disk\Realtime\Events\UserRecentsEvent;
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\DuplicateEntryException;
 use Bitrix\Main\Type\DateTime;
 
 final class TrackedObjectManager
 {
-	/** @var  ErrorCollection */
-	protected $errorCollection;
-	/** @var array */
-	protected $dataToInsert = [];
+	protected ErrorCollection $errorCollection;
+	protected array $dataToInsert = [];
 
 	/**
 	 * Constructor RecentlyUsedManager.
@@ -61,12 +61,32 @@ final class TrackedObjectManager
 			return;
 		}
 
-		$this->dataToInsert[] = [
-			'userId' => (int)$userId,
-			'object' => $object,
-			'attachedObject' => null,
-			'canRead' => $canRead,
-		];
+		$userIds = [(int)$userId];
+
+		//experiemental logic to add each file in collab group to every member without any interaction
+		$collabService = new Disk\Integration\Collab\CollabService();
+		$collab = $collabService->getCollabByStorage($object->getStorage());
+		if ($collab)
+		{
+			foreach ($collab->getUserMemberIds() as $memberId)
+			{
+				if ($collabService->isCollaberUserById($memberId))
+				{
+					$userIds[] = (int)$memberId;
+				}
+			}
+		}
+
+		$userIds = array_unique($userIds);
+		foreach ($userIds as $userId)
+		{
+			$this->dataToInsert[] = [
+				'userId' => $userId,
+				'object' => $object,
+				'attachedObject' => null,
+				'canRead' => $canRead,
+			];
+		}
 	}
 
 	public function pushAttachedObject($user, AttachedObject $attachedObject, bool $canRead = null): void
@@ -93,11 +113,6 @@ final class TrackedObjectManager
 			return false;
 		}
 
-		if (!Disk\Document\DocumentHandler::isEditable($object->getExtension()))
-		{
-			return false;
-		}
-
 		$alreadyExists = Disk\Internals\TrackedObjectTable::query()
 			->setSelect(['ID'])
 			->where('USER_ID', $userId)
@@ -105,18 +120,40 @@ final class TrackedObjectManager
 			->fetch()
 		;
 
-		if (!empty($alreadyExists['ID']))
+		if ($alreadyExists && !empty($alreadyExists['ID']))
 		{
 			$this->refresh($object);
 		}
 		else
 		{
-			Disk\Internals\TrackedObjectTable::add([
+			try
+			{
+				Disk\Internals\TrackedObjectTable::add([
 					'USER_ID' => $userId,
 					'OBJECT_ID' => $object->getId(),
 					'REAL_OBJECT_ID' => $object->getRealObjectId(),
-					'ATTACHED_OBJECT_ID' => $attachedObject? $attachedObject->getId() : null,
-			]);
+					'ATTACHED_OBJECT_ID' => $attachedObject?->getId(),
+				]);
+			}
+			catch (DuplicateEntryException)
+			{
+			}
+
+			$event = new UserRecentsEvent(
+				$userId,
+				'newRecentsFile',
+				[
+					'file' => [
+						'id' => (int)$object->getId(),
+						'realObjectId' => (int)$object->getRealObjectId(),
+						'storageId' => (int)$object->getStorageId(),
+					],
+					'attachedObject' => [
+						'id' => $attachedObject?->getId(),
+					],
+				],
+			);
+			$event->sendToUser();
 		}
 
 		return true;

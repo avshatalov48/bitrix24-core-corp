@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\User;
@@ -54,6 +55,15 @@ class TasksMobileCommentsComponent extends CBitrixComponent
 		$this->arResult['GUID'] = $this->arParams['GUID'];
 		$this->arResult['PATH_TEMPLATE_TO_USER_PROFILE'] = $this->arParams['PATH_TEMPLATE_TO_USER_PROFILE'];
 		$this->arResult['IS_TABS_MODE'] = ($this->arParams['IS_TABS_MODE'] !== 'false');
+		$this->arResult['ANALYTICS_LABEL'] = [
+			...$this->arParams['ANALYTICS_LABEL'],
+			'tool' => 'tasks',
+			'category' => 'comments_operations',
+			'type' => 'comment',
+			'event' => 'comment_add',
+			'c_sub_section' => 'task_card',
+			'c_element' => 'send_button',
+		];
 	}
 
 	public function getData(): void
@@ -71,6 +81,11 @@ class TasksMobileCommentsComponent extends CBitrixComponent
 		catch (TasksException $exception)
 		{
 			$this->errors->add($exception->getCode(), $exception->getMessageOrigin());
+			return;
+		}
+		catch (\CTaskAssertException $exception)
+		{
+			$this->errors->add($exception->getCode(), Loc::getMessage('TASKS_TC_NOT_FOUND_OR_NOT_ACCESSIBLE'));
 			return;
 		}
 

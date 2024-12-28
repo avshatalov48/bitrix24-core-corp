@@ -683,7 +683,6 @@ this.BX = this.BX || {};
 	    } = options;
 	    const inputField = (_options$inputField = options.inputField) != null ? _options$inputField : null;
 	    const copilotTextController = (_options$copilotTextC = options.copilotTextController) != null ? _options$copilotTextC : null;
-	    const usePromptLibrary = main_core.Extension.getSettings('ai.copilot.copilot-text-controller').get('isPromptLibraryEnable');
 	    const saveMenuItemText = selectedText ? 'AI_COPILOT_COMMAND_REPLACE' : 'AI_COPILOT_COMMAND_SAVE';
 	    const saveMenuItem = {
 	      text: main_core.Loc.getMessage(saveMenuItemText),
@@ -694,7 +693,7 @@ this.BX = this.BX || {};
 	      }),
 	      notHighlight: true
 	    };
-	    const promptMasterMenuItem = usePromptLibrary && copilotTextController.getLastCommandCode() === 'zero_prompt' && copilotTextController.isReadonly() === false && copilotTextController.getSelectedPromptCodeWithSimpleTemplate() === null ? {
+	    const promptMasterMenuItem = copilotTextController.getLastCommandCode() === 'zero_prompt' && copilotTextController.isReadonly() === false && copilotTextController.getSelectedPromptCodeWithSimpleTemplate() === null ? {
 	      code: 'prompt-master',
 	      text: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_CREATE_PROMPT'),
 	      icon: ui_iconSet_api_core.Main.BOOKMARK_1,
@@ -822,7 +821,6 @@ this.BX = this.BX || {};
 	      systemPrompts,
 	      favouritePrompts
 	    } = options;
-	    const usePromptLibrary = main_core.Extension.getSettings('ai.copilot.copilot-text-controller').get('isPromptLibraryEnable');
 	    const favouriteSectionSeparator = favouritePrompts.length > 0 ? CopilotGeneralMenuItems.getFavouritePromptsSeparatorMenuItem() : null;
 	    const imageMenuItem = addImageMenuItem ? [{
 	      code: 'image',
@@ -833,7 +831,7 @@ this.BX = this.BX || {};
 	      }),
 	      labelText: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_LABEL_NEW')
 	    }] : [];
-	    return [...imageMenuItem, favouriteSectionSeparator, ...getGeneralMenuItemsFromPrompts(favouritePrompts, copilotTextController, true), ...(usePromptLibrary && copilotTextController.isReadonly() === false ? [{
+	    return [...imageMenuItem, favouriteSectionSeparator, ...getGeneralMenuItemsFromPrompts(favouritePrompts, copilotTextController, true), ...(copilotTextController.isReadonly() === false ? [{
 	      code: 'user-prompt-separator',
 	      separator: true,
 	      title: main_core.Loc.getMessage('AI_COPILOT_USER_PROMPTS_MENU_SECTION'),
@@ -848,7 +846,7 @@ this.BX = this.BX || {};
 	        if (BX.SidePanel) {
 	          copilotTextController.getAnalytics().setCategoryPromptSaving();
 	          copilotTextController.getAnalytics().sendEventOpenPromptLibrary();
-	          BX.SidePanel.Instance.open('/bitrix/components/bitrix/ai.prompt.library/templates/.default/template.php', {
+	          BX.SidePanel.Instance.open('/bitrix/components/bitrix/ai.prompt.library.grid/slider.php', {
 	            cacheable: false,
 	            events: {
 	              onCloseStart: () => {
@@ -858,7 +856,7 @@ this.BX = this.BX || {};
 	            }
 	          });
 	        } else {
-	          window.location.href = '/bitrix/components/bitrix/ai.prompt.library/templates/.default/template.php';
+	          window.location.href = '/bitrix/components/bitrix/ai.prompt.library.grid/slider.php';
 	        }
 	      }
 	    }] : []), ...getGeneralMenuItemsFromPrompts(systemPrompts, copilotTextController), ...getSelectedEngineMenuItem(engines, selectedEngineCode, copilotTextController, canEditSettings), {

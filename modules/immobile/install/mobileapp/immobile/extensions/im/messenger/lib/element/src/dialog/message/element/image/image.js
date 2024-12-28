@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/element/image/image', (require, exports, module) => {
 	const { Type } = require('type');
+	const { FileStatus } = require('im/messenger/const');
 
 	class Image
 	{
@@ -32,6 +33,7 @@ jn.define('im/messenger/lib/element/dialog/message/element/image/image', (requir
 				type: this.#getMessageElementType(),
 				url: this.#getUrl(),
 				previewParams: this.#getPreviewParams(),
+				status: this.#getUploadStatus(),
 			};
 		}
 
@@ -53,7 +55,7 @@ jn.define('im/messenger/lib/element/dialog/message/element/image/image', (requir
 				return this.fileModel.id.toString();
 			}
 
-			return '';
+			return this.fileModel.id;
 		}
 
 		/**
@@ -87,6 +89,20 @@ jn.define('im/messenger/lib/element/dialog/message/element/image/image', (requir
 				height: 0,
 				width: 0,
 			};
+		}
+
+		/**
+		 * @return {FileStatus}
+		 */
+		#getUploadStatus()
+		{
+			const status = this.fileModel.status;
+			if ([FileStatus.done, FileStatus.wait].includes(status))
+			{
+				return FileStatus.done;
+			}
+
+			return FileStatus.upload;
 		}
 	}
 

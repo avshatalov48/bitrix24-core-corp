@@ -1,12 +1,12 @@
 (() => {
 	const require = (ext) => jn.require(ext);
 
-	const AppTheme = require('apptheme');
-	const { SyncPage } = require('calendar/sync-page');
 	const { Loc } = require('loc');
-	const { SyncAjax } = require('calendar/ajax');
-	const { CalendarLoader } = require('calendar/layout/ui/loader');
 	const { Color } = require('tokens');
+	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
+
+	const { SyncPage } = require('calendar/sync-page');
+	const { SyncAjax } = require('calendar/ajax');
 
 	class CalendarSyncDetail extends LayoutComponent
 	{
@@ -32,7 +32,7 @@
 
 			if (this.state.loading)
 			{
-				this.loadData();
+				void this.loadData();
 			}
 		}
 
@@ -72,7 +72,7 @@
 						backgroundColor: Color.bgNavigation.toHex(),
 					},
 				},
-				this.state.loading ? CalendarLoader() : this.renderContent(),
+				this.state.loading ? this.renderLoader() : this.renderContent(),
 			);
 		}
 
@@ -81,6 +81,23 @@
 			return new SyncPage({
 				syncInfo: this.state.syncInfo,
 			});
+		}
+
+		renderLoader()
+		{
+			return View(
+				{
+					style: {
+						height: device.screen.height - 90,
+						width: device.screen.width,
+						alignItems: 'center',
+						justifyContent: 'center',
+					},
+				},
+				new LoadingScreenComponent({
+					backgroundColor: Color.bgContentPrimary.toHex(),
+				}),
+			);
 		}
 	}
 

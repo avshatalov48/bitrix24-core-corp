@@ -6,6 +6,7 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 	const { Loc } = require('loc');
 
 	const { RecentItem } = require('im/messenger/lib/element/recent/item/base');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { merge } = require('utils/object');
@@ -48,7 +49,8 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 		createSubtitle()
 		{
 			const item = this.getModelItem();
-			const message = item.message;
+			const message = this.getItemMessage();
+
 			const messageText = this.getMessageText(item);
 			if (!Type.isPlainObject(message) || message.id === 0)
 			{
@@ -58,7 +60,7 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 			}
 
 			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](message.senderId);
-			const isYourMessage = item.message.senderId === serviceLocator.get('core').getUserId();
+			const isYourMessage = message.senderId === serviceLocator.get('core').getUserId();
 			if (isYourMessage)
 			{
 				this.subtitle = Loc.getMessage('IMMOBILE_ELEMENT_RECENT_YOU_WROTE') + messageText;
@@ -66,7 +68,7 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 				return this;
 			}
 
-			const hasAuthor = item.message.senderId;
+			const hasAuthor = message.senderId;
 			if (!hasAuthor)
 			{
 				this.subtitle = messageText;
@@ -95,7 +97,7 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 			const dialog = this.getDialogItem();
 			if (dialog)
 			{
-				this.color = dialog.color;
+				this.color = ChatAvatar.createFromDialogId(dialog.dialogId).getColor();
 			}
 
 			return this;

@@ -5,7 +5,7 @@ namespace Bitrix\Crm\Controller\Settings;
 use Bitrix\Crm\Controller\Base;
 use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Integration\AI\AIManager;
-use Bitrix\Crm\Integration\AI\Operation\AutostartSettings;
+use Bitrix\Crm\Integration\AI\Operation\Autostart\FillFieldsSettings;
 use Bitrix\Main\Engine\ActionFilter\ContentType;
 use Bitrix\Main\Engine\ActionFilter\Scope;
 use Bitrix\Main\Error;
@@ -22,7 +22,7 @@ class AI extends Base
 		$filters[] = new ContentType([ContentType::JSON]); // its pain to work with empty arrays, nulls and booleans otherwise
 
 		$filters[] = new class extends \Bitrix\Main\Engine\ActionFilter\Base {
-			public function onBeforeAction(Event $event)
+			public function onBeforeAction(Event $event): ?EventResult
 			{
 				if (!AIManager::isAiCallProcessingEnabled())
 				{
@@ -40,7 +40,7 @@ class AI extends Base
 
 	public function getAutostartSettingsAction(int $entityTypeId, ?int $categoryId = null): ?array
 	{
-		if (!AutostartSettings::checkReadPermissions($entityTypeId, $categoryId))
+		if (!FillFieldsSettings::checkReadPermissions($entityTypeId, $categoryId))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 
@@ -48,20 +48,20 @@ class AI extends Base
 		}
 
 		return [
-			'settings' => AutostartSettings::get($entityTypeId, $categoryId),
+			'settings' => FillFieldsSettings::get($entityTypeId, $categoryId),
 		];
 	}
 
 	public function saveAutostartSettingsAction(array $settings, int $entityTypeId, ?int $categoryId = null): ?array
 	{
-		if (!AutostartSettings::checkSavePermissions($entityTypeId, $categoryId))
+		if (!FillFieldsSettings::checkSavePermissions($entityTypeId, $categoryId))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 
 			return null;
 		}
 
-		$settingsObject = AutostartSettings::fromJson($settings);
+		$settingsObject = FillFieldsSettings::fromJson($settings);
 		if (!$settingsObject)
 		{
 			$this->addError(new Error('settings has invalid structure', ErrorCode::INVALID_ARG_VALUE));
@@ -69,7 +69,7 @@ class AI extends Base
 			return null;
 		}
 
-		$result = AutostartSettings::save($settingsObject, $entityTypeId, $categoryId);
+		$result = FillFieldsSettings::save($settingsObject, $entityTypeId, $categoryId);
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($result->getErrors());

@@ -144,7 +144,7 @@ class Company extends Tool
 	public function getSubgroupSettingsPath(): array
 	{
 		return [
-			'structure' => '/company/vis_structure.php',
+			'structure' => '/hr/structure/',
 			'employees' => '/company/',
 			'worktime' => '/timeman/timeman.php',
 			'knowledge_base' => '/kb/',
@@ -245,6 +245,6 @@ class Company extends Tool
 
 	public function getSettingsPath(): ?string
 	{
-		return '/company/vis_structure.php';
+		return '/hr/structure/';
 	}
 }

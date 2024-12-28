@@ -1,0 +1,2 @@
+<?php
+$MESS['AI_SERVICE_GRID_HIDDEN_ROLE_TITLE'] = 'Скрыто';

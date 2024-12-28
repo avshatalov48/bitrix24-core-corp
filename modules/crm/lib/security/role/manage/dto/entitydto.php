@@ -12,6 +12,9 @@ class EntityDTO
 		private array $fields,
 		/** @var Permission[] */
 		private array $permissions,
+		private ?string $description = null,
+		private ?string $iconCode = null,
+		private ?string $iconColor = null,
 	)
 	{
 	}
@@ -29,6 +32,21 @@ class EntityDTO
 	public function fields(): array
 	{
 		return $this->fields;
+	}
+
+	public function description(): ?string
+	{
+		return $this->description;
+	}
+
+	public function iconCode(): ?string
+	{
+		return $this->iconCode;
+	}
+
+	public function iconColor(): ?string
+	{
+		return $this->iconColor;
 	}
 
 	/**

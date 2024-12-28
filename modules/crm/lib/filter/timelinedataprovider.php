@@ -68,6 +68,14 @@ class TimelineDataProvider extends Main\Filter\DataProvider
 					'default' => false,
 					'partial' => true
 				)
+			),
+			'ACTIVITY' => $this->createField(
+				'ACTIVITY',
+				[
+					'name' => Loc::getMessage('CRM_TIMELINE_FILTER_ACTIVITY'),
+					'type' => 'entity_selector',
+					'partial' => true
+				]
 			)
 		);
 
@@ -131,6 +139,32 @@ class TimelineDataProvider extends Main\Filter\DataProvider
 				)
 			);
 		}
+		elseif ($fieldID === 'ACTIVITY')
+		{
+			return [
+				'params' => [
+					'contextCode' => 'CRM',
+					'multiple' => 'N',
+					'dialogOptions' => [
+						'context' => 'CRM_TIMELINE_FILTER_ACTIVITY',
+						'height' => 200,
+						'entities' => [
+							[
+								'id' => 'activity',
+								'dynamicLoad' => true,
+								'dynamicSearch' => true,
+								'options' => [
+									'entityId' => $this->getSettings()->getOwnerId(),
+									'entityTypeId' => $this->getSettings()->getOwnerTypeId(),
+								],
+							]
+						],
+						'dropdownMode' => false,
+					],
+				],
+			];
+		}
+
 		return null;
 	}
 
@@ -230,6 +264,13 @@ class TimelineDataProvider extends Main\Filter\DataProvider
 					)
 				);
 			}
+		}
+
+		$operationInfo = Crm\UI\Filter\EntityHandler::findFieldOperation('ACTIVITY', $filter);
+		if (is_array($operationInfo))
+		{
+			$query->where('ASSOCIATED_ENTITY_ID', (int)($filter['ACTIVITY'] ?? 0));
+			$query->where('ASSOCIATED_ENTITY_TYPE_ID', \CCrmOwnerType::Activity);
 		}
 	}
 }

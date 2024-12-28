@@ -7,6 +7,7 @@ class Tag
 	private const UNIQUE_CASES = [
 		'TASK_EXPIRED',
 		'TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION',
+		'TASKS_ADDED_TO_FLOW_WITH_HIMSELF_DISTRIBUTION',
 	];
 	private int $userId  = 0;
 	private string $moduleName = 'TASKS';

@@ -103,4 +103,17 @@ class LogTable extends Main\Entity\DataManager
 			new Main\Entity\Validator\Length(null, 50),
 		);
 	}
+
+	public static function deleteByTaskId(int $taskId): void
+	{
+		if ($taskId <= 0)
+		{
+			return;
+		}
+
+		$dbConnection = Main\Application::getConnection();
+		$tableName = static::getTableName();
+
+		$dbConnection->query("DELETE FROM {$tableName} WHERE TASK_ID = {$taskId}");
+	}
 }

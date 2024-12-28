@@ -602,7 +602,7 @@ class Recent
 	 */
 	public static function recentAvailable(int $sessionId): bool
 	{
-		if ($session = SessionTable::getByPrimary($sessionId)->fetch())
+		if ($session = SessionTable::getByPrimary($sessionId, ['select' => ['STATUS']])->fetch())
 		{
 			if ($session['STATUS'] < Session::STATUS_ANSWER)
 			{

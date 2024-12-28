@@ -1,4 +1,4 @@
-import { ajax, AjaxError, AjaxResponse, Dom, Loc, Type, Uri } from 'main.core';
+import { ajax, AjaxError, AjaxResponse, Dom, Event, Loc, Type, Uri } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { EditForm } from 'tasks.flow.edit-form';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
@@ -8,12 +8,16 @@ import { TeamPopup } from 'tasks.flow.team-popup';
 import { TaskQueue } from 'tasks.flow.task-queue';
 import { Clue } from 'tasks.clue';
 import { Manual } from 'ui.manual';
+import { UI } from 'ui.notification';
+
+import { QueueAnimation } from './queue-animation/queue-animation';
 
 type Params = {
 	gridId: number,
 	currentUserId: number,
 	currentUrl: string,
 	isAhaShownOnMyTasksColumn: boolean,
+	isAhaShownCopilotAdvice: boolean,
 	flowLimitCode: string,
 };
 
@@ -35,12 +39,18 @@ export class Grid
 
 	#grid: BX.Main.grid;
 
-	#clueMyTasks: Clue = null;
-	#rowIdForMyTasksAhaMoment = null;
+	#instantPullHandlers: Object;
+	#delayedPullFlowHandlers: Object;
+	#delayedPullTasksHandlers: Object;
 
+	#clueMyTasks: ?Clue = null;
+	#clueCopilotAdvice: ?Clue = null;
+	#rowIdForMyTasksAhaMoment = null;
 	#notificationList: Set = new Set();
 
 	#addedFlowId: ?number = null;
+
+	#loadItemsDelay: number = 500;
 
 	constructor(params: Params)
 	{
@@ -48,16 +58,17 @@ export class Grid
 
 		this.#grid = BX.Main.gridManager.getById(this.#params.gridId).instance;
 
-		this.instantPullHandlers = {
+		this.#instantPullHandlers = {
 			comment_read_all: this.#commentReadAll,
 			flow_add: this.#onFlowAdd,
-			flow_update: this.#onFlowUpdate,
 			flow_delete: this.#onFlowDelete,
 		};
 
-		this.delayedPullFlowHandlers = {};
+		this.#delayedPullFlowHandlers = {
+			flow_update: this.#onFlowUpdate,
+		};
 
-		this.delayedPullTasksHandlers = {
+		this.#delayedPullTasksHandlers = {
 			comment_add: this.#onFlowUpdate,
 			task_add: this.#onFlowUpdate,
 			task_update: this.#onFlowUpdate,
@@ -70,7 +81,10 @@ export class Grid
 
 		this.#clearAnalyticsParams();
 		this.#activateHint();
+		this.#colorPinnedRows();
 		this.#showFlowCreationWizard();
+
+		this.#showAhaCopilotAdvice();
 	}
 
 	activateFlow(flowId: number): void
@@ -84,6 +98,40 @@ export class Grid
 				},
 			},
 		).then(() => {});
+	}
+
+	pinFlow(flowId: number, skipNotify: boolean = false): void
+	{
+		// eslint-disable-next-line promise/catch-or-return
+		ajax.runAction(
+			'tasks.flow.Flow.pin',
+			{
+				data: {
+					flowId,
+				},
+			},
+		).then((response) => {
+			if (!skipNotify)
+			{
+				const code = response.data ? 'TASKS_FLOW_LIST_FLOW_PINNED' : 'TASKS_FLOW_LIST_FLOW_UNPINNED';
+
+				UI.Notification.Center.notify({
+					content: BX.Loc.getMessage(code),
+					actions: [{
+						title: BX.Loc.getMessage('TASKS_FLOW_LIST_FLOW_PIN_CANCEL'),
+						events: {
+							click: (event, baloon) => {
+								this.pinFlow(flowId, true);
+
+								baloon.close();
+							},
+						},
+					}],
+				});
+			}
+
+			this.#updateRow(flowId);
+		});
 	}
 
 	removeFlow(flowId: number)
@@ -191,6 +239,57 @@ export class Grid
 		this.#grid.removeRow(rowId);
 	}
 
+	#moveRowToFirstPosition(rowId: number): Promise
+	{
+		return new Promise((resolve) => {
+			const inputRow = this.#getRowById(rowId);
+
+			const firstRow = (
+				this.#isPinned(inputRow.getNode())
+					? this.#getFirstPinnedRow()
+					: this.#getFirstUnpinnedRow()
+			);
+
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dom-methods
+			this.#grid.getRows().insertBefore(rowId, firstRow.getId());
+
+			// eslint-disable-next-line promise/catch-or-return
+			this.#highlightRow(rowId).then(() => {
+				resolve();
+			});
+		});
+	}
+
+	#highlightRow(rowId: number): Promise
+	{
+		return new Promise((resolve) => {
+			const rowNode: HTMLElement = this.#getRowById(rowId).getNode();
+
+			Event.bindOnce(rowNode, 'animationend', () => {
+				resolve();
+
+				Dom.removeClass(rowNode, 'tasks-flow__list-flow-highlighted');
+			});
+			Dom.addClass(rowNode, 'tasks-flow__list-flow-highlighted');
+		});
+	}
+
+	#isFirstRow(rowId: number): boolean
+	{
+		const inputRow = this.#getRowById(rowId);
+
+		if (this.#isPinned(inputRow.getNode()))
+		{
+			const row = this.#getFirstPinnedRow();
+
+			return parseInt(row?.getId(), 10) === rowId;
+		}
+
+		const row = this.#getFirstUnpinnedRow();
+
+		return parseInt(row?.getId(), 10) === rowId;
+	}
+
 	#isRowExist(rowId: number): boolean
 	{
 		return this.#getRowById(rowId) !== null;
@@ -206,9 +305,22 @@ export class Grid
 		return this.#grid.getRows().getById(rowId);
 	}
 
-	#getFirstRowId(): ?number
+	#getFirstPinnedRow(): BX.Grid.Row
 	{
-		return this.#grid.getRows().getFirst().getId();
+		const rows = this.#grid.getRows().getBodyChild();
+
+		return rows.find((row) => {
+			return this.#isPinned(row.getNode());
+		});
+	}
+
+	#getFirstUnpinnedRow(): BX.Grid.Row
+	{
+		const rows = this.#grid.getRows().getBodyChild();
+
+		return rows.find((row) => {
+			return !this.#isPinned(row.getNode());
+		});
 	}
 
 	#getCell(rowId: number, columnId: string): ?HTMLElement
@@ -219,9 +331,11 @@ export class Grid
 	#subscribeToPull(): void
 	{
 		new QueueManager({
-			loadItemsDelay: 300,
 			moduleId: 'tasks',
 			userId: this.#params.currentUserId,
+			config: {
+				loadItemsDelay: this.#loadItemsDelay,
+			},
 			additionalData: {},
 			events: {
 				onBeforePull: (event) => {
@@ -250,6 +364,7 @@ export class Grid
 		EventEmitter.subscribe('Grid::updated', () => {
 			this.#activateHint();
 			this.#highlightAddedFlow();
+			this.#colorPinnedRows();
 		});
 	}
 
@@ -257,11 +372,11 @@ export class Grid
 	{
 		const { pullData: { command, params } } = event.data;
 
-		if (this.instantPullHandlers[command])
+		if (this.#instantPullHandlers[command])
 		{
 			const flowId = this.#recognizeFlowId(params);
 
-			this.instantPullHandlers[command].apply(this, [params, flowId]);
+			this.#instantPullHandlers[command].apply(this, [params, flowId]);
 		}
 	}
 
@@ -269,7 +384,7 @@ export class Grid
 	{
 		const { pullData: { command, params }, promises } = event.data;
 
-		if (Object.keys(this.delayedPullFlowHandlers).includes(command))
+		if (Object.keys(this.#delayedPullFlowHandlers).includes(command))
 		{
 			const flowId = this.#recognizeFlowId(params);
 
@@ -287,7 +402,7 @@ export class Grid
 			}
 		}
 
-		if (Object.keys(this.delayedPullTasksHandlers).includes(command))
+		if (Object.keys(this.#delayedPullTasksHandlers).includes(command))
 		{
 			const taskId = this.#recognizeTaskId(params);
 
@@ -318,7 +433,9 @@ export class Grid
 
 		if (taskItems.length === 0)
 		{
-			return this.#executeQueue(flowItems, this.delayedPullFlowHandlers);
+			await this.#executeQueueAnimation(flowItems);
+
+			return this.#executeQueue(flowItems, this.#delayedPullFlowHandlers);
 		}
 
 		let mapIds: {} = await this.#getMapIds(this.#getEntityIds(taskItems));
@@ -340,10 +457,65 @@ export class Grid
 
 		const allItems = [...flowItems, ...convertedTaskItems];
 
+		await this.#executeQueueAnimation(allItems);
+
 		return this.#executeQueue(
 			this.#uniqueItems(allItems),
-			{ ...this.delayedPullFlowHandlers, ...this.delayedPullTasksHandlers },
+			{ ...this.#delayedPullFlowHandlers, ...this.#delayedPullTasksHandlers },
 		);
+	}
+
+	async #executeQueueAnimation(items: Array<PullItem>): Promise
+	{
+		const processItemAnimation = async () => {
+			for (const item of items)
+			{
+				// eslint-disable-next-line no-await-in-loop
+				await this.#processItemAnimation(item);
+			}
+		};
+
+		await processItemAnimation();
+
+		return Promise.resolve();
+	}
+
+	#processItemAnimation(item: PullItem)
+	{
+		const { data: { action, actionParams, id } } = item;
+
+		return new Promise((resolve, reject) => {
+			if (
+				action === 'flow_update'
+				&& ('activity' in actionParams)
+				&& this.#isRowExist(id)
+			)
+			{
+				if (this.#isFirstPage() && !this.#isFirstRow(id))
+				{
+					// eslint-disable-next-line promise/catch-or-return
+					this.#moveRowToFirstPosition(id).then(() => {
+						(new QueueAnimation(this.#grid, actionParams))
+							.start()
+							.then(() => resolve())
+							.catch(() => resolve())
+						;
+					});
+				}
+				else
+				{
+					(new QueueAnimation(this.#grid, actionParams))
+						.start()
+						.then(() => resolve())
+						.catch(() => resolve())
+					;
+				}
+			}
+			else
+			{
+				resolve();
+			}
+		});
 	}
 
 	#getMapIds(taskIds: Array): Promise
@@ -351,13 +523,13 @@ export class Grid
 		return new Promise((resolve) => {
 			// eslint-disable-next-line promise/catch-or-return
 			ajax.runComponentAction(
-					'bitrix:tasks.flow.list',
-					'getMapIds',
-					{
-						mode: 'class',
-						data: { taskIds },
-					},
-				)
+				'bitrix:tasks.flow.list',
+				'getMapIds',
+				{
+					mode: 'class',
+					data: { taskIds },
+				},
+			)
 				.then((response: AjaxResponse) => {
 					resolve(Type.isArray(response.data) ? {} : response.data);
 				})
@@ -511,7 +683,7 @@ export class Grid
 		return pullItems.filter((item: PullItem) => {
 			const { data: { action } } = item;
 
-			return Object.keys(this.delayedPullFlowHandlers).includes(action);
+			return Object.keys(this.#delayedPullFlowHandlers).includes(action);
 		});
 	}
 
@@ -520,7 +692,7 @@ export class Grid
 		return pullItems.filter((item: PullItem) => {
 			const { data: { action } } = item;
 
-			return Object.keys(this.delayedPullTasksHandlers).includes(action);
+			return Object.keys(this.#delayedPullTasksHandlers).includes(action);
 		});
 	}
 
@@ -602,6 +774,39 @@ export class Grid
 		}
 	}
 
+	#showAhaCopilotAdvice(): void
+	{
+		if (this.#params.isAhaShownCopilotAdvice)
+		{
+			return;
+		}
+
+		const firstRow: ?BX.Grid.Row = this.#grid.getRows().getBodyChild()[0];
+
+		if (!firstRow)
+		{
+			return;
+		}
+
+		const bindElement = this.#getBindElementForAhaOnCell(
+			firstRow.getId(),
+			'EFFICIENCY',
+			'.tasks-flow__efficiency-copilot-icon-wrapper',
+		);
+
+		if (bindElement)
+		{
+			this.#clueCopilotAdvice = new Clue({
+				id: 'flow_copilot_advice',
+				autoSave: true,
+			});
+
+			this.#clueCopilotAdvice.show(Clue.SPOT.FLOW_COPILOT_ADVICE, bindElement);
+
+			this.#params.isAhaShownCopilotAdvice = true;
+		}
+	}
+
 	#getBindElementForAhaOnCell(rowId: number, columnId: string, selector: string): ?HTMLElement
 	{
 		return this.#getCell(rowId, columnId)?.querySelector(selector);
@@ -635,9 +840,7 @@ export class Grid
 	{
 		if (this.#addedFlowId !== null && this.#isRowExist(this.#addedFlowId))
 		{
-			const rowNode: HTMLElement = this.#getRowById(this.#addedFlowId).getNode();
-
-			Dom.addClass(rowNode, 'tasks-flow__list-flow-highlighted');
+			this.#highlightRow(this.#addedFlowId);
 
 			this.#addedFlowId = null;
 		}
@@ -666,5 +869,29 @@ export class Grid
 
 			EditForm.createInstance({ guideFlow: 'Y' });
 		}
+	}
+
+	#colorPinnedRows()
+	{
+		const rows = this.#grid.getRows().getRows();
+		rows.forEach((row) => {
+			const node = row.getNode();
+
+			if (this.#isPinned(node))
+			{
+				Dom.addClass(node, 'tasks-flow_list_row_pinned');
+			}
+			else
+			{
+				Dom.removeClass(node, 'tasks-flow_list_row_pinned');
+			}
+		});
+	}
+
+	#isPinned(node): boolean
+	{
+		return Type.isDomNode(
+			node.querySelector('.main-grid-cell-content-action-pin.main-grid-cell-content-action-active'),
+		);
 	}
 }

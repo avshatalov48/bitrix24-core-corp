@@ -17,6 +17,7 @@ use Bitrix\Tasks\Flow\Control\Middleware\Implementation\UserMiddleware;
 use Bitrix\Tasks\Flow\Control\Observer\Search;
 use Bitrix\Tasks\Flow\Control\Observer\UpdateObserverInterface;
 use Bitrix\Tasks\Flow\Control\Observer\ResponsibleQueue;
+use Bitrix\Tasks\Flow\Control\Observer\ResponsibleList;
 use Bitrix\Tasks\Flow\Control\Observer\Option;
 use Bitrix\Tasks\Flow\Control\Observer\Member;
 use Bitrix\Tasks\Flow\Control\Observer\Robot;
@@ -200,6 +201,7 @@ class UpdateCommandHandler extends CommandHandler
 		parent::init();
 		$this->mapper = new FlowCommandMapper();
 
+		$this->addRequiredObserver(new ResponsibleList\UpdateObserver());
 		$this->addRequiredObserver(new ResponsibleQueue\UpdateObserver());
 		$this->addRequiredObserver(new Option\UpdateObserver());
 		$this->addRequiredObserver(new Member\UpdateObserver());

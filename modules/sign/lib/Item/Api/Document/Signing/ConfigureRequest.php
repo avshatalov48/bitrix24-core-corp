@@ -25,6 +25,9 @@ class ConfigureRequest implements Contract\Item
 		public ?string $titleWithoutNumber = null,
 		public ?string $scheme = null,
 		public string $externalDateCreate = '',
+		public ?string $dateFormat = null,
+		public ?string $dateTimeFormat = null,
+		public ?int $weekStart = null,
 	)
 	{}
 

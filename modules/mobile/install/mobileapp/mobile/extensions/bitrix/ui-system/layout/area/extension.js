@@ -15,7 +15,7 @@ jn.define('ui-system/layout/area', (require, exports, module) => {
 	 * @param {object=} [props.excludePaddingSide={}]
 	 * @param {boolean} [props.excludePaddingSide.bottom=false]
 	 * @param {boolean} [props.excludePaddingSide.horizontal=false]
-	 * @param {View} children
+	 * @param {...*} children
 	 * @return Area
 	 */
 	function Area(props = {}, ...children)

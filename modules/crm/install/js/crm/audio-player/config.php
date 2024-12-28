@@ -8,10 +8,9 @@ return [
 	'css' => 'dist/audio-player.bundle.css',
 	'js' => 'dist/audio-player.bundle.js',
 	'rel' => [
-		'main.popup',
-		'ui.vue3',
 		'ui.vue3.components.audioplayer',
 		'main.core',
+		'ui.vue3',
 	],
 	'skip_core' => false,
 ];

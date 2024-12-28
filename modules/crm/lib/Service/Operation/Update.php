@@ -55,7 +55,11 @@ class Update extends Operation
 
 	protected function save(): Result
 	{
-		return $this->item->save($this->isCheckFieldsEnabled() && $this->isCheckRequiredUserFields());
+		return $this->item->save(
+			$this->isCheckFieldsEnabled()
+			&& $this->isCheckRequiredUserFields()
+			&& $this->isCheckRequiredByAttributeUserFields()
+		);
 	}
 
 	public function isItemChanged(): bool
@@ -104,6 +108,14 @@ class Update extends Operation
 		}
 
 		return true;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function isCheckRequiredByAttributeUserFields(): bool
+	{
+		return !$this->wasItemMovedToFailStage();
 	}
 
 	protected function updateDuplicates(): void
@@ -181,10 +193,39 @@ class Update extends Operation
 			return false;
 		}
 
-		$previousStageId = (string)$this->getItemBeforeSave()->remindActual(Item::FIELD_NAME_STAGE_ID);
+		if ($this->getItemBeforeSave())
+		{
+			$previousStageId = (string)$this->getItemBeforeSave()->remindActual(Item::FIELD_NAME_STAGE_ID);
+		}
+		else
+		{
+			$previousStageId = (string)$this->getItem()->remindActual(Item::FIELD_NAME_STAGE_ID);
+		}
+
 		$currentStageId = (string)$this->getItem()->getStageId();
 
 		return ComparerBase::isMovedToFinalStage($this->getItem()->getEntityTypeId(), $previousStageId, $currentStageId);
+	}
+
+	private function wasItemMovedToFailStage(): bool
+	{
+		if (!$this->getItem()->hasField(Item::FIELD_NAME_STAGE_ID))
+		{
+			return false;
+		}
+
+		if ($this->getItemBeforeSave())
+		{
+			$previousStageId = (string)$this->getItemBeforeSave()->remindActual(Item::FIELD_NAME_STAGE_ID);
+		}
+		else
+		{
+			$previousStageId = (string)$this->getItem()->remindActual(Item::FIELD_NAME_STAGE_ID);
+		}
+
+		$currentStageId = (string)$this->getItem()->getStageId();
+
+		return ComparerBase::isMovedToFailStage($this->getItem()->getEntityTypeId(), $previousStageId, $currentStageId);
 	}
 
 	protected function registerStatistics(Statistics\OperationFacade $statisticsFacade): Result

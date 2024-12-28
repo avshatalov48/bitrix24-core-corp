@@ -19,6 +19,7 @@ return [
 		'market.uninstall-store',
 		'main.core.events',
 		'main.popup',
+		'ui.ears',
 		'ui.design-tokens',
 		'ui.vue3.pinia',
 	],

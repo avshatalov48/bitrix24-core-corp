@@ -74,7 +74,6 @@ jn.define('qrauth/crm', (require, exports, module) => {
 							flexDirection: 'row',
 							width: 38,
 							marginRight: 12,
-							flexWrap: 'nowrap',
 						},
 					},
 					View({
@@ -100,7 +99,6 @@ jn.define('qrauth/crm', (require, exports, module) => {
 				{
 					style: {
 						flexDirection: 'row',
-						flexWrap: 'nowrap',
 					},
 				},
 

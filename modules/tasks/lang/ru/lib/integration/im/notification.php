@@ -206,10 +206,14 @@ $MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE_N"] = "Задача #TASK_URL
 $MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE_PUSH_N"] = "Задача #TASK_TITLE# почти просрочена.";
 $MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_SAME_CREATOR_MESSAGE_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# завтра в #DEADLINE_TIME# будет просрочена.";
 $MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_SAME_CREATOR_MESSAGE_PUSH_N"] = "Задача #TASK_TITLE# почти просрочена.";
+$MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE_HIDE_EFFICIENCY_PART_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# завтра в #DEADLINE_TIME# будет просрочена.";
+$MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE_HIDE_EFFICIENCY_PART_PUSH_N"] = "Задача #TASK_TITLE# почти просрочена.";
 $MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_MESSAGE_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# просрочена, ваша эффективность снижена. Завершите задачу или передвиньте срок.";
 $MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_MESSAGE_PUSH_N"] = "Задача #TASK_TITLE# просрочена.";
 $MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_SAME_CREATOR_MESSAGE_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# просрочена.";
 $MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_SAME_CREATOR_MESSAGE_PUSH_N"] = "Задача #TASK_TITLE# просрочена.";
+$MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_MESSAGE_HIDE_EFFICIENCY_PART_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# просрочена.";
+$MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_MESSAGE_HIDE_EFFICIENCY_PART_PUSH_N"] = "Задача #TASK_TITLE# просрочена.";
 $MESS["TASKS_TASK_EXPIRED_CREATOR_MESSAGE_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# просрочена.";
 $MESS["TASKS_TASK_EXPIRED_CREATOR_MESSAGE_PUSH_N"] = "Задача #TASK_TITLE# просрочена.";
 $MESS["TASKS_TASK_EXPIRED_AUDITOR_MESSAGE_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# просрочена.";
@@ -249,7 +253,11 @@ $MESS["TASKS_REGULAR_TASK_STARTED_N"] = "Наступило время выпо�
 $MESS["TASKS_REGULAR_TASK_STARTED_M"] = "Наступило время выполнения регулярной задачи #TASK_URL_BEGIN##TASK_TITLE##URL_END# #BR# #TASK_EXTRA#";
 $MESS["TASKS_REGULAR_TASK_STARTED_F"] = "Наступило время выполнения регулярной задачи #TASK_URL_BEGIN##TASK_TITLE##URL_END# #BR# #TASK_EXTRA#";
 
-$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_N"] = "В поток [url=/company/personal/user/#RECEPIENT_ID#/tasks/flow/?apply_filter=Y&ID_numsel=exact&ID_from=#FLOW_ID#]#FLOW_NAME#[/url] добавлена задача #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Назначьте сотрудника, который будет её выполнять";
-$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_M"] = "В поток [url=/company/personal/user/#RECEPIENT_ID#/tasks/flow/?apply_filter=Y&ID_numsel=exact&ID_from=#FLOW_ID#]#FLOW_NAME#[/url] добавлена задача #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Назначьте сотрудника, который будет её выполнять";
-$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_F"] = "В поток [url=/company/personal/user/#RECEPIENT_ID#/tasks/flow/?apply_filter=Y&ID_numsel=exact&ID_from=#FLOW_ID#]#FLOW_NAME#[/url] добавлена задача #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Назначьте сотрудника, который будет её выполнять";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_N"] = "В поток [url=#FLOW_URL#]#FLOW_NAME#[/url] добавлена задача #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Назначьте сотрудника, который будет её выполнять";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_M"] = "В поток [url=#FLOW_URL#]#FLOW_NAME#[/url] добавлена задача #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Назначьте сотрудника, который будет её выполнять";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_F"] = "В поток [url=#FLOW_URL#]#FLOW_NAME#[/url] добавлена задача #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Назначьте сотрудника, который будет её выполнять";
+
+$MESS["TASKS_ADDED_TO_FLOW_WITH_HIMSELF_DISTRIBUTION_N"] = "В поток [url=#FLOW_URL#]#FLOW_NAME#[/url] добавлена задача #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Возьмите задачу в работу";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_HIMSELF_DISTRIBUTION_M"] = "В поток [url=#FLOW_URL#]#FLOW_NAME#[/url] добавлена задача #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Возьмите задачу в работу";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_HIMSELF_DISTRIBUTION_F"] = "В поток [url=#FLOW_URL#]#FLOW_NAME#[/url] добавлена задача #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Возьмите задачу в работу";
 ?>

@@ -1,0 +1,23 @@
+.ai__copilot-chat-message-menu {
+	--ui-icon-set__icon-color: var(--ui-color-on-primary);
+	width: 22px;
+	height: 22px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	opacity: var(--ui-opacity-none);
+	border-radius: var(--ui-border-radius-circle);
+	border: none;
+	background-color: rgba(var(--ui-color-base-70-rgb), 0.2);
+	cursor: pointer;
+	transition: 0.2s ease-in-out opacity;
+}
+
+.ai__copilot-chat-message-menu.--open {
+	opacity: 1 !important;
+	background-color: rgba(var(--ui-color-base-70-rgb), 0.4);
+}
+
+.ai__copilot-chat-message-menu:hover {
+	background-color: rgba(var(--ui-color-base-70-rgb), 0.4);
+}

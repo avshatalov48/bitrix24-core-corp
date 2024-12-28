@@ -6,5 +6,6 @@ return [
 		'loc',
 		'tokens',
 		'sign:dialog/banners/template',
+		'sign:type/initiated-by-type',
 	],
 ];

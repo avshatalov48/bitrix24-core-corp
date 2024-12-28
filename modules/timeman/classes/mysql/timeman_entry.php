@@ -188,10 +188,12 @@ FROM
 	{
 		global $DB;
 
+		$userId = (int)$USER_ID;
+
 		$sqlGetLastId = '
 			SELECT ID
 			FROM b_timeman_entries
-			WHERE USER_ID = \''.(int)$USER_ID.'\'
+			WHERE USER_ID = \''.$userId.'\'
 			ORDER BY ID DESC
 			LIMIT 1
 		';

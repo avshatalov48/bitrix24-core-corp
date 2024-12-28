@@ -5,7 +5,6 @@ namespace Bitrix\HumanResources\Contract\Repository;
 use Bitrix\HumanResources\Enum\DepthLevel;
 use Bitrix\HumanResources\Exception\CreationFailedException;
 use Bitrix\HumanResources\Item;
-use Bitrix\HumanResources\Item\Collection\NodeCollection;
 use Bitrix\HumanResources\Enum\NodeActiveFilter;
 use Bitrix\HumanResources\Item\Node;
 use Bitrix\Main\ArgumentException;
@@ -17,6 +16,7 @@ interface NodeRepository
 {
 	public const NODE_CACHE_KEY = 'structure/node/%d';
 	public const NODE_ENTITY_CACHE_KEY = 'structure/node/entity/%d';
+	public const NODE_ENTITY_RESTRICTION_CACHE = 'structure/node/restriction';
 	/**
 	 * @param \Bitrix\HumanResources\Item\Node $node
 	 *
@@ -45,15 +45,16 @@ interface NodeRepository
 	public function getChildOf(
 		Item\Node $node,
 		DepthLevel|int $depthLevel = DepthLevel::FIRST,
-		NodeActiveFilter $activeFilter = NodeActiveFilter::ALL,
+		NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE,
 	): Item\Collection\NodeCollection;
 
 	public function getChildOfNodeCollection(
 		Item\Collection\NodeCollection $nodeCollection,
-		DepthLevel|int $depthLevel = DepthLevel::FIRST
+		DepthLevel|int $depthLevel = DepthLevel::FIRST,
+		NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE,
 	): Item\Collection\NodeCollection;
 
-	public function findAllByUserId(int $userId, NodeActiveFilter $activeFilter = NodeActiveFilter::ALL): Item\Collection\NodeCollection;
+	public function findAllByUserId(int $userId, NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE): Item\Collection\NodeCollection;
 
 	/**
 	 * @param int $nodeId
@@ -67,6 +68,18 @@ interface NodeRepository
 	public function getById(int $nodeId, bool $needDepth = false): ?Item\Node;
 
 	/**
+	 * returns node data with depth level
+	 *
+	 * @param int $nodeId
+	 *
+	 * @return Node|null
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public function getByIdWithDepth(int $nodeId): ?Item\Node;
+
+	/**
 	 * Retrieves all child ids of a given node id.
 	 *
 	 * @param int $nodeId
@@ -75,7 +88,7 @@ interface NodeRepository
 	 */
 	public function getAllChildIdsByNodeId(int $nodeId): array;
 
-	public function findAllByUserIdAndRoleId(int $userId, int $roleId, NodeActiveFilter $activeFilter = NodeActiveFilter::ALL): Item\Collection\NodeCollection;
+	public function findAllByUserIdAndRoleId(int $userId, int $roleId, NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE): Item\Collection\NodeCollection;
 
 	/**
 	 * Retrieve a node by access code.
@@ -97,7 +110,7 @@ interface NodeRepository
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 */
-	public function findAllByXmlId(string $xmlId, NodeActiveFilter $activeFilter = NodeActiveFilter::ALL): Item\Collection\NodeCollection;
+	public function findAllByXmlId(string $xmlId, NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE): Item\Collection\NodeCollection;
 
 	/**
 	 * Retrieves the root node by structure id.
@@ -122,8 +135,8 @@ interface NodeRepository
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function getAllByStructureId(int $structureId, NodeActiveFilter $activeFilter = NodeActiveFilter::ALL): Item\Collection\NodeCollection;
-	public function getAllPagedByStructureId(int $structureId, int $limit = 10, int $offset = 0, NodeActiveFilter $activeFilter = NodeActiveFilter::ALL): Item\Collection\NodeCollection;
+	public function getAllByStructureId(int $structureId, NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE): Item\Collection\NodeCollection;
+	public function getAllPagedByStructureId(int $structureId, int $limit = 10, int $offset = 0, NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE): Item\Collection\NodeCollection;
 
 	public function hasChild(Item\Node $node): bool;
 
@@ -158,5 +171,16 @@ interface NodeRepository
 		?int $parentId = null,
 		DepthLevel|int $depth = DepthLevel::FULL,
 		bool $strict = false,
+		NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE,
+	): Item\Collection\NodeCollection;
+
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
+	public function findAllByIds(
+		array $departmentIds,
+		NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE,
 	): Item\Collection\NodeCollection;
 }

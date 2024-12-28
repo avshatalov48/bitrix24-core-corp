@@ -2,42 +2,108 @@
 
 namespace Bitrix\CalendarMobile\Controller;
 
-use Bitrix\Calendar\Integration\Bitrix24\FeatureDictionary;
-use Bitrix\Calendar\Integration\Bitrix24Manager;
+use Bitrix\Calendar\Controller\CalendarEntryAjax;
+use Bitrix\Calendar\Core\Event\Tools\Dictionary;
 use Bitrix\Calendar\Ui\CalendarFilter;
+use Bitrix\Calendar\Ui\CountersManager;
 use Bitrix\CalendarMobile\AhaMoments\Factory;
+use Bitrix\CalendarMobile\Integration;
+use Bitrix\CalendarMobile\Provider\BaseInfoProvider;
+use Bitrix\CalendarMobile\Provider\EditFormProvider;
+use Bitrix\CalendarMobile\Provider\ViewFormProvider;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use Bitrix\Main\Engine\Controller;
-use Bitrix\Main\Loader;
-
-Loader::requireModule('calendar');
+use Bitrix\Main\Engine\UrlManager;
+use Bitrix\Main\Error;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
+use Bitrix\Mobile\Dto\InvalidDtoException;
 
 class Event extends Controller
 {
-	public function loadMainAction(): array
-	{
-		$userSettings = \Bitrix\Calendar\UserSettings::get();
-		$syncInfo = $this->getSyncInfo();
-		$isSyncHasError = $this->isSyncHasError($syncInfo);
+	private int $userId;
 
+	protected function init(): void
+	{
+		parent::init();
+
+		$this->userId = \CCalendar::GetUserId();
+	}
+
+	public function configureActions(): array
+	{
 		return [
-			'sharingInfo' => $this->getSharingInfo(),
-			'sectionInfo' => $this->getSectionInfo(),
-			'locationInfo' => $this->getLocationInfo(),
-			'syncInfo' => $syncInfo,
-			'ahaMoments' => [
-				'syncCalendar' => Factory::getInstance()->getAhaInstance('SyncCalendar')?->canShow(),
-				'syncError' => $isSyncHasError && Factory::getInstance()->getAhaInstance('SyncError')?->canShow(),
+			'loadMain' => [
+				'+prefilters' => [
+					new CloseSession(),
+				],
 			],
-			'filterPresets' => CalendarFilter::getPresets('user'),
-			'settings' => [
-				'firstWeekday' => $this->getFirstWeekDay(),
-				'showDeclined' => isset($userSettings['showDeclined']) && $userSettings['showDeclined'],
-				'showWeekNumbers' => isset($userSettings['showWeekNumbers']) && $userSettings['showWeekNumbers'] === 'Y',
+			'getList' => [
+				'+prefilters' => [
+					new CloseSession(),
+				],
+			],
+			'getSectionList' => [
+				'+prefilters' => [
+					new CloseSession(),
+				],
+			],
+			'getViewFormConfig' => [
+				'+prefilters' => [
+					new CloseSession(),
+				],
+			],
+			'getEditFormConfig' => [
+				'+prefilters' => [
+					new CloseSession(),
+				],
+			],
+			'getIcsLink' => [
+				'+prefilters' => [
+					new CloseSession(),
+				],
 			],
 		];
 	}
 
-	public function getListAction()
+	/**
+	 * @param int|null $ownerId
+	 * @param string|null $calType
+	 *
+	 * @return array
+	 * @throws ArgumentException
+	 * @throws InvalidDtoException
+	 * @throws LoaderException
+	 * @throws ObjectPropertyException
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 */
+	public function loadMainAction(?int $ownerId = null, ?string $calType = null): array
+	{
+		if ($ownerId === null || $calType === null)
+		{
+			$ownerId = $this->userId;
+			$calType = Dictionary::CALENDAR_TYPE['user'];
+		}
+
+		$baseInfoProvider = new BaseInfoProvider($this->userId, $ownerId, $calType);
+
+		$result = $baseInfoProvider->getBaseInfoConfig();
+		if (!$result->isSuccess())
+		{
+			$this->addError($result->getError());
+		}
+
+		return $result->getData();
+	}
+
+	/**
+	 * @return array[]
+	 */
+	public function getListAction(): array
 	{
 		$request = $this->getRequest();
 		$yearFrom = (int)$request->getPost('yearFrom');
@@ -62,57 +128,93 @@ class Event extends Controller
 		];
 	}
 
+	/**
+	 * @return array
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
 	public function getFilteredListAction(): array
 	{
 		$request = $this->getRequest();
 		$search = (string)$request->getPost('search');
 		$preset = $request->getPost('preset');
+		$ownerId = (int)$request->getPost('ownerId');
+		$calType = (string)$request->getPost('calType');
 
-		$userId = \CCalendar::GetUserId();
-		$ownerId = $userId;
-		$calendarType = 'user';
-
-		$sectionList = \CCalendar::getSectionList([
-			'CAL_TYPE' => $calendarType,
-			'OWNER_ID' => $ownerId,
-			'checkPermissions' => true,
-			'getPermissions' => true,
-		]);
-		$sectionIds = [];
-		foreach ($sectionList as $section)
+		if (empty($ownerId) || empty($calType))
 		{
-			$sectionIds[] = (int)$section['ID'];
+			$ownerId = $this->userId;
+			$calType = Dictionary::CALENDAR_TYPE['user'];
 		}
 
 		$presetId = null;
+		if (!empty($preset) && is_array($preset))
+		{
+			$presetId = $preset['id'] ?? null;
+		}
+
+		$sectionIds = CalendarFilter::getSectionsForFilter($calType, $presetId, $ownerId, $this->userId);
+
 		$fields = [
 			'SECTION_ID' => $sectionIds,
 		];
 
-		if (!empty($preset) && is_array($preset))
+		if (!empty($preset['fields']))
 		{
-			if (!empty($preset['id']))
-			{
-				$presetId = $preset['id'];
-			}
-
-			if (!empty($preset['fields']))
-			{
-				$fields = array_merge($fields, $preset['fields']);
-			}
+			$fields = array_merge($fields, $preset['fields']);
 		}
 
 		$searchFields = [
 			'search' => $search,
 			'presetId' => $presetId,
-			'fields' => $fields
+			'fields' => $fields,
 		];
 
-		$searchResult = CalendarFilter::getFilterUserData($calendarType, $userId, $ownerId, $searchFields);
+		if ($calType === Dictionary::CALENDAR_TYPE['group'])
+		{
+			$searchResult = CalendarFilter::getFilterCompanyData(
+				$calType,
+				$this->userId,
+				$ownerId,
+				$searchFields
+			);
+		}
+		else
+		{
+			$searchResult = CalendarFilter::getFilterUserData(
+				$calType,
+				$this->userId,
+				$ownerId,
+				$searchFields
+			);
+		}
 
 		return [
 			'events' => $searchResult['entries'],
 		];
+	}
+
+	/**
+	 * @param int $parentId
+	 * @param int $ownerId
+	 * @param string $calType
+	 *
+	 * @return array
+	 */
+	public function getEventForContextAction(int $parentId, int $ownerId, string $calType): array
+	{
+		 return \CCalendarEvent::GetList([
+			'arFilter' => [
+				'PARENT_ID' => $parentId,
+				'OWNER_ID' => $ownerId,
+				'CAL_TYPE' => $calType,
+			],
+			'parseRecursion' => false,
+			'fetchAttendees' => true,
+			'userId' => $this->userId,
+			'setDefaultLimit' => false,
+		]);
 	}
 
 	public function setAhaViewedAction(string $name): void
@@ -120,68 +222,251 @@ class Event extends Controller
 		Factory::getInstance()->getAhaInstance($name)?->setViewed();
 	}
 
-	public function getSectionListAction(): array
+	/**
+	 * @param int|null $ownerId
+	 * @param string|null $calType
+	 *
+	 * @return array[]
+	 * @throws LoaderException
+	 */
+	public function getSectionListAction(?int $ownerId = null, ?string $calType = null): array
 	{
+		if ($ownerId === null || $calType === null)
+		{
+			$ownerId = $this->userId;
+			$calType = Dictionary::CALENDAR_TYPE['user'];
+		}
+
+		$baseInfoProvider = new BaseInfoProvider($this->userId, $ownerId, $calType);
+
+		if (!$baseInfoProvider->checkPermissions())
+		{
+			$this->addError(new Error('Access denied'));
+
+			return [
+				'sections' => [],
+			];
+		}
+
 		return [
-			'sections' => $this->getSectionInfo(),
+			'sections' => $baseInfoProvider->getSectionInfo(),
 		];
 	}
 
 	/**
-	 * @return \Bitrix\CalendarMobile\Dto\Sharing|null
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\SystemException
-	 * @throws \Bitrix\Mobile\Dto\InvalidDtoException
+	 * @return array
 	 */
-	private function getSharingInfo(): ?\Bitrix\CalendarMobile\Dto\Sharing
+	public function setMeetingStatusAction(): array
 	{
-		$sharing = new \Bitrix\Calendar\Sharing\Sharing(\CCalendar::GetCurUserId());
+		$request = $this->getRequest();
+		$eventId = (int)$request->getPost('eventId');
+		$parentId = (int)$request->getPost('parentId');
+		$status = $request->getPost('status');
+		$currentDateFrom = $request->getPost('currentDateFrom');
+		$recurrentMode = $request->getPost('recursionMode');
 
-		return \Bitrix\CalendarMobile\Dto\Sharing::make([
-			'isEnabled' => !empty($sharing->getActiveLinkShortUrl()),
-			'isRestriction' => !Bitrix24Manager::isFeatureEnabled(FeatureDictionary::CALENDAR_SHARING),
-			'isPromo' => Bitrix24Manager::isPromoFeatureEnabled(FeatureDictionary::CALENDAR_SHARING),
-			'shortUrl' => $sharing->getActiveLinkShortUrl(),
-			'userInfo' => $sharing->getUserInfo(),
-			'settings' => $sharing->getLinkSettings(),
-			'options' => $sharing->getOptions(),
+		\CCalendarEvent::SetMeetingStatusEx([
+			'attendeeId' => $this->userId,
+			'eventId' => $eventId,
+			'parentId' => $parentId,
+			'status' => $status,
+			'reccurentMode' => $recurrentMode,
+			'currentDateFrom' => $currentDateFrom,
 		]);
+
+		\CCalendar::UpdateCounter([$this->userId]);
+
+		return [
+			'counters' => CountersManager::getValues($this->userId),
+		];
 	}
 
-	private function getSectionInfo(): array
+	/**
+	 * @param int $eventId
+	 * @param string $recursionMode
+	 * @return array|true[]
+	 * @throws \Bitrix\Main\Access\Exception\UnknownActionException
+	 */
+	public function deleteEventAction(int $eventId, string $recursionMode): array
 	{
-		return \CCalendar::GetSectionList([
-			'CAL_TYPE' => 'user',
-			'OWNER_ID' => \CCalendar::GetCurUserId(),
-			'checkPermissions' => true,
-			'getPermissions' => true,
-		]);
+		$result = \CCalendar::deleteEvent(
+			$eventId,
+			true,
+			[
+				'recursionMode' => $recursionMode,
+			]
+		);
+
+		if ($result !== true)
+		{
+			$this->addError(new Error('Error while delete event'));
+		}
+
+		return [
+			'result' => $result,
+		];
 	}
 
-	private function getFirstWeekDay(): int
+	/**
+	 * @param int $eventId
+	 *
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	public function getIcsLinkAction(int $eventId): array
 	{
-		$weekDayIndex = [
-			'SU' => 1,
-			'MO' => 2,
-			'TU' => 3,
-			'WE' => 4,
-			'TH' => 5,
-			'FR' => 6,
-			'SA' => 7,
+		$connectionPath = '/bitrix/services/main/ajax.php';
+		$siteId = \CSite::GetDefSite();
+
+		$hash = \CUser::GetHitAuthHash($connectionPath, $this->userId, $siteId);
+		if (!$hash)
+		{
+			$hash = \CUser::AddHitAuthHash($connectionPath, $this->userId, $siteId, 7200);
+		}
+
+		if (!$hash)
+		{
+			$this->addError(new Error('Error while trying to receive link', 404));
+
+			return [];
+		}
+
+		$link = UrlManager::getInstance()->createByController(
+			new CalendarEntryAjax(),
+			'getIcsFileMobile',
+			[
+				'hitHash' => $hash,
+				'eventId' => $eventId,
+			],
+			true
+		);
+
+		return [
+			'link' => $link,
+		];
+	}
+
+	/**
+	 * @param int $eventId
+	 * @param string $eventDate
+	 * @param int $timezoneOffset
+	 * @param array $userIds
+	 * @param string $requestUsers
+	 * @param string $requestCollabs
+	 * @param string $getEventById
+	 *
+	 * @return array
+	 * @throws LoaderException
+	 * @throws SystemException
+	 */
+	public function getViewFormConfigAction(
+		int $eventId,
+		string $eventDate = '',
+		int $timezoneOffset = 0,
+		array $userIds = [],
+		string $requestUsers = 'Y',
+		string $requestCollabs = 'N',
+		string $getEventById = 'N',
+	): array
+	{
+		$viewFormProvider = new ViewFormProvider(
+			$this->userId,
+			$eventId,
+			$eventDate,
+			$timezoneOffset,
+			$userIds,
+			$requestUsers === 'Y',
+			$requestCollabs === 'Y',
+			$getEventById === 'Y',
+		);
+
+		$result = $viewFormProvider->getViewFormConfig();
+
+		if (!$result->isSuccess())
+		{
+			$this->addError($result->getError());
+		}
+
+		return $result->getData();
+	}
+
+	/**
+	 * @param int $eventId
+	 * @param int $parentId
+	 *
+	 * @return array
+	 * @throws LoaderException
+	 * @throws SystemException
+	 */
+	public function getFilesForViewFormAction(int $eventId, int $parentId): array
+	{
+		$event = [
+			'ID' => $eventId,
+			'PARENT_ID' => $parentId,
 		];
 
-		$weekDay = \CCalendar::GetWeekStart();
+		$userFields = \CCalendarEvent::GetEventUserFields($event);
+		$files = !empty($userFields['UF_WEBDAV_CAL_EVENT']) ? $userFields['UF_WEBDAV_CAL_EVENT']['VALUE'] : [];
+		$fileIds = is_array($files) ? array_map(static fn ($fileId) => (int)$fileId, $files) : [];
 
-		return $weekDayIndex[$weekDay];
+		return [
+			'files' => (new Integration\Disk\Attachment($this->userId))->getAttachments($fileIds),
+		];
 	}
 
-	private function getLocationInfo(): ?array
+	/**
+	 * @param int $ownerId
+	 * @param string $calType
+	 * @param array $userIds
+	 *
+	 * @return array
+	 * @throws ArgumentException
+	 * @throws LoaderException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public function getEditFormConfigAction(int $ownerId, string $calType, array $userIds = []): array
 	{
-		return \Bitrix\Calendar\Rooms\Manager::getRoomsList();
+		$editFormProvider = new EditFormProvider($this->userId, $ownerId, $calType, $userIds);
+		$result = $editFormProvider->getEditFormConfig();
+
+		if (!$result->isSuccess())
+		{
+			$this->addError($result->getError());
+		}
+
+		return $result->getData();
 	}
 
-	private function getEvents(array $sections, array $limits)
+	/**
+	 * @param int $eventId
+	 *
+	 * @return array
+	 * @throws ArgumentException
+	 * @throws LoaderException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public function getEventChatIdAction(int $eventId): array
+	{
+		$chatService = new Integration\IM\ChatService($this->userId);
+		$result = $chatService->getEventChatId($eventId);
+
+		if (!$result->isSuccess())
+		{
+			$this->addError($result->getError());
+		}
+
+		return $result->getData();
+	}
+
+	/**
+	 * @param array $sections
+	 * @param array $limits
+	 * @return array
+	 */
+	private function getEvents(array $sections, array $limits): array
 	{
 		return \CCalendarEvent::GetList([
 			'arFilter' => [
@@ -189,44 +474,10 @@ class Event extends Controller
 				'FROM_LIMIT' => $limits['from'],
 				'TO_LIMIT' => $limits['to'],
 			],
-			'parseRecursion' => true,
+			'parseRecursion' => false,
 			'fetchAttendees' => true,
-			'userId' => \CCalendar::GetCurUserId(),
+			'userId' => $this->userId,
 			'setDefaultLimit' => false,
 		]);
-	}
-
-	private function getSyncInfo(): array
-	{
-		$userId = \CCalendar::GetCurUserId();
-		$calculateTimestamp = \CCalendarSync::getTimestampWithUserOffset($userId);
-		$syncInfo = \CCalendarSync::getNewSyncItemsInfo($userId, $calculateTimestamp);
-
-		$defaultSyncData = static function($name){
-			return [
-				'type' => $name,
-				'active' => false,
-				'connected' => false,
-			];
-		};
-
-		return [
-			'google' => !empty($syncInfo['google']) ? $syncInfo['google'] : $defaultSyncData('google'),
-			'office365' => !empty($syncInfo['office365']) ? $syncInfo['office365'] : $defaultSyncData('office365'),
-			'icloud' => !empty($syncInfo['icloud']) ? $syncInfo['icloud'] : $defaultSyncData('icloud'),
-		];
-	}
-
-	private function isSyncHasError($syncInfo): bool
-	{
-		foreach ($syncInfo as $item)
-		{
-			if ($item['connected'] === true && $item['status'] === false)
-			{
-				return true;
-			}
-		}
-
-		return false;
 	}
 }

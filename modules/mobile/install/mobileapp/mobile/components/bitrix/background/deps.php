@@ -36,5 +36,8 @@ return [
 
 		'background/notifications/open-desktop',
 		'background/notifications/open-helpdesk',
+		'background/notifications/promotion',
+
+		'calendar:background',
 	],
 ];

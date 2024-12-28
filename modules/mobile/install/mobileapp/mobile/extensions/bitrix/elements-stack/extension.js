@@ -9,6 +9,8 @@ jn.define('elements-stack', (require, exports, module) => {
 	const { Text } = require('ui-system/typography/text');
 	const { ElementsStackDirection } = require('elements-stack/src/direction-enum');
 
+	const isAndroid = Application.getPlatform() === 'android';
+
 	const toArray = (value) => {
 		if (!value)
 		{
@@ -25,6 +27,7 @@ jn.define('elements-stack', (require, exports, module) => {
 	 * @param {string} [props.direction]
 	 * @param {Indent} [props.offset]
 	 * @param {Indent} [props.indent]
+	 * @param {Indent} [props.externalIndent]
 	 * @param {Component} [props.radius]
 	 * @param {Color} [props.textColor]
 	 * @param {number} [props.textSize]
@@ -45,7 +48,8 @@ jn.define('elements-stack', (require, exports, module) => {
 			showRest = true,
 			direction,
 			offset = Indent.S,
-			indent = Indent.XS2,
+			indent,
+			externalIndent,
 			maxElements = 999,
 			radius = Component.elementAccentCorner,
 			backgroundColor = Color.bgContentPrimary,
@@ -66,9 +70,14 @@ jn.define('elements-stack', (require, exports, module) => {
 		const calcOffset = offsetWidth > 0 ? offsetWidth + indentWidth : 0;
 		const borderRadius = radius?.toNumber() || 0;
 
+		const countElements = elements.length;
+		const isShowRestText = showRest && countElements > maxElements;
+		const countVisibleElements = Math.min(countElements, maxElements) + (isShowRestText ? 1 : 0);
+
 		const getDirectionStyle = ({ index }) => {
 			const isFirst = index === 0;
-			const isLast = index === elements.length - 1;
+			const isLast = index + 1 === countVisibleElements;
+
 			const directionStyle = {
 				borderWidth: indentWidth,
 				borderColor: backgroundColor.toHex(),
@@ -84,6 +93,16 @@ jn.define('elements-stack', (require, exports, module) => {
 			{
 				directionStyle.marginRight = isLast ? 0 : -calcOffset;
 				directionStyle.zIndex = index;
+			}
+
+			if (isFirst && externalIndent)
+			{
+				directionStyle.marginLeft = -(externalIndent / 2);
+
+				if (isAndroid)
+				{
+					directionStyle.marginLeft += 1;
+				}
 			}
 
 			return directionStyle;
@@ -107,20 +126,27 @@ jn.define('elements-stack', (require, exports, module) => {
 		}).filter(Boolean);
 
 		const minRestTextMargin = 4;
-		const isShowRestText = showRest && elements.length > maxElements;
 		const marginLeft = isRight ? minRestTextMargin : calcOffset + minRestTextMargin;
-		const countRestElements = elements.length - maxElements;
 
-		const restElement = Type.isFunction(restView)
-			? elementWrapper(restView(countRestElements), maxElements + 1)
-			: Text({
-				size: textSize,
-				text: `+${countRestElements}`,
-				style: {
-					color: Color.resolve(textColor, Color.base1).toHex(),
-					marginLeft,
-				},
-			});
+		const renderRestElement = () => {
+			if (!isShowRestText)
+			{
+				return null;
+			}
+
+			const countRestElements = countElements - maxElements;
+
+			return Type.isFunction(restView)
+				? elementWrapper(restView(countRestElements), maxElements)
+				: Text({
+					size: textSize,
+					text: `+${countRestElements}`,
+					style: {
+						color: Color.resolve(textColor, Color.base1).toHex(),
+						marginLeft,
+					},
+				});
+		};
 
 		const mainProps = mergeImmutable(
 			restProps,
@@ -135,7 +161,7 @@ jn.define('elements-stack', (require, exports, module) => {
 		return View(
 			mainProps,
 			...getRenderElements(),
-			isShowRestText && restElement,
+			renderRestElement(),
 		);
 	}
 
@@ -154,6 +180,7 @@ jn.define('elements-stack', (require, exports, module) => {
 		direction: PropTypes.instanceOf(ElementsStackDirection),
 		offset: PropTypes.oneOfType([PropTypes.number, PropTypes.instanceOf(Indent)]),
 		indent: PropTypes.oneOfType([PropTypes.number, PropTypes.instanceOf(Indent)]),
+		externalIndent: PropTypes.oneOfType([PropTypes.number, PropTypes.instanceOf(Indent)]),
 		textColor: PropTypes.instanceOf(Color),
 		radius: PropTypes.object,
 		textSize: PropTypes.number,

@@ -1,5 +1,5 @@
 import { post } from '../request';
-import type { Template } from './type';
+import type { Template, TemplateField, FieldValue } from './type';
 
 export type { Template };
 
@@ -10,13 +10,31 @@ export class TemplateApi
 		return post('sign.api_v1.b2e.document.template.list');
 	}
 
-	completeTemplate(templateUid: string): Promise<void>
+	completeTemplate(templateUid: string): Promise<{ template: { id: number } }>
 	{
 		return post('sign.api_v1.b2e.document.template.complete', { uid: templateUid });
 	}
 
-	send(templateUid: string): Promise<{ employeeMember: { id: number, uid: string } }>
+	send(templateUid: string, fields: FieldValue[]): Promise<{
+		employeeMember: { id: number, uid: string },
+		document: { id: number }
+	}>
 	{
-		return post('sign.api_v1.b2e.document.template.send', { uid: templateUid });
+		return post('sign.api_v1.b2e.document.template.send', { uid: templateUid, fields });
+	}
+
+	getFields(templateUid: string): Promise<{ fields: TemplateField[] }>
+	{
+		return post('sign.api_v1.b2e.document.template.getFields', { uid: templateUid });
+	}
+
+	exportBlank(templateId: number): Promise<{json: string, filename: string}>
+	{
+		return post('sign.api_v1.b2e.document.template.export', { templateId }, true);
+	}
+
+	importBlank(serializedTemplate: string): Promise<void>
+	{
+		return post('sign.api_v1.b2e.document.template.import', { serializedTemplate }, true);
 	}
 }

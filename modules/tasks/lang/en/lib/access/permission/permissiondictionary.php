@@ -2,7 +2,7 @@
 $MESS["HINT_TASK_CLOSED_DEPARTMENT_EDIT"] = "User can edit available completed tasks in own department";
 $MESS["HINT_TASK_CLOSED_NON_DEPARTMENT_EDIT"] = "User can edit completed tasks of other departments they can view. Supervisor inherits their employees' task edit permission. Supervisor can edit their task if it was assigned to them by their subordinate employee.";
 $MESS["HINT_TASK_DEPARTMENT_DELETE"] = "User can edit completed tasks of their department they can view.";
-$MESS["HINT_TASK_DEPARTMENT_DIRECT"] = "Employees in own department and subdepartments";
+$MESS["HINT_TASK_DEPARTMENT_DIRECT_MSGVER_1"] = "Assign tasks to employees in user's own department.";
 $MESS["HINT_TASK_DEPARTMENT_EDIT"] = "User can edit tasks of their department they can view.";
 $MESS["HINT_TASK_DEPARTMENT_VIEW"] = "User can view tasks of other employees and the department supervisor in their department. Note that this permission applies to all departments the user belongs to.";
 $MESS["HINT_TASK_RESPONSE_ASSIGN"] = "Adding a participant requires task assign permission for a specific person.";

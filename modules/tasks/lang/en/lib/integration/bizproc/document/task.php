@@ -56,4 +56,5 @@ $MESS["TASKS_BP_DOCUMENT_TAGS"] = "Tags";
 $MESS["TASKS_BP_DOCUMENT_TASK_CONTROL"] = "Accept when completed";
 $MESS["TASKS_BP_DOCUMENT_TIME_ESTIMATE"] = "Estimated time required";
 $MESS["TASKS_BP_DOCUMENT_TITLE"] = "Name";
-$MESS["TASKS_FLOW_NOTIFICATION_MESSAGE_HALF_TIME_BEFORE_EXPIRE_MESSAGE"] = "Half the time allotted for the task [url=/workgroups/group/{groupId}/tasks/task/view/{taskId}/][#{taskId}] {taskTitle}[/url]has elapsed. Make sure you're on time with this task.";
+$MESS["TASKS_FLOW_NOTIFICATION_MESSAGE_HALF_TIME_BEFORE_EXPIRE_MESSAGE"] = "Half the time allotted for the task [url=#TASK_URL#][#{taskId}] #TASK_TITLE#[/url] has elapsed. Make sure you're on time with this task.";
+$MESS["TASKS_FLOW_NOTIFICATION_MESSAGE_HIMSELF_ADMIN_TASK_NOT_TAKEN_MESSAGE"] = "Nobody has accepted this task in the flow [url=#FLOW_URL#][#{flowId}] #FLOW_TITLE#[/url]. Please select an assignee for this task.";

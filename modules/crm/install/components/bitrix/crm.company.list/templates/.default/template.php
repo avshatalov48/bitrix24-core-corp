@@ -22,6 +22,7 @@ use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
+use Bitrix\Crm\UI\SettingsButtonExtender\SettingsButtonExtenderParams;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 
@@ -512,6 +513,8 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 	{
 		if ($arResult['IS_BIZPROC_AVAILABLE'])
 		{
+			\Bitrix\Main\UI\Extension::load(['bp_starter']);
+
 			//$arActions[] = array('SEPARATOR' => true);
 			if (isset($arCompany['PATH_TO_BIZPROC_LIST']) && $arCompany['PATH_TO_BIZPROC_LIST'] !== '')
 				$arActions[] = array(
@@ -520,7 +523,19 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 					'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arCompany['PATH_TO_BIZPROC_LIST'])."');"
 				);
 
-			if (!empty($arCompany['BIZPROC_LIST']))
+			if (class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
+			{
+				$starterConfig = \Bitrix\Main\Web\Json::encode(
+					CCrmBizProcHelper::getBpStarterConfig(CCrmOwnerType::Company, $arCompany['ID'])
+				);
+				$reloadGridAction = 'function(){BX.Main.gridManager.reload(\''.CUtil::JSEscape($arResult['GRID_ID']).'\');}';
+				$arActions[] = [
+					'TITLE' => Loc::getMessage('CRM_COMPANY_BIZPROC_LIST_TITLE'),
+					'TEXT' => Loc::getMessage('CRM_COMPANY_BIZPROC_LIST'),
+					'ONCLICK' => 'BX.Bizproc.Starter.showTemplates(' . $starterConfig . ', { callback:' . $reloadGridAction . '})',
+				];
+			}
+			elseif (!empty($arCompany['BIZPROC_LIST']))
 			{
 				$arBizprocList = [];
 				foreach($arCompany['BIZPROC_LIST'] as $arBizproc)
@@ -811,7 +826,7 @@ if (
 	&& \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('IFRAME') !== 'Y'
 )
 {
-	$settingsButtonExtenderParams = \Bitrix\Crm\UI\SettingsButtonExtender\SettingsButtonExtenderParams::createDefaultForGrid(
+	$settingsButtonExtenderParams = SettingsButtonExtenderParams::createDefaultForGrid(
 		\CCrmOwnerType::Company,
 		$arResult['GRID_ID'],
 	);

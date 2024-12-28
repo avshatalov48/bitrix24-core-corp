@@ -10,6 +10,8 @@ use Bitrix\Main\Web\Uri;
 
 abstract class SystemPageProvider
 {
+	protected const SEPARATOR = CustomSectionProvider::PAGE_SETTINGS_SEPARATOR;
+
 	/**
 	 * returns information about the component that needs to be connected for the system page according to the passed $pageSettings
 	 *
@@ -41,6 +43,12 @@ abstract class SystemPageProvider
 	 */
 	public static function isPageAvailable(CustomSection $section): bool
 	{
-		return false;
+		$pages = $section->getPages();
+		if (empty($pages))
+		{
+			return false;
+		}
+
+		return true;
 	}
 }

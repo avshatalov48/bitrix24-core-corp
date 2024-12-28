@@ -1780,6 +1780,26 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 		//BX.onCustomEvent(this, 'CREATED', [self]);
 		return self;
 	};
+	BX.CrmUIGridExtension.getCountRow = function(gridId, serviceUrl)
+	{
+		fetch(serviceUrl, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+		})
+			.then(response => response.json())
+			.then(result => {
+				const rowCount = result.DATA.TEXT;
+				const rowCountWrapper = document.getElementById(`${gridId}_row_count_wrapper`);
+				if (rowCountWrapper) {
+					rowCountWrapper.textContent = rowCount;
+				}
+			})
+			.catch(error => {
+				console.error('Error executing request:', error);
+			});
+	};
 	BX.CrmUIGridExtension.getById = function(id)
 	{
 		if (this.items.hasOwnProperty(id))

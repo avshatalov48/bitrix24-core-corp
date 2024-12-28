@@ -1408,10 +1408,53 @@
 				{
 					client.on(VIClient.Events.Failed, onFailed);
 					client.on(VIClient.Events.Connected, onConnected);
-					client.connect();
+					this.getNode().then((result) =>
+					{
+						try
+						{
+							client.connectWithNode(result);
+						}
+						catch (error)
+						{
+							if (error.name == "TypeError")
+							{
+								client.connect();
+							}
+							else
+							{
+								reject();
+							}
+						}
+					});
 					//client.connectWithConnectivityCheck(false, ["web-gw-yy-01-148.voximplant.com"]); // todo: remove
 				}
 			});
+		},
+
+		getNode()
+		{
+			return new Promise((resolve, reject) => {
+				BX.rest.callMethod('voximplant.user.getNode').then((result) => {
+					const data = result.data();
+
+					if (data.error)
+					{
+						const e = {
+							name: 'OtherError',
+							code: data.code,
+							message: data.message,
+						};
+
+						reject(e);
+					}
+					else
+					{
+						resolve(data.node.toString());
+					}
+				}).catch((error) => {
+					reject(error);
+				})
+			})
 		}
 	}
 

@@ -335,7 +335,7 @@ class SignLegalFormComponent extends UIFormComponent implements \Bitrix\Main\Eng
 	{
 		return [
 			'string',
-//			'date',
+			'date',
 			'address',
 			'url',
 			'enumeration',

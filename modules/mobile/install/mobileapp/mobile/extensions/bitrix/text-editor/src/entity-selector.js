@@ -29,6 +29,12 @@ jn.define('text-editor/entity-selector', (require, exports, module) => {
 				['users', 'groups', 'departments'],
 			);
 
+			const typesMap = {
+				user: 'user',
+				group: 'project',
+				department: 'department',
+			};
+
 			recipientList.ui.on('close', this.props?.onClose);
 
 			return recipientList
@@ -38,7 +44,7 @@ jn.define('text-editor/entity-selector', (require, exports, module) => {
 						.reduce((acc, [recipientScopeId, scopeRecipients]) => {
 							if (Type.isArrayFilled(scopeRecipients))
 							{
-								const type = recipientScopeId.slice(0, -1);
+								const type = typesMap[recipientScopeId.slice(0, -1)];
 								scopeRecipients.forEach((data) => {
 									acc.push(
 										new Mention({ type, data }),

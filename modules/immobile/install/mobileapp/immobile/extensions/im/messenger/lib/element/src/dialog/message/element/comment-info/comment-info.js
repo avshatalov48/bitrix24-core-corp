@@ -5,10 +5,12 @@ jn.define('im/messenger/lib/element/dialog/message/element/comment-info/comment-
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 
-	const { Theme } = require('im/lib/theme');
 	const { defaultUserIcon } = require('im/messenger/assets/common');
+	const { Theme } = require('im/lib/theme');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ColorUtils } = require('im/messenger/lib/utils');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
+
 	/**
 	 * @class CommentInfo
 	 */
@@ -133,18 +135,23 @@ jn.define('im/messenger/lib/element/dialog/message/element/comment-info/comment-
 			return users.map((user) => {
 				const result = {};
 
+				const chatAvatar = ChatAvatar.createFromDialogId(user.id);
 				if (user.avatar !== '')
 				{
+					result.avatar = chatAvatar.getMessageCommentInfoAvatarProps();
+
+					/** @deprecated */
 					result.imageUrl = user.avatar;
 
 					return result;
 				}
 
-				result.defaultIconSvg = defaultUserIcon(
-					user
-						? user.color
-						: colorUtils.getColorByNumber(user.id),
-				);
+				const color = Type.isStringFilled(chatAvatar.getColor())
+					? chatAvatar.getColor()
+					: colorUtils.getColorByNumber(user.id)
+				;
+
+				result.defaultIconSvg = defaultUserIcon(color);
 
 				return result;
 			});

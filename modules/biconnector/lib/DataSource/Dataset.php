@@ -72,9 +72,17 @@ abstract class Dataset
 	}
 
 	/**
+	 * @return array|null
+	 */
+	protected function getDictionaries(): array
+	{
+		return [];
+	}
+
+	/**
 	 * @return array
 	 */
-	protected function getResultFields(): array
+	protected function getDatasetFields(): array
 	{
 		$result = [];
 
@@ -83,8 +91,23 @@ abstract class Dataset
 			if ($field instanceof DatasetField)
 			{
 				$field->setDataset($this);
-				$result[$field->getCode()] = $field->getFormatted();
+				$result[$field->getCode()] = $field;
 			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function getResultFields(): array
+	{
+		$result = [];
+
+		foreach ($this->getDatasetFields() as $field)
+		{
+			$result[$field->getCode()] = $field->getFormatted();
 		}
 
 		return $result;
@@ -114,6 +137,11 @@ abstract class Dataset
 						->getFormatted()
 				;
 			}
+		}
+
+		if (!empty($this->getDictionaries()))
+		{
+			$result['DICTIONARY'] = $this->getDictionaries();
 		}
 
 		return $result;
@@ -174,7 +202,7 @@ abstract class Dataset
 	}
 
 	/**
-	 * Event handler for onBIConnectorDataSources event.
+	 * Event handler for OnBIConnectorDataSources event.
 	 * Adds a key from `getResultTableName` to the second event parameter.
 	 * Fills it with data to retrieve information from table.
 	 *

@@ -1,9 +1,11 @@
 import { BitrixVue } from 'ui.vue3';
+import { Text, Type } from 'main.core';
+import { Button as UIButton, ButtonOptions, SplitButton as UISplitButton } from 'ui.buttons';
+
 import { BaseButton } from './baseButton';
-import { Button as UIButton, ButtonOptions } from 'ui.buttons';
 import { ButtonType } from '../enums/button-type';
 import { ButtonState } from '../enums/button-state';
-import { Text, Type } from 'main.core';
+import { Menu as LayoutMenu } from './menu';
 
 import 'ui.hint';
 
@@ -24,6 +26,11 @@ export const Button = BitrixVue.cloneComponent(BaseButton, {
 			required: false,
 			default: 'extra_small',
 		},
+		menuItems: {
+			type: Object,
+			required: false,
+			default: null,
+		},
 	},
 
 	data(): Object
@@ -39,7 +46,8 @@ export const Button = BitrixVue.cloneComponent(BaseButton, {
 
 	computed:
 	{
-		itemTypeToButtonColorDict(): Object {
+		itemTypeToButtonColorDict(): Object
+		{
 			return {
 				[ButtonType.PRIMARY]: UIButton.Color.PRIMARY,
 				[ButtonType.SECONDARY]: UIButton.Color.LIGHT_BORDER,
@@ -49,7 +57,8 @@ export const Button = BitrixVue.cloneComponent(BaseButton, {
 			};
 		},
 
-		buttonContainerRef(): HTMLElement | undefined {
+		buttonContainerRef(): HTMLElement | undefined
+		{
 			return this.$refs.buttonContainer;
 		},
 	},
@@ -127,6 +136,33 @@ export const Button = BitrixVue.cloneComponent(BaseButton, {
 			this.getUiButton()?.setState(this.itemStateToButtonStateDict[this.currentState] ?? null);
 		},
 
+		createSplitButton(): UISplitButton
+		{
+			const menuItems = Object.keys(this.menuItems).map((key) => this.menuItems[key]);
+			const options = this.getButtonOptions();
+			options.menuButton = {
+				onclick: (element, event: PointerEvent) => {
+					event.stopPropagation();
+
+					LayoutMenu.showMenu(
+						this,
+						menuItems,
+						{
+							id: `split-button-menu-${this.id}`,
+							className: 'crm-timeline__split-button-menu',
+							width: 230,
+							angle: true,
+							cacheable: false,
+							offsetLeft: 13,
+							bindElement: this.$el.querySelector('.ui-btn-menu'),
+						},
+					);
+				},
+			};
+
+			return new UISplitButton(options);
+		},
+
 		renderButton(): void
 		{
 			if (!this.buttonContainerRef)
@@ -136,7 +172,11 @@ export const Button = BitrixVue.cloneComponent(BaseButton, {
 
 			this.buttonContainerRef.innerHTML = '';
 
-			const button = new UIButton(this.getButtonOptions());
+			const button = this.menuItems
+				? this.createSplitButton()
+				: new UIButton(this.getButtonOptions())
+			;
+
 			button.renderTo(this.buttonContainerRef);
 
 			this.uiButton = button;

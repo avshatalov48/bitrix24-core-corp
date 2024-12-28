@@ -38,7 +38,7 @@ class Language extends Formatter implements IFormatter
 
 		if ($langCode !== null)
 		{
-			$language = new Context\Language($langCode);
+			$language = new Context\Language(Bitrix24::getUserLanguage());
 
 			return $language->getName($langCode);
 		}

@@ -219,7 +219,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  show(mode = 'ear') {
 	    if (mode === 'slider') {
-	      this.getSlider().show();
+	      const BannerDispatcher = main_core.Reflection.getClass('BX.UI.BannerDispatcher');
+	      if (BannerDispatcher) {
+	        BannerDispatcher.critical.toQueue(() => {
+	          this.getSlider().show();
+	        }, {
+	          id: babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1]
+	        });
+	      } else {
+	        this.getSlider().show();
+	      }
 	      void babelHelpers.classPrivateFieldLooseBase(this, _runAction)[_runAction]('show', {
 	        context: 'auto'
 	      });
@@ -251,6 +260,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	function _handleSliderClose2() {
 	  if (BX.SidePanel.Instance.getOpenSlidersCount() === 0) {
 	    this.getEar().show(true);
+	  }
+	  const AutoLauncher = main_core.Reflection.getClass('BX.UI.AutoLaunch.AutoLauncher');
+	  if (AutoLauncher) {
+	    setTimeout(() => {
+	      AutoLauncher.unregister(babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1]);
+	    }, 1000);
 	  }
 	  void babelHelpers.classPrivateFieldLooseBase(this, _runAction)[_runAction]('close');
 	}

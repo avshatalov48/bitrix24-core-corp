@@ -151,7 +151,7 @@ final class FlowProvider extends BaseProvider
 
 		if ($searchQuery)
 		{
-			$filter->whereLike('NAME', $searchQuery->getQuery());
+			$filter->whereLike('NAME', "%{$searchQuery->getQuery()}%");
 		}
 
 		$query->setWhere($filter);

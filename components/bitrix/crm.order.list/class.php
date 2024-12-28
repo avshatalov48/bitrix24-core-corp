@@ -14,6 +14,7 @@ use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\Order;
 use Bitrix\Crm\Product\Url;
 use Bitrix\Crm\Service;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Iblock\Url\AdminPage\BuilderManager;
 use Bitrix\Main;
@@ -2257,7 +2258,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			{
 				if (COption::GetOptionString('crm', '~CRM_REBUILD_ORDER_ATTR', 'N') === 'Y')
 				{
-					$this->arResult['PATH_TO_PRM_LIST'] = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_perm_list'));
+					$this->arResult['PATH_TO_PRM_LIST'] = (string)Container::getInstance()->getRouter()->getPermissionsUrl();;
 					$this->arResult['NEED_FOR_REBUILD_ORDER_ATTRS'] = true;
 				}
 

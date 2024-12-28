@@ -41,6 +41,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		FeatureFlag,
 		ComponentCode,
 		MessengerInitRestMethod,
+		ViewName,
 	} = require('im/messenger/const');
 
 	const core = new CopilotApplication({
@@ -170,6 +171,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 						chatCreateButtonColor: AppTheme.colors.accentMainCopilot || AppTheme.colors.accentBrandBlue,
 						showLoader: true,
 					},
+					viewName: ViewName.recent,
 				}),
 			});
 
@@ -508,7 +510,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			}
 
 			PageManager.getNavigator().makeTabActive();
-			this.visibilityManager.checkIsDialogVisible(openDialogOptions.dialogId)
+			this.visibilityManager.checkIsDialogVisible({ dialogId: openDialogOptions.dialogId })
 				.then((isVisible) => {
 					if (isVisible)
 					{
@@ -518,7 +520,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					this.dialog = new CopilotDialog();
 					this.dialog.open(openDialogOptions);
 
-					this.recent.view.initChatCreateButton();
+					this.recent.view.renderChatCreateButton();
 				})
 				.catch((error) => {
 					Logger.error(error);

@@ -13,8 +13,11 @@ if (!CModule::IncludeModule('crm'))
 }
 
 use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\Integration\Analytics\Builder\Block\LinkEvent;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Integration\Channel\LeadImportTracker;
+
 $CrmPerms = CCrmPerms::GetCurrentUserPermissions();
 if ($CrmPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'IMPORT'))
 {
@@ -1569,6 +1572,18 @@ for ($i = 1; $i <= 4; $i++):
 	if ($arResult['STEP'] != $i)
 		$arResult['FIELDS']['tab_'.$i] = array();
 endfor;
+
+preg_match('#/crm/lead/kanban#', $this->request->getHeaders()->get('referer'), $matches);
+if ($matches[0] && $this->request->getQuery('from') === 'kanban')
+{
+	LinkEvent::createDefault(CCrmOwnerType::Lead)
+		->setType(Dictionary::TYPE_CONTACT_CENTER)
+		->setSection(Dictionary::getAnalyticsEntityType(CCrmOwnerType::Lead) . '_section')
+		->setSubSection(Dictionary::SUB_SECTION_KANBAN)
+		->setElement(Dictionary::ELEMENT_CONTACT_CENTER_IMPORTEXCEL)
+		->buildEvent()
+		->send();
+}
 
 $this->IncludeComponentTemplate();
 

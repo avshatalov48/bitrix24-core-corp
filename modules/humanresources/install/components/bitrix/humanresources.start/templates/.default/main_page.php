@@ -1,17 +1,29 @@
 <?php
 
+global $APPLICATION;
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
-\Bitrix\Main\UI\Extension::load([
-	'humanresources.tree-structure'
-]);
+$APPLICATION->SetPageProperty('BodyClass', 'ui-page-slider-wrapper-hr');
+$APPLICATION->IncludeComponent(
+	'bitrix:ui.toolbar',
+	'',
+);
 
+\Bitrix\Main\UI\Extension::load(['humanresources.company-structure.org-chart']);
 ?>
 
-<div id="humanresources-main-page-container"></div>
+<div class="humanresources-company-structure" id="humanresources-company-structure"></div>
+<style>
+	#humanresources-company-structure {
+		height: 100%;
+	}
+</style>
 <script>
-	BX.HumanResources.TreeStructure.renderTo(BX('humanresources-main-page-container'));
+	(() => {
+		const { App } = BX.Humanresources.CompanyStructure;
+		App.mount('humanresources-company-structure');
+	})();
 </script>

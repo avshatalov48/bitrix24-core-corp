@@ -71,12 +71,7 @@ export const EntityControl = {
 		},
 		availableValues(): EntitySelectorValue[]
 		{
-			const availableValues = [{
-				id: BLOCKED_VALUE,
-				entityId: 'stages',
-				tabs: 'stages_tab',
-				title: this.label.blocked,
-			}];
+			const availableValues = [];
 			for (const [key: string, value: string] of Object.entries(this.valuesMap))
 			{
 				if (

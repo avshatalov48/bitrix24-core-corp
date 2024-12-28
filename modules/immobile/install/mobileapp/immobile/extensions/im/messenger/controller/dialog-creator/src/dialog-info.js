@@ -220,7 +220,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 			})
 				.then((result) => {
 					const { chat } = result;
-					serviceLocator.get('core').getStore().dispatch('dialoguesModel/set', chat)
+					serviceLocator.get('core').getStore().dispatch('dialoguesModel/set', chat);
 
 					MessengerEmitter.emit(
 						EventType.messenger.openDialog,
@@ -228,7 +228,9 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 							dialogId,
 							dialogTitleParams: {
 								name: chat.name,
-								description: this.dialogDTO.getType() === 'CHAT' ? Loc.getMessage('IMMOBILE_DIALOG_CREATOR_CHAT_NEW') : Loc.getMessage('IMMOBILE_DIALOG_CREATOR_CHANNEL_NEW'),
+								description: this.dialogDTO.getType() === 'CHAT'
+									? Loc.getMessage('IMMOBILE_DIALOG_CREATOR_CHAT_NEW_MSGVER_1')
+									: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_CHANNEL_NEW_MSGVER_1'),
 								avatar: chat.avatar,
 								color: chat.color,
 							},

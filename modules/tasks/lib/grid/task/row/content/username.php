@@ -70,6 +70,10 @@ class UserName extends Content
 		{
 			$userIcon = ' tasks-grid-avatar-crm';
 		}
+		if ($user['IS_COLLABER_USER'] ?? false)
+		{
+			$userIcon = ' tasks-grid-avatar-collaber';
+		}
 
 		$userAvatar = '';
 		$userEmptyAvatar = ' tasks-grid-avatar-empty';

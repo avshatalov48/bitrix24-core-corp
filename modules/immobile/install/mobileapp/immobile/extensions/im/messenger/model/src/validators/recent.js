@@ -119,6 +119,23 @@ jn.define('im/messenger/model/validators/recent', (require, exports, module) => 
 			}
 		}
 
+		if (Type.isPlainObject(fields.uploadingState))
+		{
+			result.uploadingState = {
+				message: prepareMessage(fields.uploadingState),
+				lastActivityDate: DateHelper.cast(fields.uploadingState.lastActivityDate),
+			};
+
+			if (result.lastActivityDate && result.message && result.lastActivityDate > result.uploadingState.lastActivityDate)
+			{
+				result.uploadingState = null;
+			}
+		}
+		if (Type.isNull(fields.uploadingState))
+		{
+			result.uploadingState = null;
+		}
+
 		return result;
 	}
 

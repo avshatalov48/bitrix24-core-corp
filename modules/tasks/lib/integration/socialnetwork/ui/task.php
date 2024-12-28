@@ -11,6 +11,7 @@
 namespace Bitrix\Tasks\Integration\Socialnetwork\UI;
 
 use \Bitrix\Main\Localization\Loc;
+use Bitrix\Socialnetwork\Collab\Provider\CollabProvider;
 use Bitrix\Tasks\Internals\Task\Status;
 use CDBResult;
 use CUser;
@@ -58,7 +59,7 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 			}
 
 			// todo: if $siteId is set, use its dir, not SITE_DIR
-			$urlPrefix = (defined(SITE_DIR) ? SITE_DIR : '/').'company/personal';
+			$urlPrefix = (defined('SITE_DIR') ? SITE_DIR : '/').'company/personal';
 		}
 
 		return $urlPrefix.'/user/#user_id#/tasks/task/#action#/#task_id#/';
@@ -351,15 +352,17 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 
 		if ($arFields["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_GROUP)
 		{
+			$isExtranet =
+				is_array($GLOBALS["arExtranetGroupID"] ?? null)
+				&& in_array($arFields['ENTITY_ID'], $GLOBALS['arExtranetGroupID'])
+			;
 			$arResult['EVENT_FORMATTED']['DESTINATION'] = [
 				[
 					'STYLE' => 'sonetgroups',
 					'TITLE' => $arResult['ENTITY']['FORMATTED']['NAME'],
 					'URL' => $arResult['ENTITY']['FORMATTED']['URL'],
-					'IS_EXTRANET' =>
-						is_array($GLOBALS["arExtranetGroupID"] ?? null)
-						&& in_array($arFields['ENTITY_ID'], $GLOBALS['arExtranetGroupID'])
-					,
+					'IS_EXTRANET' => $isExtranet,
+					'IS_COLLAB' => $isExtranet && CollabProvider::getInstance()->isCollab((int)$arFields['ENTITY_ID']),
 				],
 			];
 		}

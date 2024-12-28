@@ -92,8 +92,10 @@ jn.define('im/messenger/db/model-writer/vuex/dialog', (require, exports, module)
 				'update',
 				'mute',
 				'unmute',
+				'updateType',
 				'decreaseCounter',
 				'updateUserCounter',
+				'updatePermissions',
 				'setLastMessageViews',
 				'incrementLastMessageViews',
 			];

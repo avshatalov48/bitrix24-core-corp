@@ -20,6 +20,10 @@ jn.define('im/messenger/lib/dev/settings', (require, exports, module) => {
 					name: 'Show message IDs',
 					value: false,
 				},
+				showDialogIds: {
+					name: 'Show dialog IDs',
+					value: false,
+				},
 			};
 		}
 

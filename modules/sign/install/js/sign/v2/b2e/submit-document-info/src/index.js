@@ -1,12 +1,14 @@
-import { Dom, Loc, Tag, Type } from 'main.core';
+import { Dom, Loc, Tag, Text, Type } from 'main.core';
 import { MemoryCache } from 'main.core.cache';
-import { EventEmitter } from 'main.core.events';
-import { DateTimeFormat } from 'main.date';
-import type { GeneralField, TemplateField } from 'sign.v2.api';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
+import type { FieldValue, MemberStatusType, TemplateField } from 'sign.v2.api';
 import { Api, MemberStatus } from 'sign.v2.api';
 import './style.css';
 import 'ui.forms';
 import { SignLink } from 'sign.v2.b2e.sign-link';
+import { BaseField, Selector, TextInput } from 'ui.form-elements.view';
+import { DatePickerField } from './date-picker-field';
+import readyToSendImage from './images/ready-to-send-state-image.svg';
 
 function sleep(ms: number): Promise<void>
 {
@@ -15,16 +17,11 @@ function sleep(ms: number): Promise<void>
 	});
 }
 
-type Company = {
-	name: string;
-	taxId: string;
-};
-
 type Options = {
 	template: {
 		uid: string,
+		title: string,
 	},
-	company: Company,
 	fields: Array<TemplateField>,
 };
 
@@ -34,35 +31,27 @@ type MemberInvitedToSignEventData = {
 	signingLink: string
 };
 
-export class SubmitDocumentInfo
+export type DocumentSendedSuccessFullyEvent = BaseEvent<{ documentId: number }>;
+
+export class SubmitDocumentInfo extends EventEmitter
 {
+	events = Object.freeze({
+		onProgressClosePageBtnClick: 'onProgressClosePageBtnClick',
+		documentSendedSuccessFully: 'documentSendedSuccessFully',
+	});
+
+	#cache: MemoryCache<any> = new MemoryCache();
 	#layoutCache: MemoryCache<HTMLElement> = new MemoryCache();
 	#options: Options;
 	#api: Api = new Api();
+	#fieldFormId: string = 'sign-b2e-employee-fields-form';
+	#uiFields: BaseField[] = [];
 
 	constructor(options: Options)
 	{
+		super();
+		this.setEventNamespace('BX.Sign.V2.B2e.SubmitDocumentInfo');
 		this.#options = options;
-	}
-
-	#getCompanyLayout(): HTMLElement
-	{
-		const { name, taxId } = this.#options.company;
-
-		return Tag.render`
-			<div class="sign-b2e-submit-document-info__company">
-				<div class="sign-b2e-submit-document-info__company_summary">
-					<p class="sign-b2e-submit-document-info__company_name">
-						${name}
-					</p>
-					<p class="sign-b2e-submit-document-info__company_tax">
-						${Loc.getMessage('SIGN_SUBMIT_DOCUMENT_COMPANY_TAX', {
-			'#TAX_ID#': taxId,
-		})}
-					</p>
-				</div>
-			</div>
-		`;
 	}
 
 	#getProgressLayout(): HTMLElement
@@ -91,16 +80,17 @@ export class SubmitDocumentInfo
 
 	#showProgress(): void
 	{
-		Dom.removeClass(this.#getProgressLayout(), '--hidden');
+		Dom.append(this.#getProgressLayout(), this.getLayout());
 	}
 
 	#hideProgress(): void
 	{
-		Dom.addClass(this.#getProgressLayout(), '--hidden');
+		Dom.remove(this.#getProgressLayout());
 	}
 
 	#onProgressClosePageBtnClick(): void
 	{
+		this.emit(this.event.onProgressClosePageBtnClick);
 		BX.SidePanel.Instance.close();
 	}
 
@@ -109,24 +99,37 @@ export class SubmitDocumentInfo
 		return this.#layoutCache.remember(
 			'layout',
 			() => {
-				this.#hideProgress();
+				if (this.#options.fields.length === 0)
+				{
+					return Tag.render`
+						<div class="sign-submit-document-info-center-container">
+							<div class="sign-submit-document-info-center-icon">
+								<img src="${readyToSendImage}" alt="">
+							</div>
+							<p class="sign-submit-document-info-center-title">
+								${Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_TITLE')}
+							</p>
+							<p class="sign-submit-document-info-center-description">
+								${Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_DESCRIPTION', {
+									'#TITLE#': Text.encode(this.#options.template.title),
+								})}
+							</p>
+							<form id="${this.#fieldFormId}"></form>
+						</div>
+					`;
+				}
 
 				return Tag.render`
 					<div class="sign-b2e-submit-document-info">
-						<h1 class="sign-b2e-settings__header">${Loc.getMessage('SIGN_START_PROCESS_HEAD')}</h1>
-						<div class="sign-b2e-settings__item">
-							<p class="sign-b2e-settings__item_title">
-								${Loc.getMessage('SIGN_SUBMIT_DOCUMENT_COMPANY')}
-							</p>
-							${this.#getCompanyLayout()}
-						</div>
+						<h1 class="sign-b2e-settings__header">${Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_HEAD')}</h1>
 						<div class="sign-b2e-settings__item">
 							<p class="sign-b2e-settings__item_title">
 								${Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_DESCRIPTION')}
 							</p>
-							${this.#getFieldsLayout()}
+							<form id="${this.#fieldFormId}">
+								${this.#getFieldsLayout()}
+							</form>
 						</div>
-						${this.#getProgressLayout()}
 					</div>
 				`;
 			},
@@ -135,16 +138,43 @@ export class SubmitDocumentInfo
 
 	async sendForSign(): Promise<boolean>
 	{
-		const { employeeMember } = await this.#api.template.send(this.#options.template.uid);
+		const currentSidePanel = BX.SidePanel.Instance.getTopSlider();
+		if (!this.#isFieldsValid())
+		{
+			return false;
+		}
+
+		let employeeMember = null;
+		let documentId: number | null = null;
+		EventEmitter.emit('BX.Sign.SignSettingsEmployee:onBeforeTemplateSend');
+		try
+		{
+			const sendResult = await this.#api.template.send(
+				this.#options.template.uid,
+				this.#getFieldValues(),
+			);
+			employeeMember = sendResult.employeeMember;
+			documentId = sendResult.document.id;
+		}
+		catch (e)
+		{
+			console.error(e);
+
+			return false;
+		}
+		finally
+		{
+			EventEmitter.emit('BX.Sign.SignSettingsEmployee:onAfterTemplateSend');
+		}
 		const { uid: memberUid, id: memberId } = employeeMember;
-		const currentSidePanel: BX.SidePanel.Slider | null = BX.SidePanel.Instance.getTopSlider();
+		this.emit(this.events.documentSendedSuccessFully, { documentId });
 
 		this.#showProgress();
 		let pending = true;
 		let openSigningSliderAfterPending = true;
 		const signLink = new SignLink({ memberId });
 
-		EventEmitter.subscribe('SidePanel.Slider:onCloseStart', () => {
+		EventEmitter.subscribeOnce(currentSidePanel, 'SidePanel.Slider:onCloseStart', () => {
 			pending = false;
 			openSigningSliderAfterPending = false;
 		});
@@ -153,14 +183,13 @@ export class SubmitDocumentInfo
 			moduleId: 'sign',
 			command: 'memberInvitedToSign',
 			callback: async (params: MemberInvitedToSignEventData): Promise<void> => {
-				if (params.member.id !== memberId && pending && openSigningSliderAfterPending)
+				if (params.member.id !== memberId || !pending || !openSigningSliderAfterPending)
 				{
 					return;
 				}
 
 				pending = false;
-				openSigningSliderAfterPending = false;
-				await this.#openSigningSliderAndCloseCurrent(signLink, currentSidePanel);
+				await this.#openSigningSliderAndCloseCurrent(signLink);
 			},
 		});
 
@@ -171,7 +200,23 @@ export class SubmitDocumentInfo
 			{
 				return true;
 			}
-			const { status } = await this.#api.getMember(memberUid);
+
+			if (!pending)
+			{
+				break;
+			}
+			let status: MemberStatusType | null = null;
+			try
+			{
+				status = (await this.#api.getMember(memberUid)).status;
+			}
+			catch (e)
+			{
+				console.error(e);
+				this.#hideProgress();
+
+				return false;
+			}
 
 			if (status === MemberStatus.ready || status === MemberStatus.stoppableReady)
 			{
@@ -182,27 +227,27 @@ export class SubmitDocumentInfo
 
 		if (openSigningSliderAfterPending)
 		{
-			await this.#openSigningSliderAndCloseCurrent(signLink, currentSidePanel);
+			await this.#openSigningSliderAndCloseCurrent(signLink);
 		}
 
 		return true;
 	}
 
-	async #openSigningSliderAndCloseCurrent(
-		signLink: SignLink,
-		currentSidePanel: BX.SidePanel.Slider | null,
-	): Promise<void>
+	async #openSigningSliderAndCloseCurrent(signLink: SignLink): Promise<void>
 	{
-		// load signing data before close current slider
-		await signLink.preloadData();
-		if (Type.isNull(currentSidePanel))
-		{
-			signLink.openSlider({ events: {} });
-		}
-		else
-		{
-			currentSidePanel.close(false, () => signLink.openSlider({ events: {} }));
-		}
+		return this.#cache.remember('openSigningSliderAndCloseCurrent', async () => {
+			const currentSidePanel = BX.SidePanel.Instance.getTopSlider();
+			// load signing data before close current slider
+			await signLink.preloadData();
+			if (Type.isNull(currentSidePanel))
+			{
+				signLink.openSlider({ events: {} });
+			}
+			else
+			{
+				currentSidePanel.close(false, () => signLink.openSlider({ events: {} }));
+			}
+		});
 	}
 
 	#getFieldsLayout(): HTMLElement[]
@@ -228,49 +273,68 @@ export class SubmitDocumentInfo
 
 	#getFieldLayoutCallback(field: TemplateField): () => HTMLElement
 	{
-		const now = new Date();
-		const fieldName = Tag.render`
-			<span class="sign-b2e-submit-document-info__label">
-				${field.name}
+		const label = `
+			<span>
+				${Text.encode(field.name)} 
+				${field.required ? '<span class="sign-b2e-submit-document-info__field_required">*</span>' : ''}
 			</span>
 		`;
 
 		const fieldsLayoutCallbackByType = {
-			date: () => Tag.render`
-				<div class="sign-b2e-submit-document-info__field">
-					${fieldName}
-					<div class="ui-ctl ui-ctl-after-icon ui-ctl-date" onclick="${() => this.#onDateFieldClick(field)}">
-						<div class="ui-ctl-after ui-ctl-icon-calendar"></div>
-						<div class="ui-ctl-element sign-b2e-submit-document-info__field-date__value">${this.#formatDateToUserFormat(now)}</div>
+			date: () => {
+				const datePickerField = new DatePickerField({
+					label,
+					inputName: field.uid,
+					value: field.value,
+				});
+				this.#uiFields.push(datePickerField);
+
+				return Tag.render`
+					<div class="sign-b2e-submit-document-info__field">
+						${datePickerField.render()}
 					</div>
-				</div>
-			`,
-			string: () => Tag.render`
-				<div class="sign-b2e-submit-document-info__field">
-					${fieldName}
-					<div class="ui-ctl ui-ctl-textbox">
-						<input type="text" class="ui-ctl-element">
+				`;
+			},
+			string: () => {
+				const fieldInput = new TextInput({
+					label,
+					inputName: field.uid,
+					value: field.value,
+				});
+				this.#uiFields.push(fieldInput);
+
+				return Tag.render`
+					<div class="sign-b2e-submit-document-info__field">
+						${fieldInput.render()}
 					</div>
-				</div>
-			`,
-			list: () => Tag.render`
-				<div class="sign-b2e-submit-document-info__field">
-					${fieldName}
-					<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
-						<div class="ui-ctl-after ui-ctl-icon-angle"></div>
-						<select class="ui-ctl-element">
-							${field.items.map((item) => Tag.render`
-								<option value="${item.code}">${item.label}</option>
-							`)}
-						</select>
+				`;
+			},
+			list: () => {
+				const selector = new Selector({
+					label,
+					name: field.uid,
+					inputName: field.uid,
+					items: this.#getSelectorItemsWithEmpty(field),
+				});
+
+				this.#uiFields.push(selector);
+
+				return Tag.render`
+					<div class="sign-b2e-submit-document-info__field">
+						${selector.render()}
 					</div>
-				</div>
-			`,
-			number: () => Tag.render`
+				`;
+			},
+			// @TODO address picker
+			address: () => Tag.render`
 				<div class="sign-b2e-submit-document-info__field">
-					${fieldName}
-					<div class="ui-ctl ui-ctl-textbox">
-						<input type="number" class="ui-ctl-element">
+					<span class="sign-b2e-submit-document-info__label">
+						${Text.encode(field.name)}
+					</span>
+					<div class="sign-b2e-submit-document-info__subfields">
+						${field.subfields.map((subfield) => Tag.render`
+							<div>${this.#getOrCreateFieldLayout(subfield)}</div>
+						`)}
 					</div>
 				</div>
 			`,
@@ -281,26 +345,91 @@ export class SubmitDocumentInfo
 		return fieldsLayoutCallbackByType[field.type] ?? defaultLayout;
 	}
 
-	#onDateFieldClick(field: GeneralField): void
+	#getFieldValues(): FieldValue[]
 	{
-		BX.calendar({
-			node: this.#getOrCreateFieldLayout(field),
-			field: this.#getOrCreateFieldLayout(field),
-			bTime: false,
-			callback_after: (date: Date) => {
-				const dateFieldValue = this.#getOrCreateFieldLayout(field)
-					.querySelector('.sign-b2e-submit-document-info__field-date__value')
-				;
-				if (dateFieldValue)
-				{
-					dateFieldValue.textContent = this.#formatDateToUserFormat(date);
-				}
-			},
+		const form = document.getElementById(this.#fieldFormId);
+		const formData = new FormData(form);
+
+		const fieldValues = [];
+
+		formData.forEach((value, name) => {
+			fieldValues.push({ name, value });
 		});
+
+		return fieldValues;
 	}
 
-	#formatDateToUserFormat(date: Date): string
+	#isFieldsValid(): boolean
 	{
-		return DateTimeFormat.format(DateTimeFormat.getFormat('FORMAT_DATE'), date);
+		let errorCount = 0;
+		this.#uiFields.forEach((domField: BaseField) => {
+			domField.cleanError();
+			const templateField = this.#getFieldByUid(domField.getName());
+			if (!templateField)
+			{
+				return;
+			}
+
+			if (templateField.required && domField.getValue()?.trim() === '')
+			{
+				domField.setErrors([]);
+				errorCount += 1;
+			}
+		});
+
+		return errorCount === 0;
+	}
+
+	#getFieldByUid(uid: string): ?TemplateField
+	{
+		return this.#findFieldByUidRecursive(uid, this.#options.fields);
+	}
+
+	#findFieldByUidRecursive(uid: string, fields: TemplateField[]): ?TemplateField
+	{
+		for (const field of fields)
+		{
+			if (field.uid === uid)
+			{
+				return field;
+			}
+
+			if (field.subfields)
+			{
+				const subfield = this.#findFieldByUidRecursive(uid, field.subfields);
+				if (subfield)
+				{
+					return subfield;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	#getSelectorItemsWithEmpty(field: TemplateField): Array<{ value: string, name: string, selected: boolean }>
+	{
+		const items = [];
+
+		if (!field.items.some((item) => item.code === field.value))
+		{
+			items.push({
+				value: '',
+				name: '',
+				selected: true,
+				hidden: true,
+				disabled: true,
+			});
+		}
+
+		field.items.forEach((item) => {
+			items.push({
+				value: Text.encode(item.code),
+				name: Text.encode(item.label),
+				selected: item.code === field.value,
+			});
+		});
+
+		return items;
 	}
 }

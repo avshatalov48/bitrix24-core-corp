@@ -89,13 +89,14 @@ jn.define('tasks/layout/task/fields/accomplices', (require, exports, module) => 
 					style: (this.props.style || {}),
 				},
 				UserField({
-					analytics: new AnalyticsEvent().setSection('task'),
+					analytics: new AnalyticsEvent().setSection('tasks'),
 					readOnly: this.state.readOnly,
 					showEditIcon: true,
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_ACCOMPLICES'),
 					multiple: true,
 					value: Object.keys(this.state.accomplices),
 					config: {
+						enableCreation: !(env.isCollaber || env.extranet),
 						canOpenUserList: true,
 						mode: UserFieldMode.ICONS,
 						useLettersForEmptyAvatar: true,

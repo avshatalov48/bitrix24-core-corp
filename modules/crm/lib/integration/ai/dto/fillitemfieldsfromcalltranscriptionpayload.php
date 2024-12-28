@@ -5,13 +5,12 @@ namespace Bitrix\Crm\Integration\AI\Dto;
 use Bitrix\Crm\Dto\Caster;
 use Bitrix\Crm\Dto\Dto;
 use Bitrix\Crm\Dto\Validator;
-use Bitrix\Main\Error;
+use Bitrix\Crm\Dto\Validator\ObjectCollectionField;
+use Bitrix\Crm\Integration\AI\ErrorCode;
 use Bitrix\Main\Result;
 
 class FillItemFieldsFromCallTranscriptionPayload extends Dto
 {
-	public const PAYLOAD_IS_EMPTY_ERROR_CODE = 'PAYLOAD_IS_EMPTY';
-
 	/** @var SingleFieldFillPayload[] */
 	public array $singleFields = [];
 	/** @var MultipleFieldFillPayload[] */
@@ -30,8 +29,8 @@ class FillItemFieldsFromCallTranscriptionPayload extends Dto
 	protected function getValidators(array $fields): array
 	{
 		return [
-			new \Bitrix\Crm\Dto\Validator\ObjectCollectionField($this, 'singleFields'),
-			new \Bitrix\Crm\Dto\Validator\ObjectCollectionField($this, 'multipleFields'),
+			new ObjectCollectionField($this, 'singleFields'),
+			new ObjectCollectionField($this, 'multipleFields'),
 			new class($this) extends Validator {
 				public function validate(array $fields): Result
 				{
@@ -43,12 +42,7 @@ class FillItemFieldsFromCallTranscriptionPayload extends Dto
 						&& empty($fields['unallocatedData'])
 					)
 					{
-						$result->addError(
-							new Error(
-								'Payload cant be completely empty',
-								FillItemFieldsFromCallTranscriptionPayload::PAYLOAD_IS_EMPTY_ERROR_CODE
-							)
-						);
+						$result->addError(ErrorCode::getInvalidPayloadError());
 					}
 
 					return $result;

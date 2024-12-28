@@ -67,6 +67,7 @@ $MESS["TASKS_TASK_COMPONENT_TEMPLATE_BLOCK_HEADER_SE_TAG"] = "Теги";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_MAKE_REPLICABLE"] = "Сделать задачу регулярной";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_TIME_TO_DO"] = "Время для выполнения задачи";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_BLOCK_TITLE_SE_PROJECT"] = "Проект";
+$MESS['TASKS_TASK_COMPONENT_TEMPLATE_BLOCK_TITLE_SE_PROJECT_COLLAB'] = 'Коллаба';
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_BLOCK_TITLE_TIMEMAN"] = "Учет времени";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_BLOCK_TITLE_SE_REMINDER"] = "Напомнить о задаче";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_BLOCK_TITLE_SE_TEMPLATE"] = "Повторять задачу";
@@ -118,11 +119,10 @@ $MESS["TASKS_TASK_COMPONENT_TEMPLATE_NO_WORK_DAYS_ERROR"] = "Все дни на 
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_BLOCK_TITLE_SE_REQUIRE_RESULT"] = "Результат задачи";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_BLOCK_LABEL_SE_REQUIRE_RESULT"] = "Обязательный отчет при завершении задачи";
 
-$MESS["TASKS_TASK_FLOW_SELECTOR_CREATE_BUTTON"] = "Создать поток";
-$MESS["TASKS_TASK_FLOW_CHANGE_TITLE"] = "Выбрать поток?";
-$MESS["TASKS_TASK_FLOW_CHANGE_MESSAGE"] = "Описание задачи не сохранится. Скопируйте его и добавьте после выбора потока";
-$MESS["TASKS_TASK_FLOW_CHANGE_OK_CAPTION"] = "Выбрать";
-$MESS["TASKS_TASK_FLOW_CHANGE_CANCEL_CAPTION"] = "Отмена";
-
 $MESS["TASKS_NOTIFY_TASK_CREATED"] = "Задача успешно добавлена";
 $MESS["TASKS_NOTIFY_TASK_DO_VIEW"] = "Просмотреть";
+
+$MESS["TASKS_TASK_AI_PROMO_TITLE"] = "CoPilot";
+$MESS["TASKS_TASK_AI_PROMO_SUBTITLE"] = "Расскажите #COPILOT_START#CoPilot#COPILOT_END# о задаче, а он сделает всё остальное";
+
+$MESS['TASKS_PRESELECTED_COLLAB_HINT'] = 'Если вы хотите добавить задачу в другую коллабу, выберите её';

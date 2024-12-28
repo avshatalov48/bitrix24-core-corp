@@ -1,0 +1,165 @@
+.sign-grid-document-title {
+	color: var(--ui-color-palette-gray-90);
+	font-size: 15px;
+	max-width: 100%;
+	word-break: break-word;
+}
+
+.sign-grid-document-title_text_my_role {
+	color: var(--ui-color-text-subtle);
+	font-size: 12px;
+}
+
+.sign-grid-document-title_current_role {
+	margin-left: 5px;
+	color: var(--ui-color-palette-gray-90);
+	font-size: 12px;
+}
+
+.sign-grid-document-title_my_role {
+	margin-top: 1%;
+	display: flex;
+	flex-direction: row;
+}
+
+.sign-grid-document-users-container {
+	display: flex;
+	align-items: center;
+	width: 170px;
+	height: 50px;
+	justify-content: space-between;
+	position: relative;
+}
+
+.sign-grid-document-user-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	z-index: 2;
+}
+
+.sign-grid-document-user,
+.sign-grid-document-user:hover {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	text-decoration: none !important;
+}
+
+.sign-grid-document-user-role-title-from {
+	font-size: 11px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--ui-color-text-subtle);
+	white-space: nowrap;
+}
+
+.sign-grid-document-user-role-title-to {
+	font-size: 11px;
+	width: 68px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--ui-color-text-subtle);
+}
+
+.line-between-users {
+	height: 1px;
+	top: 36px;
+	width: 77px;
+	left: 40px;
+	background-color: #EDEEF0;
+	position: absolute;
+	z-index: 1;
+}
+
+.sign-grid-download-link {
+	color: var(--ui-color-link-primary-base);
+	text-decoration: none !important;
+	font-size: 13px;
+}
+
+.sign-grid-download-link:hover {
+	border-bottom: 1px solid var(--ui-color-link-primary-base);
+	text-decoration: none;
+}
+
+.sign-grid-download-link-text {
+	display: inline-block;
+	margin-top: 1%;
+	margin-bottom: 1%;
+}
+
+.sign-grid-my-action-in-process {
+	color: var(--ui-color-palette-gray-40);
+	text-transform: uppercase;
+	font-weight: 700;
+	/*font-size: 9px;*/
+}
+
+.sign-counter .ui-counter-panel__item-head {
+	color: var(--color-text-active);
+}
+
+.sign-counter .ui-counter-panel__item-title {
+	color: var(--color-text-active);
+}
+
+
+.main-grid-cell:has(.sign-grid-download-background-stopped),
+.main-grid-cell:has(.sign-grid-download-background-stopped):hover
+{
+	background-color: #FFF5E3 !important;
+}
+
+.main-grid-cell:has(.sign-grid-download-background-done),
+.main-grid-cell:has(.sign-grid-download-background-done):hover
+{
+	background-color: #F5FCDE !important;
+}
+
+.sign-grid-action-signed-info {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.sign-grid-action-signed-text {
+	text-transform: uppercase;
+	color: #7FA800;
+	font-weight: 700;
+}
+
+.sign-grid-action-stopped-text {
+	text-transform: uppercase;
+	color: #C48300;
+	font-weight: 700;
+}
+
+.sign-grid-action-with-me-text {
+	text-transform: uppercase;
+	color: #BDC1C6;
+	font-weight: 700;
+}
+
+.sign-grid-action-date {
+	color: #525C69;
+	font-size: 12px;
+	font-weight: 400;
+}
+
+.sign-counter .ui-counter-panel__item-head {
+	color: var(--color-text-active);
+}
+
+.sign-counter .ui-counter-panel__item-title {
+	color: var(--color-text-active);
+}
+
+.sign-grid-salary-and-vocation-button {
+	background-color: #2FC6F6;
+	border-color: #2FC6F6;
+}

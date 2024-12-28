@@ -106,6 +106,7 @@ class EventService
 					'role' => $priorityNotificationLink->getRole(),
 					'isGoskey' => $priorityNotificationLink->isGoskey(),
 					'isExternal' => $priorityNotificationLink->isExternal(),
+					'initiatedByType' => $priorityNotificationLink->getInitiatedByType(),
 					'document' => [
 						'url' => $url,
 						'title' => $priorityNotificationLink->documentTitle,
@@ -143,6 +144,7 @@ class EventService
 		$payload = [
 			'forcedBannerOpening' => true,
 			'memberId' => $link->memberId,
+			'initiatedByType' => $link->getInitiatedByType(),
 			'document' => [
 				'role' => $link->getRole(),
 				'url' => $link->url,

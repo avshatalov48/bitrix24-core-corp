@@ -1,8 +1,4 @@
-<?
-
-use Bitrix\Tasks\Flow\Provider\Exception\FlowNotFoundException;
-use Bitrix\Tasks\Flow\Provider\FlowProvider;
-use Bitrix\Tasks\Flow\Web\FlowRequestService;
+<?php
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
@@ -26,25 +22,8 @@ $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 
 $isEdit = ($arParams['ACTION'] ?? '') === 'edit';
 $taskId = (int)($arParams['FORM_PARAMETERS']['ID'] ?? null);
-$flowId = (new FlowRequestService($request))->getFlowIdFromRequest($taskId);
 
-$arResult['flow'] = null;
-$arResult['flowEfficiency'] = 0;
-
-
-if ($flowId > 0)
-{
-	$flowProvider = new FlowProvider();
-	try
-	{
-		$flow = $flowProvider->getFlow($flowId);
-		$arResult['flow'] = $flow;
-		$arResult['flowEfficiency'] = $flowProvider->getEfficiency($flow);
-	}
-	catch (FlowNotFoundException $e)
-	{
-	}
-}
+$arResult['isExtranet'] = \Bitrix\Tasks\Integration\Extranet\User::isExtranet($arParams["USER_ID"]);
 
 if($this->__templateName != 'legacy')
 {

@@ -2,6 +2,7 @@
 // region Action denied
 
 $MESS['M_TASKS_DENIED_SELECT_USER_AS_RESPONSIBLE'] = 'Недостаточно прав на постановку задачи этому сотруднику';
+$MESS['M_TASKS_DENIED_SELECT_COLLABER_WITHOUT_COLLAB'] = 'Добавьте задачу в коллабу или выберите другого сотрудника';
 $MESS['M_TASKS_DENIED_DELEGATE_USER_AS_RESPONSIBLE'] = 'Недостаточно прав на делегирование задачи этому сотруднику';
 $MESS['M_TASKS_DENIED_SELECT_PROJECT'] = 'Недостаточно прав на создание задач в этом проекте';
 $MESS['M_TASKS_DENIED_SELECT_TASK'] = 'Вы не можете выбрать эту задачу';
@@ -42,6 +43,7 @@ $MESS['M_TASKS_FIELDS_CRM_MULTI'] = 'Элементы CRM: #COUNT#';
 $MESS['M_TASKS_FIELDS_FILES'] = 'Файлы';
 $MESS['M_TASKS_FIELDS_FILES_MULTI'] = 'Файлы: #COUNT#';
 $MESS['M_TASKS_FIELDS_TIME_TRACKING'] = 'Учёт времени';
+$MESS['M_TASKS_FIELDS_USER_FIELDS'] = 'Пользовательские поля';
 // endregion
 
 //region common

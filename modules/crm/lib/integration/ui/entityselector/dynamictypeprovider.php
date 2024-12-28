@@ -45,7 +45,17 @@ final class DynamicTypeProvider extends BaseProvider
 
 	public function isAvailable(): bool
 	{
-		return Container::getInstance()->getUserPermissions()->canWriteConfig();
+		$userPermissions = Container::getInstance()->getUserPermissions();
+		if ($this->isOnlyExternalTypes)
+		{
+			return $userPermissions->canEditAutomatedSolutions();
+		}
+		if ($this->isOnlyCrmTypes)
+		{
+			return $userPermissions->isCrmAdmin();
+		}
+
+		return $userPermissions->canEditAutomatedSolutions() && $userPermissions->isCrmAdmin();
 	}
 
 	public function getItems(array $ids): array

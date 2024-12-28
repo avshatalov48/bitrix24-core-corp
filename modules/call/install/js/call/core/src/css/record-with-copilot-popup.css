@@ -1,0 +1,60 @@
+.bx-messenger-videocall-record-alert-popup {
+
+}
+
+.bx-messenger-videocall-record-alert-popup-content {
+	padding: 16px 22px 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.bx-messenger-videocall-record-alert-title {
+	font-size: 16px;
+	line-height: 19px;
+	font-weight: var(--ui-font-weight-bold, 700);
+	margin-bottom: 12px;
+}
+
+.bx-messenger-videocall-record-alert-message {
+	font-size: 15px;
+	line-height: 135%;
+	font-weight: var(--ui-font-weight-regular, 400);
+}
+
+.bx-messenger-videocall-record-alert-actions {
+	margin-top: 12px;
+	display: flex;
+	justify-content: center;
+	gap: 10px;
+}
+
+.bx-messenger-videocall-record-alert-button {
+	padding: 6px 22px;
+	height: 38px;
+	font-size: 12px;
+	line-height: 16px;
+	font-weight: var(--ui-font-weight-semibold, 600);
+	color: #ffffff;
+	border: none;
+	outline: none;
+	border-radius: 56px;
+	transition: background-color 200ms linear;
+	cursor: pointer;
+}
+
+.bx-messenger-videocall-record-alert-button-yes {
+	background-color: #2FC6F6;
+}
+
+.bx-messenger-videocall-record-alert-button-yes:hover {
+	background-color: #34bbe5;
+}
+
+.bx-messenger-videocall-record-alert-button-no {
+	background-color: transparent;
+}
+
+.bx-messenger-videocall-record-alert-button-no:hover {
+	background-color: rgba(255, 255, 255, .3);
+}

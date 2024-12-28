@@ -394,6 +394,14 @@ final class Task extends Base
 		if (!$this->checkOrderKeys($order))
 		{
 			$this->addError(new Error(Main\Localization\Loc::getMessage('TASKS_FAILED_WRONG_ORDER_FIELD')));
+
+			return null;
+		}
+
+		if (!$this->checkSelect($select))
+		{
+			$this->addError(new Error('Invalid select data'));
+
 			return null;
 		}
 
@@ -600,6 +608,26 @@ final class Task extends Base
 		try
 		{
 			$task->startExecution($params);
+			return $this->getAction($task);
+
+		}
+		catch (Exception $e)
+		{
+			$this->errorCollection->add([new Error($e->getMessage())]);
+			return null;
+		}
+	}
+
+	/**
+	 * Take task from himself distribution flow
+	 *
+	 * @restMethod tasks.task.take
+	 */
+	public function takeAction(CTaskItem $task, array $params = []): ?array
+	{
+		try
+		{
+			$task->takeExecution($params);
 			return $this->getAction($task);
 
 		}
@@ -2100,6 +2128,19 @@ final class Task extends Base
 		$availableKeys = CTasks::getAvailableOrderFields();
 
 		return empty(array_diff($orderKeys, $availableKeys));
+	}
+
+	private function checkSelect(array $select): bool
+	{
+		foreach ($select as $key)
+		{
+			if (!is_string($key))
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	private function isUfExist(array $fields): bool

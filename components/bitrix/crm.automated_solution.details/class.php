@@ -40,7 +40,7 @@ class CrmAutomatedSolutionDetailsComponent extends Base
 			return;
 		}
 
-		if (!$this->userPermissions->canWriteConfig())
+		if (!$this->userPermissions->canEditAutomatedSolutions())
 		{
 			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 
@@ -85,17 +85,24 @@ class CrmAutomatedSolutionDetailsComponent extends Base
 
 	private function prepareVuexState(): array
 	{
+		$permissions = [
+			'canMoveSmartProcessFromCrm' => $this->userPermissions->isCrmAdmin(),
+			'canMoveSmartProcessFromAnotherAutomatedSolution' => $this->userPermissions->canEditAutomatedSolutions(),
+		];
+
 		if (!$this->automatedSolution)
 		{
 			return [
 				'automatedSolution' => [],
 				'dynamicTypesTitles' => [],
+				'permissions' => $permissions,
 			];
 		}
 
 		return [
 			'automatedSolution' => Container::getInstance()->getAutomatedSolutionConverter()->toJson($this->automatedSolution),
 			'dynamicTypesTitles' => $this->getTitlesOfDynamicTypes($this->automatedSolution['TYPE_IDS']),
+			'permissions' => $permissions,
 		];
 	}
 

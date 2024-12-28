@@ -1,5 +1,5 @@
-import { ajax as Ajax, clone, Dom, Reflection, Runtime, Tag, Type } from 'main.core';
 import { BannerDispatcher } from 'crm.integration.ui.banner-dispatcher';
+import { ajax as Ajax, clone, Dom, Reflection, Runtime, Tag, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Popup, PopupManager } from 'main.popup';
 import { Button } from 'ui.buttons';
@@ -36,9 +36,11 @@ type StepConfig = {
 	text: string,
 	position: ?StepPosition,
 	target: ?string,
+	reserveTargets: ?string[],
 	useDynamicTarget: ?boolean,
 	eventName: ?string,
 	article: ?number,
+	articleAnchor?: string,
 	infoHelperCode: ?string,
 }
 
@@ -55,6 +57,8 @@ type Option = {
 	hideTourOnMissClick?: boolean,
 	numberOfViewsLimit:	number,
 	isNumberOfViewsExceeded?: boolean,
+	disableBannerDispatcher?: boolean,
+	additionalTourIdsForDisable?: Array<string>,
 	...
 }
 
@@ -207,6 +211,7 @@ class ActionViewMode
 				text: stepConfig.text,
 				position: stepConfig.position,
 				article: stepConfig.article,
+				articleAnchor: stepConfig.articleAnchor ?? null,
 				infoHelperCode: stepConfig.infoHelperCode,
 			};
 
@@ -217,7 +222,28 @@ class ActionViewMode
 			}
 			else
 			{
-				step.target = stepConfig.target;
+				const target = document.querySelector(stepConfig.target);
+				if (target && Dom.style(target, 'display') !== 'none')
+				{
+					step.target = stepConfig.target;
+				}
+				else if (Type.isArrayFilled(stepConfig.reserveTargets))
+				{
+					stepConfig.reserveTargets.some((reserveTarget) => {
+						if (document.querySelector(reserveTarget))
+						{
+							step.target = reserveTarget;
+
+							return true;
+						}
+
+						return false;
+					});
+				}
+				else
+				{
+					step.target = stepConfig.target;
+				}
 			}
 
 			return step;
@@ -226,6 +252,8 @@ class ActionViewMode
 
 	#showStepByEvent(event: BaseEvent): void
 	{
+		const { disableBannerDispatcher = false } = this.#options;
+
 		void this.tourPromise.then((exports) => {
 			const { stepId, target } = event.data;
 			// eslint-disable-next-line no-shadow
@@ -243,17 +271,41 @@ class ActionViewMode
 
 			this.setStepPopupOptions(guide.getPopup());
 
-			void this.#getBannerDispatcher().then((dispatcher: BannerDispatcher) => {
-				dispatcher.toQueue((onDone: Function) => {
-					guide.subscribe('UI.Tour.Guide:onFinish', () => {
-						this.save();
-						onDone();
-					});
+			if (disableBannerDispatcher === false)
+			{
+				this.#runGuideWithBannerDispatcher(guide);
+			}
+			else
+			{
+				this.#runGuide(guide);
+			}
+		});
+	}
 
-					guide.showNextStep();
-				});
+	#runGuideWithBannerDispatcher(guide: Object): void
+	{
+		void this.#getBannerDispatcher().then((dispatcher: BannerDispatcher) => {
+			dispatcher.toQueue((onDone: Function) => {
+				this.#runGuide(guide, onDone);
 			});
 		});
+	}
+
+	#onGuideFinish(guide: Object, onDone: Function = null): void
+	{
+		guide.subscribe('UI.Tour.Guide:onFinish', () => {
+			this.save();
+			if (onDone)
+			{
+				onDone();
+			}
+		});
+	}
+
+	#runGuide(guide: Object, onDone: Function = null): void
+	{
+		this.#onGuideFinish(guide, onDone);
+		guide.showNextStep();
 	}
 
 	#getDefaultStepEventName(stepId: string): string
@@ -291,6 +343,8 @@ class ActionViewMode
 
 	#executeWhatsNew(): void
 	{
+		const { disableBannerDispatcher = false } = this.#options;
+
 		if (PopupManager && PopupManager.isAnyPopupShown())
 		{
 			return;
@@ -311,13 +365,20 @@ class ActionViewMode
 				},
 			});
 
-			// eslint-disable-next-line promise/no-nesting
-			void this.#getBannerDispatcher().then((dispatcher: BannerDispatcher) => {
-				dispatcher.toQueue((onDone: Function) => {
-					this.#popup.subscribe('onDestroy', onDone);
-					this.#popup.show();
+			if (disableBannerDispatcher === false)
+			{
+				// eslint-disable-next-line promise/no-nesting
+				void this.#getBannerDispatcher().then((dispatcher: BannerDispatcher) => {
+					dispatcher.toQueue((onDone: Function) => {
+						this.#popup.subscribe('onDestroy', onDone);
+						this.#popup.show();
+					});
 				});
-			});
+			}
+			else
+			{
+				this.#popup.show();
+			}
 
 			ActionViewMode.whatsNewInstances.push(this.#popup);
 		}, this);
@@ -325,6 +386,7 @@ class ActionViewMode
 
 	#executeGuide(isAddToQueue: boolean = true): void
 	{
+		const { disableBannerDispatcher = false } = this.#options;
 		let steps = clone(this.#steps);
 
 		steps = steps.filter((step) => Boolean(step.target));
@@ -353,16 +415,14 @@ class ActionViewMode
 
 			if (isAddToQueue)
 			{
-				void this.#getBannerDispatcher().then((dispatcher: BannerDispatcher) => {
-					dispatcher.toQueue((onDone: Function) => {
-						guide.subscribe('UI.Tour.Guide:onFinish', () => {
-							onDone();
-							this.save();
-						});
-
-						this.#showGuide(guide);
-					});
-				});
+				if (disableBannerDispatcher === false)
+				{
+					this.#runGuideWithBannerDispatcher(guide);
+				}
+				else
+				{
+					this.#runGuide(guide);
+				}
 
 				return;
 			}
@@ -420,6 +480,7 @@ class ActionViewMode
 				options: {
 					isMultipleViewsAllowed: !this.#isViewHappened && this.#isMultipleViewsAllowed(),
 					numberOfViewsLimit: this.#options.numberOfViewsLimit ?? 1,
+					additionalTourIdsForDisable: this.#options.additionalTourIdsForDisable ?? null,
 				},
 			},
 		}).then(({ data }) => {

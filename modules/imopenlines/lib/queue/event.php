@@ -204,7 +204,7 @@ class Event
 
 		if ($checkTimeman)
 		{
-			$filter['CONFIG.CHECK_AVAILABLE'] = 'Y';
+			$filter['=CONFIG.CHECK_AVAILABLE'] = 'Y';
 		}
 
 		$queueList = QueueTable::getList([

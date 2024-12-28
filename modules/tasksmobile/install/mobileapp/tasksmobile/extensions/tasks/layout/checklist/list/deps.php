@@ -9,7 +9,6 @@ return [
 		'animation',
 		'assets/icons',
 		'assets/icons/types',
-		'elements-stack',
 		'notify-manager',
 		'utils/url',
 		'toast/base',
@@ -24,13 +23,13 @@ return [
 		'layout/ui/fields/user',
 		'layout/ui/fields/file',
 		'layout/ui/context-menu',
-		'layout/ui/user/avatar',
 		'layout/ui/optimized-list-view',
 		'layout/list-view-queue-worker',
 
 		'ui-system/blocks/icon',
 		'ui-system/form/checkbox',
 		'ui-system/typography/text',
+		'ui-system/blocks/avatar-stack',
 		'ui-system/typography/text-input',
 
 		'tariff-plan-restriction',

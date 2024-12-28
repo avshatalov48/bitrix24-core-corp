@@ -1,8 +1,10 @@
 <?php
 $MESS["ERROR_TASKS_GUID_NON_UNIQUE"] = "GUID value must be unique";
 $MESS["TASKS_BAD_ASSIGNEE_ID"] = "Assignee not specified.";
+$MESS["TASKS_BAD_ASSIGNEE_IN_GROUP"] = "Task assignee is not a member of the selected project.";
 $MESS["TASKS_BAD_CREATED_BY"] = "Task creator is not specified.";
 $MESS["TASKS_BAD_DURATION"] = "The planned task duration period is too long";
+$MESS["TASKS_BAD_GROUP"] = "No project is associated with this task.";
 $MESS["TASKS_BAD_PARENT_ID"] = "A task specified in the field &quot;Subtask&quot; was not found.";
 $MESS["TASKS_BAD_PLAN_DATES"] = "The planned end date is earlier than the start date.";
 $MESS["TASKS_BAD_RESPONSIBLE_ID"] = "The responsible person is not specified.";

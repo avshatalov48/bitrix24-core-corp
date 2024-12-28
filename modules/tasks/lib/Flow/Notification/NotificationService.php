@@ -20,6 +20,8 @@ use Bitrix\Tasks\Flow\Notification\Command\NotifyAboutSlowEfficiencyCommand;
 use Bitrix\Tasks\Flow\Notification\Command\NotifyAboutSlowEfficiencyCommandHandler;
 use Bitrix\Tasks\Flow\Notification\Command\NotifyAboutSlowQueueCommand;
 use Bitrix\Tasks\Flow\Notification\Command\NotifyAboutSlowQueueCommandHandler;
+use Bitrix\Tasks\Flow\Notification\Command\NotifyHimselfMembersAboutNewTaskCommand;
+use Bitrix\Tasks\Flow\Notification\Command\NotifyHimselfMembersAboutNewTaskHandler;
 use Bitrix\Tasks\Flow\Notification\Command\PingManualDistributorAboutNewTaskCommand;
 use Bitrix\Tasks\Flow\Notification\Command\PingManualDistributorAboutNewTaskCommandHandler;
 use Bitrix\Tasks\Flow\Notification\Command\SaveConfigCommand;
@@ -46,6 +48,7 @@ class NotificationService
 	private FlowProvider $flowProvider;
 	private ThrottleProvider $throttleProvider;
 	private Presets $presets;
+	private HimselfFlowAgent $himselfFlowAgent;
 
 	public function __construct()
 	{
@@ -56,6 +59,7 @@ class NotificationService
 		$this->taskProvider = new TaskProvider();
 		$this->flowProvider = new FlowProvider();
 		$this->throttleProvider = new ThrottleProvider();
+		$this->himselfFlowAgent = new HimselfFlowAgent();
 		$this->presets = new Presets();
 	}
 
@@ -71,6 +75,7 @@ class NotificationService
 				OptionDictionary::NOTIFY_ON_TASKS_IN_PROGRESS_OVERFLOW->value => $this->getTasksInProgressSetting($option),
 				OptionDictionary::NOTIFY_ON_QUEUE_OVERFLOW->value => $this->getBusyQueueSetting($option),
 				OptionDictionary::NOTIFY_AT_HALF_TIME->value => $this->getHalfTimeSetting($option),
+				OptionDictionary::NOTIFY_WHEN_TASK_NOT_TAKEN->value => $this->getTaskNotTakenSetting($option),
 				default => null,
 			};
 
@@ -107,6 +112,10 @@ class NotificationService
 		$pingManualDistributorAboutNewTask = new PingManualDistributorAboutNewTaskCommand($taskId, $flowId);
 		$pingManualDistributorAboutNewTaskHandler = new PingManualDistributorAboutNewTaskCommandHandler();
 		$pingManualDistributorAboutNewTaskHandler($pingManualDistributorAboutNewTask);
+
+		$pingHimselfDistributorAboutNewTask = new NotifyHimselfMembersAboutNewTaskCommand($taskId, $flowId);
+		$pingHimselfDistributorAboutNewTaskHandler = new NotifyHimselfMembersAboutNewTaskHandler();
+		$pingHimselfDistributorAboutNewTaskHandler($pingHimselfDistributorAboutNewTask);
 	}
 
 	public function onSwitchToManualDistribution(int $flowId): void
@@ -143,6 +152,7 @@ class NotificationService
 		$commandHandler = (new UpdatePingCommandHandler(
 			$this->configRepository,
 			$this->pingAgent,
+			$this->himselfFlowAgent,
 		));
 
 		$commandHandler($command);
@@ -186,7 +196,7 @@ class NotificationService
 		{
 			NotifyAboutSlowQueueCommand::class => new NotifyAboutSlowQueueCommandHandler($this->configRepository, $this->bizProcess, $this->taskProvider, $this->throttleProvider),
 			NotifyAboutBusyResponsibleCommand::class => new NotifyAboutBusyResponsibleCommandHandler($this->configRepository, $this->bizProcess, $this->taskProvider, $this->throttleProvider),
-			NotifyAboutNewTaskCommand::class => new NotifyAboutNewTaskCommandHandler($this->configRepository, $this->pingAgent, $this->bizProcess),
+			NotifyAboutNewTaskCommand::class => new NotifyAboutNewTaskCommandHandler($this->configRepository, $this->pingAgent, $this->bizProcess, $this->himselfFlowAgent),
 			NotifyAboutSwitchToManualDistributionCommand::class => new NotifyAboutSwitchToManualDistributionCommandHandler($this->configRepository, $this->bizProcess, $this->flowProvider),
 			NotifyAboutSwitchToManualDistributionAbsentCommand::class => new NotifyAboutSwitchToManualDistributionAbsentCommandHandler($this->configRepository, $this->bizProcess, $this->flowProvider),
 			ForcedManualDistributorChangeCommand::class => new ForcedManualDistributorChangeCommandHandler($this->configRepository, $this->bizProcess, $this->flowProvider),
@@ -215,6 +225,14 @@ class NotificationService
 			$forcedManualDistributorChange,
 			$forcedManualDistributorChangeAbsent,
 		];
+	}
+
+	private function getTaskNotTakenSetting(Option $option): ?Item
+	{
+		return $this->presets->getItemByCaption(
+			new Caption('TASKS_FLOW_NOTIFICATION_CAPTION_HIMSELF_ADMIN_TASK_NOT_TAKEN'),
+			(int)$option->getValue(),
+		);
 	}
 
 	private function getSlowEfficiencySetting(Option $option): ?Item

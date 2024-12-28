@@ -1,12 +1,12 @@
 <?php
 
-use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Catalog\AgentContractTable;
+use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Crm\Item;
-use Bitrix\Crm\Service\Container;
-use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Service;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\DI\ServiceLocator;
 
 class CCrmOwnerType
 {
@@ -57,9 +57,10 @@ class CCrmOwnerType
 
 	public const SmartB2eDocument = 39;
 	public const SuspendedSmartB2eDocument = 40;
+	public const CopilotCallAssessment = 41;
 
 	public const FirstOwnerType = 1;
-	public const LastOwnerType = 40;
+	public const LastOwnerType = 41;
 
 	public const DynamicTypeStart = 128;
 	public const DynamicTypeEnd = 192;

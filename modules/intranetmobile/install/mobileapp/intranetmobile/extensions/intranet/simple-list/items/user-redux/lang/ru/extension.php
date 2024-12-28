@@ -1,5 +1,7 @@
 <?php
 $MESS['M_INTRANET_USER_STATUS_ADMIN'] = 'Администратор';
+$MESS['M_INTRANET_USER_STATUS_GUEST'] = 'Гость';
+$MESS['M_INTRANET_USER_STATUS_EXTRANET'] = 'Экстранет';
 $MESS['M_INTRANET_USER_STATUS_INVITED'] = 'Приглашение ещё не принято';
 $MESS['M_INTRANET_USER_STATUS_INVITE_IS_SENDED'] = 'Приглашение отправлено повторно';
 $MESS['M_INTRANET_USER_STATUS_PENDING'] = 'Ждёт подтверждения входа';

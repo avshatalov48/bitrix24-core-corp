@@ -1,0 +1,28 @@
+<?php
+$MESS["CALL_NOTIFY_COPILOT"] = "CoPilot";
+$MESS["CALL_NOTIFY_COPILOT_AGENDA"] = "Agenda";
+$MESS["CALL_NOTIFY_COPILOT_AGREEMENTS"] = "Meeting summary";
+$MESS["CALL_NOTIFY_COPILOT_AGREEMENTS_COMMON"] = "Result";
+$MESS["CALL_NOTIFY_COPILOT_AGREEMENTS_MEETINGS"] = "Meetings";
+$MESS["CALL_NOTIFY_COPILOT_AGREEMENTS_TASKS"] = "Things To Do";
+$MESS["CALL_NOTIFY_COPILOT_DETAIL"] = "[url=#CALL_DETAIL#]Detailed analysis[/url]";
+$MESS["CALL_NOTIFY_COPILOT_DISCLAIMER"] = "Replies provided by CoPilot [url=#DISCLAIMER#]may not always be factually accurate[/url]. Always verify the information you receive.";
+$MESS["CALL_NOTIFY_COPILOT_EFFICIENCY"] = "CoPilot rated efficiency as \"#EFFICIENCY#\".";
+$MESS["CALL_NOTIFY_COPILOT_EFFICIENCY_25"] = "unclear";
+$MESS["CALL_NOTIFY_COPILOT_EFFICIENCY_50"] = "average";
+$MESS["CALL_NOTIFY_COPILOT_EFFICIENCY_75"] = "good";
+$MESS["CALL_NOTIFY_COPILOT_EFFICIENCY_100"] = "excellent";
+$MESS["CALL_NOTIFY_COPILOT_ERROR_AGREEMENT_RESTRICTION_B24"] = "CoPilot is not available until the administrator accepts the updated Terms of Service.";
+$MESS["CALL_NOTIFY_COPILOT_ERROR_AGREEMENT_RESTRICTION_B24_ADMIN"] = "CoPilot is not available until the administrator accepts the updated Terms of Service.";
+$MESS["CALL_NOTIFY_COPILOT_ERROR_AGREEMENT_RESTRICTION_BOX"] = "You have to accept Bitrix24 CoPilot Additional Terms. [URL=#LINK#]Learn more[/URL]";
+$MESS["CALL_NOTIFY_COPILOT_ERROR_ERROR_LIMIT_BAAS"] = "Insufficient credits to use CoPilot Follow-Up. Please [URL=#LINK#]buy CoPilot credits[/URL] to continue.";
+$MESS["CALL_NOTIFY_COPILOT_ERROR_SETTINGS_RESTRICTION"] = "CoPilot Follow-Up in video calls is disabled in the Bitrix24 settings.";
+$MESS["CALL_NOTIFY_COPILOT_ERROR_TARIFF_RESTRICTION"] = "CoPilot Follow-Up is not available on your plan. Please upgrade to one of the major plans.";
+$MESS["CALL_NOTIFY_COPILOT_INSIGHTS"] = "Recommendations";
+$MESS["CALL_NOTIFY_COPILOT_TASKS"] = "Things to do";
+$MESS["CALL_NOTIFY_FEEDBACK"] = "[url=#FEEDBACK_URL#]Report an issue[/url]";
+$MESS["CALL_NOTIFY_TASK_BOOST"] = "You don't have sufficient CoPilot credits. [url=#CALL_START#]Call ##CALL_ID#[/url] has been saved. Please [url=#BUY_URL#]top up[/url] your CoPilot credits and [SEND=#CALL_COMMAND#]run analysis[/SEND] again.";
+$MESS["CALL_NOTIFY_TASK_COMPLETE"] = "CoPilot finished processing [url=#CALL_START#]call ##CALL_ID#[/url].";
+$MESS["CALL_NOTIFY_TASK_FAILED"] = "CoPilot failed to analyze [url=#CALL_START#]call ##CALL_ID#[/url].";
+$MESS["CALL_NOTIFY_TASK_START"] = "CoPilot is processing [url=#CALL_START#]call ##CALL_ID#[/url].";
+$MESS["CALL_NOTIFY_USERS"] = "Participants: #USERS#";

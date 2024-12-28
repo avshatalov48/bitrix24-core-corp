@@ -629,18 +629,40 @@ class CCrmEntityEditorComponent extends UIFormComponent
 		//endregion
 
 		//Bizproc
-		$this->arResult['BIZPROC_MANAGER_CONFIG'] = array();
+		$this->arResult['BIZPROC_MANAGER_CONFIG'] = [];
 		$bizprocEventType = $this->entityID === 0 ? CCrmBizProcEventType::Create : CCrmBizProcEventType::Edit;
 		if (CCrmBizProcHelper::HasParameterizedAutoWorkflows($this->entityTypeID, $bizprocEventType))
 		{
-			$this->arResult['BIZPROC_MANAGER_CONFIG'] = array(
-				"hasParameters" => true,
-				"moduleId" => 'crm',
-				"entity" => CCrmBizProcHelper::ResolveDocumentName($this->entityTypeID),
-				"documentType" => CCrmOwnerType::ResolveName($this->entityTypeID),
-				"autoExecuteType" => $bizprocEventType,
-				'fieldName' => 'bizproc_parameters'
-			);
+			$bizprocStarterData = [
+				'hasParameters' => true,
+				'moduleId' => 'crm',
+				'entity' => CCrmBizProcHelper::ResolveDocumentName($this->entityTypeID),
+				'documentType' => CCrmOwnerType::ResolveName($this->entityTypeID),
+				'autoExecuteType' => $bizprocEventType,
+				'fieldName' => 'bizproc_parameters',
+			];
+
+			if (class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
+			{
+				$bizprocStarterData['signedDocumentType'] = CBPDocument::signDocumentType([
+					$bizprocStarterData['moduleId'], $bizprocStarterData['entity'], $bizprocStarterData['documentType']
+				]);
+
+				if ($this->entityID > 0)
+				{
+					$bizprocStarterData['signedDocumentId'] = CBPDocument::signDocumentType(
+						[
+							$bizprocStarterData['moduleId'],
+							$bizprocStarterData['entity'],
+							CCrmBizProcHelper::ResolveDocumentId($this->entityTypeID, $this->entityID),
+						],
+					);
+				}
+
+				unset($bizprocStarterData['moduleId'], $bizprocStarterData['entity'], $bizprocStarterData['documentType']);
+			}
+
+			$this->arResult['BIZPROC_MANAGER_CONFIG'] = $bizprocStarterData;
 		}
 		//end Bizproc
 
@@ -708,6 +730,18 @@ class CCrmEntityEditorComponent extends UIFormComponent
 		$this->arResult['MESSAGES'] = (array)($this->arParams['MESSAGES'] ?? []);
 
 		$this->prepareRestrictions();
+		$this->prepareEntityData();
+	}
+
+	protected function prepareEntityData(): void
+	{
+		$data = \Bitrix\Crm\Component\Utils\JsonCompatibleConverter::convert($this->arResult['ENTITY_DATA'] ?? []);
+		if (isset($data['sort']) && is_array($data['sort']))
+		{
+			$data['sort'] = array_map('intval', $data['sort']);
+		}
+
+		$this->arResult['PREPARED_ENTITY_DATA'] = $data;
 	}
 
 	protected function initPull(): void

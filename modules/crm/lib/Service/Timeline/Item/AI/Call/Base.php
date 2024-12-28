@@ -36,9 +36,9 @@ abstract class Base extends Configurable
 		return sprintf('AI:Call:%s', $this->getAICallTypeId());
 	}
 
-	final public function getIconCode(): ?string
+	public function getIconCode(): ?string
 	{
-		return Common\Icon::AI_COPILOT;
+		return Common\Icon::AI_PROCESS;
 	}
 
 	final public function getLogo(): ?Body\Logo
@@ -51,7 +51,7 @@ abstract class Base extends Configurable
 		;
 	}
 
-	final public function getContentBlocks(): ?array
+	public function getContentBlocks(): ?array
 	{
 		$result = [];
 

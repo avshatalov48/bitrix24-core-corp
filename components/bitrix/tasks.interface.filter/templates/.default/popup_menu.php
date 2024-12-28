@@ -4,7 +4,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Helper\Filter;
-
+use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 \Bitrix\Main\UI\Extension::load([
 	'ui.stepprocessing',
 ]);

@@ -11,7 +11,7 @@
 			let userFormatFunction = user => ({
 				title: Utils.getFormattedName(user),
 				subtitle: user.WORK_POSITION,
-				shortTitle: user.NAME,
+				shortTitle: user.NAME || Utils.getFormattedName(user),
 				hasName: (Utils.getFormattedHumanName(user) !== ""),
 				sectionCode: "people",
 				color: "#5D5C67",

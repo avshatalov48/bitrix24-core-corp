@@ -4,9 +4,11 @@
 jn.define('crm/timeline/services/responsible-selector', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const { AnalyticsEvent } = require('analytics');
 	const AppTheme = require('apptheme');
 	const { EntitySelectorFactory } = require('selector/widget/factory');
-	const { AnalyticsEvent } = require('analytics');
+	const { dispatch } = require('statemanager/redux/store');
+	const { usersUpsertedFromEntitySelector } = require('statemanager/redux/slices/users');
 
 	/**
 	 * @class ResponsibleSelector
@@ -83,6 +85,7 @@ jn.define('crm/timeline/services/responsible-selector', (require, exports, modul
 		{
 			if (Array.isArray(selectedUsers) && selectedUsers.length > 0)
 			{
+				dispatch(usersUpsertedFromEntitySelector(selectedUsers));
 				this.onSelectedUsers(selectedUsers);
 			}
 		}

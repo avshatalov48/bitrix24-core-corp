@@ -1,0 +1,189 @@
+.hr-structure-components-action-menu-item-wrapper {
+	border-radius: 6px;
+	margin: 0 8px;
+	padding: 0 8px 0 6px;
+	transition: .1s;
+}
+
+.hr-structure-components-action-menu-container {
+	padding: 8px 0;
+	display: flex;
+	flex-flow: column;
+}
+
+.hr-structure-action-popup-menu-item-delimiter {
+	background-color: #f0f1f2;
+	display: block;
+	height: 1px;
+	line-height: 1px;
+	margin-left: 16px;
+	width: calc(100% - 32px);
+}
+
+.hr-structure-components-action-menu-item-wrapper:hover {
+	background-color: #F5F7F8;
+	cursor: pointer;
+}
+
+.hr-structure-components-action-menu-item-wrapper.--disabled {
+	pointer-events: none;
+	opacity: 0.4;
+	cursor: default;
+}
+.hr-confirmation-popup__title-bar {
+	position: relative;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	margin: 0 14px;
+}
+
+.hr-confirmation-popup__title-bar-close-button {
+	position: absolute;
+	right: 0;
+	cursor: pointer;
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-50);
+}
+
+.hr-confirmation-popup__title-bar-close-button:hover {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-90);
+}
+
+.hr-confirmation-popup__content-container {
+	padding: 4px 14px 9px;
+}
+
+.hr-confirmation-popup__content-container.--without-title-bar{
+	padding-top: 20px;
+}
+
+.hr-confirmation-popup__title-bar-text {
+	color: var(--ui-color-palette-gray-90);
+	font-weight: var(--ui-font-weight-bold);
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-3xs);
+}
+
+.hr-confirmation-popup__content-text {
+	padding-bottom: 10px;
+	color: var(--ui-color-palette-gray-90);
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-3xs);
+}
+
+.hr-confirmation-popup__buttons-container {
+	position: relative;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 10px;
+	padding: 13px 0 14px;
+}
+
+.hr-confirmation-popup__buttons-container::before {
+	content: '';
+	position: absolute;
+	width: 100%;
+	height: 1px;
+	background-color: var(--ui-color-palette-gray-90);
+	top: 0;
+	opacity: 0.08;
+}
+
+.hr_structure_confirmation_popup .popup-window-content {
+	border-radius: 12px;
+}
+
+.hr-structure-components-base-popup {
+	transition: all;
+}
+.hr-structure-route-action-popup-menu-item {
+	display: flex;
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-regular);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-lg);
+	color: var(--ui-color-palette-black-base);
+	padding: 8px 0;
+}
+
+.hr-structure-route-action-popup-menu-item__content-icon-container {
+	width: 20px;
+	height: 20px;
+}
+
+.hr-structure-route-action-popup-menu-item__content-icon {
+	width: 20px;
+	height: 20px;
+	background-repeat: no-repeat;
+	background-size: cover;
+	background-position: center;
+}
+
+.hr-structure-route-action-popup-menu-item__content {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+}
+
+.hr-structure-route-action-popup-menu-item__content-text-container {
+	margin-left: 10px;
+}
+
+.hr-structure-route-action-popup-menu-item__content-title {
+	margin-top: 2px;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-3xs);
+}
+
+.hr-structure-route-action-popup-menu-item__content-description {
+	margin-top: 4px;
+	font-size: var(--ui-font-size-3xs);
+	color: var(--ui-color-palette-gray-60);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-2xs);
+}
+.hr-structure-action-popup-menu-item {
+	display: flex;
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-regular);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-lg);
+	color: var(--ui-color-palette-black-base);
+	height: 42px;
+}
+
+.hr-structure-action-popup-menu-item__content-title::before {
+	content: '';
+	display: inline-block;
+	margin-right: 6px;
+	width: 20px;
+	height: 20px;
+	position: absolute;
+	left: 16px;
+	background-repeat: no-repeat;
+	background-size: auto;
+	background-position: center;
+}
+
+.hr-structure-action-popup-menu-item__content {
+	margin-left: 40px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.hr-structure-action-popup-menu-item__content-title {
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 20px;
+}
+
+.hr-structure-action-popup-menu-item__content-title.--red {
+	color: var(--ui-color-palette-red-60);
+}
+.hr-default-popup-layout__content {
+	background-color: var(--ui-color-palette-white-base);
+}

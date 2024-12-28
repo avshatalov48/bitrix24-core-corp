@@ -43,4 +43,9 @@ class BlankScenario
 			self::B2E => SignPermissionDictionary::SIGN_B2E_TEMPLATES,
 		][$scenario];
 	}
+
+	public static function isValid(string $value): bool
+	{
+		return in_array($value, self::getAll(), true);
+	}
 }

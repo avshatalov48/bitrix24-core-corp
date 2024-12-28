@@ -423,9 +423,25 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 
 		if ($canInstallApplication)
 		{
-			$itemsList["ccplacement"]["ONCLICK"] = "BX.rest.Marketplace.open({PLACEMENT: '".\CIntranetRestService::CONTACT_CENTER_PLACEMENT."'});";
-			$itemsList["chatbot"]["ONCLICK"] = "BX.rest.Marketplace.open({}, 'chat_bots');";
-			$itemsList["telephonybot"]["ONCLICK"] = "BX.rest.Marketplace.open({PLACEMENT: 'IVR_BOT'});";
+			if (Loader::includeModule('market'))
+			{
+				$itemsList["ccplacement"]["ONCLICK"] = "BX.SidePanel.Instance.open('/market/', {allowChangeHistory: false});";
+				$itemsList["chatbot"]["ONCLICK"] = "BX.SidePanel.Instance.open('/market/collection/openline_bot/', {allowChangeHistory: false});";
+				if (in_array(\Bitrix\Main\Application::getInstance()->getLicense()->getRegion(), ['ru', 'by', 'kz'], true))
+				{
+					$itemsList["telephonybot"]["ONCLICK"] = "BX.SidePanel.Instance.open('/market/collection/ivr_bot/', {allowChangeHistory: false});";
+				}
+				else
+				{
+					$itemsList["telephonybot"]["ONCLICK"] = "BX.rest.Marketplace.open({PLACEMENT: 'IVR_BOT'});";
+				}
+			}
+			else
+			{
+				$itemsList["ccplacement"]["ONCLICK"] = "BX.rest.Marketplace.open({PLACEMENT: '".\CIntranetRestService::CONTACT_CENTER_PLACEMENT."'});";
+				$itemsList["chatbot"]["ONCLICK"] = "BX.rest.Marketplace.open({}, 'chat_bots');";
+				$itemsList["telephonybot"]["ONCLICK"] = "BX.rest.Marketplace.open({PLACEMENT: 'IVR_BOT'});";
+			}
 		}
 
 		foreach ($itemsList as $itemCode => &$item)

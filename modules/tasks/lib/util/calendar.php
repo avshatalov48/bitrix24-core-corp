@@ -419,7 +419,7 @@ final class Calendar
 		}
 
 		$site = \CSite::GetByID($siteId)->fetch();
-		$weekDay = $site['WEEK_START'];
+		$weekDay = $site['WEEK_START'] ?? null;
 		$weekDaysMap = array(
 			'SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'
 		);

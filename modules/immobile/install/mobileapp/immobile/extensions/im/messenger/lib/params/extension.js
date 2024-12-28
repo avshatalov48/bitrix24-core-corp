@@ -86,11 +86,6 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			return this.get('IS_CHAT_LOCAL_STORAGE_AVAILABLE', false);
 		}
 
-		isCopilotAvailable()
-		{
-			return this.get('IS_COPILOT_AVAILABLE', false);
-		}
-
 		shouldShowChatV2UpdateHint()
 		{
 			return this.get('SHOULD_SHOW_CHAT_V2_UPDATE_HINT', false);
@@ -146,22 +141,52 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			return true;
 		}
 
-		isLinksMigrated()
+		/**
+		 * @return ImFeatures
+		 */
+		getImFeatures()
 		{
-			return this.get('IS_LINKS_MIGRATED', false);
+			return this.get('IM_FEATURES', {
+				chatDepartments: false,
+				chatV2: false,
+				collabAvailable: false,
+				collabCreationAvailable: false,
+				copilotActive: false,
+				copilotAvailable: false,
+				giphyAvailable: false,
+				sidebarBriefs: false,
+				sidebarFiles: false,
+				sidebarLinks: false,
+				zoomActive: false,
+				zoomAvailable: false,
+			});
 		}
 
-		isFilesMigrated()
+		/**
+		 * @return UserInfo
+		 */
+		getUserInfo()
 		{
-			return this.get('IS_FILES_MIGRATED', false);
+			return this.get('USER_INFO', {
+				id: 0,
+				type: 'user',
+			});
 		}
 
-		isCollabAvailable()
+		/**
+		 * @return Permissions
+		 */
+		getPermissions()
 		{
-			// TODO implement collab flag support
-			return false;
+			return this.get('PERMISSIONS', {});
+		}
 
-			return this.get('IS_COLLAB_AVAILABLE', false);
+		/**
+		 * @return {number}
+		 */
+		getMultipleActionMessageLimit()
+		{
+			return this.get('MULTIPLE_ACTION_MESSAGE_LIMIT', 20);
 		}
 	}
 

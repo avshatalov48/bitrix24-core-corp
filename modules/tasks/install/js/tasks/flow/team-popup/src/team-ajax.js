@@ -24,7 +24,7 @@ export class TeamAjax
 			};
 		}
 
-		const { data, error } = await ajax.runAction('tasks.flow.Assignee.list', {
+		const { data, error } = await ajax.runAction('tasks.flow.Team.list', {
 			data: {
 				flowData: { id: this.#flowId },
 			},

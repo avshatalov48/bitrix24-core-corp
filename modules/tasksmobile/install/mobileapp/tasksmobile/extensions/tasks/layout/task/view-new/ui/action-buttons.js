@@ -107,6 +107,9 @@ jn.define('tasks/layout/task/view-new/ui/action-buttons', (require, exports, mod
 		static #getCompactActions(actionProps)
 		{
 			const {
+				actions: {
+					take,
+				},
 				inProgress,
 				isDeferred,
 				isSupposedlyCompleted,
@@ -151,6 +154,13 @@ jn.define('tasks/layout/task/view-new/ui/action-buttons', (require, exports, mod
 			{
 				return [
 					ActionId.RENEW,
+				];
+			}
+
+			if (take)
+			{
+				return [
+					ActionId.TAKE,
 				];
 			}
 
@@ -294,6 +304,7 @@ jn.define('tasks/layout/task/view-new/ui/action-buttons', (require, exports, mod
 					actionId === ActionId.START
 					|| actionId === ActionId.COMPLETE
 					|| actionId === ActionId.RENEW
+					|| actionId === ActionId.TAKE
 				)
 			)
 			{

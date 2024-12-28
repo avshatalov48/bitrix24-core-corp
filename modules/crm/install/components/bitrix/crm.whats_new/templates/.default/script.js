@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (exports,main_core,crm_integration_ui_bannerDispatcher,main_core_events,main_popup,ui_buttons,ui_tour) {
+(function (exports,crm_integration_ui_bannerDispatcher,main_core,main_core_events,main_popup,ui_buttons,ui_tour) {
 	'use strict';
 
 	var _templateObject, _templateObject2;
@@ -23,6 +23,9 @@
 	var _getPrepareSlideButtons = /*#__PURE__*/new WeakSet();
 	var _prepareSteps = /*#__PURE__*/new WeakSet();
 	var _showStepByEvent = /*#__PURE__*/new WeakSet();
+	var _runGuideWithBannerDispatcher = /*#__PURE__*/new WeakSet();
+	var _onGuideFinish = /*#__PURE__*/new WeakSet();
+	var _runGuide = /*#__PURE__*/new WeakSet();
 	var _getDefaultStepEventName = /*#__PURE__*/new WeakSet();
 	var _isMultipleViewsAllowed = /*#__PURE__*/new WeakSet();
 	var _showHelpDesk = /*#__PURE__*/new WeakSet();
@@ -43,6 +46,9 @@
 	    _classPrivateMethodInitSpec(this, _showHelpDesk);
 	    _classPrivateMethodInitSpec(this, _isMultipleViewsAllowed);
 	    _classPrivateMethodInitSpec(this, _getDefaultStepEventName);
+	    _classPrivateMethodInitSpec(this, _runGuide);
+	    _classPrivateMethodInitSpec(this, _onGuideFinish);
+	    _classPrivateMethodInitSpec(this, _runGuideWithBannerDispatcher);
 	    _classPrivateMethodInitSpec(this, _showStepByEvent);
 	    _classPrivateMethodInitSpec(this, _prepareSteps);
 	    _classPrivateMethodInitSpec(this, _getPrepareSlideButtons);
@@ -152,6 +158,7 @@
 	    key: "save",
 	    value: function save() {
 	      var _babelHelpers$classPr3,
+	        _babelHelpers$classPr4,
 	        _this2 = this;
 	      main_core.ajax.runAction('crm.settings.tour.updateOption', {
 	        json: {
@@ -159,7 +166,8 @@
 	          name: babelHelpers.classPrivateFieldGet(this, _closeOptionName),
 	          options: {
 	            isMultipleViewsAllowed: !babelHelpers.classPrivateFieldGet(this, _isViewHappened) && _classPrivateMethodGet(this, _isMultipleViewsAllowed, _isMultipleViewsAllowed2).call(this),
-	            numberOfViewsLimit: (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(this, _options).numberOfViewsLimit) !== null && _babelHelpers$classPr3 !== void 0 ? _babelHelpers$classPr3 : 1
+	            numberOfViewsLimit: (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(this, _options).numberOfViewsLimit) !== null && _babelHelpers$classPr3 !== void 0 ? _babelHelpers$classPr3 : 1,
+	            additionalTourIdsForDisable: (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldGet(this, _options).additionalTourIdsForDisable) !== null && _babelHelpers$classPr4 !== void 0 ? _babelHelpers$classPr4 : null
 	          }
 	        }
 	      }).then(function (_ref2) {
@@ -259,12 +267,14 @@
 	    this.tourPromise = main_core.Runtime.loadExtension('ui.tour');
 	  }
 	  babelHelpers.classPrivateFieldSet(this, _steps, stepsConfig.map(function (stepConfig) {
+	    var _stepConfig$articleAn;
 	    var step = {
 	      id: stepConfig.id,
 	      title: stepConfig.title,
 	      text: stepConfig.text,
 	      position: stepConfig.position,
 	      article: stepConfig.article,
+	      articleAnchor: (_stepConfig$articleAn = stepConfig.articleAnchor) !== null && _stepConfig$articleAn !== void 0 ? _stepConfig$articleAn : null,
 	      infoHelperCode: stepConfig.infoHelperCode
 	    };
 	    if (stepConfig.useDynamicTarget) {
@@ -272,13 +282,29 @@
 	      var eventName = (_stepConfig$eventName = stepConfig.eventName) !== null && _stepConfig$eventName !== void 0 ? _stepConfig$eventName : _classPrivateMethodGet(_this5, _getDefaultStepEventName, _getDefaultStepEventName2).call(_this5, step.id);
 	      main_core_events.EventEmitter.subscribeOnce(eventName, _classPrivateMethodGet(_this5, _showStepByEvent, _showStepByEvent2).bind(_this5));
 	    } else {
-	      step.target = stepConfig.target;
+	      var target = document.querySelector(stepConfig.target);
+	      if (target && main_core.Dom.style(target, 'display') !== 'none') {
+	        step.target = stepConfig.target;
+	      } else if (main_core.Type.isArrayFilled(stepConfig.reserveTargets)) {
+	        stepConfig.reserveTargets.some(function (reserveTarget) {
+	          if (document.querySelector(reserveTarget)) {
+	            step.target = reserveTarget;
+	            return true;
+	          }
+	          return false;
+	        });
+	      } else {
+	        step.target = stepConfig.target;
+	      }
 	    }
 	    return step;
 	  }));
 	}
 	function _showStepByEvent2(event) {
 	  var _this6 = this;
+	  var _babelHelpers$classPr5 = babelHelpers.classPrivateFieldGet(this, _options),
+	    _babelHelpers$classPr6 = _babelHelpers$classPr5.disableBannerDispatcher,
+	    disableBannerDispatcher = _babelHelpers$classPr6 === void 0 ? false : _babelHelpers$classPr6;
 	  void this.tourPromise.then(function (exports) {
 	    var _event$data = event.data,
 	      stepId = _event$data.stepId,
@@ -295,16 +321,35 @@
 	    var Guide = exports.Guide;
 	    var guide = _this6.createGuideInstance(Guide, [step], true);
 	    _this6.setStepPopupOptions(guide.getPopup());
-	    void _classPrivateMethodGet(_this6, _getBannerDispatcher, _getBannerDispatcher2).call(_this6).then(function (dispatcher) {
-	      dispatcher.toQueue(function (onDone) {
-	        guide.subscribe('UI.Tour.Guide:onFinish', function () {
-	          _this6.save();
-	          onDone();
-	        });
-	        guide.showNextStep();
-	      });
+	    if (disableBannerDispatcher === false) {
+	      _classPrivateMethodGet(_this6, _runGuideWithBannerDispatcher, _runGuideWithBannerDispatcher2).call(_this6, guide);
+	    } else {
+	      _classPrivateMethodGet(_this6, _runGuide, _runGuide2).call(_this6, guide);
+	    }
+	  });
+	}
+	function _runGuideWithBannerDispatcher2(guide) {
+	  var _this7 = this;
+	  void _classPrivateMethodGet(this, _getBannerDispatcher, _getBannerDispatcher2).call(this).then(function (dispatcher) {
+	    dispatcher.toQueue(function (onDone) {
+	      _classPrivateMethodGet(_this7, _runGuide, _runGuide2).call(_this7, guide, onDone);
 	    });
 	  });
+	}
+	function _onGuideFinish2(guide) {
+	  var _this8 = this;
+	  var onDone = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+	  guide.subscribe('UI.Tour.Guide:onFinish', function () {
+	    _this8.save();
+	    if (onDone) {
+	      onDone();
+	    }
+	  });
+	}
+	function _runGuide2(guide) {
+	  var onDone = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+	  _classPrivateMethodGet(this, _onGuideFinish, _onGuideFinish2).call(this, guide, onDone);
+	  guide.showNextStep();
 	}
 	function _getDefaultStepEventName2(stepId) {
 	  return "Crm.WhatsNew::onTargetSetted::".concat(stepId);
@@ -319,38 +364,47 @@
 	  }
 	}
 	function _executeWhatsNew2() {
-	  var _this7 = this;
+	  var _this9 = this;
+	  var _babelHelpers$classPr7 = babelHelpers.classPrivateFieldGet(this, _options),
+	    _babelHelpers$classPr8 = _babelHelpers$classPr7.disableBannerDispatcher,
+	    disableBannerDispatcher = _babelHelpers$classPr8 === void 0 ? false : _babelHelpers$classPr8;
 	  if (main_popup.PopupManager && main_popup.PopupManager.isAnyPopupShown()) {
 	    return;
 	  }
 	  void this.whatNewPromise.then(function (exports) {
 	    var WhatsNew = exports.WhatsNew;
-	    babelHelpers.classPrivateFieldSet(_this7, _popup, new WhatsNew({
-	      slides: babelHelpers.classPrivateFieldGet(_this7, _slides),
+	    babelHelpers.classPrivateFieldSet(_this9, _popup, new WhatsNew({
+	      slides: babelHelpers.classPrivateFieldGet(_this9, _slides),
 	      popupOptions: {
 	        height: 440
 	      },
 	      events: {
 	        onDestroy: function onDestroy() {
-	          _this7.save();
-	          _classPrivateMethodGet(_this7, _executeGuide, _executeGuide2).call(_this7, false);
+	          _this9.save();
+	          _classPrivateMethodGet(_this9, _executeGuide, _executeGuide2).call(_this9, false);
 	        }
 	      }
 	    }));
-
-	    // eslint-disable-next-line promise/no-nesting
-	    void _classPrivateMethodGet(_this7, _getBannerDispatcher, _getBannerDispatcher2).call(_this7).then(function (dispatcher) {
-	      dispatcher.toQueue(function (onDone) {
-	        babelHelpers.classPrivateFieldGet(_this7, _popup).subscribe('onDestroy', onDone);
-	        babelHelpers.classPrivateFieldGet(_this7, _popup).show();
+	    if (disableBannerDispatcher === false) {
+	      // eslint-disable-next-line promise/no-nesting
+	      void _classPrivateMethodGet(_this9, _getBannerDispatcher, _getBannerDispatcher2).call(_this9).then(function (dispatcher) {
+	        dispatcher.toQueue(function (onDone) {
+	          babelHelpers.classPrivateFieldGet(_this9, _popup).subscribe('onDestroy', onDone);
+	          babelHelpers.classPrivateFieldGet(_this9, _popup).show();
+	        });
 	      });
-	    });
-	    ActionViewMode.whatsNewInstances.push(babelHelpers.classPrivateFieldGet(_this7, _popup));
+	    } else {
+	      babelHelpers.classPrivateFieldGet(_this9, _popup).show();
+	    }
+	    ActionViewMode.whatsNewInstances.push(babelHelpers.classPrivateFieldGet(_this9, _popup));
 	  }, this);
 	}
 	function _executeGuide2() {
-	  var _this8 = this;
+	  var _this10 = this;
 	  var isAddToQueue = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+	  var _babelHelpers$classPr9 = babelHelpers.classPrivateFieldGet(this, _options),
+	    _babelHelpers$classPr10 = _babelHelpers$classPr9.disableBannerDispatcher,
+	    disableBannerDispatcher = _babelHelpers$classPr10 === void 0 ? false : _babelHelpers$classPr10;
 	  var steps = main_core.clone(babelHelpers.classPrivateFieldGet(this, _steps));
 	  steps = steps.filter(function (step) {
 	    return Boolean(step.target);
@@ -370,22 +424,18 @@
 	      return;
 	    }
 	    var Guide = exports.Guide;
-	    var guide = _this8.createGuideInstance(Guide, steps, babelHelpers.classPrivateFieldGet(_this8, _steps).length <= 1);
+	    var guide = _this10.createGuideInstance(Guide, steps, babelHelpers.classPrivateFieldGet(_this10, _steps).length <= 1);
 	    ActionViewMode.tourInstances.push(guide);
-	    _this8.setStepPopupOptions(guide.getPopup());
+	    _this10.setStepPopupOptions(guide.getPopup());
 	    if (isAddToQueue) {
-	      void _classPrivateMethodGet(_this8, _getBannerDispatcher, _getBannerDispatcher2).call(_this8).then(function (dispatcher) {
-	        dispatcher.toQueue(function (onDone) {
-	          guide.subscribe('UI.Tour.Guide:onFinish', function () {
-	            onDone();
-	            _this8.save();
-	          });
-	          _classPrivateMethodGet(_this8, _showGuide, _showGuide2).call(_this8, guide);
-	        });
-	      });
+	      if (disableBannerDispatcher === false) {
+	        _classPrivateMethodGet(_this10, _runGuideWithBannerDispatcher, _runGuideWithBannerDispatcher2).call(_this10, guide);
+	      } else {
+	        _classPrivateMethodGet(_this10, _runGuide, _runGuide2).call(_this10, guide);
+	      }
 	      return;
 	    }
-	    _classPrivateMethodGet(_this8, _showGuide, _showGuide2).call(_this8, guide);
+	    _classPrivateMethodGet(_this10, _showGuide, _showGuide2).call(_this10, guide);
 	  });
 	}
 	function _showGuide2(guide) {
@@ -399,5 +449,5 @@
 	babelHelpers.defineProperty(ActionViewMode, "whatsNewInstances", []);
 	namespaceCrmWhatsNew.ActionViewMode = ActionViewMode;
 
-}((this.window = this.window || {}),BX,BX.Crm.Integration.UI,BX.Event,BX.Main,BX.UI,BX.UI.Tour));
+}((this.window = this.window || {}),BX.Crm.Integration.UI,BX,BX.Event,BX.Main,BX.UI,BX.UI.Tour));
 //# sourceMappingURL=script.js.map

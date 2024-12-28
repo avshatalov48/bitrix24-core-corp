@@ -13,4 +13,6 @@ $MESS["INTRANET_INVITATION_WIDGET_SETTING_ALL_INVITE"] = "Приглашать �
 $MESS["INTRANET_INVITATION_WIDGET_SETTING_ADMIN_INVITE"] = "Приглашать могут только администраторы";
 $MESS["INTRANET_INVITATION_WIDGET_EXTRANET"] = "Экстранет";
 $MESS["INTRANET_INVITATION_WIDGET_EXTRANET_DESC"] = "что такое экстранет?";
-
+$MESS["INTRANET_INVITATION_WIDGET_COLLAB"] = "Коллабы";
+$MESS["INTRANET_INVITATION_WIDGET_COLLAB_DESC"] = "Для работы с внешними командами";
+$MESS["INTRANET_INVITATION_WIDGET_COLLAB_CREATE"] = "Создать";

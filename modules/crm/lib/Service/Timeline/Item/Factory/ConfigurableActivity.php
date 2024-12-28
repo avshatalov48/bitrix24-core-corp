@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\Factory;
 
+use Bitrix\Crm\Activity\Provider\Booking;
 use Bitrix\Crm\Activity\Provider\CalendarSharing;
 use Bitrix\Crm\Activity\Provider\ConfigurableRestApp;
 use Bitrix\Crm\Activity\Provider\Delivery;
@@ -17,6 +18,7 @@ use Bitrix\Crm\Activity\Provider\ToDo\ToDo;
 use Bitrix\Crm\Activity\Provider\Visit;
 use Bitrix\Crm\Activity\Provider\WhatsApp;
 use Bitrix\Crm\Activity\Provider\Zoom;
+use Bitrix\Crm\Activity\Provider\Bizproc;
 use Bitrix\Crm\Activity\ProviderId;
 use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Service\Timeline\Item;
@@ -161,6 +163,11 @@ class ConfigurableActivity
 				return new Item\Activity\Visit($context, $model);
 			}
 
+			if ($providerId === Booking::getId())
+			{
+				return new Item\Activity\Booking($context, $model);
+			}
+
 			if ($providerId === Zoom::getId())
 			{
 				$providerData = $model->getHistoryItemModel()?->get('PROVIDER_DATA') ?? [];
@@ -170,6 +177,25 @@ class ConfigurableActivity
 				}
 
 				return new Item\Activity\Zoom($context, $model);
+			}
+
+			$isAvailable = (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024', 0);
+			if ($isAvailable)
+			{
+				if ($providerId === Bizproc\Workflow::getId())
+				{
+					return new Item\Activity\Bizproc\WorkflowCompleted($context, $model);
+				}
+
+				if ($providerId === Bizproc\Comment::getId())
+				{
+					return new Item\Activity\Bizproc\CommentAdded($context, $model);
+				}
+
+				if ($providerId === Bizproc\Task::getId())
+				{
+					return new Item\Activity\Bizproc\Task($context, $model);
+				}
 			}
 		}
 

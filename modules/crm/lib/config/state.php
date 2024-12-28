@@ -2,7 +2,8 @@
 
 namespace Bitrix\Crm\Config;
 
-use Bitrix\Main;
+use Bitrix\Main\Application;
+use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -11,15 +12,15 @@ use Bitrix\Iblock;
 
 class State
 {
-	/** @var int */
-	private static $elementCount;
+	/** @var null|int */
+	private static ?int $elementCount = null;
 	/** @var array */
-	private static $iblockList = [];
+	private static array $iblockList = [];
 
 	/**
 	 * Returns information about exceeding the number of goods in the landing for the information block.
 	 *
-	 * @param int|null $iblockId		Iblock Id.
+	 * @param int|null $iblockId Iblock identifier.
 	 * @return array|null
 	 */
 	public static function getExceedingProductLimit(?int $iblockId = null): ?array
@@ -244,20 +245,41 @@ class State
 		if (self::$elementCount === null)
 		{
 			self::$elementCount = 0;
-			if (Loader::includeModule('iblock'))
+
+			$cache = Cache::createInstance();
+			$cacheTtl = defined('BX_COMP_MANAGED_CACHE') ? 2419200 : 3600;
+			$cachePath = '/crm/limits/catalog';
+			if ($cache->initCache($cacheTtl, 'product_limit_' .$iblockId, $cachePath))
 			{
-				self::$elementCount = Iblock\ElementTable::getCount(
-					[
-						'=IBLOCK_ID' => $iblockId,
-						'=WF_STATUS_ID' => 1,
-						'==WF_PARENT_ELEMENT_ID' => null,
-					],
-					[
-						'ttl' => 86400,
-					]
-				);
+				[$count] = $cache->getVars();
+				self::$elementCount = (int)$count;
+			}
+			else
+			{
+				if (Loader::includeModule('iblock'))
+				{
+					$cache->startDataCache();
+
+					$taggedCache = Application::getInstance()->getTaggedCache();
+					$taggedCache->startTagCache($cachePath);
+					$count = Iblock\ElementTable::getCount(
+						[
+							'=IBLOCK_ID' => $iblockId,
+							'=WF_STATUS_ID' => 1,
+							'==WF_PARENT_ELEMENT_ID' => null,
+						]
+					);
+
+					$taggedCache->registerTag('iblock_id_' . $iblockId);
+					$taggedCache->endTagCache();
+
+					$cache->endDataCache([$count]);
+
+					self::$elementCount = $count;
+				}
 			}
 		}
+
 		return self::$elementCount;
 	}
 

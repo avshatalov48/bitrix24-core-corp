@@ -11,6 +11,7 @@ jn.define('sign/dialog/banners/signedbyassignee', (require, exports, module) => 
 	const { BannerTemplate } = require('sign/dialog/banners/template');
 	const { Color } = require('tokens');
 	const { BBCodeParser } = require('bbcode/parser');
+	const { InitiatedByType } = require('sign/type/initiated-by-type');
 	const parser = new BBCodeParser();
 
 	class SignedByAssignee extends LayoutComponent
@@ -22,10 +23,12 @@ jn.define('sign/dialog/banners/signedbyassignee', (require, exports, module) => 
 			const {
 				layoutWidget,
 				documentTitle,
+				initiatedByType,
 			} = props;
 
 			this.documentTitle = documentTitle;
 			this.layoutWidget = layoutWidget;
+			this.initiatedByType = initiatedByType;
 		}
 
 		closeLayout()
@@ -35,11 +38,16 @@ jn.define('sign/dialog/banners/signedbyassignee', (require, exports, module) => 
 
 		render()
 		{
+			const { titleCode, descriptionCode } = InitiatedByType.isInitiatedByEmployee(this.initiatedByType)
+				? { titleCode: 'SIGN_MOBILE_DIALOG_SIGNED_BY_ASSIGNEE_BY_EMPLOYEE_TITLE',  descriptionCode: 'SIGN_MOBILE_DIALOG_SIGNED_BY_ASSIGNEE_BY_EMPLOYEE_DESCRIPTION'}
+				: { titleCode: 'SIGN_MOBILE_DIALOG_SIGNED_BY_ASSIGNEE_TITLE',  descriptionCode: 'SIGN_MOBILE_DIALOG_SIGNED_BY_ASSIGNEE_DESCRIPTION'}
+			;
+
 			return BannerTemplate({
 				iconPathName: 'signed.svg',
-				title: Loc.getMessage('SIGN_MOBILE_DIALOG_SIGNED_BY_ASSIGNEE_TITLE'),
+				title: Loc.getMessage(titleCode),
 				description: Loc.getMessage(
-					'SIGN_MOBILE_DIALOG_SIGNED_BY_ASSIGNEE_DESCRIPTION',
+					descriptionCode,
 					{
 						'#DOCUMENT_TITLE#': parser.parse(this.documentTitle).toPlainText(),
 						'#COLOR_OF_HIGHLIGHTED_TEXT#': Color.base1.toHex(),

@@ -15,7 +15,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 \Bitrix\Main\Loader::includeModule("ui");
 \Bitrix\Main\UI\Extension::load([
 	'ui.icons.disk',
-	'ui.label'
+	'ui.label',
 ]);
 
 if ($arParams['NEED_SET_TITLE'])

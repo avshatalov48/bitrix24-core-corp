@@ -12,14 +12,13 @@ use Bitrix\Socialnetwork\UserToGroupTable;
 class IntranetUserSettings extends UserSettings
 {
 	public const ADMIN_FIELD = 'ADMIN';
-	public const EXTRANET_FIELD = 'EXTRANET';
 	public const FIRED_FIELD = 'FIRED';
 	public const INVITED_FIELD = 'INVITED';
 	public const WAIT_CONFIRMATION_FIELD = 'WAIT_CONFIRMATION';
 	public const INTEGRATOR_FIELD = 'INTEGRATOR';
 	public const VISITOR_FIELD = 'VISITOR';
 
-	private array $filterAvailability;
+	protected array $filterAvailability;
 
 	public function __construct(array $params)
 	{
@@ -59,10 +58,6 @@ class IntranetUserSettings extends UserSettings
 				|| Option::get('extranet', 'extranet_site', '') === ''
 				|| !$isExtranetSite
 			);
-
-		$this->filterAvailability[self::EXTRANET_FIELD] =
-			ModuleManager::isModuleInstalled('extranet')
-			&& Option::get('extranet', 'extranet_site') !== '';
 
 		$this->filterAvailability[self::FIRED_FIELD] =
 			(

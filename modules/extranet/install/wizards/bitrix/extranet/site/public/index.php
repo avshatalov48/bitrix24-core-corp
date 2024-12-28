@@ -1,7 +1,7 @@
 <?php
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 
-if (!\CModule::IncludeModule('intranet'))
+if (!\CModule::IncludeModule('intranet') || !\CModule::IncludeModule('extranet'))
 {
 	return;
 }
@@ -9,7 +9,9 @@ if (!\CModule::IncludeModule('intranet'))
 IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/extranet/public/index.php');
 
 $APPLICATION->SetTitle(GetMessage("EXTRANET_INDEX_PAGE_TITLE"));
+
 use Bitrix\Intranet;
+
 ?>
 <p><table class="data-table">
 <tr>

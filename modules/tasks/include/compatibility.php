@@ -36,3 +36,10 @@ class_alias('\\Bitrix\\Tasks\\Integration\\Integration', '\\Bitrix\\Tasks\\Integ
 class_alias('\\Bitrix\\Tasks\\Util\\Util', '\\Bitrix\\Tasks\\Util');
 
 class_alias('\\Bitrix\\Tasks\\Util\\UI', '\\Bitrix\\Tasks\\UI');
+
+class_alias('\\Bitrix\\Tasks\\Provider\\Query\\QueryBuilderInterface', '\\Bitrix\\Tasks\\Provider\\QueryBuilderInterface');
+class_alias('\\Bitrix\\Tasks\\Provider\\Query\\QueryInterface', '\\Bitrix\\Tasks\\Provider\\QueryInterface');
+class_alias('\\Bitrix\\Tasks\\Provider\\Query\\TaskQueryInterface', '\\Bitrix\\Tasks\\Provider\\TaskQueryInterface');
+class_alias('\\Bitrix\\Tasks\\Provider\\Query\\TaskQueryBuilder', '\\Bitrix\\Tasks\\Provider\\TaskQueryBuilder');
+class_alias('\\Bitrix\\Tasks\\Provider\\Query\\TaskFilterBuilder', '\\Bitrix\\Tasks\\Provider\\TaskFilterBuilder');
+class_alias('\\Bitrix\\Tasks\\Provider\\Query\\TaskQuery', '\\Bitrix\\Tasks\\Provider\\TaskQuery');

@@ -24,7 +24,7 @@ class CBPTasksChangeResponsibleActivity extends CBPActivity
 
 		if (!$this->canChangeResponsible())
 		{
-			$this->WriteToTrackingService(GetMessage('TASKS_CHANGE_RESPONSIBLE_NO_PERMISSIONS'), 0, CBPTrackingType::Error);
+			$this->WriteToTrackingService(GetMessage('TASKS_CHANGE_RESPONSIBLE_NO_PERMISSIONS_MSGVER_1'), 0, CBPTrackingType::Error);
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -67,7 +67,7 @@ class CBPTasksChangeResponsibleActivity extends CBPActivity
 
 		if (empty($arTestProperties["Responsible"]))
 		{
-			$errors[] = array("code" => "NotExist", "parameter" => "Responsible", "message" => GetMessage("TASKS_CHANGE_RESPONSIBLE_EMPTY_PROP"));
+			$errors[] = array("code" => "NotExist", "parameter" => "Responsible", "message" => GetMessage("TASKS_CHANGE_RESPONSIBLE_EMPTY_PROP_MSGVER_1"));
 		}
 
 		return array_merge($errors, parent::ValidateProperties($arTestProperties, $user));

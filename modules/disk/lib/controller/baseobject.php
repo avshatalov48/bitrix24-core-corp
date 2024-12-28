@@ -46,12 +46,12 @@ abstract class BaseObject extends Internals\Engine\Controller
 		bool $generateUniqueName = false
 	)
 	{
-		$securityContext = $object->getStorage()->getSecurityContext($this->getCurrentUser()->getId());
-		if (!$object->canRename($securityContext))
+		$securityContext = $object->getStorage()?->getSecurityContext($this->getCurrentUser()->getId());
+		if (!$securityContext || !$object->canRename($securityContext))
 		{
 			$this->addError(new Error(Loc::getMessage('DISK_ERROR_MESSAGE_DENIED')));
 
-			return;
+			return null;
 		}
 
 		if ($autoCorrect)
@@ -63,7 +63,7 @@ abstract class BaseObject extends Internals\Engine\Controller
 		{
 			$this->addErrors($object->getErrors());
 
-			return;
+			return null;
 		}
 
 		return $this->get($object);
@@ -196,7 +196,7 @@ abstract class BaseObject extends Internals\Engine\Controller
 
 		if (!$extLink)
 		{
-			$this->errorCollection[] = new Error(Loc::getMessage("DISK_FILE_C_ERROR_COULD_NOT_CREATE_FIND_EXT_LINK"));
+			$this->errorCollection[] = new Error(Loc::getMessage('DISK_FILE_C_ERROR_COULD_NOT_CREATE_FIND_EXT_LINK'));
 
 			return null;
 		}

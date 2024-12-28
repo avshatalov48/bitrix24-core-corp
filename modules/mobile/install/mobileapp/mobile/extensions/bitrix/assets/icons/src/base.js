@@ -6,6 +6,8 @@ jn.define('assets/icons/src/base', (require, exports, module) => {
 
 	/**
 	 * @class BaseIcon
+	 * @template TBaseIcon
+	 * @extends {BaseEnum<BaseIcon>}
 	 */
 	class BaseIcon extends BaseEnum
 	{

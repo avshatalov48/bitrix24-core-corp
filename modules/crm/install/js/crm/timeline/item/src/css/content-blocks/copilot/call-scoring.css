@@ -1,0 +1,164 @@
+.crm-timeline__call-scoring {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: flex-start;
+	box-sizing: border-box;
+	gap: var(--ui-space-inset-xs);
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-palette-black-solid-rgb);
+	text-align: left;
+	padding-right: 20px;
+}
+
+.crm-timeline__call-scoring-wrapper {
+	width: 100%;
+	position: relative;
+	box-sizing: border-box;
+	border-radius: var(--ui-border-radius-lg);
+	border: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) var(--ui-color-palette-blue-30);
+	height: 140px;
+}
+
+.crm-timeline__call-scoring-title {
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-palette-gray-70);
+	line-height: var(--ui-font-line-height-2xs);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.crm-timeline__call-scoring-wrapper .crm-timeline__call-scoring-responsible {
+	width: 100%;
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: flex-end;
+	min-height: var(--ui-size-xl2);
+	line-height: var(--ui-font-line-height-xl);
+	gap: var(--ui-space-inset-2xs);
+	top: 12px;
+	left: 18px;
+}
+
+.crm-timeline__call-scoring-wrapper .crm-timeline__line-div {
+	width: 92%;
+	position: relative;
+	box-sizing: border-box;
+	text-align: center;
+	border-top: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) var(--ui-color-palette-blue-30);
+	height: var(--ui-border-width-thin);
+	top: 68px;
+	left: 18px;
+	right: 18px;
+}
+
+.crm-timeline__call-scoring-wrapper .crm-timeline__call-scoring-assessment {
+	width: 100%;
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: center;
+	box-sizing: border-box;
+	color: var(--ui-color-palette-gray-80);
+	left: var(--ui-size-none);
+	height: var(--ui-size-8xl);
+	top: 70px;
+	padding: 8px 20px 12px 8px;
+}
+
+.crm-timeline__call-scoring-responsible-content {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: var(--ui-space-inset-xs);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.crm-timeline__call-scoring-responsible-content .responsible-user-name {
+	max-width: 100%;
+	position: relative;
+	font-size: var(--ui-font-size-lg);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.crm-timeline__call-scoring-assessment .crm-timeline__call-scoring-assessment-wrapper {
+	align-self: stretch;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+}
+
+.crm-timeline__call-scoring-assessment-wrapper .copilot-avatar {
+	position: relative;
+	object-fit: cover;
+	padding: var(--ui-border-width-thin);
+	width: 42px;
+	height: 42px;
+}
+
+.crm-timeline__call-scoring-assessment-wrapper .script-layout {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: center;
+	overflow: hidden;
+	gap: 1px;
+}
+
+.crm-timeline__call-scoring-assessment-script {
+	width: 100%;
+	display: inline-block;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: center;
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-palette-blue-60);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	cursor: pointer;
+}
+
+.crm-timeline__call-scoring-assessment-pill {
+	position: relative;
+	background: url('../../../images/crm-timelime__copilot-pill-backgroud.svg') center no-repeat;
+	font-weight: var(--ui-font-weight-bold);
+	color: var(--ui-color-palette-white-base);
+	width: 100px;
+	height: 50px;
+	overflow: hidden;
+	flex-shrink: 0;
+	text-align: center;
+	cursor: pointer;
+}
+
+.crm-timeline__call-scoring-assessment-script:hover,
+.crm-timeline__call-scoring-assessment-pill:hover {
+	filter: brightness(110%);
+}
+
+.crm-timeline__call-scoring-assessment-script:active,
+.crm-timeline__call-scoring-assessment-pill:active {
+	filter: brightness(90%);
+}
+
+.crm-timeline__call-scoring-assessment-script.--readonly,
+.crm-timeline__call-scoring-assessment-pill.--readonly {
+	cursor: default;
+}
+
+.crm-timeline__call-scoring-assessment-pill .value {
+	font-size: var(--ui-font-size-5xl);
+	padding-right: 18px;
+	line-height: 50px;
+}

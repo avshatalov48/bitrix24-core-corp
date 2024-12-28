@@ -1,8 +1,11 @@
 <?php
 namespace Bitrix\Crm\Service;
 
+use Bitrix\Crm\Feature;
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Security\Role\Manage\Manager\AllSelection;
+use Bitrix\Crm\Security\Role\Manage\RoleManagerSelectionFactory;
 use Bitrix\Crm\Service\Router\ParseResult;
 use Bitrix\Crm\Settings\EntityViewSettings;
 use Bitrix\Intranet\Util;
@@ -52,6 +55,7 @@ class Router
 	protected $isSefMode;
 	protected $siteData;
 	protected $customRoots = [];
+	protected array $customRootsWithoutPages = [];
 	protected string $defaultComponent = 'bitrix:crm.router.default.root';
 	protected array $defaultComponentParameters = [];
 
@@ -175,6 +179,7 @@ class Router
 			'bitrix:crm.item.kanban' => 'type/#entityTypeId#/kanban/category/#categoryId#/',
 			'bitrix:crm.type.detail' => 'type/detail/#entityTypeId#/',
 			'bitrix:crm.type.merge.resolver' => 'type/#entityTypeId#/merge/',
+			'bitrix:crm.config.perms.wrapper' => 'perms/#criterion#/',
 			'bitrix:crm.type.list' => 'type/',
 			'bitrix:crm.item.list' => 'type/#entityTypeId#/list/category/#categoryId#/',
 			'bitrix:crm.sales.tunnels' => 'type/#entityTypeId#/categories/',
@@ -182,6 +187,9 @@ class Router
 			'bitrix:crm.item.deadlines' => 'type/#entityTypeId#/deadlines/category/#categoryId#/',
 			'bitrix:crm.automated_solution.list' => 'type/automated_solution/list/',
 			'bitrix:crm.automated_solution.details' => 'type/automated_solution/details/#id#/',
+			'bitrix:crm.automated_solution.permissions' => 'type/automated_solution/permissions/',
+			'bitrix:crm.copilot.call.assessment.list' => 'copilot-call-assessment/',
+			'bitrix:crm.copilot.call.assessment.details.wrapper' => 'copilot-call-assessment/details/#callAssessmentId#/',
 		];
 	}
 
@@ -528,6 +536,30 @@ class Router
 		}
 
 		return null;
+	}
+
+	/**
+	 * Returns Uri to all CRM permissions
+	 */
+	public function getPermissionsUrl(): ?Uri
+	{
+		if (Feature::enabled(Feature\PermissionsLayoutV2::class))
+		{
+			return (new AllSelection())->getUrl();
+		}
+
+		return new Uri('/crm/configs/perms/');
+	}
+
+	/**
+	 * Returns Uri to permissions filtered by specific entity
+	 */
+	public function getEntityPermissionsUrl(int $entityTypeId, ?int $categoryId = null): ?Uri
+	{
+		return (new RoleManagerSelectionFactory())
+			->createByEntity($entityTypeId, $categoryId)
+			?->getUrl()
+		;
 	}
 
 	public function getItemListUrlIntoCustomSection(string $customSectionCode, int $entityTypeId, ?int $categoryId = null): ?Uri
@@ -1372,6 +1404,18 @@ class Router
 		return $this->customRoots;
 	}
 
+	public function getCustomRootsWithoutPages(): array
+	{
+		return $this->customRootsWithoutPages;
+	}
+
+	public function setCustomRootsWithoutPages(array $roots): self
+	{
+		$this->customRootsWithoutPages = $roots;
+
+		return $this;
+	}
+
 	public function getDefaultComponent(): string
 	{
 		return $this->defaultComponent;
@@ -1405,8 +1449,16 @@ class Router
 		}
 
 		$customRoots = [];
+		$customRootsWithoutPages = [];
+
 		foreach ($customSections as $section)
 		{
+			$url = IntranetManager::getUrlForCustomSection($section);
+			if ($url !== null)
+			{
+				$customRootsWithoutPages[] = $url;
+			}
+
 			foreach ($section->getPages() as $page)
 			{
 				$entityTypeId = IntranetManager::getEntityTypeIdByPageSettings($page->getSettings());
@@ -1418,7 +1470,10 @@ class Router
 			}
 		}
 
-		$this->setCustomRoots($customRoots);
+		$this
+			->setCustomRoots($customRoots)
+			->setCustomRootsWithoutPages($customRootsWithoutPages)
+		;
 	}
 
 	public function getConsistentUrlFromPartlyDefined(string $currentUrl): ?Uri

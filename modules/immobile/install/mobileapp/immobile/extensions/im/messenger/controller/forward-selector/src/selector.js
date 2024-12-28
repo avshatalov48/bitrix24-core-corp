@@ -7,7 +7,7 @@ jn.define('im/messenger/controller/forward-selector/selector', (require, exports
 
 	const { Theme } = require('im/lib/theme');
 	const { Feature } = require('im/messenger/lib/feature');
-	const { EventType } = require('im/messenger/const');
+	const { EventType, WidgetTitleParamsType } = require('im/messenger/const');
 	const { RecentProvider, RecentSelector } = require('im/messenger/controller/search/experimental');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { ForwardSelectorView } = require('im/messenger/controller/forward-selector/view');
@@ -39,14 +39,17 @@ jn.define('im/messenger/controller/forward-selector/selector', (require, exports
 			this.initProvider();
 		}
 
-		async open({ messageId, fromDialogId, locator })
+		async open({ messageIds, fromDialogId, locator, onItemSelectedCallBack = () => {} })
 		{
 			this.fromDialogId = fromDialogId;
 			this.bindMethods();
 			this.subscribeExternalEvents();
 
 			const layoutWidget = await PageManager.openWidget('layout', {
-				title: Loc.getMessage('IMMOBILE_MESSENGER_FORWARD_SELECTOR_TITLE'),
+				titleParams: {
+					text: Loc.getMessage('IMMOBILE_MESSENGER_FORWARD_SELECTOR_TITLE'),
+					type: WidgetTitleParamsType.entity,
+				},
 				useLargeTitleMode: true,
 				modal: true,
 				backgroundColor: Theme.colors.bgNavigation,
@@ -63,8 +66,9 @@ jn.define('im/messenger/controller/forward-selector/selector', (require, exports
 					this.onUserTypeText({ text });
 				},
 				onItemSelected: (dialogParams) => {
+					onItemSelectedCallBack();
 					this.forwardMessage({
-						messageId,
+						messageIds,
 						dialogParams,
 						fromDialogId,
 						locator,
@@ -118,14 +122,14 @@ jn.define('im/messenger/controller/forward-selector/selector', (require, exports
 		}
 
 		/**
-		 * @param {number} messageId
+		 * @param {Array<number>} messageIds
 		 * @param {MessengerItemOnClickParams} dialogParams
 		 * @param {DialogId} fromDialogId
 		 * @param {DialogLocator} locator
 		 */
-		forwardMessage({ messageId, dialogParams, fromDialogId, locator })
+		forwardMessage({ messageIds, dialogParams, fromDialogId, locator })
 		{
-			logger.log(`${this.constructor.name} forwardMessage`, messageId, dialogParams, fromDialogId);
+			logger.log(`${this.constructor.name} forwardMessage`, messageIds, dialogParams, fromDialogId);
 			const userModel = serviceLocator.get('core').getStore().getters['usersModel/getById'](dialogParams.dialogId);
 			if (userModel?.bot && !Feature.isChatDialogWidgetSupportsBots)
 			{
@@ -136,7 +140,7 @@ jn.define('im/messenger/controller/forward-selector/selector', (require, exports
 
 			if (dialogParams.dialogId.toString() === fromDialogId.toString())
 			{
-				locator.get('reply-manager').startForwardingMessage(messageId);
+				locator.get('reply-manager').startForwardingMessages(messageIds);
 				this.close();
 
 				return;
@@ -144,7 +148,7 @@ jn.define('im/messenger/controller/forward-selector/selector', (require, exports
 
 			const openDialogParams = {
 				...dialogParams,
-				forwardMessageId: messageId,
+				forwardMessageIds: messageIds,
 			};
 
 			MessengerEmitter.emit(EventType.messenger.openDialog, openDialogParams, 'im.messenger');

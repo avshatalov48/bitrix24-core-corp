@@ -15,6 +15,17 @@ this.BX = this.BX || {};
 	  }
 	  throw new Error(`Expected ${paramName} be an instance of ${constructor.name}, got ${getType(param)} instead`);
 	}
+	function requireArrayOfString(param, paramName) {
+	  if (!main_core.Type.isArray(param)) {
+	    throw new TypeError(`Expected ${paramName} should be an array of strings, got ${getType(param)} instead`);
+	  }
+	  param.forEach((value, index) => {
+	    if (!main_core.Type.isString(value)) {
+	      throw new TypeError(`Expected ${paramName} should be an array of strings, instead the element at index ${index} is ${getType(value)}`);
+	    }
+	  });
+	  return param;
+	}
 	function requireStringOrNull(param, paramName) {
 	  if (main_core.Type.isStringFilled(param) || main_core.Type.isNil(param)) {
 	    return param;
@@ -174,6 +185,7 @@ this.BX = this.BX || {};
 	var _pingSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pingSettings");
 	var _rootMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rootMenu");
 	var _targetItemId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("targetItemId");
+	var _expandsBehindThan = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("expandsBehindThan");
 	var _kanbanController = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("kanbanController");
 	var _restriction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restriction");
 	var _gridController = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("gridController");
@@ -187,11 +199,13 @@ this.BX = this.BX || {};
 	var _extensionSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extensionSettings");
 	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
 	var _getItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItems");
+	var _resolveEarlyTargetId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resolveEarlyTargetId");
 	var _getPushCrmSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPushCrmSettings");
 	var _shouldShowLastActivitySortToggle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowLastActivitySortToggle");
 	var _getLastActivitySortToggle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLastActivitySortToggle");
 	var _isLastActivitySortEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isLastActivitySortEnabled");
 	var _handleLastActivitySortToggleClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleLastActivitySortToggleClick");
+	var _closeMenuWindow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeMenuWindow");
 	var _shouldShowTodoSkipMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowTodoSkipMenu");
 	var _shouldShowTodoPingSettingsMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowTodoPingSettingsMenu");
 	var _getCoPilotSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCoPilotSettings");
@@ -205,6 +219,7 @@ this.BX = this.BX || {};
 	 */
 	class SettingsButtonExtender {
 	  constructor(params) {
+	    var _params$expandsBehind;
 	    Object.defineProperty(this, _getInfoHelper, {
 	      value: _getInfoHelper2
 	    });
@@ -229,6 +244,9 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _shouldShowTodoSkipMenu, {
 	      value: _shouldShowTodoSkipMenu2
 	    });
+	    Object.defineProperty(this, _closeMenuWindow, {
+	      value: _closeMenuWindow2
+	    });
 	    Object.defineProperty(this, _handleLastActivitySortToggleClick, {
 	      value: _handleLastActivitySortToggleClick2
 	    });
@@ -243,6 +261,9 @@ this.BX = this.BX || {};
 	    });
 	    Object.defineProperty(this, _getPushCrmSettings, {
 	      value: _getPushCrmSettings2
+	    });
+	    Object.defineProperty(this, _resolveEarlyTargetId, {
+	      value: _resolveEarlyTargetId2
 	    });
 	    Object.defineProperty(this, _getItems, {
 	      value: _getItems2
@@ -267,6 +288,10 @@ this.BX = this.BX || {};
 	      value: void 0
 	    });
 	    Object.defineProperty(this, _targetItemId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _expandsBehindThan, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -317,6 +342,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1] = main_core.Text.toInteger(params.entityTypeId);
 	    babelHelpers.classPrivateFieldLooseBase(this, _categoryId)[_categoryId] = main_core.Type.isInteger(params.categoryId) ? params.categoryId : null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _pingSettings)[_pingSettings] = main_core.Type.isPlainObject(params.pingSettings) ? params.pingSettings : {};
+	    babelHelpers.classPrivateFieldLooseBase(this, _expandsBehindThan)[_expandsBehindThan] = requireArrayOfString((_params$expandsBehind = params.expandsBehindThan) != null ? _params$expandsBehind : [], 'params.expandsBehindThan');
 	    babelHelpers.classPrivateFieldLooseBase(this, _smartActivityNotificationSupported)[_smartActivityNotificationSupported] = main_core.Text.toBoolean(params.smartActivityNotificationSupported);
 	    if (EntityType && !EntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1])) {
 	      throw new Error(`Provided entityTypeId is invalid: ${babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1]}`);
@@ -363,13 +389,15 @@ this.BX = this.BX || {};
 	    while (createdMenuItemIds.length > 0) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _rootMenu)[_rootMenu].removeMenuItem(createdMenuItemIds.pop());
 	    }
-	    let targetItemId = babelHelpers.classPrivateFieldLooseBase(this, _targetItemId)[_targetItemId];
+	    let targetItemId = babelHelpers.classPrivateFieldLooseBase(this, _resolveEarlyTargetId)[_resolveEarlyTargetId]();
 	    for (const item of items.reverse())
 	    // new item is *prepended* on top of target item, therefore reverse
 	    {
 	      const newItem = babelHelpers.classPrivateFieldLooseBase(this, _rootMenu)[_rootMenu].addMenuItem(item, targetItemId);
-	      targetItemId = newItem.getId();
-	      createdMenuItemIds.push(newItem.getId());
+	      if (newItem) {
+	        targetItemId = newItem.getId();
+	        createdMenuItemIds.push(newItem.getId());
+	      }
 	    }
 	  });
 	}
@@ -384,6 +412,12 @@ this.BX = this.BX || {};
 	    items.push(coPilotSettings);
 	  }
 	  return items;
+	}
+	function _resolveEarlyTargetId2() {
+	  var _earlyItem$getId;
+	  const items = babelHelpers.classPrivateFieldLooseBase(this, _rootMenu)[_rootMenu].getMenuItems();
+	  const earlyItem = items.find(item => babelHelpers.classPrivateFieldLooseBase(this, _expandsBehindThan)[_expandsBehindThan].includes(item.getId()));
+	  return (_earlyItem$getId = earlyItem == null ? void 0 : earlyItem.getId()) != null ? _earlyItem$getId : babelHelpers.classPrivateFieldLooseBase(this, _targetItemId)[_targetItemId];
 	}
 	function _getPushCrmSettings2() {
 	  const pushCrmItems = [];
@@ -455,6 +489,10 @@ this.BX = this.BX || {};
 	  } else {
 	    console.error('Can not handle last activity toggle click');
 	  }
+	}
+	function _closeMenuWindow2(event, item) {
+	  var _item$getMenuWindow2;
+	  (_item$getMenuWindow2 = item.getMenuWindow()) == null ? void 0 : _item$getMenuWindow2.close();
 	}
 	function _shouldShowTodoSkipMenu2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _smartActivityNotificationSupported)[_smartActivityNotificationSupported];

@@ -1,8 +1,14 @@
 <?php
 
+use Bitrix\Crm\Activity\Entity\ToDo;
 use Bitrix\Crm\Format\EntityAddressFormatter;
+use Bitrix\Crm\Integration\Bitrix24Manager;
 use Bitrix\Crm\Integration\location\Format;
+use Bitrix\Crm\Settings\Mode;
+use Bitrix\Crm\Settings\WorkTime;
 use Bitrix\Location\Service\FormatService;
+use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -10,13 +16,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 $settings = [
-	'canUseAddressBlock' => \Bitrix\Main\ModuleManager::isModuleInstalled('location'),
+	'canUseAddressBlock' => ModuleManager::isModuleInstalled('location'),
+	'canUseCalendarBlock' => ModuleManager::isModuleInstalled('calendar'),
 ];
 
-if (\Bitrix\Main\Loader::includeModule('crm'))
+if (Loader::includeModule('crm'))
 {
-	$settings['crmMode'] = \Bitrix\Crm\Settings\Mode::getCurrentName();
-	$settings['locationFeatureEnabled'] = \Bitrix\Crm\Integration\Bitrix24Manager::isFeatureEnabled('calendar_location');
+	$settings['crmMode'] = Mode::getCurrentName();
+	$settings['locationFeatureEnabled'] = Bitrix24Manager::isFeatureEnabled('calendar_location');
 }
 
 return [
@@ -51,16 +58,16 @@ return [
 	'settings' => $settings,
 	'oninit' => static function() {
 		$date = null;
-		if (\Bitrix\Main\Loader::includeModule('crm'))
+		if (Loader::includeModule('crm'))
 		{
-			$date = (new \Bitrix\Crm\Settings\WorkTime())->detectNearestWorkDateTime(3, 1);
+			$date = (new WorkTime())->detectNearestWorkDateTime(3, 1);
 		}
 
-		$defaultDescription = \Bitrix\Crm\Activity\Entity\ToDo::getDescriptionForEntityType(CCrmOwnerType::Undefined);
-		$defaultDescriptionDeal = \Bitrix\Crm\Activity\Entity\ToDo::getDescriptionForEntityType(CCrmOwnerType::Deal);
+		$defaultDescription = ToDo::getDescriptionForEntityType(CCrmOwnerType::Undefined);
+		$defaultDescriptionDeal = ToDo::getDescriptionForEntityType(CCrmOwnerType::Deal);
 
 		$format = null;
-		if (\Bitrix\Main\Loader::includeModule('location'))
+		if (Loader::includeModule('location'))
 		{
 			$format = FormatService::getInstance()->findByCode(
 				Format::getLocationFormatCode(EntityAddressFormatter::getFormatID()),

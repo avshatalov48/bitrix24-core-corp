@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-btn', (require, exports, module) => {
 	const { Logger } = require('im/messenger/lib/logger');
+	const { EventType } = require('im/messenger/const');
 
 	/**
 	 * @class SidebarProfileBtn
@@ -31,7 +32,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-btn', (require, 
 						flexDirection: 'row',
 						alignSelf: 'stretch',
 						alignItems: 'center',
-						justifyContent: 'space-around',
+						justifyContent: 'flex-start',
 					},
 				},
 				...this.state.buttonElements,
@@ -41,7 +42,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-btn', (require, 
 		componentDidMount()
 		{
 			Logger.log(`${this.constructor.name}.view.componentDidMount`);
-			this.bindListener();
+			this.bindMethods();
 			this.subscribeStoreEvents();
 		}
 
@@ -49,51 +50,51 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-btn', (require, 
 		 * @desc Method binding this for use in handlers
 		 * @void
 		 */
-		bindListener()
+		bindMethods()
 		{
 			this.unsubscribeStoreEvents = this.unsubscribeStoreEvents.bind(this);
-			this.onChangeMuteBtn = this.onChangeMuteBtn.bind(this);
-			this.onUpdateBtn = this.onUpdateBtn.bind(this);
+			this.onChangeMuteButton = this.onChangeMuteButton.bind(this);
+			this.onUpdateAllButton = this.onUpdateAllButton.bind(this);
 		}
 
 		subscribeStoreEvents()
 		{
 			Logger.log(`${this.constructor.name}.view.subscribeStoreEvents`);
-			BX.addCustomEvent('onCloseSidebarWidget', this.unsubscribeStoreEvents);
-			BX.addCustomEvent('onChangeMuteBtn', this.onChangeMuteBtn);
-			BX.addCustomEvent('onUpdateBtn', this.onUpdateBtn);
+			BX.addCustomEvent(EventType.sidebar.closeWidget, this.unsubscribeStoreEvents);
+			BX.addCustomEvent(EventType.sidebar.changeMuteButton, this.onChangeMuteButton);
+			BX.addCustomEvent(EventType.sidebar.updateAllButton, this.onUpdateAllButton);
 		}
 
 		unsubscribeStoreEvents()
 		{
 			Logger.log(`${this.constructor.name}.view.unsubscribeStoreEvents`);
-			BX.removeCustomEvent('onCloseSidebarWidget', this.unsubscribeStoreEvents);
-			BX.removeCustomEvent('onChangeMuteBtn', this.onChangeMuteBtn);
-			BX.removeCustomEvent('onUpdateBtn', this.onUpdateBtn);
+			BX.removeCustomEvent(EventType.sidebar.closeWidget, this.unsubscribeStoreEvents);
+			BX.removeCustomEvent(EventType.sidebar.changeMuteButton, this.onChangeMuteButton);
+			BX.removeCustomEvent(EventType.sidebar.updateAllButton, this.onUpdateAllButton);
 		}
 
 		/**
-		 * @desc Handler update mute btn
-		 * @param {LayoutComponent} btn
+		 * @desc Handler update mute button
+		 * @param {LayoutComponent} button
 		 * @void
 		 */
-		onChangeMuteBtn(btn)
+		onChangeMuteButton(button)
 		{
 			const oldState = this.state.buttonElements;
 			const indexMute = oldState.findIndex((btnComponent) => btnComponent.props.id === 'mute');
 			const newState = [...oldState];
-			newState[indexMute] = btn;
+			newState[indexMute] = button;
 			this.updateStateView({ buttonElements: newState });
 		}
 
 		/**
-		 * @desc Handler update all btns
-		 * @param {Array<LayoutComponent>} btns
+		 * @desc Handler update all buttons
+		 * @param {Array<LayoutComponent>} buttons
 		 * @void
 		 */
-		onUpdateBtn(btns)
+		onUpdateAllButton(buttons)
 		{
-			this.updateStateView({ buttonElements: btns });
+			this.updateStateView({ buttonElements: buttons });
 		}
 
 		/**

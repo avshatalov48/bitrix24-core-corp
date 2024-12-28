@@ -13,7 +13,7 @@ class UserListPreset extends Stepper
 
 	public function getUserIds($offset = 0): array
 	{
-		 return UserTable::query()
+		return UserTable::query()
 			->setLimit($this->limit)
 			->setSelect(['ID'])
 			->setOffset($offset)
@@ -24,8 +24,9 @@ class UserListPreset extends Stepper
 	public function execute(array &$result): bool
 	{
 		$siteList = SiteTable::getList([
-			'select' => ['LID'],
-			'filter' => ['=DEF' => 'Y', '=ACTIVE' => 'Y']
+			'select' => ['LID', 'LANGUAGE_ID'],
+			'filter' => ['=DEF' => 'Y', '=ACTIVE' => 'Y'],
+			'cache' => ['ttl' => 86400],
 		]);
 		$siteIdList = [];
 
@@ -45,11 +46,13 @@ class UserListPreset extends Stepper
 			foreach ($siteIdList as $siteId)
 			{
 				$filterOptions = \CUserOptions::GetOption('main.ui.filter', 'INTRANET_USER_LIST_' . $siteId, false, $id);
+
 				if ($filterOptions === false)
 				{
 					continue;
 				}
-				$filterOptions = $this->updateFilterPresets($filterOptions);
+
+				$filterOptions['update_default_presets'] = true;
 
 				\CUserOptions::SetOption('main.ui.filter', 'INTRANET_USER_LIST_' . $siteId, $filterOptions, false, $id);
 			}
@@ -57,30 +60,5 @@ class UserListPreset extends Stepper
 		$result["steps"]++;
 
 		return ($result["steps"] <= $result["count"] ? self::CONTINUE_EXECUTION : self::FINISH_EXECUTION);
-	}
-
-	private function updateNameFilterPresets($presets): array
-	{
-		foreach ($presets as $code => &$preset)
-		{
-			if (in_array($code, ['invited', 'fired', 'company', 'admin', 'extranet', 'wait_confirmation']))
-			{
-				unset($presets[$code]);
-			}
-		}
-
-		return $presets;
-	}
-
-	/**
-	 * @param mixed $filterOptions
-	 * @return mixed
-	 */
-	private function updateFilterPresets(mixed $filterOptions): mixed
-	{
-		$filterOptions['filters'] = $this->updateNameFilterPresets($filterOptions['filters']);
-		$filterOptions['default_presets'] = $this->updateNameFilterPresets($filterOptions['default_presets']);
-
-		return $filterOptions;
 	}
 }

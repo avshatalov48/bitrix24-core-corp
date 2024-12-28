@@ -17,12 +17,12 @@ class Signing extends \Bitrix\Sign\Engine\Controller
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid',
 	)]
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid',
 	)]
 	public function startAction(string $uid): array
 	{
@@ -44,12 +44,12 @@ class Signing extends \Bitrix\Sign\Engine\Controller
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid',
 	)]
 	#[Attribute\ActionAccess(
 		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
 		itemType: AccessibleItemType::DOCUMENT,
-		itemIdRequestKey: 'uid'
+		itemIdOrUidRequestKey: 'uid',
 	)]
 	public function stopAction(string $uid): array
 	{

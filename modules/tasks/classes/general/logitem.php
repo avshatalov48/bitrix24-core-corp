@@ -4,7 +4,7 @@
  * @package bitrix
  * @subpackage tasks
  * @copyright 2001-2015 Bitrix
- * 
+ *
  * Just a wrapper for CTaskLog with permission access control and rest support
  * @access private
  */
@@ -15,13 +15,17 @@ final class CTaskLogItem extends CTaskSubItemAbstract
 	{
 		CTaskAssert::assertLaxIntegers($taskData['ID']);
 
-		if(!isset($arOrder))
+		if (!isset($arOrder))
+		{
 			$arOrder = array('ID' => 'ASC');
+		}
 
-		if(!is_array($arFilter))
+		if (!is_array($arFilter))
+		{
 			$arFilter = array();
+		}
 
-		$arFilter['TASK_ID'] = (int) $taskData['ID'];
+		$arFilter['TASK_ID'] = (int)$taskData['ID'];
 
 		$arItemsData = array();
 		/** @noinspection PhpDeprecationInspection */
@@ -30,11 +34,13 @@ final class CTaskLogItem extends CTaskSubItemAbstract
 			$arFilter
 		);
 
-		if ( ! is_object($rsData) )
+		if (!is_object($rsData))
+		{
 			throw new Exception();
+		}
 
 		$i = 1;
-		while ($arData = $rsData->fetch())
+		while ($arData = $rsData->Fetch())
 		{
 			$arData['ID'] = $i; // emulate ID field that is required by CTaskSubItemAbstract::constructWithPreloadedData()
 			$arItemsData[] = $arData;
@@ -42,7 +48,7 @@ final class CTaskLogItem extends CTaskSubItemAbstract
 			$i++;
 		}
 
-		return (array($arItemsData, $rsData));
+		return ([$arItemsData, $rsData]);
 	}
 
 	protected static function fetchDataFromDb($taskId, $itemId)
@@ -50,7 +56,7 @@ final class CTaskLogItem extends CTaskSubItemAbstract
 		throw new \Bitrix\Main\NotImplementedException();
 	}
 
-	public static function runRestMethod($executiveUserId, $methodName, $args,
+	public static function runRestMethod(                 $executiveUserId, $methodName, $args,
 		/** @noinspection PhpUnusedParameterInspection */ $navigation)
 	{
 		static $arManifest = null;
@@ -81,7 +87,9 @@ final class CTaskLogItem extends CTaskSubItemAbstract
 
 				$returnValue = array();
 				foreach ($items as $item)
+				{
 					$returnValue[] = $item->getData(false);
+				}
 			}
 			else
 			{
@@ -90,10 +98,10 @@ final class CTaskLogItem extends CTaskSubItemAbstract
 		}
 		else
 		{
-			$taskId     = array_shift($argsParsed);
-			$itemId     = array_shift($argsParsed);
-			$oTaskItem  = CTaskItem::getInstance($taskId, $executiveUserId);
-			$item  = new self($oTaskItem, $itemId);
+			$taskId = array_shift($argsParsed);
+			$itemId = array_shift($argsParsed);
+			$oTaskItem = CTaskItem::getInstance($taskId, $executiveUserId);
+			$item = new self($oTaskItem, $itemId);
 
 			$returnValue = call_user_func_array(array($item, $methodName), $argsParsed);
 		}
@@ -106,15 +114,15 @@ final class CTaskLogItem extends CTaskSubItemAbstract
 	 * This method is not part of public API.
 	 * Its purpose is for internal use only.
 	 * It can be changed without any notifications
-	 * 
+	 *
 	 * @access private
 	 */
 	public static function getManifest()
 	{
-		$arWritableKeys = 		array();
-		$arSortableKeys = 		array('USER_ID', 'TASK_ID', 'FIELD', 'CREATED_DATE');
-		$arAggregatableKeys = 	array();
-		$arDateKeys = 			array('CREATED_DATE');
+		$arWritableKeys = array();
+		$arSortableKeys = array('USER_ID', 'TASK_ID', 'FIELD', 'CREATED_DATE');
+		$arAggregatableKeys = array();
+		$arDateKeys = array('CREATED_DATE');
 		$arReadableKeys = array_merge(
 			$arDateKeys,
 			$arSortableKeys,
@@ -123,44 +131,48 @@ final class CTaskLogItem extends CTaskSubItemAbstract
 		);
 		$arFiltrableKeys = array('TASK_ID', 'USER_ID', 'CREATED_DATE', 'FIELD');
 
-		return(array(
+		return (array(
 			'Manifest version' => '1.0',
 			'Warning' => 'don\'t rely on format of this manifest, it can be changed without any notification',
 			'REST: shortname alias to class' => 'logitem',
-			'REST: writable logitem data fields'   =>  $arWritableKeys,
-			'REST: readable logitem data fields'   =>  $arReadableKeys,
-			'REST: sortable logitem data fields'   =>  $arSortableKeys,
-			'REST: filterable logitem data fields' =>  $arFiltrableKeys,
-			'REST: date fields' =>  $arDateKeys,
+			'REST: writable logitem data fields' => $arWritableKeys,
+			'REST: readable logitem data fields' => $arReadableKeys,
+			'REST: sortable logitem data fields' => $arSortableKeys,
+			'REST: filterable logitem data fields' => $arFiltrableKeys,
+			'REST: date fields' => $arDateKeys,
 			'REST: available methods' => array(
 				'getmanifest' => array(
 					'staticMethod' => true,
-					'params'       => array()
+					'params' => array()
 				),
 				'list' => array(
-					'staticMethod'         =>  true,
-					'mandatoryParamsCount' =>  1,
+					'staticMethod' => true,
+					'mandatoryParamsCount' => 1,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
+							'type' => 'integer'
 						),
 						array(
 							'description' => 'arOrder',
-							'type'        => 'array',
+							'type' => 'array',
 							'allowedKeys' => $arSortableKeys
 						),
 						array(
 							'description' => 'arFilter',
-							'type'        => 'array',
+							'type' => 'array',
 							'allowedKeys' => $arFiltrableKeys,
 							'allowedKeyPrefixes' => array(
-								'!', '<=', '<', '>=', '>'
+								'!',
+								'<=',
+								'<',
+								'>=',
+								'>'
 							)
 						),
 					),
 					'allowedKeysInReturnValue' => $arReadableKeys,
-					'collectionInReturnValue'  => true,
+					'collectionInReturnValue' => true,
 				)
 			)
 		));

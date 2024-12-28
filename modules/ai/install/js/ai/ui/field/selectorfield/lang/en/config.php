@@ -1,0 +1,2 @@
+<?php
+$MESS["AI_SELECTORFIELD_RECOMMENDED_LABEL"] = "Recommended";

@@ -8,7 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Crm\Order\Manager;
 use Bitrix\Crm\Order\Payment;
 use Bitrix\Crm\Service;
-use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
@@ -849,7 +849,7 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 			{
 				if(COption::GetOptionString('crm', '~CRM_REBUILD_ORDER_PAYMENT_ATTR', 'N') === 'Y')
 				{
-					$this->arResult['PATH_TO_PRM_LIST'] = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_perm_list'));
+					$this->arResult['PATH_TO_PRM_LIST'] = (string)Container::getInstance()->getRouter()->getPermissionsUrl();;
 					$this->arResult['NEED_FOR_REBUILD_ORDER_PAYMENT_ATTRS'] = true;
 				}
 				if(COption::GetOptionString('crm', '~CRM_REBUILD_ORDER_PAYMENT_SEMANTICS', 'N') === 'Y')

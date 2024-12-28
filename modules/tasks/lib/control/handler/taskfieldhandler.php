@@ -11,9 +11,14 @@ use Bitrix\Tasks\Control\Handler\Exception\TaskFieldValidateException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Flow\Control\Task\Exception\FlowTaskException;
 use Bitrix\Tasks\Flow\Control\Task\Field\FlowFieldHandler;
+use Bitrix\Tasks\Flow\FlowFeature;
 use Bitrix\Tasks\Flow\Provider\Exception\FlowNotFoundException;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Intranet\Department;
+use Bitrix\Tasks\Integration\Extranet;
+use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Integration\SocialNetwork\Collab\Provider\CollabDefaultProvider;
+use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Helper\Task\Dependence;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\Mark;
@@ -70,12 +75,12 @@ class TaskFieldHandler
 			return $this;
 		}
 
-		$flowId = (int)($this->fields['FLOW_ID'] ?? 0);
+		$flowId = (int)($this->fields['FLOW_ID'] ?? $this->taskData['FLOW_ID']);
 		$handler = new FlowFieldHandler($flowId, $this->userId);
 
 		try
 		{
-			$handler->modify($this->fields);
+			$handler->modify($this->fields, $this->taskData);
 		}
 		catch (FlowTaskException|FlowNotFoundException $e)
 		{
@@ -173,17 +178,85 @@ class TaskFieldHandler
 			$this->fields['GROUP_ID'] = (int) $this->fields['GROUP_ID'];
 		}
 
+		$this->prepareCollab();
+
+		if (
+			!Util\User::isSuper($this->userId)
+			&& Extranet\User::isExtranet($this->userId)
+			&& isset($this->fields['GROUP_ID'])
+			&& !isset($this->taskData['GROUP_ID'])
+			&& (int) $this->fields['GROUP_ID'] === 0
+		)
+		{
+			throw new TaskFieldValidateException(Loc::getMessage('TASKS_BAD_GROUP'));
+		}
+
+		if (
+			!Util\User::isSuper($this->userId)
+			&& Extranet\User::isExtranet($this->userId)
+			&& isset($this->taskData['GROUP_ID'])
+			&& (int) $this->taskData['GROUP_ID'] !== 0
+			&& isset($this->fields['GROUP_ID'])
+			&& (int) $this->fields['GROUP_ID'] === 0
+		)
+		{
+			throw new TaskFieldValidateException(Loc::getMessage('TASKS_BAD_GROUP'));
+		}
+
 		if (
 			$this->taskId
 			&& isset($this->fields['GROUP_ID'])
-			&& $this->fields['GROUP_ID']
 			&& $this->fields['GROUP_ID'] !== (int) $this->taskData['GROUP_ID']
 		)
 		{
-			$this->fields['STAGE_ID'] = 0;
+			if ($this->fields['GROUP_ID'])
+			{
+				$this->fields['STAGE_ID'] = 0;
+			}
+
+			if (
+				isset($this->taskData['FLOW_ID'])
+				&& !isset($this->fields['FLOW_ID'])
+			)
+			{
+				$this->fields['FLOW_ID'] = 0;
+			}
 		}
 
 		return $this;
+	}
+
+	private function prepareCollab(): void
+	{
+		$isCollaber = Extranet\User::isCollaber($this->userId);
+		if (!$isCollaber)
+		{
+			return;
+		}
+
+		$isGroupAlreadyFilled = isset($this->taskData['GROUP_ID']) && (int)$this->taskData['GROUP_ID'] !== 0;
+		$isGroupUpdateOnEmpty = isset($this->fields['GROUP_ID']) && (int)$this->fields['GROUP_ID'] === 0;
+		$isGroupUpdateOnCorrect = isset($this->fields['GROUP_ID']) && (int)$this->fields['GROUP_ID'] !== 0;
+
+		if (
+			($isGroupAlreadyFilled && !$isGroupUpdateOnEmpty)
+			|| $isGroupUpdateOnCorrect
+		)
+		{
+			return;
+		}
+
+		$defaultCollab = CollabDefaultProvider::getInstance()?->getCollab($this->userId);
+		$defaultCollabId = $defaultCollab?->getId();
+		if ($defaultCollabId === null)
+		{
+			return;
+		}
+
+		if (Group::can($defaultCollabId, Group::ACTION_CREATE_TASKS, $this->userId))
+		{
+			$this->fields['GROUP_ID'] = $defaultCollabId;
+		}
 	}
 
 	/**
@@ -663,6 +736,60 @@ class TaskFieldHandler
 				throw new TaskFieldValidateException(Loc::getMessage('TASKS_BAD_ASSIGNEE_EX'));
 			}
 
+			if (
+				!Util\User::isSuper($this->userId)
+				&& Extranet\User::isExtranet($this->userId)
+				&& $newResponsibleId !== $this->userId
+			)
+			{
+				if (isset($this->fields['GROUP_ID']))
+				{
+					if (
+						(int) $this->fields['GROUP_ID'] !== 0
+						&& isset($this->taskData['GROUP_ID'])
+						&& isset($this->taskData['RESPONSIBLE_ID'])
+						&& $newResponsibleId !== (int) $this->taskData['RESPONSIBLE_ID']
+					)
+					{
+						$responsibleRoleInGroup = SocialNetwork\User::getUserRole($newResponsibleId, [$this->fields['GROUP_ID']]);
+
+						if (!$responsibleRoleInGroup[$this->fields['GROUP_ID']])
+						{
+							throw new TaskFieldValidateException(Loc::getMessage('TASKS_BAD_ASSIGNEE_IN_GROUP'));
+						}
+					}
+
+					if (
+						(int) $this->fields['GROUP_ID'] !== 0
+						&& !isset($this->taskData['GROUP_ID'])
+					)
+					{
+						$responsibleRoleInGroup = SocialNetwork\User::getUserRole($newResponsibleId, [$this->fields['GROUP_ID']]);
+
+						if (!$responsibleRoleInGroup[$this->fields['GROUP_ID']])
+						{
+							throw new TaskFieldValidateException(Loc::getMessage('TASKS_BAD_ASSIGNEE_IN_GROUP'));
+						}
+					}
+				}
+				else
+				{
+					if (
+						isset($this->taskData['GROUP_ID'])
+						&& (int) $this->taskData['GROUP_ID'] !== 0
+						&& !isset($this->fields['GROUP_ID'])
+					)
+					{
+						$responsibleRoleInGroup = SocialNetwork\User::getUserRole($newResponsibleId, [$this->taskData['GROUP_ID']]);
+
+						if (!$responsibleRoleInGroup[$this->taskData['GROUP_ID']])
+						{
+							throw new TaskFieldValidateException(Loc::getMessage('TASKS_BAD_ASSIGNEE_IN_GROUP'));
+						}
+					}
+				}
+			}
+
 			$currentResponsible = 0;
 
 			if ($this->taskId)
@@ -707,6 +834,23 @@ class TaskFieldHandler
 				}
 
 				$this->fields['DECLINE_REASON'] = false;
+			}
+		}
+
+		if (
+			!Util\User::isSuper($this->userId)
+			&& !array_key_exists('RESPONSIBLE_ID', $this->fields)
+			&& Extranet\User::isExtranet($this->userId)
+			&& array_key_exists('GROUP_ID', $this->fields)
+			&& (int) $this->fields['GROUP_ID'] !== 0
+			&& array_key_exists('RESPONSIBLE_ID', $this->taskData)
+		)
+		{
+			$responsibleRoleInGroup = SocialNetwork\User::getUserRole($this->taskData['RESPONSIBLE_ID'], [$this->fields['GROUP_ID']]);
+
+			if (!$responsibleRoleInGroup[$this->fields['GROUP_ID']])
+			{
+				throw new TaskFieldValidateException(Loc::getMessage('TASKS_BAD_ASSIGNEE_IN_GROUP'));
 			}
 		}
 
@@ -1244,26 +1388,16 @@ class TaskFieldHandler
 
 	protected function skipModifyByFlow(): bool
 	{
-		$flowId = (int)($this->fields['FLOW_ID'] ?? 0);
-		if ($flowId <= 0)
+		if (!FlowFeature::isFeatureEnabled() || !FlowFeature::isOn())
 		{
 			return true;
 		}
 
-		if ($this->isNewTask())
+		if (isset($this->fields['FLOW_ID']) && (int)$this->fields['FLOW_ID'] === 0)
 		{
-			return false;
+			return true;
 		}
 
-		if ($this->isExistingTask())
-		{
-			$currentFlowId = (int)($this->taskData['FLOW_ID'] ?? 0);
-			if ($currentFlowId === $flowId)
-			{
-				return true;
-			}
-		}
-
-		return false;
+		return empty($this->taskData['FLOW_ID']) && empty($this->fields['FLOW_ID']);
 	}
 }

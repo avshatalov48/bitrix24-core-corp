@@ -176,6 +176,14 @@
 	}
 
 	/**
+	 * Escapes the RegExp special characters "^", "$", "", ".", "*", "+", "?", "(", ")", "[", "]", "{", "}",
+	 * and "|" in string.
+	 * @param string
+	 * @returns {string}
+	 */
+	const escapeRegExp = (string) => string.replaceAll(/[$()*+./?[\\\]^{|}-]/g, '\\$&');
+
+	/**
 	 * @class StringUtils
 	 * @deprecated Please import specific utilities directly, using jn.require()
 	 */
@@ -225,6 +233,7 @@
 			IntlCollator,
 			truncate,
 			replaceAll,
+			escapeRegExp,
 		};
 	});
 })();

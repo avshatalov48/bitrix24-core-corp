@@ -23,6 +23,7 @@ export enum DialogType {
 	openChannel = 'openChannel',
 	comment = 'comment',
 	generalChannel = 'generalChannel',
+	collab = 'collab',
 }
 
 export type DialoguesModelState = {
@@ -61,6 +62,7 @@ export type DialoguesModelState = {
 	loading: boolean,
 	hasPrevPage: boolean,
 	hasNextPage: boolean,
+	diskFolderId: number,
 	tariffRestrictions: TariffRestrictions
 	role: string,
 	permissions: DialogPermissions,
@@ -123,6 +125,8 @@ export type DialoguesModelActions =
 	| 'dialoguesModel/decreaseCounter'
 	| 'dialoguesModel/updateUserCounter'
 	| 'dialoguesModel/updateManagerList'
+	| 'dialoguesModel/updatePermissions'
+	| 'dialoguesModel/updateType'
 	| 'dialoguesModel/updateTariffRestrictions'
 	| 'dialoguesModel/clearLastMessageViews'
 	| 'dialoguesModel/incrementLastMessageViews'
@@ -160,6 +164,8 @@ export type DialoguesUpdateActions =
 	'set'
 	| 'update'
 	| 'updateCollection'
+	| 'updateType'
+	| 'updateTariffRestrictions'
 	| 'updateWritingList'
 	| 'decreaseCounter'
 	| 'updateUserCounter'

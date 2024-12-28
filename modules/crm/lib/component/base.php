@@ -71,6 +71,20 @@ abstract class Base extends \CBitrixComponent implements Errorable
 		return $messages;
 	}
 
+	public function showFirstErrorViaInfoErrorUI(): void
+	{
+		$message = $this->getErrorMessages()[0] ?? null;
+
+		$this->getApplication()->IncludeComponent(
+			'bitrix:ui.info.error',
+			'',
+			[
+				'TITLE' => $message,
+				'DESCRIPTION' => '',
+			]
+		);
+	}
+
 	protected function init(): void
 	{
 		$this->errorCollection = new ErrorCollection();

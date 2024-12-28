@@ -26,3 +26,9 @@ $MESS['AI_COPILOT_ROLES_EMPTY_FAVOURITE_GROUP_TITLE'] = 'Здесь будут �
 $MESS['AI_COPILOT_ROLES_EMPTY_FAVOURITE_GROUP'] = 'Добавляйте в Избранное роли, которые используете чаще всего';
 $MESS['AI_COPILOT_ROLES_SEARCH_NO_RESULT_3'] = 'Попробуйте изменить запрос или выберите #LINK#Универсальный CoPilot#/LINK#';
 $MESS['AI_COPILOT_ROLES_SEARCH_NO_RESULT_TITLE'] = 'Роль не найдена';
+
+$MESS['AI_COPILOT_ROLES_CUSTOM_GROUP'] = 'Мои роли';
+$MESS['AI_COPILOT_ROLES_EMPTY_CUSTOM_GROUP_TITLE'] = 'Здесь будут ваши роли';
+$MESS['AI_COPILOT_ROLES_EMPTY_CUSTOM_GROUP'] = 'Создавайте их в #LINK#Библиотеке ролей#/LINK# или используйте роли, которыми с вами поделились коллеги';
+
+$MESS['AI_COPILOT_ROLES_LIBRARY_TITLE'] = 'Библиотека ролей';

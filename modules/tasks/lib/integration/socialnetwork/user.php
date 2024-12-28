@@ -69,4 +69,14 @@ final class User extends \Bitrix\Tasks\Integration\SocialNetwork
 			'userId' => $userIds,
 		]);
 	}
+
+	public static function getUserRole($userId, $groupId): ?array
+	{
+		if(!static::includeModule())
+		{
+			return [];
+		}
+
+		return \CSocNetUserToGroup::GetUserRole($userId, $groupId);
+	}
 }

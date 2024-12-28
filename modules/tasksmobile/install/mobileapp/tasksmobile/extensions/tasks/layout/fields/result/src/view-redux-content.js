@@ -9,7 +9,7 @@ jn.define('tasks/layout/fields/result/view-redux-content', (require, exports, mo
 	const { Chip } = require('ui-system/blocks/chips/chip');
 	const { Text5 } = require('ui-system/typography/text');
 	const { ButtonSize, ButtonDesign, Button } = require('ui-system/form/buttons/button');
-	const { ReduxAvatar } = require('layout/ui/user/avatar');
+	const { Avatar } = require('ui-system/blocks/avatar');
 	const { ActionId, ActionMeta } = require('tasks/layout/action-menu/actions');
 	const { Date } = require('tasks/layout/fields/result/date');
 	const { dayMonth, longDate, shortTime } = require('utils/date/formats');
@@ -226,10 +226,11 @@ jn.define('tasks/layout/fields/result/view-redux-content', (require, exports, mo
 				indent: Indent.L,
 				borderColor: (isSelected ? Color.accentSoftBorderBlue : Color.bgSeparatorPrimary),
 				children: [
-					ReduxAvatar({
+					Avatar({
 						id: result.createdBy,
 						size: 20,
 						testId: `${this.#testId}_ANOTHER_RESULTS_CHIP_${result.id}_AVATAR`,
+						withRedux: true,
 					}),
 					new Date({
 						style: {

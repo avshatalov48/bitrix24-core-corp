@@ -119,6 +119,7 @@ jn.define('crm/salescenter/products-step', (require, exports, module) => {
 					description: Loc.getMessage('MOBILE_RECEIVE_PAYMENT_NO_SMS_PROVIDERS_TEXT'),
 					layout: PageManager,
 					redirectUrl: '/saleshub/',
+					analyticsSection: 'crm',
 				});
 			}
 

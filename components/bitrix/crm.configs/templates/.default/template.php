@@ -100,7 +100,7 @@ if($arResult['PERM_CONFIG'])
 	$items['tab_content_printed_forms_of_documents']['PS_MARKETPLACE']['ICON_CLASS'] = 'img-app';
 	$items['tab_content_printed_forms_of_documents']['PS_MARKETPLACE']['NAME'] = GetMessage("CRM_CONFIGS_TAB_APPS_2");
 
-	$items['tab_content_rights']['PERMS']['URL'] = $siteDir.'/crm/configs/perms/';
+	$items['tab_content_rights']['PERMS']['URL'] = (string)Container::getInstance()->getRouter()->getPermissionsUrl();
 	$items['tab_content_rights']['PERMS']['ICON_CLASS'] = 'img-permissions';
 	$items['tab_content_rights']['PERMS']['NAME'] = GetMessage("CRM_CONFIGS_PERMS");
 

@@ -1,0 +1,3 @@
+<?php
+
+$MESS['CRM_SECURITY_ROLE_PERMS_HEAD_COPILOT_CALL_ASSESSMENT_READ'] = 'Разрешить просматривать настройки';

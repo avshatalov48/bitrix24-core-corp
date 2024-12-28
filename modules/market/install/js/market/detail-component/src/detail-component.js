@@ -8,6 +8,7 @@ import {marketInstallState} from "market.install-store";
 import {marketUninstallState} from "market.uninstall-store";
 import {EventEmitter} from 'main.core.events';
 import { MenuManager } from 'main.popup';
+import { Ears } from 'ui.ears'
 import 'ui.design-tokens';
 
 import { mapState, mapActions } from 'ui.vue3.pinia';
@@ -193,7 +194,7 @@ export const DetailComponent = {
 		},
 		initOther: function () {
 			if (this.showYouMayLike) {
-				(new BX.UI.Ears({
+				(new Ears({
 					container: document.querySelector(".market-detail__catalog-elements"),
 					smallSize: true,
 					noScrollbar: true,
@@ -275,16 +276,6 @@ export const DetailComponent = {
 		},
 		configApp: function () {
 			BX.SidePanel.Instance.open(this.result.IMPORT_PAGE);
-		},
-		addUserReview: function (userReview) {
-			if (BX.Type.isArray(this.result.APP.REVIEWS.ITEMS)) {
-				this.result.APP.REVIEWS.ITEMS.unshift(userReview);
-			}
-		},
-		updateRating: function (rating) {
-			if (rating.hasOwnProperty('RATING_DETAIL')) {
-				this.result.APP.REVIEWS.RATING = rating;
-			}
 		},
 		createPopupMenu: function() {
 			if (this.result.APP.MENU_ITEMS.length <= 0 && !this.showRightsButton) {
@@ -814,9 +805,7 @@ export const DetailComponent = {
 			<Rating
 				:appInfo="result.APP"
 				:showNoAccessInstallButton="showNoAccessInstallButton"
-				@can-review="result.APP.REVIEWS.CAN_REVIEW = $event"
-				@review-info="addUserReview"
-				@update-rating="updateRating"
+				@install-app="installApp"
 			/>
 
 			<div class="market-detail__catalog-element" v-if="showYouMayLike">

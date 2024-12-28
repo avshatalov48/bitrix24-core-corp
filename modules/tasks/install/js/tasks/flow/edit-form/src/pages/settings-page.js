@@ -1,16 +1,23 @@
-import { Dom, Event, Extension, Loc, Tag, Type } from 'main.core';
+import { Dom, Event, Extension, Loc, Tag, Type, ajax } from 'main.core';
 import { PULL as Pull } from 'pull.client';
-import { Dialog } from 'ui.entity-selector';
+import { Dialog, TagItem, TagSelector } from 'ui.entity-selector';
 import { UserSelector } from 'ui.form-elements.view';
 import { PullRequests } from '../pull-requests';
 import { FormPage } from './form-page';
 import { ValueChecker } from '../value-checker';
 
-import type { Flow } from '../edit-form';
+import type { DistributionType, Flow } from '../edit-form';
 
 type Params = {
 	onChangeHandler: Function,
 };
+
+const BIG_DEPARTMENT_USER_COUNT = 30;
+
+const HINT_MESSAGES_BY_COUNT = [
+	{ condition: (count) => count === 0, message: 'TASKS_FLOW_EDIT_FORM_THIS_IS_EMPTY_DEPARTMENT_HINT' },
+	{ condition: (count) => count > BIG_DEPARTMENT_USER_COUNT, message: 'TASKS_FLOW_EDIT_FORM_THIS_IS_BIG_DEPARTMENT_HINT' },
+];
 
 export class SettingsPage extends FormPage
 {
@@ -21,7 +28,8 @@ export class SettingsPage extends FormPage
 
 		queueDistribution: HTMLElement,
 		queueRadio: HTMLInputElement,
-		responsiblesSelector: UserSelector,
+		responsiblesQueueSelector: UserSelector,
+		responsiblesHimselfSelector: UserSelector,
 		manuallyDistribution: HTMLElement,
 		manuallyRadio: HTMLInputElement,
 		himselfDistribution: HTMLElement,
@@ -119,7 +127,7 @@ export class SettingsPage extends FormPage
 	{
 		const requiredData = [
 			'groupId',
-			this.getFields().distributionType === 'manually' ? 'manualDistributorId' : 'responsibleQueue',
+			'responsibleList',
 		];
 
 		if (this.#layout.taskTemplate.isChecked())
@@ -147,18 +155,18 @@ export class SettingsPage extends FormPage
 		{
 			Dom.addClass(this.#layout.manuallyDistribution, '--active');
 		}
+
+		if (this.#layout.himselfRadio.checked)
+		{
+			Dom.addClass(this.#layout.himselfDistribution, '--active');
+		}
 	}
 
 	showErrors(incorrectData: string[]): void
 	{
-		if (incorrectData.includes('responsibleQueue'))
+		if (incorrectData.includes('responsibleList'))
 		{
-			this.#layout.responsiblesSelector.setErrors([Loc.getMessage('TASKS_FLOW_EDIT_FORM_TASKS_RESPONSIBLES_ERROR')]);
-		}
-
-		if (incorrectData.includes('manualDistributorId'))
-		{
-			this.#layout.moderatorSelector.setErrors([Loc.getMessage('TASKS_FLOW_EDIT_FORM_TASKS_MODERATOR_ERROR')]);
+			this.#showResponsibleListError();
 		}
 
 		if (incorrectData.includes('groupId'))
@@ -172,27 +180,40 @@ export class SettingsPage extends FormPage
 		}
 	}
 
+	#showResponsibleListError(): void
+	{
+		const distributionType = new FormData(this.#layout.settingsPageForm).get('distribution');
+
+		// eslint-disable-next-line default-case
+		switch (distributionType)
+		{
+			case 'manually':
+				this.#layout.moderatorSelector.setErrors([Loc.getMessage('TASKS_FLOW_EDIT_FORM_TASKS_MODERATOR_ERROR')]);
+				break;
+			case 'queue':
+				this.#layout.responsiblesQueueSelector.setErrors([Loc.getMessage('TASKS_FLOW_EDIT_FORM_TASKS_RESPONSIBLES_ERROR')]);
+				break;
+			case 'himself':
+				this.#layout.responsiblesHimselfSelector.setErrors([Loc.getMessage('TASKS_FLOW_EDIT_FORM_TASKS_RESPONSIBLES_ERROR')]);
+				break;
+		}
+	}
+
 	cleanErrors(): void
 	{
 		this.#layout.projectSelector.cleanError();
-		this.#layout.responsiblesSelector.cleanError();
+		this.#layout.responsiblesQueueSelector.cleanError();
+		this.#layout.responsiblesHimselfSelector.cleanError();
 		this.#layout.moderatorSelector.cleanError();
 		this.#layout.taskTemplate.cleanError();
 	}
 
 	getFields(flowData: Flow = {}): Flow
 	{
-		let responsibleQueue = this.#flow.responsibleQueue;
-		if (this.#layout.responsiblesSelector?.getSelector().getDialog().isLoaded())
-		{
-			responsibleQueue = this.#layout.responsiblesSelector?.getSelector().getTags().map((tag) => tag.id);
-		}
+		const selectedDistributionType = new FormData(this.#layout.settingsPageForm).get('distribution');
+		const distributionType: DistributionType = flowData.distributionType ?? (selectedDistributionType || 'queue');
 
-		let manualDistributorId = this.#flow.manualDistributorId;
-		if (this.#layout.moderatorSelector?.getSelector().getDialog().isLoaded())
-		{
-			manualDistributorId = this.#layout.moderatorSelector.getSelector().getTags()[0]?.id;
-		}
+		const responsibleList = this.#getResponsiblesByDistributionType(distributionType, flowData);
 
 		let groupId = this.#flow.groupId;
 		if (this.#layout.projectSelector?.getSelector().getDialog().isLoaded())
@@ -201,15 +222,71 @@ export class SettingsPage extends FormPage
 		}
 
 		return {
-			distributionType: flowData.distributionType ?? (new FormData(this.#layout.settingsPageForm).get('distribution') || 'queue'),
-			responsibleQueue: flowData.responsibleQueue ?? responsibleQueue,
-			manualDistributorId: flowData.manualDistributorId ?? (manualDistributorId || 0),
+			distributionType,
+			responsibleList,
 			responsibleCanChangeDeadline: flowData.responsibleCanChangeDeadline ?? (this.#layout.responsibleCanChangeDeadline?.isChecked() ?? false),
 			notifyAtHalfTime: flowData.notifyAtHalfTime ?? (this.#layout.notifyAtHalfTime?.isChecked() ?? false),
 			taskControl: flowData.taskControl ?? (this.#layout.taskControl?.isChecked() ?? false),
 			groupId: flowData.groupId ?? (groupId || 0),
 			templateId: flowData.templateId ?? (this.#layout.taskTemplate?.isChecked() ? this.#layout.taskTemplate.getValue() : 0),
 		};
+	}
+
+	#getResponsiblesByDistributionType(distributionType: DistributionType, flowData: Flow = {}): Array
+	{
+		let responsibleList = [];
+
+		const isConsiderFlowResponsible = this.#flow.distributionType === distributionType;
+		if (isConsiderFlowResponsible)
+		{
+			responsibleList = this.#flow.responsibleList;
+		}
+
+		const responsibleListFromSelector = this.#getResponsiblesFromSelectorByDistributionType(distributionType);
+		if (!Type.isNull(responsibleListFromSelector))
+		{
+			responsibleList = responsibleListFromSelector;
+		}
+
+		const isConsiderFlowDataResponsible = flowData.distributionType === distributionType;
+		if (isConsiderFlowDataResponsible)
+		{
+			return flowData.responsibleList ?? responsibleList;
+		}
+
+		return responsibleList;
+	}
+
+	#getResponsiblesFromSelectorByDistributionType(distributionType: DistributionType): ?Array
+	{
+		switch (distributionType)
+		{
+			case 'manually':
+				return this.#getResponsiblesFromSelector(this.#layout.moderatorSelector);
+
+			case 'queue':
+				return this.#getResponsiblesFromSelector(this.#layout.responsiblesQueueSelector);
+
+			case 'himself':
+				return this.#getResponsiblesFromSelector(this.#layout.responsiblesHimselfSelector);
+
+			default:
+				return null;
+		}
+	}
+
+	#getResponsiblesFromSelector(selector: UserSelector): ?Array
+	{
+		if (selector?.getSelector().getDialog().isLoaded())
+		{
+			return selector
+				?.getSelector()
+				.getTags()
+				.map((tag) => [tag.entityId, tag.id])
+			;
+		}
+
+		return null;
 	}
 
 	render(): HTMLElement
@@ -259,6 +336,8 @@ export class SettingsPage extends FormPage
 							tasks: [],
 						},
 						checkFeatureForCreate: true,
+						'!type': ['collab'],
+						isFromFlowCreationForm: true,
 					},
 				},
 			],
@@ -292,23 +371,30 @@ export class SettingsPage extends FormPage
 
 	#renderDistribution(): HTMLElement
 	{
-		this.#layout.responsiblesSelector = new UserSelector({
-			enableAll: false,
-			enableDepartments: false,
-			values: this.#flow.responsibleQueue?.map((responsibleId) => ['user', responsibleId]),
-			label: Loc.getMessage('TASKS_FLOW_EDIT_FORM_DISTRIBUTION_QUEUE_SELECTOR_LABEL'),
-		});
+		this.#layout.responsiblesQueueSelector = this.#getResponsiblesSelector(
+			this.#flow.distributionType === 'queue' ? this.#flow.responsibleList : [],
+			false,
+		);
+
+		this.#layout.responsiblesHimselfSelector = this.#getResponsiblesSelector(
+			this.#flow.distributionType === 'himself' ? this.#flow.responsibleList : [],
+		);
 
 		this.#layout.moderatorSelector = new UserSelector({
 			enableAll: false,
 			enableDepartments: false,
 			multiple: false,
-			values: [['user', this.#flow.manualDistributorId || this.#currentUser]],
+			values: [[
+				'user',
+				this.#flow.distributionType === 'manually' && Type.isArrayFilled(this.#flow.responsibleList)
+					? this.#flow.responsibleList[0][1]
+					: this.#currentUser,
+			]],
 		});
 
 		const { root: queueDistribution, radio: queueRadio } = this.#renderDistributionType({
 			type: 'queue',
-			selector: this.#layout.responsiblesSelector,
+			selector: this.#layout.responsiblesQueueSelector,
 		});
 		this.#layout.queueDistribution = queueDistribution;
 		this.#layout.queueRadio = queueRadio;
@@ -322,13 +408,18 @@ export class SettingsPage extends FormPage
 
 		const { root: himselfDistribution, radio: himselfRadio } = this.#renderDistributionType({
 			type: 'himself',
+			selector: this.#layout.responsiblesHimselfSelector,
 		});
 		this.#layout.himselfDistribution = himselfDistribution;
 		this.#layout.himselfRadio = himselfRadio;
 
 		this.#layout.queueRadio.checked = this.#flow.distributionType === 'queue';
 		this.#layout.manuallyRadio.checked = this.#flow.distributionType === 'manually';
+		this.#layout.himselfRadio.checked = this.#flow.distributionType === 'himself';
 		this.update();
+
+		const selector = this.#layout.responsiblesHimselfSelector.getSelector();
+		selector.getDialog().subscribe('onHide', this.checkDepartmentUsersCount.bind(this, selector));
 
 		return Tag.render`
 			<div class="ui-section__field-container">
@@ -342,6 +433,21 @@ export class SettingsPage extends FormPage
 				${this.#layout.himselfDistribution}
 			</div>
 		`;
+	}
+
+	#getResponsiblesSelector(
+		responsibleValues: string[],
+		enableDepartments: boolean = true,
+		multiple: boolean = true,
+	): UserSelector
+	{
+		return new UserSelector({
+			enableAll: false,
+			multiple,
+			enableDepartments,
+			values: responsibleValues,
+			label: Loc.getMessage('TASKS_FLOW_EDIT_FORM_DISTRIBUTION_QUEUE_SELECTOR_LABEL'),
+		});
 	}
 
 	#renderDistributionType({ type, selector }): HTMLElement
@@ -413,5 +519,95 @@ export class SettingsPage extends FormPage
 				${this.#flow.id ? '' : notifyEmptyProject}
 			</div>
 		`;
+	}
+
+	checkDepartmentUsersCount(selector: TagSelector): void
+	{
+		const selectedTags = selector.getTags();
+
+		const selectedDepartments = selectedTags.filter(
+			(tag) => tag.getEntityId() === 'department',
+		);
+
+		let addedDepartments = [];
+		if (Type.isUndefined(this.selectedDepartments) || this.selectedDepartments.length === 0)
+		{
+			addedDepartments = selectedDepartments;
+		}
+		else
+		{
+			addedDepartments = selectedDepartments.filter(
+				(departmentTag) => !this.selectedDepartments.includes(departmentTag),
+			);
+		}
+
+		this.selectedDepartments = selectedDepartments;
+
+		if (addedDepartments.length === 0)
+		{
+			return;
+		}
+
+		this.#getDepartmentsUsersCount(addedDepartments).then((countArray) => {
+			const departmentForHint = countArray.find(
+				(departmentData) => departmentData.count > BIG_DEPARTMENT_USER_COUNT
+				|| departmentData.count === 0,
+			);
+
+			if (departmentForHint)
+			{
+				const tag = addedDepartments.find(
+					(item) => item.getId().toString() === departmentForHint.departmentId,
+				);
+
+				if (tag)
+				{
+					this.#showDepartmentHint(tag, this.#getHintMessageCodeByCount(departmentForHint.count));
+				}
+			}
+		}).catch((error) => {
+			console.error(error);
+		});
+	}
+
+	#getHintMessageCodeByCount(count: number): string
+	{
+		const hintMessage = HINT_MESSAGES_BY_COUNT.find(
+			(hint) => hint.condition(count),
+		);
+
+		return hintMessage ? hintMessage.message : '';
+	}
+
+	#showDepartmentHint(tag: TagItem, code: string): void
+	{
+		const popup = new BX.PopupWindow({
+			content: BX.Loc.getMessage(code),
+			darkMode: true,
+			bindElement: tag.getContainer(),
+			angle: true,
+			contentPadding: 5,
+			maxWidth: 400,
+			offsetLeft: (tag.getContainer().offsetWidth / 2),
+			autoHide: true,
+			closeByEsc: true,
+		});
+
+		popup.show();
+	}
+
+	#getDepartmentsUsersCount(departments): ?Array
+	{
+		const departmentsToBackend = departments.map(
+			(department) => [department.getEntityId(), department.getId()],
+		);
+
+		return ajax.runAction('tasks.flow.Flow.getDepartmentsMemberCount', {
+			data: { departments: departmentsToBackend },
+		}).then((result) => {
+			return Type.isArrayFilled(result.errors) ? null : result.data;
+		}).catch((errors) => {
+			console.error(errors);
+		});
 	}
 }

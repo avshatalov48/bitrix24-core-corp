@@ -14,6 +14,7 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',
 		'im:messenger/lib/counters',
+		'im:messenger/lib/parser',
 		'im:messenger/lib/notifier',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/uuid-manager',

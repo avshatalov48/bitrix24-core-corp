@@ -444,7 +444,6 @@ export class Methodology
 
 			Event.bind(node, 'click', () => {
 				const uri = new Uri(marketUri);
-				uri.setQueryParam('tag', ['migrator', 'tasks']);
 
 				this.sidePanel.openSidePanelByUrl(uri.toString());
 

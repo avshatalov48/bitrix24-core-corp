@@ -2,7 +2,10 @@
  * @module im/messenger/lib/ui/base/item/item
  */
 jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
-	const { Avatar } = require('im/messenger/lib/ui/base/avatar');
+	const { Type } = require('type');
+	const { Feature: MobileFeature } = require('feature');
+
+	const { Avatar: MessengerAvatarLegacy } = require('im/messenger/lib/ui/base/avatar');
 	const { ItemInfo } = require('im/messenger/lib/ui/base/item/item-info');
 	const { styles: itemStyles } = require('im/messenger/lib/ui/base/item/style');
 	const { withPressed } = require('utils/color');
@@ -42,6 +45,21 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 		render()
 		{
 			const style = this.getStyleBySize();
+			let avatar = null;
+			if (Type.isObject(this.props.data.avatar) && MobileFeature.isNativeAvatarSupported())
+			{
+				avatar = Avatar(this.props.data.avatar);
+			}
+			else
+			{
+				avatar = new MessengerAvatarLegacy({
+					text: this.props.data.title,
+					uri: this.props.data.avatarUri,
+					color: this.props.data.avatarColor,
+					size: this.props.size,
+					isSuperEllipse: this.props.isSuperEllipseAvatar,
+				});
+			}
 
 			return View(
 				{
@@ -92,13 +110,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 								marginTop: 6,
 							},
 						},
-						new Avatar({
-							text: this.props.data.title,
-							uri: this.props.data.avatarUri,
-							color: this.props.data.avatarColor,
-							size: this.props.size,
-							isSuperEllipse: this.props.isSuperEllipseAvatar,
-						}),
+						avatar,
 						this.renderStatusInAvatar(),
 					),
 					View(

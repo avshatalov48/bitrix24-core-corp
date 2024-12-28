@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\ActivityTable;
 use Bitrix\Crm\Integration\Channel;
 use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Settings\ActivitySettings;
@@ -691,9 +692,9 @@ class CCrmEMail
 							'=ACTIVE'  => 'Y',
 							array(
 								'LOGIC' => 'OR',
-								'EMAIL' => $sender,
-								'NAME'  => $sender,
-								'LOGIN' => $sender,
+								'=EMAIL' => $sender,
+								'=NAME'  => $sender,
+								'=LOGIN' => $sender,
 							),
 						),
 						'limit' => 1,
@@ -3126,7 +3127,12 @@ class CCrmEMail
 				]);
 
 				$activity['SETTINGS']['READ_CONFIRMED'] = time();
-				\CCrmActivity::update($activity['ID'], array('SETTINGS' => $activity['SETTINGS']), false, false);
+
+				ActivityTable::update($activity['ID'],
+					[
+						'SETTINGS' => $activity['SETTINGS'],
+					]
+				);
 
 				if (\Bitrix\Main\Loader::includeModule('pull'))
 				{

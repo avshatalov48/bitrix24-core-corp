@@ -126,6 +126,11 @@ jn.define('feature', (require, exports, module) => {
 		{
 			return typeof Avatar === 'function' && minApiVersion(56, 'isNativeAvatarSupported');
 		}
+
+		static isListViewMoveRowToSectionEndSupported()
+		{
+			return minApiVersion(56, 'isListViewMoveRowToSectionEndSupported');
+		}
 	}
 
 	/**

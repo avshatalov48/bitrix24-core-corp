@@ -15,5 +15,6 @@ return [
 		'node-formatters/strip-tag-formatter',
 		'node-formatters/list-formatter',
 		'node-formatters/list-item-formatter',
+		'wrappers/linebreaks-wrapper',
 	],
 ];

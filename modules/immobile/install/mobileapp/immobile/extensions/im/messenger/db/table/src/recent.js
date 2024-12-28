@@ -117,7 +117,8 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 				SELECT b_im_recent.*, b_im_dialog.* 
 				FROM b_im_recent 
 				JOIN b_im_dialog ON b_im_recent.id = b_im_dialog.dialogId ${filterString}
-				ORDER BY lastActivityDate DESC LIMIT ?
+				ORDER BY pinned DESC, lastActivityDate DESC
+				LIMIT ?
 			`;
 
 			const selectResult = await this.executeSql({
@@ -274,7 +275,8 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 		{
 			const userIds = [];
 			recentItems.forEach((item) => {
-				if (item.message.senderId !== 0)
+				const senderId = item?.message?.senderId ?? 0;
+				if (senderId !== 0)
 				{
 					userIds.push(Number(item.message.senderId));
 				}

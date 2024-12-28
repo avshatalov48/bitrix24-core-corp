@@ -76,9 +76,20 @@ class ExternalLinkTable extends ORM\Data\DataManager
 			{
 				static::$cache[$documentId] = $item;
 			}
+			else
+			{
+				static::$cache[$documentId] = false;
+			}
 		}
 
-		return static::$cache[$documentId] ?? null;
+		if (empty(static::$cache[$documentId]))
+		{
+			return null;
+		}
+		else
+		{
+			return static::$cache[$documentId];
+		}
 	}
 
 	/**
@@ -227,5 +238,44 @@ class ExternalLinkTable extends ORM\Data\DataManager
 		])->fetch();
 
 		return ($user && $user['USER_TYPE'] === 'employee');
+	}
+
+	public static function onAfterAdd(Event $event)
+	{
+		self::cleanRuntimeCacheByEvent($event);
+	}
+
+	public static function onAfterUpdate(Event $event)
+	{
+		self::cleanRuntimeCacheByEvent($event);
+	}
+
+	public static function onAfterDelete(Event $event)
+	{
+		self::cleanRuntimeCacheByEvent($event);
+	}
+
+	private static function cleanRuntimeCacheByEvent(Event $event): void
+	{
+		$object = $event->getParameter('object');
+
+		$canFindExactCacheKey =
+			$object instanceof EO_ExternalLink
+			&& $object->hasDocumentId()
+		;
+
+		if (!$canFindExactCacheKey)
+		{
+			// flush the whole cache
+			self::cleanRuntimeCache();
+			return;
+		}
+
+		unset(self::$cache[$object->requireDocumentId()]);
+	}
+
+	private static function cleanRuntimeCache(): void
+	{
+		self::$cache = [];
 	}
 }

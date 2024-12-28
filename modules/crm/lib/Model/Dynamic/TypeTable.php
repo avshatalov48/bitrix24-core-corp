@@ -48,6 +48,9 @@ use Bitrix\Main\Security\Random;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserField;
+use Bitrix\Crm\Security\Role\Utils\RolePermissionLogContext;
+use Bitrix\Crm\Category\PermissionEntityTypeHelper;
+use Bitrix\Crm\Feature;
 
 /**
  * Class TypeTable
@@ -650,6 +653,39 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			$newIndexTableName = static::prepareItemIndexTableName($data['TABLE_NAME']);
 
 			Application::getConnection()->renameTable($oldIndexTableName, $newIndexTableName);
+		}
+
+		$oldAutomatedSolutionId = (int)($oldData['CUSTOM_SECTION_ID'] ?? 0);
+		$newAutomatedSolutionId = (int)($data['CUSTOM_SECTION_ID'] ?? 0);
+
+		// remove all existed permissions when move smart process to another automated solution:
+		if (
+			array_key_exists('CUSTOM_SECTION_ID', $oldData)
+			&& array_key_exists('CUSTOM_SECTION_ID', $data)
+			&& $oldAutomatedSolutionId !== $newAutomatedSolutionId
+			&& Feature::enabled(Feature\PermissionsLayoutV2::class)
+		)
+		{
+			$entityTypeId = Container::getInstance()->getType($id)?->getEntityTypeId();
+			$factory = $entityTypeId ? Container::getInstance()->getFactory($entityTypeId) : null;
+			$categories = $factory?->getCategories() ?? [];
+
+			RolePermissionLogContext::getInstance()->set([
+				'scenario' => 'change smart process automated solution',
+				'entityTypeId' => $entityTypeId,
+				'categoryId' => $id,
+				'oldAutomatedSolution' => $oldAutomatedSolutionId,
+				'newAutomatedSolution' => $newAutomatedSolutionId,
+			]);
+
+			foreach ($categories as $category)
+			{
+				\CCrmRole::EraseEntityPermissons(
+					(new PermissionEntityTypeHelper($entityTypeId))->getPermissionEntityTypeForCategory($category->getId())
+				);
+			}
+
+			RolePermissionLogContext::getInstance()->clear();
 		}
 
 		static::clearBindingMenuCache();

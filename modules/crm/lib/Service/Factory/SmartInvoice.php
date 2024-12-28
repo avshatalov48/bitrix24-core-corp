@@ -11,6 +11,7 @@ use Bitrix\Crm\Model\Dynamic\TypeTable;
 use Bitrix\Crm\Relation;
 use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Security\Role\RolePermission;
+use Bitrix\Crm\Security\Role\Utils\RolePermissionLogContext;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\EditorAdapter;
@@ -220,11 +221,15 @@ class SmartInvoice extends Dynamic
 				{
 					$permissions[$roleId] = array_merge($rolePermissions, \CCrmRole::getBasePermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(\CCrmOwnerType::SmartInvoice, $defaultCategoryId)));
 				}
+				RolePermissionLogContext::getInstance()->set([
+					'scenario' => 'create SmartInvoice',
+				]);
 				$permissionsCopingResult = RolePermission::setByEntityId($smartInvoicePermissionEntity, $permissions);
 				if (!$permissionsCopingResult->isSuccess())
 				{
 					$result->addErrors($permissionsCopingResult->getErrors());
 				}
+				RolePermissionLogContext::getInstance()->clear();
 
 				// bind templates
 				$documentGeneratorManager = DocumentGeneratorManager::getInstance();

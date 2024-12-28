@@ -2,25 +2,28 @@
 
 namespace Bitrix\Tasks\Integration\Calendar;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
-use Bitrix\Tasks\Internals\Log\Logger;
+use Bitrix\Tasks\Integration\Calendar\ClosestWorkDateStrategy\StrategyFactory;
+use Bitrix\Tasks\Integration\Calendar\Exception\LoopException;
+use Bitrix\Tasks\Integration\Calendar\Schedule\PortalSchedule;
 use Bitrix\Tasks\Util\Type\DateTime;
 
 class Calendar
 {
-	protected const MINUTES_IN_HOUR = 60;
 	protected const MAX_ITERATIONS = 365;
+	protected const MINUTES_TO_ROUND_UP = 5;
 
-	protected static string $hash = '';
-
-	protected array $settings = [];
-	protected array $holidays = [];
-	protected array $weekEnds = [];
-	protected array $workTime = [];
+	protected ScheduleInterface $schedule;
 
 	protected static ?self $instance = null;
 
-	public static function useCalendar(string $feature): bool
+	public static function needUseSchedule(): bool
+	{
+		return Option::get('tasks', 'tasks_use_schedule', 'Y') === 'Y';
+	}
+
+	public static function needUseCalendar(string $feature): bool
 	{
 		return match($feature)
 		{
@@ -30,64 +33,90 @@ class Calendar
 		};
 	}
 
-	public static function getInstance(array $settings = []): self
+	public static function createFromPortalSchedule(?array $settings = null): static
 	{
-		if (null === self::$instance)
-		{
-			self::$instance = new self($settings);
-		}
-		elseif (static::$hash !== ($settingsHash = md5(serialize($settings))))
-		{
-			self::$hash = $settingsHash;
-			self::$instance = new self($settings);
-		}
+		$schedule = new PortalSchedule($settings);
 
-		return self::$instance;
+		return new static($schedule);
 	}
 
-	public function __construct(array $settings = [])
+	public function __construct(ScheduleInterface $schedule)
 	{
-		$this->setSettings([] === $settings ? $this->getPortalSettings() : $settings);
+		$this->schedule = $schedule;
 	}
 
-	public function getClosestDate(\Bitrix\Main\Type\DateTime $date, int $offsetInSeconds, bool $matchWorkTime = false): DateTime
+	public function getSchedule(): ScheduleInterface
 	{
-		$start = DateTime::createFromDateTime($date);
+		return $this->schedule;
+	}
 
-		$deadline = $start->disableUserTime()->add(($offsetInSeconds) . ' seconds');
+	public function getClosestDate(
+		\Bitrix\Main\Type\DateTime $date,
+		int $offsetInSeconds,
+		bool $matchSchedule = false,
+		bool $matchWorkTime = false,
+	): DateTime
+	{
+		$date = DateTime::createFromDateTime($date);
+		$date->stripSeconds();
+
+		$possibleDate = clone $date;
+		$possibleDate = $possibleDate->disableUserTime();
+
+		if ($offsetInSeconds <= 0)
+		{
+			return $possibleDate;
+		}
+
+		$possibleDate->add($offsetInSeconds . ' seconds');
+
+		if ($matchSchedule)
+		{
+			$matchWorkTime = true;
+		}
+
+		if (static::needUseSchedule())
+		{
+			$closestWorkDateStrategy = StrategyFactory::getStrategy(
+				$this->schedule,
+				$matchSchedule,
+				$matchWorkTime,
+			);
+
+			$closestWorkDate = $closestWorkDateStrategy->getClosestWorkDate($date, $offsetInSeconds);
+
+			return $this->roundDate($closestWorkDate);
+		}
 
 		if (!$matchWorkTime)
 		{
-			return $deadline;
+			return $possibleDate;
 		}
 
-		$isWorkTime = $this->isWorkTime($deadline);
-
-		if ($isWorkTime)
+		if ($this->schedule->isWorkTime($possibleDate) && !$this->schedule->isWeekend($possibleDate))
 		{
-			return $deadline;
+			return $possibleDate;
 		}
 
-		return $this->getClosestWorkTime($deadline);
+		return $this->getNextWorkdayDate($possibleDate);
 	}
 
-	public function isWorkTime(DateTime $date): bool
+	protected function roundDate(DateTime $date): DateTime
 	{
-		$date = DateTime::createFromDateTime($date);
-
-		if ($this->isWeekend($date) || $this->isHoliday($date))
+		$divisionRemainder = $date->getMinute() % static::MINUTES_TO_ROUND_UP;
+		if ($divisionRemainder === 0)
 		{
-			return false;
+			return $date;
 		}
+		$restOfMinutes = static::MINUTES_TO_ROUND_UP - $divisionRemainder;
 
-		$start = $this->getStartHour() * self::MINUTES_IN_HOUR + $this->getStartMinute();
-		$end = $this->getEndHour() * self::MINUTES_IN_HOUR + $this->getEndMinute();
-		$now = $date->getHour() * self::MINUTES_IN_HOUR + $date->getMinute();
-
-		return $now >= $start && $now <= $end;
+		return $date->setTime($date->getHour(), $date->getMinute() + $restOfMinutes);
 	}
 
-	protected function getClosestWorkTime(DateTime $start): DateTime
+	/**
+	 * Will be removed soon.
+	 */
+	protected function getNextWorkdayDate(DateTime $start): DateTime
 	{
 		$currentDate = DateTime::createFromTimestamp($start->getTimestamp());
 
@@ -95,235 +124,35 @@ class Calendar
 
 		while ($counter < self::MAX_ITERATIONS)
 		{
-			$intervals = $this->getWorkHours($currentDate);
-			foreach ($intervals as $interval)
+			if ($this->schedule->isWeekend($currentDate))
 			{
-				/** @var DateTime $intervalStart */
-				$intervalStart = $interval['startDate'];
+				$currentDate->stripTime();
+				$currentDate->addDay(1);
 
-				/** @var DateTime $intervalStart */
-				$intervalEnd = $interval['endDate'];
+				++$counter;
 
-				if ($intervalEnd->checkLT($start))
-				{
-					continue;
-				}
-
-				return $intervalStart->checkLT($start) ? $start : $intervalStart;
+				continue;
 			}
 
-			$currentDate->stripTime();
-			$currentDate->addDay(1);
+			$intervalStart = $this->schedule->getShiftStart($currentDate);
+			$intervalEnd = $this->schedule->getShiftEnd($currentDate);
 
-			++$counter;
+			if ($intervalEnd->checkLT($start))
+			{
+				$currentDate->stripTime();
+				$currentDate->addDay(1);
+
+				++$counter;
+
+				continue;
+			}
+
+			return $intervalStart->checkLT($start) ? $start : $intervalStart;
 		}
 
-		Logger::log([
-			'settings' => $this->settings,
-			'date' => $start,
-		], 'TASKS_CALENDAR_WORKTIME_LOOP');
+		$exception = new LoopException('Probably infinite loop with date ' . $start->toString());
+		Application::getInstance()->getExceptionHandler()->writeToLog($exception);
 
 		return $currentDate;
-	}
-
-	public function getWorkHours(DateTime $date): array
-	{
-		if ($this->isWeekend($date) || $this->isHoliday($date))
-		{
-			return [];
-		}
-
-		$hours = [];
-
-		$year = $date->getYear();
-		$month = $date->getMonth();
-		$day = $date->getDay();
-
-		foreach ($this->workTime as $time)
-		{
-			$start = (new DateTime())->setDate($year, $month, $day)->setTime($time['start']['hours'], $time['start']['minutes']);
-
-			$end = (new DateTime())->setDate($year, $month, $day)->setTime($time['end']['hours'], $time['end']['minutes']);
-
-			$hours[] = [
-				'startDate' => $start,
-				'endDate' => $end,
-			];
-		}
-
-		return $hours;
-	}
-
-	public function isHoliday(DateTime $date): bool
-	{
-		$month = $date->getMonth();
-		$day = $date->getDay();
-
-		return array_key_exists($month.'_'.$day, $this->holidays) && $this->holidays[$month.'_'.$day];
-	}
-
-	public function isWeekend(DateTime $date): bool
-	{
-		$day = $date->getWeekDay();
-
-		return array_key_exists($day, $this->weekEnds) && $this->weekEnds[$day];
-	}
-
-	public function getStartHour(): int
-	{
-		return (int)($this->settings['HOURS']['START']['H'] ?? 0);
-	}
-
-	public function getStartMinute(): int
-	{
-		return (int)($this->settings['HOURS']['START']['M'] ?? 0);
-	}
-
-	public function getEndHour(): int
-	{
-		return (int)($this->settings['HOURS']['END']['H'] ?? 0);
-	}
-
-	public function getEndMinute(): int
-	{
-		return (int)($this->settings['HOURS']['END']['M'] ?? 0);
-	}
-
-	public function getSettings(): array
-	{
-		return $this->settings;
-	}
-
-	protected function setSettings(array $settings): void
-	{
-		if (is_array($settings['HOURS']) && !empty($settings['HOURS']))
-		{
-			$hours = $settings['HOURS'];
-
-			$this->workTime = [
-				[
-					'start' => [
-						'hours' => (int)$hours['START']['H'],
-						'minutes' => (int)$hours['START']['M'],
-						'time' => ((int)$hours['START']['H']) * self::MINUTES_IN_HOUR + ((int)$hours['START']['M']),
-					],
-					'end' => [
-						'hours' => (int)$hours['END']['H'],
-						'minutes' => (int)$hours['END']['M'],
-						'time' => ((int)$hours['END']['H']) * self::MINUTES_IN_HOUR + ((int)$hours['START']['M']),
-					],
-				],
-			];
-		}
-
-		if (is_array($settings['HOLIDAYS']))
-		{
-			foreach($settings['HOLIDAYS'] as $day)
-			{
-				$this->holidays[(int)$day['M'] . '_' . (int)$day['D']] = true;
-			}
-		}
-
-		$dayMap = [
-			'MO' => 1,
-			'TU' => 2,
-			'WE' => 3,
-			'TH' => 4,
-			'FR' => 5,
-			'SA' => 6,
-			'SU' => 0,
-		];
-
-		$this->weekEnds = [];
-		if(is_array($settings['WEEKEND']))
-		{
-			foreach($settings['WEEKEND'] as $day)
-			{
-				$this->weekEnds[$dayMap[$day]] = true;
-			}
-		}
-
-		if(count($this->weekEnds) === 7)
-		{
-			$this->weekEnds = [$dayMap['SA'] => true, $dayMap['SU'] => true];
-		}
-
-		$this->settings = $settings;
-	}
-
-	protected function getPortalSettings(): array
-	{
-		$defaultSettings = [
-			'HOURS' => [
-				'START' => [
-					'H' => 9,
-					'M' => 0,
-					'S' => 0,
-				],
-				'END' => [
-					'H' => 19,
-					'M' => 0,
-					'S' => 0,
-				],
-			],
-			'HOLIDAYS' => [],
-			'WEEKEND' => ['SA', 'SU'],
-			'WEEK_START' => 'MO',
-		];
-
-		$calendarSettings = \Bitrix\Tasks\Integration\Calendar::getSettings();
-		if(empty($calendarSettings))
-		{
-			return $defaultSettings;
-		}
-
-		if (is_array($calendarSettings['week_holidays']))
-		{
-			$defaultSettings['WEEKEND'] = $calendarSettings['week_holidays'];
-		}
-
-		if ((string)$calendarSettings['year_holidays'] !== '')
-		{
-			$holidays = explode(',', $calendarSettings['year_holidays']);
-			if (is_array($holidays) && !empty($holidays))
-			{
-				foreach ($holidays as $day)
-				{
-					$day = trim($day);
-					[$day, $month] = explode('.', $day);
-
-					if ($day && $month)
-					{
-						$defaultSettings['HOLIDAYS'][] = ['M' => (int)$month, 'D' => (int)$day];
-					}
-				}
-			}
-		}
-
-		$timeStart = explode('.', (string)$calendarSettings['work_time_start']);
-
-		if (isset($timeStart[0]))
-		{
-			$defaultSettings['HOURS']['START']['H'] = (int)$timeStart[0];
-		}
-
-		if (isset($timeStart[1]))
-		{
-			$defaultSettings['HOURS']['START']['M'] = (int)$timeStart[1];
-		}
-
-		$timeEnd = explode('.', (string)$calendarSettings['work_time_end']);
-
-		if (isset($timeEnd[0]))
-		{
-			$defaultSettings['HOURS']['END']['H'] = (int)$timeEnd[0];
-		}
-
-		if (isset($timeEnd[1]))
-		{
-			$defaultSettings['HOURS']['END']['M'] = (int)$timeEnd[1];
-		}
-
-		return $defaultSettings;
 	}
 }

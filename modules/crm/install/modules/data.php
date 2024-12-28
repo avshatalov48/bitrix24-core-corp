@@ -29,9 +29,11 @@ if (IsModuleInstalled('bitrix24')
 
 if ($languageId == '')
 {
+	/** @todo Use SiteTable::getDefaultLanguageId() */
 	$siteIterator = \Bitrix\Main\SiteTable::getList(array(
 		'select' => array('LID', 'LANGUAGE_ID'),
-		'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y')
+		'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y'),
+		'cache' => ['ttl' => 86400],
 	));
 	if ($site = $siteIterator->fetch())
 	{
@@ -79,9 +81,11 @@ switch ($languageId)
 $currentSiteID = SITE_ID;
 if (defined("ADMIN_SECTION"))
 {
+	/** @todo Use SiteTable::getDefaultSiteId() */
 	$siteIterator = \Bitrix\Main\SiteTable::getList(array(
 		'select' => array('LID', 'LANGUAGE_ID'),
-		'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y')
+		'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y'),
+		'cache' => ['ttl' => 86400],
 	));
 	if ($defaultSite = $siteIterator->fetch())
 	{

@@ -11,6 +11,7 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Mobile\Config\Feature;
 use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\MobileApp\Janative\Manager;
+use Bitrix\MobileApp\Mobile;
 use Bitrix\Socialnetwork\Helper\Path;
 
 class Stream implements Tabable
@@ -53,7 +54,8 @@ class Stream implements Tabable
 			'useLetterImage' => true,
 			'color' => '#40465A',
 			'imageUrl' => 'favorite/stream.png',
-		];;
+			'imageName' => $this->getIconId(),
+		];
 
 		if ($data['component'])
 		{
@@ -78,7 +80,7 @@ class Stream implements Tabable
 		{
 			return [
 				'sort' => 200,
-				'imageName' => 'stream',
+				'imageName' => $this->getIconId(),
 				'badgeCode' => 'stream',
 				'page' => [
 					'url' => $newsWebPath,
@@ -208,7 +210,7 @@ class Stream implements Tabable
 
 		return [
 			'sort' => 200,
-			'imageName' => 'stream',
+			'imageName' => $this->getIconId(),
 			'badgeCode' => 'stream',
 			'id' => 'stream',
 			'component' => [
@@ -331,7 +333,7 @@ class Stream implements Tabable
 
 	public function getIconId(): string
 	{
-		return 'stream';
+		return Mobile::getApiVersion() < 56 ? 'stream' : 'newsfeed';
 	}
 
 	private function pushBizprocTab(array &$tabs): void

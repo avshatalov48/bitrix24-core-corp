@@ -7,7 +7,9 @@
 	let items = [];
 	let sections = [];
 	let SITE_ID = BX.componentParameters.get("SITE_ID", "s1");
+	const { Color } = jn.require('tokens');
 
+	const { debounce } = jn.require('utils/function');
 	const { MoreTabNavigator } = jn.require('navigator/more-tab');
 	const moreTabNavigator = new MoreTabNavigator();
 
@@ -63,23 +65,37 @@
 
 			return result.concat(groupItems);
 		},
-		updateCounters: function (siteCounters)
+		updateCounters(siteCounters)
 		{
-			let counters = Object.keys(siteCounters);
-			let totalCount = 0;
-			let updateCountersData = counters.filter(counter => this.counterList.includes(counter))
-				.map(counter =>
-				{
+			const counters = Object.keys(siteCounters);
+
+			const preparedItems = items
+				.filter((item) => counters.includes(item?.params?.counter))
+				.map((item) => {
+					const counter = item.params.counter;
 					this.currentCounters[counter] = siteCounters[counter];
-					return {filter: {"params.counter": counter}, element: {messageCount: siteCounters[counter]}}
+
+					const isNewStyles = item.imageName && this.enableNewStyle();
+
+					return {
+						filter: { 'params.counter': counter },
+						element: {
+							messageCount: siteCounters[counter],
+							styles: isNewStyles ? this.getItemStyles(this.showHighlighted(item, siteCounters[counter])) : item.styles,
+						},
+					};
 				});
 
-			if (updateCountersData.length > 0)
+			if (preparedItems.length > 0)
 			{
-				menu.updateItems(updateCountersData);
-				Object.values(this.currentCounters).forEach(count => totalCount += count);
-				Application.setBadges({more: totalCount});
+				// eslint-disable-next-line no-undef
+				menu.updateItems(preparedItems);
+				Application.setBadges({ more: this.getTotalCounter(siteCounters) });
 			}
+		},
+		enableNewStyle()
+		{
+			return Application.getApiVersion() > 55;
 		},
 		initCache: function ()
 		{
@@ -124,41 +140,83 @@
 						More.updated = true;
 						Application.sharedStorage().set("more", JSON.stringify(result));
 						this.handleResult(result);
-						setTimeout(()=>this.redraw(), 100);
+						this.redraw();
 					}
 				})
 				.catch(e => console.error(e));
 		},
-		redraw: function ()
+		redraw()
 		{
-			BX.onViewLoaded(()=>
-			{
+			BX.onViewLoaded(() => {
 				this.drawPopupMenu();
-				menu.setItems(items, sections);
-				setTimeout(() =>
+				const cachedCounters = Application.sharedStorage().get('userCounters');
+
+				try
 				{
-					let cachedCounters = Application.sharedStorage().get('userCounters');
-					if (cachedCounters)
-					{
-						try
-						{
-							let counters = JSON.parse(cachedCounters);
-							if (counters[SITE_ID])
-							{
-								this.updateCounters(counters[SITE_ID]);
-							}
+					const counters = cachedCounters ? JSON.parse(cachedCounters) : {};
 
-						}
-						catch (e)
-						{
-							//do nothing
-						}
-					}
+					const preparedItems = this.prepareItemsBeforeRedraw(counters[SITE_ID]);
+					const totalCounter = this.getTotalCounter(counters[SITE_ID]);
+					Application.setBadges({ more: totalCounter });
 
-				}, 0);
+					// eslint-disable-next-line no-undef
+					menu.setItems(preparedItems, sections);
+				}
+				catch (e)
+				{
+					console.error(e);
+				}
 			});
 		},
+		getTotalCounter(counters = {})
+		{
+			return Object.keys(counters)
+				.filter((counter) => this.counterList.includes(counter))
+				.reduce((acc, counter) => acc + counters[counter], 0);
+		},
+		prepareItemsBeforeRedraw(counters = {})
+		{
+			return items.map((item) => {
+				const isNewStyles = item.imageName && this.enableNewStyle();
+				const counter = counters[item?.params?.counter];
 
+				return {
+					...item,
+					messageCount: counters[item?.params?.counter],
+					styles: isNewStyles ? this.getItemStyles(this.showHighlighted(item, counter)) : item.styles,
+				};
+			});
+		},
+		getItemStyles(showHighlighted = false)
+		{
+			return {
+				title: {
+					font: {
+						useColor: true,
+						color: showHighlighted ? Color.accentMainPrimary.toHex() : Color.base1.toHex(),
+					},
+				},
+				image: {
+					image: {
+						tintColor: showHighlighted ? Color.accentMainPrimary.toHex() : Color.base0.toHex(),
+						contentHeight: 24,
+					},
+					border: {
+						color: showHighlighted ? Color.accentSoftBlue1.toHex() : Color.bgSeparatorPrimary.toHex(),
+						width: 1,
+					},
+				},
+			};
+		},
+		showHighlighted(item, counter)
+		{
+			if (item?.params?.highlightWithCounter)
+			{
+				return item?.params?.showHighlighted && Number.isInteger(counter) && counter > 0;
+			}
+
+			return item?.params?.showHighlighted;
+		},
 		drawPopupMenu()
 		{
 			const popupPoints = this.popupMenuItems;
@@ -186,7 +244,12 @@
 		},
 		handleResult(result)
 		{
+			const customCounters = {
+				[env.siteId]: result.customCounters || {},
+			};
 			const menuStructure = result.menu;
+			const counters = {};
+			counters[String(env.siteId)] = {};
 			if (result.counterList)
 			{
 				this.counterList = result.counterList;
@@ -207,7 +270,7 @@
 					.filter((section) => !(typeof section !== 'object'
 							|| (typeof section.items === 'undefined')
 							|| (section.min_api_version && section.min_api_version > Application.getApiVersion())
-							|| section.hidden == true
+							|| section.hidden === true
 					))
 					.forEach(
 						(section) => {
@@ -224,6 +287,21 @@
 											if (typeof this.currentCounters[item.params.counter] !== 'undefined')
 											{
 												item.messageCount = this.currentCounters[item.params.counter];
+											}
+										}
+
+										if (item.imageName)
+										{
+											if (this.enableNewStyle())
+											{
+												item.color = null;
+												item.styles = this.getItemStyles(
+													this.showHighlighted(item, this.currentCounters[item.params.counter]),
+												);
+											}
+											else
+											{
+												item.imageName = null;
 											}
 										}
 
@@ -244,6 +322,8 @@
 							items = [...items, ...sectionItems];
 						},
 					);
+
+				BX.postComponentEvent('onSetUserCounters', [customCounters], 'communication');
 			}
 		},
 		init()
@@ -277,14 +357,16 @@
 			BX.addCustomEvent('onPullEvent-main', (command, params) => {
 				if (command === 'user_counter' && params[SITE_ID])
 				{
-					this.updateCounters(params[SITE_ID]);
+					More.updateCounters(params[SITE_ID]);
 				}
 			});
 
 			BX.addCustomEvent('onUpdateUserCounters', (data) => {
 				if (data[SITE_ID])
 				{
-					this.updateCounters(data[SITE_ID]);
+					setTimeout(() => {
+						More.updateCounters(data[SITE_ID]);
+					}, 100);
 				}
 			});
 
@@ -331,10 +413,7 @@
 					}
 					else if (item.params.onclick)
 					{
-						(function()
-						{
-							eval(item.params.onclick);
-						}).call(item);
+						More.debouncedOnClick(item);
 					}
 					else if (item.params.action)
 					{
@@ -380,6 +459,12 @@
 				default:
 			}
 		},
+		debouncedOnClick: debounce((item) => {
+			(() => {
+				// eslint-disable-next-line no-eval
+				eval(item.params.onclick);
+			}).call(item);
+		}, 50),
 		counterList: [],
 		currentCounters: {},
 		getItemById(id)

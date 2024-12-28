@@ -143,10 +143,12 @@ $gridSorting = $gridOptions->GetSorting(
 $sort = $arResult['SORT'] = $gridSorting['sort'];
 $arResult['SORT_VARS'] = $gridSorting['vars'];
 
+/** @todo Use SiteTable::getDefaultSiteId() */
 $siteId = '';
 $siteIterator = Bitrix\Main\SiteTable::getList(array(
 	'select' => array('LID', 'LANGUAGE_ID'),
-	'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y')
+	'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y'),
+	'cache' => ['ttl' => 86400],
 ));
 if ($defaultSite = $siteIterator->fetch())
 {

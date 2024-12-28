@@ -1,0 +1,76 @@
+.ai__role-master-app-container,
+.ai__role-master-app-container > div {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+}
+
+.ai__role-master-app-container main {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+}
+
+.ai__role-master-app_footer {
+	margin-top: 24px;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.ai__role-master-app_footer > div:only-child {
+	width: 100%;
+	display: flex;
+	justify-content: flex-end;
+}
+
+.ai__role-master_back-btn {
+	--ai__role-master_back-btn-color: var(--ui-color-base-50);
+	--ui-icon-set__icon-color: var(--ai__role-master_back-btn-color);
+
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding: 4px;
+	background: transparent;
+	border: none;
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-3xs);
+	color: var(--ai__role-master_back-btn-color);
+	cursor: pointer;
+}
+
+.ai__role-master_back-btn:hover,
+.ai__role-master_back-btn:focus {
+	--ai__role-master_back-btn-color: var(--ui-color-base-60);
+}
+
+.ai__role-master_back-btn:active {
+	--ai__role-master_back-btn-color: var(--ui-color-base-70);
+}
+
+.ai__role-master_about-link {
+	color: var(--ui-color-base-60);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-3xs);
+	text-decoration: underline;
+	text-decoration-color: rgba(var(--ui-color-base-60-rgb), 0.4);
+	text-underline-position: under;
+}
+
+.ai__role-master_about-link:hover,
+.ai__role-master_about-link:focus {
+	color: var(--ui-color-base-60);
+	text-decoration: underline;
+	text-decoration-color: rgba(var(--ui-color-base-60-rgb), 0.8);
+}
+
+.ai__role-master_about-link:active {
+	color: var(--ui-color-base-60);
+	text-decoration: underline;
+	text-decoration-color: rgba(var(--ui-color-base-60-rgb), 1);
+}
+
+

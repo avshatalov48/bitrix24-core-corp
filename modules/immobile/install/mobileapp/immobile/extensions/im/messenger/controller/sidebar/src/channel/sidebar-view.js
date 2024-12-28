@@ -2,7 +2,6 @@
  * @module im/messenger/controller/sidebar/channel/sidebar-view
  */
 jn.define('im/messenger/controller/sidebar/channel/sidebar-view', (require, exports, module) => {
-	const { ChannelProfileUserCounter } = require('im/messenger/controller/sidebar/channel/profile-user-counter-view');
 	const { SidebarView } = require('im/messenger/controller/sidebar/chat/sidebar-view');
 	const { ChannelProfileBtn } = require('im/messenger/controller/sidebar/channel/profile-btn-view');
 	const { ChannelTabView } = require('im/messenger/controller/sidebar/channel/tabs/tab-view');
@@ -22,16 +21,13 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-view', (require, expo
 						justifyContent: 'center',
 						alignItems: 'center',
 						flexDirection: 'column',
+						width: '100%',
+						paddingHorizontal: 18,
+						marginTop: 12,
 					},
 				},
 				new ChannelProfileInfo(this.props),
-				this.renderDialogUserCounter(),
 			);
-		}
-
-		renderDialogUserCounter()
-		{
-			return new ChannelProfileUserCounter({ dialogId: this.props.dialogId });
 		}
 
 		renderButtonsBlock()

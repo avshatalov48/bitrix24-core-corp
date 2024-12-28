@@ -52,6 +52,7 @@ if (Loader::includeModule('tasks') && Loader::includeModule('mobileapp'))
 		'FRAGMENT_ID' => ($this->request->getQuery('FRAGMENT_ID') ?? ''),
 		'RESULT_ID' => ($this->request->getQuery('RESULT_ID') ?? ''),
 		'IS_TABS_MODE' => ($this->request->getQuery('IS_TABS_MODE') ?? true),
+		'ANALYTICS_LABEL' => ($this->request->getQuery('ANALYTICS_LABEL') ?? []),
 	];
 
 	foreach ($params as $key => $value)
