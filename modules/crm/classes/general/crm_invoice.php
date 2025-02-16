@@ -3011,36 +3011,6 @@ class CAllCrmInvoice
 		$errMsg = array();
 		$bError = false;
 
-		$clearCountableFromCallListsOption = '~CRM_APPROVE_CCA_READ';
-		if ((string)COption::GetOptionString('crm', $clearCountableFromCallListsOption, 'N') === 'N' && Bitrix\Crm\Feature::enabled(\Bitrix\Crm\Feature\CopilotInCallGrading::class))
-		{
-			$agentExists = \CAgent::GetList([], ['=NAME' => 'Bitrix\Crm\Agent\Security\ApproveCustomPermsToExistRoleAgent::run();'])->Fetch();
-			try
-			{
-				$lostDefaultPermissions = Main\Web\Json::decode(Main\Config\Option::get('crm', 'default_permissions'));
-			}
-			catch (Main\ArgumentException)
-			{
-				$lostDefaultPermissions = [];
-			}
-			if (!$agentExists)
-			{
-				COption::SetOptionString('crm', $clearCountableFromCallListsOption, 'Y');
-				if (count($lostDefaultPermissions) === 1 && (current($lostDefaultPermissions)['permissionClass'] ?? '') === 'Bitrix\\Crm\\Security\\Role\\Manage\\Permissions\\CopilotCallAssessment\\Read')
-				{
-					\CAgent::AddAgent(
-						'Bitrix\Crm\Agent\Security\ApproveCustomPermsToExistRoleAgent::run();',
-						'crm',
-						'N',
-						1,
-						'',
-						'Y',
-						\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 10)
-					);
-				}
-			}
-		}
-
 		$reFillDynamicTypesAttrTable = '~CRM_REFILL_DYNAMIC_TYPES_ATTR_TABLE_V2';
 		if ((string)COption::GetOptionString('crm', $reFillDynamicTypesAttrTable, 'N') === 'N') {
 			COption::SetOptionString('crm', $reFillDynamicTypesAttrTable, 'Y');

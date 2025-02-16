@@ -4,7 +4,11 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Crm;
+\Bitrix\Main\Loader::requireModule('crm');
+
+$analytics = [
+	'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_WEBFORM,
+];
 
 global $APPLICATION;
 if ((!isset($_REQUEST['IFRAME']) || $_REQUEST['IFRAME'] !== 'Y') && CCrmPerms::IsAccessEnabled())
@@ -32,7 +36,8 @@ if ((!isset($_REQUEST['IFRAME']) || $_REQUEST['IFRAME'] !== 'Y') && CCrmPerms::I
 			'PATH_TO_REPORT_LIST' => isset($arResult['PATH_TO_REPORT_LIST']) ? $arResult['PATH_TO_REPORT_LIST'] : '',
 			'PATH_TO_DEAL_FUNNEL' => isset($arResult['PATH_TO_DEAL_FUNNEL']) ? $arResult['PATH_TO_DEAL_FUNNEL'] : '',
 			'PATH_TO_EVENT_LIST' => isset($arResult['PATH_TO_EVENT_LIST']) ? $arResult['PATH_TO_EVENT_LIST'] : '',
-			'PATH_TO_PRODUCT_LIST' => isset($arResult['PATH_TO_PRODUCT_LIST']) ? $arResult['PATH_TO_PRODUCT_LIST'] : ''
+			'PATH_TO_PRODUCT_LIST' => isset($arResult['PATH_TO_PRODUCT_LIST']) ? $arResult['PATH_TO_PRODUCT_LIST'] : '',
+			'ANALYTICS' => $analytics,
 		],
 		null
 	);
@@ -43,7 +48,8 @@ $componentParameters = [
 	'PATH_TO_WEB_FORM_EDIT' => $arResult['PATH_TO_WEB_FORM_EDIT'],
 	'PATH_TO_WEB_FORM_FILL' => $arResult['PATH_TO_WEB_FORM_FILL'],
 	'PATH_TO_WEB_FORM_ADS' => $arResult['PATH_TO_WEB_FORM_ADS'],
-	'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE']
+	'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE'],
+	'ANALYTICS' => $analytics,
 ];
 
 $APPLICATION->IncludeComponent(

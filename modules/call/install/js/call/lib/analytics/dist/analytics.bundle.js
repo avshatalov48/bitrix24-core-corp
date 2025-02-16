@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Call = this.BX.Call || {};
-(function (exports,ui_analytics,im_v2_const,im_v2_lib_analytics,call_const) {
+(function (exports,im_v2_const,im_v2_lib_analytics,ui_analytics,call_const) {
 	'use strict';
 
 	const AnalyticsEvent = Object.freeze({
@@ -34,7 +34,16 @@ this.BX.Call = this.BX.Call || {};
 	  openResume: 'open_resume',
 	  clickCallButton: 'click_call_button',
 	  clickStartConf: 'click_start_conf',
-	  aiRecordStart: 'ai_record_start'
+	  aiRecordStart: 'ai_record_start',
+	  aiOn: 'ai_on',
+	  aiOff: 'ai_off',
+	  openTab: 'open_tab',
+	  clickCreateEvent: 'click_create_event',
+	  clickCreateTask: 'click_create_task',
+	  viewPopup: 'view_popup',
+	  viewNotification: 'view_notification',
+	  clickTimeCode: 'click_timecode',
+	  playRecord: 'play_record'
 	});
 	const AnalyticsTool = Object.freeze({
 	  im: 'im',
@@ -44,7 +53,8 @@ this.BX.Call = this.BX.Call || {};
 	  call: 'call',
 	  callDocs: 'call_docs',
 	  messenger: 'messenger',
-	  callsOperations: 'calls_operations'
+	  callsOperations: 'calls_operations',
+	  callFollowup: 'call_followup'
 	});
 	const AnalyticsType = Object.freeze({
 	  private: 'private',
@@ -55,7 +65,9 @@ this.BX.Call = this.BX.Call || {};
 	  presentation: 'presentation',
 	  sheet: 'sheet',
 	  privateCall: 'private',
-	  groupCall: 'group'
+	  groupCall: 'group',
+	  aiOn: 'ai_on',
+	  turnOnAi: 'turn_on_ai'
 	});
 	const AnalyticsSection = Object.freeze({
 	  callWindow: 'call_window',
@@ -109,6 +121,99 @@ this.BX.Call = this.BX.Call || {};
 	  aiOff: 'ai_off'
 	});
 
+	class Copilot {
+	  onAIRecordStart(params) {
+	    const errorCodes = {
+	      AI_UNAVAILABLE_ERROR: AnalyticsStatus.errorB24,
+	      AI_SETTINGS_ERROR: AnalyticsStatus.errorB24,
+	      AI_AGREEMENT_ERROR: AnalyticsStatus.errorAgreement,
+	      AI_NOT_ENOUGH_BAAS_ERROR: AnalyticsStatus.errorLimitBaas
+	    };
+	    const resultData = {
+	      tool: AnalyticsTool.ai,
+	      category: AnalyticsCategory.callsOperations,
+	      event: AnalyticsEvent.aiRecordStart,
+	      type: params.callType,
+	      c_section: AnalyticsSection.callFollowup,
+	      p5: `callId_${params.callId}`
+	    };
+	    if (params != null && params.userCount) {
+	      resultData.p3 = `userCount_${params.userCount}`;
+	    }
+	    resultData.status = params != null && params.errorCode ? errorCodes[params.errorCode] : AnalyticsStatus.success;
+	    ui_analytics.sendData(resultData);
+	  }
+	  onAIRecordStatusChanged(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: params.isAIOn ? AnalyticsEvent.aiOn : AnalyticsEvent.aiOff,
+	      type: params.callType,
+	      status: params != null && params.error ? `error_${params.error}` : AnalyticsStatus.success,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onOpenFollowUpTab(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.callFollowup,
+	      event: AnalyticsEvent.openTab,
+	      type: params.tabName,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onFollowUpCreateEventClick(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.callFollowup,
+	      event: AnalyticsEvent.clickCreateEvent,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onFollowUpCreateTaskClick(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.callFollowup,
+	      event: AnalyticsEvent.clickCreateTask,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onAIRestrictionsPopupShow(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.viewPopup,
+	      type: params.popupType,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onCopilotNotifyShow(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.viewNotification,
+	      type: params.isCopilotActive ? AnalyticsType.aiOn : AnalyticsType.turnOnAi,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onAIRecordTimeCodeClick(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.callFollowup,
+	      event: AnalyticsEvent.clickTimeCode,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onAIPlayRecord(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.callFollowup,
+	      event: AnalyticsEvent.playRecord,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	}
+
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
 	var _screenShareStarted = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("screenShareStarted");
 	var _recordStarted = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("recordStarted");
@@ -122,6 +227,7 @@ this.BX.Call = this.BX.Call || {};
 	    Object.defineProperty(this, _getCallElementParam, {
 	      value: _getCallElementParam2
 	    });
+	    this.copilot = new Copilot();
 	    Object.defineProperty(this, _screenShareStarted, {
 	      writable: true,
 	      value: false
@@ -601,27 +707,6 @@ this.BX.Call = this.BX.Call || {};
 	    }
 	    ui_analytics.sendData(resultData);
 	  }
-	  onAIRecordStart(params) {
-	    const errorCodes = {
-	      AI_UNAVAILABLE_ERROR: AnalyticsStatus.errorB24,
-	      AI_SETTINGS_ERROR: AnalyticsStatus.errorB24,
-	      AI_AGREEMENT_ERROR: AnalyticsStatus.errorAgreement,
-	      AI_NOT_ENOUGH_BAAS_ERROR: AnalyticsStatus.errorLimitBaas
-	    };
-	    const resultData = {
-	      tool: AnalyticsTool.ai,
-	      category: AnalyticsCategory.callsOperations,
-	      event: AnalyticsEvent.aiRecordStart,
-	      type: params.callType,
-	      c_section: AnalyticsSection.callFollowup,
-	      p5: `callId_${params.callId}`
-	    };
-	    if (params != null && params.userCount) {
-	      resultData.p3 = `userCount_${params.userCount}`;
-	    }
-	    resultData.status = params != null && params.errorCode ? errorCodes[params.errorCode] : AnalyticsStatus.success;
-	    ui_analytics.sendData(resultData);
-	  }
 	}
 	function _getCallElementParam2(callType) {
 	  return callType === call_const.CallTypes.video.id ? AnalyticsElement.videocall : AnalyticsElement.audiocall;
@@ -641,5 +726,5 @@ this.BX.Call = this.BX.Call || {};
 
 	exports.Analytics = Analytics;
 
-}((this.BX.Call.Lib = this.BX.Call.Lib || {}),BX.UI.Analytics,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Call.Const));
+}((this.BX.Call.Lib = this.BX.Call.Lib || {}),BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.UI.Analytics,BX.Call.Const));
 //# sourceMappingURL=analytics.bundle.js.map

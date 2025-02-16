@@ -12,8 +12,6 @@ use Bitrix\Crm\Format\Duration;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Operation\OperationState;
 use Bitrix\Crm\Integration\AI\Operation\Orchestrator;
-use Bitrix\Crm\Integration\AI\Operation\Scenario;
-use Bitrix\Crm\Integration\AI\SuitableAudiosChecker;
 use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
@@ -36,11 +34,11 @@ use Bitrix\Crm\Service\Timeline\Layout\Footer\Button;
 use Bitrix\Crm\Service\Timeline\Layout\Footer\IconButton;
 use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
 use Bitrix\Crm\Service\Timeline\Layout\Menu;
-use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItem;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
 use Bitrix\Crm\Tour\CopilotInCall;
 use Bitrix\Crm\Tour\CopilotRunAutomatically;
 use Bitrix\Crm\Tour\CopilotRunManually;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\PhoneNumber;
 use Bitrix\Main\Type\DateTime;
@@ -249,7 +247,7 @@ class Call extends Activity
 
 				if (isset($communication['ENTITY_TYPE_ID']) && $communication['ENTITY_TYPE_ID'] === CCrmOwnerType::Contact)
 				{
-					$photo = Container::getInstance()->getContactBroker()->getById($communication['ENTITY_ID'])['PHOTO'];
+					$photo = Container::getInstance()->getContactBroker()->getById($communication['ENTITY_ID'])['PHOTO'] ?? '';
 					if ($photo)
 					{
 						$photoUrl = CFile::ResizeImageGet($photo, ["width" => 2000, "height" => 2000], BX_RESIZE_IMAGE_PROPORTIONAL,false, false, true);
@@ -819,10 +817,8 @@ class Call extends Activity
 		return $button;
 	}
 
-	private function getAIButton(): ?Button
+	private function getAIButton(): ?Activity\Call\CopilotButton
 	{
-		$ownerTypeId = $this->getContext()->getIdentifier()->getEntityTypeId();
-		$ownerId = $this->getContext()->getIdentifier()->getEntityId();
 		$activityId = $this->getActivityId();
 
 		// don't show the button
@@ -844,138 +840,12 @@ class Call extends Activity
 			return null;
 		}
 
-		$operationState = new OperationState($activityId, $ownerTypeId, $ownerId);
-
-		$buttonProps = [
-			'data-activity-id' => $activityId,
-		];
-
-		$jsEventAction = (new JsEvent('Call:LaunchCopilot'))
-			->addActionParamInt('activityId', $activityId)
-			->addActionParamInt('ownerTypeId', $ownerTypeId)
-			->addActionParamInt('ownerId', $ownerId)
-			->addActionParamBoolean('isCopilotBannerNeedShow', $this->isCopilotBannerNeedShow())
-		;
-
-		$button = (new Button(Loc::getMessage('CRM_COMMON_COPILOT'), Button::TYPE_AI))
-			->setIcon(Button::TYPE_AI)
-			->setScopeWeb()
-		;
-
-		if (!AIManager::isAILicenceAccepted($this->getContext()->getUserId()))
-		{
-			if (\Bitrix\Crm\Settings\Crm::isBox())
-			{
-				$jsEventAction->addActionParamBoolean('isCopilotAgreementNeedShow', true);
-			}
-			else if (!$this->getContext()->getUserPermissions()->isAdmin())
-			{
-				$buttonProps = [
-					'data-bitrix24-license-feature' => AIManager::AI_LICENCE_FEATURE_NAME,
-				];
-			}
-		}
-
-		$button->setAction($jsEventAction);
-		if ($this->isCopilotMultiScenarioEnabled())
-		{
-			$button->setMenuItems($this->getAiButtonMenuItems($jsEventAction, $operationState));
-		}
-
-		if (!empty($buttonProps))
-		{
-			$button->setProps($buttonProps);
-		}
-
-		if ($operationState->isLaunchOperationsPending())
-		{
-			$button->setAction(null);
-			$button->setState(Layout\Button::STATE_AI_LOADING);
-
-			return $button;
-		}
-
-		if ($this->isAIButtonDisabled($operationState))
-		{
-			$button->setAction(null);
-			$button->setState(Layout\Button::STATE_DISABLED);
-			$button->setTooltip(Loc::getMessage(
-				!$this->isAudiosValid()
-					? 'CRM_TIMELINE_ITEM_COPILOT_ERROR_TOOLTIP'
-					: 'CRM_TIMELINE_BUTTON_TIP_COPILOT',
-			));
-		}
-		elseif (
-			$operationState->isFillFieldsScenarioSuccess()
-			|| $operationState->isCallScoringScenarioSuccess()
-		)
-		{
-			$button->setState(Layout\Button::STATE_DEFAULT);
-		}
-
-		return $button;
-	}
-
-	private function getAiButtonMenuItems(JsEvent $baseEvent, OperationState $operationState): array
-	{
-		$fillFieldsScenarioState = Layout\Button::STATE_DEFAULT;
-		$callScoringScenarioState = Layout\Button::STATE_DEFAULT;
-		$fillFieldsScenarioAction = (clone $baseEvent)
-			->addActionParamString('scenario', Scenario::FILL_FIELDS_SCENARIO)
-		;
-		$callScoringScenarioAction  = (clone $baseEvent)
-			->addActionParamString('scenario', Scenario::CALL_SCORING_SCENARIO)
-		;
-
-		if ($operationState->isFillFieldsScenarioPending())
-		{
-			$fillFieldsScenarioState = Layout\Button::STATE_AI_LOADING;
-			$fillFieldsScenarioAction = null;
-		}
-		elseif (
-			$operationState->isFillFieldsScenarioSuccess()
-			|| $operationState->isFillFieldsScenarioErrorsLimitExceeded()
-		)
-		{
-			$fillFieldsScenarioState = Layout\Button::STATE_AI_SUCCESS;
-			$fillFieldsScenarioAction = null;
-		}
-
-		if ($operationState->isCallScoringScenarioPending())
-		{
-			$callScoringScenarioState = Layout\Button::STATE_AI_LOADING;
-			$callScoringScenarioAction  = null;
-		}
-		elseif (
-			$operationState->isCallScoringScenarioSuccess()
-			|| $operationState->isCallScoringScenarioErrorsLimitExceeded()
-		)
-		{
-			$callScoringScenarioState = Layout\Button::STATE_AI_SUCCESS;
-			$callScoringScenarioAction  = null;
-		}
-
-		if (!$this->isAudiosValid())
-		{
-			$fillFieldsScenarioState = Layout\Button::STATE_DISABLED;
-			$fillFieldsScenarioAction = null;
-			$callScoringScenarioState = Layout\Button::STATE_DISABLED;
-			$callScoringScenarioAction  = null;
-		}
-
-		$result['fillFields'] = (new MenuItem(Loc::getMessage('CRM_TIMELINE_BUTTON_COPILOT_MENU_FILL_FIELDS')))
-			->setAction($fillFieldsScenarioAction)
-			->setState($fillFieldsScenarioState)
-			->setScopeWeb()
-		;
-
-		$result['callScoring'] = (new MenuItem(Loc::getMessage('CRM_TIMELINE_BUTTON_COPILOT_MENU_CALL_SCORING')))
-			->setAction($callScoringScenarioAction)
-			->setState($callScoringScenarioState)
-			->setScopeWeb()
-		;
-
-		return $result;
+		return new Activity\Call\CopilotButton(
+			$this->getContext(),
+			$this->getAssociatedEntityModel(),
+			$activityId,
+			$this->isCopilotMultiScenarioEnabled()
+		);
 	}
 
 	private function mapClientMark(int $callVote): ?string
@@ -1088,14 +958,9 @@ class Call extends Activity
 		return isset($input['HAS_TRANSCRIPT']) && $input['HAS_TRANSCRIPT'];
 	}
 
-	private function isCopilotBannerNeedShow(): bool
-	{
-		return \Bitrix\AI\Config::getPersonalValue('first_launch') !== 'N';
-	}
-
 	private function isCopilotMultiScenarioEnabled(): bool
 	{
-		return Scenario::isMultiScenarioEnabled($this->getDate()?->getTimestamp() ?? 0);
+		return ($this->getDate()?->getTimestamp() ?? 0) > (int)Option::get('crm', 'b_crm_copilot_in_cal_grading_ts', 0);
 	}
 
 	private function isCopilotScope(): bool
@@ -1105,60 +970,5 @@ class Call extends Activity
 			AIManager::SUPPORTED_ENTITY_TYPE_IDS,
 			true
 		);
-	}
-
-	private function isAudiosValid(): bool
-	{
-		static $isAudiosValidList = [];
-
-		$originId = (string)$this->getAssociatedEntityModel()?->get('ORIGIN_ID');
-
-		if (!isset($isAudiosValidList[$originId]))
-		{
-			$audiosCheckResult = (new SuitableAudiosChecker(
-				$originId,
-				(int)$this->getAssociatedEntityModel()?->get('STORAGE_TYPE_ID'),
-				(string)$this->getAssociatedEntityModel()?->get('STORAGE_ELEMENT_IDS')
-			))->run();
-			$isSuccess = $audiosCheckResult->isSuccess();
-			$isAudiosValidList[$originId] = $isSuccess;
-		}
-
-		return $isAudiosValidList[$originId];
-	}
-
-	private function isAIButtonDisabled(OperationState $operationState): bool
-	{
-		if (!$this->isAudiosValid())
-		{
-			return true;
-		}
-
-		$isMultiScenario = $this->isCopilotMultiScenarioEnabled();
-		$isFillFieldsScenarioSuccess = $operationState->isFillFieldsScenarioSuccess();
-		$isCallScoringScenarioSuccess = $operationState->isCallScoringScenarioSuccess();
-		$isAllSuccess = $isMultiScenario
-			? $isFillFieldsScenarioSuccess && $isCallScoringScenarioSuccess
-			: $isFillFieldsScenarioSuccess
-		;
-		if ($isAllSuccess)
-		{
-			return true;
-		}
-
-		$isFillFieldsScenarioError = $operationState->isFillFieldsScenarioErrorsLimitExceeded();
-		$isCallScoringScenarioError = $operationState->isCallScoringScenarioErrorsLimitExceeded();
-		$isAllError = $isMultiScenario
-			? $isFillFieldsScenarioError && $isCallScoringScenarioError
-			: $isFillFieldsScenarioError
-		;
-		if ($isAllError)
-		{
-			return true;
-		}
-
-		return ($isFillFieldsScenarioSuccess && $isCallScoringScenarioError)
-			|| ($isCallScoringScenarioSuccess && $isFillFieldsScenarioError)
-		;
 	}
 }

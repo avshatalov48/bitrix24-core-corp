@@ -101,7 +101,8 @@ if ((!$document && \Bitrix\Sign\Config\Storage::instance()->isNewSignEnabled()) 
 				templateUid: '<?= CUtil::JSEscape($arResult['TEMPLATE_UID'] ?? '') ?>',
 				initiatedByType: '<?= CUtil::JSEscape($arResult['INITIATED_BY_TYPE'] ?? '' )?>',
 				chatId: <?= (int)($arResult['CHAT_ID'] ?? 0) ?>,
-			},
+				b2eDocumentLimitCount: <?= (int)($arResult['MAX_DOCUMENT_COUNT'] ?? 20) ?>,
+				},
 				<?= JsonHelper::encodeOrDefault('{}', $arResult['ANALYTIC_CONTEXT'] ?? '') ?>
 			);
 		});

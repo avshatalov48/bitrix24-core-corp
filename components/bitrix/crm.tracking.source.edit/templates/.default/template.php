@@ -49,6 +49,7 @@ $containerId = 'crm-analytics-source-ads-editor';
 				'row' => $arResult['ROW'],
 				'enabled' => $arResult['ROW']['ID'] > 0 && $arResult['ROW']['UTM_SOURCE'],
 				'added' => $arParams['IS_ADDED'],
+				'updated' => $arParams['IS_UPDATED'],
 			])?>]
 		);
 

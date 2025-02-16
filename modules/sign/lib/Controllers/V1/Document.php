@@ -2,13 +2,10 @@
 
 namespace Bitrix\Sign\Controllers\V1;
 
-use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Request;
-use Bitrix\Main\SystemException;
 use Bitrix\Sign\Access\ActionDictionary;
 use Bitrix\Sign\Attribute;
 use Bitrix\Sign\Config\Storage;
@@ -18,6 +15,7 @@ use Bitrix\Sign\Operation;
 use Bitrix\Sign\Service;
 use Bitrix\Sign\Type;
 use Bitrix\Sign\Type\Access\AccessibleItemType;
+use Bitrix\Sign\Type\DocumentScenario;
 use Bitrix\Sign\Type\Document\InitiatedByType;
 
 class Document extends \Bitrix\Sign\Engine\Controller
@@ -439,8 +437,8 @@ class Document extends \Bitrix\Sign\Engine\Controller
 		if ($result instanceof Operation\Result\ConfigureResult && !$result->completed)
 		{
 			Service\Container::instance()
-				 ->getDocumentAgentService()
-				 ->addConfigureAndStartAgent($uid)
+				->getDocumentAgentService()
+				->addConfigureAndStartAgent($uid)
 			;
 		}
 
@@ -607,6 +605,70 @@ class Document extends \Bitrix\Sign\Engine\Controller
 		return [];
 	}
 
+	#[Attribute\ActionAccess(
+		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+		itemType: AccessibleItemType::DOCUMENT,
+		itemIdOrUidRequestKey: 'uid'
+	)]
+	public function removeAction(string $uid): array
+	{
+		if (!Storage::instance()->isB2eAvailable())
+		{
+			$this->addError(new Error('B2e document scenario is not available'));
+
+			return [];
+		}
+
+		$document = Service\Container::instance()->getDocumentRepository()->getByUid($uid);
+
+		if (!$document)
+		{
+			$this->addError(new Error(Loc::getMessage('SIGN_CONTROLLER_DOCUMENT_NOT_FOUND')));
+
+			return [];
+		}
+
+		if ($document->id === null)
+		{
+			$this->addError(new Error(Loc::getMessage('SIGN_CONTROLLER_DOCUMENT_NOT_FOUND')));
+
+			return [];
+		}
+
+		if (!DocumentScenario::isB2EScenario($document->scenario))
+		{
+			$this->addError(new Error('Only b2e documents can be removed'));
+
+			return [];
+		}
+
+		$expected = [Type\DocumentStatus::NEW, Type\DocumentStatus::UPLOADED];
+		if (!in_array($document->status, $expected, true))
+		{
+			$this->addError(new Error(
+				message: 'Document has improper status',
+				code: 'SIGN_DOCUMENT_INCORRECT_STATUS',
+				customData: [
+					'has' => $document->status,
+					'expected' => $expected,
+				],
+			));
+
+			return [];
+		}
+
+		$rollbackResult = $this->documentService->rollbackDocument($document->id);
+
+		if (!$rollbackResult->isSuccess())
+		{
+			$this->addErrors($rollbackResult->getErrors());
+
+			return [];
+		}
+
+		return [];
+	}
+
 	private function mapToRepresentedDocumentView(\Bitrix\Sign\Item\Document $document): array
 	{
 		return [
@@ -637,6 +699,7 @@ class Document extends \Bitrix\Sign\Engine\Controller
 			'providerCode' => $document->providerCode ? Type\ProviderCode::toRepresentativeString($document->providerCode) : null,
 			'templateId' => $document->templateId,
 			'chatId' => $document->chatId,
+			'groupId' => $document->groupId,
 			'createdFromDocumentId' => $document->createdFromDocumentId,
 			'initiatedByType' => $document->initiatedByType,
 			'hcmLinkCompanyId' => $document->hcmLinkCompanyId,

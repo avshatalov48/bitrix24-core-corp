@@ -72,15 +72,10 @@ class ProviderManager
 			Tasks\Comment::getId() => Tasks\Comment::class,
 			Tasks\Task::getId() => Tasks\Task::class,
 			Booking::getId() => Booking::class,
+			Bizproc\Workflow::getId() => Bizproc\Workflow::class,
+			Bizproc\Comment::getId() => Bizproc\Comment::class,
+			Bizproc\Task::getId() => Bizproc\Task::class,
 		];
-
-		$isAvailable = (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024', 0);
-		if ($isAvailable)
-		{
-			$providersList[Bizproc\Workflow::getId()] = Bizproc\Workflow::class;
-			$providersList[Bizproc\Comment::getId()] = Bizproc\Comment::class;
-			$providersList[Bizproc\Task::getId()] = Bizproc\Task::class;
-		}
 
 		if (Settings\Crm::isWhatsAppScenarioEnabled())
 		{

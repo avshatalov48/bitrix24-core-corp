@@ -6,13 +6,8 @@ use Bitrix\AI\Context;
 use Bitrix\AI\Context\Language;
 use Bitrix\AI\Engine;
 use Bitrix\AI\Integration\Baas\BaasTokenService;
-use Bitrix\AI\Limiter\Enums\ErrorLimit;
-use Bitrix\AI\Limiter\LimitControlService;
-use Bitrix\AI\Limiter\ReserveRequest;
-use Bitrix\AI\Limiter\Usage;
 use Bitrix\AI\Tuning\Manager;
 use Bitrix\Crm\Integration\AI\Enum\GlobalSetting;
-use Bitrix\Crm\Integration\AI\Model\QueueTable;
 use Bitrix\Crm\Integration\AI\Operation\ExtractScoringCriteria;
 use Bitrix\Crm\Integration\AI\Operation\FillItemFieldsFromCallTranscription;
 use Bitrix\Crm\Integration\AI\Operation\Scenario;
@@ -24,7 +19,6 @@ use Bitrix\Crm\Integration\Market\Router;
 use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
@@ -38,8 +32,6 @@ final class AIManager
 {
 	public const SUPPORTED_ENTITY_TYPE_IDS = FillItemFieldsFromCallTranscription::SUPPORTED_TARGET_ENTITY_TYPE_IDS;
 	public const AI_LICENCE_FEATURE_NAME = 'ai_available_by_version';
-	public const AI_PROVIDER_PARTNER_CRM = 'ai_provider_partner_crm';
-	public const AI_DISABLED_SLIDER_CODE = 'limit_copilot_off';
 	public const AI_PACKAGES_EMPTY_SLIDER_CODE = 'limit_boost_crm_automation';
 
 	public const AI_LIMIT_CODE_DAILY = 'Daily';
@@ -99,14 +91,6 @@ final class AIManager
 		if (
 			$setting === GlobalSetting::FillCrmText
 			&& !self::isEngineAvailable(EventHandler::ENGINE_CATEGORY)
-		)
-		{
-			return false;
-		}
-
-		if (
-			$setting === GlobalSetting::CallAssessment
-			&& !Scenario::isMultiScenarioEnabled()
 		)
 		{
 			return false;
@@ -386,47 +370,30 @@ final class AIManager
 		return Container::getInstance()->getLogger('Integration.AI');
 	}
 
-	public static function getLimitResult(Engine $engine): Main\Result
+	public static function fetchLimitError(Error $error): ?Error
 	{
-		$limitControlService = new LimitControlService();
-		$reservedRequest = $limitControlService->reserveRequest(
-			new Usage($engine->getIEngine()->getContext())
-		);
-
-		if ($reservedRequest->isSuccess() === false)
+		$errorCode = $error->getCode();
+		if (!str_starts_with($errorCode, 'LIMIT_IS_EXCEEDED'))
 		{
-			return self::getErrorLimitResult($reservedRequest);
+			return null;
 		}
 
-		return new Main\Result();
-	}
-
-	private static function getErrorLimitResult(ReserveRequest $reservedRequest): Main\Result
-	{
-		$result = new Main\Result();
-		if ($reservedRequest->getErrorLimit() === ErrorLimit::BAAS_LIMIT)
+		return match ($errorCode)
 		{
-			$result->addError(ErrorCode::getAILimitOfRequestsExceededError([
+			'LIMIT_IS_EXCEEDED_BAAS' => ErrorCode::getAILimitOfRequestsExceededError([
 				'sliderCode' => self::AI_LIMIT_SLIDERS_MAP[self::AI_LIMIT_BAAS],
 				'limitCode' => self::AI_LIMIT_BAAS,
-			]));
-
-			return $result;
-		}
-
-		if ($reservedRequest->getPromoLimitCode())
-		{
-			$errorData = [
-				'sliderCode' => self::AI_LIMIT_SLIDERS_MAP[$reservedRequest->getPromoLimitCode()],
-				'limitCode' => $reservedRequest->getPromoLimitCode(),
-			];
-		}
-
-		$result->addError(ErrorCode::getAILimitOfRequestsExceededError(
-			$errorData ?? null
-		));
-
-		return $result;
+			]),
+			'LIMIT_IS_EXCEEDED_MONTHLY' => ErrorCode::getAILimitOfRequestsExceededError([
+				'sliderCode' => self::AI_LIMIT_SLIDERS_MAP[self::AI_LIMIT_CODE_MONTHLY],
+				'limitCode' => self::AI_LIMIT_CODE_MONTHLY,
+			]),
+			'LIMIT_IS_EXCEEDED_DAILY' => ErrorCode::getAILimitOfRequestsExceededError([
+				'sliderCode' => self::AI_LIMIT_SLIDERS_MAP[self::AI_LIMIT_CODE_DAILY],
+				'limitCode' => self::AI_LIMIT_CODE_DAILY,
+			]),
+			default => ErrorCode::getAILimitOfRequestsExceededError(),
+		};
 	}
 
 	public static function getAiAppCollectionMarketLink(): string
@@ -435,18 +402,6 @@ final class AIManager
 		$collectionId = self::AI_APP_COLLECTION_MARKET_MAP[$region] ?? self::AI_APP_COLLECTION_MARKET_DEFAULT;
 
 		return Router::getBasePath() . 'collection/' . $collectionId . '/';
-	}
-
-	public static function isUserHasJobs(int $userId): bool
-	{
-		$useJob = QueueTable::query()
-			->setSelect(['ID'])
-			->where('USER_ID', $userId)
-			->setLimit(1)
-			->fetchObject()
-		;
-
-		return (bool)$useJob;
 	}
 
 	public static function getAvailableLanguageList(): array

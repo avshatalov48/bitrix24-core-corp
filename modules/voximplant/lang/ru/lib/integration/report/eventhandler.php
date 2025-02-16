@@ -11,3 +11,4 @@ $MESS['TELEPHONY_REPORT_EMPLOYEES_WORKLOAD_TITLE'] = 'Нагрузка по со
 $MESS['TELEPHONY_REPORT_CALL_DURATION_TITLE'] = 'Длительность разговоров';
 $MESS['TELEPHONY_REPORT_MISSED_REACTION_TITLE'] = 'Реакция на пропущенные звонки';
 $MESS['TELEPHONY_REPORT_AVERAGE_CALL_TIME_TITLE'] = 'Среднее время звонка';
+$MESS["TELEPHONY_REPORT_MARKET_LINK"] = "Битрикс24 Маркет";

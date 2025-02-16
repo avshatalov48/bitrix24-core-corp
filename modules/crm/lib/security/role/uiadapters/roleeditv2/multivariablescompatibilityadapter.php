@@ -3,12 +3,13 @@
 namespace Bitrix\Crm\Security\Role\UIAdapters\RoleEditV2;
 
 
+use Bitrix\Crm\Security\Role\Manage\AttrPreset\UserRoleAndHierarchy;
 use Bitrix\Crm\Security\Role\Manage\DTO\EntityDTO;
 use Bitrix\Crm\Security\Role\Manage\DTO\PermissionModel;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Permission;
-use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\DependentVariables;
 use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\Variants;
 use Bitrix\Crm\Service\UserPermissions;
+use Bitrix\Main\Access\Permission\PermissionDictionary;
 
 class MultivariablesCompatibilityAdapter
 {
@@ -45,7 +46,9 @@ class MultivariablesCompatibilityAdapter
 			{
 				if ($this->isSuitablePermission($permission))
 				{
-					$variants = $this->getVariantsFromValues( $permissionValues[$permissionEntity->code()][$permission->code()] ?? []);
+					$variants = $this->getVariantsFromValues(
+						$permissionValues[$permissionEntity->code()][$permission->code()] ?? []
+					);
 					$permission->setVariants($variants);
 				}
 			}
@@ -53,21 +56,31 @@ class MultivariablesCompatibilityAdapter
 		return $permissionEntities;
 	}
 
-	public function prepareRoleAssignedPermissions(\Bitrix\Crm\Security\Role\Manage\RoleManagementModelBuilder $permissionEntitiesBuilder, array $rolAssignedPermissions): array
+	public function prepareRoleAssignedPermissions(
+		\Bitrix\Crm\Security\Role\Manage\RoleManagementModelBuilder $permissionEntitiesBuilder,
+		array $rolAssignedPermissions,
+	): array
 	{
 		foreach ($rolAssignedPermissions as $index => $assignedPermission)
 		{
-			$permission = $permissionEntitiesBuilder->getPermissionByCode($assignedPermission['ENTITY'], $assignedPermission['PERM_TYPE']);
+			$permission = $permissionEntitiesBuilder->getPermissionByCode(
+				$assignedPermission['ENTITY'],
+				$assignedPermission['PERM_TYPE'],
+			);
 			if ($this->isSuitablePermission($permission) && !empty($assignedPermission['SETTINGS']))
 			{
-				$compatibleValue = \Bitrix\Crm\Security\Role\Manage\AttrPreset\UserRoleAndHierarchy::tryConvertMultiToSingleValue($assignedPermission['SETTINGS']);
+				$compatibleValue = (new UserRoleAndHierarchy())->tryConvertMultiToSingleValue(
+					$assignedPermission['SETTINGS'],
+				);
 				if (!is_null($compatibleValue))
 				{
 					$rolAssignedPermissions[$index]['ATTR'] = $compatibleValue;
 				}
 				else
 				{
-					$rolAssignedPermissions[$index]['ATTR'] = $this->getAttrValueFromSettings($assignedPermission['SETTINGS']);
+					$rolAssignedPermissions[$index]['ATTR'] = $this->getAttrValueFromSettings(
+						$assignedPermission['SETTINGS'],
+					);
 				}
 				$rolAssignedPermissions[$index]['SETTINGS'] = null;
 			}
@@ -82,7 +95,7 @@ class MultivariablesCompatibilityAdapter
 	 */
 	public function prepareChangedValues(array $toChange): array
 	{
-		$variants = \Bitrix\Crm\Security\Role\Manage\AttrPreset\UserRoleAndHierarchy::getPresetWithUserRole();
+		$variants = (new UserRoleAndHierarchy())->getVariants();
 		foreach ($toChange as $index => $item)
 		{
 			if (in_array($item->permissionCode(), self::getPermissionCodes()))
@@ -117,16 +130,25 @@ class MultivariablesCompatibilityAdapter
 
 	private function isSuitablePermission(?Permission $permission): bool
 	{
+		if (!defined('\Bitrix\Main\Access\Permission\PermissionDictionary::TYPE_DEPENDENT_VARIABLES'))
+		{
+			$typeDependantVariables = 'dependent_variables';
+		}
+		else
+		{
+			$typeDependantVariables = PermissionDictionary::TYPE_DEPENDENT_VARIABLES;
+		}
+
 		return $permission
 			&& in_array($permission->code(), self::getPermissionCodes())
-			&& $permission->getControlType() instanceof DependentVariables
+			&& $permission->getControlMapper()->getType() === $typeDependantVariables
 		;
 	}
 
 	private function getVariantsFromValues(array $permissionValues): Variants
 	{
 		$compatibleVariants = \Bitrix\Crm\Security\Role\Manage\PermissionAttrPresets::userHierarchyAndOpen();
-		$newVariants = \Bitrix\Crm\Security\Role\Manage\AttrPreset\UserRoleAndHierarchy::getPresetWithUserRole();
+		$newVariants = (new UserRoleAndHierarchy())->getVariants();
 
 		$result = $compatibleVariants;
 		foreach ($permissionValues as $permissionValue)
@@ -135,7 +157,7 @@ class MultivariablesCompatibilityAdapter
 
 			if (!empty($settings)) // permissions in new format
 			{
-				$compatibleValue = \Bitrix\Crm\Security\Role\Manage\AttrPreset\UserRoleAndHierarchy::tryConvertMultiToSingleValue($settings);
+				$compatibleValue = (new UserRoleAndHierarchy())->tryConvertMultiToSingleValue($settings);
 
 				if ($compatibleValue !== null && $result->has($compatibleValue))
 				{

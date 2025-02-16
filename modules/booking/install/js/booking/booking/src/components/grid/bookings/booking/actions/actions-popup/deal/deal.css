@@ -1,0 +1,42 @@
+.booking-actions-popup__item-deal-content {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.booking-actions-popup__item-deal-loader {
+	width: 100%;
+	height: 75px;
+}
+
+.booking-actions-popup__item-deal {
+	display: flex;
+	gap: 8px;
+	min-height: 50px;
+}
+
+.booking-actions-popup__item-deal-content.--active .booking-actions-popup-item-icon {
+	border-color: transparent;
+	background: var(--ui-color-primary);
+}
+
+.booking-actions-popup__item-deal-content.--active .booking-actions-popup-item-icon .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-palette-white-base);
+}
+
+.booking-actions-popup__item-deal-content.--active .booking-actions-popup-item-title {
+	color: var(--ui-color-palette-gray-90);
+}
+
+.booking-actions-popup__item-deal-profit {
+	color: var(--ui-color-palette-gray-70);
+	font-size: var(--ui-font-size-xs);
+}
+
+.booking-actions-popup-plus-button.--lock .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-35);
+}
+
+.booking-menu-deal-add-button.--lock .ui-btn-text {
+	color: var(--ui-color-base-35);
+}

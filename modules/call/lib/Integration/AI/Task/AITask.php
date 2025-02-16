@@ -117,6 +117,24 @@ abstract class AITask
 		return new $class($source);
 	}
 
+	public static function getTaskForCall(int $callId, SenseType $senseType): ?self
+	{
+		$task = CallAITaskTable::getList([
+			'filter' => [
+				'=CALL_ID' => $callId,
+				'=TYPE' => $senseType->value,
+			],
+			'order' => ['ID' => 'DESC'],
+			'limit' => 1,
+		])?->fetchObject();
+		if ($task)
+		{
+			return self::buildBySource($task);
+		}
+
+		return null;
+	}
+
 	public function getContextId(): string
 	{
 		return (new \ReflectionClass(static::class))->getShortName();
@@ -193,6 +211,11 @@ abstract class AITask
 	public function getAIEngineCode(): string
 	{
 		return '';
+	}
+
+	public function getCost(): int
+	{
+		return 1;
 	}
 
 	public static function getAIPromptFields(): array

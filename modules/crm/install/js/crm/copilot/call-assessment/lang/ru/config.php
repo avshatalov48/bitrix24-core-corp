@@ -58,3 +58,18 @@ $MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_VALIDATION_ERROR'] = 'Заполните
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_SAVE_ERROR'] = 'Не удалось сохранить скрипт. Обновите страницу и попробуйте ещё раз';
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_COPILOT_ERROR'] = 'Не удалось сохранить скрипт. Попробуйте ещё раз немного позже';
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_COPILOT_OPERATION_PENDING_ERROR'] = 'Не удалось сохранить скрипт. Попробуйте ещё раз немного позже';
+
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_TITLE'] = 'Как оценивать разговоры менеджеров';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_DESCRIPTION'] = 'CoPilot проанализирует разговор и покажет процент соответствия скрипту продаж. Вы можете указать пороговые значения, чтобы CoPilot квалифицировал разговор как качественный или некачественный';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_LOW_BORDER_TITLE'] = 'Некачественный разговор';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_LOW_BORDER_DESCRIPTION'] = 'Если процент соответствия скрипту будет ниже или равен этому, CoPilot&nbsp;квалифицирует разговор как некачественный';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_LOW_BORDER_ADDITIONAL'] = 'Менеджер увидит результат в таймлайне и статус в канбане. Это поможет понять, насколько разговор соответствует требованиям компании';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_HIGH_BORDER_TITLE'] = 'Качественный разговор';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_HIGH_BORDER_DESCRIPTION'] = 'Если процент соответствия скрипту будет выше или равен этому, CoPilot&nbsp;квалифицирует разговор как качественный';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_HIGH_BORDER_ADDITIONAL'] = 'Менеджер увидит результат в таймлайне и поймёт, насколько разговор соответствует требованиям компании';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_RESULT_TITLE'] = 'Сообщать о результатах';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_VALIDATION_ERROR'] = 'В качественном разговоре пороговое значение должно быть выше, чем в некачественном';
+
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PILL_TITLE'] = 'Соответствие<br>скрипту';
+
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_AI_DISABLED'] = 'Чтобы изменить скрипт, попросите администратора вашего Битрикс24 включить <b>CoPilot для&nbsp;оценки звонка по&nbsp;скрипту</b> в&nbsp;настройках';

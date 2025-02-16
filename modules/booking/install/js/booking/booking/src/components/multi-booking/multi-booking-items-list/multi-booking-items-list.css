@@ -1,0 +1,73 @@
+.booking--multi-booking--book-list {
+	display: flex;
+	overflow: hidden;
+}
+
+.booking--multi-booking--books-wrapper {
+	display: flex;
+	flex-direction: row;
+	flex-grow: 1;
+	align-items: center;
+	gap: 9px;
+	overflow-x: hidden;
+	width: 100%;
+}
+
+.booking--multi-booking--book {
+	background-color: var(--ui-color-base-04);
+	display: flex;
+	gap: 3px;
+	align-items: center;
+	height: var(--ui-btn-size-sm);
+	--ui-btn-font-size: var(--ui-font-size-xs);
+	white-space: nowrap;
+	font: var(--ui-btn-font-size) / calc(var(--ui-btn-height) - 2px) var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold);
+	border-radius: 4px;
+	padding: 0 8px 0 11px;
+}
+
+.booking--multi-booking--book label {
+	color: var(--ui-color-base-90);
+	font-size: 13px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: normal;
+}
+
+.booking--multi-booking--book button {
+	background-color: rgba(0, 0, 0, 0.2);
+}
+
+.booking--multi-booking--book button:hover {
+	background-color: rgba(0, 0, 0, 0.4);
+}
+
+.booking--multi-booking--items-ears .ui-ear {
+	background: linear-gradient(90deg, rgba(2,144,226,0) 0%, rgba(2,144,226,1) 77%, rgba(2,144,226,1) 100%);
+	opacity: 1;
+}
+
+.booking--multi-booking--items-ears .ui-ear::before {
+	content: "";
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='48' height='48' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='5' y='5' width='38' height='38' rx='19' fill='%2334A7EA'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M19.84 17.872l4.905 4.904L26.015 24l-1.27 1.224-4.904 4.904 1.73 1.73L29.431 24l-7.86-7.858-1.73 1.73z' fill='%23fff' fill-opacity='.94'/%3E%3C/svg%3E");
+	background-size: 30px;
+	position: absolute;
+	display: block;
+	top: 0;
+	left: 50%;
+	height: 30px;
+	width: 30px;
+}
+
+.booking--multi-booking--items-ears .ui-ear.ui-ear-show {
+	width: 60px;
+}
+
+.booking--multi-booking--items-ears .ui-ear-left {
+	transform: rotate(180deg);
+}
+
+.booking--multi-booking--items-ears .ui-ear-left.ui-ear-show {
+	margin-left: -3px;
+}

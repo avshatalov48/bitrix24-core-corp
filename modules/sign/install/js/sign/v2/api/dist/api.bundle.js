@@ -170,10 +170,11 @@ this.BX.Sign = this.BX.Sign || {};
 	      uid
 	    }, false);
 	  }
-	  loadBlanks(page, scenario = null) {
+	  loadBlanks(page, scenario = null, countPerPage = null) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.blank.list', {
 	      page,
-	      scenario
+	      scenario,
+	      countPerPage
 	    });
 	  }
 	  createBlank(files, scenario = null, forTemplate = false) {
@@ -250,6 +251,11 @@ this.BX.Sign = this.BX.Sign || {};
 	  configureDocument(uid) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.configure', {
 	      uid
+	    });
+	  }
+	  configureDocumentGroup(groupId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.b2e.document.group.configure', {
+	      groupId
 	    });
 	  }
 	  loadBlocksByDocument(documentUid) {
@@ -451,9 +457,33 @@ this.BX.Sign = this.BX.Sign || {};
 	      uid
 	    });
 	  }
+	  getDocumentGroupFillAndStartProgress(groupId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.b2e.document.group.getFillAndStartProgress', {
+	      groupId
+	    });
+	  }
 	  getMember(uid) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.member.get', {
 	      uid
+	    });
+	  }
+	  createDocumentsGroup() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.b2e.document.group.create');
+	  }
+	  removeDocument(uid) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.remove', {
+	      uid
+	    });
+	  }
+	  attachGroupToDocument(documentUid, groupId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.b2e.document.group.attach', {
+	      documentUid,
+	      groupId
+	    });
+	  }
+	  getDocumentListInGroup(groupId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.b2e.document.group.documentList', {
+	      groupId
 	    });
 	  }
 	  changeTemplateVisibility(templateId, visibility) {

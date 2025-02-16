@@ -1,19 +1,18 @@
 <?php
 
-
 namespace Bitrix\Crm\Service\Broker;
 
-
-use Bitrix\Crm\Service\Broker;
 use Bitrix\Crm\Product;
+use Bitrix\Crm\Service\Broker;
 use Bitrix\Iblock;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Type;
+use CIBlockElement;
 
 class IBlockElement extends Broker
 {
-	private $iblockIncluded;
-	private $catalogIncluded;
+	private ?bool $iblockIncluded = null;
+	private ?bool $catalogIncluded = null;
 
 	protected function loadEntry(int $id): ?array
 	{
@@ -21,6 +20,7 @@ class IBlockElement extends Broker
 		{
 			return null;
 		}
+
 		if ($id <= 0)
 		{
 			return null;
@@ -51,7 +51,7 @@ class IBlockElement extends Broker
 		}
 		else
 		{
-			$iterator = \CIBlockElement::GetList(
+			$iterator = CIBlockElement::GetList(
 				[],
 				[
 					'ID' => $id,
@@ -136,7 +136,7 @@ class IBlockElement extends Broker
 			{
 				foreach ($iblockElements[$iblockId] as $pageIds)
 				{
-					$iterator = \CIBlockElement::GetList(
+					$iterator = CIBlockElement::GetList(
 						[],
 						[
 							'ID' => $pageIds,
@@ -171,6 +171,7 @@ class IBlockElement extends Broker
 		{
 			$this->iblockIncluded = Loader::includeModule('iblock');
 		}
+
 		if ($this->catalogIncluded === null)
 		{
 			$this->catalogIncluded = Loader::includeModule('catalog');
@@ -190,6 +191,7 @@ class IBlockElement extends Broker
 		{
 			return false;
 		}
+		
 		if (!$this->catalogIncluded)
 		{
 			return false;

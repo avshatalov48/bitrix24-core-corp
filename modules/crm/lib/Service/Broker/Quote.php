@@ -7,6 +7,10 @@ use Bitrix\Crm\Service\Broker;
 
 final class Quote extends Broker
 {
+	protected ?string $eventEntityAdd = 'OnAfterCrmQuoteAdd';
+	protected ?string $eventEntityUpdate = 'OnAfterCrmQuoteUpdate';
+	protected ?string $eventEntityDelete = 'OnAfterCrmQuoteDelete';
+
 	protected function loadEntry(int $id)
 	{
 		return QuoteTable::getById($id)->fetchObject();

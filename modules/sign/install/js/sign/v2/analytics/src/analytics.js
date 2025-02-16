@@ -1,5 +1,5 @@
 import { Type } from 'main.core';
-import type { ProviderCodeType } from 'sign.v2.api';
+import type { LoadedDocumentData, ProviderCodeType } from 'sign.v2.api';
 import { Api } from 'sign.v2.api';
 import { ProviderCode } from 'sign.v2.b2e.company-selector';
 import { type AnalyticsOptions, sendData } from 'ui.analytics';
@@ -12,6 +12,7 @@ type AnalyticOptionsWithoutToolKey = Omit<AnalyticsOptions, 'tool'>;
 
 export class Analytics
 {
+	#documentUidToIdCache: Record<string, number> = {};
 	#context: Context;
 	#api: Api = new Api();
 
@@ -38,9 +39,10 @@ export class Analytics
 	sendWithProviderTypeAndDocId(
 		options: AnalyticOptionsWithoutToolKey,
 		documentUidOrId: number | string,
+		providerCode?: ProviderCodeType,
 	): void
 	{
-		void this.#sendWithProviderType(options, documentUidOrId);
+		void this.#sendWithProviderType(options, documentUidOrId, providerCode);
 	}
 
 	sendWithDocId(options: AnalyticOptionsWithoutToolKey, documentUidOrId: string | number): void
@@ -56,30 +58,63 @@ export class Analytics
 		}
 
 		(async () => {
-			const document = await this.#api.loadDocument(documentUidOrId);
+			const documentId = await this.#loadDocumentIdByUid(documentUidOrId);
 			this.send({
 				...options,
-				p5: `docId_${document.id}`,
+				p5: `docId_${documentId}`,
 			});
-		})()
+		})();
 	}
 
-	async #sendWithProviderType(options: AnalyticOptionsWithoutToolKey, documentUidOrId: number | string): Promise<void>
+	async #loadDocumentIdByUid(documentUid: string): Promise<number | null>
 	{
-		const document = Type.isString(documentUidOrId)
-			? await this.#api.loadDocument(documentUidOrId)
-			: await this.#api.loadDocumentById(documentUidOrId)
-		;
-		if (!document)
+		if (Type.isNumber(this.#documentUidToIdCache[documentUid]))
 		{
-			console.warn('Document not found by identifier', documentUidOrId);
-
-			return;
+			return this.#documentUidToIdCache[documentUid];
 		}
+
+		const document = await this.#api.loadDocument(documentUid);
+		if (document)
+		{
+			this.#documentUidToIdCache[documentUid] = document.id;
+
+			return document.id;
+		}
+
+		return null;
+	}
+
+	async #sendWithProviderType(
+		options: AnalyticOptionsWithoutToolKey,
+		documentUidOrId: number | string,
+		providerCode?: ProviderCodeType,
+	): Promise<void>
+	{
+		let documentId: number | null = Type.isNumber(documentUidOrId)
+			? documentUidOrId
+			: this.#documentUidToIdCache[documentUidOrId] ?? null
+		;
+		let providerType = providerCode;
+		if (Type.isNull(documentId) || Type.isUndefined(providerCode))
+		{
+			const document = Type.isString(documentUidOrId)
+				? await this.#api.loadDocument(documentUidOrId)
+				: await this.#api.loadDocumentById(documentUidOrId)
+			;
+			if (!document)
+			{
+				console.warn('Document not found by identifier', documentUidOrId);
+
+				return;
+			}
+			documentId = document.id;
+			providerType = document.providerCode;
+		}
+
 		this.send({
 			...options,
-			p1: this.#convertProviderCodeToP1IntegrationType(document.providerCode),
-			p5: `docId_${document.id}`,
+			p1: this.#convertProviderCodeToP1IntegrationType(providerType),
+			p5: `docId_${documentId}`,
 		});
 	}
 

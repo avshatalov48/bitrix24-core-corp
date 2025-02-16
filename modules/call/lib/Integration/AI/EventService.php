@@ -3,6 +3,8 @@
 namespace Bitrix\Call\Integration\AI;
 
 use Bitrix\Im\V2\Chat;
+use Bitrix\Im\Call\Registry;
+use Bitrix\Call\NotifyService;
 use Bitrix\Call\Integration\AI\Outcome\OutcomeCollection;
 
 
@@ -25,25 +27,25 @@ class EventService
 			&& $call->isAiAnalyzeEnabled()
 		)
 		{
+			$chat = Chat::getInstance($call->getChatId());
+
 			$minDuration = CallAISettings::getRecordMinDuration();
-			if (
-				$call->getDuration() > 0
-				&& $call->getDuration() > $minDuration
-				//todo: Add err message
-			)
+			if ($call->getDuration() < $minDuration)
 			{
+				$call
+					->disableAudioRecord()
+					->disableAiAnalyze()
+					->save();
 
-				//todo: Setup result waiting agent
+				return;
+			}
 
-				$chat = Chat::getInstance($call->getChatId());
-
-				$message = ChatMessage::generateCallFinishedMessage($call, $chat);
-				if ($message)
-				{
-					$message->setAuthorId($call->getInitiatorId());
-					$notifyService = \Bitrix\Call\NotifyService::getInstance();
-					$notifyService->sendMessageDeferred($chat, $message);
-				}
+			$message = ChatMessage::generateCallFinishedMessage($call, $chat);
+			if ($message)
+			{
+				$message->setAuthorId($call->getInitiatorId());
+				$notifyService = \Bitrix\Call\NotifyService::getInstance();
+				$notifyService->sendMessageDeferred($chat, $message);
 			}
 		}
 	}
@@ -111,6 +113,9 @@ class EventService
 				$messageOutcome->setAuthorId($call->getInitiatorId());
 				$notifyService = \Bitrix\Call\NotifyService::getInstance();
 				$notifyService->sendMessageDeferred($chat, $messageOutcome);
+
+				$callInstance = \Bitrix\Im\Call\Registry::getCallWithId($outcome->getCallId());
+				(new \Bitrix\Call\Analytics\FollowUpAnalytics($callInstance))->addFollowUpResultMessage();
 			}
 		}
 	}
@@ -131,22 +136,10 @@ class EventService
 		if (
 			$task instanceof \Bitrix\Call\Integration\AI\Task\AITask
 			&& $error instanceof \Bitrix\Main\Error
-			&& (
-				$task->getType() == SenseType::TRANSCRIBE->value
-				|| $task->getType() == SenseType::OVERVIEW->value
-			)
 		)
 		{
-			$call = $task->fillCall();
-			$chat = Chat::getInstance($call->getChatId());
-
-			$message = ChatMessage::generateTaskFailedMessage($task, $error, $chat);
-			if ($message)
-			{
-				$message->setAuthorId($call->getInitiatorId());
-				$notifyService = \Bitrix\Call\NotifyService::getInstance();
-				$notifyService->sendMessageDeferred($chat, $message);
-			}
+			$call = Registry::getCallWithId($task->getCallId());
+			NotifyService::getInstance()->sendTaskFailedMessage($error, $call);
 		}
 	}
 }

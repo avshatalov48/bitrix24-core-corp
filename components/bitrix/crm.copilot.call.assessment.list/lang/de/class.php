@@ -1,4 +1,7 @@
 <?php
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ASSESSMENT_AVG"] = "Bewertung der Übereinstimmung mit dem Skript";
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ASSESSMENT_AVG_TOOLTIP"] = "Dieser Wert zeigt die durchschnittliche Bewertung aller Mitarbeiter an. Standardmäßig werden Werte unter #LOW_BORDER#% als schlecht und Werte über #HIGH_BORDER#% als gut eingestuft. Die Schwellenwerte können in den Skripteinstellungen geändert werden.";
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_CALL_TYPE"] = "Anruftyp";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_CLIENT"] = "Kundengruppe";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_GIST"] = "Kriterien";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_INSPECTOR"] = "Prüfer";
@@ -14,6 +17,6 @@ $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_STATUS_PENDING"] = "Anstehend";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_STATUS_SUCCESS"] = "Geprüft";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_FORMAT_DATE_NOW"] = "gerade eben";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_ITEM_DELETE_ERROR"] = "Elemente können nicht gelöscht werden.";
-$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_NOT_FOUND"] = "Regel wurde nicht gefunden.";
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_NOT_FOUND_MSGVER_1"] = "Skript wurde nicht gefunden.";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_TITLE"] = "AI-Sprachanalyse und Verkaufsskripts";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_TOOLBAR_GUIDE_TITLE"] = "Copilot für CRM: Ein neuer Weg zur Verbesserung der Vertriebseffizienz";

@@ -1,0 +1,48 @@
+.booking-actions-popup__item-client-note {
+	padding: 4px;
+}
+
+.booking-actions-popup__item-client-note-inner {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 2px 6px;
+	border-radius: 4px;
+	cursor: default;
+}
+
+.booking-actions-popup__item-client-note.--empty .booking-actions-popup__item-client-note-inner {
+	cursor: pointer;
+}
+
+.booking-actions-popup__item-client-note.--empty .booking-actions-popup__item-client-note-inner:hover {
+	box-shadow: inset 0 0 999px rgba(0, 0, 0, 0.03);
+}
+
+.booking-actions-popup__item-client-note-text {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	color: var(--ui-color-base-default);
+	font-size: var(--ui-font-size-xs);
+}
+
+.booking-actions-popup__item-client-note.--empty .booking-actions-popup__item-client-note-text {
+	color: rgba(0, 0, 0, 0.3);
+}
+
+.booking-actions-popup__item-client-note-edit {
+	display: flex;
+	padding: 2px;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.booking-actions-popup__item-client-note-edit:hover {
+	box-shadow: inset 0 0 999px rgba(0, 0, 0, 0.03);
+}
+
+.booking-actions-popup__item-client-note .ui-icon-set {
+	--ui-icon-set__icon-color: rgba(0, 0, 0, 0.3);
+	--ui-icon-set__icon-size: 16px;
+}

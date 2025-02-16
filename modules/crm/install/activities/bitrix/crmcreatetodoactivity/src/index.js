@@ -184,7 +184,7 @@ class CrmCreateTodoActivity
 		this.renderControl('Duration');
 
 		this.locations = await this.#fetchRoomsManagerData();
-		const wrapper = Dom.create('div');
+		const wrapper = Tag.render`<div id="id_location"></div>`;
 		this.#getLocationSelectorDialog(value).renderTo(wrapper);
 
 		return wrapper;

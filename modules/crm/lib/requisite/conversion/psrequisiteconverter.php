@@ -5,12 +5,13 @@ namespace Bitrix\Crm\Requisite\Conversion;
 use Bitrix\Crm\EntityBankDetail;
 use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\Invoice;
 use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\RequisiteAddress;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\CompanySettings;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Invoice;
 
 class PSRequisiteConverter
 {
@@ -1177,6 +1178,7 @@ class PSRequisiteConverter
 		if (isset($row['IS_MY_COMPANY']) && $row['IS_MY_COMPANY'] !== 'Y')
 		{
 			Main\Application::getConnection()->queryExecute("UPDATE b_crm_company SET IS_MY_COMPANY = 'Y' WHERE ID = $id");
+			Container::getInstance()->getCompanyBroker()->deleteCache((int)$id);
 		}
 
 

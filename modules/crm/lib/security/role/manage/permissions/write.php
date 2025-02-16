@@ -23,4 +23,9 @@ class Write extends Permission
 	{
 		return 3;
 	}
+
+	public function getManagerDefaultAttributeValue(): ?string
+	{
+		return \Bitrix\Crm\Service\UserPermissions::PERMISSION_SELF;
+	}
 }

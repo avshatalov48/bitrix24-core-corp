@@ -1,0 +1,13 @@
+.resource-creation-wizard__form-settings.--base .ui-form-row {
+	width: 50%;
+}
+
+.booking--rcw--field-with-validation {
+	display: flex;
+	flex-direction: column;
+	align-items: start !important;
+}
+
+.booking--rcw--form-row-align {
+	align-items: start;
+}

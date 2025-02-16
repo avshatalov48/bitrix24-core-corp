@@ -18,10 +18,10 @@ export class ConsentApprover
 
 	async checkAndApprove(): Promise<boolean>
 	{
-		// if (this.#senderType !== Types.bitrix24)
-		// {
-		// 	return Promise.resolve(true);
-		// }
+		if (this.#senderType !== Types.bitrix24)
+		{
+			return Promise.resolve(true);
+		}
 
 		return new Promise((resolve) => {
 			ajax.runAction('notifications.consent.Agreement.get')

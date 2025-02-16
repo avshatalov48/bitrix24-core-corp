@@ -3513,7 +3513,7 @@ class CCrmViewHelper
 			]);
 		}
 
-		return implode("\n", $result);
+		return implode(',<br>'."\n", $result);
 	}
 
 	final public static function initGridSettings(

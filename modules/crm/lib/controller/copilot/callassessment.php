@@ -29,7 +29,11 @@ final class CallAssessment extends Base
 	}
 
 	// region actions
-	public function saveAction(CallAssessmentItem $callAssessmentItem, ?int $id = null): Result
+	public function saveAction(
+		CallAssessmentItem $callAssessmentItem,
+		?int $id = null,
+		?string $eventId = null
+	): Result
 	{
 		if (!Container::getInstance()->getUserPermissions()->canEditCopilotCallAssessmentSettings())
 		{
@@ -86,13 +90,15 @@ final class CallAssessment extends Base
 			}
 
 			$callAssessmentItem
-				->setGist($entity->getGist())
+				->setGist($isNeedExtractCriteria ? null : $entity->getGist())
 				->setJobId($entity->getJobId())
-				->setStatus($entity->getStatus())
+				->setStatus($isNeedExtractCriteria ? QueueTable::EXECUTION_STATUS_PENDING : $entity->getStatus())
 				->setCode($entity->getCode())
 			;
 
-			$result = $controller->update($id, $callAssessmentItem);
+			$context = clone(Container::getInstance()->getContext());
+			$context->setEventId($eventId);
+			$result = $controller->update($id, $callAssessmentItem, $context);
 		}
 		else
 		{
@@ -105,6 +111,7 @@ final class CallAssessment extends Base
 
 			$isNeedExtractCriteria = true;
 
+			$callAssessmentItem->setStatus(QueueTable::EXECUTION_STATUS_PENDING);
 			$result = $controller->add($callAssessmentItem);
 		}
 
@@ -191,10 +198,7 @@ final class CallAssessment extends Base
 				CallAssessmentItem::class,
 				'callAssessmentItem',
 				static function($className, $data) {
-					$callAssessmentItem = CallAssessmentItem::createFromArray($data);
-					$callAssessmentItem->setStatus(QueueTable::EXECUTION_STATUS_PENDING);
-
-					return $callAssessmentItem;
+					return CallAssessmentItem::createFromArray($data);
 				}
 			),
 		];
@@ -207,8 +211,7 @@ final class CallAssessment extends Base
 
 	private function isLaunchExtractCriteriaOperationEnabled(int $userId): bool
 	{
-		return Feature::enabled(Feature\CopilotInCallGrading::class)
-			&& AIManager::isAiCallProcessingEnabled()
+		return AIManager::isAiCallProcessingEnabled()
 			&& AIManager::isAILicenceAccepted($userId)
 			&& AIManager::isEnabledInGlobalSettings(AI\Enum\GlobalSetting::CallAssessment)
 		;

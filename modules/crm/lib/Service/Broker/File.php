@@ -1,11 +1,14 @@
 <?php
 
-
 namespace Bitrix\Crm\Service\Broker;
 
-
 use Bitrix\Crm\Service\Broker;
+use CFile;
 
+/**
+ * @method array|null getById(int $id)
+ * @method array[] getBunchByIds(array $ids)
+ */
 class File extends Broker
 {
 	private bool $isRequiredSrc = false;
@@ -19,18 +22,17 @@ class File extends Broker
 
 	protected function loadEntry(int $id): ?array
 	{
-		$files = \CFile::GetList(
+		$files = CFile::GetList(
 			[],
 			[
 				'ID' => $id,
 			]
 		);
-
 		$file = $files->Fetch();
 
 		if ($this->isNeedAddSrcToFile($file))
 		{
-			$file['SRC'] = \CFile::GetFileSRC($file);
+			$file['SRC'] = CFile::GetFileSRC($file);
 
 			return $file;
 		}
@@ -48,7 +50,7 @@ class File extends Broker
 	 */
 	protected function loadEntries(array $ids): array
 	{
-		$files = \CFile::GetList(
+		$files = CFile::GetList(
 			[],
 			[
 				'@ID' => $ids,
@@ -62,7 +64,7 @@ class File extends Broker
 
 			if ($this->isNeedAddSrcToFile($file))
 			{
-				$entries[$file['ID']]['SRC'] = \CFile::GetFileSRC($file);
+				$entries[$file['ID']]['SRC'] = CFile::GetFileSRC($file);
 			}
 		}
 

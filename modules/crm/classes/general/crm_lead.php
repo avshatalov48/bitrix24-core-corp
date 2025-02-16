@@ -1752,6 +1752,8 @@ class CAllCrmLead
 			$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_lead');
 		}
 
+		self::clearStageCache($ID);
+
 		$arFields['ID'] = $ID;
 		$arFields['DATE_CREATE'] = $arFields['DATE_MODIFY'] = ConvertTimeStamp(time() + CTimeZone::GetOffset(), 'FULL');
 
@@ -3106,6 +3108,15 @@ class CAllCrmLead
 				$filler->fill($options['CURRENT_FIELDS'], $arFields);
 
 				if (
+					is_array($arRow)
+					&& is_array($arFields)
+					&& ComparerBase::compareEntityFields($arRow, $arFields)->isChanged('STATUS_ID')
+				)
+				{
+					self::clearStageCache($ID);
+				}
+
+				if (
 					isset($arRow['STATUS_ID'])
 					&& isset($currentFields['STATUS_ID'])
 					&& ComparerBase::isMovedToFinalStage(CCrmOwnerType::Lead, $arRow['STATUS_ID'], $currentFields['STATUS_ID'])
@@ -3272,6 +3283,7 @@ class CAllCrmLead
 				$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_lead');
 				$GLOBALS['CACHE_MANAGER']->ClearByTag('b_crm_lead');
 			}
+			self::clearStageCache($ID);
 
 			CCrmSearch::DeleteSearch('LEAD', $ID);
 
@@ -4228,6 +4240,11 @@ class CAllCrmLead
 		}
 	}
 
+	private static function clearStageCache($ID)
+	{
+		Container::getInstance()->getFactory(CCrmOwnerType::Lead)->clearItemStageCache((int)$ID);
+	}
+
 	private static function canTransitionItemToFinalStage(int $entityId, int $userId): bool
 	{
 		$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Lead);
@@ -4236,13 +4253,8 @@ class CAllCrmLead
 			return false;
 		}
 
-		$items = $factory->getItems([
-			'select' => [Item::FIELD_NAME_ID, Item::FIELD_NAME_STAGE_ID],
-			'filter' => ['=ID' => $entityId],
-			'limit' => 1,
-		]);
-		$item = array_shift($items);
-		if (!$item)
+		$currentStageId = $factory->getItemStageId($entityId);
+		if ($currentStageId === null)
 		{
 			return false;
 		}
@@ -4254,9 +4266,9 @@ class CAllCrmLead
 		}
 
 		return Crm\Service\Container::getInstance()->getUserPermissions($userId)->isStageTransitionAllowed(
-			$item->getStageId(),
+			$currentStageId,
 			$successfulStageId,
-			Crm\ItemIdentifier::createByItem($item),
+			new Crm\ItemIdentifier(\CCrmOwnerType::Lead, $entityId),
 		);
 	}
 

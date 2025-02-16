@@ -6,6 +6,7 @@ use Bitrix\Crm\Integration\UI\EntitySelector\CopilotLanguageProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\DynamicMultipleProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\MessageTemplateProvider;
+use Bitrix\Crm\Integration\UI\EntitySelector\MailRecipientProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\PlaceholderProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\TimelinePingProvider;
 
@@ -21,6 +22,20 @@ $uiEntitySelectorConfig = [
 			],
 			[
 				'entityId' => 'company',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\CompanyProvider',
+				],
+			],
+			[
+				'entityId' => 'contact',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\CompanyProvider',
+				],
+			],
+			[
+				'entityId' => 'user',
 				'provider' => [
 					'moduleId' => 'crm',
 					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\CompanyProvider',
@@ -94,6 +109,13 @@ $uiEntitySelectorConfig = [
 				'provider' => [
 					'moduleId' => 'crm',
 					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\SmartDocument',
+				],
+			],
+			[
+				'entityId' => 'mail_recipient',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => MailRecipientProvider::class,
 				],
 			],
 			[

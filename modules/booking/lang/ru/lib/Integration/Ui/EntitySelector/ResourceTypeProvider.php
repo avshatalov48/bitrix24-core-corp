@@ -1,0 +1,2 @@
+<?php
+$MESS ['BOOKING_RESOURCE_TYPE_PROVIDER_SUPER_TITLE'] = "Тип ресурса";

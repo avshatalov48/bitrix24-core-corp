@@ -27,4 +27,9 @@ class HideSum extends Permission
 	{
 		return \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL;
 	}
+
+	public function getDeputyDefaultAttributeValue(): ?string
+	{
+		return \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL;
+	}
 }

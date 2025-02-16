@@ -84,10 +84,12 @@ class DocumentRepository
 			->setInitiatedByType($item->initiatedByType->toInt())
 			->setHcmlinkCompanyId($item->hcmLinkCompanyId)
 			->setDateStatusChanged($item->dateStatusChanged)
+			->setGroupId($item->groupId)
 			->save()
 		;
 
 		$item->id = $addResult->getId();
+
 		return $addResult->setData(['document' => $item]);
 	}
 
@@ -197,6 +199,8 @@ class DocumentRepository
 		{
 			$document->setExternalId($item->externalId);
 		}
+
+		$document->setGroupId($item->groupId);
 
 		if (isset($item->scheme))
 		{
@@ -352,9 +356,42 @@ class DocumentRepository
 			->addOrder('DATE_CREATE', 'DESC')
 			->fetchCollection()
 		;
+
 		return $models === null
 			? new Item\DocumentCollection()
 			: $this->extractItemCollectionByModelCollection($models)
+		;
+	}
+
+	public function listByGroupId(int $groupId, int $limit = 15): Item\DocumentCollection
+	{
+		if ($groupId < 1 || $limit < 1)
+		{
+			return new Item\DocumentCollection();
+		}
+
+		$models = Internal\DocumentTable::query()
+			->addSelect('*')
+			->where('GROUP_ID', $groupId)
+			->setLimit($limit)
+			->addOrder('DATE_CREATE', 'DESC')
+			->fetchCollection()
+		;
+
+		return $this->extractItemCollectionByModelCollection($models);
+	}
+
+	public function getCountByGroupId(int $groupId): int
+	{
+		if ($groupId < 1)
+		{
+			return 0;
+		}
+
+		return (int)Internal\DocumentTable::query()
+			->addSelect('ID')
+			->where('GROUP_ID', $groupId)
+			->queryCountTotal()
 		;
 	}
 
@@ -388,6 +425,7 @@ class DocumentRepository
 			resultFileId:          $model->getResultFileId(),
 			version:               $model->getVersion(),
 			createdById:           $model->getCreatedById(),
+			groupId: 			   $model->getGroupId(),
 			companyUid:            $model->getCompanyUid(),
 			representativeId:      $model->getRepresentativeId(),
 			scheme:                $this->getSchemeTypeById($model->getScheme()),
@@ -445,6 +483,35 @@ class DocumentRepository
 			->fetchObject();
 
 		return $document === null ? null : $this->extractItemFromModel($document);
+	}
+
+	public function getLastCompanyProvidersByUser(int $userId, array $companyUuids = []): Item\ProviderDateCollection
+	{
+		$query = Internal\DocumentTable::query()
+			->setSelect([
+				'COMPANY_UID',
+				new \Bitrix\Main\Entity\ExpressionField('MAX_DATE_CREATE', 'MAX(DATE_CREATE)'),
+			])
+			->where('CREATED_BY_ID', $userId)
+			->whereNotNull('PROVIDER_CODE')
+			->setGroup(['COMPANY_UID'])
+		;
+
+		if ($companyUuids)
+		{
+			$query->whereIn('COMPANY_UID', $companyUuids);
+		}
+
+		$rows = $query->fetchAll();
+
+		return new Item\ProviderDateCollection(
+			...array_map(
+			static fn(array $row) => new Item\ProviderDate(
+				companyUid: $row['COMPANY_UID'],
+				dateCreate: $row['MAX_DATE_CREATE'],
+			),
+			$rows,
+		));
 	}
 
 	private function getModelMetaByItem(Item\Document $item): array
@@ -641,6 +708,17 @@ class DocumentRepository
 		return $document === null ? null : $this->extractItemFromModel($document);
 	}
 
+	public function deleteByTemplateId(int $id): Result
+	{
+		Internal\DocumentTable::deleteByFilter(
+			[
+				'=TEMPLATE_ID' => $id,
+			],
+		);
+
+		return new Result();
+	}
+
 	/**
 	 * @param array<int> $createdFromDocumentIds
 	 */
@@ -667,18 +745,7 @@ class DocumentRepository
 		return $model === null
 			? null
 			: $this->extractItemFromModel($model)
-			;
-	}
-
-	public function deleteByTemplateId(int $id): Result
-	{
-		Internal\DocumentTable::deleteByFilter(
-			[
-				'=TEMPLATE_ID' => $id,
-			],
-		);
-
-		return new Result();
+		;
 	}
 
 	public function existAnyDocument(): bool

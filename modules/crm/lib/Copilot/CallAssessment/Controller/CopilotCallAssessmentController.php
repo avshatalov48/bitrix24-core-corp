@@ -6,9 +6,11 @@ use Bitrix\Crm\Copilot\AiQualityAssessment\Controller\AiQualityAssessmentControl
 use Bitrix\Crm\Copilot\CallAssessment\CallAssessmentItem;
 use Bitrix\Crm\Copilot\CallAssessment\Entity\CopilotCallAssessment;
 use Bitrix\Crm\Copilot\CallAssessment\Entity\CopilotCallAssessmentTable;
+use Bitrix\Crm\Copilot\PullManager;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Traits\Singleton;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
@@ -44,7 +46,7 @@ final class CopilotCallAssessmentController
 		return $result;
 	}
 
-	public function update(int $id, CallAssessmentItem $callAssessmentItem): Result
+	public function update(int $id, CallAssessmentItem $callAssessmentItem, ?Context $context = null): Result
 	{
 		$result = CopilotCallAssessmentTable::update($id, $this->getFields($callAssessmentItem));
 
@@ -54,6 +56,13 @@ final class CopilotCallAssessmentController
 			if (!$modifyResult->isSuccess())
 			{
 				$result->addErrors($modifyResult->getErrors());
+			}
+
+			if ($context)
+			{
+				(new PullManager())->sendUpdateAssessmentPullEvent($id, [
+					'eventId' => $context->getEventId(),
+				]);
 			}
 		}
 
@@ -73,6 +82,8 @@ final class CopilotCallAssessmentController
 			'JOB_ID' => $callAssessmentItem->getJobId(),
 			'STATUS' => $callAssessmentItem->getStatus(),
 			'CODE' => $callAssessmentItem->getCode(),
+			'LOW_BORDER' => $callAssessmentItem->getLowBorder(),
+			'HIGH_BORDER' => $callAssessmentItem->getHighBorder(),
 			'UPDATED_AT' => new DateTime(),
 			'UPDATED_BY_ID' => Container::getInstance()->getContext()->getUserId(),
 		];
@@ -101,7 +112,7 @@ final class CopilotCallAssessmentController
 
 	public function getList(array $params = []): Collection
 	{
-		$select = $params['select'] ?? ['*'];
+		$select = $params['select'] ?? ['*', 'CLIENT_TYPES.CLIENT_TYPE_ID'];
 		$filter = $params['filter'] ?? [];
 		$order = $params['order'] ?? [
 			'ID' => 'DESC',

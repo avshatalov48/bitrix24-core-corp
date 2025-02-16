@@ -17,6 +17,7 @@ use Bitrix\Sign\Item;
 use Bitrix\Sign\Main\User;
 use Bitrix\Sign\Operation\CheckDocumentAccess;
 use Bitrix\Sign\Operation\ConfigureFillAndStart;
+use Bitrix\Sign\Operation\Kanban\B2e\SendDeleteEntityPullEvent;
 use Bitrix\Sign\Operation\Result\ConfigureResult;
 use Bitrix\Sign\Repository\BlankRepository;
 use Bitrix\Sign\Repository\Document\TemplateRepository;
@@ -865,6 +866,12 @@ class DocumentService
 		$smartDocument = $this->documentEntityFactory->getByDocument($document);
 		if ($smartDocument && $smartDocument->getId())
 		{
+			$sendDeleteEntityPullEventResult = (new SendDeleteEntityPullEvent($document))->launch();
+			if (!$sendDeleteEntityPullEventResult->isSuccess())
+			{
+				return $sendDeleteEntityPullEventResult;
+			}
+
 			$smartDocumentDeleteResult = $smartDocument->delete();
 			if (!$smartDocumentDeleteResult->isSuccess())
 			{
@@ -887,7 +894,7 @@ class DocumentService
 			}
 		}
 
-		if ($document->blankId)
+		if ($document->blankId && $document->groupId === null)
 		{
 			// skip blank deletion, if assigned to documents
 			if ($this->documentRepository->getCountByBlankId($document->blankId) > 0)
@@ -910,6 +917,7 @@ class DocumentService
 	public function rollbackDocumentByUid(string $uid): Main\Result
 	{
 		$document = $this->getByUid($uid);
+
 		return $this->rollbackDocument($document->id);
 	}
 

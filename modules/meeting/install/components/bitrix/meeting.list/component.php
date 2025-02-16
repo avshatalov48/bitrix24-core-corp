@@ -1,7 +1,7 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 if (!CModule::IncludeModule("meeting"))
-	return ShowError(GetMessage("ML_MODULE_NOT_INSTALLED"));
+	ShowError(GetMessage("ML_MODULE_NOT_INSTALLED"));
 
 $arParams['USER_ID'] = $arParams['USER_ID'] ? $arParams['USER_ID'] : $USER->GetID();
 $arParams['MEETING_URL'] = $arParams['MEETING_URL'] ? $arParams['MEETING_URL'] : 'meeting.php?MEETING_ID=#MEETING_ID#';

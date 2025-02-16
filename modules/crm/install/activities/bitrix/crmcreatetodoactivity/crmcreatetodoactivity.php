@@ -5,8 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Crm;
 use Bitrix\Bizproc;
+use Bitrix\Crm;
 use Bitrix\Crm\Activity\Provider\ToDo\BlocksManager;
 use Bitrix\Crm\Entity\MessageBuilder\ProcessToDoActivityResponsible;
 use Bitrix\Crm\Integration\Disk\HiddenStorage;
@@ -174,6 +174,10 @@ class CBPCrmCreateToDoActivity extends CBPActivity
 				)
 			);
 		}
+
+		$context = clone Crm\Service\Container::getInstance()->getContext();
+		$context->setScope(Crm\Service\Context::SCOPE_AUTOMATION);
+		$todo->setContext($context);
 
 		$saveResult = $todo->save($options);
 		if (!$saveResult->isSuccess())
@@ -616,7 +620,7 @@ class CBPCrmCreateToDoActivity extends CBPActivity
 		$messageBuilder = new ProcessToDoActivityResponsible($todo->getOwner()->getEntityTypeId());
 		$notification = new ToDoResponsibleNotification($todo, $messageBuilder);
 
-		$notification->sendWhenAdd($this->getTemplateUserId(), $todo->getResponsibleId());
+		$notification->sendWhenAdd($todo->getResponsibleId());
 	}
 
 	private function setCalendarPrefix(string $locationId): string

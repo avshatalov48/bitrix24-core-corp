@@ -1,0 +1,20 @@
+<?php
+$MESS["ME_ACTION"] = "Besprechung anfangen";
+$MESS["ME_AGENDA"] = "Agenda";
+$MESS["ME_CHANGE"] = "Wechseln";
+$MESS["ME_CLOSE"] = "Besprechung beenden";
+$MESS["ME_COMMENTS"] = "Kommentare";
+$MESS["ME_COPY"] = "Neue Besprechung";
+$MESS["ME_CURRENT_STATE_MSGVER_1"] = "Status:";
+$MESS["ME_DATE_START_MSGVER_1"] = "Start:";
+$MESS["ME_DESCR_TITLE"] = "Beschreibung der Besprechung";
+$MESS["ME_EDIT_TITLE"] = "Bearbeiten";
+$MESS["ME_FILES_MSGVER_1"] = "Dateien:";
+$MESS["ME_GROUP_MSGVER_1"] = "Projekt:";
+$MESS["ME_KEEPER_MSGVER_1"] = "Assistent";
+$MESS["ME_LIST_TITLE"] = "Zur Liste der Besprechungen";
+$MESS["ME_MEMBERS"] = "Teilnehmer";
+$MESS["ME_OWNER"] = "Organisator(in)";
+$MESS["ME_PLACE_MSGVER_1"] = "Standort:";
+$MESS["ME_PREPARE"] = "Besprechung fortsetzen";
+$MESS["ME_REFUSED"] = "Teilnahme abgelehnt";

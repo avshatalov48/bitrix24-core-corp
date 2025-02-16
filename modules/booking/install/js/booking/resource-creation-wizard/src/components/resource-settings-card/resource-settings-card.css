@@ -1,0 +1,17 @@
+.resource-creation-wizard__form-settings {
+	display: flex;
+	flex-direction: column;
+	gap: 22px;
+	padding: 18px 24px 24px 18px;
+	border-radius: 18px;
+	background-color: #FFFFFFB2;
+}
+
+.resource-creation-wizard__form-settings .ui-ctl-element {
+	border-radius: var(--ui-border-radius-xs);
+}
+
+.resource-creation-wizard__form-settings-element.--placeholder {
+	color: var(--ui-color-palette-gray-50);
+	cursor: pointer;
+}

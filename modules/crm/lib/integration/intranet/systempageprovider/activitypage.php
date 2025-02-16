@@ -2,7 +2,6 @@
 
 namespace Bitrix\Crm\Integration\Intranet\SystemPageProvider;
 
-use Bitrix\Crm\Integration\Intranet\CustomSectionProvider;
 use Bitrix\Crm\Integration\Intranet\SystemPageProvider;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Router;
@@ -14,6 +13,8 @@ use Bitrix\Main\Web\Uri;
 
 class ActivityPage extends SystemPageProvider
 {
+	public const CODE = 'activity';
+
 	protected const DEFAULT_SETTINGS = [];
 	protected const SORT = 999998;
 
@@ -45,15 +46,11 @@ class ActivityPage extends SystemPageProvider
 
 	public static function getPageInstance(DataStructures\CustomSection $section): ?CustomSectionPage
 	{
-		$router = Container::getInstance()->getRouter();
-
-		$code = $router->getSystemPageCode(\CCrmOwnerType::Activity);
-
-		$settingsArr = [$code, $section->getCode(), ...self::DEFAULT_SETTINGS];
+		$settingsArr = [self::CODE, $section->getCode(), ...self::DEFAULT_SETTINGS];
 		$settings = implode(self::SEPARATOR, $settingsArr);
 
 		return (new CustomSectionPage())
-			->setCode($code)
+			->setCode(self::CODE)
 			->setTitle(Loc::getMessage('CRM_INTEGRATION_INTRANET_ACTIVITY_PAGE_TITLE'))
 			->setSort(self::SORT)
 			->setSettings($settings)

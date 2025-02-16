@@ -19,6 +19,7 @@ class InviteToCollabAccessControl extends ActionFilter\Base
 			Loader::includeModule('socialnetwork')
 			&& !Collab\CollabFeature::isOn()
 			&& !Collab\CollabFeature::isFeatureEnabled()
+			&& !Collab\Requirement::check()->isSuccess()
 		)
 		{
 			$this->addError(new Error(

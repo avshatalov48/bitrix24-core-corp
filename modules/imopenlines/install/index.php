@@ -178,6 +178,13 @@ final class imopenlines extends \CModule
 		$eventManager->registerEventHandler('main', 'Bitrix\Disk\Controller\File::'.\Bitrix\Main\Engine\Controller::EVENT_ON_BEFORE_ACTION, 'imopenlines', '\Bitrix\ImOpenLines\Widget\Auth', 'onDiskCheckAuth');
 		$eventManager->registerEventHandler('rest', 'onRestCheckAuth', 'imopenlines', '\Bitrix\ImOpenLines\Widget\Auth', 'onRestCheckAuth');
 
+		// imopenlines livechat cache
+		$eventManager->registerEventHandler('imopenlines', '\Bitrix\Imopenlines\Model\Livechat::OnAfterUpdate', 'imopenlines', '\Bitrix\Imopenlines\Widget\Config', 'clearCache');
+		$eventManager->registerEventHandler('imopenlines', '\Bitrix\Imopenlines\Model\Config::OnAfterUpdate', 'imopenlines', '\Bitrix\Imopenlines\Widget\Config', 'clearCache');
+		$eventManager->registerEventHandler('imopenlines', '\Bitrix\Imopenlines\Model\Queue::OnAfterAdd', 'imopenlines', '\Bitrix\Imopenlines\Widget\Config', 'clearCache');
+		$eventManager->registerEventHandler('imopenlines', '\Bitrix\Imopenlines\Model\Queue::OnAfterDelete', 'imopenlines', '\Bitrix\Imopenlines\Widget\Config', 'clearCache');
+		$eventManager->registerEventHandler('imopenlines', '\Bitrix\Imopenlines\Model\Queue::OnAfterUpdate', 'imopenlines', '\Bitrix\Imopenlines\Widget\Config', 'clearCache');
+
 		//visual constructor
 		$eventManager->registerEventHandler('report', 'onReportCategoryCollect', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\EventHandler', 'onCategoriesCollect');
 		$eventManager->registerEventHandler('report', 'onReportsCollect', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\EventHandler', 'onReportsCollect');
@@ -561,6 +568,12 @@ final class imopenlines extends \CModule
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnSessionFinish', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onSessionFinish');
 		/** @see \Bitrix\ImOpenLines\SalesCenter\Catalog::OnChatAnswer */
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnChatAnswer', 'imopenlines', '\Bitrix\ImOpenLines\SalesCenter\Catalog', 'OnChatAnswer');
+
+		$eventManager->unRegisterEventHandler('imopenlines', '\Bitrix\Imopenlines\Model\Livechat::OnAfterUpdate', 'imopenlines', '\Bitrix\Imopenlines\Widget\Config', 'clearCache');
+		$eventManager->unRegisterEventHandler('imopenlines', '\Bitrix\Imopenlines\Model\Config::OnAfterUpdate', 'imopenlines', '\Bitrix\Imopenlines\Widget\Config', 'clearCache');
+		$eventManager->unRegisterEventHandler('imopenlines', '\Bitrix\Imopenlines\Model\Queue::OnAfterAdd', 'imopenlines', '\Bitrix\Imopenlines\Widget\Config', 'clearCache');
+		$eventManager->unRegisterEventHandler('imopenlines', '\Bitrix\Imopenlines\Model\Queue::OnAfterDelete', 'imopenlines', '\Bitrix\Imopenlines\Widget\Config', 'clearCache');
+		$eventManager->unRegisterEventHandler('imopenlines', '\Bitrix\Imopenlines\Model\Queue::OnAfterUpdate', 'imopenlines', '\Bitrix\Imopenlines\Widget\Config', 'clearCache');
 
 		$this->UnInstallChatApps();
 

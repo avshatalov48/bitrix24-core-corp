@@ -179,23 +179,19 @@ class ConfigurableActivity
 				return new Item\Activity\Zoom($context, $model);
 			}
 
-			$isAvailable = (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024', 0);
-			if ($isAvailable)
+			if ($providerId === Bizproc\Workflow::getId())
 			{
-				if ($providerId === Bizproc\Workflow::getId())
-				{
-					return new Item\Activity\Bizproc\WorkflowCompleted($context, $model);
-				}
+				return new Item\Activity\Bizproc\WorkflowCompleted($context, $model);
+			}
 
-				if ($providerId === Bizproc\Comment::getId())
-				{
-					return new Item\Activity\Bizproc\CommentAdded($context, $model);
-				}
+			if ($providerId === Bizproc\Comment::getId())
+			{
+				return new Item\Activity\Bizproc\CommentAdded($context, $model);
+			}
 
-				if ($providerId === Bizproc\Task::getId())
-				{
-					return new Item\Activity\Bizproc\Task($context, $model);
-				}
+			if ($providerId === Bizproc\Task::getId())
+			{
+				return new Item\Activity\Bizproc\Task($context, $model);
 			}
 		}
 

@@ -11,8 +11,10 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\AI\Engine;
 use Bitrix\AI\Context;
 use Bitrix\AI\Payload\IPayload;
+use Bitrix\Im\Call\Registry;
 use Bitrix\Call\Track;
 use Bitrix\Call\Logger\Logger;
+use Bitrix\Call\NotifyService;
 use Bitrix\Call\Integration\AI\Task\AITask;
 use Bitrix\Call\Model\CallAITaskTable;
 use Bitrix\Call\Model\CallOutcomeTable;
@@ -44,7 +46,7 @@ final class CallAIService
 		{
 			$logger->error('Unable process track. Module AI is unavailable. TrackId:'.$track->getId());
 
-			return $result->addError(new CallAIError(CallAIError::AI_UNAVAILABLE_ERROR, 'Module AI is unavailable'));
+			return $result->addError(new CallAIError(CallAIError::AI_UNAVAILABLE_ERROR));
 		}
 		/*
 		if (!CallAISettings::isAutoStartRecordingEnable())
@@ -170,12 +172,35 @@ final class CallAIService
 		{
 			$log && $logger->error('Empty payload for AI');
 
-			return $result->addError(new CallAIError(CallAIError::AI_EMPTY_PAYLOAD_ERROR, 'Empty payload for AI'));
+			$error = new CallAIError(CallAIError::AI_EMPTY_PAYLOAD_ERROR);
+			$this->fireCallAiFailedEvent($task, $error);
+
+			return $result->addError($error);
 		}
 
+		/**
+		 * @var \Bitrix\AI\Payload\IPayload $payload
+		 */
 		$payload = $payloadResult->getData()['payload'];
 		$context = $task->getAIEngineContext();
 		$engine = $task->getAIEngine($context);
+
+		if (
+			$payload instanceof \Bitrix\AI\Payload\IPayload
+			&& method_exists($payload, 'setCost')
+		)
+		{
+			$payload->setCost($task->getCost());
+
+			if (CallAISettings::isAutoStartRecordingEnable())
+			{
+				$call = Registry::getCallWithId($task->getCallId());
+				if ($call->autoStartRecording())
+				{
+					$payload->setCost(0);
+				}
+			}
+		}
 
 		$event = $this->fireCallAiTaskEvent($task, $payload, $context, $engine);
 		if (
@@ -192,7 +217,7 @@ final class CallAIService
 		if (!($engine instanceof \Bitrix\AI\Engine))
 		{
 			$log && $logger->error('AI engine is unavailable');
-			$result->addError(new CallAIError(CallAIError::AI_UNAVAILABLE_ERROR, 'Module AI is unavailable'));
+			$result->addError(new CallAIError(CallAIError::AI_UNAVAILABLE_ERROR));
 		}
 		else
 		{
@@ -246,7 +271,7 @@ final class CallAIService
 								->setErrorMessage($errorMessage)
 								->save();
 
-							$result->addError(new Error($errorMessage, $errorCode));
+							$result->addError(new CallAIError($errorCode, $errorMessage));
 						}
 					)
 					->completionsInQueue();
@@ -473,11 +498,11 @@ final class CallAIService
 		$checkResult = new Result;
 		if (!$engine->isAvailableByTariff())
 		{
-			$checkResult->addError(new CallAIError(CallAIError::AI_TARIFF_ERROR, 'AI service unavailable by tariff'));
+			$checkResult->addError(new CallAIError(CallAIError::AI_UNAVAILABLE_ERROR));// AI service unavailable by tariff
 		}
 		elseif (!$engine->isAvailableByAgreement())
 		{
-			$checkResult->addError(new CallAIError(CallAIError::AI_AGREEMENT_ERROR, 'AI service agreement must be accepted'));
+			$checkResult->addError(new CallAIError(CallAIError::AI_AGREEMENT_ERROR));// AI service agreement must be accepted
 		}
 
 		return $checkResult;

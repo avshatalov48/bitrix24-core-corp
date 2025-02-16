@@ -157,6 +157,10 @@ abstract class Operation
 			{
 				$this->clearItemCategoryCache();
 			}
+			if ($this->isClearItemStageCacheNeeded())
+			{
+				$this->clearItemStageCache();
+			}
 		}
 
 		if (
@@ -1371,6 +1375,20 @@ abstract class Operation
 		if ($factory && $factory->isCategoriesSupported())
 		{
 			$factory->clearItemCategoryCache($this->item->getId());
+		}
+	}
+
+	protected function isClearItemStageCacheNeeded(): bool
+	{
+		return false;
+	}
+
+	protected function clearItemStageCache(): void
+	{
+		$factory = Container::getInstance()->getFactory($this->item->getEntityTypeId());
+		if ($factory && $factory->isStagesEnabled())
+		{
+			$factory->clearItemStageCache($this->item->getId());
 		}
 	}
 

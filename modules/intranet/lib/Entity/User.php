@@ -153,6 +153,7 @@ class User
 	{
 		return Loader::includeModule('socialnetwork')
 			&& CollabFeature::isOn()
+			&& Loader::includeModule('extranet')
 			&& \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById($this->id);
 	}
 

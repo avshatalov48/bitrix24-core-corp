@@ -27,6 +27,7 @@ this.BX.Sign = this.BX.Sign || {};
 	var _urls = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("urls");
 	var _loader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loader");
 	var _content = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("content");
+	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
 	var _createBlockStyles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createBlockStyles");
 	var _createBlocks = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createBlocks");
 	var _getBlockContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBlockContent");
@@ -40,7 +41,7 @@ this.BX.Sign = this.BX.Sign || {};
 	var _renderPagination = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPagination");
 	var _renderZoom = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderZoom");
 	class Preview {
-	  constructor() {
+	  constructor(options = {}) {
 	    Object.defineProperty(this, _renderZoom, {
 	      value: _renderZoom2
 	    });
@@ -117,6 +118,11 @@ this.BX.Sign = this.BX.Sign || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _options, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _options)[_options] = options;
 	    babelHelpers.classPrivateFieldLooseBase(this, _placeholder)[_placeholder] = main_core.Tag.render(_t || (_t = _`
 			<div class="sign-preview__placeholder">
 				<p class="sign-preview__placeholder_text">
@@ -148,12 +154,14 @@ this.BX.Sign = this.BX.Sign || {};
 	    });
 	  }
 	  getLayout() {
+	    var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3;
 	    const layout = main_core.Tag.render(_t5 || (_t5 = _`
 			<div class="sign-preview">
 				${0}
 				${0}
+				${0}
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _content)[_content], babelHelpers.classPrivateFieldLooseBase(this, _controls)[_controls]);
+		`), babelHelpers.classPrivateFieldLooseBase(this, _content)[_content], babelHelpers.classPrivateFieldLooseBase(this, _controls)[_controls], (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options]) == null ? void 0 : (_babelHelpers$classPr3 = _babelHelpers$classPr2.layout) == null ? void 0 : _babelHelpers$classPr3.getAfterPreviewLayoutCallback == null ? void 0 : _babelHelpers$classPr3.getAfterPreviewLayoutCallback()) != null ? _babelHelpers$classPr : '');
 	    babelHelpers.classPrivateFieldLooseBase(this, _render)[_render]();
 	    return layout;
 	  }
@@ -161,6 +169,9 @@ this.BX.Sign = this.BX.Sign || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _urls)[_urls] = urls.length ? [...babelHelpers.classPrivateFieldLooseBase(this, _urls)[_urls], ...urls] : [];
 	    babelHelpers.classPrivateFieldLooseBase(this, _renderContent)[_renderContent]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _renderControls)[_renderControls]();
+	  }
+	  hasUrls() {
+	    return main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _urls)[_urls]);
 	  }
 	  set ready(isReady) {
 	    if (isReady) {
@@ -353,8 +364,8 @@ this.BX.Sign = this.BX.Sign || {};
 	  scalable.style.transform = `scale(${babelHelpers.classPrivateFieldLooseBase(this, _scale)[_scale]})`;
 	}
 	function _renderBlocks2() {
-	  var _babelHelpers$classPr;
-	  const visibleBlocks = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _blocks)[_blocks].get(babelHelpers.classPrivateFieldLooseBase(this, _pageNumber)[_pageNumber] + 1)) != null ? _babelHelpers$classPr : [];
+	  var _babelHelpers$classPr4;
+	  const visibleBlocks = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _blocks)[_blocks].get(babelHelpers.classPrivateFieldLooseBase(this, _pageNumber)[_pageNumber] + 1)) != null ? _babelHelpers$classPr4 : [];
 	  const allBlocks = [...babelHelpers.classPrivateFieldLooseBase(this, _blocks)[_blocks].values()].flat();
 	  allBlocks.forEach(block => {
 	    if (visibleBlocks.includes(block)) {

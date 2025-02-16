@@ -43,8 +43,8 @@ class Contact implements PermissionEntity, FilterableByCategory
 				continue;
 			}
 
-			$entityName = htmlspecialcharsbx(Service\UserPermissions::getPermissionEntityType($factory->getEntityTypeId(), $category->getId()));
-			$entityTitle = htmlspecialcharsbx($category->getSingleNameIfPossible());
+			$entityName = Service\UserPermissions::getPermissionEntityType($factory->getEntityTypeId(), $category->getId());
+			$entityTitle = $category->getSingleNameIfPossible();
 
 			if ($category->getIsDefault())
 			{

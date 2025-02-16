@@ -689,7 +689,18 @@ if ($arResult['ENABLE_TOOLBAR'])
 		'ICON' => 'btn-new'
 	);
 
-	if ($arResult['ADD_EVENT_NAME'] !== '')
+	$urlParams = [];
+	if (isset($arResult['DEAL_ADD_URL_PARAMS']) && is_array($arResult['DEAL_ADD_URL_PARAMS']))
+	{
+		$urlParams = $arResult['DEAL_ADD_URL_PARAMS'];
+	}
+
+	$addButton['ONCLICK'] = 'BX.CrmEntityManager.createEntity(BX.CrmEntityType.names.deal, { urlParams: '.CUtil::PhpToJSObject($urlParams).' })';
+
+	if (
+		$arResult['ADD_EVENT_NAME'] !== ''
+		&& $arResult['ADD_EVENT_NAME'] !== 'CrmCreateDynamicFromDynamic' //add exclude for "CrmCreateDynamicFromDynamic" event we don't have bind/subscribe for it
+	)
 	{
 		$analyticsBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(CCrmOwnerType::Deal)
 			->setSection(
@@ -715,9 +726,6 @@ if ($arResult['ENABLE_TOOLBAR'])
 	}
 	else
 	{
-		$urlParams = isset($arResult['DEAL_ADD_URL_PARAMS']) && is_array($arResult['DEAL_ADD_URL_PARAMS'])
-			? $arResult['DEAL_ADD_URL_PARAMS'] : [];
-		$addButton['ONCLICK'] = 'BX.CrmEntityManager.createEntity(BX.CrmEntityType.names.deal, { urlParams: '.CUtil::PhpToJSObject($urlParams).' })';
 		unset($addButton['LINK']);
 	}
 
@@ -883,7 +891,6 @@ $APPLICATION->IncludeComponent(
 					entityHasInaccessibleFields: "<?= CUtil::JSEscape(Loc::getMessage('CRM_DEAL_HAS_INACCESSIBLE_FIELDS')) ?>",
 				};
 
-			BX.CrmEntityManager.entityCreateUrls = <?=CUtil::PhpToJSObject($arResult['ENTITY_CREATE_URLS'])?>;
 			BX.CrmDealCategory.infos = <?=CUtil::PhpToJSObject(
 				Bitrix\Crm\Category\DealCategory::getJavaScriptInfos($arResult['CATEGORY_ACCESS']['CREATE'])
 			)?>;

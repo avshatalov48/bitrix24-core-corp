@@ -137,7 +137,7 @@ endif;
 <?
 if (count($arResult['MEETING']['FILES']) > 0):
 ?>
-			<label class="meeting-detail-files-title"><?=GetMessage('ME_FILES')?>:</label>
+			<label class="meeting-detail-files-title"><?=GetMessage('ME_FILES_MSGVER_1')?></label>
 			<div class="meeting-detail-files-list">
 <?
 	foreach ($arResult['MEETING']['FILES'] as $ix => $arFile):
@@ -186,7 +186,7 @@ $APPLICATION->IncludeComponent(
 if ($arResult['MEETING']['PLACE'] <> ''):
 ?>
 				<tr>
-					<td class="meeting-detail-left-column" valign="top"><?=GetMessage('ME_PLACE')?>:</td>
+					<td class="meeting-detail-left-column" valign="top"><?=GetMessage('ME_PLACE_MSGVER_1')?></td>
 					<td class="meeting-detail-right-column"><?=$arResult['MEETING']['PLACE']?></td>
 				</tr>
 <?
@@ -194,21 +194,21 @@ endif;
 if ($arResult['MEETING']['DATE_START'] <> '' && MakeTimeStamp($arResult['MEETING']['DATE_START'])>0):
 ?>
 				<tr>
-					<td class="meeting-detail-left-column"><?=GetMessage('ME_DATE_START')?>:</td>
+					<td class="meeting-detail-left-column"><?=GetMessage('ME_DATE_START_MSGVER_1')?></td>
 					<td class="meeting-detail-right-column"><?=FormatDate($DB->DateFormatToPhp(FORMAT_DATE).((IsAmPmMode()) ? ' h:i a' : ' H:i'), MakeTimeStamp($arResult['MEETING']['DATE_START']))?></td>
 				</tr>
 <?
 endif;
 ?>
 				<tr>
-					<td class="meeting-detail-left-column"><?=GetMessage('ME_CURRENT_STATE')?>:</td>
+					<td class="meeting-detail-left-column"><?=GetMessage('ME_CURRENT_STATE_MSGVER_1')?></td>
 					<td class="meeting-detail-right-column" id="meeting_state_text"><?=GetMessage('MEETING_STATE_'.$arResult['MEETING']['CURRENT_STATE'])?></td>
 				</tr>
 <?
 if (($arResult['MEETING']['GROUP_NAME'] ?? null) <> ''):
 ?>
 				<tr>
-					<td class="meeting-detail-left-column" valign="top"><?=GetMessage('ME_GROUP')?>:</td>
+					<td class="meeting-detail-left-column" valign="top"><?=GetMessage('ME_GROUP_MSGVER_1')?></td>
 					<td class="meeting-detail-right-column"><a href="<?=$arResult['MEETING']['GROUP_URL']?>" class="meeting-detail-group-link"><?=$arResult['MEETING']['GROUP_NAME']?></a></td>
 				</tr>
 <?
@@ -217,7 +217,7 @@ endif;
 
 		<div class="meeting-detail-info-users" id="">
 			<div class="meeting-detail-info-users-inner">
-				<div class="meeting-detail-info-users-title"><span><?=GetMessage('ME_KEEPER')?></span>
+				<div class="meeting-detail-info-users-title"><span><?=GetMessage('ME_KEEPER_MSGVER_1')?></span>
 <?
 if ($arResult['CAN_EDIT']):
 ?>

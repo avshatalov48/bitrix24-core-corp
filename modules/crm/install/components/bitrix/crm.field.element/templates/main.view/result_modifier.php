@@ -47,7 +47,7 @@ if(is_array($arResult['value']) && count($arResult['value']))
 		{
 			$values[reset($arParams['ENTITY_TYPE'])][] = $value;
 		}
-		else
+		elseif (is_string($value))
 		{
 			$ar = explode('_', $value);
 			if (count($ar) > 1)

@@ -1,0 +1,4 @@
+<?php
+$MESS['BOOKING_COMPONENT_DRUM_HEADER'] = 'Выберите время';
+$MESS['BOOKING_COMPONENT_DRUM_BTN_SAVE'] = 'Сохранить';
+$MESS['BOOKING_COMPONENT_DRUM_BTN_CANCEL'] = 'Отмена';

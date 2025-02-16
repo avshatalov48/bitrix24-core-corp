@@ -42,11 +42,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _senderType)[_senderType] = senderType;
 	  }
 	  async checkAndApprove() {
-	    // if (this.#senderType !== Types.bitrix24)
-	    // {
-	    // 	return Promise.resolve(true);
-	    // }
-
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _senderType)[_senderType] !== Types.bitrix24) {
+	      return Promise.resolve(true);
+	    }
 	    return new Promise(resolve => {
 	      main_core.ajax.runAction('notifications.consent.Agreement.get').then(({
 	        data

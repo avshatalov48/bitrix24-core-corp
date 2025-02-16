@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\Security\Role\RolePreset;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 
@@ -517,61 +518,30 @@ class crm extends CModule
 			\Bitrix\Crm\Honorific::installDefault();
 
 			$CCrmRole = new CCrmRole();
-			$arRoles = [
-				'adm' => [
-					'NAME' => Loc::getMessage('CRM_ROLE_ADMIN'),
-					'RELATION' => [
-						'LEAD' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Lead)),
-						'DEAL' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Deal)),
-						'CONTACT' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Contact)),
-						'COMPANY' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Company)),
-						'QUOTE' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Quote)),
-						'INVOICE' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Invoice)),
+			$roles = RolePreset::GetDefaultRolesPreset();
 
-						'WEBFORM' => [
-							'READ' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-						],
-						'BUTTON' => [
-							'READ' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-						],
-						'CONFIG' => [
-							'WRITE' => ['-' => 'X'],
-						],
-					],
-				],
-				'man' => [
-					'NAME' => Loc::getMessage('CRM_ROLE_MAN'),
-					'RELATION' => [
-						'LEAD' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Lead)),
-						'DEAL' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Deal)),
-						'CONTACT' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Contact)),
-						'COMPANY' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Company)),
-						'QUOTE' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Quote)),
-						'INVOICE' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Invoice)),
+			$adminRoleID = null;
+			foreach ($roles as $presetKey => $role)
+			{
+				if ($presetKey === RolePreset::ADMIN)
+				{
+					$adminRoleID = $CCrmRole->Add($roles[RolePreset::ADMIN]);
+					continue;
+				}
 
-						'WEBFORM' => [
-							'READ' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-						],
-						'BUTTON' => [
-							'READ' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-						],
-					],
-				],
-			];
+				$CCrmRole->Add($role);
+			}
 
-			$adminRoleID = $CCrmRole->Add($arRoles['adm']);
-			$CCrmRole->Add($arRoles['man']);
 			$dbGroup = CGroup::GetList('', '', ['STRING_ID' => 'MARKETING_AND_SALES']);
-			if ($arGroup = $dbGroup->Fetch())
+			$arGroup = $dbGroup->Fetch();
+			if ($adminRoleID && $arGroup)
 			{
 				$CCrmRole->SetRelation(
 					['G' . $arGroup['ID'] => [$adminRoleID]]
 				);
 			}
+
+			(new \Bitrix\Crm\Copilot\CallAssessment\FillPreliminaryCallAssessments())->execute();
 		}
 
 		\Bitrix\Crm\Model\ItemCategoryTable::installBundledCategoriesIfNotExists();

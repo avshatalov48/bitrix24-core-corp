@@ -1,10 +1,15 @@
-import { Dom, Loc, Tag } from 'main.core';
-import { DurationFormatter } from 'bizproc.workflow.timeline';
+import { Dom, Loc, Runtime, Tag } from 'main.core';
 import { WorkflowResultStatus } from 'bizproc.types';
 
 import 'ui.hint';
 
 export default {
+	data(): Object {
+		return {
+			formattedAverageDuration: '',
+			formattedExecutionTime: '',
+		};
+	},
 	props: {
 		averageDuration: Number,
 		efficiency: String,
@@ -17,14 +22,6 @@ export default {
 		itemClassName(): string
 		{
 			return `bizproc-workflow-timeline-eff-icon --${this.efficiency}`;
-		},
-		formattedAverageDuration(): string
-		{
-			return DurationFormatter.formatTimeInterval(this.averageDuration);
-		},
-		formattedExecutionTime(): string
-		{
-			return DurationFormatter.formatTimeInterval(this.executionTime);
 		},
 		efficiencyCaption(): string
 		{
@@ -111,6 +108,15 @@ export default {
 		{
 			this.showHint();
 		}
+
+		Runtime.loadExtension('bizproc.workflow.timeline')
+			.then(({ DurationFormatter }) => {
+				this.formattedAverageDuration = DurationFormatter.formatTimeInterval(this.averageDuration);
+				this.formattedExecutionTime = DurationFormatter.formatTimeInterval(this.executionTime);
+			})
+			.catch((e) => {
+				console.error('Error loading DurationFormatter:', e);
+			});
 	},
 	methods: {
 		showHint(): void {

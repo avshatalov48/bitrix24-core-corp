@@ -3,8 +3,6 @@
 namespace Bitrix\Crm\Tour;
 
 use Bitrix\Crm\Copilot\CallAssessment\FillPreliminaryCallAssessments;
-use Bitrix\Crm\Feature;
-use Bitrix\Crm\Feature\CopilotInCallGrading;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main\Localization\Loc;
@@ -35,7 +33,6 @@ class CopilotCallAssessment extends Base
 		return (
 			!FillPreliminaryCallAssessments::isWaiting()
 			&& $isAiModuleInstalled
-			&& Feature::enabled(CopilotInCallGrading::class)
 			&& Container::getInstance()->getUserPermissions()->canReadCopilotCallAssessmentSettings()
 			&& $bitrixPaid
 		);

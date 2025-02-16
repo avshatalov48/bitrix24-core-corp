@@ -2,8 +2,8 @@
 
 namespace Bitrix\Crm\Security\Role\Manage\Permissions;
 
-use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\BaseControlType;
-use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\Toggler;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\BaseControlMapper;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\Toggler;
 
 class MyCardView extends Permission
 {
@@ -29,8 +29,13 @@ class MyCardView extends Permission
 		return \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL;
 	}
 
-	protected function createDefaultControlType(): BaseControlType
+	protected function createDefaultControlMapper(): BaseControlMapper
 	{
 		return new Toggler();
+	}
+
+	public function getDeputyDefaultAttributeValue(): ?string
+	{
+		return \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL;
 	}
 }

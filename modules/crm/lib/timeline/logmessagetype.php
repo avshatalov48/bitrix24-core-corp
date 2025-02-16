@@ -34,4 +34,5 @@ final class LogMessageType
 	public const AI_CALL_SCORING_EMPTY = 27;
 
 	public const BOOKING_CREATED = 28;
+	public const RESTART_AUTOMATION = 29;
 }

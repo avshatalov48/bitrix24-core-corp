@@ -1,0 +1,61 @@
+#uiToolbarContainer {
+	position: relative;
+}
+
+.booking--multi-booking--bar {
+	position: absolute;
+	width: 99%;
+	max-height: 48px;
+	background-color: #0091E3;
+	border-radius: 8px;
+	padding: 8px;
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	z-index: 10;
+}
+
+.booking--multi-booking--divider-vertical {
+	position: relative;
+	min-height: 20px;
+	width: 9px;
+}
+
+.booking--multi-booking--divider-vertical::before {
+	position: absolute;
+	display: block;
+	top: 0;
+	left: 50%;
+	height: 100%;
+	content: "";
+	border-left: 1px solid rgba(238, 242, 244, 0.4);
+}
+
+.booking--multi-booking--client-button {
+	color: var(--white, #fff);
+	font-size: 15px;
+	font-weight: 400;
+	text-transform: none;
+}
+
+.booking--multi-booking--client-button > i {
+	background-color: #fff;
+	margin-right: 4px;
+}
+
+.booking--multi-booking--client-button:hover {
+	color: var(--white_alpha_80, rgba(255, 255, 255, .8));
+}
+
+.booking--multi-booking--client-button:hover > i {
+	background-color: var(--white_alpha_80, rgba(255, 255, 255, .8))
+}
+
+.booking--multi-booking--space {
+	min-width: 100px;
+	flex-grow: 1;
+}
+
+.booking--multi-booking--close {
+	display: flex;
+}

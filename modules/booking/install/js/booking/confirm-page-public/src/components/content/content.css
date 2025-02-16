@@ -1,0 +1,20 @@
+.confirm-page-content{
+	align-self: stretch;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: flex-start;
+	gap: 12px;
+	display: flex;
+}
+
+.confirm-page-content-border{
+	align-self: stretch;
+	padding: 13px 20px;
+	background: rgba(var(--ui-color-palette-white-base-rgb), 0.94);
+	border-radius: 6px; border: 1.40px var(--ui-color-tag-9) solid;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 6px;
+	display: flex;
+}

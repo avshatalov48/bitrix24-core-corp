@@ -30,4 +30,14 @@ class Automation extends Permission
 	{
 		return Loc::getMessage('CRM_SECURITY_ROLE_PERMS_EXPLANATION_AUTOMATION');
 	}
+
+	public function getHeadDefaultAttributeValue(): string
+	{
+		return \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL;
+	}
+
+	public function getDeputyDefaultAttributeValue(): string
+	{
+		return \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL;
+	}
 }

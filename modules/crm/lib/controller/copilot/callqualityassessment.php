@@ -94,6 +94,7 @@ final class CallQualityAssessment extends Base
 				'ID' => null,
 				'CREATED_AT' => null,
 				'ASSESSMENT_SETTING_ID' => $callAssessment->getId(),
+				'ASSESSMENT_SETTINGS_STATUS' => $callAssessment->getStatus(),
 				'ASSESSMENT' => null,
 				'ASSESSMENT_AVG' => $prevAssessmentAvg,
 				'PREV_ASSESSMENT_AVG' => $prevAssessmentAvg,
@@ -142,7 +143,7 @@ final class CallQualityAssessment extends Base
 		{
 			if (!AIManager::isEnabledInGlobalSettings(GlobalSetting::CallAssessment))
 			{
-				$this->addError(AIErrorCode::getAIDisabledError(['sliderCode' => AIManager::AI_DISABLED_SLIDER_CODE]));
+				$this->addError(AIErrorCode::getAIDisabledError(['sliderCode' => Scenario::CALL_SCORING_SCENARIO_SLIDER_CODE]));
 
 				return null;
 			}

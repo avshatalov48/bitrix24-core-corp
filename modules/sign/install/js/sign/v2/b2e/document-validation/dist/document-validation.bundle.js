@@ -14,6 +14,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  EditorRoleDetails: '19740766',
 	  ReviewerRoleDetails: '20801214'
 	});
+	var currentUserId = main_core.Extension.getSettings('sign.v2.b2e.document-validation').get('currentUserId');
 	var _reviewerRepresentativeSelector = /*#__PURE__*/new WeakMap();
 	var _editorRepresentativeSelector = /*#__PURE__*/new WeakMap();
 	var _getRepresentativeLayout = /*#__PURE__*/new WeakSet();
@@ -30,9 +31,11 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldSet(this, _reviewerRepresentativeSelector, new sign_v2_b2e_representativeSelector.RepresentativeSelector({
+	      context: "sign_b2e_representative_selector_reviewer_".concat(currentUserId),
 	      description: "\n\t\t\t\t<span>\n\t\t\t\t\t".concat(sign_v2_helper.Helpdesk.replaceLink(main_core.Loc.getMessage('SIGN_B2E_DOCUMENT_VALIDATION_HINT_REVIEWER'), HelpdeskCodes.ReviewerRoleDetails), "\n\t\t\t\t</span>\n\t\t\t")
 	    }));
 	    babelHelpers.classPrivateFieldSet(this, _editorRepresentativeSelector, new sign_v2_b2e_representativeSelector.RepresentativeSelector({
+	      context: "sign_b2e_representative_selector_editor_".concat(currentUserId),
 	      description: "\n\t\t\t\t<span>\n\t\t\t\t\t".concat(sign_v2_helper.Helpdesk.replaceLink(main_core.Loc.getMessage('SIGN_B2E_DOCUMENT_VALIDATION_HINT_EDITOR'), HelpdeskCodes.EditorRoleDetails), "\n\t\t\t\t</span>\n\t\t\t")
 	    }));
 	  }

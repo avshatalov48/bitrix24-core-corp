@@ -177,6 +177,11 @@ this.BX.Call.Component = this.BX.Call.Component || {};
 	      type: Boolean,
 	      required: false,
 	      default: true
+	    },
+	    analyticsCallback: {
+	      type: Function,
+	      required: false,
+	      default: () => {}
 	    }
 	  },
 	  data() {
@@ -215,6 +220,13 @@ this.BX.Call.Component = this.BX.Call.Component || {};
 	    }
 	  },
 	  methods: {
+	    choosePlaybackTime(seconds) {
+	      if (!this.source()) {
+	        return;
+	      }
+	      this.source().currentTime = seconds;
+	      this.audioEventRouter('timeupdate');
+	    },
 	    startSeeking(event) {
 	      this.isSeeking = true;
 	      const {
@@ -335,6 +347,12 @@ this.BX.Call.Component = this.BX.Call.Component || {};
 	      if ((_this$$refs = this.$refs) != null && (_this$$refs$source = _this$$refs.source) != null && _this$$refs$source.playbackRate) {
 	        this.$refs.source.playbackRate = playbackRate;
 	      }
+	    },
+	    onClickControlButton() {
+	      if (this.state !== AudioPlayerState.play) {
+	        this.analyticsCallback();
+	      }
+	      this.clickToButton();
 	    }
 	  },
 	  template: `
@@ -347,7 +365,7 @@ this.BX.Call.Component = this.BX.Call.Component || {};
 					'bx-call-audio-player__control-loader': loading,
 					'bx-call-audio-player__control-play': !loading && state !== State.play,
 					'bx-call-audio-player__control-pause': !loading && state === State.play,
-				}]" @click="clickToButton"></button>
+				}]" @click="onClickControlButton"></button>
 			</div>
 			<div class="bx-call-audio-player__timeline-container">
 				<div class="bx-call-audio-player__track-container" @mousedown="startSeeking" ref="track">

@@ -2628,19 +2628,10 @@ class CCrmEMail
 		$arBindings = array();
 		$arComms = array();
 
-		$socNetLogDestTypes = array(
-			\CCrmOwnerType::LeadName => 'leads',
-			\CCrmOwnerType::DealName => 'deals',
-			\CCrmOwnerType::ContactName => 'contacts',
-			\CCrmOwnerType::CompanyName => 'companies',
-		);
-
 		foreach ($arCommunications as &$commDatum)
 		{
-			$commID = isset($commDatum['id']) ? intval($commDatum['id']) : 0;
+			$commEntityID = isset($commDatum['id']) ? intval($commDatum['id']) : 0;;
 			$commEntityType = isset($commDatum['entityType'])? mb_strtolower(strval($commDatum['entityType'])) : '';
-			$commEntityType = array_search($commEntityType, $socNetLogDestTypes);
-			$commEntityID = isset($commDatum['entityId']) ? intval($commDatum['entityId']) : 0;
 
 			$commType = isset($commDatum['type'])? mb_strtoupper(strval($commDatum['type'])) : '';
 			if($commType === '')
@@ -2678,7 +2669,6 @@ class CCrmEMail
 				mb_strtolower(trim($commValue))
 			));
 			$arComms[$key] = array(
-				'ID' => $commID,
 				'TYPE' => $commType,
 				'VALUE' => $commValue,
 				'ENTITY_ID' => $commEntityID,

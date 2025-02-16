@@ -1,0 +1,18 @@
+.bitrix24-dark-theme #booking-toolbar-counter-panel-container,
+.booking-booking-slider #booking-toolbar-counter-panel-container {
+	--color-background: rgba(82, 92, 105, .08);
+	--color-hover: rgba(82, 92, 105, .1);
+	--color-active: rgba(var(--ui-color-primary-rgb), .57);
+	--color-active-hover: var(--ui-color-base-02);
+	--color-text: var(--ui-color-base-90);
+	--color-text-active: var(--ui-color-base-90);
+	--color-separator: rgba(var(--ui-color-palette-beige-base-rgb), .15);
+	--border-radius-xl: 24px;
+	--border-radius-sm: 2px;
+	--ui-counter-bg-color-theme: rgba(82, 92, 105, .15);
+}
+
+.bitrix24-dark-theme .ui-counter-theme .ui-counter-inner,
+.booking-booking-slider .ui-counter-theme .ui-counter-inner {
+	color: rgba(82, 92, 105, 1);
+}

@@ -2,8 +2,8 @@
 
 namespace Bitrix\Crm\Security\Role\Manage\Permissions;
 
-use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\BaseControlType;
-use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\Toggler;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\BaseControlMapper;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\Toggler;
 
 class WriteConfig extends Write
 {
@@ -12,7 +12,7 @@ class WriteConfig extends Write
 		return GetMessage('CRM_PERMS_PERM_WRITE');
 	}
 
-	protected function createDefaultControlType(): BaseControlType
+	protected function createDefaultControlMapper(): BaseControlMapper
 	{
 		return new Toggler();
 	}

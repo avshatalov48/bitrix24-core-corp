@@ -19,6 +19,7 @@ class Counters extends Controller
 				->getCountForCurrentUserAction($currentUserId)
 			;
 		}
+
 		return compact('count');
 	}
 }

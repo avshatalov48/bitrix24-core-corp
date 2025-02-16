@@ -3226,6 +3226,11 @@ export class CallController extends EventEmitter
 		}).then(() => {
 			const newCopilotState = !this.currentCall.isCopilotActive;
 			this._onUpdateCallCopilotState(newCopilotState);
+			Analytics.getInstance().copilot.onAIRecordStatusChanged({
+				isAIOn: newCopilotState,
+				callId: this.currentCall.id,
+				callType: this.getCallType(),
+			});
 
 			if (!newCopilotState)
 			{
@@ -3237,12 +3242,19 @@ export class CallController extends EventEmitter
 			}
 		}).catch((error) => {
 			const errorCode = error.errors[0].code;
+			CallAI.handleCopilotError(errorCode);
 
 			if (this.callView)
 			{
-				this.callView.showCopilotErrorNotify(error.errors[0].code);
+				this.callView.showCopilotErrorNotify(errorCode);
 			}
 
+			Analytics.getInstance().copilot.onAIRecordStatusChanged({
+				isAIOn: newCopilotState,
+				callId: this.currentCall.id,
+				callType: this.getCallType(),
+				error: errorCode,
+			});
 			this.sendStartCopilotRecordAnalytics(errorCode);
 		});
 	}
@@ -3257,15 +3269,17 @@ export class CallController extends EventEmitter
 
 		const isPlainCall = this.currentCall.provider === Provider.Plain;
 
-		if (!isPlainCall && !CallAI.settingsEnabled)
+		if (!isPlainCall && !CallAI.tariffAvailable)
 		{
 			Util.openArticle(CallAI.helpSlider);
+
 			return;
 		}
 
 		this.copilotPopup = new CopilotPopup({
 			isCopilotActive: this.currentCall.isCopilotActive,
 			isCopilotFeaturesEnabled: this.currentCall.isCopilotFeaturesEnabled,
+			callId: this.currentCall.id,
 			updateCopilotState: () => {
 				this._onChangeStateCopilot();
 			},
@@ -3314,6 +3328,11 @@ export class CallController extends EventEmitter
 			&& this.callView
 		)
 		{
+			Analytics.getInstance().copilot.onCopilotNotifyShow({
+				isCopilotActive: this.currentCall.isCopilotActive,
+				callId: this.currentCall.id,
+			});
+
 			this.callView.showCopilotNotify()
 		}
 	}
@@ -3347,7 +3366,7 @@ export class CallController extends EventEmitter
 		{
 			params.userCount = userCount + 1;
 		}
-		Analytics.getInstance().onAIRecordStart(params);
+		Analytics.getInstance().copilot.onAIRecordStart(params);
 	}
 
 	_onCallViewToggleScreenSharingButtonClick()

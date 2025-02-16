@@ -1,0 +1,28 @@
+.resource-creation-wizard__form-slot-length-selector {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 4px;
+	background-color: white;
+	border: 1px solid var(--ui-color-palette-gray-10);
+	border-radius: var(--ui-border-radius-xs);
+	box-shadow: 0 2px 4px var(--ui-color-palette-gray-20);
+	padding: 6px 8px 6px 8px;
+	height: 24px;
+}
+
+.resource-creation-wizard__form-slot-length-selector .ui-btn + .ui-btn {
+	margin-top: 0;
+}
+
+.resource-creation-wizard__form-slot-length-selector .ui-btn {
+	width: 100%;
+	text-transform: var(--ui-text-transform-none);
+	font-size: 14px;
+	font-weight: 400;
+	text-align: center;
+}
+
+.resource-creation-wizard__form-slot-length-precision {
+	margin-top: 14px;
+}

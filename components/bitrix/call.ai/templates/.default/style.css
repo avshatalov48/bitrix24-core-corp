@@ -506,6 +506,7 @@
 	font: var(--ui-font-size-md, 14px)/var(--ui-font-line-height-lg, 22px) var(--ui-font-family-primary);
 	font-weight: var(--ui-font-weight-medium, 500);
 	color: var(--call-component-call-ai__copilot-color);
+	cursor: pointer;
 }
 
 .bx-call-component-call-ai-resume-block__name,

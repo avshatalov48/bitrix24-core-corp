@@ -6,10 +6,10 @@ use Bitrix\Crm\Copilot\CallAssessment\Entity\Fields\Validators\PromptLengthValid
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
-use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
+use Bitrix\Main\ORM\Fields\Validators\RangeValidator;
 use Bitrix\Main\SystemException;
 use Psr\Container\NotFoundExceptionInterface;
 
@@ -75,6 +75,16 @@ class CopilotCallAssessmentTable extends Main\ORM\Data\DataManager
 			(new Main\ORM\Fields\StringField('CODE'))
 				->configureSize(30)
 				->configureNullable()
+			,
+			(new Main\ORM\Fields\IntegerField('LOW_BORDER'))
+				->configureRequired()
+				->configureDefaultValue(0)
+				->addValidator(new RangeValidator(min: 0, max: 100))
+			,
+			(new Main\ORM\Fields\IntegerField('HIGH_BORDER'))
+				->configureRequired()
+				->configureDefaultValue(100)
+				->addValidator(new RangeValidator(min: 0, max: 100))
 			,
 			$fieldRepository->getCreatedTime('CREATED_AT'),
 			$fieldRepository->getUpdatedTime('UPDATED_AT'),

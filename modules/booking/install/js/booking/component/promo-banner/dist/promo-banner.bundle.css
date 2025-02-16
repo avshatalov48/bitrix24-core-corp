@@ -1,0 +1,138 @@
+.booking-promo-banner-popup {
+	position: relative;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	padding: 26px;
+	border-radius: var(--ui-border-radius-3xl);
+	background: #5b69d1 radial-gradient(#5f6ed2 2px, transparent 0);
+	background-size: 15px 15px;
+}
+
+.booking-promo-banner-popup-title {
+	margin-bottom: 12px;
+	color: var(--ui-color-palette-white-base);
+	font-size: var(--ui-font-size-5xl);
+	font-weight: var(--ui-font-weight-semi-bold);
+}
+
+.booking-promo-banner-popup-subtitle {
+	margin-bottom: 20px;
+	color: rgba(var(--ui-color-palette-white-base-rgb), 0.7);
+	font-size: var(--ui-font-size-2xl);
+}
+
+.booking-promo-banner-popup-body {
+	flex: 1;
+	display: flex;
+}
+
+.booking-promo-banner-popup-item {
+	display: flex;
+	margin-bottom: 10px;
+	color: var(--ui-color-palette-white-base);
+	font-size: var(--ui-font-size-xl);
+}
+
+.booking-promo-banner-popup-item .ui-icon-set {
+	margin-right: 8px;
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: rgba(var(--ui-color-palette-white-base-rgb), 0.6);
+}
+
+.booking-promo-banner-popup-video-container {
+	width: 35%;
+	margin-left: 60px;
+}
+
+.booking-promo-banner-popup-video {
+	width: 385px;
+	border-radius: var(--ui-border-radius-md);
+}
+
+.booking-promo-banner-popup-button {
+	margin-top: 10px;
+}
+
+.booking-promo-banner-popup-button .ui-btn {
+	background: linear-gradient(90deg, #bbed21, #def29f);
+	--ui-btn-font-size: var(--ui-font-size-md);
+}
+
+.booking-promo-banner-popup-button .ui-btn:hover {
+	background: linear-gradient(90deg, #bbed21, #bbed21);
+}
+
+.booking-promo-banner-popup-cross {
+	--ui-icon-set__icon-size: 18px;
+	--ui-icon-set__icon-color: rgba(var(--ui-color-palette-white-base-rgb), 0.5);
+	position: absolute;
+	right: 14px;
+	top: 14px;
+	cursor: pointer;
+}
+
+.booking-promo-banner-popup-cross:hover {
+	--ui-icon-set__icon-color: rgba(var(--ui-color-palette-white-base-rgb), 0.7);
+}
+
+/*animations*/
+.booking-promo-banner-popup-button {
+	opacity: 0;
+	transform: translateY(15px);
+	animation: 300ms ease 500ms booking-promo-banner-popup-fade-in forwards;
+}
+
+.booking-promo-banner-popup-title {
+	opacity: 0;
+	transform: translateY(-20px);
+	animation: 300ms ease 500ms booking-promo-banner-popup-fade-in forwards;
+}
+
+.booking-promo-banner-popup-subtitle {
+	opacity: 0;
+	animation: 300ms ease 500ms booking-promo-banner-popup-fade-in forwards;
+}
+
+.booking-promo-banner-popup-video {
+	opacity: 0;
+	transform: translate(80px, 15px) rotate(5deg);
+	animation: 300ms ease 500ms booking-promo-banner-popup-fade-in forwards;
+}
+
+.booking-promo-banner-popup-item {
+	opacity: 0;
+	transform: translateX(30px);
+	animation: 300ms ease booking-promo-banner-popup-fade-in forwards;
+}
+
+.booking-promo-banner-popup-item:nth-child(1) {
+	animation-delay: 1000ms;
+}
+
+.booking-promo-banner-popup-item:nth-child(2) {
+	animation-delay: 1020ms;
+}
+
+.booking-promo-banner-popup-item:nth-child(3) {
+	animation-delay: 1040ms;
+}
+
+.booking-promo-banner-popup-item:nth-child(4) {
+	animation-delay: 1060ms;
+}
+
+.booking-promo-banner-popup-item:nth-child(5) {
+	animation-delay: 1080ms;
+}
+
+.booking-promo-banner-popup-item:nth-child(6) {
+	animation-delay: 1100ms;
+}
+
+@keyframes booking-promo-banner-popup-fade-in {
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}

@@ -20,6 +20,7 @@ type UserInfo = {
 export type RepresentativeSelectorOptions = {
 	userId?: Number;
 	description?: string;
+	context?: string;
 }
 
 export class RepresentativeSelector
@@ -63,6 +64,7 @@ export class RepresentativeSelector
 		this.#description = options.description;
 		this.#userSelector = new UserSelector({
 			multiple: false,
+			context: options.context ?? 'sign_b2e_representative_selector',
 		});
 		this.#ui.container = this.getLayout();
 	}

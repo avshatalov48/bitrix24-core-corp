@@ -17,6 +17,7 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Kanban\Entity\Deadlines\DeadlinesStageManager;
 use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\RelationIdentifier;
+use Bitrix\Crm\Security\EntityPermissionType;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
@@ -29,6 +30,7 @@ use Bitrix\Main\ORM\Objectify\EntityObject;
 use Bitrix\Main\Web\Uri;
 use Bitrix\UI\Buttons;
 use Bitrix\UI\Toolbar\ButtonLocation;
+use \Bitrix\Crm\Component\EntityDetails;
 
 Loader::includeModule('crm');
 
@@ -60,7 +62,12 @@ class CrmQuoteDetailsComponent extends FactoryBased
 
 		if ($this->getErrors())
 		{
+			if ($this->tryShowCustomErrors())
+			{
+				return;
+			}
 			$this->includeComponentTemplate();
+
 			return;
 		}
 

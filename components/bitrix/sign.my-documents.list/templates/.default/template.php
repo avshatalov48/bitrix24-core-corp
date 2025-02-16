@@ -13,7 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Sign\Helper\JsonHelper;
-use Bitrix\Sign\Ui\MyDocumentsGrid\TextMapper;
+use Bitrix\Sign\Ui\MyDocumentsGrid\TextGenerator;
 use Bitrix\Sign\Ui\MyDocumentsGrid\Template;
 
 $APPLICATION->SetTitle($arResult['TITLE']);
@@ -23,68 +23,36 @@ $APPLICATION->SetTitle($arResult['TITLE']);
 	'sign.v2.grid.b2e.my-documents',
 	'humanresources.hcmlink.salary-vacation-menu',
 	'ui.hint',
-	'applayout',
 ]);
 
 $gridRows = [];
-$rows = $arResult['DOCUMENTS']['rows'] ?? [];
-foreach ($rows as $key => $documentData)
+
+$rows = $arResult['DOCUMENTS']->rows ?? [];
+foreach ($rows as $row)
 {
-	$document = $documentData['document'];
-	$myMember = $documentData['myMemberInProcess'];
-	$action = $documentData['action'];
-	$secondSideMember = $documentData['members'][0];
-	$resultFileUrl = $documentData['file']['url'] ?? null;
-	$initiatorName = $document['initiator']['fullName'];
-	$initiator = $document['initiator'];
-	$actionStatusText = TextMapper::getActionText(
-		$documentData['action']['status'] ?? null,
-		$myMember,
-		$document,
-	);
+	$textGenerator = new TextGenerator($row);
+	$template = new Template($textGenerator, $row);
 
 	$gridRows[] = [
 		'data' => [
-			'ID' => $documentData['document']['id'],
-			'TITLE' => Template::getDocumentTitle(
-				$documentData['document']['title'],
-				TextMapper::getMyRoleInProcessText(
-					$myMember['role'],
-					$document['initiatedByType'],
-					$initiator['isCurrentUser'],
-					$secondSideMember['isCurrentUser'],
-				),
-			),
-			'MEMBERS' => Template::getParticipants(
-				$initiator,
-				$secondSideMember,
-				$document,
-				$myMember,
-			),
-			'ACTION' => Template::getAction(
-				$myMember['memberId'],
-				$actionStatusText,
-				$myMember,
-				$action['status'],
-				$document,
-				$secondSideMember,
-				$initiator,
-				$resultFileUrl,
-			)
+			'ID' => $row->id,
+			'TITLE' => $template->getDocumentTitle(),
+			'MEMBERS' => $template->getParticipants(),
+			'ACTION' => $template->getAction(),
 		],
 	];
 }
 
 \Bitrix\UI\Toolbar\Facade\Toolbar::addFilter([
-	 "GRID_ID" => $arParams["GRID_ID"],
-	 "FILTER_ID" => $arParams["FILTER_ID"],
-	 "FILTER" => $arResult["FILTER"],
-	 "FILTER_PRESETS" => $arResult['FILTER_PRESETS'],
-	 "DISABLE_SEARCH" => false,
-	 "ENABLE_LIVE_SEARCH" => true,
-	 "ENABLE_LABEL" => true,
-	 'THEME' => Bitrix\Main\UI\Filter\Theme::MUTED,
- ]);
+	"GRID_ID" => $arParams["GRID_ID"],
+	"FILTER_ID" => $arParams["FILTER_ID"],
+	"FILTER" => $arResult["FILTER"],
+	"FILTER_PRESETS" => $arResult['FILTER_PRESETS'],
+	"DISABLE_SEARCH" => false,
+	"ENABLE_LIVE_SEARCH" => true,
+	"ENABLE_LABEL" => true,
+	'THEME' => Bitrix\Main\UI\Filter\Theme::MUTED,
+]);
 
 $APPLICATION->IncludeComponent(
 	'bitrix:sign.document.counter.panel',

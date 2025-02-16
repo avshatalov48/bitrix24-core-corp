@@ -1,0 +1,91 @@
+html, body {
+	padding: 0;
+	margin: 0;
+	background:
+		url(images/calendar-pub-bg-build.svg) center bottom no-repeat,
+		url(images/calendar-pub-bg-clouds.svg) center top -15px no-repeat;
+	background-color: #f2f6f7;
+	overscroll-behavior: none;
+}
+
+.errortext{
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100vh;
+}
+
+.booking-template-pub-footer {
+	padding: 14px 0 17px;
+	text-align: center;
+	font-family: var(--ui-font-family-system);
+	font-weight: 400;
+	font-size: 15px;
+	line-height: 20px;
+	color: var(--ui-color-base-50);
+	margin-top: auto;
+	order: 2;
+}
+
+.booking-template-pub-footer-top {
+	margin-top: 10px;
+	margin-bottom: 5px;
+}
+
+@media (max-width: 1070px) {
+	.booking-template-pub-footer {
+		margin: auto 0 0 0;
+		padding: 0 10px 17px 10px;
+		font-size: 14px;
+	}
+
+	.booking-template-pub-footer-bottom {
+		margin: 0 30px;
+	}
+
+	.booking-template-pub-footer__link {
+		margin-top: 5px;
+	}
+}
+
+.booking-template-pub-footer__link {
+	display: inline-block;
+	border-bottom: 1px dashed var(--ui-color-base-30);
+	cursor: pointer;
+	transition: .1s;
+	color: var(--ui-color-base-50);
+	text-decoration: none;
+}
+
+.booking-template-pub-footer__link.--no-link,
+.booking-template-pub-footer__link.--no-link:hover {
+	border: none;
+	cursor: text;
+}
+
+.booking-template-pub-footer__link.--hover,
+.booking-template-pub-footer__link:hover {
+	border-bottom: 1px dashed var(--ui-color-base-40);
+	transition: unset;
+}
+
+.booking-template-pub-footer__link.--active,
+.booking-template-pub-footer__link:active {
+	border-bottom: 1px dashed var(--ui-color-base-50);
+	transition: unset;
+}
+
+.booking-template-pub-footer__logo-b24 {
+	display: inline-block;
+	width: 68px;
+	height: 14px;
+	background: url(images/calendar-pub-logo-b24-en.svg) center no-repeat;
+}
+
+.booking-template-pub-footer__logo-b24.--ru {
+	vertical-align: middle;
+	width: 87px;
+	height: 16px;
+	background: url(images/calendar-pub-logo-b24-ru.svg) center no-repeat;
+}

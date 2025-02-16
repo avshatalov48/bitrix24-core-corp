@@ -6,9 +6,11 @@ use Bitrix\Crm\Component\EntityDetails\FactoryBased;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban\Entity\Deadlines\DeadlinesStageManager;
 use Bitrix\Crm\Kanban\ViewMode;
+use Bitrix\Crm\Security\EntityPermissionType;
 use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use \Bitrix\Crm\Component\EntityDetails\Error;
 
 Loader::includeModule('crm');
 
@@ -28,6 +30,18 @@ class CrmSmartInvoiceDetailsComponent extends FactoryBased
 	public function executeComponent()
 	{
 		$this->init();
+
+		if ($this->getErrors())
+		{
+			if ($this->tryShowCustomErrors())
+			{
+				return;
+			}
+			$this->includeComponentTemplate();
+
+			return;
+		}
+
 
 		if($this->getErrors())
 		{

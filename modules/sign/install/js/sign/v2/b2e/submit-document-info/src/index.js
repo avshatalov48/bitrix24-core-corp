@@ -1,7 +1,7 @@
 import { Dom, Loc, Tag, Text, Type } from 'main.core';
 import { MemoryCache } from 'main.core.cache';
 import { type BaseEvent, EventEmitter } from 'main.core.events';
-import type { FieldValue, MemberStatusType, TemplateField } from 'sign.v2.api';
+import type { FieldValue, MemberStatusType, ProviderCodeType, TemplateField } from 'sign.v2.api';
 import { Api, MemberStatus } from 'sign.v2.api';
 import './style.css';
 import 'ui.forms';
@@ -31,7 +31,7 @@ type MemberInvitedToSignEventData = {
 	signingLink: string
 };
 
-export type DocumentSendedSuccessFullyEvent = BaseEvent<{ documentId: number }>;
+export type DocumentSendedSuccessFullyEvent = BaseEvent<{ document: { id: number, providerCode: ProviderCodeType } }>;
 
 export class SubmitDocumentInfo extends EventEmitter
 {
@@ -145,7 +145,7 @@ export class SubmitDocumentInfo extends EventEmitter
 		}
 
 		let employeeMember = null;
-		let documentId: number | null = null;
+		let document: null | { id: number, providerCode: ProviderCodeType } = null;
 		EventEmitter.emit('BX.Sign.SignSettingsEmployee:onBeforeTemplateSend');
 		try
 		{
@@ -154,7 +154,7 @@ export class SubmitDocumentInfo extends EventEmitter
 				this.#getFieldValues(),
 			);
 			employeeMember = sendResult.employeeMember;
-			documentId = sendResult.document.id;
+			document = sendResult.document;
 		}
 		catch (e)
 		{
@@ -167,7 +167,7 @@ export class SubmitDocumentInfo extends EventEmitter
 			EventEmitter.emit('BX.Sign.SignSettingsEmployee:onAfterTemplateSend');
 		}
 		const { uid: memberUid, id: memberId } = employeeMember;
-		this.emit(this.events.documentSendedSuccessFully, { documentId });
+		this.emit(this.events.documentSendedSuccessFully, { document });
 
 		this.#showProgress();
 		let pending = true;

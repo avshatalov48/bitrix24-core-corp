@@ -3,6 +3,7 @@ import { sendData } from 'ui.analytics';
 import { ChatType } from 'im.v2.const';
 import { getCollabId, getUserType } from 'im.v2.lib.analytics';
 
+import { Copilot } from './classes/copilot';
 import { CallTypes } from 'call.const';
 
 import {
@@ -26,6 +27,8 @@ export class Analytics
 	static AnalyticsSection = AnalyticsSection;
 	static AnalyticsElement = AnalyticsElement;
 	static AnalyticsSubSection = AnalyticsSubSection;
+
+	copilot: Copilot = new Copilot();
 
 	#screenShareStarted: boolean = false;
 	#recordStarted: boolean = false;
@@ -623,37 +626,6 @@ export class Analytics
 		{
 			resultData.p4 = getCollabId(params.dialog.chatId);
 		}
-
-		sendData(resultData);
-	}
-
-	onAIRecordStart(params)
-	{
-		const errorCodes = {
-			AI_UNAVAILABLE_ERROR: AnalyticsStatus.errorB24,
-			AI_SETTINGS_ERROR: AnalyticsStatus.errorB24,
-			AI_AGREEMENT_ERROR: AnalyticsStatus.errorAgreement,
-			AI_NOT_ENOUGH_BAAS_ERROR: AnalyticsStatus.errorLimitBaas,
-		};
-
-		const resultData = {
-			tool: AnalyticsTool.ai,
-			category: AnalyticsCategory.callsOperations,
-			event: AnalyticsEvent.aiRecordStart,
-			type: params.callType,
-			c_section: AnalyticsSection.callFollowup,
-			p5: `callId_${params.callId}`,
-		};
-		
-		if (params?.userCount)
-		{
-			resultData.p3 = `userCount_${params.userCount}`;
-		}
-
-		resultData.status = params?.errorCode
-			? errorCodes[params.errorCode]
-			: AnalyticsStatus.success
-		;
 
 		sendData(resultData);
 	}

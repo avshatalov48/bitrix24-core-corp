@@ -16,9 +16,14 @@ class CrmItemDetailsComponent extends FactoryBased
 	{
 		$this->init();
 
-		if($this->getErrors())
+		if ($this->getErrors())
 		{
+			if ($this->tryShowCustomErrors())
+			{
+				return;
+			}
 			$this->includeComponentTemplate();
+
 			return;
 		}
 

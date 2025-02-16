@@ -338,7 +338,10 @@ class LiveChatManager
 			return false;
 		}
 
-		$orm = Model\LivechatTable::getById($this->id);
+		$orm = Model\LivechatTable::getList([
+			'filter' => ['=CONFIG_ID' => $this->id],
+			'cache' => ['ttl' => 864000]
+		]);
 		$this->config = $orm->fetch();
 		if (!$this->config)
 			return false;
@@ -362,7 +365,8 @@ class LiveChatManager
 
 		$orm = Model\LivechatTable::getList([
 			'select' => ['BACKGROUND_IMAGE', 'CONFIG_NAME' => 'CONFIG.LINE_NAME', 'URL_CODE_PUBLIC', 'TEXT_PHRASES'],
-			'filter' => ['=CONFIG_ID' => $this->id]
+			'filter' => ['=CONFIG_ID' => $this->id],
+			'cache' => ['ttl' => 864000]
 		]);
 		$config = $orm->fetch();
 		if ($config)
@@ -446,9 +450,10 @@ class LiveChatManager
 	{
 		$select = Array();
 		$orm = \Bitrix\ImOpenLines\Model\LivechatTable::getList(Array(
-			'select' => Array(
+			'select' => [
 				'CONFIG_ID', 'LINE_NAME' => 'CONFIG.LINE_NAME'
-			)
+			],
+			'cache' => ['ttl' => 864000]
 		));
 		while ($row = $orm->fetch())
 		{

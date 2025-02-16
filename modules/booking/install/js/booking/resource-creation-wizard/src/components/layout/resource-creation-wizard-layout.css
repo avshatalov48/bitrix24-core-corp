@@ -1,0 +1,113 @@
+.resource-creation-wizard-layout {
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+}
+
+.resource-creation-wizard__wrapper {
+	position: relative;
+	flex: 1;
+	padding: 24px 10px 15px 21px;
+	overflow-y: scroll;
+}
+
+.resource-creation-wizard__wrapper::-webkit-scrollbar {
+	width: 5px;
+}
+
+.resource-creation-wizard__wrapper::-webkit-scrollbar-thumb {
+	border-radius: 4px;
+	background: var(--ui-color-base-20);
+}
+
+.resource-creation-wizard__header {
+	margin: 0 0 20px 5px;
+}
+
+.resource-creation-wizard__header-title {
+	font-size: var(--ui-font-size-4xl);
+	font-weight: var(--ui-font-weight-light);
+}
+
+.resource-creation-wizard__content {
+	border-radius: var(--ui-border-radius-md);
+	overflow: hidden;
+}
+
+.resource-creation-wizard__footer {
+	position: relative;
+	padding: 15px;
+	background: var(--ui-color-palette-white-base);
+	box-shadow: 0 -2px 4px 0 #c6c9cb;
+	display: flex;
+	gap: 12px;
+}
+
+.resource-creation-wizard__form {
+	background-color: var(--ui-color-palette-white-base);
+}
+
+.booking--rcw--more {
+	color: var(--ui-color-link-primary-base);
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.resource-creation-wizard-layout .ui-form-section .ui-form-row-inline {
+	margin-bottom: 0;
+}
+
+.resource-creation-wizard-layout .ui-form-row-inline {
+	display: flex;
+}
+
+.resource-creation-wizard-layout .ui-form-row-inline .ui-form-row {
+	padding-right: 15px;
+	box-sizing: border-box;
+}
+
+.resource-creation-wizard-layout .ui-form-row {
+	display: flex;
+	margin-bottom: 15px;
+	max-width: 100%;
+	overflow: hidden;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.resource-creation-wizard-layout .ui-form-row-inline .ui-form-content {
+	display: flex;
+	align-items: center;
+}
+
+.resource-creation-wizard-layout .ui-form-content {
+	width: 100%;
+	max-width: 100%;
+}
+
+.resource-creation-wizard-layout .ui-form-label {
+	display: block;
+	font: 13px var(--ui-font-family-primary,var(--ui-font-family-helvetica));
+	color: rgba(82,92,105,.85);
+	flex-shrink: 0;
+	margin-bottom: 10px;
+	margin-right: 0;
+}
+
+.resource-creation-wizard-layout .ui-form-row .ui-ctl-label-text {
+	padding-bottom: 0;
+}
+
+.resource-creation-wizard-layout .ui-form .ui-ctl-label-text {
+	display: inline-block;
+	vertical-align: top;
+}
+
+.resource-creation-wizard-layout .ui-form+.ui-form {
+	margin-top: 20px;
+}
+
+.resource-creation-wizard-layout .ui-form-row-inline .ui-ctl {
+	width: auto;
+	margin-bottom: 0
+}

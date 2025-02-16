@@ -3,8 +3,10 @@
 namespace Bitrix\Crm\Integration\Catalog\Contractor;
 
 use Bitrix\Crm\Category\Entity\Category;
+use Bitrix\Crm\CategoryIdentifier;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Model\ItemCategoryTable;
+use Bitrix\Crm\Security\Role\RolePreset;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Main\Web\Json;
@@ -163,7 +165,10 @@ class CategoryRepository
 					$entityName,
 					$categoryId
 				)
-			] = \CCrmRole::getDefaultPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier($entityTypeId, $categoryId));
+			] = RolePreset::getDefaultPermissionSetForEntityByCode(
+				$role['CODE'],
+				new CategoryIdentifier($entityTypeId, $categoryId)
+			);
 
 			$fields = ['RELATION' => $rolePerms];
 			(new \CCrmRole())->update($role['ID'], $fields);

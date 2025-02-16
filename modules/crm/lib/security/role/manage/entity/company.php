@@ -35,8 +35,8 @@ class Company implements PermissionEntity, FilterableByCategory
 
 		foreach ($categories as $category)
 		{
-			$entityName = htmlspecialcharsbx(Service\UserPermissions::getPermissionEntityType($factory->getEntityTypeId(), $category->getId()));
-			$entityTitle = htmlspecialcharsbx($category->getSingleNameIfPossible());
+			$entityName = Service\UserPermissions::getPermissionEntityType($factory->getEntityTypeId(), $category->getId());
+			$entityTitle = $category->getSingleNameIfPossible();
 
 			if ($category->getIsDefault())
 			{

@@ -36,6 +36,8 @@ $rolesData = $arResult['accessRightsData'];
 $controllerData = $arResult['controllerData'];
 /** @var int|null $maxVisibleUserGroups */
 $maxVisibleUserGroups = $arResult['maxVisibleUserGroups'];
+/** @var array|null $analytics */
+$analytics = $arResult['analytics'];
 
 ?>
 
@@ -57,6 +59,7 @@ $maxVisibleUserGroups = $arResult['maxVisibleUserGroups'];
 		isSaveOnlyChangedRights: true,
 		maxVisibleUserGroups: <?= is_int($maxVisibleUserGroups) ? $maxVisibleUserGroups : 'null' ?>,
 		searchContainerSelector: '#<?= $searchContainerId ?>',
+		analytics: <?= Json::encode($analytics) ?>,
 	});
 
 	AccessRights.draw();

@@ -34,9 +34,16 @@ class Sender extends MicroService\BaseSender
 	{
 		$url = $this->getServiceUrl() . $this->getProxyPath() . $action;
 
+		/*
+		 * `trim($val, '=')` is used to bypass the proactive filter of the proxy server.
+		 * 	The '=' sign is used for padding Base64 strings. Proactive filter might detect a string
+		 * 	in the format `/[^a-z]on.+=/` and adding spaces to it to protect against potential XSS attacks,
+		 * 	which causes signature mismatches.
+		 */
+		$serializedParameters = trim(base64_encode(gzencode(Json::encode($parameters))), '=');
 		$request = [
 			'action' => $action,
-			'serializedParameters' => base64_encode(gzencode(Json::encode($parameters))),
+			'serializedParameters' => $serializedParameters,
 		];
 
 		$request['BX_TYPE'] = Client::getPortalType();

@@ -32,3 +32,19 @@
 	display: flex;
 	flex-direction: column;
 }
+
+.crm-copilot-call-assessment-list-assessment-avg {
+	display: flex;
+	align-items: center;
+}
+
+.crm-copilot-call-assessment-list-assessment-avg-value {
+	margin-left: 8px;
+	font-size: var(--ui-font-size-xl);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.crm-copilot-call-assessment-list-assessment-avg-percent {
+	font-size: var(--ui-font-size-xl);
+	color: var(--ui-color-palette-gray-50);
+}

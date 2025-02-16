@@ -2,6 +2,7 @@
 
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
+use Bitrix\Crm\Component\EntityList\NearestActivity;
 use Bitrix\Crm\Component\EntityList\NearestActivity\ManagerFactory;
 use Bitrix\Crm\Filter\FieldsTransform;
 use Bitrix\Crm\Filter\UiFilterOptions;
@@ -20,8 +21,8 @@ use Bitrix\Crm\WebForm\Internals\PageNavigation;
 use Bitrix\Main\Grid;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
 use Bitrix\UI\Buttons;
-use Bitrix\Crm\Component\EntityList\NearestActivity;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -412,23 +413,33 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList implements \Bit
 
 			$toolbar['id'] = $this->getGridId() . '_toolbar';
 
-			if ($this->arParams['ADD_EVENT_NAME'])
+			if (!empty($this->arParams['ADD_EVENT_NAME']))
 			{
-				$analyticsBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault($this->entityTypeId)
-					->setSection(
-						!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
-						? $arParams['ANALYTICS']['c_section']
-						: null
-					)
-					->setSubSection(
-						!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
-							? $arParams['ANALYTICS']['c_sub_section']
-							: null
-					)
-					->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CREATE_LINKED_ENTITY_BUTTON);
+				$analyticsBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault($this->entityTypeId);
+				$this->configureAnalyticsEventBuilder($analyticsBuilder);
+				$analyticsBuilder->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CREATE_LINKED_ENTITY_BUTTON);
 				$url = $analyticsBuilder->buildUri($url)->getUri();
 			}
 
+			$parentParams = [
+				'parentTypeId' => $this->getParentItemIdentifier()->getEntityTypeId(),
+				'parentId' => $this->getParentItemIdentifier()->getEntityId(),
+			];
+
+			if (CCrmOwnerType::SmartInvoice === $this->entityTypeId || CCrmOwnerType::isPossibleDynamicTypeId($this->entityTypeId))
+			{
+				if ($this->getParentItemIdentifier()->getEntityTypeId() === CCrmOwnerType::Contact)
+				{
+					$parentParams['contact_id'] = $this->getParentItemIdentifier()->getEntityId();
+				}
+
+				if ($this->getParentItemIdentifier()->getEntityTypeId() === CCrmOwnerType::Company)
+				{
+					$parentParams['company_id'] = $this->getParentItemIdentifier()->getEntityId();
+				}
+			}
+
+			$entityIdentity = CCrmOwnerType::ResolveName($this->entityTypeId);
 			$addButton = [
 				'TEXT' => $entityTypeDescription,
 				'TITLE' => Loc::getMessage(
@@ -437,8 +448,8 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList implements \Bit
 						'#CHILDREN_ELEMENT#' => $entityTypeDescription,
 					]
 				),
-				'LINK' => $url,
 				'ICON' => 'btn-new',
+				'ONCLICK' => "BX.CrmEntityManager.createEntity('" . $entityIdentity . "', { urlParams: " . Json::encode($parentParams) ." })",
 			];
 
 			$relation = Container::getInstance()->getRelationManager()->getRelation(new \Bitrix\Crm\RelationIdentifier(
@@ -529,7 +540,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList implements \Bit
 
 		if($this->category)
 		{
-			$filter = $this->category->getItemsFilter($filter);
+			$filter['=CATEGORY_ID'] = $this->category->getId();
 		}
 
 		FieldsTransform\UserBasedField::applyTransformWrapper($filter);
@@ -759,7 +770,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList implements \Bit
 
 			$displayOptions =
 				(new Display\Options())
-					->setMultipleFieldsDelimiter($this->isExportMode() ? ', ' : '<br />')
+					->setMultipleFieldsDelimiter($this->isExportMode() ? ', ' : ',<br />')
 					->setGridId($this->getGridId())
 			;
 			$restrictedItemIds = [];

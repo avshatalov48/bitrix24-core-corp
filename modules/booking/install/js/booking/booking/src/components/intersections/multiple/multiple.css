@@ -1,0 +1,108 @@
+.booking-booking-intersections-resource {
+	box-sizing: border-box;
+	min-width: calc(280px * var(--zoom));
+	max-width: calc(280px* var(--zoom));
+	padding: 0 6px;
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+	background: var(--ui-color-background-primary);
+	border-right: 1px solid var(--ui-color-base-10);
+}
+
+.booking-booking-intersections-resource-container {
+	display: flex;
+	align-items: center;
+	gap: 3px;
+	overflow: auto;
+}
+
+.bbi-resource-selector-item {
+	display: inline-block;
+	vertical-align: top;
+	position: relative;
+	margin: 2px;
+	height: 30px;
+}
+
+.bbi-resource-selector-tag {
+	display: inline-flex;
+	align-items: center;
+	background-color: #bcedfc;
+	color: #1066bb !important;
+	z-index: 2;
+	transition: 50ms;
+	overflow: hidden;
+	max-width: 200px;
+	border-radius: var(--ui-tag-selector-tag-border-radius, var(--ui-border-radius-3xs));
+}
+
+.bbi-resource-selector-tag.--count {
+	flex-shrink: 0;
+	padding: 0 10px;
+	cursor: pointer;
+}
+
+.bbi-resource-selector-tag-content {
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+	text-decoration: none;
+}
+
+.bbi-resource-selector-tag-title {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font: var(--ui-font-weight-bold) 13px/30px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	margin-left: 13px;
+}
+
+.bbi-resource-selector-tag-title.--count {
+	margin-left: 0;
+}
+
+.bbi-resource-selector-tag-remove {
+	min-width: 25px;
+	height: 100%;
+	background: url(/bitrix/js/booking/images/intersection/remove.svg) center no-repeat;
+	opacity: .1;
+	transition: .3s;
+	cursor: pointer;
+}
+
+.bbi-resource-selector-tag-remove:hover {
+	opacity: .2;
+}
+
+.bbi-resource-selector-add-button-caption {
+	position: relative;
+	display: inline-flex;
+	margin: 0 7px 0 18px;
+	vertical-align: middle;
+	border-top: 1px solid transparent;
+	border-bottom: 1px solid transparent;
+	color: #2067b0;
+	transition: .1s;
+	cursor: pointer;
+	align-items: baseline;
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica))
+}
+
+.bbi-resource-selector-add-button-caption:before {
+	content: '';
+	display: inline-block;
+	height: 8px;
+	width: 8px;
+	margin: 0 6px 0 -12px;
+	background: url(/bitrix/js/booking/images/intersection/plus.svg) no-repeat center;
+}
+
+.bbi-resource-selector-add-button-caption:hover {
+	border-bottom-color: #2067b0;
+}
+
+.bbi-resource-selector-add-button {
+	display: inline-flex;
+	align-items: center;
+}

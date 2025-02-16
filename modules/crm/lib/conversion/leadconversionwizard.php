@@ -94,6 +94,15 @@ class LeadConversionWizard extends EntityConversionWizard
 		}
 		catch(EntityConversionException $e)
 		{
+			$this->converter?->log(
+				'EntityConversionException',
+				[
+					'type' => get_class($e),
+					'exceptionData' => $e->externalize(),
+					'extMessage' => $e->getExtendedMessage(),
+				],
+				\Psr\Log\LogLevel::ERROR
+			);
 			$this->exception = $e;
 
 			$uri = $this->getRedirectUrlByConversionException($e)?->addParams([
@@ -202,6 +211,14 @@ class LeadConversionWizard extends EntityConversionWizard
 				]
 			);
 		}
+		$this->converter?->log(
+			'prepareDataForSave',
+				[
+					'entityTypeId' => $entityTypeID,
+					'fields' => $fields,
+				],
+			\Psr\Log\LogLevel::DEBUG
+		);
 	}
 	/**
 	 * Load wizard related to entity from session.

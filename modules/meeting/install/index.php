@@ -103,12 +103,9 @@ Class meeting extends CModule
 
 	function InstallFiles($arParams = array())
 	{
-		if(($_ENV["COMPUTERNAME"] ?? null) !== 'BX')
-		{
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/meeting/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", True, True);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/meeting/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js", True, True);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/meeting/install/tools", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools", True, True);
-		}
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/meeting/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", True, True);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/meeting/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js", True, True);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/meeting/install/tools", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools", True, True);
 		return true;
 	}
 

@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,im_lib_utils,im_v2_lib_promo,ui_switcher,ui_dialogs_messagebox,ui_buttons,im_v2_lib_desktopApi,im_v2_const,intranet_desktopDownload,main_core_events,im_v2_lib_utils,call_lib_analytics,main_core,main_popup,call_component_userListPopup,call_component_userList,loader,resize_observer,webrtc_adapter,im_lib_localstorage) {
+(function (exports,im_lib_utils,im_v2_lib_promo,ui_switcher,ui_dialogs_messagebox,ui_buttons,im_v2_lib_desktopApi,im_v2_const,intranet_desktopDownload,main_core_events,im_v2_lib_utils,main_core,main_popup,call_lib_analytics,call_component_userListPopup,call_component_userList,loader,resize_observer,webrtc_adapter,im_lib_localstorage) {
 	'use strict';
 
 	// screensharing workaround
@@ -835,6 +835,7 @@ this.BX = this.BX || {};
 	var CopilotNotify = /*#__PURE__*/function () {
 	  function CopilotNotify(config) {
 	    babelHelpers.classCallCheck(this, CopilotNotify);
+	    this.callId = config.callId || 0;
 	    this.type = config.type || '';
 	    this.popup = null;
 	    this.notifyText = '';
@@ -915,7 +916,8 @@ this.BX = this.BX || {};
 	          this.notifyColor = '#FF5752';
 	          break;
 	        default:
-	          this.notifyText = '';
+	          this.notifyText = main_core.Loc.getMessage('CALL_POPUP_AI_DEFAULT_TEXT');
+	          this.notifyColor = '#FF5752';
 	          break;
 	      }
 	    }
@@ -981,6 +983,12 @@ this.BX = this.BX || {};
 	      this.create();
 	      if (!this.canShowCopilotNotify()) {
 	        return;
+	      }
+	      if (this.type === CopilotNotifyType.COPILOT_ENABLED || this.type === CopilotNotifyType.COPILOT_DISABLED) {
+	        call_lib_analytics.Analytics.getInstance().copilot.onCopilotNotifyShow({
+	          isCopilotActive: this.type === CopilotNotifyType.COPILOT_ENABLED,
+	          callId: this.callId
+	        });
 	      }
 	      if (this.popup) {
 	        this.popup.show();
@@ -4287,9 +4295,11 @@ this.BX = this.BX || {};
 	    key: "enableAudio",
 	    value: function () {
 	      var _enableAudio = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee11() {
-	        var _babelHelpers$classPr6;
+	        var _babelHelpers$classPr6, _track4;
 	        var disabled,
 	          track,
+	          canUseUnpauseSignal,
+	          needToGetNewTrack,
 	          _args11 = arguments;
 	        return _regeneratorRuntime().wrap(function _callee11$(_context11) {
 	          while (1) switch (_context11.prev = _context11.next) {
@@ -4313,42 +4323,43 @@ this.BX = this.BX || {};
 	              this.triggerEvents('PublishFailed', [MediaStreamsKinds.Microphone]);
 	            case 12:
 	              track = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldGet(this, _privateProperties).microphoneStream) === null || _babelHelpers$classPr6 === void 0 ? void 0 : _babelHelpers$classPr6.getAudioTracks()[0];
-	              if (!(track && babelHelpers.classPrivateFieldGet(this, _privateProperties).localTracks[MediaStreamsKinds.Microphone])) {
-	                _context11.next = 21;
+	              canUseUnpauseSignal = track && babelHelpers.classPrivateFieldGet(this, _privateProperties).localTracks[MediaStreamsKinds.Microphone];
+	              needToGetNewTrack = ((_track4 = track) === null || _track4 === void 0 ? void 0 : _track4.readyState) !== 'live';
+	              if (!needToGetNewTrack) {
+	                _context11.next = 19;
+	                break;
+	              }
+	              _context11.next = 18;
+	              return this.getLocalAudio();
+	            case 18:
+	              track = _context11.sent;
+	            case 19:
+	              if (!track) {
+	                this.setLog('Enabling audio failed: has no track', LOG_LEVEL.ERROR);
+	                _classPrivateMethodGet(this, _releaseStream, _releaseStream2).call(this, MediaStreamsKinds.Microphone);
+	                this.triggerEvents('PublishFailed', [MediaStreamsKinds.Microphone]);
+	              }
+	              if (!canUseUnpauseSignal) {
+	                _context11.next = 28;
 	                break;
 	              }
 	              this.setLog('Enabling audio via unpause signal', LOG_LEVEL.INFO);
 	              track.enabled = true;
-	              _context11.next = 18;
+	              _context11.next = 25;
 	              return this.publishTrack(MediaStreamsKinds.Microphone, track);
-	            case 18:
+	            case 25:
 	              this.unpauseTrack(MediaStreamsKinds.Microphone);
-	              _context11.next = 35;
+	              _context11.next = 33;
 	              break;
-	            case 21:
-	              _context11.next = 23;
-	              return this.getLocalAudio();
-	            case 23:
-	              track = _context11.sent;
-	              if (!track) {
-	                _context11.next = 32;
-	                break;
-	              }
+	            case 28:
 	              this.setLog('Enabling audio via publish', LOG_LEVEL.INFO);
 	              track.enabled = !disabled;
 	              if (disabled) {
 	                babelHelpers.classPrivateFieldGet(this, _privateProperties).needToDisableAudioAfterPublish = true;
 	              }
-	              _context11.next = 30;
+	              _context11.next = 33;
 	              return this.publishTrack(MediaStreamsKinds.Microphone, track);
-	            case 30:
-	              _context11.next = 35;
-	              break;
-	            case 32:
-	              this.setLog('Enabling audio failed: has no track', LOG_LEVEL.ERROR);
-	              _classPrivateMethodGet(this, _releaseStream, _releaseStream2).call(this, MediaStreamsKinds.Microphone);
-	              this.triggerEvents('PublishFailed', [MediaStreamsKinds.Microphone]);
-	            case 35:
+	            case 33:
 	            case "end":
 	              return _context11.stop();
 	          }
@@ -4797,7 +4808,7 @@ this.BX = this.BX || {};
 	    value: function () {
 	      var _switchActiveAudioDevice = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee21(deviceId, force) {
 	        var _this7 = this;
-	        var error, promise;
+	        var error, fulfilled, promise;
 	        return _regeneratorRuntime().wrap(function _callee21$(_context21) {
 	          while (1) switch (_context21.prev = _context21.next) {
 	            case 0:
@@ -4809,15 +4820,17 @@ this.BX = this.BX || {};
 	              babelHelpers.classPrivateFieldGet(this, _privateProperties).switchActiveAudioDevicePending = deviceId;
 	              return _context21.abrupt("return");
 	            case 4:
+	              fulfilled = false;
 	              this.setLog("Start switching an audio device to ".concat(deviceId), LOG_LEVEL.INFO);
 	              promise = new Promise( /*#__PURE__*/function () {
 	                var _ref2 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee20(resolve, reject) {
-	                  var _babelHelpers$classPr18, prevTrack, prevTrackEnabledState, prevTrackId, audioTrack, sender, _deviceId;
+	                  var prevStream, _babelHelpers$classPr18, prevTrack, prevTrackEnabledState, prevTrackId, audioTrack, sender, _deviceId;
 	                  return _regeneratorRuntime().wrap(function _callee20$(_context20) {
 	                    while (1) switch (_context20.prev = _context20.next) {
 	                      case 0:
 	                        babelHelpers.classPrivateFieldGet(_this7, _privateProperties).audioDeviceId = deviceId;
-	                        _context20.prev = 1;
+	                        prevStream = babelHelpers.classPrivateFieldGet(_this7, _privateProperties).microphoneStream;
+	                        _context20.prev = 2;
 	                        prevTrack = (_babelHelpers$classPr18 = babelHelpers.classPrivateFieldGet(_this7, _privateProperties).microphoneStream) === null || _babelHelpers$classPr18 === void 0 ? void 0 : _babelHelpers$classPr18.getAudioTracks()[0];
 	                        babelHelpers.classPrivateFieldGet(_this7, _privateProperties).microphoneStream = null;
 	                        prevTrackEnabledState = true;
@@ -4827,60 +4840,64 @@ this.BX = this.BX || {};
 	                          prevTrackId = prevTrack.id;
 	                          prevTrack.stop();
 	                        }
-	                        _context20.next = 9;
+	                        _context20.next = 10;
 	                        return _this7.getLocalAudio();
-	                      case 9:
+	                      case 10:
 	                        audioTrack = _context20.sent;
 	                        audioTrack.source = MediaStreamsKinds.Microphone;
 	                        audioTrack.enabled = prevTrackEnabledState;
 	                        sender = _classPrivateMethodGet(_this7, _getSender, _getSender2).call(_this7, MediaStreamsKinds.Microphone);
 	                        if (!(sender && (_this7.isAudioPublished() || sender.track.id !== audioTrack.id || audioTrack.id !== prevTrackId))) {
-	                          _context20.next = 17;
+	                          _context20.next = 18;
 	                          break;
 	                        }
 	                        _this7.setLog('Have sender for audio, start replacing track', LOG_LEVEL.INFO);
-	                        _context20.next = 17;
+	                        _context20.next = 18;
 	                        return sender.replaceTrack(audioTrack);
-	                      case 17:
+	                      case 18:
 	                        _this7.setLog('Switching an audio device succeeded', LOG_LEVEL.INFO);
-	                        _context20.next = 24;
+	                        _context20.next = 26;
 	                        break;
-	                      case 20:
-	                        _context20.prev = 20;
-	                        _context20.t0 = _context20["catch"](1);
+	                      case 21:
+	                        _context20.prev = 21;
+	                        _context20.t0 = _context20["catch"](2);
 	                        error = _context20.t0;
 	                        _this7.setLog("Switching an audio device failed: ".concat(_context20.t0), LOG_LEVEL.ERROR);
-	                      case 24:
-	                        _context20.prev = 24;
+	                        if (!babelHelpers.classPrivateFieldGet(_this7, _privateProperties).microphoneStream) {
+	                          babelHelpers.classPrivateFieldGet(_this7, _privateProperties).microphoneStream = prevStream;
+	                        }
+	                      case 26:
+	                        _context20.prev = 26;
 	                        if (!babelHelpers.classPrivateFieldGet(_this7, _privateProperties).switchActiveAudioDevicePending) {
-	                          _context20.next = 31;
+	                          _context20.next = 33;
 	                          break;
 	                        }
 	                        _deviceId = babelHelpers.classPrivateFieldGet(_this7, _privateProperties).switchActiveAudioDevicePending;
 	                        babelHelpers.classPrivateFieldGet(_this7, _privateProperties).switchActiveAudioDevicePending = null;
 	                        resolve(_this7.switchActiveAudioDevice(_deviceId, true));
-	                        _context20.next = 33;
+	                        _context20.next = 36;
 	                        break;
-	                      case 31:
+	                      case 33:
+	                        fulfilled = true;
 	                        babelHelpers.classPrivateFieldGet(_this7, _privateProperties).switchActiveAudioDeviceInProgress = null;
 	                        return _context20.abrupt("return", error ? reject(error) : resolve());
-	                      case 33:
-	                        return _context20.finish(24);
-	                      case 34:
+	                      case 36:
+	                        return _context20.finish(26);
+	                      case 37:
 	                      case "end":
 	                        return _context20.stop();
 	                    }
-	                  }, _callee20, null, [[1, 20, 24, 34]]);
+	                  }, _callee20, null, [[2, 21, 26, 37]]);
 	                }));
 	                return function (_x15, _x16) {
 	                  return _ref2.apply(this, arguments);
 	                };
 	              }());
-	              if (!force) {
+	              if (!force && !fulfilled) {
 	                babelHelpers.classPrivateFieldGet(this, _privateProperties).switchActiveAudioDeviceInProgress = promise;
 	              }
 	              return _context21.abrupt("return", promise);
-	            case 8:
+	            case 9:
 	            case "end":
 	              return _context21.stop();
 	          }
@@ -4896,7 +4913,7 @@ this.BX = this.BX || {};
 	    value: function () {
 	      var _switchActiveVideoDevice = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee23(deviceId, force) {
 	        var _this8 = this;
-	        var promise;
+	        var error, fulfilled, promise;
 	        return _regeneratorRuntime().wrap(function _callee23$(_context23) {
 	          while (1) switch (_context23.prev = _context23.next) {
 	            case 0:
@@ -4908,71 +4925,78 @@ this.BX = this.BX || {};
 	              babelHelpers.classPrivateFieldGet(this, _privateProperties).switchActiveVideoDevicePending = deviceId;
 	              return _context23.abrupt("return");
 	            case 4:
+	              fulfilled = false;
 	              this.setLog("Start switching a video device to ".concat(deviceId), LOG_LEVEL.INFO);
 	              promise = new Promise( /*#__PURE__*/function () {
 	                var _ref3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee22(resolve, reject) {
-	                  var sender, _babelHelpers$classPr19, videoTrack, _deviceId2;
+	                  var prevStream, sender, _babelHelpers$classPr19, videoTrack, _deviceId2;
 	                  return _regeneratorRuntime().wrap(function _callee22$(_context22) {
 	                    while (1) switch (_context22.prev = _context22.next) {
 	                      case 0:
 	                        babelHelpers.classPrivateFieldGet(_this8, _privateProperties).videoDeviceId = deviceId;
-	                        _context22.prev = 1;
+	                        prevStream = babelHelpers.classPrivateFieldGet(_this8, _privateProperties).cameraStream;
+	                        _context22.prev = 2;
 	                        sender = _classPrivateMethodGet(_this8, _getSender, _getSender2).call(_this8, MediaStreamsKinds.Camera);
 	                        if (!(sender && _this8.isVideoPublished())) {
-	                          _context22.next = 14;
+	                          _context22.next = 15;
 	                          break;
 	                        }
 	                        _this8.setLog('Have sender for video, start replacing track', LOG_LEVEL.INFO);
 	                        (_babelHelpers$classPr19 = babelHelpers.classPrivateFieldGet(_this8, _privateProperties).cameraStream) === null || _babelHelpers$classPr19 === void 0 ? void 0 : _babelHelpers$classPr19.getVideoTracks()[0].stop();
 	                        babelHelpers.classPrivateFieldGet(_this8, _privateProperties).cameraStream = null;
-	                        _context22.next = 9;
+	                        _context22.next = 10;
 	                        return _this8.getLocalVideo();
-	                      case 9:
+	                      case 10:
 	                        videoTrack = _context22.sent;
 	                        videoTrack.source = MediaStreamsKinds.Camera;
-	                        _context22.next = 13;
+	                        _context22.next = 14;
 	                        return sender.replaceTrack(videoTrack);
-	                      case 13:
-	                        _classPrivateMethodGet(_this8, _updateVideoEncodings, _updateVideoEncodings2).call(_this8, sender, videoTrack);
 	                      case 14:
+	                        _classPrivateMethodGet(_this8, _updateVideoEncodings, _updateVideoEncodings2).call(_this8, sender, videoTrack);
+	                      case 15:
 	                        _this8.setLog('Switching a video device succeeded', LOG_LEVEL.INFO);
-	                        _context22.next = 20;
+	                        _context22.next = 23;
 	                        break;
-	                      case 17:
-	                        _context22.prev = 17;
-	                        _context22.t0 = _context22["catch"](1);
+	                      case 18:
+	                        _context22.prev = 18;
+	                        _context22.t0 = _context22["catch"](2);
+	                        error = _context22.t0;
 	                        _this8.setLog("Switching a video device failed: ".concat(_context22.t0), LOG_LEVEL.ERROR);
-	                      case 20:
-	                        _context22.prev = 20;
+	                        if (!babelHelpers.classPrivateFieldGet(_this8, _privateProperties).cameraStream) {
+	                          babelHelpers.classPrivateFieldGet(_this8, _privateProperties).cameraStream = prevStream;
+	                        }
+	                      case 23:
+	                        _context22.prev = 23;
 	                        if (!babelHelpers.classPrivateFieldGet(_this8, _privateProperties).switchActiveVideoDevicePending) {
-	                          _context22.next = 27;
+	                          _context22.next = 30;
 	                          break;
 	                        }
 	                        _deviceId2 = babelHelpers.classPrivateFieldGet(_this8, _privateProperties).switchActiveVideoDevicePending;
 	                        babelHelpers.classPrivateFieldGet(_this8, _privateProperties).switchActiveVideoDevicePending = null;
 	                        resolve(_this8.switchActiveVideoDevice(_deviceId2, true));
-	                        _context22.next = 29;
+	                        _context22.next = 33;
 	                        break;
-	                      case 27:
-	                        babelHelpers.classPrivateFieldGet(_this8, _privateProperties).switchActiveVideoDeviceInProgress = null;
-	                        return _context22.abrupt("return", resolve());
-	                      case 29:
-	                        return _context22.finish(20);
 	                      case 30:
+	                        fulfilled = true;
+	                        babelHelpers.classPrivateFieldGet(_this8, _privateProperties).switchActiveVideoDeviceInProgress = null;
+	                        return _context22.abrupt("return", error ? reject(error) : resolve());
+	                      case 33:
+	                        return _context22.finish(23);
+	                      case 34:
 	                      case "end":
 	                        return _context22.stop();
 	                    }
-	                  }, _callee22, null, [[1, 17, 20, 30]]);
+	                  }, _callee22, null, [[2, 18, 23, 34]]);
 	                }));
 	                return function (_x19, _x20) {
 	                  return _ref3.apply(this, arguments);
 	                };
 	              }());
-	              if (!force) {
+	              if (!force && !fulfilled) {
 	                babelHelpers.classPrivateFieldGet(this, _privateProperties).switchActiveVideoDeviceInProgress = promise;
 	              }
 	              return _context23.abrupt("return", promise);
-	            case 8:
+	            case 9:
 	            case "end":
 	              return _context23.stop();
 	          }
@@ -8307,6 +8331,12 @@ this.BX = this.BX || {};
 	  return DeviceMenu;
 	}();
 
+	var CallAiError = {
+	  AI_UNAVAILABLE_ERROR: 'AI_UNAVAILABLE_ERROR',
+	  AI_SETTINGS_ERROR: 'AI_SETTINGS_ERROR',
+	  AI_AGREEMENT_ERROR: 'AI_AGREEMENT_ERROR',
+	  AI_NOT_ENOUGH_BAAS_ERROR: 'AI_NOT_ENOUGH_BAAS_ERROR'
+	};
 	var CallAi = /*#__PURE__*/function () {
 	  function CallAi() {
 	    babelHelpers.classCallCheck(this, CallAi);
@@ -8352,6 +8382,27 @@ this.BX = this.BX || {};
 	      }
 	      if (options.helpSlider) {
 	        this.helpSlider = options.helpSlider;
+	      }
+	    }
+	  }, {
+	    key: "handleCopilotError",
+	    value: function handleCopilotError(errorType) {
+	      switch (errorType) {
+	        case CallAiError.AI_UNAVAILABLE_ERROR:
+	          this.tariffAvailable = false;
+	          break;
+	        case CallAiError.AI_SETTINGS_ERROR:
+	          this.settingsEnabled = false;
+	          break;
+	        case CallAiError.AI_AGREEMENT_ERROR:
+	          this.agreementAccepted = false;
+	          break;
+	        case CallAiError.AI_NOT_ENOUGH_BAAS_ERROR:
+	          this.baasAvailable = false;
+	          break;
+	        default:
+	          console.error('there are no such errorTypes');
+	          break;
 	      }
 	    }
 	  }, {
@@ -17664,6 +17715,7 @@ this.BX = this.BX || {};
 	        })["catch"](function (e) {
 	          _this4.log(e);
 	          console.error(e);
+	          babelHelpers.classPrivateFieldGet(_this4, _onBeforeLocalMediaRendererRemoved).call(_this4, MediaStreamsKinds.Camera);
 	        });
 	      }
 	    }
@@ -17694,6 +17746,10 @@ this.BX = this.BX || {};
 	        })["catch"](function (e) {
 	          _this5.log(e);
 	          console.error(e);
+	          _this5.runCallback(CallEvent.onUserMicrophoneState, {
+	            userId: _this5.userId,
+	            microphoneState: false
+	          });
 	        })["finally"](function () {
 	          _classPrivateMethodGet$2(_this5, _setPublishingState, _setPublishingState2).call(_this5, MediaStreamsKinds.Microphone, false);
 	          if (Hardware.isMicrophoneMuted && !_this5.canChangeMediaDevices()) {
@@ -24714,6 +24770,7 @@ this.BX = this.BX || {};
 	    this.popupTemplate = null;
 	    this.isCopilotActive = config.isCopilotActive;
 	    this.isCopilotFeaturesEnabled = config.isCopilotFeaturesEnabled;
+	    this.callId = config.callId;
 	    this.callbacks = {
 	      updateCopilotState: BX.type.isFunction(config.updateCopilotState) ? config.updateCopilotState : BX.DoNothing,
 	      onClose: BX.type.isFunction(config.onClose) ? config.onClose : BX.DoNothing
@@ -24739,6 +24796,7 @@ this.BX = this.BX || {};
 	          };
 	        }
 	        if (!_this.isCopilotFeaturesEnabled) {
+	          _this.sendAnalytics('private_coming_soon');
 	          return {
 	            props: {
 	              className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_transparent'
@@ -24747,6 +24805,7 @@ this.BX = this.BX || {};
 	          };
 	        }
 	        if (!CallAI.tariffAvailable) {
+	          _this.sendAnalytics('tariff_limit');
 	          return {
 	            props: {
 	              className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_green'
@@ -24754,13 +24813,23 @@ this.BX = this.BX || {};
 	            text: BX.message('CALL_COPILOT_POPUP_TARIFF_UP'),
 	            events: {
 	              click: function click() {
-	                Util.openArticle(CallAI.baasPromoSlider);
+	                Util.openArticle(CallAI.helpSlider);
 	                _this.close();
 	              }
 	            }
 	          };
 	        }
+	        if (!CallAI.settingsEnabled) {
+	          _this.sendAnalytics('error_turnedoff');
+	          return {
+	            props: {
+	              className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_transparent'
+	            },
+	            text: main_core.Loc.getMessage('CALL_COPILOT_POPUP_SETTINGS_DISABLED')
+	          };
+	        }
 	        if (!CallAI.agreementAccepted) {
+	          _this.sendAnalytics('agreement_limit');
 	          return {
 	            props: {
 	              className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_transparent'
@@ -24769,6 +24838,7 @@ this.BX = this.BX || {};
 	          };
 	        }
 	        if (!CallAI.baasAvailable) {
+	          _this.sendAnalytics('baas_limit');
 	          return {
 	            props: {
 	              className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_green'
@@ -24961,6 +25031,14 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      this.close();
+	    }
+	  }, {
+	    key: "sendAnalytics",
+	    value: function sendAnalytics(popupType) {
+	      call_lib_analytics.Analytics.getInstance().copilot.onAIRestrictionsPopupShow({
+	        callId: this.callId,
+	        popupType: popupType
+	      });
 	    }
 	  }]);
 	  return CopilotPopup;
@@ -27479,6 +27557,11 @@ this.BX = this.BX || {};
 	      }).then(function () {
 	        var newCopilotState = !_this24.currentCall.isCopilotActive;
 	        _this24._onUpdateCallCopilotState(newCopilotState);
+	        call_lib_analytics.Analytics.getInstance().copilot.onAIRecordStatusChanged({
+	          isAIOn: newCopilotState,
+	          callId: _this24.currentCall.id,
+	          callType: _this24.getCallType()
+	        });
 	        if (!newCopilotState) {
 	          _this24.showCopilotResultNotify();
 	        } else {
@@ -27486,9 +27569,16 @@ this.BX = this.BX || {};
 	        }
 	      })["catch"](function (error) {
 	        var errorCode = error.errors[0].code;
+	        CallAI.handleCopilotError(errorCode);
 	        if (_this24.callView) {
-	          _this24.callView.showCopilotErrorNotify(error.errors[0].code);
+	          _this24.callView.showCopilotErrorNotify(errorCode);
 	        }
+	        call_lib_analytics.Analytics.getInstance().copilot.onAIRecordStatusChanged({
+	          isAIOn: newCopilotState,
+	          callId: _this24.currentCall.id,
+	          callType: _this24.getCallType(),
+	          error: errorCode
+	        });
 	        _this24.sendStartCopilotRecordAnalytics(errorCode);
 	      });
 	    }
@@ -27501,13 +27591,14 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      var isPlainCall = this.currentCall.provider === Provider.Plain;
-	      if (!isPlainCall && !CallAI.settingsEnabled) {
+	      if (!isPlainCall && !CallAI.tariffAvailable) {
 	        Util.openArticle(CallAI.helpSlider);
 	        return;
 	      }
 	      this.copilotPopup = new CopilotPopup({
 	        isCopilotActive: this.currentCall.isCopilotActive,
 	        isCopilotFeaturesEnabled: this.currentCall.isCopilotFeaturesEnabled,
+	        callId: this.currentCall.id,
 	        updateCopilotState: function updateCopilotState() {
 	          _this25._onChangeStateCopilot();
 	        },
@@ -27545,6 +27636,10 @@ this.BX = this.BX || {};
 	    value: function showCopilotNotify() {
 	      var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 	      if ((this.currentCall.isCopilotActive || force) && this.currentCall.provider !== Provider.Plain && this.callView) {
+	        call_lib_analytics.Analytics.getInstance().copilot.onCopilotNotifyShow({
+	          isCopilotActive: this.currentCall.isCopilotActive,
+	          callId: this.currentCall.id
+	        });
 	        this.callView.showCopilotNotify();
 	      }
 	    }
@@ -27575,7 +27670,7 @@ this.BX = this.BX || {};
 	      if (userCount) {
 	        params.userCount = userCount + 1;
 	      }
-	      call_lib_analytics.Analytics.getInstance().onAIRecordStart(params);
+	      call_lib_analytics.Analytics.getInstance().copilot.onAIRecordStart(params);
 	    }
 	  }, {
 	    key: "_onCallViewToggleScreenSharingButtonClick",
@@ -29649,5 +29744,5 @@ this.BX = this.BX || {};
 	exports.CopilotPopup = CopilotPopup;
 	exports.CallAI = CallAI;
 
-}((this.BX.Call = this.BX.Call || {}),BX.Messenger.Lib,BX.Messenger.v2.Lib,BX.UI,BX.UI.Dialogs,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Intranet,BX.Event,BX.Messenger.v2.Lib,BX.Call.Lib,BX,BX.Main,BX.Call.Component,BX.Call.Component,BX,BX,BX,BX.Messenger.Lib));
+}((this.BX.Call = this.BX.Call || {}),BX.Messenger.Lib,BX.Messenger.v2.Lib,BX.UI,BX.UI.Dialogs,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Intranet,BX.Event,BX.Messenger.v2.Lib,BX,BX.Main,BX.Call.Lib,BX.Call.Component,BX.Call.Component,BX,BX,BX,BX.Messenger.Lib));
 //# sourceMappingURL=call.bundle.js.map

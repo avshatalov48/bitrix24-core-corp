@@ -208,14 +208,14 @@ endif;
 				</span>
 				<div class="meeting-new-members-block">
 					<span class="meeting-new-members">
-						<a href="javascript:void(0)" class="meeting-new-members-left meeting-dash-link" onclick="BXSelectMembers(this)"><?=GetMessage('ME_MEMBERS')?>:</a>
+						<a href="javascript:void(0)" class="meeting-new-members-left meeting-dash-link" onclick="BXSelectMembers(this)"><?=GetMessage('ME_MEMBERS_MSGVER_1')?></a>
 						<span class="meeting-new-members-right" id="meeting_members">
 
 						</span>
 					</span>
 <?/*<span class="meeting-new-members"><span class="meeting-new-members-left meeting-dash-link"><?=GetMessage('ME_PLANNER')?></span></span>*/?>
 					<span class="meeting-new-members">
-						<a href="javascript:void(0)" class="meeting-new-members-left meeting-dash-link" onclick="BXSelectKeepers(this)"><?=GetMessage('ME_KEEPER')?>:</a>
+						<a href="javascript:void(0)" class="meeting-new-members-left meeting-dash-link" onclick="BXSelectKeepers(this)"><?=GetMessage('ME_KEEPER_MSGVER_1')?></a>
 						<span class="meeting-new-members-right" id="meeting_keepers"></span>
 					</span>
 				</div>
@@ -387,20 +387,20 @@ function BXOnGroupChange(group)
 	if (!!group && group.length > 0)
 	{
 		group = group[0];
-		BX('ingroup_link', true).innerHTML = '<?=CUtil::JSEscape(GetMessage('ME_GROUP'))?>: ' + BX.util.htmlspecialchars(group.title)
+		BX('ingroup_link', true).innerHTML = '<?=CUtil::JSEscape(GetMessage('ME_GROUP_MSGVER_1'))?> ' + BX.util.htmlspecialchars(group.title)
 		BX('ingroup_link', true).nextSibling.style.visibility = 'visible';
 		document.forms.meeting_edit.GROUP_ID.value = group.id;
 	}
 	else
 	{
-		BX('ingroup_link', true).innerHTML = '<?=CUtil::JSEscape(GetMessage('ME_GROUP'))?>';
+		BX('ingroup_link', true).innerHTML = '<?=CUtil::JSEscape(GetMessage('ME_EMPTY_GROUP'))?>';
 		BX('ingroup_link', true).nextSibling.style.visibility = 'hidden';
 		document.forms.meeting_edit.GROUP_ID.value = '';
 	}
 }
 </script>
 					<span class="meeting-new-ingroup-wrap">
-						<span class="meeting-dash-link meeting-new-ingroup" id="ingroup_link" onclick="groupsPopup.show()"><?=GetMessage('ME_GROUP')?></span><span class="meeting-del-icon" onclick="BXOnGroupChange()" style="visibility: <?=($arResult['MEETING']['GROUP_ID'] ?? null) > 0 ? 'visible' : 'hidden'?>"></span><input type="hidden" name="GROUP_ID" value="<?=($arResult['MEETING']['GROUP_ID'] ?? null)?>" />
+						<span class="meeting-dash-link meeting-new-ingroup" id="ingroup_link" onclick="groupsPopup.show()"><?=GetMessage('ME_EMPTY_GROUP')?></span><span class="meeting-del-icon" onclick="BXOnGroupChange()" style="visibility: <?=($arResult['MEETING']['GROUP_ID'] ?? null) > 0 ? 'visible' : 'hidden'?>"></span><input type="hidden" name="GROUP_ID" value="<?=($arResult['MEETING']['GROUP_ID'] ?? null)?>" />
 					</span>
 <?
 endif;

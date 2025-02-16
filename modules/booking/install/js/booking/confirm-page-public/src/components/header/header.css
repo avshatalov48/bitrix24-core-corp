@@ -1,0 +1,58 @@
+.confirm-page-header{
+	align-self: stretch;
+	padding-bottom: 8px;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: center;
+	gap: 8px;
+	display: flex;
+}
+
+.confirm-page-header-status{
+	padding-top: 6px;
+	padding-bottom: 12px;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: center;
+	gap: 12px;
+	display: flex;
+}
+
+.confirm-page-header-status-title {
+	color: var(--ui-color-palette-green-60);
+	line-height: 16px;
+}
+
+.confirm-page-header-status-title.--canceled {
+	color: var(--ui-color-palette-red-60);
+}
+
+.confirm-page-header-status-title.--delayed {
+	color: var(--ui-color-palette-gray-60);
+}
+
+.confirm-page-header-company{
+	align-self: stretch;
+	padding-bottom: 12px;
+	justify-content: center;
+	align-items: flex-start;
+	display: inline-flex;
+}
+
+.confirm-page-header-company-title{
+	color: var(--ui-color-text-primary);
+	font-weight: var(--ui-font-weight-semi-bold);
+}
+
+.confirm-page-header-status-icon{
+	width: 54px;
+	height: 54px;
+	justify-content: center;
+	align-items: center;
+	display: inline-flex;
+}
+
+.confirm-page-header-status-icon div.--canceled{
+	border: 25px solid var(--ui-color-palette-red-30);
+	border-radius: 50px;
+}

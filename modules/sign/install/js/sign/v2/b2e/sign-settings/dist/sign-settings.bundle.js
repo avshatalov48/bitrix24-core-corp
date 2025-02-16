@@ -2,15 +2,36 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports,main_core,sign_v2_api,sign_v2_b2e_companySelector,sign_v2_b2e_documentSend,sign_v2_b2e_documentSetup,sign_v2_b2e_parties,sign_v2_b2e_userParty,sign_v2_documentSetup,sign_v2_editor,sign_v2_helper,sign_v2_signSettings) {
+(function (exports,main_core,main_core_cache,sign_featureStorage,sign_v2_api,sign_v2_b2e_companySelector,sign_v2_b2e_documentSend,sign_v2_b2e_documentSetup,sign_v2_b2e_parties,sign_v2_b2e_userParty,sign_v2_documentSetup,sign_v2_editor,sign_v2_helper,sign_v2_signSettings,ui_sidepanel_layout,ui_uploader_core) {
 	'use strict';
 
+	let _ = t => t,
+	  _t,
+	  _t2,
+	  _t3,
+	  _t4,
+	  _t5,
+	  _t6,
+	  _t7,
+	  _t8;
+	const acceptedUploaderFileTypes = new Set(['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'rtf', 'odt']);
 	var _companyParty = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("companyParty");
 	var _userParty = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userParty");
 	var _api = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("api");
+	var _maxDocumentCount = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("maxDocumentCount");
+	var _cache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
+	var _regionDocumentTypes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("regionDocumentTypes");
+	var _saveButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveButton");
+	var _isMultiDocumentSaveProcessGone = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isMultiDocumentSaveProcessGone");
 	var _prepareConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareConfig");
+	var _editDocumentData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("editDocumentData");
+	var _handleEditedDocument = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleEditedDocument");
+	var _removeDocumentElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeDocumentElement");
+	var _attachGroupToDocument = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("attachGroupToDocument");
+	var _saveUpdatedDocumentData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveUpdatedDocumentData");
+	var _deleteDocument = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deleteDocument");
 	var _setupParties = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setupParties");
-	var _syncMembers = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("syncMembers");
+	var _syncMembersWithDepartments = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("syncMembersWithDepartments");
 	var _sleep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sleep");
 	var _documentUid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentUid");
 	var _isDocumentInitiatedByEmployee = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDocumentInitiatedByEmployee");
@@ -33,6 +54,25 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _sendAnalyticsOnSendStepSuccess = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalyticsOnSendStepSuccess");
 	var _sendAnalyticsOnSendStepError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalyticsOnSendStepError");
 	var _sendAnalyticsOnStart = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalyticsOnStart");
+	var _processSetupData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processSetupData");
+	var _addDocumentInGroup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addDocumentInGroup");
+	var _scrollToTop = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scrollToTop");
+	var _scrollToDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scrollToDown");
+	var _resetDocument = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetDocument");
+	var _checkDocumentLimit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkDocumentLimit");
+	var _onBeforePreviewBtnClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onBeforePreviewBtnClick");
+	var _getMultiDocumentAddSidePanelContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMultiDocumentAddSidePanelContent");
+	var _getDocumentNumber = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDocumentNumber");
+	var _getUploader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUploader");
+	var _resetAfterPreviewSidePanel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetAfterPreviewSidePanel");
+	var _getUploadFileButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUploadFileButton");
+	var _getUploadFileFromDirButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUploadFileFromDirButton");
+	var _onInputFileChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onInputFileChange");
+	var _onFileAdd = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFileAdd");
+	var _onBeforePreviewSaveBtnClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onBeforePreviewSaveBtnClick");
+	var _onUploadComplete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onUploadComplete");
+	var _getDocumentTypeSelectorLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDocumentTypeSelectorLayout");
+	var _onBeforeFilesAdd = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onBeforeFilesAdd");
 	class B2ESignSettings extends sign_v2_signSettings.SignSettings {
 	  constructor(containerId, _signOptions) {
 	    super(containerId, _signOptions, {
@@ -43,6 +83,63 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	        className: 'ui-btn-success'
 	      },
 	      swapButtons: true
+	    });
+	    Object.defineProperty(this, _onBeforeFilesAdd, {
+	      value: _onBeforeFilesAdd2
+	    });
+	    Object.defineProperty(this, _getDocumentTypeSelectorLayout, {
+	      value: _getDocumentTypeSelectorLayout2
+	    });
+	    Object.defineProperty(this, _onUploadComplete, {
+	      value: _onUploadComplete2
+	    });
+	    Object.defineProperty(this, _onBeforePreviewSaveBtnClick, {
+	      value: _onBeforePreviewSaveBtnClick2
+	    });
+	    Object.defineProperty(this, _onFileAdd, {
+	      value: _onFileAdd2
+	    });
+	    Object.defineProperty(this, _onInputFileChange, {
+	      value: _onInputFileChange2
+	    });
+	    Object.defineProperty(this, _getUploadFileFromDirButton, {
+	      value: _getUploadFileFromDirButton2
+	    });
+	    Object.defineProperty(this, _getUploadFileButton, {
+	      value: _getUploadFileButton2
+	    });
+	    Object.defineProperty(this, _resetAfterPreviewSidePanel, {
+	      value: _resetAfterPreviewSidePanel2
+	    });
+	    Object.defineProperty(this, _getUploader, {
+	      value: _getUploader2
+	    });
+	    Object.defineProperty(this, _getDocumentNumber, {
+	      value: _getDocumentNumber2
+	    });
+	    Object.defineProperty(this, _getMultiDocumentAddSidePanelContent, {
+	      value: _getMultiDocumentAddSidePanelContent2
+	    });
+	    Object.defineProperty(this, _onBeforePreviewBtnClick, {
+	      value: _onBeforePreviewBtnClick2
+	    });
+	    Object.defineProperty(this, _checkDocumentLimit, {
+	      value: _checkDocumentLimit2
+	    });
+	    Object.defineProperty(this, _resetDocument, {
+	      value: _resetDocument2
+	    });
+	    Object.defineProperty(this, _scrollToDown, {
+	      value: _scrollToDown2
+	    });
+	    Object.defineProperty(this, _scrollToTop, {
+	      value: _scrollToTop2
+	    });
+	    Object.defineProperty(this, _addDocumentInGroup, {
+	      value: _addDocumentInGroup2
+	    });
+	    Object.defineProperty(this, _processSetupData, {
+	      value: _processSetupData2
 	    });
 	    Object.defineProperty(this, _sendAnalyticsOnStart, {
 	      value: _sendAnalyticsOnStart2
@@ -112,11 +209,29 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    Object.defineProperty(this, _sleep, {
 	      value: _sleep2
 	    });
-	    Object.defineProperty(this, _syncMembers, {
-	      value: _syncMembers2
+	    Object.defineProperty(this, _syncMembersWithDepartments, {
+	      value: _syncMembersWithDepartments2
 	    });
 	    Object.defineProperty(this, _setupParties, {
 	      value: _setupParties2
+	    });
+	    Object.defineProperty(this, _deleteDocument, {
+	      value: _deleteDocument2
+	    });
+	    Object.defineProperty(this, _saveUpdatedDocumentData, {
+	      value: _saveUpdatedDocumentData2
+	    });
+	    Object.defineProperty(this, _attachGroupToDocument, {
+	      value: _attachGroupToDocument2
+	    });
+	    Object.defineProperty(this, _removeDocumentElement, {
+	      value: _removeDocumentElement2
+	    });
+	    Object.defineProperty(this, _handleEditedDocument, {
+	      value: _handleEditedDocument2
+	    });
+	    Object.defineProperty(this, _editDocumentData, {
+	      value: _editDocumentData2
 	    });
 	    Object.defineProperty(this, _prepareConfig, {
 	      value: _prepareConfig2
@@ -133,6 +248,26 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _maxDocumentCount, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _cache, {
+	      writable: true,
+	      value: new main_core_cache.MemoryCache()
+	    });
+	    Object.defineProperty(this, _regionDocumentTypes, {
+	      writable: true,
+	      value: []
+	    });
+	    Object.defineProperty(this, _saveButton, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _isMultiDocumentSaveProcessGone, {
+	      writable: true,
+	      value: false
+	    });
 	    const {
 	      b2eFeatureConfig,
 	      blankSelectorConfig: _blankSelectorConfig,
@@ -148,11 +283,13 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      documentMode: _signOptions.documentMode
 	    }, b2eFeatureConfig.hcmLinkAvailable);
 	    babelHelpers.classPrivateFieldLooseBase(this, _api)[_api] = new sign_v2_api.Api();
+	    babelHelpers.classPrivateFieldLooseBase(this, _maxDocumentCount)[_maxDocumentCount] = _signOptions.b2eDocumentLimitCount;
 	    babelHelpers.classPrivateFieldLooseBase(this, _userParty)[_userParty] = new sign_v2_b2e_userParty.UserParty({
 	      mode: 'edit',
 	      ...userPartyConfig
 	    });
 	    this.subscribeOnEvents();
+	    babelHelpers.classPrivateFieldLooseBase(this, _regionDocumentTypes)[_regionDocumentTypes] = _blankSelectorConfig.regionDocumentTypes;
 	  }
 	  subscribeOnEvents() {
 	    super.subscribeOnEvents();
@@ -167,11 +304,30 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    this.documentSend.subscribe('enableBack', () => {
 	      this.wizard.toggleBtnActiveState('back', false);
 	    });
+	    this.documentSetup.subscribe('addDocument', () => {
+	      this.setDocumentsGroup();
+	    });
+	    this.documentSetup.subscribe('deleteDocument', ({
+	      data
+	    }) => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _deleteDocument)[_deleteDocument](data);
+	    });
+	    this.documentSetup.subscribe('editDocument', ({
+	      data
+	    }) => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _editDocumentData)[_editDocumentData](data.uid);
+	    });
 	    this.documentSend.subscribe('enableComplete', () => {
 	      this.wizard.toggleBtnActiveState('complete', false);
 	    });
 	    this.documentSend.subscribe('disableComplete', () => {
 	      this.wizard.toggleBtnActiveState('complete', true);
+	    });
+	    this.documentSetup.subscribe('documentsLimitExceeded', () => {
+	      this.documentSetup.setAvailabilityDocumentSection(false);
+	    });
+	    this.documentSetup.subscribe('documentsLimitNotExceeded', () => {
+	      this.documentSetup.setAvailabilityDocumentSection(true);
 	    });
 	    this.documentSend.subscribe(this.documentSend.events.onTemplateComplete, event => {
 	      if (this.isTemplateMode() && !this.isEditMode()) {
@@ -191,19 +347,86 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      }
 	    });
 	  }
+	  async setDocumentsGroup() {
+	    if (this.documentSetup.blankIsNotSelected || !this.documentSetup.validate()) {
+	      return;
+	    }
+	    this.documentSetup.switchAddDocumentButtonLoadingState(true);
+	    try {
+	      const documentData = await this.setupDocument();
+	      this.documentsGroup.set(documentData.uid, documentData);
+	      this.addInDocumentsGroupUids(documentData.uid);
+	      this.documentSetup.blankSelector.disableSelectedBlank(documentData.blankId);
+	      await babelHelpers.classPrivateFieldLooseBase(this, _attachGroupToDocument)[_attachGroupToDocument](documentData);
+	      this.documentSetup.switchAddDocumentButtonLoadingState(false);
+	      if (this.editedDocument) {
+	        await babelHelpers.classPrivateFieldLooseBase(this, _handleEditedDocument)[_handleEditedDocument](documentData);
+	      } else {
+	        this.documentSetup.renderDocumentBlock(documentData);
+	      }
+	    } catch {
+	      this.documentSetup.switchAddDocumentButtonLoadingState(false);
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _scrollToTop)[_scrollToTop]();
+	    this.documentSetup.documentCounters.update(this.documentsGroup.size);
+	    babelHelpers.classPrivateFieldLooseBase(this, _resetDocument)[_resetDocument]();
+	    this.wizard.toggleBtnActiveState('next', false);
+	  }
+	  addInDocumentsGroupUids(uid) {
+	    if (!this.documentsGroupUids.includes(uid)) {
+	      this.documentsGroupUids.push(uid);
+	    }
+	  }
+	  replaceInDocumentsGroupUids(oldUid, newUid) {
+	    const index = this.documentsGroupUids.indexOf(oldUid);
+	    if (index !== -1) {
+	      this.documentsGroupUids.splice(index, 1, newUid);
+	    }
+	  }
+	  deleteFromDocumentsGroupUids(uid) {
+	    const index = this.documentsGroupUids.indexOf(uid);
+	    if (index === -1) {
+	      return;
+	    }
+	    this.documentsGroupUids.splice(index, 1);
+	  }
 	  async applyDocumentData(uid) {
 	    const setupData = await this.setupDocument(uid, true);
 	    if (!setupData) {
 	      return false;
 	    }
+	    if (setupData.groupId) {
+	      const documentsGroupData = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].getDocumentListInGroup(setupData.groupId);
+	      for (const item of documentsGroupData) {
+	        this.addInDocumentsGroupUids(item.uid);
+	        const blocks = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadBlocksByDocument(item.uid);
+	        const updatedItem = {
+	          ...item,
+	          blocks
+	        };
+	        this.documentsGroup.set(item.uid, updatedItem);
+	        this.documentSetup.renderDocumentBlock(updatedItem);
+	        this.documentSetup.blankSelector.disableSelectedBlank(updatedItem.blankId);
+	      }
+	      babelHelpers.classPrivateFieldLooseBase(this, _resetDocument)[_resetDocument]();
+	      this.groupId = setupData.groupId;
+	      this.documentSetup.documentCounters.update(this.documentsGroup.size);
+	    } else {
+	      this.documentsGroup.set(setupData.uid, setupData);
+	      this.addInDocumentsGroupUids(setupData.uid);
+	    }
+	    const firstDocument = this.getFirstDocumentDataFromGroup();
 	    const {
 	      entityId,
 	      representativeId,
 	      companyUid,
 	      hcmLinkCompanyId
-	    } = setupData;
-	    this.documentSend.documentData = setupData;
-	    this.editor.documentData = setupData;
+	    } = firstDocument;
+	    this.documentSend.documentData = this.documentsGroup;
+	    babelHelpers.classPrivateFieldLooseBase(this, _checkDocumentLimit)[_checkDocumentLimit]();
+	    if (this.isSingleDocument()) {
+	      this.editor.documentData = firstDocument;
+	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].setEntityId(entityId);
 	    if (companyUid) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].setLastSavedIntegrationId(hcmLinkCompanyId);
@@ -249,6 +472,14 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _decorateStepsBeforeCompletionWithAnalytics)[_decorateStepsBeforeCompletionWithAnalytics](steps, documentUid);
 	    return steps;
 	  }
+	  async init(uid, templateUid) {
+	    await super.init(uid, templateUid);
+	    if (this.isEditMode()) {
+	      if (!main_core.Type.isNull(this.getAfterPreviewLayout())) {
+	        BX.hide(this.getAfterPreviewLayout());
+	      }
+	    }
+	  }
 	  onComplete() {
 	    if (this.isTemplateMode()) {
 	      return;
@@ -258,22 +489,127 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  isTemplateCreateMode() {
 	    return sign_v2_signSettings.isTemplateMode(this.documentMode) && !this.isEditMode();
 	  }
+	  getAfterPreviewLayout() {
+	    if (!this.isDocumentMode() || !sign_featureStorage.FeatureStorage.isMultiDocumentLoadingEnabled()) {
+	      return null;
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('beforePreviewLayout', () => main_core.Tag.render(_t || (_t = _`
+			<button class="ui-btn ui-btn-light-border ui-btn-md" style="margin-top: 20px;" onclick="${0}">
+				${0}
+			</button>
+		`), () => babelHelpers.classPrivateFieldLooseBase(this, _onBeforePreviewBtnClick)[_onBeforePreviewBtnClick](), main_core.Loc.getMessage('SIGN_SETTINGS_B2E_BEFORE_PREVIEW')));
+	  }
 	}
 	function _prepareConfig2(signOptions) {
 	  const {
 	    config,
-	    documentMode
+	    documentMode,
+	    b2eDocumentLimitCount
 	  } = signOptions;
 	  const {
 	    blankSelectorConfig,
 	    documentSendConfig
 	  } = config;
 	  blankSelectorConfig.documentMode = documentMode;
+	  blankSelectorConfig.b2eDocumentLimitCount = b2eDocumentLimitCount;
 	  documentSendConfig.documentMode = documentMode;
 	  return config;
 	}
+	async function _editDocumentData2(uid) {
+	  if (this.editedDocument) {
+	    await babelHelpers.classPrivateFieldLooseBase(this, _saveUpdatedDocumentData)[_saveUpdatedDocumentData](this.editedDocument.uid);
+	  }
+	  if (!this.documentSetup.editMode) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _checkDocumentLimit)[_checkDocumentLimit]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _resetDocument)[_resetDocument]();
+	    return;
+	  }
+	  this.editedDocument = this.documentsGroup.get(uid);
+	  this.documentSetup.setAvailabilityDocumentSection(true);
+	  if (this.documentSetup.isRuRegion()) {
+	    this.documentSetup.setDocumentNumber(this.editedDocument.externalId);
+	  }
+	  this.documentSetup.setDocumentTitle(this.editedDocument.title);
+	  babelHelpers.classPrivateFieldLooseBase(this, _scrollToDown)[_scrollToDown]();
+	}
+	async function _handleEditedDocument2(documentData) {
+	  if (this.documentSetup.blankIsNotSelected) {
+	    this.documentSetup.resetEditMode();
+	    await babelHelpers.classPrivateFieldLooseBase(this, _saveUpdatedDocumentData)[_saveUpdatedDocumentData](this.editedDocument.uid);
+	    return;
+	  }
+	  this.deleteFromDocumentsGroupUids(documentData.uid);
+	  this.replaceInDocumentsGroupUids(this.editedDocument.uid, documentData.uid);
+	  this.documentSetup.replaceDocumentBlock(this.editedDocument, documentData);
+	  await babelHelpers.classPrivateFieldLooseBase(this, _deleteDocument)[_deleteDocument](this.editedDocument);
+	  await babelHelpers.classPrivateFieldLooseBase(this, _attachGroupToDocument)[_attachGroupToDocument](documentData);
+	  this.editor.setUrls([]);
+	}
+	function _removeDocumentElement2(documentId) {
+	  const deletedElement = this.documentSetup.layout.querySelector(`[data-id="document-id-${documentId}"]`);
+	  deletedElement == null ? void 0 : deletedElement.remove();
+	}
+	async function _attachGroupToDocument2(documentData) {
+	  if (!this.groupId) {
+	    const {
+	      groupId
+	    } = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].createDocumentsGroup();
+	    this.groupId = groupId;
+	  }
+	  try {
+	    const targetDocument = this.documentsGroup.get(documentData.uid);
+	    if (targetDocument && !targetDocument.groupId) {
+	      await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].attachGroupToDocument(documentData.uid, this.groupId);
+	      targetDocument.groupId = this.groupId;
+	    }
+	  } catch (error) {
+	    console.error(error);
+	  }
+	}
+	async function _saveUpdatedDocumentData2(uid) {
+	  const updatedDocumentData = await this.documentSetup.updateDocumentData(this.editedDocument);
+	  this.documentSetup.updateDocumentBlock(this.editedDocument.id);
+	  if (uid) {
+	    this.documentsGroup.set(this.editedDocument.uid, updatedDocumentData);
+	    this.addInDocumentsGroupUids(this.editedDocument.uid);
+	    this.documentSend.setDocumentsBlock(this.documentsGroup);
+	  }
+	}
+	async function _deleteDocument2(data) {
+	  const {
+	    id,
+	    uid,
+	    blankId,
+	    deleteButton
+	  } = data;
+	  this.documentSetup.ready = false;
+	  try {
+	    await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].removeDocument(uid);
+	    this.documentSetup.ready = true;
+	    if (this.isFirstDocumentSelected(uid)) {
+	      this.resetPreview();
+	      this.hasPreviewUrls = false;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _removeDocumentElement)[_removeDocumentElement](id);
+	    this.documentSend.deleteDocument(uid);
+	    this.documentsGroup.delete(uid);
+	    this.deleteFromDocumentsGroupUids(uid);
+	    this.documentSetup.blankSelector.enableSelectedBlank(blankId);
+	    this.documentSetup.deleteDocumentFromList(blankId);
+	    this.documentSetup.documentCounters.update(this.documentsGroup.size);
+	    this.documentSetup.resetEditMode();
+	    if (this.documentsGroup.size === 0) {
+	      this.wizard.toggleBtnActiveState('next', true);
+	    } else {
+	      this.documentSetup.setupData = this.getFirstDocumentDataFromGroup();
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _resetDocument)[_resetDocument]();
+	  } catch {
+	    this.documentSetup.toggleDeleteBtnLoadingState(deleteButton);
+	    this.documentSetup.ready = true;
+	  }
+	}
 	async function _setupParties2() {
-	  const uid = babelHelpers.classPrivateFieldLooseBase(this, _documentUid)[_documentUid];
 	  const {
 	    representative
 	  } = babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].getParties();
@@ -281,12 +617,18 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    members,
 	    signerParty
 	  } = babelHelpers.classPrivateFieldLooseBase(this, _makeSetupMembers)[_makeSetupMembers]();
-	  await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].setupB2eParties(uid, representative.entityId, members);
+	  const documentUids = [...this.documentsGroup.keys()];
+	  for (const documentUid of documentUids) {
+	    // eslint-disable-next-line no-await-in-loop
+	    await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].setupB2eParties(documentUid, representative.entityId, members);
+	  }
+	  const uid = babelHelpers.classPrivateFieldLooseBase(this, _documentUid)[_documentUid];
 	  const membersData = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadMembers(uid);
 	  if (!main_core.Type.isArrayFilled(membersData)) {
 	    throw new Error('Members are empty');
 	  }
-	  await babelHelpers.classPrivateFieldLooseBase(this, _syncMembers)[_syncMembers](uid, signerParty);
+	  const syncMemberPromises = documentUids.map(uid => babelHelpers.classPrivateFieldLooseBase(this, _syncMembersWithDepartments)[_syncMembersWithDepartments](uid, signerParty));
+	  await Promise.all(syncMemberPromises);
 	  return membersData.map(memberData => {
 	    var _memberData$entityTyp, _memberData$entityId, _memberData$role;
 	    return {
@@ -299,7 +641,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    };
 	  });
 	}
-	async function _syncMembers2(uid, signerParty) {
+	async function _syncMembersWithDepartments2(uid, signerParty) {
 	  let syncFinished = false;
 	  while (!syncFinished) {
 	    // eslint-disable-next-line no-await-in-loop
@@ -385,24 +727,34 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    get content() {
 	      const layout = signSettings.documentSetup.layout;
 	      sign_v2_helper.SignSettingsItemCounter.numerate(layout);
+	      if (!main_core.Type.isNull(signSettings.getAfterPreviewLayout())) {
+	        BX.show(signSettings.getAfterPreviewLayout());
+	      }
 	      return layout;
 	    },
 	    title: main_core.Loc.getMessage('SIGN_SETTINGS_B2B_LOAD_DOCUMENT'),
 	    beforeCompletion: async () => {
-	      const isValid = this.documentSetup.validate();
-	      if (!isValid) {
-	        return false;
+	      const blankIsSelected = this.documentSetup.blankSelector.selectedBlankId !== 0;
+	      if (blankIsSelected || this.documentSetup.isFileAdded) {
+	        const isValid = this.documentSetup.validate();
+	        if (!isValid) {
+	          return false;
+	        }
 	      }
-	      const setupDataPromise = this.setupDocument();
-	      if (!setupDataPromise) {
-	        return false;
-	      }
-	      const setupData = await setupDataPromise;
+	      const setupData = await this.setupDocument();
 	      if (!setupData) {
 	        return false;
 	      }
-	      babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].setInitiatedByType(setupData.initiatedByType);
-	      babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].setEntityId(setupData.entityId);
+	      await babelHelpers.classPrivateFieldLooseBase(this, _addDocumentInGroup)[_addDocumentInGroup](setupData);
+	      if (this.editedDocument) {
+	        await babelHelpers.classPrivateFieldLooseBase(this, _handleEditedDocument)[_handleEditedDocument](setupData);
+	      }
+	      babelHelpers.classPrivateFieldLooseBase(this, _resetDocument)[_resetDocument]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _processSetupData)[_processSetupData]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _checkDocumentLimit)[_checkDocumentLimit]();
+	      if (!main_core.Type.isNull(this.getAfterPreviewLayout())) {
+	        BX.hide(this.getAfterPreviewLayout());
+	      }
 	      return true;
 	    }
 	  };
@@ -421,32 +773,28 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	        uid
 	      } = this.documentSetup.setupData;
 	      try {
-	        await babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].save(uid);
+	        for (const [uid] of this.documentsGroup) {
+	          await babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].save(uid);
+	        }
 	        this.documentSetup.setupData.integrationId = babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].getSelectedIntegrationId();
+	        this.documentSend.hcmLinkEnabled = this.documentSetup.setupData.integrationId > 0;
 	        babelHelpers.classPrivateFieldLooseBase(this, _setSecondPartySectionVisibility)[_setSecondPartySectionVisibility]();
 	        if (this.isTemplateMode()) {
-	          this.editor.entityData = await babelHelpers.classPrivateFieldLooseBase(this, _setupParties)[_setupParties]();
+	          const entityData = await babelHelpers.classPrivateFieldLooseBase(this, _setupParties)[_setupParties]();
+	          this.editor.entityData = entityData;
 	          const {
-	            title,
 	            isTemplate,
-	            entityId,
-	            externalId,
-	            templateUid
+	            entityId
 	          } = this.documentSetup.setupData;
 	          const blocks = await this.documentSetup.loadBlocks(uid);
-	          babelHelpers.classPrivateFieldLooseBase(this, _executeDocumentSendActions)[_executeDocumentSendActions]({
-	            uid,
-	            title,
-	            blocks,
-	            externalId,
-	            templateUid
-	          });
-	          babelHelpers.classPrivateFieldLooseBase(this, _executeEditorActions)[_executeEditorActions]({
+	          babelHelpers.classPrivateFieldLooseBase(this, _executeDocumentSendActions)[_executeDocumentSendActions]();
+	          const editorData = {
 	            isTemplate,
 	            uid,
 	            blocks,
 	            entityId
-	          });
+	          };
+	          babelHelpers.classPrivateFieldLooseBase(this, _executeEditorActions)[_executeEditorActions](editorData);
 	        }
 	      } catch {
 	        return false;
@@ -472,26 +820,18 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	        this.editor.entityData = await babelHelpers.classPrivateFieldLooseBase(this, _setupParties)[_setupParties]();
 	        const {
 	          uid,
-	          title,
 	          isTemplate,
-	          externalId,
-	          entityId,
-	          integrationId
+	          entityId
 	        } = this.documentSetup.setupData;
 	        const blocks = await this.documentSetup.loadBlocks(uid);
-	        babelHelpers.classPrivateFieldLooseBase(this, _executeDocumentSendActions)[_executeDocumentSendActions]({
-	          uid,
-	          title,
-	          blocks,
-	          externalId,
-	          integrationId
-	        });
-	        babelHelpers.classPrivateFieldLooseBase(this, _executeEditorActions)[_executeEditorActions]({
+	        babelHelpers.classPrivateFieldLooseBase(this, _executeDocumentSendActions)[_executeDocumentSendActions]();
+	        const editorData = {
 	          isTemplate,
 	          uid,
 	          blocks,
 	          entityId
-	        });
+	        };
+	        await babelHelpers.classPrivateFieldLooseBase(this, _executeEditorActions)[_executeEditorActions](editorData);
 	        return true;
 	      } catch (e) {
 	        console.error(e);
@@ -500,7 +840,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    }
 	  };
 	}
-	async function _executeDocumentSendActions2(documentSendData) {
+	async function _executeDocumentSendActions2() {
 	  const partiesData = babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].getParties();
 	  Object.assign(partiesData, {
 	    employees: babelHelpers.classPrivateFieldLooseBase(this, _userParty)[_userParty].getEntities().map(entity => {
@@ -510,16 +850,18 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      };
 	    })
 	  });
-	  this.documentSend.documentData = documentSendData;
+	  this.documentSend.documentData = this.documentsGroup;
 	  this.documentSend.resetUserPartyPopup();
 	  this.documentSend.setPartiesData(partiesData);
 	}
 	async function _executeEditorActions2(editorData) {
-	  this.editor.documentData = editorData;
-	  await this.editor.waitForPagesUrls();
-	  await this.editor.renderDocument();
 	  this.wizard.toggleBtnLoadingState('next', false);
-	  await this.editor.show();
+	  if (this.isSingleDocument()) {
+	    this.editor.documentData = editorData;
+	    await this.editor.waitForPagesUrls();
+	    await this.editor.renderDocument();
+	    await this.editor.show();
+	  }
 	}
 	function _getSendStep2(signSettings) {
 	  const titleLocCode = this.isTemplateMode() ? 'SIGN_SETTINGS_SEND_DOCUMENT_CREATE' : 'SIGN_SETTINGS_SEND_DOCUMENT';
@@ -539,7 +881,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  const isInitiatedByEmployee = this.documentSetup.setupData.initiatedByType === sign_v2_documentSetup.DocumentInitiated.employee;
 	  const isInitiatedByCompany = this.documentSetup.setupData.initiatedByType === sign_v2_documentSetup.DocumentInitiated.company;
 	  const isSecondPartySectionVisible = isNotSesRuProvider || sign_v2_signSettings.isTemplateMode(this.documentMode) && isInitiatedByEmployee;
-	  const isHcmLinkIntegrationSectionVisible = this.documentSetup.setupData.integrationId > 0 || isInitiatedByCompany;
+	  const isHcmLinkIntegrationSectionVisible = this.documentSetup.setupData.integrationId > 0;
 	  this.editor.setSectionVisibilityByType(sign_v2_editor.SectionType.HcmLinkIntegration, isHcmLinkIntegrationSectionVisible);
 	  this.editor.setSectionVisibilityByType(sign_v2_editor.SectionType.SecondParty, isSecondPartySectionVisible);
 	}
@@ -641,8 +983,285 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    }
 	  }
 	}
+	async function _processSetupData2() {
+	  const firstDocumentData = this.getFirstDocumentDataFromGroup();
+	  babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].setInitiatedByType(firstDocumentData.initiatedByType);
+	  babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].setEntityId(firstDocumentData.entityId);
+	  this.editedDocument = null;
+	  if (this.hasPreviewUrls) {
+	    this.wizard.toggleBtnActiveState('next', false);
+	  }
+	}
+	async function _addDocumentInGroup2(setupData) {
+	  if (this.documentSetup.blankIsNotSelected) {
+	    return;
+	  }
+	  if (this.isTemplateMode() || !sign_featureStorage.FeatureStorage.isGroupSendingEnabled()) {
+	    this.setSingleDocument(setupData);
+	    return;
+	  }
+	  this.documentsGroup.set(setupData.uid, setupData);
+	  this.addInDocumentsGroupUids(setupData.uid);
+	  this.documentSetup.blankSelector.disableSelectedBlank(setupData.blankId);
+	  if (!setupData.groupId && !this.editedDocument) {
+	    await babelHelpers.classPrivateFieldLooseBase(this, _attachGroupToDocument)[_attachGroupToDocument](setupData);
+	  }
+	  if (!this.isTemplateMode()) {
+	    this.documentSetup.documentCounters.update(this.documentsGroup.size);
+	  }
+	  if (!this.editedDocument) {
+	    this.documentSetup.renderDocumentBlock(setupData);
+	  }
+	}
+	function _scrollToTop2() {
+	  window.scrollTo({
+	    top: 0,
+	    behavior: 'smooth'
+	  });
+	}
+	function _scrollToDown2() {
+	  window.scrollTo({
+	    top: document.body.scrollHeight,
+	    behavior: 'smooth'
+	  });
+	}
+	function _resetDocument2() {
+	  if (this.isTemplateMode() || !sign_featureStorage.FeatureStorage.isGroupSendingEnabled()) {
+	    return;
+	  }
+	  this.documentSetup.resetDocument();
+	  this.editedDocument = null;
+	}
+	function _checkDocumentLimit2() {
+	  if (this.documentsGroup.size === babelHelpers.classPrivateFieldLooseBase(this, _maxDocumentCount)[_maxDocumentCount]) {
+	    this.documentSetup.setAvailabilityDocumentSection(false);
+	  }
+	}
+	function _onBeforePreviewBtnClick2() {
+	  // eslint-disable-next-line unicorn/no-this-assignment
+	  const self = this;
+	  BX.SidePanel.Instance.open('sign-settings:afterPreviewSidePanel', {
+	    cacheable: false,
+	    width: 750,
+	    contentCallback: () => {
+	      babelHelpers.classPrivateFieldLooseBase(self, _resetAfterPreviewSidePanel)[_resetAfterPreviewSidePanel]();
+	      return ui_sidepanel_layout.Layout.createContent({
+	        extensions: ['ui.forms'],
+	        title: 'Добавить папку с файлами',
+	        content() {
+	          babelHelpers.classPrivateFieldLooseBase(self, _getUploader)[_getUploader]();
+	          return babelHelpers.classPrivateFieldLooseBase(self, _getMultiDocumentAddSidePanelContent)[_getMultiDocumentAddSidePanelContent]();
+	        },
+	        buttons({
+	          cancelButton,
+	          SaveButton
+	        }) {
+	          babelHelpers.classPrivateFieldLooseBase(self, _saveButton)[_saveButton] = new SaveButton({
+	            onclick: () => babelHelpers.classPrivateFieldLooseBase(self, _onBeforePreviewSaveBtnClick)[_onBeforePreviewSaveBtnClick]()
+	          });
+	          return [babelHelpers.classPrivateFieldLooseBase(self, _saveButton)[_saveButton]];
+	        }
+	      });
+	    },
+	    events: {
+	      onClose: event => {
+	        if (babelHelpers.classPrivateFieldLooseBase(this, _isMultiDocumentSaveProcessGone)[_isMultiDocumentSaveProcessGone]) {
+	          event.denyAction();
+	        }
+	        babelHelpers.classPrivateFieldLooseBase(this, _resetAfterPreviewSidePanel)[_resetAfterPreviewSidePanel]();
+	      }
+	    }
+	  });
+	}
+	function _getMultiDocumentAddSidePanelContent2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('multiDocumentAddSidePanelContent', () => main_core.Tag.render(_t2 || (_t2 = _`
+			<div id="multiple-document-add-container" style="display: flex; flex-direction: column;">
+				<div style="flex-direction: row;">
+					${0}
+					${0}
+				</div>
+				${0}
+				${0}
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _getUploadFileFromDirButton)[_getUploadFileFromDirButton]().root, babelHelpers.classPrivateFieldLooseBase(this, _getUploadFileButton)[_getUploadFileButton](), babelHelpers.classPrivateFieldLooseBase(this, _getDocumentNumber)[_getDocumentNumber]().root, babelHelpers.classPrivateFieldLooseBase(this, _getDocumentTypeSelectorLayout)[_getDocumentTypeSelectorLayout]().root));
+	}
+	function _getDocumentNumber2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('documentNumber', () => main_core.Tag.render(_t3 || (_t3 = _`
+			<div>
+				<h3>${0}</h3>
+				<div class="ui-ctl ui-ctl-w100" style="margin-top: 25px;">
+					<input type="text" class="ui-ctl-element" ref="numberInput" maxlength="255"/>
+				</div>
+			</div>
+		`), main_core.Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_DOCUMENT_NUMBER_TITLE')));
+	}
+	function _getUploader2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('uploader', () => {
+	    return new ui_uploader_core.Uploader({
+	      id: 'sign-settings-uploader',
+	      controller: 'sign.upload.blankUploadController',
+	      acceptedFileTypes: [...acceptedUploaderFileTypes.values()].map(a => `.${a}`),
+	      multiple: true,
+	      autoUpload: false,
+	      maxFileSize: 52428800,
+	      imageMaxFileSize: 10485760,
+	      maxTotalFileSize: 52428800,
+	      events: {
+	        [ui_uploader_core.UploaderEvent.BEFORE_FILES_ADD]: event => babelHelpers.classPrivateFieldLooseBase(this, _onBeforeFilesAdd)[_onBeforeFilesAdd](event),
+	        [ui_uploader_core.UploaderEvent.FILE_ADD]: event => babelHelpers.classPrivateFieldLooseBase(this, _onFileAdd)[_onFileAdd](event.getData().file),
+	        [ui_uploader_core.UploaderEvent.UPLOAD_COMPLETE]: event => babelHelpers.classPrivateFieldLooseBase(this, _onUploadComplete)[_onUploadComplete](event)
+	      }
+	    });
+	  });
+	}
+	function _resetAfterPreviewSidePanel2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].delete('uploader');
+	  babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].delete('uploadButton');
+	  babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].delete('uploadFromDirButton');
+	  babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].delete('documentNumber');
+	  babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].delete('numberSelectorLayout');
+	  babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].delete('multiDocumentAddSidePanelContent');
+	}
+	function _getUploadFileButton2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('uploadButton', () => {
+	    const layout = main_core.Tag.render(_t4 || (_t4 = _`
+				<div>
+					<button class="ui-btn ui-btn-light-border" style="margin-top: 15px;" onclick="${0}">${0}</button>
+					<input ref="fileInput" hidden type="file" multiple ref="fileInput" onchange="${0}"
+						accept="${0}"
+					>
+				</div>
+			`), () => layout.fileInput.click(), main_core.Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_ADD_FILE'), event => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _onInputFileChange)[_onInputFileChange](event);
+	      event.target.value = '';
+	    }, [...acceptedUploaderFileTypes.values()].map(n => `.${n}`).join(', '));
+	    return layout.root;
+	  });
+	}
+	function _getUploadFileFromDirButton2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('uploadFromDirButton', () => {
+	    const layout = main_core.Tag.render(_t5 || (_t5 = _`
+				<div>
+					<button class="ui-btn ui-btn-primary" style="margin-top: 15px;" onclick="${0}">${0}</button>
+					<input hidden type="file" webkitdirectory multiple ref="fileInput" onchange="${0}">
+				</div>
+			`), () => layout.fileInput.click(), main_core.Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_LOAD_FROM_DIRS'), event => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _onInputFileChange)[_onInputFileChange](event);
+	      event.target.value = '';
+	    });
+	    return layout;
+	  });
+	}
+	function _onInputFileChange2(event) {
+	  const target = event.target;
+	  const files = target.files;
+	  const validatedFiles = [...files].filter(f => acceptedUploaderFileTypes.has(f.name.split('.').at(-1)));
+	  babelHelpers.classPrivateFieldLooseBase(this, _getUploader)[_getUploader]().addFiles(validatedFiles);
+	}
+	function _onFileAdd2(file) {
+	  main_core.Dom.insertAfter(main_core.Tag.render(_t6 || (_t6 = _`<p style="color: #666">${0}</p>`), main_core.Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_LOADED_FILE_NAME', {
+	    '#FILENAME#': main_core.Text.encode(file.getName())
+	  })), babelHelpers.classPrivateFieldLooseBase(this, _getUploadFileButton)[_getUploadFileButton]());
+	}
+	function _onBeforePreviewSaveBtnClick2() {
+	  var _babelHelpers$classPr, _babelHelpers$classPr2;
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _getUploader)[_getUploader]().getFiles().length === 0) {
+	    alert(main_core.Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_NO_FILES_SELECTED'));
+	    return;
+	  }
+	  if (!((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _getDocumentTypeSelectorLayout)[_getDocumentTypeSelectorLayout]().selector.value) != null && _babelHelpers$classPr.trim())) {
+	    alert(main_core.Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_NO_DOCUMENT_TYPE_SELECTED'));
+	    return;
+	  }
+	  if (!((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _getDocumentNumber)[_getDocumentNumber]().numberInput.value) != null && _babelHelpers$classPr2.trim())) {
+	    alert(main_core.Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_NO_DOCUMENT_NUMBER'));
+	    return;
+	  }
+	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _getMultiDocumentAddSidePanelContent)[_getMultiDocumentAddSidePanelContent](), {
+	    opacity: 0.6,
+	    'pointer-events': 'none'
+	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _isMultiDocumentSaveProcessGone)[_isMultiDocumentSaveProcessGone] = true;
+	  babelHelpers.classPrivateFieldLooseBase(this, _getUploader)[_getUploader]().start();
+	  babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton].setClocking(true);
+	}
+	async function _onUploadComplete2(event) {
+	  const uploader = babelHelpers.classPrivateFieldLooseBase(this, _getUploader)[_getUploader]();
+	  for (const file of uploader.getFiles()) {
+	    try {
+	      const blankId = await this.documentSetup.blankSelector.createBlankFromOuterUploaderFiles([file]);
+	      this.documentSetup.blankSelector.selectBlank(blankId);
+	      this.documentSetup.setDocumentType(babelHelpers.classPrivateFieldLooseBase(this, _getDocumentTypeSelectorLayout)[_getDocumentTypeSelectorLayout]().selector.value);
+	      this.documentSetup.setDocumentNumber(babelHelpers.classPrivateFieldLooseBase(this, _getDocumentNumber)[_getDocumentNumber]().numberInput.value);
+	      await this.setDocumentsGroup();
+	    } catch (e) {
+	      console.error(`Error while add file with name ${file.getName()}`, e);
+	    }
+	  }
+	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _getMultiDocumentAddSidePanelContent)[_getMultiDocumentAddSidePanelContent](), {
+	    opacity: 1,
+	    'pointer-events': 'auto'
+	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _isMultiDocumentSaveProcessGone)[_isMultiDocumentSaveProcessGone] = false;
+	  babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton].setClocking(false);
+	  BX.SidePanel.Instance.close();
+	}
+	function _getDocumentTypeSelectorLayout2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('numberSelectorLayout', () => {
+	    return main_core.Tag.render(_t7 || (_t7 = _`
+				<div style="margin-top: 15px;">
+					<h3>${0}</h3>
+					<div class="ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown">
+						<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+						<select class="ui-ctl-element" ref="selector">
+							${0}
+						</select>
+					</div>
+				</div>
+			`), main_core.Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_DOCUMENT_TYPE_SELECTOR_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _regionDocumentTypes)[_regionDocumentTypes].map(({
+	      code,
+	      description
+	    }) => main_core.Tag.render(_t8 || (_t8 = _`
+								<option value="${0}">${0}: ${0}</option>
+							`), main_core.Text.encode(code), code, main_core.Text.encode(description))));
+	  });
+	}
+	function _onBeforeFilesAdd2(event) {
+	  const uploaderConfig = {
+	    maxFileSize: 52428800,
+	    imageMaxFileSize: 10485760,
+	    maxTotalFileSize: 52428800
+	  };
+	  const data = event.getData();
+	  const files = data.files;
+	  const uploader = babelHelpers.classPrivateFieldLooseBase(this, _getUploader)[_getUploader]();
+	  const allFilesWithNew = [...files, ...uploader.getFiles()];
+	  if (allFilesWithNew.length + this.documentsGroup.size > babelHelpers.classPrivateFieldLooseBase(this, _maxDocumentCount)[_maxDocumentCount]) {
+	    alert(main_core.Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_MAX_DOCUMENTS_COUNT_EXCEEDED'));
+	    event.preventDefault();
+	    return;
+	  }
+	  for (const file of files) {
+	    if (file.getSize() > uploaderConfig.maxFileSize) {
+	      alert(main_core.Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_INVALID_FILE_SIZE'));
+	      event.preventDefault();
+	      return;
+	    }
+	    if (file.isImage() && file.getSize() > uploaderConfig.imageMaxFileSize) {
+	      alert(main_core.Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_INVALID_IMAGE_FILE_SIZE'));
+	      event.preventDefault();
+	      return;
+	    }
+	  }
+	  const totalFileSize = allFilesWithNew.reduce((acc, file) => acc + file.getSize(), 0);
+	  if (totalFileSize > uploaderConfig.maxTotalFileSize) {
+	    alert(main_core.Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_MAX_TOTAL_FILE_SIZE_EXCEEDED'));
+	    event.preventDefault();
+	    return;
+	  }
+	}
 
 	exports.B2ESignSettings = B2ESignSettings;
 
-}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX,BX.Sign.V2,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2));
+}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX,BX.Cache,BX.Sign,BX.Sign.V2,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX.UI.SidePanel,BX.UI.Uploader));
 //# sourceMappingURL=sign-settings.bundle.js.map

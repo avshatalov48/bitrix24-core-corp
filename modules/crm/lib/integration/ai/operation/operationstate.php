@@ -37,17 +37,11 @@ final class OperationState
 			return false;
 		}
 
-		$isPending = $this->transcriptionResult?->isPending()
+		return $this->transcriptionResult?->isPending()
 			|| $this->summarizeResult?->isPending()
 			|| $this->fillResult?->isPending()
+			|| $this->callScoringResult?->isPending()
 		;
-
-		if (Scenario::isMultiScenarioEnabled())
-		{
-			$isPending = $isPending || $this->callScoringResult?->isPending();
-		}
-
-		return $isPending;
 	}
 
 	public function isLaunchOperationsSuccess(bool $checkBindings = true): bool
@@ -72,17 +66,11 @@ final class OperationState
 			}
 		}
 
-		$isSuccess = $this->transcriptionResult?->isSuccess()
+		return $this->transcriptionResult?->isSuccess()
 			&& $this->summarizeResult?->isSuccess()
 			&& $this->fillResult?->isSuccess()
+			&& $this->callScoringResult?->isSuccess()
 		;
-
-		if (Scenario::isMultiScenarioEnabled())
-		{
-			$isSuccess = $isSuccess && $this->callScoringResult?->isSuccess();
-		}
-
-		return $isSuccess;
 	}
 	// endregion
 
@@ -226,11 +214,7 @@ final class OperationState
 
 		$this->transcriptionResult = $jobRepo->getTranscribeCallRecordingResultByActivity($this->activityId);
 		$this->summarizeResult = $jobRepo->getSummarizeCallTranscriptionResultByActivity($this->activityId);
-
-		if (Scenario::isMultiScenarioEnabled())
-		{
-			$this->callScoringResult = $jobRepo->getCallScoringResult($this->activityId);
-		}
+		$this->callScoringResult = $jobRepo->getCallScoringResult($this->activityId);
 
 		if ($this->isValidParams())
 		{

@@ -1,0 +1,97 @@
+.crm-entity-details-page-background {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100vh;
+}
+
+.ui-side-panel-wrap-workarea {
+	background: none;
+}
+
+.crm-iframe-popup.crm-detail-page.template-bitrix24.crm-iframe-popup-no-scroll.task-iframe-popup {
+	padding: 0;
+}
+
+.crm-entity-details-error-error-background {
+	display: flex;
+	justify-content: space-between;
+	flex-direction: column;
+	align-items: center;
+
+	width: 539px;
+	height: 446px;
+	top: 184px;
+	left: 214px;
+	border-radius: 32px;
+	background: var(--ui-color-background-primary);
+}
+
+.crm-entity-details-error-message-text {
+	width: 460px;
+
+	font-style: normal;
+	font-family: var(--ui-font-family-system);
+	font-size: var(--ui-font-size-xl);
+	line-height: 20.8px;
+	text-align: center;
+	color: var(--ui-color-palette-gray-60);
+
+	margin-bottom: 22px;
+}
+
+.crm-entity-details-error-image {
+	width: 143px;
+	height: 144px;
+	margin-top: 117.5px;
+	background: url(images/error.svg) no-repeat;
+}
+
+.crm-entity-details-error-image-no-access-error {
+	width: 470px;
+	height: 246px;
+	margin-top: 49px;
+	background: url(images/no-access-error.svg) no-repeat;
+}
+
+.crm-entity-details-error-image-no-read-permission-error {
+	width: 470px;
+	height: 246px;
+	margin-top: 49px;
+	background: url(images/no-read-permission-error.svg) no-repeat;
+}
+
+.crm-entity-details-error-message-close-button {
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+}
+
+.crm-entity-details-error-close-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	cursor: pointer;
+
+	width: 139px;
+	height: 39px;
+	top: 362px;
+	left: 200px;
+	margin-bottom: 45px;
+	border-style: solid;
+	border-color: var(--ui-color-palette-gray-60);
+	border-width: 1px;
+	border-radius: 64px;
+
+	background: var(--ui-color-background-primary);
+
+	font-style: normal;
+	font-family: var(--ui-font-family-system);
+	font-size: var(--ui-font-size-xl);
+
+	line-height: 16px;
+	text-align: left;
+
+	color: #525C69;
+}

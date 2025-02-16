@@ -359,7 +359,8 @@ class CCrmDealDetailsComponent
 
 		if ($this->entityID > 0 && !\CCrmDeal::Exists($this->entityID))
 		{
-			ShowError(GetMessage('CRM_DEAL_NOT_FOUND'));
+			Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::EntityNotExist, CCrmOwnerType::Deal);
+
 			return;
 		}
 
@@ -426,12 +427,16 @@ class CCrmDealDetailsComponent
 
 		if ($this->isCopyMode)
 		{
-			if (
-				!\CCrmDeal::CheckReadPermission($this->entityID, $this->userPermissions, $this->categoryID)
-				|| !\CCrmDeal::CheckCreatePermission($this->userPermissions, $this->categoryID)
-			)
+			if (!\CCrmDeal::CheckReadPermission($this->entityID, $this->userPermissions, $this->categoryID))
 			{
-				ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoReadPermission, CCrmOwnerType::Deal);
+
+				return;
+			}
+			elseif (!\CCrmDeal::CheckCreatePermission($this->userPermissions, $this->categoryID))
+			{
+				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAddPermission, CCrmOwnerType::Deal);
+
 				return;
 			}
 		}
@@ -449,7 +454,8 @@ class CCrmDealDetailsComponent
 				&&\CCrmDeal::CheckReadPermission($this->entityID, $this->userPermissions, $this->categoryID)
 				&& \CCrmDeal::CheckCreatePermission($this->userPermissions, $recurring['CATEGORY_ID'])))
 			{
-				ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAddPermission, CCrmOwnerType::Deal);
+
 				return;
 			}
 
@@ -458,17 +464,28 @@ class CCrmDealDetailsComponent
 		elseif ($this->isEditMode)
 		{
 			if (
+				!\CCrmDeal::CheckUpdatePermission(0)
+				&& !\CCrmDeal::CheckReadPermission()
+			)
+			{
+				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAccessToEntityType, CCrmOwnerType::Deal);
+
+				return;
+			}
+			elseif (
 				!\CCrmDeal::CheckUpdatePermission($this->entityID, $this->userPermissions, $this->categoryID)
 				&& !\CCrmDeal::CheckReadPermission($this->entityID, $this->userPermissions, $this->categoryID)
 			)
 			{
-				ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoReadPermission, CCrmOwnerType::Deal);
+
 				return;
 			}
 		}
 		elseif (!\CCrmDeal::CheckCreatePermission($this->userPermissions, $this->categoryID))
 		{
-			ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+			Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAddPermission, CCrmOwnerType::Deal);
+
 			return;
 		}
 		//endregion

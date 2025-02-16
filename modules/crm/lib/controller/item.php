@@ -24,6 +24,7 @@ use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ORM\Fields\Relations\Relation;
 use Bitrix\Main\Type\Collection;
 use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Main\InvalidOperationException;
 
 class Item extends Base
 {
@@ -80,10 +81,21 @@ class Item extends Base
 				$this->getMultiFields(),
 			);
 		}
-		$item = $factory->getItems([
-			'select' => $select,
-			'filter' => ['=ID' => $id],
-		])[0] ?? null;
+		try
+		{
+			$item = $factory->getItems([
+				'select' => $select,
+				'filter' => ['=ID' => $id],
+			])[0] ?? null;
+		}
+		catch (InvalidOperationException $e)
+		{
+			$this->addError(new Error(
+				$e->getMessage()
+			));
+			return null;
+		}
+
 		if (!$item)
 		{
 			$this->addError(new Error(
@@ -175,8 +187,18 @@ class Item extends Base
 			$parameters['limit'] = $pageNavigation->getLimit();
 		}
 
-		$items = $factory->getItemsFilteredByPermissions($parameters);
-		$items = array_values($this->getJsonForItems($factory, $items, $select));
+		try
+		{
+			$items = $factory->getItemsFilteredByPermissions($parameters);
+			$items = array_values($this->getJsonForItems($factory, $items, $select));
+		}
+		catch (InvalidOperationException $e)
+		{
+			$this->addError(new Error(
+				$e->getMessage()
+			));
+			return null;
+		}
 
 		return new Page(
 			'items',
@@ -200,7 +222,18 @@ class Item extends Base
 		{
 			return null;
 		}
-		$item = $factory->getItem($id);
+		try
+		{
+			$item = $factory->getItem($id);
+		}
+		catch (InvalidOperationException $e)
+		{
+			$this->addError(new Error(
+				$e->getMessage()
+			));
+			return null;
+		}
+
 		if (!$item)
 		{
 			$this->addError(new Error(
@@ -404,10 +437,17 @@ class Item extends Base
 		{
 			return null;
 		}
-		$item = $factory->createItem();
-
-		$fields = $this->convertKeysToUpper($fields);
-		$this->processFields($item, $fields, $factory->getFieldsCollection());
+		try
+		{
+			$item = $factory->createItem();
+		}
+		catch (InvalidOperationException $e)
+		{
+			$this->addError(new Error(
+				$e->getMessage()
+			));
+			return null;
+		}
 
 		if (!Container::getInstance()->getUserPermissions()->canAddItem($item))
 		{
@@ -415,6 +455,18 @@ class Item extends Base
 
 			return null;
 		}
+
+		if (isset($fields['fm']) && $factory->isMultiFieldsEnabled())
+		{
+			$fmValues = $this->getFmValues($fields);
+			$this->setFm($item, $fmValues);
+
+			unset($fields['fm']);
+		}
+
+		$fields = $this->convertKeysToUpper($fields);
+		$this->processFields($item, $fields, $factory->getFieldsCollection());
+
 
 		$operation = $factory->getAddOperation($item);
 		if (
@@ -451,7 +503,18 @@ class Item extends Base
 		{
 			return null;
 		}
-		$item = $factory->getItem($id);
+		try
+		{
+			$item = $factory->getItem($id);
+		}
+		catch (InvalidOperationException $e)
+		{
+			$this->addError(new Error(
+				$e->getMessage()
+			));
+			return null;
+		}
+
 		if (!$item)
 		{
 			$this->addError(new Error(
@@ -465,6 +528,14 @@ class Item extends Base
 			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 
 			return null;
+		}
+
+		if (isset($fields['fm']) && $factory->isMultiFieldsEnabled())
+		{
+			$fmValues = $this->getFmValues($fields);
+			$this->setFm($item, $fmValues);
+
+			unset($fields['fm']);
 		}
 
 		$fields = $this->convertKeysToUpper($fields);
@@ -537,7 +608,17 @@ class Item extends Base
 			return $this->importViaDeprecatedApi($entityTypeId, $fields);
 		}
 
-		$item = $factory->createItem();
+		try
+		{
+			$item = $factory->createItem();
+		}
+		catch (InvalidOperationException $e)
+		{
+			$this->addError(new Error(
+				$e->getMessage()
+			));
+			return null;
+		}
 
 		$fields = $this->convertKeysToUpper($fields);
 		$this->processFields($item, $fields, $factory->getFieldsCollection());
@@ -959,6 +1040,11 @@ class Item extends Base
 		{
 			$itemId = $item->getId();
 			$result[$itemId] = $item->jsonSerialize();
+
+			if ($factory->isMultiFieldsEnabled())
+			{
+				$result[$itemId]['fm'] = $this->getFm($item);
+			}
 		}
 
 		if ($isCheckSelect)
@@ -1081,5 +1167,69 @@ class Item extends Base
 			'PHONE_MAILING',
 			'IMOL',
 		];
+	}
+
+	private function getFm(\Bitrix\Crm\Item $item): array
+	{
+		$multiFieldsCollection = $item->getFm();
+
+		$multiFields = [];
+		foreach ($multiFieldsCollection as $multiField)
+		{
+			$multiFields[] = [
+				'id' => $multiField->getId(),
+				'valueType' => $multiField->getValueType(),
+				'value' => $multiField->getValue(),
+				'typeId' => $multiField->getTypeId(),
+			];
+		}
+
+		return $multiFields;
+	}
+
+	private function getFmValues(array $fields): array
+	{
+		$fmValues = [];
+		if (isset($fields['fm']))
+		{
+			if (isset($fields['fm']['typeId']) && isset($fields['fm']['value']))
+			{
+				$typeId = $fields['fm']['typeId'];
+				$value = $fields['fm']['value'];
+				$fmValues[$typeId]['new']['VALUE'] = $value;
+				if (isset($fields['fm']['valueType']))
+				{
+					$valueType = $fields['fm']['valueType'];
+					$fmValues[$typeId]['new']['VALUE_TYPE'] = $valueType;
+				}
+			}
+
+			foreach ($fields['fm'] as $id => $multiField)
+			{
+				if (!isset($multiField['typeId']) || !isset($multiField['value']))
+				{
+					continue;
+				}
+
+				$typeId = $multiField['typeId'];
+				$fmValues[$typeId][$id]['VALUE'] = $multiField['value'];
+				if (isset($multiField['valueType']))
+				{
+					$fmValues[$typeId][$id]['VALUE_TYPE'] = $multiField['valueType'];
+				}
+			}
+		}
+
+		return $fmValues;
+	}
+
+	private function setFm(\Bitrix\Crm\Item $item, array $fmValues): void
+	{
+		if ($fmValues && $item->hasField(\Bitrix\Crm\Item::FIELD_NAME_FM))
+		{
+			$fmCollection = $item->get(\Bitrix\Crm\Item::FIELD_NAME_FM);
+			Assembler::updateCollectionByArray($fmCollection, $fmValues);
+			$item->set(\Bitrix\Crm\Item::FIELD_NAME_FM, $fmCollection);
+		}
 	}
 }

@@ -1,0 +1,41 @@
+.resource-creation-wizard__form-week-days-popup {
+	display: flex;
+	gap: 2px;
+	user-select: none;
+}
+
+.resource-creation-wizard__form-week-days-popup-weekday {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 60px;
+	border-radius: 8px;
+	background: #EEF2F4;
+	cursor: pointer;
+}
+
+.resource-creation-wizard__form-week-days-popup-weekday-text {
+	font-size: 14px;
+	color: #333333;
+	margin-bottom: 6px;
+}
+
+.resource-creation-wizard__form-week-days-popup-weekday-icon {
+	box-sizing: border-box;
+	width: 20px;
+	height: 20px;
+	background: #fff;
+	border: 1px solid #C9CCD0;
+	border-radius: 50%;
+}
+
+.resource-creation-wizard__form-week-days-popup-weekday.--selected {
+	background: #D3F4FF;
+}
+
+.resource-creation-wizard__form-week-days-popup-weekday.--selected .resource-creation-wizard__form-week-days-popup-weekday-icon {
+	border: none;
+	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='10' cy='10' r='10' fill='%2300B0E8'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M9.0054 11.1358L14.2868 5.92188L15.8851 7.52902L9.03037 14.325L9.0054 14.2999L8.98043 14.325L4.78711 10.2664L6.38539 8.65924L9.0054 11.1358Z' fill='white'/%3E%3C/svg%3E");
+}

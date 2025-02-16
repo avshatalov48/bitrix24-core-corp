@@ -12,6 +12,7 @@ class Button extends Base
 	public const STATE_HIDDEN = 'hidden';
 	public const STATE_DISABLED = 'disabled';
 	public const STATE_LOADING = 'loading';
+	public const STATE_LOCKED = 'locked';
 	public const STATE_AI_LOADING = 'ai-loading';
 	public const STATE_AI_SUCCESS = 'ai-success';
 

@@ -44,6 +44,7 @@ class SourceExpensesConnector extends Base
 		if (!empty($dto->getFilterValue('<=DATE')))
 		{
 			$endDate = strtotime($dto->getFilterValue('<=DATE'));
+			$endDate = Date::createFromTimestamp($endDate);
 		}
 
 		$startDateTimestamp = null;

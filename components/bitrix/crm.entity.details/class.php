@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 CModule::IncludeModule("crm");
 
 use Bitrix\Crm\Component\EntityDetails\Traits\EditorInitialMode;
+use Bitrix\Crm\Relation\RelationManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Event;
@@ -161,11 +162,65 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 		}
 		// endregion
 
+		$this->arResult['PATH_TO_QUOTE_EDIT'] = CrmCheckPath(
+			'PATH_TO_QUOTE_EDIT',
+			$this->arParams['PATH_TO_QUOTE_EDIT'] ?? '',
+			''
+		);
+		$this->arResult['PATH_TO_INVOICE_EDIT'] = CrmCheckPath(
+			'PATH_TO_INVOICE_EDIT',
+			$this->arParams['PATH_TO_INVOICE_EDIT'] ?? '',
+			''
+		);
+		$this->arResult['PATH_TO_ORDER_EDIT'] = CrmCheckPath(
+			'PATH_TO_ORDER_EDIT',
+			$this->arParams['PATH_TO_ORDER_EDIT'] ?? '',
+			''
+		);
+		$this->arResult['PATH_TO_ORDER_SHIPMENT_EDIT'] = CrmCheckPath(
+			'PATH_TO_ORDER_SHIPMENT_EDIT',
+			$this->arParams['PATH_TO_ORDER_SHIPMENT_EDIT'] ?? '',
+			''
+		);
+		$this->arResult['PATH_TO_ORDER_PAYMENT_EDIT'] = CrmCheckPath(
+			'PATH_TO_ORDER_PAYMENT_EDIT',
+			$this->arParams['PATH_TO_ORDER_PAYMENT_EDIT'] ?? '',
+			''
+		);
+
+		$this->prepareEntityCreateUrls();
+
+		$this->arResult['ENTITY_CATEGORIES_DATA'] = [];
+		$this->arResult['ENTITY_CATEGORIES_ENABLED'] = [];
+
 		foreach ($this->arResult['TABS'] as &$tab)
 		{
 			if (is_array($tab) && isset($tab['id']) && is_string($tab['id']))
 			{
 				$tab['id'] = mb_strtolower($tab['id']);
+			}
+
+			$dynamicRelationTabPrefix = mb_strtolower(RelationManager::TAB_NAME_RELATION . \CCrmOwnerType::CommonDynamicName . '_');
+
+			if (isset($tab['loader']) && str_starts_with($tab['id'], $dynamicRelationTabPrefix))
+			{
+				/** @var Bitrix\Main\Web\Uri $serviceUrl */
+				$serviceUrl = $tab['loader']['serviceUrl'];
+				parse_str($serviceUrl->getQuery(), $parts);
+				if ($parts['entityTypeId'])
+				{
+					$entityName = \CCrmOwnerType::ResolveName($parts['entityTypeId']);
+					$this->arResult['ENTITY_CREATE_URLS'][$entityName] =
+						Container::getInstance()->getRouter()->getItemDetailUrl(
+							$parts['entityTypeId']
+						)->getPath()
+					;
+
+					$this->arResult['ENTITY_CATEGORIES_DATA'][$entityName] =
+						$this->getPermittedToCreateCategoriesData($parts['entityTypeId']);
+					$this->arResult['ENTITY_CATEGORIES_ENABLED'][$entityName] =
+						$this->isCategoriesEnabled($parts['entityTypeId']);
+				}
 			}
 		}
 
@@ -212,53 +267,7 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 			}
 		}
 
-		$this->arResult['PATH_TO_QUOTE_EDIT'] = CrmCheckPath(
-			'PATH_TO_QUOTE_EDIT',
-			$this->arParams['PATH_TO_QUOTE_EDIT'] ?? '',
-			''
-		);
-		$this->arResult['PATH_TO_INVOICE_EDIT'] = CrmCheckPath(
-			'PATH_TO_INVOICE_EDIT',
-			$this->arParams['PATH_TO_INVOICE_EDIT'] ?? '',
-			''
-		);
-		$this->arResult['PATH_TO_ORDER_EDIT'] = CrmCheckPath(
-			'PATH_TO_ORDER_EDIT',
-			$this->arParams['PATH_TO_ORDER_EDIT'] ?? '',
-			''
-		);
-		$this->arResult['PATH_TO_ORDER_SHIPMENT_EDIT'] = CrmCheckPath(
-			'PATH_TO_ORDER_SHIPMENT_EDIT',
-			$this->arParams['PATH_TO_ORDER_SHIPMENT_EDIT'] ?? '',
-			''
-		);
-		$this->arResult['PATH_TO_ORDER_PAYMENT_EDIT'] = CrmCheckPath(
-			'PATH_TO_ORDER_PAYMENT_EDIT',
-			$this->arParams['PATH_TO_ORDER_PAYMENT_EDIT'] ?? '',
-			''
-		);
 		$this->arResult['TODO_CREATE_NOTIFICATION_PARAMS'] = $this->getTodoCreateNotificationParams();
-
-		$this->arResult['ENTITY_CREATE_URLS'] = array(
-			\CCrmOwnerType::DealName =>
-				\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Deal, 0, false),
-			\CCrmOwnerType::LeadName =>
-				\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Lead, 0, false),
-			\CCrmOwnerType::CompanyName =>
-				\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Company, 0, false),
-			\CCrmOwnerType::ContactName =>
-				\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Contact, 0, false),
-			\CCrmOwnerType::QuoteName =>
-				\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Quote, 0, false),
-			\CCrmOwnerType::InvoiceName =>
-				\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Invoice, 0, false),
-			\CCrmOwnerType::OrderName =>
-				\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Order, 0, false),
-			\CCrmOwnerType::OrderShipmentName =>
-				CComponentEngine::MakePathFromTemplate($this->arResult['PATH_TO_ORDER_SHIPMENT_EDIT'], array('shipment_id' => 0)),
-			\CCrmOwnerType::OrderPaymentName =>
-				CComponentEngine::MakePathFromTemplate($this->arResult['PATH_TO_ORDER_PAYMENT_EDIT'], array('payment_id' => 0))
-		);
 
 		$this->arResult['ENTITY_LIST_URLS'] = array(
 			\CCrmOwnerType::DealName =>
@@ -440,5 +449,67 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 			}
 		}
 		unset($field);
+	}
+
+	private function prepareEntityCreateUrls(): void
+	{
+		$this->arResult['ENTITY_CREATE_URLS'] = [
+			\CCrmOwnerType::DealName =>
+				\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Deal, 0, false),
+			\CCrmOwnerType::LeadName =>
+				\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Lead, 0, false),
+			\CCrmOwnerType::CompanyName =>
+				\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Company, 0, false),
+			\CCrmOwnerType::ContactName =>
+				\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Contact, 0, false),
+			\CCrmOwnerType::QuoteName =>
+				\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Quote, 0, false),
+			\CCrmOwnerType::InvoiceName =>
+				\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Invoice, 0, false),
+			\CCrmOwnerType::SmartInvoiceName =>
+				\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::SmartInvoice, 0),
+			\CCrmOwnerType::OrderName =>
+				\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Order, 0, false),
+			\CCrmOwnerType::OrderShipmentName =>
+				CComponentEngine::MakePathFromTemplate($this->arResult['PATH_TO_ORDER_SHIPMENT_EDIT'], ['shipment_id' => 0]),
+			\CCrmOwnerType::OrderPaymentName =>
+				CComponentEngine::MakePathFromTemplate($this->arResult['PATH_TO_ORDER_PAYMENT_EDIT'], ['payment_id' => 0])
+		];
+	}
+
+	private function getPermittedToCreateCategoriesData(int $entityTypeId): array
+	{
+		$factory =  Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory || !$factory->isCategoriesEnabled())
+		{
+			return [];
+		}
+
+		$categories = [];
+		foreach ($factory->getCategories() as $category)
+		{
+			if (Container::getInstance()->getUserPermissions()->checkAddPermissions($entityTypeId, $category->getId()))
+			{
+				$name = htmlspecialcharsbx($category->getName());
+				$categories[] = [
+					'id' => $category->getId(),
+					'name' => $name ?? (string)$category->getId(),
+					'isDefault' => $category->getIsDefault(),
+				];
+			}
+		}
+
+		return $categories;
+	}
+
+	private function isCategoriesEnabled(mixed $entityTypeId): bool
+	{
+		$factory =  Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return false;
+		}
+
+		return $factory->isCategoriesEnabled();
 	}
 }

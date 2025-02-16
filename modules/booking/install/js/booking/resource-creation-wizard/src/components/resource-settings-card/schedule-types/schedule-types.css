@@ -1,0 +1,84 @@
+.resource-creation-wizard__form-settings-schedule-view {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.booking--rcw--schedule-item {
+	display: flex;
+	gap: 16px;
+	background-color: var(--ui-color-palette-gray-04);
+	border: 1px solid var(--ui-color-palette-gray-04);
+	padding: 16px;
+	border-radius: 8px;
+	cursor: pointer;
+}
+
+.booking--rcw--schedule-item.--selected {
+	background-color: var(--ui-color-palette-blue-20);
+	border: 1px solid var(--ui-color-palette-blue-20);
+	transition: 0.2s;
+}
+
+.booking--rcw--schedule-item:hover {
+	border: 1px solid var(--ui-color-palette-blue-40);
+	transition: 0.2s;
+}
+
+.booking--rcw--schedule-item-radio {
+	display: flex;
+	align-items: start;
+}
+
+.booking--rcw--schedule-item-text {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.booking--rcw--schedule-item-text-title {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-normal);
+	margin-bottom: 2px;
+	cursor: pointer;
+}
+
+.booking--rcw--schedule-item-text-description {
+	font-size: var(--ui-font-size-sm);
+}
+
+.booking--rcw--schedule-item-view {
+	min-width: 134px;
+	width: 134px;
+	height: 83px;
+	aspect-ratio: 2;
+	background-size: cover;
+	background-position: center;
+	border: 1px solid var(--ui-color-palette-gray-20);
+	border-radius: 8px;
+}
+
+.booking--rcw--schedule-item:hover .booking--rcw--schedule-item-view {
+	border: 1px solid var(--ui-color-palette-gray-40);
+}
+
+.booking--rcw--schedule-item.--selected .booking--rcw--schedule-item-view {
+	border: 1.4px solid var(--ui-color-palette-blue-40);
+	box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.06);
+}
+
+.resource-creation-wizard__form-settings-schedule-view-common {
+	background-image: url(../images/schedule-common.svg?5);
+}
+
+.resource-creation-wizard__form-settings-schedule-view-extra {
+	background-image: url(../images/schedule-extra.svg?5);
+}
+
+.resource-creation-wizard__form-settings-schedule-view input {
+	cursor: pointer;
+}
+
+.booking--rcw--schedule-item-text-description-more {
+	font-size: var(--ui-font-size-xs);
+}

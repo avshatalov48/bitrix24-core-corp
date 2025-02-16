@@ -100,7 +100,6 @@ final class PermissionEntityBuilder
 	{
 		return match ($permission) {
 			Permission::Order => CCrmSaleHelper::isWithOrdersMode(),
-			Permission::CopilotCallAssessment => AIManager::isAiCallProcessingEnabled() && Feature::enabled(Feature\CopilotInCallGrading::class),
 			default => true,
 		};
 	}

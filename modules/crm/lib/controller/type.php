@@ -64,11 +64,43 @@ class Type extends Base
 	public function getAction(Dynamic\Type $type): ?array
 	{
 		$userPermissions = Container::getInstance()->getUserPermissions($this->getCurrentUser()->getId());
-		if (!$userPermissions->isAdminForEntity($type->getEntityTypeId()))
+		if (
+			!$userPermissions->isAdminForEntity($type->getEntityTypeId())
+			&& !$userPermissions->canReadType($type->getEntityTypeId())
+		)
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
+
 			return null;
 		}
+
+		return [
+			'type' => $type->jsonSerialize(),
+		];
+	}
+
+	public function getByEntityTypeIdAction(int $entityTypeId): ?array
+	{
+		$userPermissions = Container::getInstance()->getUserPermissions($this->getCurrentUser()->getId());
+		if (
+			!$userPermissions->isAdminForEntity($entityTypeId)
+			&& !$userPermissions->isCrmAdmin()
+			&& !$userPermissions->canReadType($entityTypeId)
+		)
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+
+			return null;
+		}
+
+		$type = Container::getInstance()->getTypeByEntityTypeId($entityTypeId);
+		if (!$type)
+		{
+			$this->addError(new Error(Loc::getMessage('CRM_TYPE_TYPE_NOT_FOUND')));
+
+			return null;
+		}
+
 		return [
 			'type' => $type->jsonSerialize(),
 		];
@@ -252,7 +284,7 @@ class Type extends Base
 		$isNew = ($type->getId() <= 0);
 
 		$userPermissions = Container::getInstance()->getUserPermissions($this->getCurrentUser()->getId());
-		$automatedSolutionId = $fields['customSectionId'] ?? 0;
+		$automatedSolutionId = (int)($fields['customSectionId'] ?? 0);
 		if ($isNew)
 		{
 			$hasPermissions = $automatedSolutionId ? $userPermissions->isAutomatedSolutionAdmin($automatedSolutionId) : $userPermissions->isCrmAdmin();
@@ -358,6 +390,7 @@ class Type extends Base
 				$this->addErrors($customSectionsResult->getErrors());
 			}
 			$type->setCustomSectionId($typeFromContainer->getCustomSectionId());
+			Container::getInstance()->getTypeByEntityTypeId($type->getEntityTypeId())?->setCustomSectionId($typeFromContainer->getCustomSectionId()); // update cached object
 
 			$result = $this->getAction($type);
 			if (is_array($result) && ($this->getScope() === static::SCOPE_AJAX))

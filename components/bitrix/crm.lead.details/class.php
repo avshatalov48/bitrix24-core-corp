@@ -172,7 +172,8 @@ class CCrmLeadDetailsComponent
 
 		if ($this->entityID > 0 && !\CCrmLead::Exists($this->entityID))
 		{
-			ShowError(GetMessage('CRM_LEAD_NOT_FOUND'));
+			Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::EntityNotExist, CCrmOwnerType::Lead);
+
 			return;
 		}
 
@@ -181,29 +182,44 @@ class CCrmLeadDetailsComponent
 
 		if ($this->isCopyMode)
 		{
-			if (
-				!\CCrmLead::CheckReadPermission($this->entityID, $this->userPermissions)
-				|| !\CCrmLead::CheckCreatePermission($this->userPermissions)
-			)
+			if (!\CCrmLead::CheckReadPermission($this->entityID, $this->userPermissions))
 			{
-				ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoReadPermission, CCrmOwnerType::Lead);
+
+				return;
+			}
+			elseif (!\CCrmLead::CheckCreatePermission($this->userPermissions))
+			{
+				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAddPermission, CCrmOwnerType::Lead);
+
 				return;
 			}
 		}
 		elseif ($this->isEditMode)
 		{
 			if (
+				!\CCrmLead::CheckUpdatePermission(0)
+				&& !\CCrmLead::CheckReadPermission()
+			)
+			{
+				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAccessToEntityType, CCrmOwnerType::Lead);
+
+				return;
+			}
+			elseif (
 				!\CCrmLead::CheckUpdatePermission($this->entityID, $this->userPermissions)
 				&& !\CCrmLead::CheckReadPermission($this->entityID, $this->userPermissions)
 			)
 			{
-				ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoReadPermission, CCrmOwnerType::Lead);
+
 				return;
 			}
 		}
 		elseif (!\CCrmLead::CheckCreatePermission($this->userPermissions))
 		{
-			ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+			Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAddPermission, CCrmOwnerType::Lead);
+
 			return;
 		}
 		//endregion

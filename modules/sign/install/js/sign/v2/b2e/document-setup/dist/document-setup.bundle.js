@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports,sign_v2_api,sign_v2_b2e_signDropdown,sign_v2_documentSetup,sign_v2_helper,sign_v2_signSettings,main_core,main_date) {
+(function (exports,main_popup,sign_v2_api,sign_v2_b2e_signDropdown,sign_featureStorage,sign_v2_b2e_documentCounters,sign_v2_documentSetup,sign_v2_helper,sign_v2_signSettings,main_core,main_date) {
 	'use strict';
 
 	let _ = t => t,
@@ -95,10 +95,22 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  _t6,
 	  _t7,
 	  _t8,
-	  _t9;
+	  _t9,
+	  _t10,
+	  _t11,
+	  _t12,
+	  _t13,
+	  _t14,
+	  _t15,
+	  _t16,
+	  _t17,
+	  _t18,
+	  _t19,
+	  _t20;
 	const HelpdeskCodes = Object.freeze({
 	  HowToWorkWithTemplates: '23174934'
 	});
+	var _cache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
 	var _api = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("api");
 	var _region = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("region");
 	var _regionDocumentTypes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("regionDocumentTypes");
@@ -108,10 +120,12 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _documentNumberInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentNumberInput");
 	var _documentTitleInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentTitleInput");
 	var _dateSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dateSelector");
-	var _documentMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentMode");
+	var _b2eDocumentLimitCount = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("b2eDocumentLimitCount");
+	var _currentEditedId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentEditedId");
+	var _currentEditButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentEditButton");
+	var _currentEditBlock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentEditBlock");
 	var _init = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("init");
 	var _isDocumentTypeVisible = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDocumentTypeVisible");
-	var _isRuRegion = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isRuRegion");
 	var _initDocumentType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initDocumentType");
 	var _getDocumentTypeLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDocumentTypeLayout");
 	var _initDocumentSenderType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initDocumentSenderType");
@@ -119,22 +133,33 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _getHelpLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getHelpLink");
 	var _getDocumentNumberLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDocumentNumberLayout");
 	var _getDocumentTitleLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDocumentTitleLayout");
+	var _getAddDocumentLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAddDocumentLayout");
+	var _getAddDocumentButtonText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAddDocumentButtonText");
+	var _onClickAddDocument = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClickAddDocument");
+	var _createDocumentBlock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDocumentBlock");
+	var _getDocumentTypeDropdownLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDocumentTypeDropdownLayout");
 	var _getDocumentHintLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDocumentHintLayout");
+	var _onClickDeleteDocument = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClickDeleteDocument");
+	var _onClickEditDocument = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClickEditDocument");
 	var _getDocumentTitleFullClass = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDocumentTitleFullClass");
 	var _sendDocumentType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendDocumentType");
 	var _sendDocumentSenderType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendDocumentSenderType");
 	var _sendDocumentNumber = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendDocumentNumber");
 	var _sendDocumentDate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendDocumentDate");
-	var _setDocumentNumber = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setDocumentNumber");
 	var _validateInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("validateInput");
+	var _enableDocumentInputs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("enableDocumentInputs");
+	var _disableDocumentInputs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disableDocumentInputs");
 	class DocumentSetup extends sign_v2_documentSetup.DocumentSetup {
 	  constructor(blankSelectorConfig) {
 	    super(blankSelectorConfig);
+	    Object.defineProperty(this, _disableDocumentInputs, {
+	      value: _disableDocumentInputs2
+	    });
+	    Object.defineProperty(this, _enableDocumentInputs, {
+	      value: _enableDocumentInputs2
+	    });
 	    Object.defineProperty(this, _validateInput, {
 	      value: _validateInput2
-	    });
-	    Object.defineProperty(this, _setDocumentNumber, {
-	      value: _setDocumentNumber2
 	    });
 	    Object.defineProperty(this, _sendDocumentDate, {
 	      value: _sendDocumentDate2
@@ -151,8 +176,29 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    Object.defineProperty(this, _getDocumentTitleFullClass, {
 	      value: _getDocumentTitleFullClass2
 	    });
+	    Object.defineProperty(this, _onClickEditDocument, {
+	      value: _onClickEditDocument2
+	    });
+	    Object.defineProperty(this, _onClickDeleteDocument, {
+	      value: _onClickDeleteDocument2
+	    });
 	    Object.defineProperty(this, _getDocumentHintLayout, {
 	      value: _getDocumentHintLayout2
+	    });
+	    Object.defineProperty(this, _getDocumentTypeDropdownLayout, {
+	      value: _getDocumentTypeDropdownLayout2
+	    });
+	    Object.defineProperty(this, _createDocumentBlock, {
+	      value: _createDocumentBlock2
+	    });
+	    Object.defineProperty(this, _onClickAddDocument, {
+	      value: _onClickAddDocument2
+	    });
+	    Object.defineProperty(this, _getAddDocumentButtonText, {
+	      value: _getAddDocumentButtonText2
+	    });
+	    Object.defineProperty(this, _getAddDocumentLayout, {
+	      value: _getAddDocumentLayout2
 	    });
 	    Object.defineProperty(this, _getDocumentTitleLayout, {
 	      value: _getDocumentTitleLayout2
@@ -175,14 +221,15 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    Object.defineProperty(this, _initDocumentType, {
 	      value: _initDocumentType2
 	    });
-	    Object.defineProperty(this, _isRuRegion, {
-	      value: _isRuRegion2
-	    });
 	    Object.defineProperty(this, _isDocumentTypeVisible, {
 	      value: _isDocumentTypeVisible2
 	    });
 	    Object.defineProperty(this, _init, {
 	      value: _init2
+	    });
+	    Object.defineProperty(this, _cache, {
+	      writable: true,
+	      value: new main_core.Cache.MemoryCache()
 	    });
 	    Object.defineProperty(this, _api, {
 	      writable: true,
@@ -220,20 +267,36 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      writable: true,
 	      value: null
 	    });
-	    Object.defineProperty(this, _documentMode, {
+	    this.documentCounters = null;
+	    Object.defineProperty(this, _b2eDocumentLimitCount, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _currentEditedId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _currentEditButton, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _currentEditBlock, {
 	      writable: true,
 	      value: void 0
 	    });
 	    const {
 	      region,
 	      regionDocumentTypes,
-	      documentMode
+	      documentMode,
+	      b2eDocumentLimitCount
 	    } = blankSelectorConfig;
 	    babelHelpers.classPrivateFieldLooseBase(this, _api)[_api] = new sign_v2_api.Api();
 	    babelHelpers.classPrivateFieldLooseBase(this, _region)[_region] = region;
-	    babelHelpers.classPrivateFieldLooseBase(this, _documentMode)[_documentMode] = documentMode;
 	    babelHelpers.classPrivateFieldLooseBase(this, _regionDocumentTypes)[_regionDocumentTypes] = regionDocumentTypes;
 	    babelHelpers.classPrivateFieldLooseBase(this, _senderDocumentTypes)[_senderDocumentTypes] = Object.values(sign_v2_documentSetup.DocumentInitiated);
+	    babelHelpers.classPrivateFieldLooseBase(this, _b2eDocumentLimitCount)[_b2eDocumentLimitCount] = b2eDocumentLimitCount;
+	    this.editMode = false;
+	    this.onClickShowHintPopup = this.showHintPopup.bind(this);
 	    babelHelpers.classPrivateFieldLooseBase(this, _documentTitleInput)[_documentTitleInput] = main_core.Tag.render(_t$1 || (_t$1 = _$1`
 			<input
 				type="text"
@@ -244,21 +307,125 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 		`), ({
 	      target
 	    }) => this.setDocumentTitle(target.value));
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isRuRegion)[_isRuRegion]() && !sign_v2_signSettings.isTemplateMode(documentMode)) {
+	    if (this.isRuRegion() && !sign_v2_signSettings.isTemplateMode(documentMode)) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _documentNumberInput)[_documentNumberInput] = main_core.Tag.render(_t2$1 || (_t2$1 = _$1`<input type="text" class="ui-ctl-element" maxlength="255" />`));
 	      babelHelpers.classPrivateFieldLooseBase(this, _dateSelector)[_dateSelector] = new DateSelector();
 	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _disableDocumentInputs)[_disableDocumentInputs]();
 	    this.blankSelector.subscribe('toggleSelection', ({
 	      data
 	    }) => {
 	      this.setDocumentTitle(data.title);
+	      if (data.selected) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _enableDocumentInputs)[_enableDocumentInputs]();
+	      }
 	    });
 	    this.blankSelector.subscribe('addFile', ({
 	      data
 	    }) => {
+	      this.isFileAdded = true;
 	      this.setDocumentTitle(data.title);
+	      babelHelpers.classPrivateFieldLooseBase(this, _enableDocumentInputs)[_enableDocumentInputs]();
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _init)[_init]();
+	  }
+	  isRuRegion() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _region)[_region] === 'ru';
+	  }
+	  getAddDocumentButton() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('addDocumentButton', () => {
+	      return main_core.Tag.render(_t3 || (_t3 = _$1`
+				<button type="button" class="sign-b2e-document-setup__add-button" onclick="${0}">
+					${0}
+				</button>
+			`), babelHelpers.classPrivateFieldLooseBase(this, _onClickAddDocument)[_onClickAddDocument].bind(this), babelHelpers.classPrivateFieldLooseBase(this, _getAddDocumentButtonText)[_getAddDocumentButtonText]());
+	    });
+	  }
+	  getAddDocumentNotice() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('addDocumentNotice', () => {
+	      return main_core.Tag.render(_t4 || (_t4 = _$1`
+				<p class="sign-b2e-document-setup__add-notice">${0}</p>
+			`), main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_DOCUMENT_NOTICE'));
+	    });
+	  }
+	  switchAddDocumentButtonLoadingState(loading) {
+	    if (loading) {
+	      main_core.Dom.addClass(this.getAddDocumentButton(), 'ui-btn-wait');
+	    } else {
+	      main_core.Dom.removeClass(this.getAddDocumentButton(), 'ui-btn-wait');
+	    }
+	  }
+	  disableAddButton() {
+	    main_core.Dom.addClass(this.getAddDocumentButton(), '--disabled');
+	    this.getAddDocumentNotice().textContent = main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_LIMIT_NOTICE');
+	  }
+	  enableAddButton() {
+	    main_core.Dom.removeClass(this.getAddDocumentButton(), '--disabled');
+	    this.getAddDocumentNotice().textContent = main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_DOCUMENT_NOTICE');
+	  }
+	  toggleDeleteBtnLoadingState(deleteButton) {
+	    main_core.Dom.toggleClass(deleteButton, 'ui-btn-wait');
+	  }
+	  renderDocumentBlock(documentData) {
+	    if (!documentData) {
+	      return;
+	    }
+	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _createDocumentBlock)[_createDocumentBlock](documentData), this.headerLayout);
+	  }
+	  updateDocumentBlock(id) {
+	    const editedBlock = this.layout.querySelector(`[data-id="document-id-${id}"]`);
+	    const titleNode = editedBlock.querySelector('.sign-b2e-document-setup__document-block_title');
+	    titleNode.textContent = babelHelpers.classPrivateFieldLooseBase(this, _documentTitleInput)[_documentTitleInput].title;
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isDocumentTypeVisible)[_isDocumentTypeVisible]()) {
+	      const infoNode = editedBlock.querySelector('.sign-b2e-document-setup__document-block_info');
+	      infoNode.textContent = babelHelpers.classPrivateFieldLooseBase(this, _documentTypeDropdown)[_documentTypeDropdown].getSelectedCaption();
+	    }
+	  }
+	  replaceDocumentBlock(oldDocument, newDocument) {
+	    const editedBlock = this.layout.querySelector(`[data-id="document-id-${oldDocument.id}"]`);
+	    main_core.Dom.replace(editedBlock, babelHelpers.classPrivateFieldLooseBase(this, _createDocumentBlock)[_createDocumentBlock](newDocument));
+	  }
+	  toggleEditMode(id, editButton) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _currentEditedId)[_currentEditedId] !== id) {
+	      this.resetEditMode();
+	    }
+	    const documentBlock = editButton.closest(`[data-id="document-id-${id}"]`);
+	    main_core.Dom.toggleClass(documentBlock, '--edit');
+	    if (this.editMode) {
+	      // eslint-disable-next-line no-param-reassign
+	      editButton.textContent = main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_EDIT_BUTTON');
+	      babelHelpers.classPrivateFieldLooseBase(this, _disableDocumentInputs)[_disableDocumentInputs]();
+	      this.editMode = false;
+	    } else {
+	      // eslint-disable-next-line no-param-reassign
+	      editButton.textContent = main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_CANCEL_BUTTON');
+	      this.editMode = true;
+	      babelHelpers.classPrivateFieldLooseBase(this, _enableDocumentInputs)[_enableDocumentInputs]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _currentEditedId)[_currentEditedId] = id;
+	      babelHelpers.classPrivateFieldLooseBase(this, _currentEditButton)[_currentEditButton] = editButton;
+	      babelHelpers.classPrivateFieldLooseBase(this, _currentEditBlock)[_currentEditBlock] = documentBlock;
+	    }
+	  }
+	  resetEditMode() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _currentEditedId)[_currentEditedId]) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _currentEditButton)[_currentEditButton].textContent = main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_EDIT_BUTTON');
+	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _currentEditBlock)[_currentEditBlock], '--edit');
+	    this.editMode = false;
+	    babelHelpers.classPrivateFieldLooseBase(this, _currentEditButton)[_currentEditButton] = null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _currentEditBlock)[_currentEditBlock] = null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _currentEditedId)[_currentEditedId] = null;
+	  }
+	  getHeaderLayout() {
+	    const headerText = this.isTemplateMode() ? main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_TEMPLATE_HEADER') : main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_HEADER');
+	    this.headerLayout = main_core.Tag.render(_t5 || (_t5 = _$1`
+			<h1 class="sign-b2e-settings__header">${0}</h1>
+		`), headerText);
+	    return this.headerLayout;
+	  }
+	  setDocumentNumber(number) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _documentNumberInput)[_documentNumberInput].value = number;
 	  }
 	  setDocumentTitle(title = '') {
 	    babelHelpers.classPrivateFieldLooseBase(this, _documentTitleInput)[_documentTitleInput].value = title;
@@ -280,25 +447,60 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _documentSenderTypeDropdown)[_documentSenderTypeDropdown].selectItem(senderType);
 	  }
 	  initLayout() {
-	    const headerText = this.isTemplateMode() ? main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_TEMPLATE_HEADER') : main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_HEADER');
-	    const itemTitleText = this.isTemplateMode() ? main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_TEMPLATE_TITLE') : main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_TITLE');
-	    this.layout = main_core.Tag.render(_t3 || (_t3 = _$1`
+	    this.layout = main_core.Tag.render(_t6 || (_t6 = _$1`
 			<div class="sign-document-setup">
-				<h1 class="sign-b2e-settings__header">${0}</h1>
-				<div class="sign-b2e-settings__item">
-					<p class="sign-b2e-settings__item_title">
-						${0}
-					</p>
-					${0}
-				</div>
+				${0}
+				${0}
 			</div>
-		`), headerText, itemTitleText, this.blankSelector.getLayout());
+		`), this.getHeaderLayout(), this.getDocumentSectionLayout());
+	  }
+	  getDocumentSectionLayout() {
+	    this.documentSectionLayout = main_core.Tag.render(_t7 || (_t7 = _$1`
+			<div class="sign-b2e-settings__item">
+				${0}
+			</div>
+		`), this.getDocumentSectionInnerLayout());
+	    this.createHintPopup();
+	    return this.documentSectionLayout;
+	  }
+	  getDocumentSectionInnerLayout() {
+	    const itemTitleText = this.isTemplateMode() ? main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_TEMPLATE_TITLE') : main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_TITLE');
+	    this.documentSectionInnerLayout = main_core.Tag.render(_t8 || (_t8 = _$1`
+			<div class="sign-b2e-settings__item-inner">
+				<p class="sign-b2e-settings__item_title">
+					${0}
+				</p>
+				${0}
+			</div>
+		`), itemTitleText, this.blankSelector.getLayout());
+	    return this.documentSectionInnerLayout;
+	  }
+	  createHintPopup() {
+	    this.hintPopup = new main_popup.Popup({
+	      content: main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_LIMIT_POPUP'),
+	      autoHide: true,
+	      darkMode: true
+	    });
+	  }
+	  setAvailabilityDocumentSection(isAvailable) {
+	    if (isAvailable) {
+	      main_core.Dom.removeClass(this.documentSectionInnerLayout, '--disabled');
+	      main_core.Event.unbind(this.documentSectionLayout, 'click', this.onClickShowHintPopup);
+	      this.hintPopup.close();
+	      return;
+	    }
+	    main_core.Dom.addClass(this.documentSectionInnerLayout, '--disabled');
+	    main_core.Event.bind(this.documentSectionLayout, 'click', this.onClickShowHintPopup);
+	  }
+	  showHintPopup(event) {
+	    this.hintPopup.setBindElement(event);
+	    this.hintPopup.show();
 	  }
 	  async setup(uid) {
 	    try {
-	      var _babelHelpers$classPr;
 	      await super.setup(uid, this.isTemplateMode());
-	      if (!this.setupData) {
+	      if (!this.setupData || this.blankIsNotSelected) {
+	        this.ready = true;
 	        return;
 	      }
 	      if (uid) {
@@ -312,38 +514,14 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	        this.setDocumentTitle(title);
 	        this.setDocumentSenderType(initiatedByType);
 	        this.setDocumentType(regionDocumentType);
-	        if (babelHelpers.classPrivateFieldLooseBase(this, _isRuRegion)[_isRuRegion]() && !this.isTemplateMode()) {
-	          babelHelpers.classPrivateFieldLooseBase(this, _setDocumentNumber)[_setDocumentNumber](externalId);
+	        if (this.isRuRegion() && !this.isTemplateMode()) {
+	          this.setDocumentNumber(externalId);
 	          babelHelpers.classPrivateFieldLooseBase(this, _dateSelector)[_dateSelector].setDateInCalendar(new Date(externalDateCreate));
 	        }
 	        return;
 	      }
-	      const {
-	        uid: documentUid,
-	        templateUid
-	      } = this.setupData;
-	      const {
-	        value: title
-	      } = babelHelpers.classPrivateFieldLooseBase(this, _documentTitleInput)[_documentTitleInput];
-	      const externalId = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _documentNumberInput)[_documentNumberInput]) == null ? void 0 : _babelHelpers$classPr.value;
 	      this.ready = false;
-	      await Promise.all([babelHelpers.classPrivateFieldLooseBase(this, _sendDocumentType)[_sendDocumentType](documentUid), babelHelpers.classPrivateFieldLooseBase(this, _sendDocumentSenderType)[_sendDocumentSenderType](documentUid), babelHelpers.classPrivateFieldLooseBase(this, _sendDocumentNumber)[_sendDocumentNumber](documentUid), babelHelpers.classPrivateFieldLooseBase(this, _sendDocumentDate)[_sendDocumentDate](documentUid)]);
-	      const modifyDocumentTitleResponse = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].modifyTitle(documentUid, title);
-	      const {
-	        blankTitle
-	      } = modifyDocumentTitleResponse;
-	      if (blankTitle) {
-	        const {
-	          blankId
-	        } = this.setupData;
-	        this.blankSelector.modifyBlankTitle(blankId, blankTitle);
-	      }
-	      this.setupData = {
-	        ...this.setupData,
-	        title,
-	        externalId,
-	        templateUid
-	      };
+	      this.setupData = await this.updateDocumentData(this.setupData);
 	    } catch {
 	      const {
 	        blankId
@@ -351,6 +529,42 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      this.handleError(blankId);
 	    }
 	    this.ready = true;
+	  }
+	  async updateDocumentData(documentData) {
+	    var _babelHelpers$classPr;
+	    if (!documentData) {
+	      return;
+	    }
+	    await Promise.all([babelHelpers.classPrivateFieldLooseBase(this, _sendDocumentType)[_sendDocumentType](documentData.uid), babelHelpers.classPrivateFieldLooseBase(this, _sendDocumentSenderType)[_sendDocumentSenderType](documentData.uid), babelHelpers.classPrivateFieldLooseBase(this, _sendDocumentNumber)[_sendDocumentNumber](documentData.uid), babelHelpers.classPrivateFieldLooseBase(this, _sendDocumentDate)[_sendDocumentDate](documentData.uid)]);
+	    const {
+	      value: title
+	    } = babelHelpers.classPrivateFieldLooseBase(this, _documentTitleInput)[_documentTitleInput];
+	    const {
+	      templateUid
+	    } = this.setupData;
+	    const externalId = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _documentNumberInput)[_documentNumberInput]) == null ? void 0 : _babelHelpers$classPr.value;
+	    let regionDocumentType = null;
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isDocumentTypeVisible)[_isDocumentTypeVisible]()) {
+	      regionDocumentType = babelHelpers.classPrivateFieldLooseBase(this, _documentTypeDropdown)[_documentTypeDropdown].getSelectedId();
+	    }
+	    const modifyDocumentTitleResponse = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].modifyTitle(documentData.uid, title);
+	    const {
+	      blankTitle
+	    } = modifyDocumentTitleResponse;
+	    if (blankTitle) {
+	      const {
+	        blankId
+	      } = documentData;
+	      this.blankSelector.modifyBlankTitle(blankId, blankTitle);
+	    }
+	    documentData = {
+	      ...documentData,
+	      title,
+	      externalId,
+	      regionDocumentType,
+	      templateUid
+	    };
+	    return documentData;
 	  }
 	  validate() {
 	    const isValidTitle = babelHelpers.classPrivateFieldLooseBase(this, _validateInput)[_validateInput](babelHelpers.classPrivateFieldLooseBase(this, _documentTitleInput)[_documentTitleInput]);
@@ -361,13 +575,22 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    const settings = main_core.Extension.getSettings('sign.v2.b2e.document-setup');
 	    return settings.get('isSenderTypeAvailable');
 	  }
+	  resetDocument() {
+	    this.blankSelector.resetSelectedBlank();
+	    this.setDocumentTitle('');
+	    if (this.isRuRegion()) {
+	      this.setDocumentNumber('');
+	    }
+	    this.isFileAdded = false;
+	    babelHelpers.classPrivateFieldLooseBase(this, _disableDocumentInputs)[_disableDocumentInputs]();
+	  }
 	}
 	function _init2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _initDocumentType)[_initDocumentType]();
 	  babelHelpers.classPrivateFieldLooseBase(this, _initDocumentSenderType)[_initDocumentSenderType]();
 	  const documentTypeLayout = babelHelpers.classPrivateFieldLooseBase(this, _getDocumentTypeLayout)[_getDocumentTypeLayout]();
 	  const title = this.isTemplateMode() ? main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_TITLE_TEMPLATE_HEAD_LABEL') : main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_TITLE_HEAD_LABEL');
-	  const titleLayout = main_core.Tag.render(_t4 || (_t4 = _$1`
+	  const titleLayout = main_core.Tag.render(_t9 || (_t9 = _$1`
 			<div class="sign-b2e-settings__item">
 				<p class="sign-b2e-settings__item_title">
 					${0}
@@ -378,14 +601,27 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  main_core.Dom.append(documentTypeLayout, this.layout);
 	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getDocumentSenderTypeLayout)[_getDocumentSenderTypeLayout](), this.layout);
 	  main_core.Dom.append(titleLayout, this.layout);
+	  if (!this.isTemplateMode() && sign_featureStorage.FeatureStorage.isGroupSendingEnabled()) {
+	    this.documentCounters = new sign_v2_b2e_documentCounters.DocumentCounters({
+	      documentCountersLimit: babelHelpers.classPrivateFieldLooseBase(this, _b2eDocumentLimitCount)[_b2eDocumentLimitCount]
+	    });
+	    this.documentCounters.subscribe('limitNotExceeded', () => {
+	      this.enableAddButton();
+	      this.emit('documentsLimitNotExceeded');
+	    });
+	    this.documentCounters.subscribe('limitExceeded', () => {
+	      this.disableAddButton();
+	      this.emit('documentsLimitExceeded');
+	    });
+	    main_core.Dom.append(this.documentCounters.getLayout(), this.layout);
+	    const addDocumentLayout = babelHelpers.classPrivateFieldLooseBase(this, _getAddDocumentLayout)[_getAddDocumentLayout]();
+	    main_core.Dom.append(addDocumentLayout, this.layout);
+	  }
 	  sign_v2_helper.Hint.create(this.layout);
 	}
 	function _isDocumentTypeVisible2() {
 	  var _babelHelpers$classPr2;
 	  return (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _regionDocumentTypes)[_regionDocumentTypes]) == null ? void 0 : _babelHelpers$classPr2.length;
-	}
-	function _isRuRegion2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _region)[_region] === 'ru';
 	}
 	function _initDocumentType2() {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isDocumentTypeVisible)[_isDocumentTypeVisible]()) {
@@ -429,7 +665,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isDocumentTypeVisible)[_isDocumentTypeVisible]()) {
 	    return null;
 	  }
-	  return main_core.Tag.render(_t5 || (_t5 = _$1`
+	  return main_core.Tag.render(_t10 || (_t10 = _$1`
 			<div class="sign-b2e-settings__item">
 				<p class="sign-b2e-settings__item_title">
 					<span>${0}</span>
@@ -479,7 +715,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  if (!this.isTemplateMode() || !this.isSenderTypeAvailable()) {
 	    return null;
 	  }
-	  return main_core.Tag.render(_t6 || (_t6 = _$1`
+	  return main_core.Tag.render(_t11 || (_t11 = _$1`
 			<div class="sign-b2e-settings__item">
 				<p class="sign-b2e-settings__item_title">
 					<span>${0}</span>
@@ -493,10 +729,10 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  return sign_v2_helper.Helpdesk.replaceLink(main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_SENDER_TYPE_HELP_LINK'), HelpdeskCodes.HowToWorkWithTemplates, 'detail', ['ui-link']);
 	}
 	function _getDocumentNumberLayout2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isRuRegion)[_isRuRegion]() || this.isTemplateMode()) {
+	  if (!this.isRuRegion() || this.isTemplateMode()) {
 	    return null;
 	  }
-	  return main_core.Tag.render(_t7 || (_t7 = _$1`
+	  return main_core.Tag.render(_t12 || (_t12 = _$1`
 			<div class="sign-b2e-document-setup__title-item --num">
 				<p class="sign-b2e-document-setup__title-text">
 					<span>${0}</span>
@@ -512,7 +748,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	}
 	function _getDocumentTitleLayout2() {
 	  var _babelHelpers$classPr3;
-	  return main_core.Tag.render(_t8 || (_t8 = _$1`
+	  return main_core.Tag.render(_t13 || (_t13 = _$1`
 			<div>
 				<div class="sign-b2e-document-setup__title-item ${0}">
 					<p class="sign-b2e-document-setup__title-text">
@@ -528,21 +764,110 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			</div>
 		`), babelHelpers.classPrivateFieldLooseBase(this, _getDocumentTitleFullClass)[_getDocumentTitleFullClass](), main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_TITLE_LABEL'), babelHelpers.classPrivateFieldLooseBase(this, _documentTitleInput)[_documentTitleInput], babelHelpers.classPrivateFieldLooseBase(this, _getDocumentNumberLayout)[_getDocumentNumberLayout](), babelHelpers.classPrivateFieldLooseBase(this, _getDocumentHintLayout)[_getDocumentHintLayout](), (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _dateSelector)[_dateSelector]) == null ? void 0 : _babelHelpers$classPr3.getLayout());
 	}
+	function _getAddDocumentLayout2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('addDocumentLayout', () => {
+	    return main_core.Tag.render(_t14 || (_t14 = _$1`
+				<div class="sign-b2e-settings__item --add">
+					<div class="sign-b2e-settings__item_title">
+						<span>${0}</span>
+						${0}
+					</div>
+					${0}
+					${0}
+				</div>
+			`), main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_DOCUMENT'), this.documentCounters.getLayout(), this.getAddDocumentButton(), this.getAddDocumentNotice());
+	  });
+	}
+	function _getAddDocumentButtonText2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('addDocumentButtonText', () => {
+	    return main_core.Tag.render(_t15 || (_t15 = _$1`
+				<span class="sign-b2e-document-setup__add-button_text">${0}</span>
+			`), main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_ANOTHER_DOCUMENT'));
+	  });
+	}
+	function _onClickAddDocument2() {
+	  this.emit('addDocument');
+	}
+	function _createDocumentBlock2(documentData) {
+	  const deleteButton = main_core.Tag.render(_t16 || (_t16 = _$1`
+			<button class="sign-b2e-document-setup__document-block_delete" type="button"></button>
+		`));
+	  const editButton = main_core.Tag.render(_t17 || (_t17 = _$1`
+			<button class="ui-btn ui-btn-round ui-btn-sm ui-btn-light-border" type="button">
+				${0}
+			</button>
+		`), main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_EDIT_BUTTON'));
+	  main_core.Event.bind(deleteButton, 'click', event => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _onClickDeleteDocument)[_onClickDeleteDocument](documentData, event);
+	  });
+	  main_core.Event.bind(editButton, 'click', event => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _onClickEditDocument)[_onClickEditDocument](documentData, event);
+	  });
+	  const documentTypeDropdownLayout = babelHelpers.classPrivateFieldLooseBase(this, _isDocumentTypeVisible)[_isDocumentTypeVisible]() ? babelHelpers.classPrivateFieldLooseBase(this, _getDocumentTypeDropdownLayout)[_getDocumentTypeDropdownLayout]() : '';
+	  return main_core.Tag.render(_t18 || (_t18 = _$1`
+			<div class="sign-b2e-document-setup__document-block" data-id="document-id-${0}">
+				<div class="sign-b2e-document-setup__document-block_inner">
+					<div class="sign-b2e-document-setup__document-block_title">${0}</div>
+					${0}
+				</div>
+				<div class="sign-b2e-document-setup__document-block_btn">
+					${0}
+					${0}
+				</div>
+				<div class="sign-b2e-document-setup__document-block_hint">
+					${0}
+				</div>
+			</div>
+		`), documentData.id, documentData.title, documentTypeDropdownLayout, editButton, deleteButton, main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_DOCUMENT_HINT'));
+	}
+	function _getDocumentTypeDropdownLayout2() {
+	  return main_core.Tag.render(_t19 || (_t19 = _$1`
+			<div class="sign-b2e-document-setup__document-block_info">${0}</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _documentTypeDropdown)[_documentTypeDropdown].getSelectedCaption());
+	}
 	function _getDocumentHintLayout2() {
 	  if (this.isTemplateMode()) {
 	    return null;
 	  }
-	  return main_core.Tag.render(_t9 || (_t9 = _$1`
-			<p class="sign-b2e-document-setup__title-text">
-				${0}
-			</p>
-		`), main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_TITLE_HINT'));
+	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('documentHintLayout', () => {
+	    return main_core.Tag.render(_t20 || (_t20 = _$1`
+				<p class="sign-b2e-document-setup__title-text">
+					${0}
+				</p>
+			`), main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_TITLE_HINT'));
+	  });
+	}
+	function _onClickDeleteDocument2(documentData, event) {
+	  this.setupData = null;
+	  const {
+	    id,
+	    uid,
+	    blankId
+	  } = documentData;
+	  const deleteButton = event.target;
+	  this.toggleDeleteBtnLoadingState(deleteButton);
+	  this.emit('deleteDocument', {
+	    id,
+	    uid,
+	    blankId,
+	    deleteButton
+	  });
+	}
+	function _onClickEditDocument2(documentData, event) {
+	  const {
+	    id,
+	    uid
+	  } = documentData;
+	  this.toggleEditMode(id, event.target);
+	  this.emit('editDocument', {
+	    uid
+	  });
 	}
 	function _getDocumentTitleFullClass2() {
 	  if (this.isTemplateMode()) {
 	    return '--full';
 	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _isRuRegion)[_isRuRegion]() ? '' : '--full';
+	  return this.isRuRegion() ? '' : '--full';
 	}
 	function _sendDocumentType2(uid) {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isDocumentTypeVisible)[_isDocumentTypeVisible]()) {
@@ -560,19 +885,16 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].changeSenderDocumentType(uid, senderType);
 	}
 	function _sendDocumentNumber2(uid) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isRuRegion)[_isRuRegion]() || this.isTemplateMode()) {
+	  if (!this.isRuRegion() || this.isTemplateMode()) {
 	    return Promise.resolve();
 	  }
 	  return babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].changeExternalId(uid, babelHelpers.classPrivateFieldLooseBase(this, _documentNumberInput)[_documentNumberInput].value);
 	}
 	function _sendDocumentDate2(uid) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isRuRegion)[_isRuRegion]() || this.isTemplateMode()) {
+	  if (!this.isRuRegion() || this.isTemplateMode()) {
 	    return Promise.resolve();
 	  }
 	  return babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].changeExternalDate(uid, babelHelpers.classPrivateFieldLooseBase(this, _dateSelector)[_dateSelector].getSelectedDate());
-	}
-	function _setDocumentNumber2(number) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _documentNumberInput)[_documentNumberInput].value = number;
 	}
 	function _validateInput2(input) {
 	  if (!input) {
@@ -590,8 +912,22 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  input.focus();
 	  return false;
 	}
+	function _enableDocumentInputs2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _documentTitleInput)[_documentTitleInput].disabled = false;
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _documentNumberInput)[_documentNumberInput]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _documentNumberInput)[_documentNumberInput].disabled = false;
+	  }
+	  this.blankIsNotSelected = false;
+	}
+	function _disableDocumentInputs2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _documentTitleInput)[_documentTitleInput].disabled = true;
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _documentNumberInput)[_documentNumberInput]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _documentNumberInput)[_documentNumberInput].disabled = true;
+	  }
+	  this.blankIsNotSelected = true;
+	}
 
 	exports.DocumentSetup = DocumentSetup;
 
-}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX.Sign.V2,BX.Sign.V2.B2e,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX,BX.Main));
+}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX.Main,BX.Sign.V2,BX.Sign.V2.B2e,BX.Sign,BX.Sign.V2.B2e,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX,BX.Main));
 //# sourceMappingURL=document-setup.bundle.js.map

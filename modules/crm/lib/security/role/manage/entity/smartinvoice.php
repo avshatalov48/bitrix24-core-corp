@@ -46,7 +46,7 @@ class SmartInvoice implements PermissionEntity
 		$result = [];
 		foreach ($smartInvoiceFactory->getCategories() as $category)
 		{
-			$entityName = htmlspecialcharsbx(Service\UserPermissions::getPermissionEntityType(\CCrmOwnerType::SmartInvoice, $category->getId()));
+			$entityName = Service\UserPermissions::getPermissionEntityType(\CCrmOwnerType::SmartInvoice, $category->getId());
 			$entityTitle = \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice);
 			if ($smartInvoiceFactory->isCategoriesEnabled())
 			{
@@ -75,7 +75,7 @@ class SmartInvoice implements PermissionEntity
 		$stages = [];
 		foreach ($smartInvoiceFactory->getStages($category->getId()) as $stage)
 		{
-			$stages[htmlspecialcharsbx($stage->getStatusId())] = $stage->getName();
+			$stages[$stage->getStatusId()] = $stage->getName();
 		}
 
 		return $stages;

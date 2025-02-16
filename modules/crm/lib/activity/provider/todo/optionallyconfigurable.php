@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Activity\Provider\ToDo;
 
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Service\Context;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
 
@@ -23,4 +24,6 @@ interface OptionallyConfigurable
 	public function load(int $id): ?static;
 	public function save(array $options = []): Result;
 	public function isValidProviderId(string $providerId): bool;
+	public function setContext(Context $context): self;
+	public function getContext(): ?Context;
 }

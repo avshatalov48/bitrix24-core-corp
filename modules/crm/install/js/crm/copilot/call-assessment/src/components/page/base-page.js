@@ -1,16 +1,22 @@
 import { Loc, Runtime, Type } from 'main.core';
-import { Breadcrumbs } from '../navigation/breadcrumbs';
 import { UI } from 'ui.notification';
+import { AiDisabledInSettings } from '../common/ai-disabled-in-settings';
+import { Breadcrumbs } from '../navigation/breadcrumbs';
 
 export const BasePage = {
 	components: {
 		Breadcrumbs,
+		AiDisabledInSettings,
 	},
 
 	props: {
 		readOnly: {
 			type: Boolean,
 			default: false,
+		},
+		isEnabled: {
+			type: Boolean,
+			default: true,
 		},
 		isActive: {
 			type: Boolean,
@@ -75,6 +81,14 @@ export const BasePage = {
 				id: this.id,
 				data: this.getData(),
 			});
+		},
+		getBodyFieldClassList(additionalClasses: string[] = []): Array
+		{
+			return [
+				'crm-copilot__call-assessment_page-section-body-field',
+				...additionalClasses,
+				{ '--read-only': this.isEnabled !== true },
+			];
 		},
 	},
 };

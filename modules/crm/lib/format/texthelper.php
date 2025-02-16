@@ -214,7 +214,7 @@ class TextHelper
 			$text = preg_replace_callback(
 				"/\\[p](.*?)\\[\\/p](([ \r\t]*)\n?)/isu",
 				function($matches) use (&$doubleLF) {
-					$result = preg_replace("/^\n|\n$/", '', $matches[1]);
+					$result = preg_replace("/^\r?\n|\r?\n$/", '', $matches[1]);
 					if ($doubleLF)
 					{
 						$result = "\n\n" . $result;

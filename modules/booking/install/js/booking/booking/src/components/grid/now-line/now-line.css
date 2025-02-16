@@ -1,0 +1,23 @@
+.booking-booking-grid-now-line {
+	position: absolute;
+	z-index: 4;
+	left: var(--left-panel-width);
+	margin-top: var(--padding-top);
+	width: 100%;
+	height: 2px;
+	background: rgba(var(--ui-color-palette-red-60-rgb), 0.42);
+	pointer-events: none;
+	user-select: none;
+	transform: translateY(var(--top-cells-height));
+}
+
+.booking-booking-grid-now-line-text {
+	width: max-content;
+	padding: 0 4px;
+	margin-left: -2px;
+	transform: translate(-100%, -50%);
+	border-radius: 1in;
+	background: var(--ui-color-background-primary);
+	color: var(--ui-color-palette-red-60);
+	font-size: var(--ui-font-size-xs);
+}

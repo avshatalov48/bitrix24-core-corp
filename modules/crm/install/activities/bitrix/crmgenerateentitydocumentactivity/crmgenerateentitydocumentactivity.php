@@ -172,6 +172,7 @@ class CBPCrmGenerateEntityDocumentActivity
 		}
 
 		$document->setUserId($targetUserId);
+		$document->setIsCheckAccess(false);
 		$isWaitForPdf = ($this->UseSubscription === 'Y');
 
 		$result = $document->setValues($values)->getFile(true, true);

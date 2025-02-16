@@ -8,6 +8,7 @@ use Bitrix\Call\Model\EO_CallOutcome;
 use Bitrix\Call\Integration\AI\Outcome\Property;
 use Bitrix\Call\Model\EO_CallOutcomeProperty_Collection;
 use Bitrix\Call\Model\CallOutcomePropertyTable;
+use Bitrix\Call\Model\CallOutcomeTable;
 
 
 class Outcome extends EO_CallOutcome
@@ -157,5 +158,17 @@ class Outcome extends EO_CallOutcome
 			'CALL_ID' => $this->getCallId(),
 			'CONTENT' => $this->getContent(),
 		];
+	}
+
+	public static function getOutcomeForCall(int $callId, SenseType $senseType): ?self
+	{
+		return CallOutcomeTable::getList([
+			'filter' => [
+				'=CALL_ID' => $callId,
+				'=TYPE' => $senseType->value
+			],
+			'order' => ['ID' => 'DESC'],
+			'limit' => 1
+		])?->fetchObject();
 	}
 }

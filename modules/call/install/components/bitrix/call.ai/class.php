@@ -63,7 +63,7 @@ class CallAiComponent extends \CBitrixComponent
 		$mentionService = MentionService::getInstance();
 		$mentionService->loadMentionsForCall($this->callId);
 
-		$this->outcomeCollection = OutcomeCollection::getOutcomesByCallId($this->callId);
+		$this->outcomeCollection = OutcomeCollection::getOutcomesByCallId($this->callId) ?? [];
 		foreach ($this->outcomeCollection as $outcome)
 		{
 			$type = strtoupper($outcome->getType());
@@ -120,7 +120,7 @@ class CallAiComponent extends \CBitrixComponent
 					}
 					if ($content?->agreements)
 					{
-						foreach ($content->agreements as $i => &$row)
+						foreach ($content->agreements as &$row)
 						{
 							if ($row?->agreement)
 							{
@@ -135,7 +135,7 @@ class CallAiComponent extends \CBitrixComponent
 					}
 					if ($content?->meetings)
 					{
-						foreach ($content->meetings as $i => &$row)
+						foreach ($content->meetings as &$row)
 						{
 							if ($row?->meeting)
 							{
@@ -152,7 +152,7 @@ class CallAiComponent extends \CBitrixComponent
 					}
 					if ($content?->tasks)
 					{
-						foreach ($content->tasks as $i => &$row)
+						foreach ($content->tasks as &$row)
 						{
 							if ($row?->task)
 							{
@@ -172,7 +172,7 @@ class CallAiComponent extends \CBitrixComponent
 				case SenseType::INSIGHTS->value:
 					if ($content?->insights)
 					{
-						foreach ($content->insights as $i => &$row)
+						foreach ($content->insights as &$row)
 						{
 							if ($row?->detailed_insight)
 							{
@@ -189,12 +189,24 @@ class CallAiComponent extends \CBitrixComponent
 			}
 		}
 
-		$this->trackCollection = TrackCollection::getRecordings($this->callId);
+		$this->trackCollection = TrackCollection::getRecordings($this->callId) ?? [];
 		$this->arResult['RECORD'] = [];
 		foreach ($this->trackCollection as $track)
 		{
 			$this->arResult['RECORD'] = $track->toArray();
 			break;// take only one
+		}
+
+		if (
+			empty($this->arResult['OVERVIEW'])
+			&& empty($this->arResult['INSIGHTS'])
+			&& empty($this->arResult['SUMMARY'])
+			&& empty($this->arResult['TRANSCRIBE'])
+			&& empty($this->arResult['RECORD'])
+		)
+		{
+			$this->showError(Loc::getMessage('CALL_COMPONENT_ERROR_TITLE'), Loc::getMessage('CALL_COMPONENT_ERROR_DESCRIPTION'));
+			return false;
 		}
 
 		$feedbackLink = \Bitrix\Call\Library::getCallAiFeedbackUrl($this->callId);

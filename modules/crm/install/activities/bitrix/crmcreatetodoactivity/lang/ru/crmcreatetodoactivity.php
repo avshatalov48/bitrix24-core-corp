@@ -20,7 +20,7 @@ $MESS['CRM_BP_CREATE_TODO_ATTACHMENT'] = 'Вложения';
 $MESS['CRM_BP_CREATE_TODO_COLLEAGUES'] = 'Пригласить коллег в событие';
 $MESS['CRM_BP_CREATE_TODO_CLIENT'] = 'Добавить клиента в дело';
 $MESS['CRM_BP_CREATE_TODO_LINK'] = 'Ссылка';
-$MESS['CRM_BP_CREATE_TODO_NOTIFICATION'] = 'Напоминить';
+$MESS['CRM_BP_CREATE_TODO_NOTIFICATION'] = 'Напомнить';
 $MESS["CRM_BP_CREATE_TODO_DEADLINE_1"] = "Срок выполнения дела";
 
 $MESS['CRM_BP_CREATE_TODO_DURATION_MINUTES'] = '#MINUTES# минут';

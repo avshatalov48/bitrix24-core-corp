@@ -9,8 +9,8 @@ class FileViewer
 		\CCrmOwnerType::ContactName => "/bitrix/components/bitrix/crm.contact.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#",
 		\CCrmOwnerType::CompanyName => "/bitrix/components/bitrix/crm.company.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#",
 		\CCrmOwnerType::DealName => "/bitrix/components/bitrix/crm.deal.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#",
-		\CCrmOwnerType::Invoice => "/bitrix/components/bitrix/crm.invoice.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#",
-		\CCrmOwnerType::Quote => "/bitrix/components/bitrix/crm.quote.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#"
+		\CCrmOwnerType::InvoiceName => "/bitrix/components/bitrix/crm.invoice.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#",
+		\CCrmOwnerType::QuoteName => "/bitrix/components/bitrix/crm.quote.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#",
 	);
 
 	/** @var int */

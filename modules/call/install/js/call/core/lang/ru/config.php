@@ -20,6 +20,7 @@ $MESS["CALL_POPUP_AI_UNAVAILABLE_ERROR"] = "CoPilot Follow-up недоступе
 $MESS["CALL_POPUP_AI_SETTINGS_ERROR"] = "Включите CoPilot Follow-up в настройках вашего Битрикс24";
 $MESS["CALL_POPUP_AI_AGREEMENT_ERROR"] = "Попросите администратора вашего Битрикс24 принять обновлённое Лицензионное соглашение";
 $MESS["CALL_POPUP_AI_NOT_ENOUGH_BAAS_ERROR"] = "Недостаточно бустов CoPilot для работы с CoPilot Follow-up";
+$MESS["CALL_POPUP_AI_DEFAULT_TEXT"] = "Не удалось подключить CoPilot к звонку. Попробуйте позже";
 $MESS["CALL_FEATURES_COMING_SOON"] = "Скоро";
 $MESS["CALL_RECORD_AUDIO_WITH_COPILOT_TITLE"] = "Включить запись звонка?";
 $MESS["CALL_RECORD_AUDIO_WITH_COPILOT_MESSAGE"] = "CoPilot уже ведёт аудиозапись. Все участники смогут прослушать её сразу после звонка";
@@ -38,4 +39,4 @@ $MESS["CALL_COPILOT_POPUP_BUTTON_ENABLE"] = "Подключить к этому 
 $MESS["CALL_COPILOT_POPUP_BUTTON_DISABLE"] = "Отключить в этом звонке ";
 $MESS["CALL_COPILOT_POPUP_CONCERN_NOT_ACCEPTED"] = "Будет доступно, как только администратор вашего Битрикс24 примет новое Лицензионное соглашение";
 $MESS["CALL_COPILOT_POPUP_TARIFF_UP"]="Повысить тариф";
-
+$MESS["CALL_COPILOT_POPUP_SETTINGS_DISABLED"] = "Будет доступно, когда администратор вашего Битрикс24 включит CoPilot в видеозвонках";

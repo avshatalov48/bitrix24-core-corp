@@ -53,6 +53,10 @@ class SmartDocument extends Dynamic
 		{
 			return;
 		}
+		if (TypeTable::isCreatingInProgress(\CCrmOwnerType::SmartDocument))
+		{
+			return;
+		}
 
 		Container::getInstance()->getLocalization()->loadMessages();
 

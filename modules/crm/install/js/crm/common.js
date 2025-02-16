@@ -11806,6 +11806,283 @@ if(typeof(BX.CrmDealCategorySelectDialog) === "undefined")
 }
 //endregion
 
+if (BX.Type.isUndefined(BX.CrmDynamicCategory))
+{
+	BX.CrmDynamicCategory = function()
+	{
+	};
+
+	BX.CrmDynamicCategory.getDefaultId = function(infos)
+	{
+		const defaultCategory = infos.find((info) => {
+			return info.isDefault;
+		});
+
+		return (defaultCategory ? defaultCategory.id : 0);
+	};
+
+	BX.CrmDynamicCategory.getListItems = function(infos)
+	{
+		const results = [];
+		infos.forEach((info) => {
+			results.push({ value: info.id.toString(), text: info.name });
+		});
+
+		return results;
+	};
+
+	BX.CrmDynamicCategory.getCount = function(entityType)
+	{
+		if (BX.Type.isUndefined(BX.CrmDynamicCategory.infos[entityType]))
+		{
+			return 0;
+		}
+
+		return BX.CrmDynamicCategory.infos[entityType].length;
+	};
+
+	BX.CrmDynamicCategory.isCategoryEnabled = function()
+	{
+		return BX.CrmDynamicCategory.enabled;
+	};
+
+	if (BX.Type.isUndefined(BX.CrmDynamicCategory.infos))
+	{
+		BX.CrmDynamicCategory.infos = [];
+	}
+
+	if (BX.Type.isUndefined(BX.CrmDynamicCategory.enabled))
+	{
+		BX.CrmDynamicCategory.enabled = false;
+	}
+}
+
+if (BX.Type.isUndefined(BX.CrmDynamicCategorySelectDialog))
+{
+	BX.CrmDynamicCategorySelectDialog = function()
+	{
+		this.id = '';
+		this.entityType = '';
+		this.settings = {};
+		this.popup = null;
+		this.selector = null;
+		this.value = '';
+		this.isOpened = false;
+		this.closeNotifier = null;
+	};
+	BX.CrmDynamicCategorySelectDialog.prototype = {
+		initialize(id, entityType, settings)
+		{
+			this.id = id;
+			this.entityType = entityType;
+			this.settings = settings || {};
+			this.value = parseInt(this.getSetting('value', 0), 10);
+			if (!BX.Type.isNumber(this.value))
+			{
+				this.value = 0;
+			}
+			this.closeNotifier = BX.CrmNotifier.create(this);
+		},
+		getId()
+		{
+			return this.id;
+		},
+		getSetting(name, defaultVal)
+		{
+			return Object.prototype.hasOwnProperty.call(this.settings, name) ? this.settings[name] : defaultVal;
+		},
+		getMessage(name)
+		{
+			const m = BX.CrmDynamicCategorySelectDialog.messages;
+
+			return Object.prototype.hasOwnProperty.call(m, name) ? m[name] : name;
+		},
+		isOpened()
+		{
+			return this.isOpened;
+		},
+		open()
+		{
+			if (this.isOpened)
+			{
+				return;
+			}
+
+			this.popup = new BX.PopupWindow(
+				this.id,
+				null,
+				{
+					autoHide: false,
+					draggable: true,
+					offsetLeft: 0,
+					offsetTop: 0,
+					bindOptions: { forceBindPosition: true },
+					closeByEsc: true,
+					closeIcon: { top: '10px', right: '15px' },
+					titleBar: this.getMessage('title'),
+					content: this.prepareContent(),
+					events:
+						{
+							onPopupShow: BX.delegate(this.onPopupShow, this),
+							onPopupClose: BX.delegate(this.onPopupClose, this),
+							onPopupDestroy: BX.delegate(this.onPopupDestroy, this),
+						},
+					buttons: this.prepareButtons(),
+				},
+			);
+			this.popup.show();
+		},
+		close()
+		{
+			if (this.popup)
+			{
+				this.popup.close();
+			}
+		},
+		addCloseListener(listener)
+		{
+			this.closeNotifier.addListener(listener);
+		},
+		removeCloseListener(listener)
+		{
+			this.closeNotifier.removeListener(listener);
+		},
+		getFilteredCategories()
+		{
+			const categoryIds = BX.prop.getArray(this.settings, 'categoryIds', []);
+			if (categoryIds.length === 0)
+			{
+				return BX.CrmDynamicCategory.infos[this.entityType];
+			}
+
+			return BX.CrmDynamicCategory.infos[this.entityType].filter(
+				(info) => {
+					for (
+						let i = 0,
+							length = categoryIds.length; i < length; i++
+					)
+					{
+						if (info.id === categoryIds[i])
+						{
+							return true;
+						}
+					}
+
+					return false;
+				},
+			);
+		},
+		prepareContent()
+		{
+			const table = BX.create(
+				'TABLE',
+				{
+					attrs:
+						{
+							className: 'bx-crm-deal-category-selector-dialog',
+							cellspacing: '2',
+						},
+				},
+			);
+
+			const row = table.insertRow(-1);
+			let cell = row.insertCell(-1);
+			BX.Dom.append(BX.create('LABEL', { text: `${this.getMessage('field')}:` }), cell);
+			cell = row.insertCell(-1);
+			this.selector = BX.create('SELECT', {});
+
+			const items = BX.CrmDynamicCategory.getListItems(this.getFilteredCategories());
+			BX.HtmlHelper.setupSelectOptions(this.selector, items);
+			if (items.length > 0)
+			{
+				this.selector.value = BX.CrmDynamicCategory.getDefaultId(this.getFilteredCategories());
+			}
+
+			BX.Dom.append(this.selector, cell);
+
+			return table;
+		},
+		prepareButtons()
+		{
+			return (
+				[
+					new BX.PopupWindowButton(
+						{
+							text: this.getMessage('saveButton'),
+							className: 'popup-window-button-accept',
+							events: { click: BX.delegate(this.processSave, this) },
+						},
+					),
+					new BX.PopupWindowButtonLink(
+						{
+							text: this.getMessage('cancelButton'),
+							className: 'popup-window-button-link-cancel',
+							events: { click: BX.delegate(this.processCancel, this) },
+						},
+					),
+				]);
+		},
+		getValue()
+		{
+			return this.value;
+		},
+		setValue(value)
+		{
+			let val = parseInt(value, 10);
+			if (!BX.Type.isNumber(val))
+			{
+				val = 0;
+			}
+			this.value = val;
+		},
+		processSave()
+		{
+			this.value = parseInt(this.selector.value, 10);
+			if (!BX.Type.isNumber(this.value))
+			{
+				this.value = 0;
+			}
+
+			this.closeNotifier.notify([{ isCanceled: false }]);
+			this.close();
+		},
+		processCancel()
+		{
+			this.closeNotifier.notify([{ isCanceled: true }]);
+			this.close();
+		},
+		onPopupShow()
+		{
+			this.isOpened = true;
+		},
+		onPopupClose()
+		{
+			if (this.popup)
+			{
+				this.popup.destroy();
+			}
+		},
+		onPopupDestroy()
+		{
+			this.isOpened = false;
+			this.popup = null;
+		},
+	};
+
+	if (BX.Type.isUndefined(BX.CrmDynamicCategorySelectDialog.messages))
+	{
+		BX.CrmDynamicCategorySelectDialog.messages = {};
+	}
+
+	BX.CrmDynamicCategorySelectDialog.create = function(id, entityType, settings)
+	{
+		const self = new BX.CrmDynamicCategorySelectDialog();
+		self.initialize(id, entityType, settings);
+
+		return self;
+	};
+}
+
 if(typeof(BX.CrmEntityManager) === "undefined")
 {
 	BX.CrmEntityManager = function()
@@ -11829,20 +12106,36 @@ if(typeof(BX.CrmEntityManager) === "undefined")
 					""
 				);
 			},
-			innerCreateEntity: function(entityType, options)
-			{
-				var url = this.getEntityCreateUrl(entityType);
-				if(url === "")
+			innerCreateEntity: function(entityType, options) {
+				// start region -  exclude for convert smart invoice in deal, quote
+				const urlParams = BX.prop.getObject(options, 'urlParams', null);
+				if (
+					urlParams
+					&& entityType === BX.CrmEntityType.names.smartinvoice
+					&& BX.type.isNumber(urlParams.parentTypeId)
+					&& (
+						urlParams.parentTypeId === BX.CrmEntityType.enumeration.deal
+						|| urlParams.parentTypeId === BX.CrmEntityType.enumeration.quote
+					)
+				)
 				{
-					throw "BX.CrmEntityManager.innerCreateEntity: Could not find create URL for type " + entityType;
+					return;
+				}
+				// end region
+
+				let url = this.getEntityCreateUrl(entityType);
+
+				if (url === '')
+				{
+					throw `BX.CrmEntityManager.innerCreateEntity: Could not find create URL for type ${entityType}`;
 				}
 
-				var urlParams = BX.prop.getObject(options, "urlParams", null);
-				if(urlParams)
+				if (urlParams)
 				{
 					url = BX.util.add_url_param(url, urlParams);
 				}
-				return BX.Crm.Page.open(url, { openInNewWindow: true });
+
+				BX.Crm.Page.open(url, { openInNewWindow: true });
 			},
 			createEntity: function(entityType, options)
 			{
@@ -11880,6 +12173,35 @@ if(typeof(BX.CrmEntityManager) === "undefined")
 								promise.fulfill({ wnd: this.innerCreateEntity(BX.CrmEntityType.names.deal, options) });
 							}
 						}.bind(this)
+					);
+					dialog.open();
+				}
+				else if (
+					BX.CrmEntityType.isDynamicTypeByName(entityType)
+					&& BX.CrmDynamicCategory.getCount(entityType) > 1
+					&& BX.CrmDynamicCategory.isCategoryEnabled()
+				)
+				{
+					const dialog = BX.CrmDynamicCategorySelectDialog.create(this._id, entityType, { value: 0 });
+					dialog.addCloseListener(
+						(sender, args) => {
+							if (BX.type.isBoolean(args.isCanceled) && args.isCanceled === false)
+							{
+								const value = sender.getValue();
+								if (value >= 0)
+								{
+									options.urlParams = BX.mergeEx(
+										BX.prop.getObject(options, 'urlParams', {}),
+										{ categoryId: value },
+									);
+								}
+								promise.fulfill({ wnd: this.innerCreateEntity(entityType, options) });
+							}
+							else
+							{
+								promise.reject({ isCanceled: true });
+							}
+						},
 					);
 					dialog.open();
 				}
@@ -13100,7 +13422,7 @@ BX.Crm.Page =
 		dynamicAutomation: { condition: new RegExp("/crm/type/[0-9]+/automation/[0-9]+/", "i"), stopParameters: ['grid_action', 'page'], options: { customLeftBoundary: 0, loader: 'bizproc:automation-loader' } },
 		activity: { condition: new RegExp("/bitrix/components/bitrix/crm.activity.planner/slider.php", "i"), options: { allowChangeHistory: false, width: 1080 }},
 		factoryBasedMerge: { condition: new RegExp('/crm/type/[0-9]+/merge/', 'i'), options: { allowHistoryChange: false, customLeftBoundary: 0 } },
-		permissions: { condition: new RegExp('/crm/perms/[A-Za-z0-9-_]+/?$', 'i'), options: { loader: null} },
+		permissions: { condition: new RegExp('/crm/perms/[A-Za-z0-9-_]+/?', 'i'), options: { loader: null} },
 		workflow: { condition: new RegExp('/company/personal/bizproc/([a-zA-Z0-9.]+)/', 'i'), options: { cacheable: false, loader: 'bizproc:workflow-info', width: window.innerWidth > 1500 ? (1500 + Math.floor((window.innerWidth - 1500) / 3)) : null } },
 	},
 	items: [],

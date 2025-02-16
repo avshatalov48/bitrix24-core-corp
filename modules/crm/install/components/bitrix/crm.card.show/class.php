@@ -5,8 +5,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Crm\Feature;
-use Bitrix\Crm\Feature\CopilotInCallGrading;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Enum\GlobalSetting;
 use Bitrix\Crm\Service\Container;
@@ -181,7 +179,6 @@ class CrmCardShowComponent extends CBitrixComponent
 	{
 		return
 			($this->arParams['isEnableCopilotReplacement'] ?? true)
-			&& Feature::enabled(CopilotInCallGrading::class)
 			&& AIManager::isAiCallProcessingEnabled()
 			&& AIManager::isEnabledInGlobalSettings(GlobalSetting::CallAssessment)
 			&& Container::getInstance()->getUserPermissions()->canReadCopilotCallAssessmentSettings()

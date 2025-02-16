@@ -1,11 +1,16 @@
 import { BitrixVue } from 'ui.vue3';
 import { Text, Type } from 'main.core';
-import { Button as UIButton, ButtonOptions, SplitButton as UISplitButton } from 'ui.buttons';
+import {
+	Button as UIButton,
+	ButtonOptions,
+	ButtonState as UIButtonState,
+	SplitButton as UISplitButton,
+} from 'ui.buttons';
 
 import { BaseButton } from './baseButton';
 import { ButtonType } from '../enums/button-type';
 import { ButtonState } from '../enums/button-state';
-import { Menu as LayoutMenu } from './menu';
+import { ButtonMenu } from './button-menu';
 
 import 'ui.hint';
 
@@ -140,25 +145,38 @@ export const Button = BitrixVue.cloneComponent(BaseButton, {
 		{
 			const menuItems = Object.keys(this.menuItems).map((key) => this.menuItems[key]);
 			const options = this.getButtonOptions();
+			const showMenu = () => {
+				ButtonMenu.showMenu(
+					this,
+					menuItems,
+					{
+						id: `split-button-menu-${this.id}`,
+						className: 'crm-timeline__split-button-menu',
+						width: 250,
+						angle: true,
+						cacheable: false,
+						offsetLeft: 13,
+						bindElement: this.$el.querySelector('.ui-btn-menu'),
+					},
+				);
+			};
+
 			options.menuButton = {
 				onclick: (element, event: PointerEvent) => {
 					event.stopPropagation();
-
-					LayoutMenu.showMenu(
-						this,
-						menuItems,
-						{
-							id: `split-button-menu-${this.id}`,
-							className: 'crm-timeline__split-button-menu',
-							width: 230,
-							angle: true,
-							cacheable: false,
-							offsetLeft: 13,
-							bindElement: this.$el.querySelector('.ui-btn-menu'),
-						},
-					);
+					showMenu();
 				},
 			};
+
+			if (options.state === UIButtonState.DISABLED)
+			{
+				options.mainButton = {
+					onclick: (element, event: PointerEvent) => {
+						event.stopPropagation();
+						showMenu();
+					},
+				};
+			}
 
 			return new UISplitButton(options);
 		},

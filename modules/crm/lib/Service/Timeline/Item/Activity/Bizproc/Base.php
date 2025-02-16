@@ -52,7 +52,16 @@ abstract class Base extends Activity
 
 	public function getMenuItems(): array
 	{
-		return [];
+		$settings = $this->getActivitySettings();
+		$workflowId = $settings['WORKFLOW_ID'] ?? null;
+		if (empty($workflowId))
+		{
+			return [];
+		}
+
+		return [
+			'log' => $this->createLogMenuItem($workflowId)
+		];
 	}
 
 	protected function getActivitySettings(): array

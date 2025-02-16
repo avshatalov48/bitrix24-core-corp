@@ -95,8 +95,8 @@ class FileField extends BaseLinkedEntitiesField
 				$resizedFile = \CFile::ResizeImageGet(
 					$file,
 					[
-						'width' => (int)($displayParams['IMAGE_WIDTH'] ?? 70),
-						'height' => (int)($displayParams['IMAGE_HEIGHT'] ?? 70),
+						'width' => 70,
+						'height' => 70,
 					],
 					BX_RESIZE_IMAGE_PROPORTIONAL,
 					true

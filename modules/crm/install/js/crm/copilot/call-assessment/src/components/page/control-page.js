@@ -1,39 +1,25 @@
-import { Loc, Type } from 'main.core';
-import { headOfDepartment } from '../common/head-department';
-import { HeadSelector } from '../common/head-selector';
-import { HelpLink } from '../common/help-link';
-import { Switcher } from '../common/switcher';
+import { Loc } from 'main.core';
+import { UI } from 'ui.notification';
+import { BordersAccord } from '../../validator/border-accord';
+import { Pill } from '../common/pill';
 import { TextWithDialog } from '../common/text-with-dialog';
-import { userType } from '../enum/user-type';
 import { BasePage } from './base-page';
 
 export const ControlPage = {
 	extends: BasePage,
 
 	components: {
-		HelpLink,
-		Switcher,
 		TextWithDialog,
-		HeadSelector,
+		Pill,
 	},
 
 	data(): Object
 	{
-		const defaultFluidCallCount = 2;
-
-		const headItems = this.data.headItems ?? null;
-		const headItem = (Type.isArrayFilled(headItems)
-			? [...headItems[0]]
-			: [headOfDepartment.entityId, headOfDepartment.id]
-		);
-
 		return {
 			id: 'control',
-			isStrictControl: this.data.isStrictControl ?? false,
-			fluidCallCount: this.data.fluidCallCount ?? defaultFluidCallCount,
-			headItem,
-			useSummary: this.data.useSummary ?? false,
-			users: this.data.users ?? {},
+			lowBorder: this.data.lowBorder,
+			highBorder: this.data.highBorder,
+			validator: new BordersAccord(),
 		};
 	},
 
@@ -41,41 +27,28 @@ export const ControlPage = {
 		getData(): Object
 		{
 			return {
-				controlData: {
-					isStrictControl: this.isStrictControl,
-					fluidCallCount: this.fluidCallCount,
-					headItems: [
-						[...this.headItem],
-					],
-				},
-				useSummary: this.useSummary,
+				lowBorder: this.lowBorder,
+				highBorder: this.highBorder,
 			};
 		},
-		onToggleControlType(value: boolean): void
+		setLowBorder(value: number): void
 		{
-			this.isStrictControl = value;
+			this.lowBorder = value;
 		},
-		prepareCallCountToChatWithHead(messageId: string, inactive: boolean = false): string
+		setHighBorder(value: number): void
 		{
-			const inactiveClass = inactive ? '--inactive' : '';
-			const callNumberStart = `<span id="crm-copilot__call-assessment-item-selector" class="crm-copilot__call-assessment-item-selector ${inactiveClass}">`;
-			const callNumberFinish = '</span>';
-
-			return Loc.getMessage(
-				messageId,
-				{
-					'[callNumber]': callNumberStart,
-					'[/callNumber]': callNumberFinish,
-				},
-			);
+			this.highBorder = value;
 		},
-		setFluidCallCount(value: number): void
+		validate(): boolean
 		{
-			this.fluidCallCount = value;
+			return this.validator.validate(this.lowBorder, this.highBorder);
 		},
-		setHeadItem(value: Array): void
+		onValidationFailed(): void
 		{
-			this.headItem = value;
+			UI.Notification.Center.notify({
+				content: this.validator.getError(),
+				autoHideDelay: 3000,
+			});
 		},
 	},
 
@@ -87,88 +60,6 @@ export const ControlPage = {
 		pageDescription(): string
 		{
 			return Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_DESCRIPTION');
-		},
-		callCountToChatWithHeadFluid(): string
-		{
-			const messageId = `CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_CALL_NUMBER_EVERY_${this.fluidCallCount}`;
-
-			return this.prepareCallCountToChatWithHead(messageId);
-		},
-		callCountToChatWithHeadStrict(): string
-		{
-			const messageId = 'CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_CALL_NUMBER_EVERY_1';
-
-			return this.prepareCallCountToChatWithHead(messageId, true);
-		},
-		leftItem(): Object
-		{
-			return Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_FLEXIBLE');
-		},
-		rightItem(): Object
-		{
-			return Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_STRICT');
-		},
-		articleCode(): string
-		{
-			return '9474707'; // @todo set correct article code
-		},
-		summaryByManagers(): string
-		{
-			return Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_GET_SUMMARY_MANAGERS');
-		},
-		getDialogItems(): Array<Object>
-		{
-			const items = [];
-			const minCallCount = 2;
-			const maxCallCount = 10;
-
-			for (let i = minCallCount; i <= maxCallCount; i++)
-			{
-				items.push({
-					id: i,
-					entityId: 'callNumber',
-					title: Loc.getMessage(`CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_DIALOG_CALL_NUMBER_EVERY_${i}`),
-					tabs: 'items',
-				});
-			}
-
-			return items;
-		},
-		getDialogTabs(): Array<Object>
-		{
-			return [
-				{
-					id: 'items',
-					title: null,
-				},
-			];
-		},
-		getDialogSelectedItems(): Array<Object>
-		{
-			return [{
-				id: this.fluidCallCount,
-				entityId: 'callNumber',
-				title: Loc.getMessage(`CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_DIALOG_CALL_NUMBER_EVERY_${this.fluidCallCount}`),
-				tabs: 'items',
-			}];
-		},
-		headSelectorItems(): Array<Object>
-		{
-			const headType = this.headItem[0];
-			const headId = this.headItem[1];
-
-			const title = (
-				headType === userType.divisionHead
-					? headOfDepartment.title
-					: this.users[headId]?.FORMATTED_NAME ?? ''
-			);
-
-			return [{
-				id: headId,
-				entityId: headType,
-				title,
-				tabs: 'users',
-			}];
 		},
 	},
 
@@ -185,46 +76,47 @@ export const ControlPage = {
 					</div>
 				</header>
 				<div class="crm-copilot__call-assessment_page-section-body">
-					<div class="crm-copilot__call-assessment_page-section-body-field">
-						<Switcher
-							id="crm-copilot__call-assessment_control-switcher"
-							:is-checked="isStrictControl"
-							:left-item="leftItem"
-							:right-item="rightItem"
-							@onToggle="onToggleControlType"
-						/>
+					<AiDisabledInSettings v-if="!isEnabled" />
+					<div class="crm-copilot__call-assessment_page-section-body-field-container">
+						<div class="crm-copilot__call-assessment_page-section-body-field-title --low-icon">
+							{{ this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_LOW_BORDER_TITLE') }}
+						</div>
+						<div class="crm-copilot__call-assessment_page-section-body-field-content">
+							<div
+								class="crm-copilot__call-assessment_page-section-body-field-subtitle"
+								v-html="this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_LOW_BORDER_DESCRIPTION')"
+							>
+							</div>
+							<Pill
+								additionalClass="--low"
+								:value="lowBorder"
+								@change="setLowBorder"
+							/>
+							<div class="crm-copilot__call-assessment_page-section-body-field-additional">
+								{{ this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_LOW_BORDER_ADDITIONAL') }}
+							</div>
+						</div>
 					</div>
-					<div class="crm-copilot__call-assessment_page-section-body-field  --control-call-count">
-						<TextWithDialog
-							v-if="isStrictControl"
-							id="callCountToChatWithHeadControl"
-							:article-code="articleCode"
-							:content="callCountToChatWithHeadStrict"
-						/>
-						<TextWithDialog
-							v-else
-							id="callCountToChatWithHeadControl"
-							:article-code="articleCode"
-							dialog-target-id="crm-copilot__call-assessment-item-selector"
-							:content="callCountToChatWithHeadFluid"
-							:value="fluidCallCount"
-							:selectedItems="getDialogSelectedItems"
-							:items="getDialogItems"
-							:tabs="getDialogTabs"
-							@onSelectItem="setFluidCallCount"
-						/>
-					</div>
-					<div class="crm-copilot__call-assessment_page-section-body-field  --control-head">
-						<HeadSelector
-							:selectedItems="headSelectorItems"
-							@onSelectItem="setHeadItem"
-						/>
-					</div>
-					<div class="crm-copilot__call-assessment_page-section-body-field --checkbox">
-						<label class="ui-ctl ui-ctl-w100 ui-ctl-checkbox">
-							<input class="ui-ctl-element" type="checkbox" v-model="useSummary">
-							<span class="ui-ctl-label-text">{{ summaryByManagers }}</span>
-						</label>
+					
+					<div class="crm-copilot__call-assessment_page-section-body-field-container">
+						<div class="crm-copilot__call-assessment_page-section-body-field-title --high-icon">
+							{{ this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_HIGH_BORDER_TITLE') }}
+						</div>
+						<div class="crm-copilot__call-assessment_page-section-body-field-content">
+							<div 
+								class="crm-copilot__call-assessment_page-section-body-field-subtitle"
+								v-html="this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_HIGH_BORDER_DESCRIPTION')"
+							>
+							</div>
+							<Pill
+								additionalClass="--high"
+								:value="highBorder"
+								@change="setHighBorder"
+							/>
+							<div class="crm-copilot__call-assessment_page-section-body-field-additional">
+								{{ this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_HIGH_BORDER_ADDITIONAL') }}
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>

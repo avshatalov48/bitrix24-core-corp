@@ -1,0 +1,112 @@
+.resource-creation-wizard__form-work-time-selector-widget {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.resource-creation-wizard__form-work-time-selector-widget .ui-form-row {
+	padding-right: 0 !important;
+}
+
+.resource-creation-wizard__form-work-time-selector-widget .ui-ctl {
+	width: 100% !important;
+	cursor: pointer;
+}
+
+.resource-creation-wizard__form-work-time-selector-widget-days.ui-form-row {
+	flex: 1;
+}
+
+.resource-creation-wizard__form-work-time-selector-widget-time {
+	flex-grow: 0;
+}
+
+.resource-creation-wizard__form-work-time-selector-widget-time .ui-form-row {
+	flex-shrink: 0;
+	flex-grow: 0;
+}
+
+.resource-creation-wizard__form-work-time-selector-btn-row {
+	flex-grow: 0;
+	flex-shrink: 1;
+}
+
+.resource-creation-wizard__form-work-time-selector .ui-ctl-icon-angle
+{
+	transition: transform 0.150s ease-in-out;
+}
+
+.resource-creation-wizard__form-work-time-selector .ui-ctl-icon-angle.--active {
+	transform: rotateX(180deg);
+}
+
+.resource-creation-wizard__form-work-time-selector-btn {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+	width: 30px;
+	height: 30px;
+	color: var(--ui-color-palette-gray-80);
+	cursor: pointer;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+.resource-creation-wizard__form-work-time-selector-btn:hover,
+.resource-creation-wizard__form-work-time-selector-btn.--remove:hover
+{
+	color: var(--ui-field-color-primary);
+}
+
+.resource-creation-wizard__form-work-time-selector-btn:before,
+.resource-creation-wizard__form-work-time-selector-btn:after {
+	position: absolute;
+	content: '';
+	width: 2px;
+	display: block;
+	height: 14px;
+	background: var(--ui-color-palette-gray-80);
+	left: 50%;
+	top: 50%;
+	transform-origin: center;
+	transform: translate(-50%, -50%);
+}
+
+.resource-creation-wizard__form-work-time-selector-btn:after {
+	transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.resource-creation-wizard__form-work-time-selector-btn:hover:before,
+.resource-creation-wizard__form-work-time-selector-btn:hover:after,
+.resource-creation-wizard__form-work-time-selector-btn.--remove:hover:before,
+.resource-creation-wizard__form-work-time-selector-btn.--remove:hover:after
+{
+	background: var(--ui-field-color-primary);
+}
+
+.resource-creation-wizard__form-work-time-selector-btn.--remove {
+	transform: rotate(45deg);
+	color: var(--ui-color-palette-gray-50);
+}
+
+.resource-creation-wizard__form-work-time-selector-btn.--remove:before,
+.resource-creation-wizard__form-work-time-selector-btn.--remove:after {
+	background: var(--ui-color-palette-gray-50);
+}
+
+.resource-creation-wizard__form-work-time-selector-dash {
+	margin: 5px;
+	width: 12px;
+	height: 1px;
+	background: var(--ui-color-palette-black-base);
+}
+
+.resource-creation-wizard__form-work-time-menu .menu-popup-item.--selected {
+	background-color: var(--ui-color-palette-gray-20);
+}
+
+.resource-creation-wizard__form-work-time-menu .menu-popup-item.--selected .menu-popup-item-text{
+	color: var(--ui-color-palette-black-base);
+	font-weight: 400;
+}

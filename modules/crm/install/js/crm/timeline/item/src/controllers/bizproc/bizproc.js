@@ -1,4 +1,4 @@
-import { ajax, Runtime, Uri, Text, Type, Loc } from 'main.core';
+import { ajax, Runtime, Text, Type, Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { UI } from 'ui.notification';
 import AvatarsStackSteps from '../../components/content-blocks/avatars-stack-steps';
@@ -44,77 +44,92 @@ export class Bizproc extends Base
 			return;
 		}
 
-		const taskId = Text.toInteger(actionData?.taskId);
-		if (action === 'Bizproc:Task:Open' && taskId > 0)
-		{
-			this.#openTask(taskId, actionData);
+		const actionHandlers = {
+			'Bizproc:Task:Open': () => this.#openWorkflowTaskSlider(actionData),
+			'Bizproc:Task:Do': () => this.#handleTaskAction(actionData, item),
+			'Bizproc:Workflow:Timeline:Open': () => this.#openTimeline(actionData),
+			'Bizproc:Workflow:Open': () => this.#openWorkflowSlider(actionData),
+			'Bizproc:Workflow:Terminate': () => this.#terminateWorkflow(actionData),
+			'Bizproc:Workflow:Log': () => this.#openWorkflowLogSlider(actionData),
+		};
 
-			return;
+		const handler = actionHandlers[action];
+
+		if (handler)
+		{
+			handler();
+		}
+	}
+
+	#handleTaskAction(actionData: Object, item: ConfigurableItem): void
+	{
+		const responsibleId = Text.toInteger(actionData?.responsibleId);
+		if (responsibleId > 0 && Text.toInteger(item.getCurrentUser()?.userId) === responsibleId)
+		{
+			this.#doTask(actionData, item);
 		}
 
-		if (action === 'Bizproc:Task:Do' && taskId > 0)
-		{
-			const responsibleId = Text.toInteger(actionData?.responsibleId);
-			if (responsibleId > 0 && Text.toInteger(item.getCurrentUser()?.userId) === responsibleId)
+		UI.Notification.Center.notify({
+			content: Text.encode(Loc.getMessage('CRM_TIMELINE_ITEM_BIZPROC_TASK_DO_ACTION_ACCESS_DENIED')),
+			autoHideDelay: 5000,
+		});
+	}
+
+	#openWorkflowLogSlider(actionData)
+	{
+		this.#openSlider(actionData, (Router, { workflowId }) => {
+			if (Router && workflowId)
 			{
-				this.#doTask(taskId, actionData, item);
-
-				return;
+				Router.openWorkflowLog(workflowId);
 			}
+		});
+	}
 
-			UI.Notification.Center.notify({
-				content: Text.encode(Loc.getMessage('CRM_TIMELINE_ITEM_BIZPROC_TASK_DO_ACTION_ACCESS_DENIED')),
-				autoHideDelay: 5000,
-			});
+	#openWorkflowSlider(actionData)
+	{
+		this.#openSlider(actionData, (Router, { workflowId }) => {
+			if (Router && workflowId)
+			{
+				Router.openWorkflow(workflowId);
+			}
+		});
+	}
 
+	#openWorkflowTaskSlider(actionData) {
+		this.#openSlider(actionData, (Router, { taskId, userId }) => {
+			if (Router && taskId)
+			{
+				Router.openWorkflowTask(Text.toInteger(taskId), Text.toInteger(userId));
+			}
+		});
+	}
+
+	async #openSlider(actionData, callback)
+	{
+		if (!actionData)
+		{
 			return;
 		}
 
-		const isTimelineOpen = action === 'Bizproc:Workflow:Timeline:Open';
-		const isBizprocOpen = action === 'Bizproc:Workflow:Open';
-		const isWorkflowTerminate = action === 'Bizproc:Workflow:Terminate';
+		try
+		{
+			const { Router } = await Runtime.loadExtension('bizproc.router');
+			callback(Router, actionData);
+		}
+		catch (e)
+		{
+			console.error(e);
+		}
+	}
+
+	#openTimeline(actionData: Object): void
+	{
 		const workflowId = actionData?.workflowId;
 		if (!workflowId)
 		{
 			return;
 		}
 
-		if (isTimelineOpen)
-		{
-			this.#openTimeline(workflowId);
-		}
-
-		if (isBizprocOpen)
-		{
-			this.#openSlider(`/company/personal/bizproc/${workflowId}/`);
-		}
-
-		if (isWorkflowTerminate)
-		{
-			this.#terminateWorkflow(workflowId);
-		}
-	}
-
-	#openSlider(url)
-	{
-		Runtime
-			.loadExtension('sidepanel')
-			.then(() => {
-				const options = {
-					width: this.#detectSliderWidth(), // TODO extend UI with openSlider
-					cacheable: false,
-					loader: 'bizproc:workflow-info',
-				};
-				BX.SidePanel.Instance.open(
-					Uri.addParam(url),
-					options,
-				);
-			})
-			.catch((response) => console.error(response.errors));
-	}
-
-	#openTimeline(workflowId): void
-	{
 		Runtime
 			.loadExtension('bizproc.workflow.timeline')
 			.then(() => {
@@ -123,8 +138,14 @@ export class Bizproc extends Base
 			.catch((response) => console.error(response.errors));
 	}
 
-	#terminateWorkflow(workflowId): void
+	#terminateWorkflow(actionData: Object): void
 	{
+		const workflowId = actionData?.workflowId;
+		if (!workflowId)
+		{
+			return;
+		}
+
 		ajax.runAction('bizproc.workflow.terminate', { data: { workflowId } })
 			.catch((response) => {
 				response.errors.forEach((error) => {
@@ -136,18 +157,14 @@ export class Bizproc extends Base
 			});
 	}
 
-	#detectSliderWidth(): number
+	#doTask(actionData: Object, item: ConfigurableItem)
 	{
-		if (window.innerWidth < 1500)
+		const taskId = actionData?.taskId;
+		if (!taskId)
 		{
-			return null; // default slider width
+			return;
 		}
 
-		return 1500 + Math.floor((window.innerWidth - 1500) / 3);
-	}
-
-	#doTask(taskId: number, actionData, item: ConfigurableItem)
-	{
 		const value = actionData?.value;
 		const name = actionData?.name;
 
@@ -182,17 +199,6 @@ export class Bizproc extends Base
 				})
 			;
 		}
-	}
-
-	#openTask(taskId: number, actionData)
-	{
-		let url = `/company/personal/bizproc/${taskId}/`;
-		const userId = Text.toInteger(actionData?.userId);
-		if (userId > 0)
-		{
-			url += `?USER_ID=${userId}`;
-		}
-		this.#openSlider(url);
 	}
 
 	onAfterItemLayout(item: ConfigurableItem, options): void

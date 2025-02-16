@@ -4,19 +4,18 @@ namespace Bitrix\Sign\Ui\MyDocumentsGrid\ActionCellTemplateFactory;
 
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sign\Contract\Grid\MyDocuments\ActionCellTemplate;
 
 class RefusedDocumentTemplate implements ActionCellTemplate
 {
 	use ActionDateTrait;
 
-	private ?DateTime $refusedDate;
+	public function __construct(
+		private readonly ?DateTime $refusedDate = null,
+	)
+	{}
 
-	public function __construct(?DateTime $refusedDate = null)
-	{
-		$this->refusedDate = $refusedDate;
-	}
-
-	public function get(): string
+	public function render(): string
 	{
 		$message = Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_REFUSED');
 		$formattedDate = self::getFormattedDate($this->refusedDate);

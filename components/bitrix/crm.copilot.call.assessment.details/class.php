@@ -31,10 +31,12 @@ class CCrmCopilotCallAssessmentDetailsComponent extends Base
 
 		if (
 			!AIManager::isAiCallProcessingEnabled()
-			|| !Feature::enabled(Feature\CopilotInCallGrading::class)
 			|| !Container::getInstance()->getUserPermissions()->canReadCopilotCallAssessmentSettings())
 		{
-			$this->showError('CRM_COPILOT_CALL_ASSESSMENT_DETAILS_ACCESS_DENIED');
+			$this->showError(
+				'CRM_COPILOT_CALL_ASSESSMENT_DETAILS_ACCESS_DENIED_MSGVER_1',
+				'CRM_COPILOT_CALL_ASSESSMENT_DETAILS_ACCESS_DENIED_DESCRIPTION',
+			);
 
 			return;
 		}
@@ -84,18 +86,19 @@ class CCrmCopilotCallAssessmentDetailsComponent extends Base
 			!Container::getInstance()->getUserPermissions()->canEditCopilotCallAssessmentSettings()
 			|| !AIManager::isEnabledInGlobalSettings(GlobalSetting::CallAssessment)
 		;
+		$this->arResult['isEnabled'] = AIManager::isEnabledInGlobalSettings(GlobalSetting::CallAssessment);
 
 		$this->includeComponentTemplate();
 	}
 
-	private function showError(string $messageCode): void
+	private function showError(string $messageCode, string $descriptionCode = ''): void
 	{
 		$this->getApplication()->IncludeComponent(
 			'bitrix:ui.info.error',
 			'',
 			[
 				'TITLE' => Loc::getMessage($messageCode),
-				'DESCRIPTION' => '',
+				'DESCRIPTION' => empty($descriptionCode) ? '' : Loc::getMessage($descriptionCode),
 			]
 		);
 	}

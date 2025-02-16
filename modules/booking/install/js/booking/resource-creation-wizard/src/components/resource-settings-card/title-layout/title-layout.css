@@ -1,0 +1,9 @@
+.resource-creation-wizard__form-settings-title-row {
+	display: flex;
+	gap: 7px;
+	align-items: center;
+}
+
+.resource-creation-wizard__form-settings-title {
+	font-size: var(--ui-font-size-2xl);
+}

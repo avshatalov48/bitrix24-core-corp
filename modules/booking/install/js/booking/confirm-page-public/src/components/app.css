@@ -1,0 +1,41 @@
+body{
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular);
+}
+
+.confirm-page-container{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100vh;
+	word-wrap: break-word;
+}
+
+.confirm-page-body{
+	width: 343px;
+	padding-top: 20px;
+	padding-bottom: 24px;
+	padding-left: 24px;
+	padding-right: 24px;
+	background: white;
+	box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.12);
+	border-radius: 6px;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: center;
+	display: inline-flex;
+}
+
+@media only screen and (max-width: 420px) {
+	body {
+		background: none;
+	}
+
+	.confirm-page-body{
+		width: 308px;
+	}
+
+	.cancel-booking-popup-content{
+		width: 300px !important;
+	}
+}

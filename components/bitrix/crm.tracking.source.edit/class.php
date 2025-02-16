@@ -30,8 +30,19 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 
 	protected function initParams()
 	{
-		$this->arParams['SET_TITLE'] = isset($this->arParams['SET_TITLE']) ? (bool) $this->arParams['SET_TITLE'] : true;
-		$this->arParams['IS_ADDED'] = isset($this->arParams['IS_ADDED']) ? $this->arParams['IS_ADDED'] === 'Y' : false;
+		$this->arParams['SET_TITLE'] = !isset($this->arParams['SET_TITLE']) || (bool)$this->arParams['SET_TITLE'];
+		foreach (['IS_ADDED', 'IS_UPDATED'] as $param)
+		{
+			if ($this->request->get($param))
+			{
+				$this->arParams[$param] = $this->request->get($param) === 'Y';
+			}
+			else
+			{
+				$this->arParams[$param] = isset($this->arParams[$param]) && $this->arParams[$param] === 'Y';
+			}
+		}
+		unset($param);
 
 		if (!isset($this->arParams['ID']))
 		{
@@ -98,8 +109,11 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 			'AD_CLIENT_ID' => $this->arParams['CODE'] ? $this->request->get('AD_CLIENT_ID') : null,
 			'AD_ACCOUNT_ID' => $this->arParams['CODE'] ? $this->request->get('AD_ACCOUNT_ID') : null,
 		];
+
+		$resultId = 0;
 		if ($this->arResult['ROW']['ID'])
 		{
+			$resultId = $this->arResult['ROW']['ID'];
 			if ($this->request->get('archive') === 'Y')
 			{
 				$result = Tracking\Internals\SourceTable::update($this->arResult['ROW']['ID'], ['ACTIVE' => 'N']);
@@ -113,19 +127,19 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 		{
 			$data['CODE'] = $this->arParams['CODE'];
 			$result = Tracking\Internals\SourceTable::add($data);
-			$this->arResult['ROW']['ID'] = $result->getId() ?: 0;
+			$resultId = $result->getId() ?: 0;
 		}
 
 		if ($result->isSuccess())
 		{
 			Tracking\Internals\SourceFieldTable::setSourceField(
-				$this->arResult['ROW']['ID'],
+				$resultId,
 				Tracking\Internals\SourceFieldTable::FIELD_REF_DOMAIN,
 				$this->preparePostRefDomains($this->request->get('REF_DOMAIN'))
 			);
 
 			Tracking\Internals\SourceFieldTable::setSourceField(
-				$this->arResult['ROW']['ID'],
+				$resultId,
 				Tracking\Internals\SourceFieldTable::FIELD_UTM_SOURCE,
 				$this->preparePostUtmSource($this->request->get('UTM_SOURCE'))
 			);
@@ -134,7 +148,7 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 
 			$uri = str_replace(
 				'#id#',
-				$this->arResult['ROW']['ID'],
+				$resultId,
 				$this->arParams['PATH_TO_EDIT']
 			);
 			$uri = (new \Bitrix\Main\Web\Uri($uri));
@@ -146,11 +160,16 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 			{
 				$uri->addParams(['IS_ADDED' => 'Y']);
 			}
+			else
+			{
+				$uri->addParams(['IS_UPDATED' => 'Y']);
+			}
 
 			LocalRedirect($uri->getLocator());
 		}
 		else
 		{
+			$this->arResult['ROW']['ID'] = $resultId;
 			$this->errors->add($result->getErrors());
 		}
 	}

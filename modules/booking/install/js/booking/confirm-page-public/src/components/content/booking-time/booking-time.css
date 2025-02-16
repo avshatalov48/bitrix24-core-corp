@@ -1,0 +1,93 @@
+
+.confirm-page-content-booking-time{
+	align-self: stretch;
+	justify-content: flex-start;
+	align-items: center;
+	gap: 4px;
+	display: inline-flex;
+}
+
+.confirm-page-content-booking-time-calendar{
+	padding-right: 12px;
+	align-items: flex-start;
+	gap: 10px;
+	display: flex;
+}
+
+.confirm-page-content-booking-time-detail{
+	text-align: center;
+	width: 191px;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+	display: inline-flex;
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-palette-black-base);
+}
+
+.confirm-page-content-booking-time-detail-timezone{
+	color: var(--ui-color-palette-gray-70);
+	font-size: var(--ui-font-size-xs);
+	text-transform: none;
+}
+
+.confirm-page-content-booking-time-calendar-container{
+	width: 56px;
+	height: 57px;
+	position: relative;
+}
+
+.confirm-page-content-booking-time-calendar-container-border{
+	width: 56px;
+	height: 57px;
+	left: 0px;
+	top: 0px;
+	position: absolute;
+	background: var(--ui-color-palette-white-base);
+	border-radius: 4px;
+	border: 1px var(--ui-color-palette-gray-30) solid;
+}
+
+.confirm-page-content-booking-time-calendar-container-header{
+	width: 58px;
+	height: 14px;
+	left: 0px;
+	top: 0px;
+	border-top-left-radius: 3px;
+	border-top-right-radius: 3px;
+	position: absolute;
+	background: var(--ui-color-palette-gray-90);
+}
+
+.confirm-page-content-booking-time-calendar-container-date{
+	width: 56px;
+	left: 0px;
+	top: 13.50px;
+	position: absolute;
+	text-align: center;
+	color: var(--ui-color-palette-gray-90);
+	font-size: var(--ui-font-size-3xl);
+}
+
+.confirm-page-content-booking-time-calendar-container-month{
+	width: 56px;
+	height: 14px;
+	left: 0px;
+	top: 0px;
+	position: absolute;
+	text-align: center;
+	color: var(--ui-color-palette-white-base);
+	font-size: var(--ui-font-size-5xs);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.confirm-page-content-booking-time-calendar-container-time{
+	width: 56px;
+	left: 0px;
+	top: 39.50px;
+	position: absolute;
+	text-align: center;
+	color: var(--ui-color-palette-gray-70);
+	font-size: var(--ui-font-size-3xs);
+	font-weight: var(--ui-font-weight-semi-bold);
+}

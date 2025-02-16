@@ -333,6 +333,7 @@ abstract class ItemList extends Base
 		}
 
 		$permissionItem = PermissionItem::createByEntity($this->entityTypeId, $this->getCategoryId());
+		$permissionItem->setAnalytics($this->getAnalytics());
 		if ($permissionItem->canShow())
 		{
 			$settingsItems[] = $permissionItem->delimiter();
@@ -347,7 +348,7 @@ abstract class ItemList extends Base
 					'items' => $settingsItems,
 					'offsetLeft' => 20,
 					'closeByEsc' => true,
-					'angle' => true
+					'angle' => true,
 				],
 			]);
 			$settingsButton->addAttribute('id', static::TOOLBAR_SETTINGS_BUTTON_ID);
@@ -431,7 +432,7 @@ abstract class ItemList extends Base
 		if($searchRestriction->isExceeded($this->entityTypeId))
 		{
 			$limits = $searchRestriction->prepareStubInfo([
-				'ENTITY_TYPE_ID' => $this->entityTypeId
+				'ENTITY_TYPE_ID' => $this->entityTypeId,
 			]);
 		}
 
@@ -621,7 +622,7 @@ abstract class ItemList extends Base
 					'ENTITY_TYPE_NAME' => $this->arResult['entityTypeName'],
 					'EXTRAS' => $this->arResult['categoryId'] > 0 ? ['CATEGORY_ID' => $this->arResult['categoryId']] : [],
 					'PATH_TO_ENTITY_LIST' => '/crm/type/' . $this->entityTypeId,
-					'RETURN_AS_HTML_MODE' => true
+					'RETURN_AS_HTML_MODE' => true,
 				]
 			);
 			//@codingStandardsIgnoreEnd
@@ -792,6 +793,17 @@ abstract class ItemList extends Base
 	}
 	//@codingStandardsIgnoreEnd
 
+	final protected function getAnalytics(): array
+	{
+		$dummyEvent = new AddOpenEvent();
+		$this->configureAnalyticsEventBuilder($dummyEvent);
+
+		return [
+			'c_section' => $dummyEvent->getSection(),
+			'c_sub_section' => $dummyEvent->getSubSection(),
+		];
+	}
+
 	protected function isDeadlinesModeSupported(): bool
 	{
 		$supported = [\CCrmOwnerType::SmartInvoice];
@@ -819,13 +831,7 @@ abstract class ItemList extends Base
 	{
 		$params = parent::getTopPanelParameters();
 
-		$dummyEvent = new AddOpenEvent();
-		$this->configureAnalyticsEventBuilder($dummyEvent);
-
-		$params['ANALYTICS'] = [
-			'c_section' => $dummyEvent->getSection(),
-			'c_sub_section' => $dummyEvent->getSubSection(),
-		];
+		$params['ANALYTICS'] = $this->getAnalytics();
 
 		return $params;
 	}

@@ -18,6 +18,7 @@ export class B2BSignSettings extends SignSettings
 		this.documentSetup = new DocumentSetup(blankSelectorConfig);
 		this.documentSend = new DocumentSend(documentSendConfig);
 		this.#requisites = new Requisites();
+		this.isB2bSignMaster = true;
 		this.subscribeOnEvents();
 	}
 
@@ -31,8 +32,9 @@ export class B2BSignSettings extends SignSettings
 
 		const { setupData } = this.documentSetup;
 		this.#requisites.documentData = setupData;
-		this.documentSend.documentData = setupData;
 		this.editor.documentData = setupData;
+
+		this.documentsGroup.set(setupData.uid, setupData);
 
 		return true;
 	}
@@ -51,6 +53,7 @@ export class B2BSignSettings extends SignSettings
 					{
 						return false;
 					}
+					this.setSingleDocument(setupData);
 
 					const { uid, entityId, initiator } = setupData;
 					this.#requisites.documentData = { uid, entityId, initiator };

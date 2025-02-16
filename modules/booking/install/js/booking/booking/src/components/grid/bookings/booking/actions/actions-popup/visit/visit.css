@@ -1,0 +1,27 @@
+.booking-actions-popup__item-visit-content {
+	display: flex;
+	gap: 10px;
+}
+
+.booking-actions-popup__item-visit-loader {
+	width: 100%;
+	height: 33px;
+}
+
+.booking-actions-popup-item-icon.--visited {
+	background: var(--ui-color-palette-green-60);
+	border-color: transparent;
+}
+
+.booking-actions-popup-item-icon.--not-visited {
+	background: var(--ui-color-palette-orange-60);
+	border-color: transparent;
+}
+
+.booking-actions-popup-item-subtitle.--visited {
+	color: var(--ui-color-palette-green-60);
+}
+
+.booking-actions-popup-item-subtitle.--not-visited {
+	color: var(--ui-color-palette-orange-60);
+}

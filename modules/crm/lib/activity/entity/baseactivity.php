@@ -9,6 +9,7 @@ use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Context;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
@@ -39,6 +40,7 @@ class BaseActivity implements OptionallyConfigurable
 	protected ?array $settings = null;
 	protected ?array $storageElementIds = null;
 	protected string $subject = '';
+	protected ?Context $context = null;
 
 	public function __construct(ItemIdentifier $owner, ActivityProvider $provider)
 	{
@@ -595,5 +597,17 @@ class BaseActivity implements OptionallyConfigurable
 		$this->additionalFields = array_merge_recursive($this->additionalFields, $fields);
 
 		return $this;
+	}
+
+	public function setContext(Context $context): self
+	{
+		$this->context = $context;
+
+		return $this;
+	}
+
+	public function getContext(): ?Context
+	{
+		return $this->context;
 	}
 }

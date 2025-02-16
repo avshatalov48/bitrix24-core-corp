@@ -19,17 +19,6 @@ class TrackCollection extends EO_CallTrack_Collection
 		;
 	}
 
-	public static function getTrackByCallId(int $callId): ?static
-	{
-		return CallTrackTable::query()
-			->setSelect(['*'])
-			->where('CALL_ID', $callId)
-			->setLimit(1)
-			->exec()
-			?->fetchCollection()
-		;
-	}
-
 	public static function getRecordings(int $callId): ?static
 	{
 		return CallTrackTable::query()

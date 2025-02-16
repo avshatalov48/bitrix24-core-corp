@@ -6,11 +6,11 @@ use Bitrix\ImOpenLines\Chat;
 use Bitrix\ImOpenLines\Config;
 use Bitrix\ImOpenLines\ConfigStatistic;
 use Bitrix\ImOpenLines\Connector;
-use Bitrix\ImOpenLines\Crm;
 use Bitrix\ImOpenLines\Debug;
 use Bitrix\ImOpenLines\Mail;
 use Bitrix\ImOpenLines\Model\SessionCheckTable;
 use Bitrix\ImOpenLines\Model\SessionTable;
+use Bitrix\ImOpenLines\Queue;
 use Bitrix\ImOpenLines\Recent;
 use Bitrix\ImOpenLines\Relation;
 use Bitrix\ImOpenLines\Session;
@@ -469,6 +469,12 @@ class Update
 					}
 				}
 			}
+
+			if ($this->checkReturnSessionInQueue())
+			{
+				$this->updateCheckTable['DATE_QUEUE'] = new DateTime();
+			}
+
 			SessionCheckTable::update($this->session->getSessionField('ID'), $this->updateCheckTable);
 		}
 
@@ -739,5 +745,27 @@ class Update
 		}
 
 		return $this;
+	}
+
+	/**
+	 * Checks if the session should be returned to the queue.
+	 * Returns `true` if the session should be returned to the queue, `false` otherwise.
+	 *
+	 * @return bool
+	 */
+	private function checkReturnSessionInQueue(): bool
+	{
+		if (
+			$this->session->getConfig('CHECK_AVAILABLE') !== 'Y'
+			|| $this->oldSessionState['STATUS'] != Session::STATUS_OPERATOR
+			|| $this->newData['STATUS'] != Session::STATUS_CLIENT_AFTER_OPERATOR
+			|| $this->session->getSessionField('PAUSE') === 'Y'
+		)
+		{
+			return false;
+		}
+
+		$queueManager = Queue::initialization($this->session);
+		return $queueManager->isOperatorActive((int)$this->session->getSessionField('OPERATOR_ID')) !== true;
 	}
 }

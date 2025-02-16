@@ -1,3 +1,7 @@
+:root {
+	--crm-call-assessment-horizontal-padding: 28px;
+}
+
 .crm-copilot__call-assessment_container {
 	display: flex;
 	flex-direction: column;
@@ -14,7 +18,7 @@
 .crm-copilot__call-assessment_breadcrumbs-wrapper {
 	display: flex;
 	flex-direction: row;
-	padding: 18px 24px;
+	padding: 18px var(--crm-call-assessment-horizontal-padding);
 	border-bottom: 1px solid var(--ui-color-palette-gray-05);
 }
 
@@ -117,7 +121,7 @@
 }
 
 .crm-copilot__call-assessment_page-section-header {
-	padding: 20px 24px 16px 24px;
+	padding: 20px var(--crm-call-assessment-horizontal-padding) 16px;
 }
 
 .crm-copilot__call-assessment_page-section-header-title {
@@ -131,7 +135,8 @@
 
 .crm-copilot__call-assessment_page-section-body {
 	background-color: var(--ui-color-palette-white-base);
-	padding: 20px 24px;
+	padding: 20px var(--crm-call-assessment-horizontal-padding) 24px;
+	position: relative;
 }
 
 .crm-copilot__call-assessment_page-section-body-field {
@@ -140,6 +145,10 @@
 
 .crm-copilot__call-assessment_page-section-body-field + .crm-copilot__call-assessment_page-section-body-field {
 	margin-top: 9px;
+}
+
+.crm-copilot__call-assessment_page-section-body-field.--read-only {
+	opacity: var(--ui-opacity-70);
 }
 
 .crm-copilot__call-assessment_page-section-body-field.--inline {
@@ -174,12 +183,65 @@
 	margin-top: 10px;
 }
 
+.crm-copilot__call-assessment_page-section-body-field-container {
+	border-radius: 8px;
+	border: 1px solid #0000001C;
+	padding: 18px;
+}
+
+.crm-copilot__call-assessment_page-section-body-field-container + .crm-copilot__call-assessment_page-section-body-field-container {
+	margin-top: 14px;
+}
+
+.crm-copilot__call-assessment_page-section-body-field-title {
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-2xl);
+	padding-bottom: 16px;
+	border-bottom: 1px solid var(--ui-color-palette-gray-10);
+	position: relative;
+	padding-left: 34px;
+}
+
+.crm-copilot__call-assessment_page-section-body-field-title:before {
+	content: '';
+	display: block;
+	position: absolute;
+	width: 28px;
+	height: 28px;
+	left: 0;
+}
+
+.crm-copilot__call-assessment_page-section-body-field-title.--low-icon:before {
+	background-image: url('../images/control-low.svg');
+}
+
+.crm-copilot__call-assessment_page-section-body-field-title.--high-icon:before {
+	background-image: url('../images/control-high.svg');
+}
+
+.crm-copilot__call-assessment_page-section-body-field-title.--result-icon:before {
+	background-image: url('../images/control-result.svg');
+}
+
+.crm-copilot__call-assessment_page-section-body-field-subtitle {
+	color: var(--ui-color-palette-gray-90);
+	font-size: var(--ui-font-size-md);
+	padding: 10px 0;
+}
+
 .crm-copilot__call-assessment_page-section-body-field-description {
 	background: var(--ui-color-palette-blue-15);
 	margin-top: 21px;
 	padding: 10px 12px;
 	color: var(--ui-color-palette-gray-70);
 	border-radius: var(--ui-border-radius-sm);
+}
+
+.crm-copilot__call-assessment_page-section-body-field-additional {
+	color: var(--ui-color-palette-gray-50);
+	text-align: center;
+	font-size: var(--ui-font-size-md);
+	padding: 0 15px;
 }
 
 .crm-copilot__call-assessment_page-section-body-field-textarea {
@@ -424,28 +486,6 @@
 	margin-top: 20px;
 }
 
-.crm-copilot__call-assessment_page-section-body-field.--control-call-count,
-.crm-copilot__call-assessment_page-section-body-field.--control-head {
-	padding-left: 24px;
-	margin: 20px 10px 12px 10px;
-}
-
-.crm-copilot__call-assessment_page-section-body-field.--control-call-count {
-	background: url('../images/control-page-bell.svg') left 2px no-repeat;
-	border-bottom: 1px solid var(--ui-color-palette-gray-05);
-	padding-bottom: 12px;
-}
-
-.crm-copilot__call-assessment_page-section-body-field.--control-head {
-	background: url('../images/control-page-head.svg') left 2px no-repeat;
-	margin-top: 0;
-}
-
-.crm-copilot__call-assessment_page-section-body-field.--control-head > div {
-	display: flex;
-	align-items: center;
-}
-
 .crm-copilot__call-assessment-item-selector {
 	cursor: pointer;
 	color: var(--ui-color-link-primary-base);
@@ -497,4 +537,171 @@
 	height: 14px;
 	display: inline-block;
 	cursor: pointer;
+}
+
+.crm-copilot__call-assessment-pill {
+	border-radius: 512px;
+	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.11);
+	margin: 9px auto;
+	max-width: 404px;
+	padding: 13px 28px;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
+
+.crm-copilot__call-assessment-pill.--low {
+	background: url('../images/pill-stars.svg') center right, linear-gradient(191deg, #FF3131 -31.18%, #FF31C5 90.04%);
+}
+
+.crm-copilot__call-assessment-pill.--high {
+	background: url('../images/pill-stars.svg') center right, linear-gradient(191deg, #05DE8E -31.18%, #5EDB30 90.04%);
+}
+
+.crm-copilot__call-assessment-pill-title {
+	color: var(--ui-color-palette-white-base);
+	font-size: 19px;
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 21px;
+	padding-left: 12px;
+	align-content: center;
+}
+
+.crm-copilot__call-assessment-pill-control {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	width: 152px;
+}
+
+.crm-copilot__call-assessment-pill-minus,
+.crm-copilot__call-assessment-pill-plus {
+	width: 32px;
+	height: 32px;
+	background: var(--ui-color-palette-white-base);
+	border-radius: 50%;
+	color: #FF3272;
+	cursor: pointer;
+	transition: box-shadow 300ms;
+	position: relative
+}
+
+.crm-copilot__call-assessment-pill.--low .crm-copilot__call-assessment-pill-plus {
+	background: url('../images/pill-low-plus.svg') center center no-repeat;
+}
+
+.crm-copilot__call-assessment-pill.--low .crm-copilot__call-assessment-pill-minus {
+	background: url('../images/pill-low-minus.svg') center center no-repeat;
+}
+
+.crm-copilot__call-assessment-pill.--high .crm-copilot__call-assessment-pill-plus {
+	background: url('../images/pill-high-plus.svg') center center no-repeat;
+}
+
+.crm-copilot__call-assessment-pill.--high .crm-copilot__call-assessment-pill-minus {
+	background: url('../images/pill-high-minus.svg') center center no-repeat;
+}
+
+.crm-copilot__call-assessment-pill-minus:hover,
+.crm-copilot__call-assessment-pill-plus:hover {
+	box-shadow: inset 0 0 5px 1px #00000033;
+}
+
+.crm-copilot__call-assessment-pill-minus.--disabled,
+.crm-copilot__call-assessment-pill-plus.--disabled {
+	opacity: var(--ui-opacity-60);
+	cursor: not-allowed;
+}
+
+.crm-copilot__call-assessment-pill-minus.--disabled:hover,
+.crm-copilot__call-assessment-pill-plus.--disabled:hover {
+	box-shadow: none;
+}
+
+.crm-copilot__call-assessment-pill-value-container {
+	display: flex;
+	align-items: baseline;
+	max-width: 78px;
+	padding: 0 5px 0 9px;
+	justify-content: center;
+	flex-grow: 1;
+}
+
+.crm-copilot__call-assessment-pill-value {
+	color: var(--ui-color-palette-white-base);
+	font-size: 32px;
+	font-weight: var(--ui-font-weight-medium);
+	background: none;
+	border: none;
+	min-width: 0;
+}
+
+.crm-copilot__call-assessment-pill-value:focus {
+	border: none;
+	outline: none;
+}
+
+/* @todo animation will be redone */
+/*.crm-copilot__call-assessment-pill-plus.--click::after {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	margin: -32px 0 0 -32px;
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+	content: '';
+	opacity: 0;
+	box-shadow: inset 0 0 0 32px #FFF1F100;
+	animation: anim-animate-click-one 0.6s ease-out both;
+}
+
+@keyframes anim-animate-click-one {
+	0% {
+		opacity: 1;
+		transform: scale3d(0.4, 0.4, 1);
+	}
+	80% {
+		box-shadow: inset 0 0 0 2px lightgreen;
+		opacity: 0.1;
+	}
+	100% {
+		box-shadow: inset 0 0 0 2px lightgreen;
+		opacity: 0;
+		transform: scale3d(1.2, 1.2, 1);
+	}
+}*/
+
+.crm-copilot__call-assessment-pill-percent {
+	width: 19px;
+	height: 22px;
+	background: url('../images/pill-percent.svg') center center no-repeat;
+}
+
+.crm-copilot__call-assessment-ai-disabled {
+	padding: 14px 16px 14px 52px;
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-palette-red-15) url('../images/lock.svg') no-repeat 16px center;
+	margin-bottom: 14px;
+	margin-top: -4px;
+}
+
+.crm-copilot__call-assessment-ai-disabled span {
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-md);
+	line-height: 17px;
+}
+
+.crm-copilot__call-assessment-ai-disabled .ui-icon-set {
+	cursor: pointer;
+	background: var(--ui-color-palette-red-50);
+	opacity: var(--ui-opacity-80);
+	transition: opacity 300ms;
+	position: absolute;
+	margin-top: -2px;
+}
+
+.crm-copilot__call-assessment-ai-disabled .ui-icon-set:hover {
+	opacity: var(--ui-opacity-full);
 }

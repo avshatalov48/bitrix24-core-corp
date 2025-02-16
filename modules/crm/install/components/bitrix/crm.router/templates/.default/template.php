@@ -87,8 +87,8 @@ if (!$arResult['isIframe'])
 			},
 			{
 				condition: [
-					"perms/[A-Za-z0-9-_]+/?$",
-					"type/automated_solution/permissions/?$",
+					"perms/[A-Za-z0-9-_]+/?",
+					"type/automated_solution/permissions/?",
 				],
 				options: {
 					cacheable: false,
@@ -116,7 +116,7 @@ if (!$arResult['isIframe'])
 		const rulesByCustomSections = [
 			{
 				condition: [
-					"perms/?$",
+					"perms/?",
 				],
 				options: {
 					cacheable: false,
@@ -125,7 +125,7 @@ if (!$arResult['isIframe'])
 			},
 			{
 				condition: [
-					"perms/[A-Za-z0-9-_]+/?$",
+					"perms/[A-Za-z0-9-_]+/?",
 				],
 				options: {
 					cacheable: false,

@@ -992,7 +992,7 @@ function showReport(r, el)
 		var h = '<div class="meeting-report-popup"><div class="meeting-report-popup-text-wrap"><div class="meeting-report-popup-text">'+data.REPORT+'</div></div>';
 		if (data.FILES && data.FILES.length > 0)
 		{
-			h += '<div class="popup-window-hr popup-window-buttons-hr"><i></i></div><div class="meeting-detail-files"><label class="meeting-detail-files-title">'+'<?=CUtil::JSEscape(GetMessage('ME_FILES'))?>'+':</label><span class="meeting-detail-files-list">';
+			h += '<div class="popup-window-hr popup-window-buttons-hr"><i></i></div><div class="meeting-detail-files"><label class="meeting-detail-files-title">'+'<?=CUtil::JSEscape(GetMessage('ME_FILES_MSGVER_1'))?>'+'</label><span class="meeting-detail-files-list">';
 
 			for (var i = 0; i < data.FILES.length; i++)
 			{

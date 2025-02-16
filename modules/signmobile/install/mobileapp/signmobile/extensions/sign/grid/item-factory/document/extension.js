@@ -64,7 +64,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 
 		renderImage()
 		{
-			const imageName = ActionStatus.isDownloadStatus(this.getActionStatus())
+			const imageName = ActionStatus.isDownloadStatus(this.getAction())
 				? DOCUMENT_IMAGE_NAMES[this.getFileExtension()] ?? DOCUMENT_IMAGE_NAMES.default
 				: DOCUMENT_IMAGE_NAMES.default
 			;
@@ -116,7 +116,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 			if (InitiatedByType.isInitiatedByEmployee(this.getDocumentInitiatedType())
 				&& !DocumentStatus.isFinalStatus(this.getDocumentStatus())
 				&& this.isInitiatorCurrentUser()
-				&& !ActionStatus.isActionStatus(this.getActionStatus()))
+				&& !ActionStatus.isActionStatus(this.getAction()))
 			{
 				return this.renderText({
 					type: 'description',
@@ -137,7 +137,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 
 		renderSecondSide()
 		{
-			if (!ActionStatus.isActionStatus(this.getActionStatus()))
+			if (!ActionStatus.isActionStatus(this.getAction()))
 			{
 				const { secondSideText, SecondSideDesign } = this.prepareSecondSideData();
 
@@ -150,7 +150,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 						onClick: this.#onSecondSideButtonClickHandler,
 					},
 					Avatar({
-						id: this.getUserId(0),
+						id: this.getMemberUserId(0),
 						testId: `USER_AVATAR_${this.getMemberId(0)}`,
 						size: 24,
 						withRedux: true,
@@ -172,7 +172,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 
 		renderDownloadButton()
 		{
-			if (ActionStatus.isDownloadStatus(this.getActionStatus()) && this.getFileUrl())
+			if (ActionStatus.isDownloadStatus(this.getAction()) && this.getFileUrl())
 			{
 				return View(
 					{
@@ -200,7 +200,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 
 		renderBadge()
 		{
-			if (!ActionStatus.isActionStatus(this.getActionStatus()))
+			if (!ActionStatus.isActionStatus(this.getAction()))
 			{
 				return View();
 			}
@@ -220,7 +220,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 		renderActionButton()
 		{
 			let buttonText = '';
-			switch (this.getActionStatus())
+			switch (this.getAction())
 			{
 				case ActionStatus.SIGN.value:
 					buttonText = Loc.getMessage('SIGN_MOBILE_GRID_SIGN_BUTTON_TEXT');
@@ -398,19 +398,19 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 
 		isMyMemberCurrentUser()
 		{
-			return Number(env.userId) === this.getMyMemberId()
-				&& this.getUserId(0) === this.getMyMemberId()
+			return Number(env.userId) === this.getMyMemberUserId()
+				&& this.getMemberUserId(0) === this.getMyMemberUserId()
 			;
 		}
 
 		isMemberCurrentUser()
 		{
-			return Number(env.userId) === this.getUserId(0);
+			return Number(env.userId) === this.getMemberUserId(0);
 		}
 
 		isInitiatorCurrentUser()
 		{
-			return Number(env.userId) === this.getInitiatorId();
+			return Number(env.userId) === this.getInitiatorUserId();
 		}
 
 		isSecondSideStopped(id)
@@ -421,7 +421,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 		#onSecondSideButtonClickHandler = () => {
 			ProfileView.open(
 				{
-					userId: this.getUserId(0),
+					userId: this.getMemberUserId(0),
 				},
 			);
 		};
@@ -492,9 +492,9 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 			})).makeText(moment);
 		}
 
-		getActionStatus()
+		getAction()
 		{
-			return this.props.item?.action?.status;
+			return this.props.item?.action;
 		}
 
 		getDocumentStatus()
@@ -517,9 +517,9 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 			return this.props.item?.myMemberInProcess?.status;
 		}
 
-		getMyMemberId()
+		getMyMemberUserId()
 		{
-			return this.props.item?.myMemberInProcess?.id;
+			return this.props.item?.myMemberInProcess?.userId;
 		}
 
 		getMemberRole(id)
@@ -527,19 +527,19 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 			return this.props.item?.members[id]?.role;
 		}
 
-		getUserId(id)
+		getMemberUserId(id)
 		{
-			return this.props.item?.members[id]?.id;
+			return this.props.item?.members[id]?.userId;
 		}
 
 		getMemberId(id)
 		{
-			return this.props.item?.members[id]?.memberId;
+			return this.props.item?.members[id]?.id;
 		}
 
-		getInitiatorId()
+		getInitiatorUserId()
 		{
-			return this.props.item?.document?.initiator?.id
+			return this.props.item?.document?.initiator?.userId
 		}
 	}
 

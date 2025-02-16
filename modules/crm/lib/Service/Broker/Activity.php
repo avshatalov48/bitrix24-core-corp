@@ -6,84 +6,32 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Broker;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
+use CCrmActivity;
+use CCrmOwnerType;
 
+/**
+ * @method array|null getById(int $id)
+ * @method array[] getBunchByIds(array $ids)
+ */
 final class Activity extends Broker
 {
+	protected ?string $eventEntityAdd = 'OnActivityAdd';
+	protected ?string $eventEntityDelete = 'OnActivityDelete';
+
 	public function getOwner(int $id): ?ItemIdentifier
 	{
 		$activity = $this->getById($id);
 		if (
 			is_array($activity)
 			&& isset($activity['OWNER_TYPE_ID'], $activity['OWNER_ID'])
-			&& \CCrmOwnerType::IsDefined($activity['OWNER_TYPE_ID'])
 			&& $activity['OWNER_ID'] > 0
+			&& CCrmOwnerType::IsDefined($activity['OWNER_TYPE_ID'])
 		)
 		{
 			return new ItemIdentifier((int)$activity['OWNER_TYPE_ID'], (int)$activity['OWNER_ID']);
 		}
 
 		return null;
-	}
-
-	public function __construct()
-	{
-		$eventManager = EventManager::getInstance();
-
-		$eventManager->addEventHandlerCompatible(
-			'crm',
-			'OnBeforeCrmActivityAdd',
-			function ($fields): void {
-				if (is_array($fields) && isset($fields['ID']) && is_numeric($fields['ID']) && (int)$fields['ID'] > 0)
-				{
-					unset($this->cache[(int)$fields['ID']]);
-				}
-			},
-		);
-		$eventManager->addEventHandlerCompatible(
-			'crm',
-			'OnActivityAdd',
-			function ($id, $fields): void {
-				if (is_numeric($id) && (int)$id > 0 && is_array($fields) && !empty($fields))
-				{
-					$this->cache[(int)$id] = $fields;
-				}
-			},
-		);
-
-		$eventManager->addEventHandlerCompatible(
-			'crm',
-			'OnBeforeCrmActivityUpdate',
-			function ($id): void {
-				if (is_numeric($id) && (int)$id > 0)
-				{
-					unset($this->cache[(int)$id]);
-				}
-			},
-		);
-		$eventManager->addEventHandler(
-			'crm',
-			'OnActivityModified',
-			function (Event $event): void {
-				$activity = $event->getParameter('current');
-				if (is_array($activity) && isset($activity['ID']))
-				{
-					$this->cache[$activity['ID']] = $activity;
-				}
-			},
-		);
-
-		$eventManager->addEventHandlerCompatible(
-			'crm',
-			'OnBeforeActivityDelete',
-			function ($id): void {
-				if (is_numeric($id) && (int)$id > 0)
-				{
-					unset($this->cache[(int)$id]);
-				}
-			}
-		);
-
-		// currently bindings are not fetched from DB. if this changes, add cache invalidation on bindings change
 	}
 
 	protected function loadEntry(int $id)
@@ -95,7 +43,7 @@ final class Activity extends Broker
 
 	protected function loadEntries(array $ids): array
 	{
-		$dbResult = \CCrmActivity::GetList(
+		$dbResult = CCrmActivity::GetList(
 			[],
 			[
 				'@ID' => $ids,
@@ -104,7 +52,7 @@ final class Activity extends Broker
 			false,
 			false,
 			array_merge(
-				array_keys(\CCrmActivity::GetFieldsInfo()),
+				array_keys(CCrmActivity::GetFieldsInfo()),
 				[
 					'STORAGE_TYPE_ID',
 					'STORAGE_ELEMENT_IDS',
@@ -121,5 +69,44 @@ final class Activity extends Broker
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @override
+	 */
+	protected function initAdditionalCacheManagementEventHandlers(EventManager $eventManager): void
+	{
+		$eventManager->addEventHandlerCompatible(
+			'crm',
+			'OnBeforeCrmActivityAdd',
+			function ($fields): void {
+				if (is_array($fields) && isset($fields['ID']))
+				{
+					$this->removeFromCache((int)($fields['ID']));
+				}
+			},
+		);
+
+		$eventManager->addEventHandlerCompatible(
+			'crm',
+			'OnBeforeCrmActivityUpdate',
+			function ($id): void {
+				$this->removeFromCache((int)($id));
+			},
+		);
+
+		$eventManager->addEventHandler(
+			'crm',
+			'OnActivityModified',
+			function (Event $event): void {
+				$activity = $event->getParameter('current');
+				if (is_array($activity) && isset($activity['ID']))
+				{
+					$this->cache[$activity['ID']] = $activity;
+				}
+			},
+		);
+
+		// currently bindings are not fetched from DB. if this changes, add cache invalidation on bindings change
 	}
 }

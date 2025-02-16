@@ -1,9 +1,11 @@
 import { AudioPlayerComponent } from 'crm.audio-player';
 import { DatetimeConverter } from 'crm.timeline.tools';
 import { ajax as Ajax, Loc, Text, Type } from 'main.core';
-import { EventEmitter } from 'main.core.events';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Pull } from '../pull';
+import { ViewMode, ViewModeType } from './common/view-mode';
 import { Compliance as ComplianceComponent } from './compliance';
+import { AssessmentSettingsPendingBlock } from './explanation/assessment-settings-pending-block';
 import { EmptyScriptListBlock } from './explanation/empty-script-list-block';
 import { ErrorBlock } from './explanation/error-block';
 import { NotAssessmentScriptBlock } from './explanation/not-assessment-script-block';
@@ -11,12 +13,12 @@ import { OtherScriptBlock } from './explanation/other-script-block';
 import { PendingBlock } from './explanation/pending-block';
 import { RecommendationBlock } from './explanation/recommendation-block';
 import { ScriptSelector as ScriptSelectorComponent } from './script-selector';
-import { ViewMode, ViewModeType } from './view-mode';
 
 type Quality = {
 	id: number;
 	createdAt: number;
 	assessmentSettingsId: number;
+	assessmentSettingsStatus: ?string;
 	assessment: number;
 	assessmentAvg: number;
 	prevAssessmentAvg: number;
@@ -28,6 +30,8 @@ type Quality = {
 	title: string;
 	recommendations: string;
 	summary: string;
+	lowBorder: number;
+	highBorder: number;
 }
 
 type PullData = {
@@ -45,6 +49,7 @@ export const CallQuality = {
 		RecommendationBlock,
 		OtherScriptBlock,
 		NotAssessmentScriptBlock,
+		AssessmentSettingsPendingBlock,
 		PendingBlock,
 		ErrorBlock,
 		EmptyScriptListBlock,
@@ -73,6 +78,7 @@ export const CallQuality = {
 	data(): Object
 	{
 		const quality = this.getPreparedQualityProps(this.data);
+		let prompt = quality.prompt;
 
 		const currentQualityAssessmentId = quality.id ?? null;
 		let viewMode: ?ViewModeType = null;
@@ -101,6 +107,7 @@ export const CallQuality = {
 			quality,
 			currentQualityAssessmentId,
 			viewMode,
+			prompt,
 			isShowAudioPlayer: false,
 			direction: this.data.callDirection,
 		};
@@ -108,11 +115,48 @@ export const CallQuality = {
 
 	mounted()
 	{
-		this.pull = new Pull(this.onPullChangeScript);
+		top.BX.Event.EventEmitter.subscribe(
+			'crm:copilot:callAssessment:beforeSave',
+			this.onBeforeAssessmentSettingsChange,
+		);
+
+		top.BX.Event.EventEmitter.subscribe(
+			'crm:copilot:callAssessment:save',
+			this.onAssessmentSettingsChange,
+		);
+
+		this.pull = new Pull(
+			this.onPullChangeScript,
+			this.onPullChangeAssessment,
+		);
 		this.pull.init();
 	},
 
 	methods: {
+		onBeforeAssessmentSettingsChange(event: BaseEvent): void
+		{
+			const { data } = event.getData();
+			if (!this.isPromptChanged(data.prompt))
+			{
+				return;
+			}
+
+			this.quality.assessmentSettingsStatus = 'PENDING';
+		},
+		onAssessmentSettingsChange(event: BaseEvent): void
+		{
+			const { id, data } = event.getData();
+			if (!this.isPromptChanged(data.prompt))
+			{
+				return;
+			}
+
+			this.onChangeScript(id);
+		},
+		isPromptChanged(newPrompt: string): boolean
+		{
+			return this.quality.actualPrompt !== newPrompt;
+		},
 		showAudioPlayer(): void
 		{
 			this.isShowAudioPlayer = true;
@@ -120,10 +164,12 @@ export const CallQuality = {
 		onShowActualPrompt(): void
 		{
 			this.viewMode = ViewMode.usedOtherVersionOfScript;
+			this.prompt = this.quality.actualPrompt;
 		},
 		onShowCurrentAssessment(): void
 		{
 			this.viewMode = ViewMode.usedCurrentVersionOfScript;
+			this.prompt = this.quality.prompt;
 		},
 		onDoAssessment(): void
 		{
@@ -184,7 +230,15 @@ export const CallQuality = {
 					if (Type.isObject(data))
 					{
 						this.quality = this.getPreparedQualityProps(data);
-						this.viewMode = data.viewMode;
+
+						if (!(
+							this.quality.isPromptChanged
+							&& data.viewMode === ViewMode.assessmentSettingsPending
+							//&& this.viewMode === ViewMode.usedCurrentVersionOfScript
+						))
+						{
+							this.viewMode = data.viewMode;
+						}
 					}
 				})
 				.catch((response) => {
@@ -215,6 +269,7 @@ export const CallQuality = {
 				id: Number(quality.ID ?? 0),
 				createdAt: quality.CREATED_AT ?? null,
 				assessmentSettingsId: Number(quality.ASSESSMENT_SETTING_ID ?? 0),
+				assessmentSettingsStatus: quality.ASSESSMENT_SETTINGS_STATUS ?? null,
 				assessment: Number(quality.ASSESSMENT ?? 0),
 				assessmentAvg: Number(quality.ASSESSMENT_AVG ?? 0),
 				prevAssessmentAvg: Number(quality.PREV_ASSESSMENT_AVG ?? 0),
@@ -226,12 +281,22 @@ export const CallQuality = {
 				title: quality.TITLE ?? '',
 				recommendations: quality.RECOMMENDATIONS ?? '',
 				summary: quality.SUMMARY ?? '',
+				lowBorder: Number(quality.LOW_BORDER ?? 30),
+				highBorder: Number(quality.HIGH_BORDER ?? 70),
 			};
 		},
 		close(): void
 		{
 			this.$refs.scriptSelector?.close();
 			this.pull.unsubscribe();
+			top.BX.Event.EventEmitter.unsubscribe(
+				'crm:copilot:callAssessment:beforeSave',
+				this.onBeforeAssessmentSettingsChange,
+			);
+			top.BX.Event.EventEmitter.unsubscribe(
+				'crm:copilot:callAssessment:save',
+				this.onAssessmentSettingsChange,
+			);
 		},
 		onPullChangeScript(params: PullData): void
 		{
@@ -248,6 +313,27 @@ export const CallQuality = {
 			{
 				this.onChangeScript(params.assessmentSettingsId);
 			}
+		},
+		onPullChangeAssessment(params: PullData): void
+		{
+			const assessmentSettingsId = params.assessmentSettingsId ?? null;
+			const currentAssessmentSettingsId = this.quality.assessmentSettingsId;
+
+			if (assessmentSettingsId !== currentAssessmentSettingsId)
+			{
+				return;
+			}
+
+			this.onChangeScript(assessmentSettingsId);
+		},
+	},
+
+	watch: {
+		quality: {
+			handler(quality) {
+				this.prompt = quality.prompt;
+			},
+			deep: true,
 		},
 	},
 
@@ -289,6 +375,10 @@ export const CallQuality = {
 		{
 			return this.viewMode === ViewMode.usedNotAssessmentScript;
 		},
+		isAssessmentSettingsPendingViewMode(): boolean
+		{
+			return this.viewMode === ViewMode.assessmentSettingsPending;
+		},
 		isPendingViewMode(): boolean
 		{
 			return this.viewMode === ViewMode.pending;
@@ -324,6 +414,8 @@ export const CallQuality = {
 					:assessment="quality.assessment"
 					:title="quality.title"
 					:viewMode="viewMode"
+					:lowBorder="quality.lowBorder"
+					:highBorder="quality.highBorder"
 				/>
 				<RecommendationBlock
 					v-if="isUsedCurrentVersionOfScriptViewMode"
@@ -340,6 +432,7 @@ export const CallQuality = {
 					v-if="isUsedNotAssessmentScriptViewMode"
 					@doAssessment="onDoAssessment"
 				/>
+				<AssessmentSettingsPendingBlock v-if="isAssessmentSettingsPendingViewMode"/>
 				<PendingBlock v-if="isPendingViewMode"/>
 				<ErrorBlock v-if="isErrorViewMode" ref="errorBlock"/>
 				<EmptyScriptListBlock v-if="isEmptyScriptListViewMode"/>
@@ -349,10 +442,11 @@ export const CallQuality = {
 			<ScriptSelectorComponent
 				ref="scriptSelector"
 				:assessmentSettingsId="quality.assessmentSettingsId"
+				:assessmentSettingsStatus="quality.assessmentSettingsStatus"
 				:assessmentSettingsTitle="quality.title"
 				:isPromptChanged="quality.isPromptChanged"
 				:promptUpdatedAt="quality.promptUpdatedAt"
-				:prompt="quality.prompt"
+				:prompt="prompt"
 				:viewMode="viewMode"
 				@onBeforeSelect="onChangeScript"
 				@onShowActualPrompt="onShowActualPrompt"

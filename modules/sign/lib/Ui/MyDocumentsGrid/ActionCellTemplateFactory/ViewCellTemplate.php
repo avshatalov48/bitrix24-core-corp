@@ -4,23 +4,20 @@ namespace Bitrix\Sign\Ui\MyDocumentsGrid\ActionCellTemplateFactory;
 
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sign\Contract\Grid\MyDocuments\ActionCellTemplate;
 
 class ViewCellTemplate implements ActionCellTemplate
 {
 	use ActionDateTrait;
 
-	private ?DateTime $sendDate;
-	private ?string $downloadFileLink;
-	private ?string $textForActionColumn;
+	public function __construct(
+		private readonly ?DateTime $sendDate,
+		private readonly ?string $downloadFileLink,
+		private readonly ?string $textForActionColumn,
+	)
+	{}
 
-	public function __construct(?DateTime $sendDate, ?string $downloadFileLink, ?string $textForActionColumn)
-	{
-		$this->sendDate = $sendDate;
-		$this->downloadFileLink = $downloadFileLink;
-		$this->textForActionColumn = $textForActionColumn;
-	}
-
-	public function get(): string
+	public function render(): string
 	{
 		$downloadFileLink = htmlspecialcharsbx($this->downloadFileLink);
 		$formattedDate = self::getFormattedDate($this->sendDate);

@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Category;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\CategoryIdentifier;
 use Bitrix\Crm\Color\PhaseColorScheme;
+use Bitrix\Crm\Security\Role\RolePreset;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
@@ -543,10 +544,11 @@ class DealCategory
 				continue;
 			}
 
-			if(!isset($roleRelation[$permissionEntity]))
-			{
-				$roleRelation[$permissionEntity] = \CCrmRole::getDefaultPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(\CCrmOwnerType::Deal, $ID));
-			}
+			$roleRelation[$permissionEntity] = RolePreset::getDefaultPermissionSetForEntityByCode(
+				$roleFields['CODE'],
+				new CategoryIdentifier(\CCrmOwnerType::Deal, $ID)
+			);
+
 			$fields = array('RELATION' => $roleRelation);
 			$role->Update($roleID, $fields);
 		}

@@ -27,9 +27,5 @@ $MESS['CRM_TIMELINE_BUTTON_CALL'] = 'Позвонить';
 $MESS['CRM_TIMELINE_BUTTON_CALL_COMPLETE'] = 'Обработан';
 $MESS['CRM_TIMELINE_BUTTON_TIP_TRANSCRIPT'] = 'Показать расшифровку звонка';
 $MESS['CRM_TIMELINE_ITEM_CALL_COMPLETE_TO'] = 'Крайний срок';
-$MESS['CRM_TIMELINE_BUTTON_TIP_COPILOT'] = 'CoPilot уже обработал звонок';
-$MESS['CRM_TIMELINE_ITEM_COPILOT_ERROR_TOOLTIP'] = 'CoPilot не может обработать этот звонок';
 
-$MESS['CRM_TIMELINE_BUTTON_COPILOT_MENU_FILL_FIELDS'] = 'Заполнить поля из звонка';
-$MESS['CRM_TIMELINE_BUTTON_COPILOT_MENU_CALL_SCORING'] = 'Оценить звонок по скрипту';
 $MESS['CRM_TIMELINE_COPILOT_SCORING_PILL_DEFAULT_TITLE'] = 'Выбрать скрипт';

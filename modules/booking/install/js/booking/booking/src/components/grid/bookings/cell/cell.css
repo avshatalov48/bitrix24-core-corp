@@ -1,0 +1,16 @@
+.booking-booking-selected-cell {
+	position: absolute;
+	width: calc(280px * var(--zoom));
+
+	--left: 0px;
+	--top: 0px;
+	--height: 0px;
+	left: var(--left);
+	top: max(var(--top), calc(-1 * var(--top-cells-height)));
+	bottom: max(calc(100% - var(--top) - var(--height)), 1px);
+	transition: left var(--booking-animation-duration) var(--booking-animation-function);
+}
+
+.--booking-booking-no-transition .booking-booking-selected-cell {
+	transition: none;
+}

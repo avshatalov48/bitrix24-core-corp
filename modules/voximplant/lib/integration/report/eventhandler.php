@@ -168,6 +168,13 @@ class EventHandler
 		$averageCallTime->addFeedbackButton();
 		$boards[] = $averageCallTime;
 
+		$marketAppsLink = new AnalyticBoard('market_apps_link');
+		$marketAppsLink->setGroup(self::BATCH_GROUP_TELEPHONY_GENERAL);
+		$marketAppsLink->setTitle(Loc::getMessage('TELEPHONY_REPORT_MARKET_LINK'));
+		$marketAppsLink->setExternal(true);
+		$marketAppsLink->setExternalUrl('/market/?placement=TELEPHONY_ANALYTICS_MENU');
+		$boards[] = $marketAppsLink;
+
 		$restApps = AppPlacementManager::getHandlerInfos(AppPlacement::ANALYTICS_MENU);
 		foreach ($restApps as $categoryName => $apps)
 		{

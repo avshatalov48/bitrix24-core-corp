@@ -83,6 +83,15 @@ Loc::loadMessages(__FILE__);
  */
 class SessionTable extends DataManager
 {
+	private const INDEX_FIELDS = [
+		'END_ID',
+		'CHAT_ID',
+		'CRM_ACTIVITY_ID',
+		'OPERATOR_ID',
+		'USER_ID',
+		'EXTRA_URL',
+	];
+
 	/**
 	 * Returns DB table name for entity.
 	 *
@@ -523,7 +532,11 @@ class SessionTable extends DataManager
 			Session::updateStateAfterOrmEvent($id, $fields);
 		}
 
-		static::indexRecord($id);
+		if (array_intersect(array_keys($fields), self::INDEX_FIELDS))
+		{
+			static::indexRecord($id);
+		}
+
 		Statistics\EventHandler::onSessionUpdate($event);
 		return new EventResult();
 	}

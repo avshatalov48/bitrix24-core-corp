@@ -190,7 +190,7 @@ abstract class AbstractOperation
 				],
 			);
 
-			$result->addError(ErrorCode::getAIDisabledError(['sliderCode' => AIManager::AI_DISABLED_SLIDER_CODE]));
+			$result->addError(ErrorCode::getAIDisabledError(['sliderCode' => Scenario::SLIDER_CODE_MAP[$this->scenario]]));
 
 			static::notifyAboutJobError($result, false);
 
@@ -239,36 +239,6 @@ abstract class AbstractOperation
 		if (method_exists($engine, 'skipAgreement'))
 		{
 			$engine->skipAgreement();
-		}
-
-		$limitsResult = AIManager::getLimitResult($engine);
-		if (!$limitsResult->isSuccess())
-		{
-			$result->addErrors($limitsResult->getErrors());
-
-			$errorData = $result->getErrorCollection()->getErrorByCode(ErrorCode::AI_ENGINE_LIMIT_EXCEEDED)?->getCustomData() ?? [];
-
-			AIManager::logger()->error(
-				'{date}: {class}: Cant start operation {operationType} on {target} because limit of requests to AI exceeded!'
-				. ' Category {engineCategory}, context {engineContext}, slider code "{sliderCode}"' . PHP_EOL,
-				[
-					'class' => static::class,
-					'target' => $this->target,
-					'operationType' => static::TYPE_ID,
-					'engineCategory' => static::ENGINE_CATEGORY,
-					'engineContext' => $context,
-					'sliderCode' => $errorData['sliderCode'] ?? null,
-				],
-			);
-
-			if (!$this->isManualLaunch)
-			{
-				static::notifyAboutLimitExceededError($result);
-			}
-
-			static::notifyAboutJobError($result, false);
-
-			return $result;
 		}
 
 		$checkJobsResult = static::checkPreviousJobs($this->target, (int)$this->parentJobId);
@@ -361,6 +331,37 @@ abstract class AbstractOperation
 
 		if ($error instanceof Error)
 		{
+			//first, process limit errors
+			$limitError = AIManager::fetchLimitError($error);
+			if ($limitError !== null)
+			{
+				$result->addError($limitError);
+
+				$errorData = $limitError->getCustomData() ?? [];
+
+				AIManager::logger()->error(
+					'{date}: {class}: Cant start operation {operationType} on {target} because limit of requests to AI exceeded!'
+					. ' Category {engineCategory}, context {engineContext}, slider code "{sliderCode}"' . PHP_EOL,
+					[
+						'class' => static::class,
+						'target' => $this->target,
+						'operationType' => static::TYPE_ID,
+						'engineCategory' => static::ENGINE_CATEGORY,
+						'engineContext' => $context,
+						'sliderCode' => $errorData['sliderCode'] ?? null,
+					],
+				);
+
+				if (!$this->isManualLaunch)
+				{
+					static::notifyAboutLimitExceededError($result);
+				}
+
+				static::notifyAboutJobError($result, false);
+
+				return $result;
+			}
+
 			AIManager::logger()->critical(
 				'{date}: {class}: Error while adding AI job for target {target} in operation {operationType} for activity{activity}: {error}' . PHP_EOL,
 				[
@@ -568,7 +569,7 @@ abstract class AbstractOperation
 			return false;
 		}
 
-		$tagId = AIManager::AI_PROVIDER_PARTNER_CRM;
+		$tagId = 'ai_provider_partner_crm';
 		$cache = Application::getInstance()->getCache();
 		$cacheId = $tagId . '_marketplace';
 		$cacheTtl = 60 * 60 * 24; // 24 hour

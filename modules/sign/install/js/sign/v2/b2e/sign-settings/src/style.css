@@ -117,3 +117,22 @@
 	color: var(--ui-color-palette-black-base);
 	margin: 0 0 15px 0;
 }
+
+.sign-b2e-settings__item.--add .sign-b2e-settings__counter_num {
+	display: none;
+}
+
+.sign-b2e-settings__item.--add .sign-b2e-settings__counter_connect {
+	height: calc(100% + 55px);
+}
+
+.sign-b2e-settings__item.--add .sign-b2e-settings__item_title {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.sign-b2e-settings__item-inner.--disabled {
+	opacity: .6;
+	pointer-events: none;
+}

@@ -1286,7 +1286,6 @@ $_SESSION['CRM_GRID_DATA'][$arResult['GRID_ID']] = array('FILTER' => $arFilter);
 $arResult['SHOW_TOP'] = isset($arParams['SHOW_TOP']) && intval($arParams['SHOW_TOP']) > 0 ? intval($arParams['SHOW_TOP']) : 0;
 $arResult['ENABLE_TASK_ADD'] = !$arResult['READ_ONLY'] && IsModuleInstalled('tasks');
 $arResult['ENABLE_CALENDAR_EVENT_ADD'] = !$arResult['READ_ONLY'] && IsModuleInstalled('calendar');
-$arResult['ENABLE_EMAIL_ADD'] = !$arResult['READ_ONLY'] && IsModuleInstalled('subscribe');
 $arResult['IS_AJAX_CALL'] = isset($_REQUEST['bxajaxid']) || isset($_REQUEST['AJAX_CALL']);
 $arResult['AJAX_MODE'] = isset($arParams['AJAX_MODE']) ? $arParams['AJAX_MODE'] : 'N';
 $arResult['AJAX_ID'] = isset($arParams['AJAX_ID']) ? $arParams['AJAX_ID'] : '';

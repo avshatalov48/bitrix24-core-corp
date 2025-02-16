@@ -1,0 +1,13 @@
+.booking-booking-bookings {
+	position: absolute;
+	z-index: 3;
+	inset: 0;
+	max-height: calc((var(--to-hour) - var(--from-hour)) * 50px * var(--zoom) + (24 - var(--to-hour) + var(--from-hour)) * var(--booking-off-hours-cell-height));
+	margin-top: var(--padding-top);
+	transform: translateY(var(--top-cells-height));
+	pointer-events: none;
+}
+
+.booking-transition-booking-leave-to {
+	opacity: 0 !important;
+}

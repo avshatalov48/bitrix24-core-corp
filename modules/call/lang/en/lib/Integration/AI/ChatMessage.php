@@ -19,7 +19,6 @@ $MESS["CALL_NOTIFY_COPILOT_ERROR_ERROR_LIMIT_BAAS"] = "Insufficient credits to u
 $MESS["CALL_NOTIFY_COPILOT_ERROR_SETTINGS_RESTRICTION"] = "CoPilot Follow-Up in video calls is disabled in the Bitrix24 settings.";
 $MESS["CALL_NOTIFY_COPILOT_ERROR_TARIFF_RESTRICTION"] = "CoPilot Follow-Up is not available on your plan. Please upgrade to one of the major plans.";
 $MESS["CALL_NOTIFY_COPILOT_INSIGHTS"] = "Recommendations";
-$MESS["CALL_NOTIFY_COPILOT_TASKS"] = "Things to do";
 $MESS["CALL_NOTIFY_FEEDBACK"] = "[url=#FEEDBACK_URL#]Report an issue[/url]";
 $MESS["CALL_NOTIFY_TASK_BOOST"] = "You don't have sufficient CoPilot credits. [url=#CALL_START#]Call ##CALL_ID#[/url] has been saved. Please [url=#BUY_URL#]top up[/url] your CoPilot credits and [SEND=#CALL_COMMAND#]run analysis[/SEND] again.";
 $MESS["CALL_NOTIFY_TASK_COMPLETE"] = "CoPilot finished processing [url=#CALL_START#]call ##CALL_ID#[/url].";

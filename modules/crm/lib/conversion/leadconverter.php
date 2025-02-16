@@ -812,6 +812,14 @@ class LeadConverter extends EntityConverter
 					{
 						$entityUpdateOptions['CURRENT_USER'] = $this->contextData['USER_ID'];
 					}
+					$this->log(
+						'UpdateLead',
+						[
+							'fields' => $fields,
+							'options' => $entityUpdateOptions,
+						],
+						\Psr\Log\LogLevel::INFO
+					);
 
 					if($entity->Update($this->entityID, $fields, true, true, $entityUpdateOptions))
 					{
@@ -883,8 +891,30 @@ class LeadConverter extends EntityConverter
 									}
 									//endregion
 								}
+								catch(\Bitrix\Crm\Requisite\AddressRequisiteConvertException $ex)
+								{
+									$this->log(
+										'AddressRequisiteConvertException',
+										[
+											'entityTypeId' => $ex->getEntityTypeID(),
+											'presetId' => $ex->getPresetID(),
+											'localizedMessage' => $ex->getLocalizedMessage(),
+											'message' => $ex->getMessage(),
+											'code' => $ex->getCode(),
+										],
+										\Psr\Log\LogLevel::ERROR
+									);
+								}
 								catch(RequisiteConvertException $ex)
 								{
+									$this->log(
+										'RequisiteConvertException',
+										[
+											'message' => $ex->getMessage(),
+											'code' => $ex->getCode(),
+										],
+										\Psr\Log\LogLevel::ERROR
+									);
 								}
 							}
 						}
@@ -901,12 +931,34 @@ class LeadConverter extends EntityConverter
 								$errors
 							);
 							//endregion
+							if (!empty($errors))
+							{
+								$this->log(
+									'AutoStartWorkflowsError',
+									[
+										'errors' => $errors
+									],
+									\Psr\Log\LogLevel::ERROR
+								);
+							}
 						}
 
 						//region Automation
 						$starter = new Crm\Automation\Starter(\CCrmOwnerType::Lead, $this->entityID);
 						$starter->runOnUpdate($fields, $presentFields);
 						//end region
+					}
+					else
+					{
+						$this->log(
+							'UpdateLeadError',
+							[
+								'error' => $entity->getLastError(),
+								'fields' => $fields,
+								'options' => $entityUpdateOptions,
+							],
+							\Psr\Log\LogLevel::ERROR
+						);
 					}
 				}
 
@@ -1177,5 +1229,16 @@ class LeadConverter extends EntityConverter
 		$options['DISABLE_USER_FIELD_CHECK'] = true;
 
 		return $options;
+	}
+
+	protected function getLogContext(): array
+	{
+		return array_merge(
+			parent::getLogContext(),
+			[
+				'conversionTypeId' => $this->conversionTypeID,
+				'isReturnCustomer' => $this->isReturnCustomer,
+			]
+		);
 	}
 }

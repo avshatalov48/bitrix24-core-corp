@@ -243,7 +243,15 @@ class Order extends Sale\Order
 	{
 		$result = parent::onAfterSave();
 
-		if ($this->enableAutomaticDealCreation())
+		$binding = $this->getEntityBinding();
+
+		if (
+			(
+				!$binding
+				|| $binding->getOwnerTypeId() === \CCrmOwnerType::Deal
+			)
+			&& $this->enableAutomaticDealCreation()
+		)
 		{
 			if ($this->isNew())
 			{
@@ -272,8 +280,7 @@ class Order extends Sale\Order
 			);
 		}
 
-		$binding = $this->getEntityBinding();
-		if ($binding && $binding->getOwnerTypeId() === \CCrmOwnerType::Deal)
+		if ($binding?->getOwnerTypeId() === \CCrmOwnerType::Deal)
 		{
 			if ($binding->isChanged() && !$this->enableAutomaticDealCreation())
 			{
@@ -298,8 +305,7 @@ class Order extends Sale\Order
 
 				if (
 					$this->getField('STATUS_ID') === OrderStatus::getFinalStatus()
-					&& $binding
-					&& $binding->getOwnerTypeId() === \CCrmOwnerType::Deal
+					&& $binding?->getOwnerTypeId() === \CCrmOwnerType::Deal
 				)
 				{
 					$this->addTimelineEntryNotifyBindingDeal([

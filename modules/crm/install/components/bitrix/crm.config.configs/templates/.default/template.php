@@ -184,6 +184,15 @@ endif;
 					});
 				}
 
+				var nodeEnableUnconnectedRecipients = form.querySelector('input[type="checkbox"][name="ENABLE_UNCONNECTED_RECIPIENTS"]');
+				var nodeOutgoingEmailOwnerType = form.querySelector('select[name="OUTGOING_EMAIL_OWNER_TYPE"]');
+				if (nodeEnableUnconnectedRecipients && nodeOutgoingEmailOwnerType)
+				{
+					BX.bind(nodeEnableUnconnectedRecipients, 'change', function() {
+						BX.CrmInterfaceFormUtil.showFormRow(nodeEnableUnconnectedRecipients.checked, nodeOutgoingEmailOwnerType);
+					});
+				}
+
 				var productPriceEditSetting = form.querySelector('input[type="checkbox"][name="ENABLE_ENTITY_CATALOG_PRICE_EDIT"]');
 				var productPriceSaveSetting = form.querySelector('input[type="checkbox"][name="ENABLE_ENTITY_CATALOG_PRICE_SAVE"]');
 				if (productPriceEditSetting && productPriceSaveSetting)

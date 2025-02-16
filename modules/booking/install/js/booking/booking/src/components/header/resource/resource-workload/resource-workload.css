@@ -1,0 +1,10 @@
+.booking-booking-header-resource-workload {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	cursor: default;
+}
+
+.booking-booking-header-resource .booking-booking-header-resource-workload {
+	margin-right: calc(8px * var(--half-zoom));
+}

@@ -21,6 +21,7 @@ use Bitrix\Sign\Serializer\MasterFieldSerializer;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Type\Access\AccessibleItemType;
 use Bitrix\Sign\Type\DocumentScenario;
+use Bitrix\Sign\Type\ProviderCode;
 use Bitrix\Sign\Type\Template\Status;
 use Bitrix\Sign\Type\Template\Visibility;
 
@@ -127,6 +128,7 @@ class Template extends Controller
 			],
 			'document' => [
 				'id' => $document->id,
+				'providerCode' => ProviderCode::toRepresentativeString($document->providerCode),
 			],
 		];
 	}

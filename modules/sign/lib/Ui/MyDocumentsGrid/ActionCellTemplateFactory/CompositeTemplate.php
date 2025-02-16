@@ -2,21 +2,25 @@
 
 namespace Bitrix\Sign\Ui\MyDocumentsGrid\ActionCellTemplateFactory;
 
+use Bitrix\Sign\Contract\Grid\MyDocuments\ActionCellTemplate;
+
 class CompositeTemplate implements ActionCellTemplate
 {
-	private array $templates;
-
-	public function __construct(array $templates)
+	/**
+	 * @param ActionCellTemplate[] $templates
+	 */
+	public function __construct(
+		private readonly array $templates,
+	)
 	{
-		$this->templates = $templates;
 	}
 
-	public function get(): string
+	public function render(): string
 	{
 		$output = '';
 		foreach ($this->templates as $template)
 		{
-			$output .= $template->get();
+			$output .= $template->render();
 		}
 
 		return $output;

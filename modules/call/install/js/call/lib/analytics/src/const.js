@@ -29,6 +29,15 @@ export const AnalyticsEvent = Object.freeze({
 	clickCallButton: 'click_call_button',
 	clickStartConf: 'click_start_conf',
 	aiRecordStart: 'ai_record_start',
+	aiOn: 'ai_on',
+	aiOff: 'ai_off',
+	openTab: 'open_tab',
+	clickCreateEvent: 'click_create_event',
+	clickCreateTask: 'click_create_task',
+	viewPopup: 'view_popup',
+	viewNotification: 'view_notification',
+	clickTimeCode: 'click_timecode',
+	playRecord: 'play_record',
 });
 
 export const AnalyticsTool = Object.freeze({
@@ -41,6 +50,7 @@ export const AnalyticsCategory = Object.freeze({
 	callDocs: 'call_docs',
 	messenger: 'messenger',
 	callsOperations: 'calls_operations',
+	callFollowup: 'call_followup',
 });
 
 export const AnalyticsType = Object.freeze({
@@ -53,6 +63,8 @@ export const AnalyticsType = Object.freeze({
 	sheet: 'sheet',
 	privateCall: 'private',
 	groupCall: 'group',
+	aiOn: 'ai_on',
+	turnOnAi: 'turn_on_ai',
 });
 
 export const AnalyticsSection = Object.freeze({

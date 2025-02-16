@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Integration\UI\EntitySelector;
 
 use Bitrix\Crm\CompanyTable;
 use Bitrix\Crm\Integration\UI\EntitySelector\Traits\FilterByIds;
+use Bitrix\Crm\Integration\UI\EntitySelector\Traits\FilterByEmails;
 use Bitrix\Crm\Multifield\Type\Email;
 use Bitrix\Crm\Multifield\Type\Phone;
 
@@ -20,6 +21,7 @@ class CompanyProvider extends EntityProvider
 	protected $categoryId;
 
 	use FilterByIds;
+	use FilterByEmails;
 
 	public function __construct(array $options = [])
 	{
@@ -34,6 +36,7 @@ class CompanyProvider extends EntityProvider
 		$this->showMails = (bool)($options['showMails'] ?? $this->showMails);
 		$this->hideReadMoreLink = (bool)($options['hideReadMoreLink'] ?? $this->hideReadMoreLink);
 		$this->setIdsForFilter($options['idsForFilterCompany'] ?? []);
+		$this->setEmailOnlyMode($options['onlyWithEmail'] ?? false);
 		$this->options['enableMyCompanyOnly'] = $this->enableMyCompanyOnly;
 		$this->options['excludeMyCompany'] = $this->excludeMyCompany;
 		$this->options['showPhones'] = $this->showPhones;
@@ -87,7 +90,7 @@ class CompanyProvider extends EntityProvider
 			'=CATEGORY_ID' =>  $this->categoryId,
 		];
 
-		return array_merge($filter, $this->getCompanyFilter());
+		return array_merge($filter, $this->getCompanyFilter(), $this->getEmailFilters());
 	}
 
 	private function getCompanyFilter(): array

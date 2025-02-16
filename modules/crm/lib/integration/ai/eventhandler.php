@@ -68,14 +68,9 @@ final class EventHandler
 				'helpdesk' => 18799442
 			];
 
-			$isCopilotCallAssessmentEnabled = Feature::enabled(Feature\CopilotInCallGrading::class);
-
 			$items[self::SETTINGS_FILL_ITEM_FROM_CALL_ENABLED_CODE] = [
 				'group' => self::SETTINGS_GROUP_CODE,
-				'title' => $isCopilotCallAssessmentEnabled
-					? Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_FILL_ITEM_FROM_CALL_TITLE')
-					: Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_GROUP_TITLE')
-				,
+				'title' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_FILL_ITEM_FROM_CALL_TITLE'),
 				'header' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_FILL_ITEM_FROM_CALL_HEADER'),
 				'type' => Tuning\Type::BOOLEAN,
 				'default' => true,
@@ -107,27 +102,24 @@ final class EventHandler
 				],
 			);
 
-			if ($isCopilotCallAssessmentEnabled)
-			{
-				$items[self::SETTINGS_CALL_ASSESSMENT_ENABLED_CODE] = [
-					'group' => self::SETTINGS_GROUP_CODE,
-					'title' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTING_CALL_ASSESSMENT_TITLE'),
-					'header' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_CALL_ASSESSMENT_HEADER'),
-					'type' => Tuning\Type::BOOLEAN,
-					'default' => true,
-					'sort' => 15,
-				];
+			$items[self::SETTINGS_CALL_ASSESSMENT_ENABLED_CODE] = [
+				'group' => self::SETTINGS_GROUP_CODE,
+				'title' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTING_CALL_ASSESSMENT_TITLE'),
+				'header' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_CALL_ASSESSMENT_HEADER'),
+				'type' => Tuning\Type::BOOLEAN,
+				'default' => true,
+				'sort' => 15,
+			];
 
-				$quality = new Quality([
-					Quality::QUALITIES['translate'],
-				]);
-				$items[self::SETTINGS_CALL_ASSESSMENT_ENGINE_CODE] = [
-					...Tuning\Defaults::getProviderSelectFieldParams(Engine::CATEGORIES['text'], $quality),
-					'group' => self::SETTINGS_GROUP_CODE,
-					'title' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_CALL_ASSESSMENT_ENGINE_TITLE'),
-					'sort' => 50,
-				];
-			}
+			$quality = new Quality([
+				Quality::QUALITIES['translate'],
+			]);
+			$items[self::SETTINGS_CALL_ASSESSMENT_ENGINE_CODE] = [
+				...Tuning\Defaults::getProviderSelectFieldParams(Engine::CATEGORIES['text'], $quality),
+				'group' => self::SETTINGS_GROUP_CODE,
+				'title' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_CALL_ASSESSMENT_ENGINE_TITLE'),
+				'sort' => 50,
+			];
 		}
 
 		$result->modifyFields([

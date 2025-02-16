@@ -212,6 +212,13 @@ class CallAISettings
 		return Option::get('call', 'call_ai_help_code', self::CALL_COPILOT_HELP_SLIDER_CODE);
 	}
 
+	public static function getHelpUrl(): string
+	{
+		\Bitrix\Main\Loader::includeModule('ui');
+		return \Bitrix\UI\Util::getArticleUrlByCode(self::CALL_COPILOT_HELP_SLIDER_CODE);
+	}
+
+
 	public static function getAgreementUrl(): string
 	{
 		return '/online/?AI_UX_TRIGGER=box_agreement';

@@ -3,6 +3,7 @@
 namespace Bitrix\Call;
 
 use Bitrix\Call\Integration\AI\ChatMessage;
+use Bitrix\Im\Call\Call;
 use Bitrix\Im\V2\Chat;
 use Bitrix\Im\V2\Message;
 use Bitrix\Im\V2\Message\Params;
@@ -30,6 +31,8 @@ class NotifyService
 
 	private static ?NotifyService $service = null;
 
+	private array $shownMessage = [];
+
 	private function __construct()
 	{}
 
@@ -40,6 +43,51 @@ class NotifyService
 			self::$service = new self();
 		}
 		return self::$service;
+	}
+
+	public function sendTaskFailedMessage(\Bitrix\Main\Error $error, Call $call): void
+	{
+		if (isset($this->shownMessage[self::MESSAGE_TYPE_AI_FAILED][$call->getId()]))
+		{
+			return;
+		}
+		$this->shownMessage[self::MESSAGE_TYPE_AI_FAILED][$call->getId()] = true;
+
+		$chat = Chat::getInstance($call->getChatId());
+
+		if ($this->findMessage($chat, $call->getId(), self::MESSAGE_TYPE_AI_FAILED, 3) === null)
+		{
+			$message = ChatMessage::generateTaskFailedMessage($call->getId(), $error, $chat);
+			if ($message)
+			{
+				$message->setAuthorId($call->getInitiatorId());
+				$this->sendMessageDeferred($chat, $message);
+
+				(new \Bitrix\Call\Analytics\FollowUpAnalytics($call))->addFollowUpErrorMessage($error->getCode());
+			}
+		}
+	}
+
+	public function sendCallError(\Bitrix\Main\Error $error, Call $call): void
+	{
+		if (isset($this->shownMessage[self::MESSAGE_TYPE_AI_FAILED][$call->getId()]))
+		{
+			return;
+		}
+		$this->shownMessage[self::MESSAGE_TYPE_AI_FAILED][$call->getId()] = true;
+
+		$chat = Chat::getInstance($call->getChatId());
+
+		if ($this->findMessage($chat, $call->getId(), self::MESSAGE_TYPE_AI_FAILED, 3) === null)
+		{
+			$errorMessage = ChatMessage::generateErrorMessage($error, $chat, $call);
+			if ($errorMessage)
+			{
+				$this->sendError($chat, $errorMessage);
+
+				(new \Bitrix\Call\Analytics\FollowUpAnalytics($call))->addFollowUpErrorMessage($error->getCode());
+			}
+		}
 	}
 
 	public function sendMessage(Chat $chat, Message $message): void
@@ -82,11 +130,17 @@ class NotifyService
 				//&& $params->get(Params::COMPONENT_ID)->getValue() == self::MESSAGE_COMPONENT_ID
 				$params->isSet(Params::COMPONENT_PARAMS)
 				&& isset($params->get(Params::COMPONENT_PARAMS)->getValue()['MESSAGE_TYPE'])
-				&& $params->get(Params::COMPONENT_PARAMS)->getValue()['MESSAGE_TYPE'] == $messageType
 				&& $params->get(Params::COMPONENT_PARAMS)->getValue()['CALL_ID'] == $callId
 			)
 			{
-				return $message;
+				if ($params->get(Params::COMPONENT_PARAMS)->getValue()['MESSAGE_TYPE'] == $messageType)
+				{
+					return $message;
+				}
+				if ($params->get(Params::COMPONENT_PARAMS)->getValue()['MESSAGE_TYPE'] == self::MESSAGE_TYPE_START)
+				{
+					break;
+				}
 			}
 		}
 

@@ -14,9 +14,9 @@ use Bitrix\Crm\Security\Role\Manage\Permissions\Permission;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Read;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Transition;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Write;
-use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\DependentVariables;
-use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\Toggler;
-use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\Variables;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\DependentVariables;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\Toggler;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\Variables;
 use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\Variants;
 use Bitrix\Main\Localization\Loc;
 
@@ -27,8 +27,11 @@ class PermissionAttrPresets
 	 */
 	public static function crmEntityPreset(): array
 	{
-		$withoutUserRoleDependentVariables = (new DependentVariables())
-			->setUseAttributesAsValues(true)
+		$hierarchy = (new UserRoleAndHierarchy())->exclude(UserRoleAndHierarchy::THIS_ROLE);
+		$variants = $hierarchy->getVariants();
+
+		$withoutUserRoleDependentVariables = (new DependentVariables\UserRoleAndHierarchyAsAttributes())
+			->setHierarchy($hierarchy)
 			->addSelectedVariablesAlias(
 				[
 					UserRoleAndHierarchy::SELF,
@@ -42,12 +45,12 @@ class PermissionAttrPresets
 		;
 
 		return [
-			new Read(UserRoleAndHierarchy::getPresetWithoutUserRole(), $withoutUserRoleDependentVariables),
-			new Add(UserRoleAndHierarchy::getPresetWithoutUserRole(), $withoutUserRoleDependentVariables),
-			new Write(UserRoleAndHierarchy::getPresetWithoutUserRole(), $withoutUserRoleDependentVariables),
-			new Delete(UserRoleAndHierarchy::getPresetWithoutUserRole(), $withoutUserRoleDependentVariables),
-			new Export(UserRoleAndHierarchy::getPresetWithoutUserRole(), $withoutUserRoleDependentVariables),
-			new Import(UserRoleAndHierarchy::getPresetWithoutUserRole(), $withoutUserRoleDependentVariables),
+			new Read($variants, $withoutUserRoleDependentVariables),
+			new Add($variants, $withoutUserRoleDependentVariables),
+			new Write($variants, $withoutUserRoleDependentVariables),
+			new Delete($variants, $withoutUserRoleDependentVariables),
+			new Export($variants, $withoutUserRoleDependentVariables),
+			new Import($variants, $withoutUserRoleDependentVariables),
 			new MyCardView(self::allowedYesNo(), (new Toggler())->setDefaultValue(true)),
 		];
 	}
@@ -90,7 +93,10 @@ class PermissionAttrPresets
 			Transition::TRANSITION_ANY,
 			(string)Loc::getMessage('CRM_SECURITY_ROLE_PERMS_TYPE_TRANSITION_ANY'),
 			[
-				'conflictsWith' => array_merge($stageIds, [Transition::TRANSITION_INHERIT, Transition::TRANSITION_BLOCKED]),
+				'conflictsWith' => array_merge(
+					$stageIds,
+					[Transition::TRANSITION_INHERIT, Transition::TRANSITION_BLOCKED],
+				),
 				'defaultInSection' => true,
 			]
 		);
@@ -200,7 +206,11 @@ class PermissionAttrPresets
 			],
 		);
 
-		$variants->add(BX_CRM_PERM_ALL, (string)GetMessage('CRM_SECURITY_ROLE_PERMS_SHOW_SUM'), ['defaultInSection' => true]);
+		$variants->add(
+			BX_CRM_PERM_ALL,
+			(string)GetMessage('CRM_SECURITY_ROLE_PERMS_SHOW_SUM'),
+			['defaultInSection' => true],
+		);
 
 		$variants->add(
 			HideSum::INHERIT,
@@ -218,7 +228,11 @@ class PermissionAttrPresets
 	{
 		$variants = new Variants();
 
-		$variants->add('', (string)GetMessage('CRM_SECURITY_ROLE_PERMS_TYPE_AUTOMATION_NONE'), ['useAsEmptyInSection' => true]);
+		$variants->add(
+			'',
+			(string)GetMessage('CRM_SECURITY_ROLE_PERMS_TYPE_AUTOMATION_NONE'),
+			['useAsEmptyInSection' => true],
+		);
 
 		$variants->add(BX_CRM_PERM_ALL, (string)GetMessage('CRM_SECURITY_ROLE_PERMS_TYPE_AUTOMATION_ALL'));
 
@@ -229,7 +243,11 @@ class PermissionAttrPresets
 	{
 		$variants = new Variants();
 
-		$variants->add('', (string)GetMessage('CRM_SECURITY_ROLE_PERMS_TYPE_ALLOWED_NO'), ['useAsEmptyInSection' => true]);
+		$variants->add(
+			'',
+			(string)GetMessage('CRM_SECURITY_ROLE_PERMS_TYPE_ALLOWED_NO'),
+			['useAsEmptyInSection' => true],
+		);
 
 		$variants->add(BX_CRM_PERM_ALL, (string)GetMessage('CRM_SECURITY_ROLE_PERMS_TYPE_ALLOWED_YES'));
 

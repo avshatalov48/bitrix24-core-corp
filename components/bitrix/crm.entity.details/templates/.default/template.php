@@ -1,5 +1,6 @@
 <?
 
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Loader;
 
@@ -419,6 +420,16 @@ $tabs = array_map(static function(array $tab) {
 				{
 					title: "<?=GetMessageJS('CRM_ENT_DETAIL_DEAL_CATEGORY_DLG_TITLE')?>",
 					field: "<?=GetMessageJS('CRM_ENT_DETAIL_DEAL_CATEGORY_DLG_FIELD')?>",
+					saveButton: "<?=GetMessageJS('CRM_ENT_DETAIL_BUTTON_SAVE')?>",
+					cancelButton: "<?=GetMessageJS('CRM_ENT_DETAIL_BUTTON_CANCEL')?>"
+				};
+
+			BX.CrmDynamicCategory.infos = <?=Json::encode($arResult['ENTITY_CATEGORIES_DATA'])?>;
+			BX.CrmDynamicCategory.enabled = <?=Json::encode($arResult['ENTITY_CATEGORIES_ENABLED'])?>;
+			BX.CrmDynamicCategorySelectDialog.messages =
+				{
+					title: "<?=GetMessageJS('CRM_ENT_DETAIL_DYNAMIC_CATEGORY_DLG_TITLE')?>",
+					field: "<?=GetMessageJS('CRM_ENT_DETAIL_DYNAMIC_CATEGORY_DLG_FIELD')?>",
 					saveButton: "<?=GetMessageJS('CRM_ENT_DETAIL_BUTTON_SAVE')?>",
 					cancelButton: "<?=GetMessageJS('CRM_ENT_DETAIL_BUTTON_CANCEL')?>"
 				};

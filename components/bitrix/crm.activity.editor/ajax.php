@@ -8,6 +8,7 @@ use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Activity\Mail\MailEntitiesDiskHelper;
+use Bitrix\Crm\Settings\ActivitySettings;
 use Bitrix\Disk\Folder;
 use Bitrix\Disk\Internals\FolderTable;
 use Bitrix\Disk\Uf\FileUserType;
@@ -1658,7 +1659,6 @@ elseif($action == 'SAVE_EMAIL')
 				{
 					$item = \Bitrix\Main\Web\Json::decode($item);
 
-					$item['entityType'] = array_search($item['entityType'], $socNetLogDestTypes);
 					$item['type'] = 'EMAIL';
 					$item['value'] = $item['email'];
 					$item['__field'] = $field;
@@ -1760,14 +1760,14 @@ elseif($action == 'SAVE_EMAIL')
 			${$rcptFieldName}[] = mb_strtolower(trim($commValue));
 		}
 
-		if (isset($commDatum['isEmail']) && $commDatum['isEmail'] == 'Y' && mb_strtolower(trim($commValue)))
+		if (ActivitySettings::getCurrent()->getEnableUnconnectedRecipients() && isset($commDatum['entityType']) && ($commDatum['entityType'] === 'address_book' || $commDatum['entityType'] === 'mail-recipient-user') && mb_strtolower(trim($commValue)))
 		{
-			$newEntityTypeId = \Bitrix\Crm\Settings\ActivitySettings::getCurrent()->getOutgoingEmailOwnerTypeId();
+			$newEntityTypeId = ActivitySettings::getCurrent()->getOutgoingEmailOwnerTypeId();
 			if (CCrmOwnerType::Contact == $newEntityTypeId && \CCrmContact::checkCreatePermission())
 			{
 				$contactFields = [
-					'NAME'           => isset($commDatum['params']['name']) ? $commDatum['params']['name'] : '',
-					'LAST_NAME'      => isset($commDatum['params']['lastName']) ? $commDatum['params']['lastName'] : '',
+					'NAME'           => $commDatum['name'] ?? '',
+					'LAST_NAME'      => $commDatum['lastName'] ?? '',
 					'RESPONSIBLE_ID' => $userID,
 					'FM'             => [
 						'EMAIL' => [
@@ -1781,7 +1781,14 @@ elseif($action == 'SAVE_EMAIL')
 
 				if (isset($contactType) && ('' !== $contactType))
 				{
-					$contactFields['TYPE_ID'] = $contactType;
+					if ($commDatum['entityType'] === 'mail-recipient-user' && isset($contactTypes['OTHER']))
+					{
+						$contactFields['TYPE_ID'] = 'OTHER';
+					}
+					else
+					{
+						$contactFields['TYPE_ID'] = $contactType;
+					}
 				}
 
 				if (isset($sourceId) && ('' !== $sourceId))
@@ -1821,8 +1828,8 @@ elseif($action == 'SAVE_EMAIL')
 			{
 				$leadFields = [
 					'TITLE'          => $subject,
-					'NAME'           => isset($commDatum['params']['name']) ? $commDatum['params']['name'] : '',
-					'LAST_NAME'      => isset($commDatum['params']['lastName']) ? $commDatum['params']['lastName'] : '',
+					'NAME'           => $commDatum['name'] ?? '',
+					'LAST_NAME'      => $commDatum['lastName'] ?? '',
 					'STATUS_ID'      => 'NEW',
 					'OPENED'         => 'Y',
 					'FM'             => [

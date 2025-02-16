@@ -13,8 +13,6 @@ use Bitrix\Crm;
 use Bitrix\Crm\Component\ControlPanel\ControlPanelMenuMapper;
 use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
-use Bitrix\Crm\Feature;
-use Bitrix\Crm\Feature\CopilotInCallGrading;
 use Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
@@ -244,7 +242,7 @@ $arParams['PATH_TO_SEARCH_PAGE'] = (isset($arParams['PATH_TO_SEARCH_PAGE']) && $
 	? $arParams['PATH_TO_SEARCH_PAGE'] : '#SITE_DIR#search/index.php?where=crm';
 
 $arParams['PATH_TO_PRODUCT_MARKETPLACE'] = (isset($arParams['PATH_TO_PRODUCT_MARKETPLACE']) && $arParams['PATH_TO_PRODUCT_MARKETPLACE'] !== '')
-	? $arParams['PATH_TO_PRODUCT_MARKETPLACE'] : \Bitrix\Crm\Integration\Market\Router::getCategoryPath('crm');
+	? $arParams['PATH_TO_PRODUCT_MARKETPLACE'] : \Bitrix\Crm\Integration\Market\Router::getBasePath();
 
 $arParams['PATH_TO_WEBFORM'] = (isset($arParams['PATH_TO_WEBFORM']) && $arParams['PATH_TO_WEBFORM'] !== '')
 	? $arParams['PATH_TO_WEBFORM'] : '#SITE_DIR#crm/webform/';
@@ -870,10 +868,19 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_PERMISSIONS'),
 	];
 
+	$crmPermsViewEventBuilder = (new Crm\Integration\Analytics\Builder\Security\ViewEvent())
+		->setSection(
+			!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+				? $arParams['ANALYTICS']['c_section']
+				: null
+		)
+		->setSubSection(\Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_CONTROL_PANEL)
+	;
+
 	$stdItems['CRM_PERMISSIONS'] = [
 		'ID' => 'CRM_PERMISSIONS',
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CRM_PERMISSIONS'),
-		'URL' => (string)$router->getPermissionsUrl(),
+		'URL' => (string)$crmPermsViewEventBuilder->buildUri($router->getPermissionsUrl()),
 	];
 }
 
@@ -1148,7 +1155,9 @@ if(ModuleManager::isModuleInstalled('bitrix24'))
 		$stdItems['MARKETPLACE_CRM_MIGRATION'] = array(
 			'ID' => 'MARKETPLACE_CRM_MIGRATION',
 			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_MARKETPLACE_CRM_MIGRATION'),
-			'URL' => \Bitrix\Rest\Marketplace\Url::getCategoryUrl('migration'),
+			'URL' => Loader::includeModule('market')
+				? \Bitrix\Crm\Integration\Market\Router::getBasePath() . 'collection/migration_crm/'
+				: \Bitrix\Crm\Integration\Market\Router::getCategoryPath('migration'),
 			'IS_DISABLED' => true,
 			'SLIDER_ONLY' => true,
 		);
@@ -1217,7 +1226,6 @@ if (
 	Container::getInstance()->getUserPermissions()->canReadCopilotCallAssessmentSettings()
 	&& !Crm\Copilot\CallAssessment\FillPreliminaryCallAssessments::isWaiting()
 	&& Crm\Integration\AI\AIManager::isAiCallProcessingEnabled()
-	&& Feature::enabled(CopilotInCallGrading::class)
 )
 {
 	$stdItems['CALL_ASSESSMENT'] = [

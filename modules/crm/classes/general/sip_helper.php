@@ -469,7 +469,7 @@ class CCrmSipHelper
 			],
 			'filter' => [
 				'@ID' => $dealIds,
-				'CLOSED' => 'N',
+				'=CLOSED' => 'N',
 			],
 			'order' => [
 				Item::FIELD_NAME_BEGIN_DATE => 'ASC',

@@ -6,18 +6,19 @@ use Bitrix\Crm\CompanyTable;
 use Bitrix\Crm\EO_Company;
 use Bitrix\Crm\Service\Broker;
 
+/**
+ * @method EO_Company|null getById(int $id)
+ * @method EO_Company[] getBunchByIds(array $ids)
+ */
 class Company extends Broker
 {
+	protected ?string $eventEntityAdd = 'OnAfterCrmCompanyAdd';
+	protected ?string $eventEntityUpdate = 'OnAfterCrmCompanyUpdate';
+	protected ?string $eventEntityDelete = 'OnAfterCrmCompanyDelete';
+
 	public function getTitle(int $id): ?string
 	{
-		/** @var EO_Company|null $company */
-		$company = $this->getById($id);
-		if (!$company)
-		{
-			return null;
-		}
-
-		return $company->getTitle();
+		return $this->getById($id)?->getTitle();
 	}
 
 	protected function loadEntry(int $id): ?EO_Company

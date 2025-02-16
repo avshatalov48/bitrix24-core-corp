@@ -22,6 +22,7 @@ if (!CModule::IncludeModule('crm'))
 use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
 use Bitrix\Crm\Integration\Sender\Rc;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
 Container::getInstance()->getLocalization()->loadMessages();
@@ -71,7 +72,13 @@ $arParams['PATH_TO_LEAD_DEDUPE'] = CrmCheckPath(
 	$curPage
 );
 
-$arParams['PATH_TO_MIGRATION'] = \Bitrix\Crm\Integration\Market\Router::getCategoryPath('migration');
+$arParams['PATH_TO_MIGRATION'] = Loader::includeModule('market')
+	? \Bitrix\Crm\Integration\Market\Router::getBasePath() . 'collection/migration_crm/'
+	: \Bitrix\Crm\Integration\Market\Router::getCategoryPath('migration');
+
+$arParams['PATH_TO_LEAD_GENERATOR'] = Loader::includeModule('market')
+	? \Bitrix\Crm\Integration\Market\Router::getCategoryPath('crm_leads')
+	: \Bitrix\Crm\Integration\Market\Router::getCategoryPath('leads');
 
 $arResult['PATH_TO_LEAD_WIDGET'] = CrmCheckPath(
 	'PATH_TO_LEAD_WIDGET',
@@ -435,14 +442,14 @@ if (isset($arParams['TYPE']) && $arParams['TYPE'] === 'list')
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('LEAD_MIGRATION'),
 			'TITLE' => GetMessage('LEAD_MIGRATION_TITLE'),
-			'ONCLICK' => 'BX.rest.Marketplace.open({}, \'migration\');',
+			'LINK' => $arParams['PATH_TO_MIGRATION'],
 			'ICON' => 'btn-migration'
 		);
 
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('LEAD_GENERATOR'),
 			'TITLE' => GetMessage('LEAD_GENERATOR_TITLE'),
-			'ONCLICK' => 'BX.rest.Marketplace.open({}, \'leads\');',
+			'LINK' => $arParams['PATH_TO_LEAD_GENERATOR'],
 			'ICON' => 'btn-migration'
 		);
 		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
@@ -636,6 +643,10 @@ if (isset($arParams['TYPE']) && $arParams['TYPE'] === 'list')
 	}
 
 	$permissionItem = PermissionItem::createByEntity(CCrmOwnerType::Lead);
+	if (isset($arParams['ANALYTICS']) && is_array($arParams['ANALYTICS']))
+	{
+		$permissionItem->setAnalytics($arParams['ANALYTICS']);
+	}
 	if ($permissionItem->canShow())
 	{
 		$arResult['BUTTONS'][] = $permissionItem->interfaceToolbarDelimiter();

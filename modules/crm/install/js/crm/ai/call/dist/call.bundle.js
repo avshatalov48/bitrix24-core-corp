@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_vue3,crm_ai_slider,crm_ai_textbox,ui_notification,crm_audioPlayer,pull_client,ui_lottie,crm_copilot_callAssessmentSelector,crm_timeline_tools,main_core_events,ui_bbcode_formatter_htmlFormatter,ui_sidepanel,ui_designTokens,main_core) {
+(function (exports,ui_vue3,crm_ai_slider,crm_ai_textbox,ui_notification,crm_audioPlayer,pull_client,pull_queuemanager,ui_lottie,crm_copilot_callAssessmentSelector,crm_router,crm_timeline_tools,main_core_events,ui_bbcode_formatter_htmlFormatter,ui_sidepanel,ui_designTokens,main_core) {
 	'use strict';
 
 	var _templateObject;
@@ -24,7 +24,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      previousTextContent: this.audioPlayerNode,
 	      attentions: this.getTextboxAttentions()
 	    });
-	    this.sliderId = "".concat(this.id, "-").concat(Math.floor(Math.random() * 1000));
+	    this.sliderId = "".concat(this.id, "-").concat(this.activityId);
 	    this.wrapperSlider = new crm_ai_slider.Slider({
 	      url: this.sliderId,
 	      sliderTitle: this.sliderTitle,
@@ -189,20 +189,32 @@ this.BX.Crm = this.BX.Crm || {};
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var CALL_SCORING_ADD_COMMAND = 'call_scoring_add';
-	var _callback = /*#__PURE__*/new WeakMap();
-	var _unsubscribe = /*#__PURE__*/new WeakMap();
+	var CALL_ASSESSMENT_UPDATE_COMMAND = 'call_assessment_update';
+	var _callScoringCallback = /*#__PURE__*/new WeakMap();
+	var _callAssessmentCallback = /*#__PURE__*/new WeakMap();
+	var _unsubscribeFromCallScoring = /*#__PURE__*/new WeakMap();
+	var _unsubscribeFromCallAssessment = /*#__PURE__*/new WeakMap();
 	var Pull = /*#__PURE__*/function () {
-	  function Pull(callback) {
+	  function Pull(callScoringCallback, callAssessmentCallback) {
 	    babelHelpers.classCallCheck(this, Pull);
-	    _classPrivateFieldInitSpec(this, _callback, {
+	    _classPrivateFieldInitSpec(this, _callScoringCallback, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec(this, _unsubscribe, {
+	    _classPrivateFieldInitSpec(this, _callAssessmentCallback, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _unsubscribeFromCallScoring, {
 	      writable: true,
 	      value: null
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _callback, callback);
+	    _classPrivateFieldInitSpec(this, _unsubscribeFromCallAssessment, {
+	      writable: true,
+	      value: null
+	    });
+	    babelHelpers.classPrivateFieldSet(this, _callScoringCallback, callScoringCallback);
+	    babelHelpers.classPrivateFieldSet(this, _callAssessmentCallback, callAssessmentCallback);
 	  }
 	  babelHelpers.createClass(Pull, [{
 	    key: "init",
@@ -212,19 +224,36 @@ this.BX.Crm = this.BX.Crm || {};
 	        console.error('pull is not initialized');
 	        return;
 	      }
-	      babelHelpers.classPrivateFieldSet(this, _unsubscribe, pull_client.PULL.subscribe({
+
+	      // @todo use only one subscribe with many actions in callback
+	      babelHelpers.classPrivateFieldSet(this, _unsubscribeFromCallScoring, pull_client.PULL.subscribe({
 	        moduleId: 'crm',
 	        command: CALL_SCORING_ADD_COMMAND,
 	        callback: function callback(params) {
-	          babelHelpers.classPrivateFieldGet(_this, _callback).call(_this, params);
+	          if (main_core.Type.isStringFilled(params.eventId) && pull_queuemanager.QueueManager.eventIds.has(params.eventId)) {
+	            return;
+	          }
+	          babelHelpers.classPrivateFieldGet(_this, _callScoringCallback).call(_this, params);
+	        }
+	      }));
+	      babelHelpers.classPrivateFieldSet(this, _unsubscribeFromCallAssessment, pull_client.PULL.subscribe({
+	        moduleId: 'crm',
+	        command: CALL_ASSESSMENT_UPDATE_COMMAND,
+	        callback: function callback(params) {
+	          if (main_core.Type.isStringFilled(params.eventId) && pull_queuemanager.QueueManager.eventIds.has(params.eventId)) {
+	            return;
+	          }
+	          babelHelpers.classPrivateFieldGet(_this, _callAssessmentCallback).call(_this, params);
 	        }
 	      }));
 	      pull_client.PULL.extendWatch(CALL_SCORING_ADD_COMMAND);
+	      pull_client.PULL.extendWatch(CALL_ASSESSMENT_UPDATE_COMMAND);
 	    }
 	  }, {
 	    key: "unsubscribe",
 	    value: function unsubscribe() {
-	      babelHelpers.classPrivateFieldGet(this, _unsubscribe).call(this);
+	      babelHelpers.classPrivateFieldGet(this, _unsubscribeFromCallScoring).call(this);
+	      babelHelpers.classPrivateFieldGet(this, _unsubscribeFromCallAssessment).call(this);
 	    }
 	  }]);
 	  return Pull;
@@ -239,6 +268,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  usedCurrentVersionOfScript: 'usedCurrentVersionOfScript',
 	  usedOtherVersionOfScript: 'usedOtherVersionOfScript',
 	  emptyScriptList: 'emptyScriptList',
+	  assessmentSettingsPending: 'assessmentSettingsPending',
 	  pending: 'pending',
 	  error: 'error'
 	});
@@ -252,6 +282,14 @@ this.BX.Crm = this.BX.Crm || {};
 	    assessment: {
 	      type: Number,
 	      "default": null
+	    },
+	    lowBorder: {
+	      type: Number,
+	      "default": 30
+	    },
+	    highBorder: {
+	      type: Number,
+	      "default": 70
 	    },
 	    viewMode: {
 	      type: String,
@@ -287,11 +325,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    classList: function classList() {
 	      return {
 	        'call-quality__compliance__container': true,
-	        '--empty-state': !this.isUsedCurrentVersionOfScript
-	        // @todo
-	        // '--bad': this.assessment < 50,
-	        // '--normal': this.assessment >= 50 && this.assessment < 80,
-	        // '--good': this.assessment >= 80,
+	        '--empty-state': !this.isUsedCurrentVersionOfScript,
+	        '--low': this.assessment <= this.lowBorder,
+	        '--high': this.assessment >= this.highBorder
 	      };
 	    },
 	    isUsedCurrentVersionOfScript: function isUsedCurrentVersionOfScript() {
@@ -305,6 +341,36 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  },
 	  template: "\n\t\t<div :class=\"classList\">\n\t\t\t<div class=\"call-quality__compliance\">\n\t\t\t\t<div\n\t\t\t\t\tv-if=\"isUsedCurrentVersionOfScript\"\n\t\t\t\t\tclass=\"call-quality__compliance__assessment\"\n\t\t\t\t>\n\t\t\t\t\t<span ref=\"assessment\" class=\"call-quality__compliance__assessment-value\">\n\t\t\t\t\t\t{{ assessment }}\n\t\t\t\t\t</span>\n\t\t\t\t\t<div class=\"call-quality__compliance__assessment-measure\">\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__compliance__info\">\n\t\t\t\t\t<span class=\"call-quality__compliance__info-title\">\n\t\t\t\t\t\t{{ infoTitle }}\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"call-quality__compliance__info-value\">\n\t\t\t\t\t\t{{ valueTitle }}\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	};
+
+	var Loader = {
+	  mounted: function mounted() {
+	    this.renderLottieAnimation();
+	  },
+	  methods: {
+	    renderLottieAnimation: function renderLottieAnimation() {
+	      var mainAnimation = ui_lottie.Lottie.loadAnimation({
+	        path: this.getAnimationPath(),
+	        container: this.$refs.lottie,
+	        renderer: 'svg',
+	        loop: true,
+	        autoplay: true
+	      });
+	      mainAnimation.setSpeed(0.75);
+	      return this.$refs.lottie.root;
+	    },
+	    getAnimationPath: function getAnimationPath() {
+	      return '/bitrix/js/crm/ai/call/src/call-quality/lottie/loader.json';
+	    }
+	  },
+	  template: "\n\t\t<div ref=\"lottie\" class=\"call-quality__explanation-loader__lottie\"></div>\n\t"
+	};
+
+	var AssessmentSettingsPendingBlock = {
+	  components: {
+	    Loader: Loader
+	  },
+	  template: "\n\t\t<div class=\"call-quality__explanation\">\n\t\t\t<div class=\"call-quality__explanation__container\">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ASSESSMENT_SETTINGS_PENDING_TITLE') }}\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-text\">\n\t\t\t\t\t<div class=\"call-quality__explanation-loader__container\">\n\t\t\t\t\t\t<Loader />\n\t\t\t\t\t\t<div class=\"call-quality__explanation-loader__lottie-text\">\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ASSESSMENT_SETTINGS_PENDING_TEXT') }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	var EmptyScriptListBlock = {
@@ -385,29 +451,14 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 
 	var PendingBlock = {
-	  mounted: function mounted() {
-	    this.renderLottieAnimation();
+	  components: {
+	    Loader: Loader
 	  },
-	  methods: {
-	    renderLottieAnimation: function renderLottieAnimation() {
-	      var mainAnimation = ui_lottie.Lottie.loadAnimation({
-	        path: this.getAnimationPath(),
-	        container: this.$refs.lottie,
-	        renderer: 'svg',
-	        loop: true,
-	        autoplay: true
-	      });
-	      mainAnimation.setSpeed(0.75);
-	      return this.$refs.lottie.root;
-	    },
-	    getAnimationPath: function getAnimationPath() {
-	      return '/bitrix/js/crm/ai/call/src/call-quality/lottie/loader.json';
-	    }
-	  },
-	  template: "\n\t\t<div class=\"call-quality__explanation\">\n\t\t\t<div class=\"call-quality__explanation__container \">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_PENDING_TITLE') }}\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-text\">\n\t\t\t\t\t<div class=\"call-quality__explanation-loader__container\">\n\t\t\t\t\t\t<div ref=\"lottie\" class=\"call-quality__explanation-loader__lottie\"></div>\n\t\t\t\t\t\t<div class=\"call-quality__explanation-loader__lottie-text\">{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_PENDING_TEXT') }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"call-quality__explanation\">\n\t\t\t<div class=\"call-quality__explanation__container\">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_PENDING_TITLE') }}\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-text\">\n\t\t\t\t\t<div class=\"call-quality__explanation-loader__container\">\n\t\t\t\t\t\t<Loader />\n\t\t\t\t\t\t<div class=\"call-quality__explanation-loader__lottie-text\">\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_PENDING_TEXT') }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	var ARTICLE_CODE = '23240682';
+	var DISCLAIMER_ARTICLE_CODE = '20412666';
 	var RecommendationBlock = {
 	  props: {
 	    recommendations: {
@@ -429,7 +480,15 @@ this.BX.Crm = this.BX.Crm || {};
 	      (_window$top$BX = window.top.BX) === null || _window$top$BX === void 0 ? void 0 : (_window$top$BX$Helper = _window$top$BX.Helper) === null || _window$top$BX$Helper === void 0 ? void 0 : _window$top$BX$Helper.show("redirect=detail&code=".concat(ARTICLE_CODE));
 	    }
 	  },
-	  template: "\n\t\t<div class=\"call-quality__explanation --copilot-content\">\n\t\t\t<div class=\"call-quality__explanation__container \">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_TITLE') }}\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-text\">\n\t\t\t\t\t<div \n\t\t\t\t\t\tv-if=\"!useInRating\"\n\t\t\t\t\t\tclass=\"call-quality__explanation-badge\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_NOT_IN_RATING') }}\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"call-quality__explanation-badge-article ui-icon-set --help\"\n\t\t\t\t\t\t\t\t@click=\"showArticle\"\n\t\t\t\t\t\t\t></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<p>\n\t\t\t\t\t\t{{ summary }}\n\t\t\t\t\t</p>\n\t\t\t\t\t<p>\n\t\t\t\t\t\t{{ recommendations }}\n\t\t\t\t\t</p>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  computed: {
+	    disclaimer: function disclaimer() {
+	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_DISCLAIMER', {
+	        '#LINK_START#': "<a onclick='window.top.BX?.Helper?.show(`redirect=detail&code=".concat(DISCLAIMER_ARTICLE_CODE, "`)' href=\"#\">"),
+	        '#LINK_END#': '</a>'
+	      });
+	    }
+	  },
+	  template: "\n\t\t<div class=\"call-quality__explanation --copilot-content\">\n\t\t\t<div class=\"call-quality__explanation__container \">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_TITLE') }}\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-text\">\n\t\t\t\t\t<div \n\t\t\t\t\t\tv-if=\"!useInRating\"\n\t\t\t\t\t\tclass=\"call-quality__explanation-badge\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_NOT_IN_RATING') }}\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"call-quality__explanation-badge-article ui-icon-set --help\"\n\t\t\t\t\t\t\t\t@click=\"showArticle\"\n\t\t\t\t\t\t\t></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<p>\n\t\t\t\t\t\t{{ summary }}\n\t\t\t\t\t</p>\n\t\t\t\t\t<p>\n\t\t\t\t\t\t{{ recommendations }}\n\t\t\t\t\t</p>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-disclaimer\" v-html=\"disclaimer\">\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	var _templateObject$1, _templateObject2;
@@ -484,11 +543,17 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	var ARTICLE_CODE$1 = '23240682';
+	var SUCCESS_STATUS = 'SUCCESS';
+	var PENDING_STATUS = 'PENDING';
 	var ScriptSelector = {
 	  props: {
 	    assessmentSettingsId: {
 	      type: Number,
 	      required: true
+	    },
+	    assessmentSettingsStatus: {
+	      type: String,
+	      "default": SUCCESS_STATUS
 	    },
 	    assessmentSettingsTitle: {
 	      type: String,
@@ -550,21 +615,14 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    onEditCallAssessmentSettings: function onEditCallAssessmentSettings(_ref) {
 	      var target = _ref.target;
-	      top.BX.UI.Hint.popupParameters = {
-	        closeByEsc: true,
-	        autoHide: true,
-	        angle: false
-	      };
-	      top.BX.UI.Hint.show(target, main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_EDIT_HINT'), false);
-
-	      // temporary disabled
-	      // Router.openSlider(
-	      // 	`/crm/copilot-call-assessment/details/${this.#itemIdentifier.id}/`,
-	      // 	{
-	      // 		width: 700,
-	      // 		cacheable: false,
-	      // 	},
-	      // );
+	      if (this.assessmentSettingsStatus === PENDING_STATUS) {
+	        this.showDisabledButtonHint(target);
+	        return;
+	      }
+	      crm_router.Router.openSlider("/crm/copilot-call-assessment/details/".concat(this.assessmentSettingsId, "/"), {
+	        width: 700,
+	        cacheable: false
+	      });
 	    },
 	    onShowActualPrompt: function onShowActualPrompt() {
 	      this.$emit('onShowActualPrompt');
@@ -590,8 +648,30 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this$callAssessmentS4;
 	      (_this$callAssessmentS4 = this.callAssessmentSelector) === null || _this$callAssessmentS4 === void 0 ? void 0 : _this$callAssessmentS4.enable();
 	    },
-	    doAssessment: function doAssessment() {
+	    doAssessment: function doAssessment(_ref2) {
+	      var target = _ref2.target;
+	      if (this.assessmentSettingsStatus === PENDING_STATUS) {
+	        this.showDisabledButtonHint(target);
+	        return;
+	      }
 	      this.$emit('doAssessment');
+	    },
+	    showDisabledButtonHint: function showDisabledButtonHint(target) {
+	      top.BX.UI.Hint.popupParameters = {
+	        closeByEsc: true,
+	        autoHide: true,
+	        angle: null,
+	        events: {}
+	      };
+	      main_core.Runtime.debounce(function () {
+	        top.BX.UI.Hint.show(target, main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_DISABLED_DO_ASSESSMENT_HINT'), true);
+	      }, 150, this)();
+	    },
+	    isDisabledAssessmentButton: function isDisabledAssessmentButton() {
+	      return this.assessmentSettingsStatus !== SUCCESS_STATUS;
+	    },
+	    isDisabledEditButton: function isDisabledEditButton() {
+	      return this.assessmentSettingsStatus === PENDING_STATUS;
 	    }
 	  },
 	  mounted: function mounted() {
@@ -619,16 +699,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.viewMode !== ViewMode.usedOtherVersionOfScript && this.viewMode !== ViewMode.usedNotAssessmentScript && this.viewMode !== ViewMode.pending && this.assessmentSettingsId > 0;
 	    },
 	    footerButtonClassList: function footerButtonClassList() {
-	      var isErrorViewMode = this.viewMode === ViewMode.error;
-	      return {
-	        'ui-btn': true,
-	        'ui-btn-xs': true,
-	        'ui-btn-no-caps': true,
-	        'ui-btn-light-border': !isErrorViewMode,
-	        'ui-btn-round': true,
-	        'ui-btn-active': !isErrorViewMode,
-	        'ui-btn-success': isErrorViewMode
-	      };
+	      return ['ui-btn', 'ui-btn-xs', 'ui-btn-no-caps', 'ui-btn-light-border', 'ui-btn-round', {
+	        'ui-btn-disabled': this.isDisabledAssessmentButton()
+	      }];
+	    },
+	    footerEditButtonClassList: function footerEditButtonClassList() {
+	      return ['ui-btn', 'ui-btn-xs', 'ui-btn-no-caps', 'ui-btn-round', 'ui-btn-light', 'edit-button', {
+	        'ui-btn-disabled': this.isDisabledEditButton()
+	      }];
 	    },
 	    isEmptyScriptListViewMode: function isEmptyScriptListViewMode() {
 	      return this.viewMode === ViewMode.emptyScriptList;
@@ -640,7 +718,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      main_core.Dom.append(this.formattedPrompt, this.$refs.prompt);
 	    }
 	  },
-	  template: "\n\t\t<div>\n\t\t\t<div class=\"call-quality__script-selector__container\">\n\t\t\t\t<div class=\"call-quality__script-selector__title\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_SELECTOR_TITLE') }}\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"call-quality__script-selector__selector-container\" ref=\"container\"></div>\n\t\t\t\t\t<div \n\t\t\t\t\t\tclass=\"call-quality__script-selector__article ui-icon-set --help\"\n\t\t\t\t\t\t@click=\"showArticle\"\n\t\t\t\t\t></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div\n\t\t\t\tv-if=\"this.isPromptChanged && isShowFooterButtons\"\n\t\t\t\tclass=\"call-quality__script-info__container\"\n\t\t\t>\n\t\t\t\t<span>{{scriptUpdatedAt}}</span>\n\t\t\t\t<button\n\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-no-caps ui-btn-round ui-btn-link ui-btn-active\"\n\t\t\t\t\t@click=\"onShowActualPrompt\"\n\t\t\t\t>\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_INFO_SHOW_NEW_PROMPT') }}\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t\t<div class=\"call-quality__script-container\">\n\t\t\t\t<div\n\t\t\t\t\tv-if=\"isEmptyScriptListViewMode\"\n\t\t\t\t\tclass=\"call-quality__script-text\"\n\t\t\t\t>\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EMPTY_SCRIPT_LIST_PROMPT_TEXT') }}\n\t\t\t\t</div>\n\t\t\t\t<div v-else class=\"call-quality__script-text\" ref=\"prompt\">\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t\t<div\n\t\t\t\t\tv-if=\"isShowFooterButtons\"\n\t\t\t\t\tclass=\"call-quality__script-footer\"\n\t\t\t\t>\n\t\t\t\t\t<button \n\t\t\t\t\t\t:class=\"footerButtonClassList\"\n\t\t\t\t\t\t@click=\"doAssessment\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_ASSESSMENT_REPLY') }}\n\t\t\t\t\t</button>\n\t\t\t\t\t<button \n\t\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-no-caps ui-btn-round ui-btn-light ui-btn-active edit-button\"\n\t\t\t\t\t\t@click=\"onEditCallAssessmentSettings\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_EDIT') }}\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div>\n\t\t\t<div class=\"call-quality__script-selector__container\">\n\t\t\t\t<div class=\"call-quality__script-selector__title\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_SELECTOR_TITLE') }}\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"call-quality__script-selector__selector-container\" ref=\"container\"></div>\n\t\t\t\t\t<div \n\t\t\t\t\t\tclass=\"call-quality__script-selector__article ui-icon-set --help\"\n\t\t\t\t\t\t@click=\"showArticle\"\n\t\t\t\t\t></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div\n\t\t\t\tv-if=\"this.isPromptChanged && isShowFooterButtons\"\n\t\t\t\tclass=\"call-quality__script-info__container\"\n\t\t\t>\n\t\t\t\t<span>{{scriptUpdatedAt}}</span>\n\t\t\t\t<button\n\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-no-caps ui-btn-round ui-btn-link ui-btn-active\"\n\t\t\t\t\t@click=\"onShowActualPrompt\"\n\t\t\t\t>\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_INFO_SHOW_NEW_PROMPT') }}\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t\t<div class=\"call-quality__script-container\">\n\t\t\t\t<div\n\t\t\t\t\tv-if=\"isEmptyScriptListViewMode\"\n\t\t\t\t\tclass=\"call-quality__script-text\"\n\t\t\t\t>\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EMPTY_SCRIPT_LIST_PROMPT_TEXT') }}\n\t\t\t\t</div>\n\t\t\t\t<div v-else class=\"call-quality__script-text\" ref=\"prompt\">\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t\t<div\n\t\t\t\t\tv-if=\"isShowFooterButtons\"\n\t\t\t\t\tclass=\"call-quality__script-footer\"\n\t\t\t\t>\n\t\t\t\t\t<button \n\t\t\t\t\t\t:class=\"footerButtonClassList\"\n\t\t\t\t\t\t@click=\"doAssessment\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_ASSESSMENT_REPLY') }}\n\t\t\t\t\t</button>\n\t\t\t\t\t<button \n\t\t\t\t\t\t:class=\"footerEditButtonClassList\"\n\t\t\t\t\t\t@click=\"onEditCallAssessmentSettings\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_EDIT') }}\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -652,6 +730,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    RecommendationBlock: RecommendationBlock,
 	    OtherScriptBlock: OtherScriptBlock,
 	    NotAssessmentScriptBlock: NotAssessmentScriptBlock,
+	    AssessmentSettingsPendingBlock: AssessmentSettingsPendingBlock,
 	    PendingBlock: PendingBlock,
 	    ErrorBlock: ErrorBlock,
 	    EmptyScriptListBlock: EmptyScriptListBlock,
@@ -678,6 +757,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  data: function data() {
 	    var _quality$id;
 	    var quality = this.getPreparedQualityProps(this.data);
+	    var prompt = quality.prompt;
 	    var currentQualityAssessmentId = (_quality$id = quality.id) !== null && _quality$id !== void 0 ? _quality$id : null;
 	    var viewMode = null;
 	    if (this.data.viewMode === ViewMode.usedNotAssessmentScript) {
@@ -696,23 +776,48 @@ this.BX.Crm = this.BX.Crm || {};
 	      quality: quality,
 	      currentQualityAssessmentId: currentQualityAssessmentId,
 	      viewMode: viewMode,
+	      prompt: prompt,
 	      isShowAudioPlayer: false,
 	      direction: this.data.callDirection
 	    };
 	  },
 	  mounted: function mounted() {
-	    this.pull = new Pull(this.onPullChangeScript);
+	    top.BX.Event.EventEmitter.subscribe('crm:copilot:callAssessment:beforeSave', this.onBeforeAssessmentSettingsChange);
+	    top.BX.Event.EventEmitter.subscribe('crm:copilot:callAssessment:save', this.onAssessmentSettingsChange);
+	    this.pull = new Pull(this.onPullChangeScript, this.onPullChangeAssessment);
 	    this.pull.init();
 	  },
 	  methods: {
+	    onBeforeAssessmentSettingsChange: function onBeforeAssessmentSettingsChange(event) {
+	      var _event$getData = event.getData(),
+	        data = _event$getData.data;
+	      if (!this.isPromptChanged(data.prompt)) {
+	        return;
+	      }
+	      this.quality.assessmentSettingsStatus = 'PENDING';
+	    },
+	    onAssessmentSettingsChange: function onAssessmentSettingsChange(event) {
+	      var _event$getData2 = event.getData(),
+	        id = _event$getData2.id,
+	        data = _event$getData2.data;
+	      if (!this.isPromptChanged(data.prompt)) {
+	        return;
+	      }
+	      this.onChangeScript(id);
+	    },
+	    isPromptChanged: function isPromptChanged(newPrompt) {
+	      return this.quality.actualPrompt !== newPrompt;
+	    },
 	    showAudioPlayer: function showAudioPlayer() {
 	      this.isShowAudioPlayer = true;
 	    },
 	    onShowActualPrompt: function onShowActualPrompt() {
 	      this.viewMode = ViewMode.usedOtherVersionOfScript;
+	      this.prompt = this.quality.actualPrompt;
 	    },
 	    onShowCurrentAssessment: function onShowCurrentAssessment() {
 	      this.viewMode = ViewMode.usedCurrentVersionOfScript;
+	      this.prompt = this.quality.prompt;
 	    },
 	    onDoAssessment: function onDoAssessment() {
 	      var _this$$refs$scriptSel,
@@ -760,7 +865,11 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	        if (main_core.Type.isObject(data)) {
 	          _this2.quality = _this2.getPreparedQualityProps(data);
-	          _this2.viewMode = data.viewMode;
+	          if (!(_this2.quality.isPromptChanged && data.viewMode === ViewMode.assessmentSettingsPending
+	          //&& this.viewMode === ViewMode.usedCurrentVersionOfScript
+	          )) {
+	            _this2.viewMode = data.viewMode;
+	          }
 	        }
 	      })["catch"](function (response) {
 	        var _this2$$refs$scriptSe2;
@@ -780,7 +889,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	    },
 	    getPreparedQualityProps: function getPreparedQualityProps(_ref) {
-	      var _quality$ID, _quality$CREATED_AT, _quality$ASSESSMENT_S, _quality$ASSESSMENT, _quality$ASSESSMENT_A, _quality$PREV_ASSESSM, _quality$IS_PROMPT_CH, _quality$USE_IN_RATIN, _quality$PROMPT, _quality$ACTUAL_PROMP, _quality$PROMPT_UPDAT, _quality$TITLE, _quality$RECOMMENDATI, _quality$SUMMARY;
+	      var _quality$ID, _quality$CREATED_AT, _quality$ASSESSMENT_S, _quality$ASSESSMENT_S2, _quality$ASSESSMENT, _quality$ASSESSMENT_A, _quality$PREV_ASSESSM, _quality$IS_PROMPT_CH, _quality$USE_IN_RATIN, _quality$PROMPT, _quality$ACTUAL_PROMP, _quality$PROMPT_UPDAT, _quality$TITLE, _quality$RECOMMENDATI, _quality$SUMMARY, _quality$LOW_BORDER, _quality$HIGH_BORDER;
 	      var quality = _ref.callQuality;
 	      if (!main_core.Type.isPlainObject(quality)) {
 	        // eslint-disable-next-line no-param-reassign
@@ -790,6 +899,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        id: Number((_quality$ID = quality.ID) !== null && _quality$ID !== void 0 ? _quality$ID : 0),
 	        createdAt: (_quality$CREATED_AT = quality.CREATED_AT) !== null && _quality$CREATED_AT !== void 0 ? _quality$CREATED_AT : null,
 	        assessmentSettingsId: Number((_quality$ASSESSMENT_S = quality.ASSESSMENT_SETTING_ID) !== null && _quality$ASSESSMENT_S !== void 0 ? _quality$ASSESSMENT_S : 0),
+	        assessmentSettingsStatus: (_quality$ASSESSMENT_S2 = quality.ASSESSMENT_SETTINGS_STATUS) !== null && _quality$ASSESSMENT_S2 !== void 0 ? _quality$ASSESSMENT_S2 : null,
 	        assessment: Number((_quality$ASSESSMENT = quality.ASSESSMENT) !== null && _quality$ASSESSMENT !== void 0 ? _quality$ASSESSMENT : 0),
 	        assessmentAvg: Number((_quality$ASSESSMENT_A = quality.ASSESSMENT_AVG) !== null && _quality$ASSESSMENT_A !== void 0 ? _quality$ASSESSMENT_A : 0),
 	        prevAssessmentAvg: Number((_quality$PREV_ASSESSM = quality.PREV_ASSESSMENT_AVG) !== null && _quality$PREV_ASSESSM !== void 0 ? _quality$PREV_ASSESSM : 0),
@@ -800,13 +910,17 @@ this.BX.Crm = this.BX.Crm || {};
 	        promptUpdatedAt: (_quality$PROMPT_UPDAT = quality.PROMPT_UPDATED_AT) !== null && _quality$PROMPT_UPDAT !== void 0 ? _quality$PROMPT_UPDAT : '',
 	        title: (_quality$TITLE = quality.TITLE) !== null && _quality$TITLE !== void 0 ? _quality$TITLE : '',
 	        recommendations: (_quality$RECOMMENDATI = quality.RECOMMENDATIONS) !== null && _quality$RECOMMENDATI !== void 0 ? _quality$RECOMMENDATI : '',
-	        summary: (_quality$SUMMARY = quality.SUMMARY) !== null && _quality$SUMMARY !== void 0 ? _quality$SUMMARY : ''
+	        summary: (_quality$SUMMARY = quality.SUMMARY) !== null && _quality$SUMMARY !== void 0 ? _quality$SUMMARY : '',
+	        lowBorder: Number((_quality$LOW_BORDER = quality.LOW_BORDER) !== null && _quality$LOW_BORDER !== void 0 ? _quality$LOW_BORDER : 30),
+	        highBorder: Number((_quality$HIGH_BORDER = quality.HIGH_BORDER) !== null && _quality$HIGH_BORDER !== void 0 ? _quality$HIGH_BORDER : 70)
 	      };
 	    },
 	    close: function close() {
 	      var _this$$refs$scriptSel4;
 	      (_this$$refs$scriptSel4 = this.$refs.scriptSelector) === null || _this$$refs$scriptSel4 === void 0 ? void 0 : _this$$refs$scriptSel4.close();
 	      this.pull.unsubscribe();
+	      top.BX.Event.EventEmitter.unsubscribe('crm:copilot:callAssessment:beforeSave', this.onBeforeAssessmentSettingsChange);
+	      top.BX.Event.EventEmitter.unsubscribe('crm:copilot:callAssessment:save', this.onAssessmentSettingsChange);
 	    },
 	    onPullChangeScript: function onPullChangeScript(params) {
 	      if (this.context.activityId !== params.activityId) {
@@ -817,6 +931,23 @@ this.BX.Crm = this.BX.Crm || {};
 	      } else {
 	        this.onChangeScript(params.assessmentSettingsId);
 	      }
+	    },
+	    onPullChangeAssessment: function onPullChangeAssessment(params) {
+	      var _params$assessmentSet;
+	      var assessmentSettingsId = (_params$assessmentSet = params.assessmentSettingsId) !== null && _params$assessmentSet !== void 0 ? _params$assessmentSet : null;
+	      var currentAssessmentSettingsId = this.quality.assessmentSettingsId;
+	      if (assessmentSettingsId !== currentAssessmentSettingsId) {
+	        return;
+	      }
+	      this.onChangeScript(assessmentSettingsId);
+	    }
+	  },
+	  watch: {
+	    quality: {
+	      handler: function handler(quality) {
+	        this.prompt = quality.prompt;
+	      },
+	      deep: true
 	    }
 	  },
 	  computed: {
@@ -850,6 +981,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    isUsedNotAssessmentScriptViewMode: function isUsedNotAssessmentScriptViewMode() {
 	      return this.viewMode === ViewMode.usedNotAssessmentScript;
 	    },
+	    isAssessmentSettingsPendingViewMode: function isAssessmentSettingsPendingViewMode() {
+	      return this.viewMode === ViewMode.assessmentSettingsPending;
+	    },
 	    isPendingViewMode: function isPendingViewMode() {
 	      return this.viewMode === ViewMode.pending;
 	    },
@@ -860,7 +994,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.viewMode === ViewMode.emptyScriptList;
 	    }
 	  },
-	  template: "\n\t\t<div class=\"call-quality__column --info\">\n\t\t\t<div>\n\t\t\t\t<div class=\"call-quality__header\">\n\t\t\t\t\t<div class=\"call-quality__header-row --flex\">\n\t\t\t\t\t\t<div :class=\"clientNameClassList\" v-html=\"clientName\">\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"call-quality__call-date\">\n\t\t\t\t\t\t\t{{ formattedDate }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"call-quality__header-row\">\n\t\t\t\t\t\t<div id=\"crm-textbox-audio-player\" ref=\"audioPlayer\">\n\t\t\t\t\t\t\t<AudioPlayerComponent v-if=\"isShowAudioPlayer\" v-bind=\"audioProps\" />\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<ComplianceComponent \n\t\t\t\t\t:assessment=\"quality.assessment\"\n\t\t\t\t\t:title=\"quality.title\"\n\t\t\t\t\t:viewMode=\"viewMode\"\n\t\t\t\t/>\n\t\t\t\t<RecommendationBlock\n\t\t\t\t\tv-if=\"isUsedCurrentVersionOfScriptViewMode\"\n\t\t\t\t\t:recommendations=\"quality.recommendations\"\n\t\t\t\t\t:summary=\"quality.summary\"\n\t\t\t\t\t:use-in-rating=\"quality.useInRating\"\n\t\t\t\t/>\n\t\t\t\t<OtherScriptBlock\n\t\t\t\t\tv-if=\"isUsedOtherVersionOfScriptViewMode\"\n\t\t\t\t\t@showAssessment=\"onShowCurrentAssessment\"\n\t\t\t\t\t@doAssessment=\"onDoAssessment\"\n\t\t\t\t/>\n\t\t\t\t<NotAssessmentScriptBlock\n\t\t\t\t\tv-if=\"isUsedNotAssessmentScriptViewMode\"\n\t\t\t\t\t@doAssessment=\"onDoAssessment\"\n\t\t\t\t/>\n\t\t\t\t<PendingBlock v-if=\"isPendingViewMode\"/>\n\t\t\t\t<ErrorBlock v-if=\"isErrorViewMode\" ref=\"errorBlock\"/>\n\t\t\t\t<EmptyScriptListBlock v-if=\"isEmptyScriptListViewMode\"/>\n\t\t\t</div>\n\t\t</div>\n\t\t<div class=\"call-quality__column --prompt\">\n\t\t\t<ScriptSelectorComponent\n\t\t\t\tref=\"scriptSelector\"\n\t\t\t\t:assessmentSettingsId=\"quality.assessmentSettingsId\"\n\t\t\t\t:assessmentSettingsTitle=\"quality.title\"\n\t\t\t\t:isPromptChanged=\"quality.isPromptChanged\"\n\t\t\t\t:promptUpdatedAt=\"quality.promptUpdatedAt\"\n\t\t\t\t:prompt=\"quality.prompt\"\n\t\t\t\t:viewMode=\"viewMode\"\n\t\t\t\t@onBeforeSelect=\"onChangeScript\"\n\t\t\t\t@onShowActualPrompt=\"onShowActualPrompt\"\n\t\t\t\t@doAssessment=\"onDoAssessment\"\n\t\t\t/>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"call-quality__column --info\">\n\t\t\t<div>\n\t\t\t\t<div class=\"call-quality__header\">\n\t\t\t\t\t<div class=\"call-quality__header-row --flex\">\n\t\t\t\t\t\t<div :class=\"clientNameClassList\" v-html=\"clientName\">\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"call-quality__call-date\">\n\t\t\t\t\t\t\t{{ formattedDate }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"call-quality__header-row\">\n\t\t\t\t\t\t<div id=\"crm-textbox-audio-player\" ref=\"audioPlayer\">\n\t\t\t\t\t\t\t<AudioPlayerComponent v-if=\"isShowAudioPlayer\" v-bind=\"audioProps\" />\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<ComplianceComponent \n\t\t\t\t\t:assessment=\"quality.assessment\"\n\t\t\t\t\t:title=\"quality.title\"\n\t\t\t\t\t:viewMode=\"viewMode\"\n\t\t\t\t\t:lowBorder=\"quality.lowBorder\"\n\t\t\t\t\t:highBorder=\"quality.highBorder\"\n\t\t\t\t/>\n\t\t\t\t<RecommendationBlock\n\t\t\t\t\tv-if=\"isUsedCurrentVersionOfScriptViewMode\"\n\t\t\t\t\t:recommendations=\"quality.recommendations\"\n\t\t\t\t\t:summary=\"quality.summary\"\n\t\t\t\t\t:use-in-rating=\"quality.useInRating\"\n\t\t\t\t/>\n\t\t\t\t<OtherScriptBlock\n\t\t\t\t\tv-if=\"isUsedOtherVersionOfScriptViewMode\"\n\t\t\t\t\t@showAssessment=\"onShowCurrentAssessment\"\n\t\t\t\t\t@doAssessment=\"onDoAssessment\"\n\t\t\t\t/>\n\t\t\t\t<NotAssessmentScriptBlock\n\t\t\t\t\tv-if=\"isUsedNotAssessmentScriptViewMode\"\n\t\t\t\t\t@doAssessment=\"onDoAssessment\"\n\t\t\t\t/>\n\t\t\t\t<AssessmentSettingsPendingBlock v-if=\"isAssessmentSettingsPendingViewMode\"/>\n\t\t\t\t<PendingBlock v-if=\"isPendingViewMode\"/>\n\t\t\t\t<ErrorBlock v-if=\"isErrorViewMode\" ref=\"errorBlock\"/>\n\t\t\t\t<EmptyScriptListBlock v-if=\"isEmptyScriptListViewMode\"/>\n\t\t\t</div>\n\t\t</div>\n\t\t<div class=\"call-quality__column --prompt\">\n\t\t\t<ScriptSelectorComponent\n\t\t\t\tref=\"scriptSelector\"\n\t\t\t\t:assessmentSettingsId=\"quality.assessmentSettingsId\"\n\t\t\t\t:assessmentSettingsStatus=\"quality.assessmentSettingsStatus\"\n\t\t\t\t:assessmentSettingsTitle=\"quality.title\"\n\t\t\t\t:isPromptChanged=\"quality.isPromptChanged\"\n\t\t\t\t:promptUpdatedAt=\"quality.promptUpdatedAt\"\n\t\t\t\t:prompt=\"prompt\"\n\t\t\t\t:viewMode=\"viewMode\"\n\t\t\t\t@onBeforeSelect=\"onChangeScript\"\n\t\t\t\t@onShowActualPrompt=\"onShowActualPrompt\"\n\t\t\t\t@doAssessment=\"onDoAssessment\"\n\t\t\t/>\n\t\t</div>\n\t"
 	};
 
 	var _templateObject$2, _templateObject2$1, _templateObject3, _templateObject4, _templateObject5;
@@ -1027,6 +1161,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var CallQuality$1 = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(CallQuality$$1, _Base);
 	  function CallQuality$$1(data) {
+	    var _babelHelpers$classPr;
 	    var _this;
 	    babelHelpers.classCallCheck(this, CallQuality$$1);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CallQuality$$1).call(this, data));
@@ -1064,6 +1199,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _jobId, main_core.Type.isNumber(data.jobId) ? data.jobId : null);
+	    _this.sliderId = "".concat(_this.id, "-").concat((_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _jobId)) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : _this.activityId);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _clientDetailUrl, main_core.Type.isStringFilled(data.clientDetailUrl) ? data.clientDetailUrl : null);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _clientFullName, main_core.Type.isStringFilled(data.clientFullName) ? data.clientFullName : null);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _userPhotoUrl$1, main_core.Type.isStringFilled(data.userPhotoUrl) ? data.userPhotoUrl : null);
@@ -1274,5 +1410,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.Call = Call;
 
-}((this.BX.Crm.AI = this.BX.Crm.AI || {}),BX.Vue3,BX.Crm.AI,BX.Crm.AI,BX,BX.Crm,BX,BX.UI,BX.Crm.Copilot,BX.Crm.Timeline,BX.Event,BX.UI.BBCode.Formatter,BX,BX,BX));
+}((this.BX.Crm.AI = this.BX.Crm.AI || {}),BX.Vue3,BX.Crm.AI,BX.Crm.AI,BX,BX.Crm,BX,BX.Pull,BX.UI,BX.Crm.Copilot,BX.Crm,BX.Crm.Timeline,BX.Event,BX.UI.BBCode.Formatter,BX,BX,BX));
 //# sourceMappingURL=call.bundle.js.map

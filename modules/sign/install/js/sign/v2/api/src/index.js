@@ -47,9 +47,9 @@ export class Api
 		return this.#post('sign.api_v1.document.pages.list', { uid }, false);
 	}
 
-	loadBlanks(page: number, scenario: string | null = null): Promise<Array<{ title: string; id: number }>>
+	loadBlanks(page: number, scenario: string | null = null, countPerPage: number | null = null): Promise<Array<{ title: string; id: number }>>
 	{
-		return this.#post('sign.api_v1.document.blank.list', { page, scenario });
+		return this.#post('sign.api_v1.document.blank.list', { page, scenario, countPerPage });
 	}
 
 	createBlank(files: Array<string>, scenario: string | null = null, forTemplate: boolean = false): Promise<{
@@ -122,6 +122,11 @@ export class Api
 	configureDocument(uid: string): Promise<[]>
 	{
 		return this.#post('sign.api_v1.document.configure', { uid });
+	}
+
+	configureDocumentGroup(groupId: number): Promise<[]>
+	{
+		return this.#post('sign.api_v1.b2e.document.group.configure', { groupId });
 	}
 
 	loadBlocksByDocument(documentUid: string): Promise<Array<LoadedBlock>>
@@ -410,9 +415,34 @@ export class Api
 		return this.#post('sign.api_v1.document.getFillAndStartProgress', { uid });
 	}
 
+	getDocumentGroupFillAndStartProgress(groupId: number): Promise<{ completed: boolean, progress: Number }>
+	{
+		return this.#post('sign.api_v1.b2e.document.group.getFillAndStartProgress', { groupId });
+	}
+
 	getMember(uid: string): Promise<{ id: number, uid: string, status: MemberStatusType }>
 	{
 		return this.#post('sign.api_v1.document.member.get', { uid });
+	}
+
+	createDocumentsGroup(): Promise<{ groupId: number }>
+	{
+		return this.#post('sign.api_v1.b2e.document.group.create');
+	}
+
+	removeDocument(uid: string): Promise<Array>
+	{
+		return this.#post('sign.api_v1.document.remove', { uid });
+	}
+
+	attachGroupToDocument(documentUid: string, groupId: number): Promise<Array>
+	{
+		return this.#post('sign.api_v1.b2e.document.group.attach', { documentUid, groupId });
+	}
+
+	getDocumentListInGroup(groupId: string): Promise
+	{
+		return this.#post('sign.api_v1.b2e.document.group.documentList', { groupId });
 	}
 
 	changeTemplateVisibility(templateId: number, visibility: string): Promise<Object>

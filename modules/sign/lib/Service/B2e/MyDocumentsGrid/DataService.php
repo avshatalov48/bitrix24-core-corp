@@ -2,38 +2,40 @@
 
 namespace Bitrix\Sign\Service\B2e\MyDocumentsGrid;
 
-use Bitrix\Sign\Type\MyDocumentsGrid\ActorRole;
-use Bitrix\Sign\Type\MyDocumentsGrid\FilterStatus;
-use Bitrix\Main\Type\DateTime;
-use CFile;
-use CSite;
-use CUser;
-use Bitrix\Main\UserTable;
 use Bitrix\Sign\Item\Member;
 use Bitrix\Sign\Item\Document;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sign\Type\EntityType;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Type\Member\Role;
 use Bitrix\Sign\Type\EntityFileCode;
 use Bitrix\Sign\Type\MemberStatus;
+use Bitrix\Sign\Service\UserService;
 use Bitrix\Sign\Type\DocumentStatus;
 use Bitrix\Sign\Item\MemberCollection;
 use Bitrix\Sign\Item\DocumentCollection;
 use Bitrix\Sign\Service\Sign\MemberService;
 use Bitrix\Sign\Repository\MemberRepository;
-use Bitrix\Sign\Type\MyDocumentsGrid\Action;
 use Bitrix\Sign\Repository\DocumentRepository;
 use Bitrix\Sign\Type\Document\InitiatedByType;
 use Bitrix\Sign\Operation\GetSignedB2eFileUrl;
 use Bitrix\Sign\Service\Sign\DocumentService;
+use Bitrix\Sign\Item\MyDocumentsGrid\Row;
+use Bitrix\Sign\Item\MyDocumentsGrid\File;
+use Bitrix\Sign\Item\MyDocumentsGrid\Grid;
 use Bitrix\Sign\Item\MyDocumentsGrid\MyDocumentsFilter;
+use Bitrix\Sign\Item\MyDocumentsGrid\RowCollection;
+use Bitrix\Sign\Type\MyDocumentsGrid\ActorRole;
+use Bitrix\Sign\Type\MyDocumentsGrid\FilterStatus;
 
 class DataService
 {
-	private MemberRepository $memberRepository;
-	private DocumentRepository $documentRepository;
-	private MemberService $memberService;
-	private DocumentService $documentService;
+	private readonly MemberRepository $memberRepository;
+	private readonly DocumentRepository $documentRepository;
+	private readonly MemberService $memberService;
+	private readonly DocumentService $documentService;
+	private readonly ActionStatusService $actionStatusService;
+	private readonly UserService $userService;
 
 	public function __construct()
 	{
@@ -41,6 +43,8 @@ class DataService
 		$this->documentRepository = Container::instance()->getDocumentRepository();
 		$this->memberService = Container::instance()->getMemberService();
 		$this->documentService = Container::instance()->getDocumentService();
+		$this->actionStatusService = Container::instance()->getActionStatusService();
+		$this->userService = Container::instance()->getUserService();
 	}
 
 	public function getGridData(
@@ -48,13 +52,19 @@ class DataService
 		int $offset,
 		int $userId,
 		?MyDocumentsFilter $filter = null,
-	): array
+	): Grid
 	{
-		$members = $this->getCurrentMemberCollection($userId, $limit, $offset, $filter);
-		$documents = $this->getDocuments($members);
-
-		$rows = [];
 		$userIds = [];
+		$rows = new RowCollection();
+		$members = $this->getMembersForCurrentUser(
+			$userId,
+			$limit,
+			$offset,
+			$filter,
+		);
+		$documents = $this->getDocuments($members);
+		$secondSideMembersMap = $this->getSecondSideMembersForEmployeeMap($members, $documents, $userId);
+
 		foreach ($members as $member)
 		{
 			$myMemberInProcess = $member;
@@ -64,120 +74,123 @@ class DataService
 				continue;
 			}
 
-			$userIdForMember = $this->memberService->getUserIdForMember($member, $document);
-
-			if (
-				$userIdForMember === $userId
-				&& $document->initiatedByType === InitiatedByType::EMPLOYEE
-				&& $member->status !== MemberStatus::STOPPABLE_READY
-				&& $myMemberInProcess->role === Role::SIGNER
-			)
+			if ($this->isSecondSideMemberForEmployee($member, $document, $userId))
 			{
-
-				$secondSideMember = $this->getSecondSideMember($userId, $document->id, $member->id);
+				$secondSideMember = $secondSideMembersMap[$document->id] ?? null;
 				if ($secondSideMember != null)
 				{
-					$member = $secondSideMember;
+					$member = $secondSideMember[0];
 				}
 			}
 
-			$fromEmployeeResultFileLink = $this->getFromEmployeeFileLink(
-				$document,
-				$myMemberInProcess,
-				$member,
-			);
-			$memberData = $this->getMemberData($member, $document, $userId);
-
-			$fileData = $this->getFileData(
-				$document->initiatedByType !== InitiatedByType::EMPLOYEE || $document->status === DocumentStatus::DONE
+			$fileData = null;
+			if ($document->isInitiatedByEmployee() && DocumentStatus::isFinalByDocument($document))
+			{
+				$fileData = $this->getFromEmployeeFileLink(
+					$document,
+					$myMemberInProcess,
+					$member,
+				);
+			}
+			else
+			{
+				$relevantMember = !$document->isInitiatedByEmployee() || $document->status === DocumentStatus::DONE
 					? $member
-					: $myMemberInProcess,
-				EntityFileCode::SIGNED
-			);
-
-			$fileData = is_array($fileData) ? $fileData : [];
-			$fileData = $document->initiatedByType === InitiatedByType::EMPLOYEE && in_array($document->status, DocumentStatus::getFinalStatuses())
-				? $fromEmployeeResultFileLink
-				: $fileData;
+					: $myMemberInProcess
+				;
+				$fileData = $this->getFileData($relevantMember);
+			}
 
 			$dateSend = $member->dateSend ?? $myMemberInProcess->dateSend;
-			$initiatorData = $this->getInitiatorDataByDocument($document, $userId, $member);
+			$initiatorData = $this->buildMemberData(
+				$document,
+				$member,
+				$userId,
+				true,
+			);
 
-
-			if (
-				$document->initiatedByType === InitiatedByType::EMPLOYEE
-				&& $document->status === DocumentStatus::STOPPED
-				&& $document->stoppedById != null
-				&& $myMemberInProcess->role !== Role::REVIEWER
-			)
+			$memberData = $this->buildMemberData($document, $member, $userId);
+			if ($this->isDocumentStoppedForEmployee($myMemberInProcess, $document))
 			{
-				$memberData = [
-					'role' => null,
-					'status' => null,
-					'memberId' => null,
-					'isCurrentUser' => $document->stoppedById === $userId,
-					'isStopped' => true,
-					...$this->getUserData($document->stoppedById),
-				];
-
+				$stoppedUser = $this->userService->getUserById($document->stoppedById);
+				$memberData = new \Bitrix\Sign\Item\MyDocumentsGrid\Member(
+					isCurrentUser: $document->stoppedById === $userId,
+					isStopped: true,
+					userId: $document->stoppedById,
+					fullName: $this->userService->getUserName($stoppedUser),
+					icon: $this->userService->getUserAvatar($stoppedUser),
+				);
 			}
 
-			if (!in_array($memberData['id'], $userIds))
+			if (!in_array($memberData->id, $userIds, true))
 			{
-				$userIds[] = $memberData['id'];
+				$userIds[] = $memberData->id;
+			}
+			if (!in_array($initiatorData->id, $userIds, true))
+			{
+				$userIds[] = $initiatorData->id;
 			}
 
-			$rows[] = [
-				'id' => $myMemberInProcess->id,
-				'document' => [
-					'id' => $document->id,
-					'title' => $this->documentService->getComposedTitleByDocument($document),
-					'providerCode' => $document->providerCode,
-					'signDate' => $this->getSignDate($myMemberInProcess, $document),
-					'sendDate' => $dateSend,
-					'editDate' => $this->getEditDate($myMemberInProcess),
-					'approvedDate' => $this->getApprovedDate($myMemberInProcess),
-					'cancelledDate' => $this->getCancelledDate($myMemberInProcess, $document),
-					'status' => $document->status,
-					'initiator' => $initiatorData,
-					'initiatedByType' => $document->initiatedByType,
-					'stoppedById' => $document->stoppedById,
-					'cancellationInitiatorId' =>  $this->memberRepository->getCancellationInitiatorIdByDocumentId($document->id),
-				],
-				'members' => [
-					$memberData,
-				],
-				'myMemberInProcess' => $this->getMemberData($myMemberInProcess, $document, $userId),
-				'file' => [
-					...$fileData,
-				],
-				'action' => [
-					'status' => $this->getActionStatus($document, $myMemberInProcess, $userId),
-				],
-			];
+			$isDocumentHasSuccessfulSigners = $document->status === DocumentStatus::STOPPED
+				? $this->memberService->isDocumentHasSuccessfulSigners($document->id)
+				: null
+			;
+			$rowDocument = new \Bitrix\Sign\Item\MyDocumentsGrid\Document(
+				$document->id,
+				$this->documentService->getComposedTitleByDocument($document),
+				$document->providerCode,
+				$this->getSignDate($myMemberInProcess, $document),
+				$dateSend,
+				$this->getEditDate($myMemberInProcess),
+				$this->getApprovedDate($myMemberInProcess),
+				$this->getCancelledDate($myMemberInProcess, $document),
+				$document->status,
+				$initiatorData,
+				$document->initiatedByType,
+				$document->stoppedById,
+				$isDocumentHasSuccessfulSigners
+			);
+
+			$rows->add(
+				new Row(
+					$myMemberInProcess->id,
+					$rowDocument,
+					new \Bitrix\Sign\Item\MyDocumentsGrid\MemberCollection(...[$memberData]),
+					$this->buildMemberData(
+						$document,
+						$myMemberInProcess,
+						$userId,
+					),
+					$fileData,
+					$this->actionStatusService->getActionStatus(
+						$document,
+						$myMemberInProcess,
+						$userId,
+					),
+				)
+			);
 		}
 
-		return [
-			'rows' => $rows,
-			'totalCountMembers' => $this->getTotalCountMembers($userId, $filter),
-			'userIds' => $userIds,
-		];
+		return new Grid(
+			$rows,
+			$this->getTotalCountMembers($userId, $filter),
+			$userIds,
+		);
 	}
 
-	private function getFileData(
-		?Member $member,
-		string $entityFileCode,
-	): ?array
+	private function getFileData(?Member $member): ?File
 	{
 		if ($member === null)
 		{
-			return [];
+			return null;
 		}
+
+		$entityFileCode = EntityFileCode::SIGNED;
 
 		$operation = new GetSignedB2eFileUrl(
 			EntityType::MEMBER,
 			$member->id,
-			$entityFileCode
+			$entityFileCode,
 		);
 
 		$result = $operation->launch();
@@ -186,192 +199,57 @@ class DataService
 			return null;
 		}
 
-		return $result
-			->setData([
-				'entityFileCode' => (int)$entityFileCode,
-				...$result->getData()
-			])
-			->getData();
-	}
-
-
-	private function getMemberData(
-		Member $member,
-		Document $document,
-		int $currentUserId
-	): array
-	{
-		$userIdForMember = $this->memberService->getUserIdForMember($member, $document);
-		$isCurrentUser = $userIdForMember === $currentUserId;
-
-		return [
-			'role' => $member->role,
-			'status' => $member->status,
-			'memberId' => (int)$member->id,
-			'isCurrentUser' => $isCurrentUser,
-			'isStopped' => false,
-			...$this->getUserData($userIdForMember),
+		$data = [
+			'entityFileCode' => $entityFileCode,
+			...$result->getData()
 		];
+
+		return new File(
+			$data['entityFileCode'],
+			$data['ext'],
+			$data['url'],
+		);
 	}
 
-	private function getInitiatorDataByDocument(
+
+	private function buildMemberData(
 		Document $document,
+		Member $member,
 		int $currentUserId,
-		Member $member,
-	): array
+		bool $isInitiator = false,
+	): ?\Bitrix\Sign\Item\MyDocumentsGrid\Member
 	{
-		$userData = $this->getUserData($document->createdById);
-
 		$userIdForMember = $this->memberService->getUserIdForMember($member, $document);
+		$user = $isInitiator
+			? $this->userService->getUserById($document->createdById)
+			: $this->userService->getUserById($userIdForMember);
 		$isCurrentUser = $userIdForMember === $currentUserId;
 
-		return [
-			'role' => 'initiator',
-			'status' => null,
-			'memberId' => null,
-			'isCurrentUser' => $isCurrentUser,
-			...$userData,
-		];
+		return new \Bitrix\Sign\Item\MyDocumentsGrid\Member(
+			isCurrentUser: $isCurrentUser,
+			isStopped: $isInitiator ? null : false,
+			userId: $isInitiator ? $document->createdById : $userIdForMember,
+			fullName: $this->userService->getUserName($user),
+			icon: $this->userService->getUserAvatar($user),
+			id: $isInitiator ? null : $member->id,
+			role: $isInitiator ? 'initiator' : $member->role,
+			status: $isInitiator ? null : $member->status,
+		);
 	}
 
-	private function getCurrentMemberCollection(
+	private function getMembersForCurrentUser(
 		int $userId,
 		int $limit = 10,
 		int $offset = 10,
 		?MyDocumentsFilter $filter = null,
 	): MemberCollection
 	{
-		return $this->memberRepository->listB2eMembersWithNotWaitStatus($userId, $limit, $offset, $filter);
-	}
-
-	private function getUserData(int $userId): array
-	{
-		static $userData = [];
-		if (isset($userData[$userId]))
-		{
-			return $userData[$userId];
-		}
-
-		$userNameTemplate = empty($this->arParams['USER_NAME_TEMPLATE'])
-			? CSite::GetNameFormat(false)
-			: str_replace(["#NOBR#", "#/NOBR#"], ["", ""], $this->arParams["USER_NAME_TEMPLATE"])
-		;
-
-		$userTableQueryResult = UserTable::getRowById($userId);
-		$userFullName = $userTableQueryResult === null
-			? ''
-			: CUser::FormatName(
-				$userNameTemplate,
-				[
-					'LOGIN' => $userTableQueryResult['LOGIN'],
-					'NAME' => $userTableQueryResult['NAME'],
-					'LAST_NAME' => $userTableQueryResult['LAST_NAME'],
-					'SECOND_NAME' => $userTableQueryResult['SECOND_NAME'],
-				],
-				true,
-				false,
-			);
-
-		$userIconFileTmp = $userTableQueryResult === null
-			? null
-			: CFile::ResizeImageGet(
-				$userTableQueryResult['PERSONAL_PHOTO'],
-				15,
-				BX_RESIZE_IMAGE_EXACT,
-				false,
-				false,
-				true,
-			);
-
-		$userIcon = ($userIconFileTmp && isset($userIconFileTmp['src'])) ? $userIconFileTmp['src'] : null;
-
-		$userData[$userId] = [
-			'id' => $userId,
-			'fullName' => $userFullName,
-			'icon' => $userIcon,
-		];
-
-		return $userData[$userId];
-	}
-
-	private function getActionStatus(
-		Document $document,
-		Member $member,
-		int $userId,
-	): ?Action
-	{
-		if ($document->status === DocumentStatus::DONE && $member->status !== MemberStatus::READY)
-		{
-			if ($document->initiatedByType == InitiatedByType::COMPANY && $member->role !== Role::SIGNER)
-			{
-				return null;
-			}
-
-			return Action::DOWNLOAD;
-		}
-
-		if ($document->initiatedByType === InitiatedByType::EMPLOYEE)
-		{
-			$userIdForMember = $this->memberService->getUserIdForMember($member, $document);
-
-			if ($userIdForMember !== $userId || $member->status === MemberStatus::DONE)
-			{
-				if ($document->status === DocumentStatus::STOPPED)
-				{
-					return Action::DOWNLOAD;
-				}
-				return Action::VIEW;
-			}
-
-			if ($member->status === MemberStatus::REFUSED || $member->status === MemberStatus::STOPPED && $member->role === Role::SIGNER)
-			{
-				return Action::DOWNLOAD;
-			}
-
-			if ($member->status === MemberStatus::STOPPED || $document->status == DocumentStatus::STOPPED)
-			{
-				return null;
-			}
-
-			switch ($member->role)
-			{
-				case Role::REVIEWER:
-					return Action::APPROVE;
-				case Role::SIGNER:
-				case Role::ASSIGNEE:
-					return Action::SIGN;
-			}
-		}
-
-		if ($document->initiatedByType === InitiatedByType::COMPANY)
-		{
-			if ($member->role === Role::SIGNER && $member->status === MemberStatus::DONE)
-			{
-				return Action::DOWNLOAD;
-			}
-
-			if (
-				$member->status === MemberStatus::REFUSED
-				||$member->status === MemberStatus::STOPPED
-				|| $member->status === MemberStatus::DONE
-			)
-			{
-				return null;
-			}
-
-			switch ($member->role)
-			{
-				case Role::REVIEWER:
-					return Action::APPROVE;
-				case Role::EDITOR:
-					return Action::EDIT;
-				case Role::SIGNER:
-				case Role::ASSIGNEE:
-					return Action::SIGN;
-			}
-		}
-
-		return null;
+		return $this->memberRepository->listB2eMembersForMyDocumentsGrid(
+			$userId,
+			$limit,
+			$offset,
+			$filter,
+		);
 	}
 
 	public function getTotalCountMembers(
@@ -398,18 +276,51 @@ class DataService
 		return $this->documentRepository->listByIds($documentIds);
 	}
 
-	private function getSecondSideMember(int $userId, int $documentId, int $memberId): ?Member
+	/**
+	 * @psalm-return array<int, array<int, Member>>
+	 */
+	private function getSecondSideMembersForEmployeeMap(
+		MemberCollection $membersForCurrentUser,
+		DocumentCollection $documents,
+		int $userId,
+	): array
 	{
-		return $this->memberRepository
-			->getSecondSideMemberForEmployee(
-				$userId,
-				$documentId,
-				1,
-				0,
-				$memberId,
-			)
-			->getFirst()
-			;
+		$memberIds = [];
+		$documentIds = [];
+
+		foreach ($membersForCurrentUser as $member)
+		{
+			$document = $documents->getById((int)$member->documentId);
+			if (!$document)
+			{
+				continue;
+			}
+
+			if ($this->isSecondSideMemberForEmployee($member, $document, $userId))
+			{
+				$documentIds[] = $document->id;
+				$memberIds[] = $member->id;
+			}
+		}
+
+		if ($documentIds === [])
+		{
+			return [];
+		}
+
+		$secondSideMembers = $this->memberRepository->getSecondSideMembersForMyDocumentsGrid(
+			$documentIds,
+			$memberIds
+		);
+
+		$secondSideMembersMap = [];
+		foreach ($secondSideMembers as $member)
+		{
+			$documentId = $member->documentId;
+			$secondSideMembersMap[$documentId][] = $member;
+		}
+
+		return $secondSideMembersMap;
 	}
 
 	public function isSignedExists(int $userId): bool
@@ -444,25 +355,19 @@ class DataService
 		Document $document,
 		Member $initiator,
 		Member $myMemberInProcess,
-	): array
+	): ?File
 	{
-		$documentStatusIsFinal = in_array($document->status, DocumentStatus::getFinalStatuses());
+		$documentStatusIsFinal = DocumentStatus::isFinalByDocument($document);
 
 		if ($document->initiatedByType == InitiatedByType::EMPLOYEE && $documentStatusIsFinal)
 		{
 			if ($initiator->role === Role::SIGNER)
 			{
-				$resultFile = $this->getFileData(
-					$this->memberService->getAssignee($document),
-					EntityFileCode::SIGNED,
-				) ?? [];
+				$resultFile = $this->getFileData($this->memberService->getAssignee($document));
 
-				if ($resultFile === [])
+				if ($resultFile === null)
 				{
-					return $this->getFileData(
-						$this->memberService->getSigner($document),
-						EntityFileCode::SIGNED,
-					) ?? [];
+					return $this->getFileData($this->memberService->getSigner($document));
 				}
 
 				return $resultFile;
@@ -470,19 +375,16 @@ class DataService
 
 			if ($myMemberInProcess->status === MemberStatus::STOPPED && $document->status === DocumentStatus::STOPPED)
 			{
-				return $this->getFileData(
-					$this->memberService->getSigner($document),
-					EntityFileCode::SIGNED,
-				) ?? [];
+				return $this->getFileData($this->memberService->getSigner($document));
 			}
 
 			if ($myMemberInProcess->role === Role::ASSIGNEE)
 			{
-				return [];
+				return null;
 			}
 		}
 
-		return [];
+		return null;
 	}
 
 	private function getEditDate(Member $member): ?DateTime
@@ -522,10 +424,32 @@ class DataService
 
 	private function getSignDate(Member $member, Document $document): ?DateTime
 	{
-		return $document->isInitiatedByEmployee() && $member->role === Role::SIGNER	&& $document->dateSign
+		return $document->isInitiatedByEmployee() && $member->role === Role::SIGNER && $document->dateSign
 			? $document->dateSign
 			: $member->dateSigned
 			;
 	}
 
+	private function isSecondSideMemberForEmployee(
+		Member $member,
+		Document $document,
+		int $userId,
+	): bool
+	{
+		return $this->memberService->getUserIdForMember($member, $document) === $userId
+			&& $document->isInitiatedByEmployee()
+			&& $member->status !== MemberStatus::STOPPABLE_READY
+			&& $member->role === Role::SIGNER;
+	}
+
+	private function isDocumentStoppedForEmployee(
+		Member $myMemberInProcess,
+		Document $document,
+	): bool
+	{
+		return $document->isInitiatedByEmployee()
+			&& $document->status === DocumentStatus::STOPPED
+			&& $document->stoppedById != null
+			&& $myMemberInProcess->role !== Role::REVIEWER;
+	}
 }

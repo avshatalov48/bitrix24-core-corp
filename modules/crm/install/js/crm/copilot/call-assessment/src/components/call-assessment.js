@@ -1,14 +1,14 @@
 import { ajax as Ajax, Loc, Text, Type } from 'main.core';
+import { QueueManager } from 'pull.queuemanager';
 import { UI } from 'ui.notification';
 import { TextEditor } from 'ui.text-editor';
 import { BreadcrumbsEvents } from './navigation/breadcrumbs';
 import { ButtonEvents } from './navigation/button';
 import { Navigation } from './navigation/navigation';
-import type { BasePage } from './page/base-page';
 import { AboutPage } from './page/about-page';
+import type { BasePage } from './page/base-page';
 import { ClientPage } from './page/client-page';
-// import { ControlPage } from './page/control-page';
-// import { EncouragementPage } from './page/encouragement-page';
+import { ControlPage } from './page/control-page';
 import { SettingsPage } from './page/settings-page';
 
 /**
@@ -28,8 +28,7 @@ export const CallAssessment = {
 		AboutPage,
 		ClientPage,
 		SettingsPage,
-		// ControlPage,
-		// EncouragementPage,
+		ControlPage,
 		Navigation,
 	},
 
@@ -93,26 +92,12 @@ export const CallAssessment = {
 						autoCheckTypeId: data?.autoCheckTypeId,
 					},
 				},
-				// temporary disabled
-				/* control: {
+				control: {
 					data: {
-						isStrictControl: data?.controlData?.isStrictControl ?? false,
-						fluidCallCount: data?.controlData?.fluidCallCount,
-						items: [],
-						headItems: data?.controlData?.headItems ?? null,
-						useSummary: data?.useSummary ?? false,
-						users: data?.users ?? {},
+						lowBorder: data?.lowBorder ?? 0,
+						highBorder: data?.highBorder ?? 100,
 					},
 				},
-				encouragement: {
-					data: {
-						isAutoEncourage: data?.encouragementData?.isAutoEncourage ?? false,
-						encourageCallCount: data?.encouragementData?.encourageCallCount,
-
-						users: data?.users ?? {},
-						headItems: data?.controlData?.headItems ?? null, // for readonly head selector in page
-					},
-				}, */
 			};
 		},
 		onNavigationButtonClick({ data }): void
@@ -174,14 +159,23 @@ export const CallAssessment = {
 				};
 			});
 
+			const dataParams = {
+				id: this.id,
+				data,
+				eventId: QueueManager.registerRandomEventId('crm-copilot-call-assessment'),
+			};
+
+			top.BX.Event.EventEmitter.emit('crm:copilot:callAssessment:beforeSave', dataParams);
+
 			Ajax
-				.runAction('crm.copilot.callassessment.save', {
-					data: {
-						id: this.id,
-						data,
-					},
-				}).then(
+				.runAction('crm.copilot.callassessment.save', { data: dataParams })
+				.then(
 					(response) => {
+						top.BX.Event.EventEmitter.emit('crm:copilot:callAssessment:save', {
+							...dataParams,
+							status: response?.status,
+						});
+
 						if (response?.status !== 'success')
 						{
 							UI.Notification.Center.notify({
@@ -214,7 +208,8 @@ export const CallAssessment = {
 					});
 
 					throw response;
-				});
+				})
+			;
 		},
 		closeSlider(): void
 		{
@@ -305,8 +300,7 @@ export const CallAssessment = {
 				'about',
 				'client',
 				'settings',
-				// 'control',
-				// 'encouragement',
+				'control',
 			];
 		},
 		isNew(): boolean
@@ -316,6 +310,10 @@ export const CallAssessment = {
 		readOnly(): boolean
 		{
 			return this.settings.readOnly;
+		},
+		isEnabled(): boolean
+		{
+			return this.settings.isEnabled;
 		},
 	},
 
@@ -338,6 +336,7 @@ export const CallAssessment = {
 			<div class="crm-copilot__call-assessment_page-wrapper">
 				<AboutPage 
 					:is-active="isPageActive('about')"
+					:is-enabled="isEnabled"
 					:data="getPageData('about')"
 					:text-editor="textEditor"
 					@onChange="onPageDataChange"
@@ -345,6 +344,7 @@ export const CallAssessment = {
 				/>
 				<ClientPage 
 					:is-active="isPageActive('client')"
+					:is-enabled="isEnabled"
 					:data="getPageData('client')"
 					:read-only="readOnly"
 					@onChange="onPageDataChange"
@@ -352,27 +352,21 @@ export const CallAssessment = {
 				/>
 				<SettingsPage
 					:is-active="isPageActive('settings')"
+					:is-enabled="isEnabled"
 					:data="getPageData('settings')"
 					:settings="getPageSettings('settings')"
 					:read-only="readOnly"
 					@onChange="onPageDataChange"
 					ref="settings"
 				/>
-				<!-- temporary hidden -->
-				<!--<ControlPage
+				<ControlPage
 					:is-active="isPageActive('control')"
+					:is-enabled="isEnabled"
 					:data="getPageData('control')"
 					:read-only="readOnly"
 					@onChange="onPageDataChange"
 					ref="control"
 				/>
-				<EncouragementPage
-					:is-active="isPageActive('encouragement')"
-					:data="getPageData('encouragement')"
-					:read-only="readOnly"
-					@onChange="onPageDataChange"
-					ref="encouragement"
-				/>-->
 			</div>
 			<Navigation 
 				:active-tab-id="activePageId"

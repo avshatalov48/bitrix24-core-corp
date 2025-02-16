@@ -1,0 +1,115 @@
+.booking-confirm-page-content-booking-detail-border {
+	padding-left: 20px;
+	padding-right: 20px;
+	padding-top: 16px;
+	padding-bottom: 16px;
+	background: rgba(var(--ui-color-palette-white-base-rgb), 0.94);
+	border-radius: 6px;
+	border: 1px var(--ui-color-tag-9) solid;
+	flex-direction: column; justify-content: center;
+	align-items: flex-start;
+	gap: 6px;
+	display: flex;
+	align-self: stretch;
+}
+
+.booking-confirm-page-content-booking-detail-title {
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.booking-confirm-page-content-booking-detail-line {
+	width: 300px;
+	height: 1px;
+	background: var(--ui-color-palette-gray-10);
+	margin-top:4px;
+	margin-bottom:4px;
+}
+
+@media only screen and (max-width: 390px) {
+	.booking-confirm-page-content-booking-detail-line {
+		width: 270px;
+	}
+}
+
+.booking-confirm-page-content-booking-detail-master {
+	justify-content: flex-start;
+	align-items: flex-start;
+	gap: 10px;
+	display: inline-flex;
+}
+
+.booking-confirm-page-content-booking-detail-master-name {
+	align-self: stretch;
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-md);
+}
+
+.booking-confirm-page-content-booking-detail-master-title {
+	align-self: stretch;
+	color: var(--ui-color-palette-gray-50);
+	font-size: var(--ui-font-size-xs);
+}
+
+.booking-confirm-page-content-booking-detail-service {
+	align-self: stretch;
+	padding-top: 3px;
+	padding-bottom: 3px;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 8px;
+	display: inline-flex;
+}
+
+.booking-confirm-page-content-booking-detail-service-item {
+	flex: 1 1 0;
+	height: 34px;
+	justify-content: flex-start;
+	align-items: flex-start;
+	gap: 12px;
+	display: flex;
+}
+
+.booking-confirm-page-content-booking-detail-service-item-summary {
+	flex: 1 1 0;
+	flex-direction: column;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 2px;
+	display: inline-flex;
+}
+
+.booking-confirm-page-content-booking-detail-service-item-summary-title {
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-md);
+}
+
+.booking-confirm-page-content-booking-detail-service-item-summary-duration {
+	color: var(--ui-color-palette-gray-50);
+	font-size: var(--ui-font-size-xs);
+}
+
+.booking-confirm-page-content-booking-detail-service-item-price {
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-md);
+}
+
+.booking-confirm-page-content-booking-detail-service-item-total-title {
+	flex: 1 1 0;
+	color: var(--ui-color-palette-gray-50);
+	font-size: var(--ui-font-size-md);
+}
+.booking-confirm-page-content-booking-detail-service-item-total-price {
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-xl);
+}
+
+.booking-confirm-page-content-booking-detail-master-info {
+	flex: 1 1 0;
+	flex-direction: column;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 2px;
+	display: inline-flex;
+}

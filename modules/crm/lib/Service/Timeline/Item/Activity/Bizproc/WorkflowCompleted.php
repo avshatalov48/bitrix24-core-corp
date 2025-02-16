@@ -43,6 +43,11 @@ class WorkflowCompleted extends Base
 			$result['processNameBlock'] = $processNameBlock;
 		}
 
+		if (!$this->isBizprocEnabled())
+		{
+			return $result;
+		}
+
 		$averageDuration = $settings['AVERAGE_DURATION'] ?? null;
 		$efficiency = $settings['EFFICIENCY'] ?? null;
 		$executionTime = $settings['EXECUTION_TIME'] ?? null;
@@ -81,7 +86,10 @@ class WorkflowCompleted extends Base
 
 		return [
 			'open' => $this->createOpenButton($workflowId, $btnType),
-			'timeline' => $this->createTimelineButton($workflowId),
+			'timeline' =>
+				$this->createTimelineButton($workflowId)
+					->setState(!$this->isBizprocEnabled() ? 'hidden' : null)
+			,
 		];
 	}
 

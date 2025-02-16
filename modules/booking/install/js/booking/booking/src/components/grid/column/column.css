@@ -1,0 +1,20 @@
+.booking-booking-grid-column {
+	min-width: calc(280px * var(--zoom));
+}
+
+.booking-booking-grid-padding {
+	position: relative;
+	height: var(--padding-top);
+	background: rgba(var(--ui-color-palette-white-base-rgb), 0.5);
+	border-bottom: 1px solid var(--ui-color-base-10);
+	border-right: 1px solid var(--ui-color-base-10);
+}
+
+.booking-booking-grid-off-hours-cells {
+	overflow: hidden;
+	height: var(--top-cells-height);
+}
+
+.booking-booking-grid-off-hours-cells.--bottom {
+	height: var(--bottom-cells-height);
+}

@@ -31,13 +31,16 @@ class Manager
 		static $entities = [];
 		if (!isset($entities[$entityTypeName]))
 		{
-			$entities[$entityTypeName] = self::compileEntity($entityTypeName);
+			if (self::validateEntityTypeName($entityTypeName))
+			{
+				$entities[$entityTypeName] = self::compileEntity($entityTypeName);
+			}
 		}
 
 		return $entities[$entityTypeName];
 	}
 
-	private static function compileEntity(string $entityTypeName): Entity
+	private static function validateEntityTypeName(string $entityTypeName): bool
 	{
 		if (\CCrmOwnerType::ResolveID($entityTypeName) === \CCrmOwnerType::Undefined)
 		{
@@ -49,6 +52,11 @@ class Manager
 			throw new NotSupportedException("Permission entity type: '{$entityTypeName}' is not supported in current context");
 		}
 
+		return true;
+	}
+
+	private static function compileEntity(string $entityTypeName): Entity
+	{
 		$entityTypeNameLower = strtolower($entityTypeName);
 
 		$entityTypeNameFormatted = ucfirst(preg_replace('/[^a-z0-9]/', '', $entityTypeNameLower));

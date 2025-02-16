@@ -29,6 +29,7 @@ export class CallAssessment
 
 	#textEditor: BasicEditor = null;
 	#isReadOnly: boolean = true;
+	#isEnabled: boolean = true;
 
 	constructor(containerId: string, params: CallAssessmentParams = {})
 	{
@@ -40,6 +41,7 @@ export class CallAssessment
 		}
 
 		this.#isReadOnly = params.config?.readOnly ?? true;
+		this.#isEnabled = params.config?.isEnabled ?? true;
 
 		this.#initTitleInlineEditing(params);
 
@@ -47,6 +49,7 @@ export class CallAssessment
 			textEditor: this.#getTextEditor(params.data, params.config ?? {}),
 			settings: {
 				readOnly: this.#isReadOnly,
+				isEnabled: this.#isEnabled,
 				isCopy: params.config?.isCopy ?? false,
 				baas: params.config?.baasSettings ?? false,
 			},
@@ -238,6 +241,17 @@ export class CallAssessment
 			return this.#textEditor;
 		}
 
+		const toolbar = (
+			this.#isReadOnly
+				? []
+				: [
+					'bold', 'italic', 'underline', 'strikethrough',
+					'|',
+					'numbered-list', 'bulleted-list',
+					'copilot',
+				]
+		);
+
 		this.#textEditor = new BasicEditor({
 			editable: !this.#isReadOnly,
 			removePlugins: ['BlockToolbar'],
@@ -250,12 +264,7 @@ export class CallAssessment
 					? 'CRM_COPILOT_CALL_ASSESSMENT_PLACEHOLDER_WITH_COPILOT'
 					: null,
 			),
-			toolbar: [
-				'bold', 'italic', 'underline', 'strikethrough',
-				'|',
-				'numbered-list', 'bulleted-list',
-				'copilot',
-			],
+			toolbar,
 			floatingToolbar: [],
 			collapsingMode: false,
 			copilot: {

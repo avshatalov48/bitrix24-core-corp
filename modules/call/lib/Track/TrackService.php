@@ -8,7 +8,9 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\HttpClient;
+use Bitrix\Im\Call\Registry;
 use Bitrix\Call;
+use Bitrix\Call\NotifyService;
 use Bitrix\Call\Logger\Logger;
 use Bitrix\Call\Integration\AI;
 use Bitrix\Call\Integration\AI\CallAIError;
@@ -65,6 +67,12 @@ final class TrackService
 			return false;
 		}
 
+		$minDuration = \Bitrix\Call\Integration\AI\CallAISettings::getRecordMinDuration();
+		if ($track->getDuration() > 0 && $track->getDuration() < $minDuration)
+		{
+			return false;
+		}
+
 		$taskList = Call\Model\CallAITaskTable::query()
 			->setSelect(['ID'])
 			->where('TRACK_ID', $track->getId())
@@ -86,6 +94,7 @@ final class TrackService
 				"Call track file: {$track->getFileName()}"
 				. ", size:{$track->getFileSize()}b"
 				. ", type:{$track->getType()}"
+				. ", duration:{$track->getDuration()}"
 				. ", source:{$track->getDownloadUrl()}"
 				. ", url:{$track->getUrl()}"
 			);
@@ -103,13 +112,34 @@ final class TrackService
 			return $result;// cancel processing by event
 		}
 
+		$minDuration = \Bitrix\Call\Integration\AI\CallAISettings::getRecordMinDuration();
+		if ($track->getDuration() > 0 && $track->getDuration() < $minDuration)
+		{
+			$log && $logger->error("Ignoring track:{$track->getUrl()}, track #{$track->getExternalTrackId()}. Call #{$track->getCallId()} was too short.");
+
+			$error = new CallAIError(CallAIError::AI_RECORD_TOO_SHORT);
+
+			if ($track->getType() == Call\Track::TYPE_TRACK_PACK)
+			{
+				$call = Registry::getCallWithId($track->getCallId());
+				NotifyService::getInstance()->sendTaskFailedMessage($error, $call);
+			}
+
+			return $result->addError($error);
+		}
+
 		if ($this->doNeedNeedAiProcessing($track))
 		{
 			if (!CallAISettings::isCallAIEnable())
 			{
 				$log && $logger->error('Unable process track. Module AI is unavailable. TrackId:'.$track->getId());
 
-				return $result->addError(new CallAIError(CallAIError::AI_UNAVAILABLE_ERROR, 'Module AI is unavailable'));
+				$error = new CallAIError(CallAIError::AI_UNAVAILABLE_ERROR);
+
+				$call = Registry::getCallWithId($track->getCallId());
+				NotifyService::getInstance()->sendTaskFailedMessage($error, $call);
+
+				return $result->addError($error);
 			}
 			/*
 			if (!CallAISettings::isAutoStartRecordingEnable())
@@ -129,6 +159,11 @@ final class TrackService
 			$aiResult = $aiService->processTrack($track);
 			if (!$aiResult->isSuccess())
 			{
+				$error = $aiResult->getError();
+
+				$call = Registry::getCallWithId($track->getCallId());
+				NotifyService::getInstance()->sendTaskFailedMessage($error, $call);
+
 				$result->addErrors($aiResult->getErrors());
 			}
 		}

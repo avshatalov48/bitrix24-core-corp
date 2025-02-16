@@ -161,20 +161,7 @@ class PermissionRepository
 		$query = RolePermissionTable::query()
 			->setSelect(['ROLE_ID', 'ENTITY', 'FIELD', 'FIELD_VALUE', 'PERM_TYPE', 'ATTR', 'SETTINGS'])
 			->whereIn('ROLE_ID', $roleIds)
-			->where(
-				(new ConditionTree())
-					->logic(ConditionTree::LOGIC_OR)
-					->where(
-						(new ConditionTree())
-							->whereNotNull('ATTR')
-							->where('ATTR', '<>', '')
-					)
-					->where(
-						(new ConditionTree())
-							->whereNotNull('SETTINGS')
-							->where('SETTINGS', '<>', '[]')
-					)
-			);
+		;
 
 		return $query->fetchAll();
 	}

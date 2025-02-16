@@ -4,7 +4,8 @@
 }
 if (!CModule::IncludeModule("meeting"))
 {
-	return ShowError(GetMessage("ME_MODULE_NOT_INSTALLED"));
+	ShowError(GetMessage("ME_MODULE_NOT_INSTALLED"));
+	return;
 }
 
 $arParams['MEETING_ID'] = (int)($arParams['MEETING_ID'] ?? null);
@@ -42,13 +43,15 @@ if ($arParams['MEETING_ID'] > 0)
 				die();
 			}
 
-			return ShowError(GetMessage("ME_MEETING_ACCESS_DENIED"));
+			ShowError(GetMessage("ME_MEETING_ACCESS_DENIED"));
+			return;
 		}
 
 		$dbRes = CMeeting::GetList([], ['ID' => $arParams['MEETING_ID']], false, false, ['*']);
 		if (!$arResult['MEETING'] = $dbRes->GetNext())
 		{
-			return ShowError(GetMessage("ME_MEETING_NOT_FOUND"));
+			ShowError(GetMessage("ME_MEETING_NOT_FOUND"));
+			return;
 		}
 
 		if (CMeeting::CheckPlace($arResult["MEETING"]["PLACE"]))
@@ -60,7 +63,8 @@ if ($arParams['MEETING_ID'] > 0)
 		$arResult['MEETING']['CURRENT_RIGHTS'] = $arResult['ACCESS'];//$arResult['MEETING']['USERS'][$USER->GetID()]; // not arParams[USER_ID]!
 		if (!$arResult['MEETING']['CURRENT_RIGHTS'])
 		{
-			return ShowError(GetMessage("ME_MEETING_ACCESS_DENIED"));
+			ShowError(GetMessage("ME_MEETING_ACCESS_DENIED"));
+			return;
 		}
 
 		$arResult['MEETING']['FILES'] = [];
@@ -132,7 +136,7 @@ if ($arParams['MEETING_ID'] > 0)
 						$arRes['FILES'][$arFile['FILE_ID']] = $arFile['FILE_SRC'];
 					}
 
-					if(count($arRes['FILES']) > 0)
+					if (!empty($arRes['FILES']))
 					{
 						$arRes['FILES'] = CMeeting::GetFilesData($arRes['FILES'], ["ITEM" => $arRes['ITEM_ID']]);
 					}
@@ -187,7 +191,8 @@ if ($arParams['MEETING_ID'] > 0)
 	}
 	else
 	{
-		return ShowError(GetMessage("ME_MEETING_ACCESS_DENIED"));
+		ShowError(GetMessage("ME_MEETING_ACCESS_DENIED"));
+		return;
 	}
 }
 
@@ -355,7 +360,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 			$USERS[$arResult['MEETING']['OWNER_ID']] = CMeeting::ROLE_OWNER;
 		}
 
-		if (count($USERS) > 0)
+		if (!empty($USERS))
 		{
 			$APPLICATION->RestartBuffer();
 
@@ -697,7 +702,7 @@ if (top.document.forms.meeting_edit)
 			}
 ?>
 <?
-			if (count($arNewAgendaTasks) > 0)
+			if (!empty($arNewAgendaTasks))
 			{
 ?>
 	top.replaceTasks(<?=CUtil::PhpToJsObject($arNewAgendaTasks)?>);
@@ -705,7 +710,7 @@ if (top.document.forms.meeting_edit)
 			}
 ?>
 <?
-			if (count($arNewAgendaMap) > 0)
+			if (!empty($arNewAgendaMap))
 			{
 ?>
 	top.replaceKeys(<?=CUtil::PhpToJsObject($arNewAgendaMap)?>, '<?=CUtil::JSEscape($arParams['ITEM_URL'])?>');
@@ -826,7 +831,7 @@ if($arParams['EDIT'] && $arResult['CAN_EDIT'])
 }
 else
 {
-	if (is_array($arResult['MEETING']['FILES']) && count($arResult['MEETING']['FILES']) > 0)
+	if (is_array($arResult['MEETING']['FILES']) && !empty($arResult['MEETING']['FILES']))
 	{
 		$arResult['MEETING']['FILES'] = CMeeting::GetFilesData($arResult['MEETING']['FILES'], ['MEETING' => $arResult['MEETING']['ID']]);
 	}
@@ -845,5 +850,3 @@ else
 
 	$this->IncludeComponentTemplate('tpl_view');
 }
-
-?>

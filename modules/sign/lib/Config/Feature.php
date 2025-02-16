@@ -57,6 +57,21 @@ final class Feature
 		Option::set('sign', $name, false);
 	}
 
+	public function isSenderTypeAvailable(): bool
+	{
+		return Option::get("sign", "is_sender_type_available", 'N') === 'Y';
+	}
+
+	public function isMultiDocumentLoadingEnabled(): bool
+	{
+		return Option::get("sign", "is_multi_document_loading_enabled", 'N') === 'Y';
+	}
+
+	public function isGroupSendingEnabled(): bool
+	{
+		return Option::get("sign", "is_group_sending_enabled", 'N') === 'Y';
+	}
+
 	private function read(string $name): mixed
 	{
 		$value = Main\Config\Configuration::getValue('sign')[$name] ?? null;

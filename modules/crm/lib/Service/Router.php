@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Service;
 
 use Bitrix\Crm\Feature;
+use Bitrix\Crm\Integration\Intranet\SystemPageProvider\ActivityPage;
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Security\Role\Manage\Manager\AllSelection;
@@ -32,7 +33,7 @@ class Router
 	public const LIST_VIEW_DEADLINES = EntityViewSettings::DEADLINES_VIEW_NAME;
 
 	private const SYSTEM_PAGE_CODES = [
-		\CCrmOwnerType::Activity => 'activity',
+		\CCrmOwnerType::Activity => ActivityPage::CODE,
 	];
 
 	protected const GET_COMPONENT_NAME = 'c';

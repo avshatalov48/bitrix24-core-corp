@@ -1,5 +1,5 @@
 import { Loc } from 'main.core';
-import { ViewMode } from './view-mode';
+import { ViewMode } from './common/view-mode';
 
 export const Compliance = {
 	props: {
@@ -10,6 +10,14 @@ export const Compliance = {
 		assessment: {
 			type: Number,
 			default: null,
+		},
+		lowBorder: {
+			type: Number,
+			default: 30,
+		},
+		highBorder: {
+			type: Number,
+			default: 70,
 		},
 		viewMode: {
 			type: String,
@@ -58,10 +66,8 @@ export const Compliance = {
 			return {
 				'call-quality__compliance__container': true,
 				'--empty-state': !this.isUsedCurrentVersionOfScript,
-				// @todo
-				// '--bad': this.assessment < 50,
-				// '--normal': this.assessment >= 50 && this.assessment < 80,
-				// '--good': this.assessment >= 80,
+				'--low': this.assessment <= this.lowBorder,
+				'--high': this.assessment >= this.highBorder,
 			};
 		},
 		isUsedCurrentVersionOfScript(): boolean

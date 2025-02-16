@@ -4,7 +4,6 @@ namespace Bitrix\Crm\Service\Timeline\Item\AI\Call;
 
 use Bitrix\Crm\Copilot\AiQualityAssessment\Controller\AiQualityAssessmentController;
 use Bitrix\Crm\Copilot\AiQualityAssessment\Entity\AiQualityAssessmentTable;
-use Bitrix\Crm\Integration\AI\Dto\ScoreCallPayload;
 use Bitrix\Crm\Integration\AI\JobRepository;
 use Bitrix\Crm\Integration\AI\Result;
 use Bitrix\Crm\Service\Timeline\Layout\Action;
@@ -38,7 +37,7 @@ final class CallScoringResult extends Base
 		$communication = $this->getAssociatedEntityModel()?->get('COMMUNICATION') ?? [];
 		$userData = $this->getResponsibleUser();
 		$jobId = $this->getModel()->getSettings()['JOB_ID'] ?? null;
-		$createdTimestamp = (new DateTime($this->getAssociatedEntityModel()->get('CREATED')))->getTimestamp();
+		$createdTimestamp = (new DateTime($this->getAssociatedEntityModel()?->get('CREATED')))->getTimestamp();
 
 		return (new Action\JsEvent('CallScoringResult:Open'))
 			->addActionParamInt('activityId', $this->getActivityId())
@@ -98,94 +97,61 @@ final class CallScoringResult extends Base
 	{
 		$buttons = parent::getButtons();
 
-		// @todo: not implemented yet
-		/** @var Result<ScoreCallPayload>|null $job */
-		/*$job = $this->getJobResult();
-		if ($job?->getJobId())
+		$scoringResult = $this->getScoringResult();
+		if (isset($scoringResult['ASSESSMENT_SETTING_ID']))
 		{
-			$result = AiQualityAssessmentController::getInstance()->getList([
-				'select' => ['ASSESSMENT_SETTING_ID'],
-				'filter' => [
-					'=JOB_ID' => $job?->getJobId(),
-				],
-				'limit' => 1,
-			])->current();
-
-			if ($result?->getAssessmentSettingId())
-			{
-				$buttons['editPromptButton'] =
-					(new Button(Loc::getMessage('CRM_TIMELINE_ACTIVITY_AI_CALL_SCORING_OPEN_SETTINGS_BTN'), Button::TYPE_SECONDARY))
-						->setAction(
-							(new Action\JsEvent('CallScoringResult:EditPrompt'))
-								->addActionParamInt('assessmentSettingId', $result?->getAssessmentSettingId())
-								->setAnimation(Action\Animation::disableBlock())
-						)
-						->setScopeWeb()
-				;
-			}
+			$buttons['editPromptButton'] =
+				(new Button(Loc::getMessage('CRM_TIMELINE_ACTIVITY_AI_CALL_SCORING_OPEN_SETTINGS_BTN'), Button::TYPE_SECONDARY))
+					->setAction(
+						(new Action\JsEvent('CallScoringResult:EditPrompt'))
+							->addActionParamInt('assessmentSettingId', $scoringResult['ASSESSMENT_SETTING_ID'])
+							->setAnimation(Action\Animation::disableBlock())
+					)
+					->setScopeWeb()
+			;
 		}
-		*/
-
-		// click to button - show hint
-		$buttons['editPromptButton'] =
-			(new Button(Loc::getMessage('CRM_TIMELINE_ACTIVITY_AI_CALL_SCORING_OPEN_SETTINGS_BTN'), Button::TYPE_SECONDARY))
-				->setAction(
-					(new Action\JsEvent('CallScoringResult:EditPrompt'))
-						->setAnimation(Action\Animation::disableBlock())
-				)
-				->setScopeWeb()
-		;
 
 		return $buttons;
 	}
 
 	public function getTags(): ?array
 	{
-		$activityId = $this->getAssociatedEntityModel()?->get('ID');
-		if ($activityId === null)
-		{
-			return null;
-		}
-
-		$scoringResult = AiQualityAssessmentController::getInstance()->getByActivityIdAndJobId(
-			$activityId,
-			$this->getModel()->getSettings()['JOB_ID'] ?? null
-		);
+		$scoringResult = $this->getScoringResult();
 		if (!$scoringResult)
 		{
 			return null;
 		}
 
+		$tags = [];
+
 		$numberOfScore = AiQualityAssessmentController::getInstance()->getCountByFilter([
-			'=ACTIVITY_ID' => $activityId,
+			'=ACTIVITY_ID' => $this->getAssociatedEntityModel()?->get('ID'),
 			'=ACTIVITY_TYPE' => AiQualityAssessmentTable::ACTIVITY_TYPE_CALL,
 			'=RATED_USER_ID' => $this->getAssociatedEntityModel()?->get('RESPONSIBLE_ID'),
 		]);
 
 		if ($scoringResult['USE_IN_RATING'] === 'Y' && $numberOfScore > 1)
 		{
-			return [
-				'use_in_rating' => new Tag(
-					Loc::getMessage('CRM_TIMELINE_ACTIVITY_AI_CALL_SCORING_TAG_USE_IN_RATING'),
-					Tag::TYPE_PRIMARY
-				),
-			];
+			$tags['use_in_rating'] = new Tag(
+				Loc::getMessage('CRM_TIMELINE_ACTIVITY_AI_CALL_SCORING_TAG_USE_IN_RATING'),
+				Tag::TYPE_PRIMARY
+			);
 		}
 
-		return null;
+		if ((int)($scoringResult['ASSESSMENT'] ?? 0) < (int)($scoringResult['LOW_BORDER'] ?? 0))
+		{
+			$tags['failed'] = new Tag(
+				Loc::getMessage('CRM_TIMELINE_ACTIVITY_AI_CALL_SCORING_TAG_FAILED'),
+			Tag::TYPE_FAILURE
+			);
+		}
+
+		return $tags;
 	}
 
 	private function buildCallScoringBlock(): ?ContentBlock
 	{
-		$activityId = $this->getAssociatedEntityModel()?->get('ID');
-		if ($activityId === null)
-		{
-			return null;
-		}
-
-		$result = AiQualityAssessmentController::getInstance()
-			->getByActivityIdAndJobId($activityId, $this->getModel()->getSettings()['JOB_ID'] ?? null)
-		;
+		$result = $this->getScoringResult();
 		if ($result)
 		{
 			$userData = $this->getResponsibleUser();
@@ -204,5 +170,19 @@ final class CallScoringResult extends Base
 	private function getResponsibleUser(): array
 	{
 		return $this->getUserData($this->getAssociatedEntityModel()?->get('RESPONSIBLE_ID'));
+	}
+
+	private function getScoringResult(): ?array
+	{
+		$activityId = $this->getAssociatedEntityModel()?->get('ID');
+		if ($activityId === null)
+		{
+			return null;
+		}
+
+		return AiQualityAssessmentController::getInstance()->getByActivityIdAndJobId(
+			$activityId,
+			$this->getModel()->getSettings()['JOB_ID'] ?? null
+		);
 	}
 }

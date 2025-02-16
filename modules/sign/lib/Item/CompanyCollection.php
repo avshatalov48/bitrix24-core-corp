@@ -65,17 +65,27 @@ final class CompanyCollection implements ItemCollection, \IteratorAggregate, \Co
 		return $this->getIterator()->count();
 	}
 
-	public function sortProviders(): self
+	/**
+	 * @param callable(CompanyProvider, CompanyProvider):int $callback
+	 */
+	public function sortProviders(callable $callback): self
 	{
 		/** @var Company $company */
 		foreach ($this->iterator as $company)
 		{
-			usort(
-				$company->providers,
-				fn(CompanyProvider $a, CompanyProvider $b) => $b->timestamp <=> $a->timestamp,
-			);
+			usort($company->providers, $callback);
 		}
 
 		return $this;
+	}
+
+	/**
+	 * @param callable(Company, Company):int $callback
+	 */
+	public function getSorted(\Closure $callback): CompanyCollection
+	{
+		$items = $this->toArray();
+		usort($items, $callback);
+		return new static(...$items);
 	}
 }

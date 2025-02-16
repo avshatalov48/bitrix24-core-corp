@@ -79,6 +79,7 @@ class RolePermissionTable extends DataManager
 			(new StringField('ATTR'))
 				->configureDefaultValue('')
 				->configureSize(1)
+				->addFetchDataModifier([static::class, 'prepareAttr'])
 			,
 
 			(new ArrayField('SETTINGS'))
@@ -256,5 +257,10 @@ class RolePermissionTable extends DataManager
 			"Deleted permissions in role #{ROLE_ID}",
 			RolePermissionLogContext::getInstance()->appendTo($fields)
 		);
+	}
+
+	public static function prepareAttr($attr): string
+	{
+		return trim($attr ?? '');
 	}
 }

@@ -3,7 +3,6 @@
 namespace Bitrix\Crm\Security\Role\UIAdapters\AccessRights;
 
 
-use Bitrix\Crm\Security\Role\Manage\Manager\Decorator\CheckEmptyPermissions;
 use Bitrix\Crm\Security\Role\Manage\RoleManagementModelBuilder;
 use Bitrix\Crm\Security\Role\Repositories\PermissionRepository;
 use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\Utils\PermCodeTransformer;
@@ -213,6 +212,11 @@ final class UserGroupBuilder
 	private function collectAccessRightValuesGroupedByRoleId(array $roles): array
 	{
 		$roleIds = array_column($roles, 'ID');
+		if (empty($roleIds))
+		{
+			return [[], []];
+		}
+
 		$perms = $this->permissionRepository->queryActualPermsByRoleIds($roleIds);
 
 		$perms = $this->filterByAccessRightsCodes($perms);
@@ -238,7 +242,7 @@ final class UserGroupBuilder
 
 		$value = RoleManagementModelBuilder::getInstance()
 			->getPermissionByCode($permIdentifier->entityCode, $permIdentifier->permCode)
-			?->getControlType()
+			?->getControlMapper()
 			->getValueForUi($perm['ATTR'], $perm['SETTINGS'])
 			?? $perm['ATTR'] ?? ''
 		;

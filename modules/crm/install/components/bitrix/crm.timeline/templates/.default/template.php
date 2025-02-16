@@ -61,6 +61,7 @@ if (\Bitrix\Main\Loader::includeModule('disk'))
 		'ui.hint',
 		'disk.document',
 		'disk.viewer.document-item',
+		'disk.viewer.board-item',
 		'disk.viewer.actions',
 	]);
 }
@@ -147,8 +148,7 @@ if (ServiceLocator::getInstance()->get('crm.integration.sign')::isEnabled())
 		->build();
 }
 
-$isAvailable = (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024', 0);
-if ($arResult['BIZPROC_AVAILABLE'] && $isAvailable)
+if ($arResult['BIZPROC_AVAILABLE'])
 {
 	echo \Bitrix\Crm\Tour\Bizproc\WorkflowStarted::getInstance()->build();
 	echo \Bitrix\Crm\Tour\Bizproc\WorkflowTaskAddInTimeline::getInstance()->build();
@@ -555,7 +555,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 	);
 </script>
 <?php
-if ($arResult['BIZPROC_AVAILABLE'] && $isAvailable): ?>
+if ($arResult['BIZPROC_AVAILABLE']): ?>
 	<script>
 		BX.ready(
 			function ()

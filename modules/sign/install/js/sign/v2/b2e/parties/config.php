@@ -16,4 +16,7 @@ return [
 		'sign.v2.sign-settings',
 	],
 	'skip_core' => false,
+	'settings' => [
+		'currentUserId' => \Bitrix\Main\Engine\CurrentUser::get()->getId(),
+	]
 ];

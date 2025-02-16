@@ -165,6 +165,8 @@ class Entity extends Main\Engine\Controller
 			: 0;
 
 		$items = [];
+
+		$permissions = Container::getInstance()->getUserPermissions();
 		foreach ($values as $value)
 		{
 			if (!is_string($value))
@@ -180,6 +182,7 @@ class Entity extends Main\Engine\Controller
 
 			$storedEntityTypeId = (int)$parts[0];
 			$storedCategoryId = isset($parts[2]) ? (int)$parts[2] : 0;
+			$entityId = (int)$parts[1];
 
 			if (
 				$actualEntityTypeId !== $storedEntityTypeId
@@ -189,9 +192,14 @@ class Entity extends Main\Engine\Controller
 				continue;
 			}
 
+			if (!$permissions->checkReadPermissions($storedEntityTypeId, $entityId, $storedCategoryId))
+			{
+				continue;
+			}
+
 			$items[] = [
 				'ENTITY_TYPE_ID' => $storedEntityTypeId,
-				'ENTITY_ID' => (int)$parts[1],
+				'ENTITY_ID' => $entityId,
 				'CATEGORY_ID' => $storedCategoryId,
 			];
 		}

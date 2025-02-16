@@ -35,20 +35,18 @@ class MarkCompletedCommand
 			}
 
 			$status = $settings['STATUS'] ?? Bizproc\Task::TASK_STATUS_DONE;
-			if ($status !== Bizproc\Task::TASK_STATUS_RUNNING)
+			if (!$this->canChangeStatus($status))
 			{
 				continue;
 			}
 
-			unset($settings['IS_INLINE'], $settings['BUTTONS']);
 			$settings['STATUS'] = $this->status;
 
 			$updateFields['SETTINGS'] = $settings;
-			if (Loader::includeModule('bizproc'))
+			$isWaitForClosure = $this->isWaitForClosure();
+			if (!$isWaitForClosure)
 			{
-				$manager = new Manager();
-				$isWaitForClosure = $manager->getControlValue($manager::WAIT_FOR_CLOSURE_TASK_OPTION) === 'Y';
-				$updateFields['COMPLETED'] = $isWaitForClosure ? 'N' : 'Y';
+				$updateFields['COMPLETED'] = 'Y';
 			}
 
 			if (!\CCrmActivity::Update($activity['ID'], $updateFields))
@@ -65,8 +63,25 @@ class MarkCompletedCommand
 		return $result;
 	}
 
+	protected function canChangeStatus(string $status): bool
+	{
+		return $status === Bizproc\Task::TASK_STATUS_RUNNING;
+	}
+
 	protected function findActivities(): array
 	{
 		return (new Task())->find($this->task->id, $this->responsibleId);
+	}
+
+	protected function isWaitForClosure(): bool
+	{
+		if (Loader::includeModule('bizproc'))
+		{
+			$manager = new Manager();
+
+			return $manager->getControlValue($manager::WAIT_FOR_CLOSURE_TASK_OPTION) === 'Y';
+		}
+
+		return true;
 	}
 }

@@ -1,0 +1,44 @@
+.booking-actions-popup__item-confirmation-content {
+	display: flex;
+	gap: 10px;
+}
+
+.booking-actions-popup__item-confirmation-loader {
+	width: 100%;
+	height: 33px;
+}
+
+.booking-actions-popup-item-icon.--confirmed {
+	background-color: var(--ui-color-palette-green-60);
+	border-color: transparent;
+}
+
+.booking-actions-popup-item-icon.--awaiting {
+
+}
+
+.booking-actions-popup-item-icon.--delayed {
+	background-color: var(--ui-color-palette-orange-60);
+	border-color: transparent;
+}
+
+.booking-actions-popup-item-icon.--not-confirmed {
+	background-color: var(--ui-color-palette-red-50);
+	border-color: transparent;
+}
+
+.booking-actions-popup-item-subtitle.--confirmed {
+	color: var(--ui-color-palette-green-60);
+}
+
+.booking-actions-popup-item-subtitle.--awaiting {
+	color: var(--ui-color-palette-gray-50);
+}
+
+.booking-actions-popup-item-subtitle.--delayed {
+	color: var(--ui-color-palette-orange-60);
+}
+
+.booking-actions-popup-item-subtitle.--not-confirmed {
+	color: var(--ui-color-palette-red-50);
+}

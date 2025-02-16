@@ -25,6 +25,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    this.documentSetup = new sign_v2_documentSetup.DocumentSetup(blankSelectorConfig);
 	    this.documentSend = new sign_v2_b2b_documentSend.DocumentSend(documentSendConfig);
 	    babelHelpers.classPrivateFieldLooseBase(this, _requisites)[_requisites] = new sign_v2_b2b_requisites.Requisites();
+	    this.isB2bSignMaster = true;
 	    this.subscribeOnEvents();
 	  }
 	  async applyDocumentData(uid) {
@@ -36,8 +37,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      setupData
 	    } = this.documentSetup;
 	    babelHelpers.classPrivateFieldLooseBase(this, _requisites)[_requisites].documentData = setupData;
-	    this.documentSend.documentData = setupData;
 	    this.editor.documentData = setupData;
+	    this.documentsGroup.set(setupData.uid, setupData);
 	    return true;
 	  }
 	  getStepsMetadata(signSettings) {
@@ -52,6 +53,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	          if (!setupData) {
 	            return false;
 	          }
+	          this.setSingleDocument(setupData);
 	          const {
 	            uid,
 	            entityId,

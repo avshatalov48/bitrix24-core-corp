@@ -9,11 +9,12 @@ use Bitrix\Crm\Badge;
 use Bitrix\Crm\Copilot\AiQualityAssessment\Controller\AiQualityAssessmentController;
 use Bitrix\Crm\Copilot\AiQualityAssessment\Entity\AiQualityAssessmentItem;
 use Bitrix\Crm\Copilot\AiQualityAssessment\Entity\AiQualityAssessmentTable;
-use Bitrix\Crm\Copilot\AiQualityAssessment\PullManager;
+use Bitrix\Crm\Copilot\CallAssessment\AssessmentClientTypeResolver;
 use Bitrix\Crm\Copilot\CallAssessment\CallAssessmentItem;
 use Bitrix\Crm\Copilot\CallAssessment\CallAssessmentItemChecker;
 use Bitrix\Crm\Copilot\CallAssessment\Controller\CopilotCallAssessmentController;
 use Bitrix\Crm\Copilot\CallAssessment\ItemFactory;
+use Bitrix\Crm\Copilot\PullManager;
 use Bitrix\Crm\Dto\Dto;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Config;
@@ -27,6 +28,7 @@ use Bitrix\Crm\Integration\Analytics\Builder\AI\AIBaseEvent;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\CallScoring;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Timeline\Monitor;
 use Bitrix\Crm\Timeline\AI\Call\Controller;
 use Bitrix\Main;
 use Bitrix\Main\Security\Random;
@@ -115,11 +117,14 @@ final class ScoreCall extends AbstractOperation
 			return (new Main\Result())->addError($checkerResult->getError());
 		}
 
+		$clientType = (new AssessmentClientTypeResolver())->resolveByActivityId($this->target->getEntityId());
+
 		return (new Main\Result())->setData([
 			'payload' => (new \Bitrix\AI\Payload\Prompt('call_scoring'))
 				->setMarkers([
 					'transcript' => $this->transcription,
 					'criteria' => $this->assessmentSettings->getGist(),
+					'client_type' => $clientType?->name ?? '',
 				])
 			,
 		]);
@@ -170,6 +175,7 @@ final class ScoreCall extends AbstractOperation
 		return $result;
 	}
 
+	// region notify
 	protected static function notifyTimelineAfterSuccessfulLaunch(Result $result): void
 	{
 		$nextTarget = (new Orchestrator())->findPossibleFillFieldsTarget($result->getTarget()?->getEntityId());
@@ -245,6 +251,14 @@ final class ScoreCall extends AbstractOperation
 
 		self::notifyCallQualityUpdate($activityId, 'error');
 	}
+
+	protected static function notifyCallQualityUpdate(int $activityId, string $status, array $params = []): void
+	{
+		$params['status'] = $status;
+
+		(new PullManager())->sendAddScoringPullEvent($activityId, $params);
+	}
+	// endregion
 
 	protected static function extractPayloadFromAIResult(AI\Result $result, EO_Queue $job): Dto
 	{
@@ -363,6 +377,12 @@ final class ScoreCall extends AbstractOperation
 					'ratedUserId' => $userId,
 				]
 			);
+
+			self::trySyncScoreStatusBadge(
+				$activityId,
+				$assessment,
+				$assessmentSettings?->getLowBorder()
+			);
 		}
 		else
 		{
@@ -456,15 +476,29 @@ final class ScoreCall extends AbstractOperation
 		return empty($criteriaLis);
 	}
 
-	protected static function notifyCallQualityUpdate(int $activityId, string $status, array $params = []): void
+	private static function trySyncScoreStatusBadge(int $activityId, int $assessment, int $assessmentLowBorder): void
 	{
-		$params['status'] = $status;
+		$itemIdentifier = (new Orchestrator())->findPossibleFillFieldsTarget($activityId);
+		if (!$itemIdentifier)
+		{
+			return;
+		}
 
-		$pullManager = new PullManager();
-		$pullManager->sendPullEvent(
+		Badge\Badge::deleteByEntity($itemIdentifier, Badge\Badge::AI_CALL_SCORING_STATUS);
+
+		if ($assessment > $assessmentLowBorder)
+		{
+			return;
+		}
+
+		$badge = Container::getInstance()->getBadge(Badge\Badge::AI_CALL_SCORING_STATUS, Badge\Type\AiCallScoringStatus::FAILED_VALUE);
+		$sourceIdentifier = new Badge\SourceIdentifier(
+			Badge\SourceIdentifier::CRM_OWNER_TYPE_PROVIDER,
+			CCrmOwnerType::Activity,
 			$activityId,
-			$params,
-			PullManager::ADD_CALL_SCORING_PULL_COMMAND
 		);
+
+		$badge->bind($itemIdentifier, $sourceIdentifier);
+		Monitor::getInstance()->onBadgesSync($itemIdentifier);
 	}
 }

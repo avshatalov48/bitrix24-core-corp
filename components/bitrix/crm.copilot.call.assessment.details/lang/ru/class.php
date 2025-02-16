@@ -2,3 +2,5 @@
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_DETAILS_TITLE'] = 'Новый скрипт';
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_DETAILS_NOT_FOUND'] = 'Скрипт не найден';
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_DETAILS_ACCESS_DENIED'] = 'Доступ запрещён';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_DETAILS_ACCESS_DENIED_MSGVER_1'] = 'Недостаточно прав на редактирование скрипта';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_DETAILS_ACCESS_DENIED_DESCRIPTION'] = 'Обратитесь к вашему руководителю или администратору Битрикс24';

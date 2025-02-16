@@ -1,0 +1,8 @@
+.booking-booking-grid-cell {
+	position: relative;
+	box-sizing: border-box;
+	min-height: calc(50px * var(--zoom));
+	background: rgba(var(--ui-color-palette-white-base-rgb), 0.5);
+	border-bottom: 1px solid var(--ui-color-base-10);
+	border-right: 1px solid var(--ui-color-base-10);
+}

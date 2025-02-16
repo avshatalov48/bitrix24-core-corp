@@ -6,7 +6,6 @@ use Bitrix\Crm\Activity;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Timeline;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
@@ -200,6 +199,12 @@ class Booking extends Activity\Provider\Base
 
 		foreach ($booking['clients'] as $client)
 		{
+			$contactId = isset($client['id']) ? (int)$client['id'] : 0;
+			if (!$contactId)
+			{
+				continue;
+			}
+
 			$bindings[] = [
 				'OWNER_TYPE_ID' => \CCrmOwnerType::Contact,
 				'OWNER_ID' => $client['id'],
@@ -210,12 +215,13 @@ class Booking extends Activity\Provider\Base
 		{
 			$isCrm = isset($externalData['moduleId']) && $externalData['moduleId'] === 'crm';
 			$isDeal = isset($externalData['entityTypeId']) && $externalData['entityTypeId'] === 'DEAL';
+			$dealId = isset($externalData['value']) ? (int)$externalData['value'] : 0;
 
-			if ($isCrm && $isDeal)
+			if ($isCrm && $isDeal && $dealId)
 			{
 				$bindings[] = [
 					'OWNER_TYPE_ID' => \CCrmOwnerType::Deal,
-					'OWNER_ID' => $externalData['value'],
+					'OWNER_ID' => $dealId,
 				];
 			}
 		}

@@ -243,8 +243,9 @@ class RolePermission
 	 */
 	public static function setByEntityIdForAllNotAdminRoles(CategoryIdentifier $categoryIdentifier, array $permissionSet, bool $needStrictByRoleGroupCode = true)
 	{
-		$permissionEntityId = $categoryIdentifier->getPermissionEntityCode();
 		static::$cache = null;
+
+		$permissionEntityId = $categoryIdentifier->getPermissionEntityCode();
 
 		$systemRolesIds = self::getSystemRolesIds();
 
@@ -253,10 +254,15 @@ class RolePermission
 			$needStrictByRoleGroupCode = false;
 		}
 
+		$emptyRoles = [];
 		if ($needStrictByRoleGroupCode)
 		{
 			$strictByRoleGroupCode = (string)\Bitrix\Crm\Security\Role\GroupCodeGenerator::getGroupCodeByEntityTypeId($categoryIdentifier->getEntityTypeId());
 			$rolesIdsInGroup = self::getRolesByGroupCode($strictByRoleGroupCode);
+			foreach ($rolesIdsInGroup as $roleId)
+			{
+				$emptyRoles[$roleId] = $roleId;
+			}
 		}
 
 		$result = new Main\Result();
@@ -271,6 +277,7 @@ class RolePermission
 		}
 
 		$role = new \CCrmRole();
+
 		foreach (self::getAll() as $roleId => $entities)
 		{
 			if (in_array($roleId, $adminRolesIds, false)) // do not affect admin roles
@@ -285,11 +292,32 @@ class RolePermission
 			{
 				continue;
 			}
+			unset($emptyRoles[$roleId]);
 
 			$entities[$permissionEntityId] = $permissionSet;
 
 			$fields = ["RELATION" => $entities];
 			if (!$role->Update($roleId, $fields))
+			{
+				$result->addError(new Main\Error($fields["RESULT_MESSAGE"]));
+			}
+		}
+
+		foreach ($emptyRoles as $emptyRoleId)
+		{
+			if (in_array($emptyRoleId, $adminRolesIds, false)) // do not affect admin roles
+			{
+				continue;
+			}
+			if (in_array($emptyRoleId, $systemRolesIds, false)) // do not affect system roles
+			{
+				continue;
+			}
+
+			$fields = ["RELATION" => [
+				$permissionEntityId => $permissionSet,
+			]];
+			if (!$role->Update($emptyRoleId, $fields))
 			{
 				$result->addError(new Main\Error($fields["RESULT_MESSAGE"]));
 			}

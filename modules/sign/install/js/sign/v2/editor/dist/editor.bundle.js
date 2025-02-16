@@ -5872,12 +5872,14 @@ this.BX.Sign = this.BX.Sign || {};
 	  }) => {
 	    main_core.Dom.addClass(target, 'ui-btn-wait');
 	    const blocks = await babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].save();
+	    const uid = babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].getDocumentUid();
 	    main_core.Dom.removeClass(target, 'ui-btn-wait');
 	    if (!blocks) {
 	      return;
 	    }
 	    main_core_events.EventEmitter.subscribeOnce('SidePanel.Slider:onCloseComplete', () => {
 	      this.emit('save', {
+	        uid,
 	        blocks
 	      });
 	    });
@@ -6104,10 +6106,12 @@ this.BX.Sign = this.BX.Sign || {};
 	    if (!blocks) {
 	      return;
 	    }
+	    const uid = babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].getDocumentUid();
 	    babelHelpers.classPrivateFieldLooseBase(this, _needToLockSidePanelClose)[_needToLockSidePanelClose] = false;
 	    babelHelpers.classPrivateFieldLooseBase(this, _sidePanel)[_sidePanel].close();
 	    babelHelpers.classPrivateFieldLooseBase(this, _needToLockSidePanelClose)[_needToLockSidePanelClose] = true;
 	    this.emit('save', {
+	      uid,
 	      blocks
 	    });
 	  });

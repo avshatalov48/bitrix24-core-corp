@@ -21,6 +21,14 @@
 	height: 140px;
 }
 
+.crm-timeline__call-scoring.--success .crm-timeline__call-scoring-wrapper {
+	border: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) #31ff6b;
+}
+
+.crm-timeline__call-scoring.--failed .crm-timeline__call-scoring-wrapper {
+	border: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) #ff31c57a;
+}
+
 .crm-timeline__call-scoring-title {
 	font-size: var(--ui-font-size-sm);
 	color: var(--ui-color-palette-gray-70);
@@ -31,12 +39,9 @@
 }
 
 .crm-timeline__call-scoring-wrapper .crm-timeline__call-scoring-responsible {
-	width: 100%;
+	width: 95%;
 	position: absolute;
-	display: flex;
-	flex-direction: column;
-	align-items: flex-start;
-	justify-content: flex-end;
+	display: inline-block;
 	min-height: var(--ui-size-xl2);
 	line-height: var(--ui-font-line-height-xl);
 	gap: var(--ui-space-inset-2xs);
@@ -56,6 +61,14 @@
 	right: 18px;
 }
 
+.crm-timeline__call-scoring.--success .crm-timeline__call-scoring-wrapper .crm-timeline__line-div {
+	border-top: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) var(--ui-color-palette-green-20);
+}
+
+.crm-timeline__call-scoring.--failed .crm-timeline__call-scoring-wrapper .crm-timeline__line-div {
+	border-top: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) var(--ui-color-palette-red-20);
+}
+
 .crm-timeline__call-scoring-wrapper .crm-timeline__call-scoring-assessment {
 	width: 100%;
 	position: absolute;
@@ -72,6 +85,7 @@
 }
 
 .crm-timeline__call-scoring-responsible-content {
+	width: 90%;
 	display: flex;
 	flex-direction: row;
 	align-items: flex-start;
@@ -80,7 +94,8 @@
 }
 
 .crm-timeline__call-scoring-responsible-content .responsible-user-name {
-	max-width: 100%;
+	min-width: 100%;
+	flex-basis: 55%;
 	position: relative;
 	font-size: var(--ui-font-size-lg);
 	white-space: nowrap;
@@ -131,7 +146,7 @@
 
 .crm-timeline__call-scoring-assessment-pill {
 	position: relative;
-	background: url('../../../images/crm-timelime__copilot-pill-backgroud.svg') center no-repeat;
+	background: url('../../../images/crm-timelime__copilot-pill-background.svg') center no-repeat;
 	font-weight: var(--ui-font-weight-bold);
 	color: var(--ui-color-palette-white-base);
 	width: 100px;
@@ -140,6 +155,14 @@
 	flex-shrink: 0;
 	text-align: center;
 	cursor: pointer;
+}
+
+.crm-timeline__call-scoring.--success .crm-timeline__call-scoring-assessment-pill {
+	background: url('../../../images/crm-timelime__copilot-pill-background-success.svg') center no-repeat;
+}
+
+.crm-timeline__call-scoring.--failed .crm-timeline__call-scoring-assessment-pill {
+	background: url('../../../images/crm-timelime__copilot-pill-background-failed.svg') center no-repeat;
 }
 
 .crm-timeline__call-scoring-assessment-script:hover,
@@ -159,6 +182,13 @@
 
 .crm-timeline__call-scoring-assessment-pill .value {
 	font-size: var(--ui-font-size-5xl);
-	padding-right: 18px;
+	padding-right: 1px;
 	line-height: 50px;
+}
+
+.crm-timeline__call-scoring-assessment-pill .percent {
+	background: url('../../../images/common/crm-timeline__percent.svg') center top no-repeat;
+	width: 13px;
+	height: 15px;
+	display: inline-block;
 }

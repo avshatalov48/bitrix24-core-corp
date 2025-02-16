@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service\Factory;
 
+use Bitrix\Crm\CategoryIdentifier;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
@@ -11,6 +12,7 @@ use Bitrix\Crm\Model\Dynamic\TypeTable;
 use Bitrix\Crm\Relation;
 use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Security\Role\RolePermission;
+use Bitrix\Crm\Security\Role\RolePreset;
 use Bitrix\Crm\Security\Role\Utils\RolePermissionLogContext;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
@@ -24,6 +26,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\AddResult;
 use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\Type\DateTime;
+use CCrmRole;
 
 class SmartInvoice extends Dynamic
 {
@@ -132,6 +135,10 @@ class SmartInvoice extends Dynamic
 		{
 			return;
 		}
+		if (TypeTable::isCreatingInProgress(\CCrmOwnerType::SmartInvoice))
+		{
+			return;
+		}
 
 		Container::getInstance()->getLocalization()->loadMessages();
 
@@ -217,9 +224,21 @@ class SmartInvoice extends Dynamic
 				);
 				$oldInvoicePermissionEntity = $userPermissions::getPermissionEntityType(\CCrmOwnerType::Invoice);
 				$permissions = RolePermission::getByEntityId($oldInvoicePermissionEntity);
+
+				$roles = [];
+				$dbResult = CcrmRole::GetList([], ['!==CODE' => null]);
+				while ($role = $dbResult->Fetch())
+				{
+					$roles[$role['ID']] = $role;
+				}
+				$categoryIdentifier = new CategoryIdentifier(\CCrmOwnerType::SmartInvoice, $defaultCategoryId);
+
 				foreach ($permissions as $roleId => $rolePermissions)
 				{
-					$permissions[$roleId] = array_merge($rolePermissions, \CCrmRole::getBasePermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(\CCrmOwnerType::SmartInvoice, $defaultCategoryId)));
+					$code = $roles[$roleId]['CODE'] ?? null;
+					$permissions[$roleId] = array_merge(
+						$rolePermissions,
+						RolePreset::getDefaultPermissionSetForEntityByCode($code, $categoryIdentifier));
 				}
 				RolePermissionLogContext::getInstance()->set([
 					'scenario' => 'create SmartInvoice',

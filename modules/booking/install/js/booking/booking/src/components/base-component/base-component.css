@@ -1,0 +1,72 @@
+.booking {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	--from-hour: 9;
+	--to-hour: 19;
+	--zoom: 1;
+	--half-zoom: calc(var(--zoom) / 2 + 0.5);
+	--quater-zoom: calc(var(--zoom) / 4 + 0.75);
+	--booking-off-hours-cell-height: 0px;
+}
+
+.booking {
+	--booking-animation-duration: 200ms;
+	--booking-animation-function: ease;
+	--top-cells-height: calc(var(--from-hour) * var(--booking-off-hours-cell-height));
+	--bottom-cells-height: calc((24 - var(--to-hour)) * var(--booking-off-hours-cell-height));
+}
+
+.booking {
+	--left-panel-width: 50px;
+	overflow: hidden;
+}
+
+.booking.--am-pm-mode {
+	--left-panel-width: 65px;
+}
+
+.--booking-booking-no-transition .booking {
+	transition: none;
+}
+
+.--vertical-scroll-bar::-webkit-scrollbar {
+	width: 5px;
+}
+
+.--horizontal-scroll-bar::-webkit-scrollbar {
+	height: 5px;
+}
+
+.--vertical-scroll-bar::-webkit-scrollbar-thumb,
+.--horizontal-scroll-bar:hover::-webkit-scrollbar-thumb {
+	background: var(--ui-color-base-30);
+}
+
+.--vertical-scroll-bar::-webkit-scrollbar-thumb,
+.--horizontal-scroll-bar::-webkit-scrollbar-thumb {
+	border-radius: 4px;
+	background: var(--ui-color-base-20);
+}
+
+.--vertical-scroll-bar::-webkit-scrollbar-track,
+.--horizontal-scroll-bar::-webkit-scrollbar-track {
+	border-radius: 4px;
+	background: var(--ui-color-base-02);
+}
+
+.booking-transition-resource-enter-active,
+.booking-transition-resource-leave-active {
+	transition-property: min-width, max-width, padding-left, padding-right;
+	transition-duration: var(--booking-animation-duration);
+	transition-timing-function: var(--booking-animation-function);
+}
+
+.booking-transition-resource-enter-from,
+.booking-transition-resource-leave-to {
+	min-width: 0 !important;
+	max-width: 0 !important;
+	padding-left: 0 !important;
+	padding-right: 0 !important;
+}

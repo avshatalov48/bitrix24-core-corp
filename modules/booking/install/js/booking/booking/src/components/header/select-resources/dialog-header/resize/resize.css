@@ -1,0 +1,23 @@
+.booking-booking-resources-dialog-header-resize {
+	position: absolute;
+	left: 50%;
+	width: 11px;
+	height: 5px;
+	padding: 4px 7px;
+	transform: translate(-50%, -50%);
+	border-radius: 1in;
+	background: var(--ui-color-palette-white-base);
+	box-shadow: 0 0 2px rgba(0, 0, 0, 0.11);
+	cursor: row-resize;
+}
+
+.booking-booking-resources-dialog-header-resize:before {
+	content: '';
+	position: absolute;
+	left: 50%;
+	width: 11px;
+	height: 1px;
+	transform: translateX(-50%);
+	background: var(--ui-color-base-35);
+	box-shadow: 0 4px var(--ui-color-base-35);
+}

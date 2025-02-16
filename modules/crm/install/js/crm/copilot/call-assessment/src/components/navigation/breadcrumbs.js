@@ -27,7 +27,8 @@ export const Breadcrumbs = {
 				{ '--soon': isSoon },
 			];
 		},
-		getTab(id: string): Object {
+		getTab(id: string): Object
+		{
 			return this.getTabsData().find((tab) => tab.id === id);
 		},
 		getTabsData(): Object[]
@@ -48,12 +49,7 @@ export const Breadcrumbs = {
 				{
 					id: 'control',
 					title: Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL'),
-					soon: true,
 				},
-				// {
-				// 	id: 'encouragement',
-				// 	title: Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_ENCOURAGEMENT'),
-				// },
 			];
 		},
 		emitClickEvent(itemId: string): void

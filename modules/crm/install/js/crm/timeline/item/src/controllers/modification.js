@@ -17,6 +17,7 @@ export class Modification extends Base
 	{
 		return (item.getType() === 'Modification')
 			|| (item.getType() === 'TasksTaskModification')
+			|| (item.getType() === 'RestartAutomation')
 			;
 	}
 }

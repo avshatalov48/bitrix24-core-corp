@@ -3,6 +3,8 @@
 namespace Bitrix\Crm\Integration\Intranet;
 
 use Bitrix\Crm\Counter\EntityCounterFactory;
+use Bitrix\Crm\Integration\Analytics\Builder\Security\ViewEvent;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Integration\Intranet\SystemPageProvider\ActivityPage;
 use Bitrix\Crm\Integration\Intranet\SystemPageProvider\PermissionsPage;
 use Bitrix\Crm\Integration\IntranetManager;
@@ -22,10 +24,15 @@ class CustomSectionProvider extends Provider
 
 	public static function getSystemPageProviders(): array
 	{
-		$router = Container::getInstance()->getRouter();
+		/**
+		 * WARNING! Don't access Crm Router here and in `getSystemPages`.
+		 *
+		 * It will cause infinite recursion since \Bitrix\Crm\Service\Router::__construct gets info about custom
+		 * section pages.
+		 */
 
 		return [
-			$router->getSystemPageCode(\CCrmOwnerType::Activity) => ActivityPage::class,
+			ActivityPage::CODE => ActivityPage::class,
 			PermissionsPage::CODE => PermissionsPage::class,
 		];
 	}
@@ -71,7 +78,7 @@ class CustomSectionProvider extends Provider
 	{
 		if (self::isSystemPage($pageSettings))
 		{
-			$systemPageCode = explode(self::PAGE_SETTINGS_SEPARATOR, $pageSettings)[0];
+			$systemPageCode = self::getSystemPageCode($pageSettings);
 			$pageProviders = static::getSystemPageProviders();
 			$dataClass = $pageProviders[$systemPageCode] ?? null;
 
@@ -279,12 +286,7 @@ class CustomSectionProvider extends Provider
 
 	private static function checkIfSystemPageIsAvailable(string $pageSettings): bool
 	{
-		if (!defined('\Bitrix\Intranet\CustomSection\Provider::PAGE_SETTINGS_SEPARATOR'))
-		{
-			return false;
-		}
-		$separator = \Bitrix\Intranet\CustomSection\Provider::PAGE_SETTINGS_SEPARATOR;
-		[$pageCode, $sectionCode] = explode($separator, $pageSettings);
+		[$pageCode, $sectionCode] = self::getSystemPageCodeAndSectionCode($pageSettings);
 		$pageProviders = static::getSystemPageProviders();
 		if (!isset($pageProviders[$pageCode]))
 		{
@@ -315,5 +317,34 @@ class CustomSectionProvider extends Provider
 		}
 
 		return false;
+	}
+
+	private static function getSystemPageCode(string $pageSettings): string
+	{
+		[$pageCode] = self::getSystemPageCodeAndSectionCode($pageSettings);
+
+		return $pageCode;
+	}
+
+	private static function getSystemPageCodeAndSectionCode(string $pageSettings): array
+	{
+		return explode(Provider::PAGE_SETTINGS_SEPARATOR, $pageSettings);
+	}
+
+	public function getAnalytics(string $pageSettings): array
+	{
+		if (self::isSystemPage($pageSettings))
+		{
+			if (self::getSystemPageCode($pageSettings) === PermissionsPage::CODE)
+			{
+				return (new ViewEvent())
+					->setSection(Dictionary::SECTION_CUSTOM)
+					->setSubSection(Dictionary::SUB_SECTION_CONTROL_PANEL)
+					->buildData()
+				;
+			}
+		}
+
+		return [];
 	}
 }

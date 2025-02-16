@@ -1,4 +1,4 @@
-import { Dom, Loc, Tag, Type } from 'main.core';
+import { Dom, Loc, Tag, Type, Extension } from 'main.core';
 import { type Role } from 'sign.v2.api';
 import { CompanySelector, type Provider } from 'sign.v2.b2e.company-selector';
 import { DocumentValidation } from 'sign.v2.b2e.document-validation';
@@ -13,6 +13,8 @@ const blockWarningClass = 'sign-document-b2e-parties__item_content--warning';
 
 type PartiesData = { entityType: string, entityId: ?number, role?: Role };
 type Options = BlankSelectorConfig & { hideValidationParty?: boolean, documentInitiatedType?: DocumentInitiatedType, documentMode?: DocumentModeType };
+
+const currentUserId = Extension.getSettings('sign.v2.b2e.parties').get('currentUserId');
 
 export class Parties
 {
@@ -34,7 +36,7 @@ export class Parties
 	{
 		const { region, hideValidationParty = true, documentInitiatedType, documentMode } = blankSelectorConfig;
 		this.#hideEditor = hideValidationParty ?? false;
-		this.#representativeSelector = new RepresentativeSelector({});
+		this.#representativeSelector = new RepresentativeSelector({ context: `sign_b2e_representative_selector_assignee_${currentUserId}` });
 		const isTemplate = isTemplateMode(documentMode || DocumentMode.document);
 		this.#companySelector = new CompanySelector({
 			region,

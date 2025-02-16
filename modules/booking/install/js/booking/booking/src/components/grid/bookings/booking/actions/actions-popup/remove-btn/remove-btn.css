@@ -1,0 +1,9 @@
+.booking-actions-popup__item-remove-btn-icon {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+}
+
+.booking-actions-popup__item-remove-btn-icon.--end {
+	margin-left: 12px;
+}

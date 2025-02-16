@@ -82,7 +82,7 @@ class EventHandlerService
 
 	public function handleCurrentDocumentStatus(
 		Sign\Item\Document $document,
-		?Sign\Item\Member $stopInitiatorMember = null,
+		?Sign\Item\Member  $initiatorMember = null,
 	): void
 	{
 		$eventType = match ($document->status)
@@ -97,7 +97,7 @@ class EventHandlerService
 			return;
 		}
 
-		$initiatorUserId = $this->getStoppedByUserId($document, $stopInitiatorMember);
+		$initiatorUserId = $this->getStoppedByUserId($document, $initiatorMember);
 
 		$eventData = new EventData();
 		$eventData->setEventType($eventType)

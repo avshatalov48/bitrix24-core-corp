@@ -18,6 +18,7 @@ use Bitrix\SignMobile\Response\Document\MemberDocumentResourceCollection;
 use Bitrix\Sign\Type\MyDocumentsGrid\FilterStatus;
 use Bitrix\Sign\Item\MyDocumentsGrid\MyDocumentsFilter;
 use Bitrix\Sign\Service\Container;
+use Bitrix\Sign\Serializer\ItemPropertyJsonSerializer;
 
 class Document extends Controller
 {
@@ -139,10 +140,11 @@ class Document extends Controller
 		$offset = (int)$nav->getOffset();
 		$gridFilter = $this->getRequestFilters($filterParams);
 		$data = $dataService->getGridData($limit, $offset, $userId, $gridFilter);
+		$items = (new ItemPropertyJsonSerializer())->serialize($data->rows);
 
 		return [
-			'items' => $data['rows'],
-			'users' => UserRepository::getByIds($data['userIds']),
+			'items' => $items,
+			'users' => UserRepository::getByIds($data->userIds),
 			'needActionCount' => $this->getNeedCountAction($user),
 			'needCountForSendPreset' => $this->getNeedCountForSendPresetAction($user),
 		];

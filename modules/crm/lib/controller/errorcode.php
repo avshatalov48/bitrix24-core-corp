@@ -18,6 +18,7 @@ abstract class ErrorCode
 	public const ADDING_DISABLED = 'ADDING_DISABLED';
 	public const REMOVING_DISABLED = 'REMOVING_DISABLED';
 	public const MULTIPLE_BINDINGS = 'MULTIPLE_BINDINGS';
+	public const RESTRICTED_BY_TARIFF = 'RESTRICTED_BY_TARIFF';
 
 	protected static function loadMessages(): void
 	{

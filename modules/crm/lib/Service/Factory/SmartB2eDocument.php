@@ -58,6 +58,10 @@ class SmartB2eDocument extends Dynamic
 		{
 			return;
 		}
+		if (TypeTable::isCreatingInProgress(\CCrmOwnerType::SmartB2eDocument))
+		{
+			return;
+		}
 
 		Container::getInstance()->getLocalization()->loadMessages();
 

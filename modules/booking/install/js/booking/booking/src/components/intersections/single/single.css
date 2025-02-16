@@ -1,0 +1,8 @@
+.booking-booking-intersections-line {
+	width: 100%;
+	padding: 0 6px;
+	box-sizing: border-box;
+	min-height: 48px;
+	align-content: center;
+	background: var(--ui-color-background-primary);
+}

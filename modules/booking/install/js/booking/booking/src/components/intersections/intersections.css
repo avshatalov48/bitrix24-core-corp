@@ -1,0 +1,99 @@
+.booking-booking-intersections {
+	display: flex;
+	border-bottom: 1px solid var(--ui-color-base-10);
+}
+
+.booking-booking-intersections-inner {
+	display: flex;
+	overflow: auto;
+	padding-right: 5px;
+}
+
+.booking-booking-intersections-inner::-webkit-scrollbar {
+	display: none;
+}
+
+.booking-booking-intersections-inner-blank {
+	box-sizing: border-box;
+	min-width: 260px;
+	padding: calc(13px* var(--half-zoom)) calc(10px* var(--half-zoom));
+	display: flex;
+	align-items: center;
+	border-right: 1px solid var(--ui-color-base-10);
+	pointer-events: none;
+}
+
+.booking-booking-intersections.--disabled {
+	opacity: 0.6;
+	pointer-events: none;
+}
+
+.booking-booking-intersections-row {
+	display: flex;
+	box-sizing: border-box;
+	min-height: 48px;
+	align-items: center;
+	background: var(--ui-color-background-primary);
+}
+
+.booking-booking-intersections-row-inner {
+	display: flex;
+	overflow: auto;
+}
+
+.booking-booking-intersections-left-panel {
+	min-width: var(--left-panel-width);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #F7F7F8;
+	cursor: pointer;
+}
+
+.booking-booking-intersections-left-panel.--active .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-palette-blue-40);
+}
+
+.booking-booking-intersections-left-panel:hover {
+	background: #E6EDF0;
+}
+
+.booking-booking-intersections-left-panel .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-30);
+	--ui-icon-set__icon-size: 22px;
+}
+
+.booking-booking-intersections .ui-tag-selector-outer-container {
+	border: none;
+}
+
+.booking-booking-intersections .ui-tag-selector-add-button-caption,
+.booking-booking-intersections .bbi-resource-selector-add-button-caption {
+	color: var(--ui-color-base-60);
+}
+
+.booking-booking-intersections .ui-tag-selector-add-button-caption:before,
+.booking-booking-intersections .bbi-resource-selector-add-button-caption:before {
+	filter:
+		brightness(0)
+		saturate(100%)
+		invert(61%)
+		sepia(7%)
+		saturate(365%)
+		hue-rotate(172deg)
+		brightness(99%)
+		contrast(94%)
+	;
+}
+
+.booking-booking-intersections .ui-tag-selector-add-button-caption:hover,
+.booking-booking-intersections .bbi-resource-selector-add-button-caption:hover,
+.booking-booking-intersections .ui-tag-selector-create-button-caption:hover {
+	border-bottom-color: var(--ui-color-base-60);
+}
+
+.booking-lock-icon-container .ui-icon-set {
+	position: absolute;
+	--ui-icon-set__icon-size: 16px;
+	--ui-icon-set__icon-color: var(--ui-color-base-35);
+}

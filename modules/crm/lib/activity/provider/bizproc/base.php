@@ -19,7 +19,7 @@ abstract class Base extends BaseActivityProvider
 			'=PROVIDER_TYPE_ID' => static::getProviderTypeId(),
 		];
 		$stringFilter = \Bitrix\Main\Web\Json::encode($filter);
-		if (is_null($cache[$stringFilter]))
+		if (is_null($cache[$stringFilter] ?? null))
 		{
 			$result = \Bitrix\Crm\ActivityTable::getList([
 				'filter' => $filter,

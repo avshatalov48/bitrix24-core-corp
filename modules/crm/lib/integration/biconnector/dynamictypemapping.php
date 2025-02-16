@@ -13,6 +13,7 @@ class DynamicTypeMapping
 				//  `ID` int unsigned NOT NULL AUTO_INCREMENT,
 				//  `ENTITY_TYPE_ID` int NOT NULL,
 				'ENTITY_TYPE_ID' => [
+					'IS_PRIMARY' => 'Y', //group (primary) key to group fields of array_string type
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'DT.ENTITY_TYPE_ID',
 					'FIELD_TYPE' => 'int',
@@ -46,12 +47,13 @@ class DynamicTypeMapping
 					'FIELD_NAME' => 'if(DT.CUSTOM_SECTION_ID is null, "CRM", CS.TITLE)',
 					'FIELD_TYPE' => 'string',
 					'TABLE_ALIAS' => 'CS',
+					'JOIN' => 'INNER JOIN b_crm_automated_solution CS ON CS.ID = DT.CUSTOM_SECTION_ID',
 					'LEFT_JOIN' => 'LEFT JOIN b_crm_automated_solution CS ON CS.ID = DT.CUSTOM_SECTION_ID',
 				],
 				'PRODUCT_DATASET_NAME' => [
 					'FIELD_NAME' => 'concat_ws(\'\', "crm_dynamic_items_prod_", DT.ENTITY_TYPE_ID)',
 					'FIELD_TYPE' => 'string',
-				]
+				],
 				//  `CREATED_BY` int unsigned NOT NULL,
 				//  `IS_CATEGORIES_ENABLED` char(1) NOT NULL DEFAULT 'N',
 				//  `IS_STAGES_ENABLED` char(1) NOT NULL DEFAULT 'N',
@@ -73,6 +75,16 @@ class DynamicTypeMapping
 				//  `CREATED_TIME` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 				//  `UPDATED_TIME` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 				//  `UPDATED_BY` int unsigned NOT NULL,
+				'USER_FIELDS' => [
+					'GROUP_CONCAT' => ', ',  // сепаратор
+					'GROUP_KEY' => 'USER_FIELDS',
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'UF.FIELD_NAME',
+					'FIELD_TYPE' => 'array_string',
+					'TABLE_ALIAS' => 'UF',
+					'JOIN' => 'INNER JOIN b_user_field UF ON UF.ENTITY_ID = concat(\'CRM_\', DT.ID)',
+					'LEFT_JOIN' => 'LEFT JOIN b_user_field UF ON UF.ENTITY_ID = concat(\'CRM_\', DT.ID)',
+				],
 			],
 		];
 	}

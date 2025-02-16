@@ -33,6 +33,7 @@ $track = !empty($arResult['RECORD']) ? $arResult['RECORD'] : null;
 	'ui.tooltip',
 	'call.component.user-list',
 	'call.component.elements.audioplayer',
+	'call.lib.analytics',
 ]);
 
 
@@ -65,7 +66,7 @@ if (!empty($arResult['FEEDBACK_URL']))
 }
 
 ?>
-<div class="bx-call-component-call-ai">
+<div class="bx-call-component-call-ai" data-call-id="<?= $arResult['CALL_ID'] ?>">
 	<div class="bx-call-component-call-ai__resume-container">
 		<div class="bx-call-component-call-ai__resume-wrapper">
 			<h3 class="bx-call-component-call-ai__resume-title"><?= $overview?->topic ?></h3>
@@ -193,10 +194,10 @@ if (!empty($arResult['FEEDBACK_URL']))
 
 	<div class="bx-call-component-call-ai__tabs-container">
 		<div class="bx-call-component-call-ai__tabs-header">
-			<button class="bx-call-component-call-ai__tab-header-button" data-tab-id="TabAgreements"><?= Loc::getMessage('CALL_COMPONENT_AGREEMENTS') ?></button>
-			<button class="bx-call-component-call-ai__tab-header-button" data-tab-id="TabRecommendations"><?= Loc::getMessage('CALL_COMPONENT_INSIGHTS_V2') ?></button>
-			<button class="bx-call-component-call-ai__tab-header-button" data-tab-id="TabSummary"><?= Loc::getMessage('CALL_COMPONENT_SUMMARY') ?></button>
-			<button class="bx-call-component-call-ai__tab-header-button" data-tab-id="TabTranscriptions"><?= Loc::getMessage('CALL_COMPONENT_TRANSCRIPTIONS') ?></button>
+			<button class="bx-call-component-call-ai__tab-header-button" data-tab-id="TabAgreements" data-tab-name="notes"><?= Loc::getMessage('CALL_COMPONENT_AGREEMENTS') ?></button>
+			<button class="bx-call-component-call-ai__tab-header-button" data-tab-id="TabRecommendations" data-tab-name="ai_call_quality"><?= Loc::getMessage('CALL_COMPONENT_INSIGHTS_V2') ?></button>
+			<button class="bx-call-component-call-ai__tab-header-button" data-tab-id="TabSummary" data-tab-name="followup"><?= Loc::getMessage('CALL_COMPONENT_SUMMARY') ?></button>
+			<button class="bx-call-component-call-ai__tab-header-button" data-tab-id="TabTranscriptions" data-tab-name="transcript"><?= Loc::getMessage('CALL_COMPONENT_TRANSCRIPTIONS') ?></button>
 		</div>
 
 		<div class="bx-call-component-call-ai__tab-content-wrapper">

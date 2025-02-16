@@ -137,6 +137,7 @@ this.BX.Sign = this.BX.Sign || {};
 	      chatId: _chatId2
 	    } = blankSelectorConfig;
 	    this.setupData = null;
+	    this.blankIsNotSelected = true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _scenarioType)[_scenarioType] = type;
 	    babelHelpers.classPrivateFieldLooseBase(this, _api)[_api] = new sign_v2_api.Api();
 	    babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids] = new Map();
@@ -205,6 +206,10 @@ this.BX.Sign = this.BX.Sign || {};
 	        this.ready = false;
 	        const isBlankChanged = selectedBlankId || this.blankSelector.isFilesReadyForUpload();
 	        blankId = selectedBlankId || (await this.blankSelector.createBlank());
+	        if (!blankId) {
+	          this.blankIsNotSelected = true;
+	          return;
+	        }
 	        let documentUid = (_this$setupData2 = this.setupData) == null ? void 0 : _this$setupData2.uid;
 	        let documentTemplateUid = null;
 	        if (isBlankChanged && isTemplateMode && documentUid) {
@@ -237,15 +242,15 @@ this.BX.Sign = this.BX.Sign || {};
 	    }
 	    this.ready = true;
 	  }
-	  async waitForPagesList(cb, preparedPages = false) {
+	  async waitForPagesList(documentData, cb, preparedPages = false) {
 	    let interval = 0;
 	    let isPagesReady = false;
 	    const requestTime = 10 * 1000;
-	    const uid = this.setupData.uid;
 	    const {
+	      uid,
 	      blankId,
 	      isTemplate
-	    } = this.setupData;
+	    } = documentData;
 	    if (!isTemplate) {
 	      this.blankSelector.selectBlank(blankId);
 	    }
@@ -291,7 +296,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    }
 	    clearInterval(interval);
 	    isPagesReady = true;
-	    babelHelpers.classPrivateFieldLooseBase(this, _processPages)[_processPages](urls, cb);
+	    await babelHelpers.classPrivateFieldLooseBase(this, _processPages)[_processPages](urls, cb);
 	  }
 	  set ready(isReady) {
 	    if (isReady) {
@@ -302,6 +307,9 @@ this.BX.Sign = this.BX.Sign || {};
 	  }
 	  isTemplateMode() {
 	    return sign_v2_signSettings.isTemplateMode(babelHelpers.classPrivateFieldLooseBase(this, _documentMode)[_documentMode]);
+	  }
+	  deleteDocumentFromList(blankId) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].delete(blankId);
 	  }
 	}
 	function _initNotifications2(portalConfig) {

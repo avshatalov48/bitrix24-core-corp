@@ -332,12 +332,20 @@ class InfoConnectors
 	 */
 	public static function infoConnectorsLine($lineId)
 	{
+		static $cache = [];
+		if (isset($cache[$lineId]))
+		{
+			return $cache[$lineId];
+		}
+
 		$result = [];
 
 		if ($infoConnectors = self::getInfoConnectorsById($lineId))
 		{
 			$result = $infoConnectors->fetch();
 		}
+
+		$cache[$lineId] = $result;
 
 		return $result;
 	}

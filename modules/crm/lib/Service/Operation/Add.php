@@ -236,4 +236,14 @@ class Add extends Operation
 
 		return $result;
 	}
+
+	protected function isClearItemCategoryCacheNeeded(): bool
+	{
+		return true;
+	}
+
+	protected function isClearItemStageCacheNeeded(): bool
+	{
+		return true;
+	}
 }

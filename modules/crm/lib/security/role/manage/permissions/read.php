@@ -23,4 +23,14 @@ class Read extends Permission
 	{
 		return 1;
 	}
+
+	public function getManagerDefaultAttributeValue(): ?string
+	{
+		return \Bitrix\Crm\Service\UserPermissions::PERMISSION_SELF;
+	}
+
+	public function getObserverDefaultAttributeValue(): ?string
+	{
+		return \Bitrix\Crm\Service\UserPermissions::PERMISSION_SELF;
+	}
 }

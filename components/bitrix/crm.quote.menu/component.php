@@ -357,6 +357,10 @@ if ($arParams['TYPE'] === 'list')
 
 	$isAddDelimiter = true;
 	$permissionItem = PermissionItem::createByEntity(CCrmOwnerType::Quote);
+	if (isset($arParams['ANALYTICS']) && is_array($arParams['ANALYTICS']))
+	{
+		$permissionItem->setAnalytics($arParams['ANALYTICS']);
+	}
 	if ($permissionItem->canShow())
 	{
 		$isAddDelimiter = false;

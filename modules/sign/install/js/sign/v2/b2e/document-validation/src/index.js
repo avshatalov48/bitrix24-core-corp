@@ -1,4 +1,4 @@
-import { Tag, Loc } from 'main.core';
+import { Tag, Loc, Extension } from 'main.core';
 import { RepresentativeSelector } from 'sign.v2.b2e.representative-selector';
 import { type Role, MemberRole } from 'sign.v2.api';
 import './style.css';
@@ -9,6 +9,8 @@ const HelpdeskCodes = Object.freeze({
 	ReviewerRoleDetails: '20801214',
 });
 
+const currentUserId = Extension.getSettings('sign.v2.b2e.document-validation').get('currentUserId');
+
 export class DocumentValidation
 {
 	#reviewerRepresentativeSelector: RepresentativeSelector;
@@ -17,6 +19,7 @@ export class DocumentValidation
 	constructor()
 	{
 		this.#reviewerRepresentativeSelector = new RepresentativeSelector({
+			context: `sign_b2e_representative_selector_reviewer_${currentUserId}`,
 			description: `
 				<span>
 					${Helpdesk.replaceLink(Loc.getMessage('SIGN_B2E_DOCUMENT_VALIDATION_HINT_REVIEWER'), HelpdeskCodes.ReviewerRoleDetails)}
@@ -24,6 +27,7 @@ export class DocumentValidation
 			`,
 		});
 		this.#editorRepresentativeSelector = new RepresentativeSelector({
+			context: `sign_b2e_representative_selector_editor_${currentUserId}`,
 			description: `
 				<span>
 					${Helpdesk.replaceLink(Loc.getMessage('SIGN_B2E_DOCUMENT_VALIDATION_HINT_EDITOR'), HelpdeskCodes.EditorRoleDetails)}

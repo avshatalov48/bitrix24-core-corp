@@ -132,6 +132,7 @@ class IsReturnCustomer extends Field
 		$this->setFalseInFirstSuccessfulItem($factory, $firstSuccessfulItemId);
 
 		$factory->getDataClass()::cleanCache();
+		Container::getInstance()->getEntityBroker($factory->getEntityTypeId())?->resetAllCache();
 
 		return $firstSuccessfulItemId;
 	}

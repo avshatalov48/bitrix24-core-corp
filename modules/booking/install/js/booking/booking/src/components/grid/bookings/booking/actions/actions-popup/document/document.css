@@ -1,0 +1,22 @@
+.booking-actions-popup__item-doc-content {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.booking-actions-popup__item-doc-loader {
+	width: 100%;
+	height: 75px;
+}
+
+.booking-actions-popup__item-doc {
+	display: flex;
+	gap: 8px;
+	min-height: 50px;
+}
+
+.booking-actions-popup__item-doc-content .booking-actions-popup-item-buttons {
+	display: flex;
+	justify-content: center;
+}

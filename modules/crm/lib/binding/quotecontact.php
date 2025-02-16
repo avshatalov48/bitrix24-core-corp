@@ -8,6 +8,7 @@
 namespace Bitrix\Crm\Binding;
 
 use Bitrix\Crm\QuoteTable;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\BooleanField;
@@ -336,7 +337,7 @@ class QuoteContactTable extends DataManager
 			$processed++;
 		}
 
-		if($processed > 0)
+		if ($processed > 0)
 		{
 			Main\Application::getConnection()->queryExecute(
 				/** @lang text*/
@@ -344,6 +345,7 @@ class QuoteContactTable extends DataManager
 				(SELECT MIN(CONTACT_ID) FROM b_crm_quote_contact WHERE IS_PRIMARY = 'Y' AND QUOTE_ID = {$quoteID})
 				WHERE ID = {$quoteID}"
 			);
+			Container::getInstance()->getQuoteBroker()->deleteCache((int)$quoteID);
 		}
 	}
 	/**
@@ -381,6 +383,7 @@ class QuoteContactTable extends DataManager
 			(SELECT MIN(CONTACT_ID) FROM b_crm_quote_contact WHERE IS_PRIMARY = 'Y' AND QUOTE_ID = {$quoteID})
 			WHERE ID = {$quoteID}"
 		);
+		Container::getInstance()->getQuoteBroker()->deleteCache((int)$quoteID);
 	}
 	/**
 	 * Unbind specified quote from specified contacts.
@@ -422,6 +425,7 @@ class QuoteContactTable extends DataManager
 			/** @lang text */
 			"UPDATE b_crm_quote SET CONTACT_ID = NULL WHERE ID = {$quoteID}"
 		);
+		Container::getInstance()->getQuoteBroker()->deleteCache((int)$quoteID);
 	}
 	/**
 	 * Unbind specified contact from all quotes.
@@ -442,12 +446,14 @@ class QuoteContactTable extends DataManager
 		/** @lang text */
 			"DELETE FROM b_crm_quote_contact WHERE CONTACT_ID = {$contactID}"
 		);
+
 		$connection->queryExecute(
 		/** @lang text */
 			"UPDATE b_crm_quote SET CONTACT_ID =
 			(SELECT MIN(CONTACT_ID) FROM b_crm_quote_contact t WHERE t.QUOTE_ID = b_crm_quote.ID)
 			WHERE CONTACT_ID = {$contactID}"
 		);
+		Container::getInstance()->getQuoteBroker()->resetAllCache();
 	}
 	/**
 	 * Prepage SQL join filter condition for specified entity.

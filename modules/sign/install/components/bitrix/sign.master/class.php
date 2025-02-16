@@ -14,6 +14,7 @@ use Bitrix\Sign\Item\Api\Client\DomainRequest;
 use Bitrix\Sign\Main\Application;
 use Bitrix\Sign\Main\User;
 use Bitrix\Sign\Service\Container;
+use Bitrix\Sign\Service\Sign\Document\GroupService;
 use Bitrix\Sign\Type\Document\InitiatedByType;
 
 \CBitrixComponent::includeComponentClass('bitrix:sign.base');
@@ -79,6 +80,7 @@ class SignMasterComponent extends SignBaseComponent
 		$document = $this->getDocument();
 		$this->setResult('DOCUMENT', $document);
 		$this->setResult('TEMPLATE_UID', $this->getTemplateUid());
+		$this->setResult('MAX_DOCUMENT_COUNT', GroupService::MAX_DOCUMENT_COUNT);
 		$this->setResult('RESPONSIBLE_NAME', $this->getResponsibleName($document));
 		$this->setResult('CHAT_ID', $this->getChatId());
 	}

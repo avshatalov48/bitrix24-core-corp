@@ -1,0 +1,25 @@
+.booking-booking-resources-dialog-header-resources {
+	padding: 10px 10px 4px;
+}
+
+.booking-booking-resources-dialog-header-header {
+	padding: 8px;
+	display: flex;
+	color: var(--ui-color-base-60);
+	font-size: var(--ui-font-size-sm);
+}
+
+.booking-booking-resources-dialog-header-title {
+	margin-right: auto;
+	font-weight: var(--ui-font-weight-medium);
+	cursor: default;
+}
+
+.booking-booking-resources-dialog-header-button {
+	margin-left: 8px;
+	cursor: pointer;
+}
+
+.booking-booking-resources-dialog-header-button:hover {
+	color: var(--ui-color-base-80);
+}

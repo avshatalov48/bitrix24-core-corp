@@ -7,21 +7,26 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Router;
 use Bitrix\Main\Application;
 use Bitrix\Main\UserTable;
+use CFile;
 use CUser;
 
+/**
+ * @method array|null getById(int $id)
+ * @method array[] getBunchByIds(array $ids)
+ */
 class User extends Broker
 {
 	protected const DEFAULT_PERSONAL_PHOTO_SIZE = 63;
 
-	/** @var Router */
-	protected $router;
-	/** @var string */
-	protected $nameFormat;
+	protected Router $router;
+	protected string $nameFormat;
 
 	public function __construct()
 	{
+		parent::__construct();
+
 		$this->router = Container::getInstance()->getRouter();
-		$this->nameFormat = Application::getInstance()->getContext()->getCulture()->getNameFormat();
+		$this->nameFormat = Application::getInstance()->getContext()->getCulture()?->getNameFormat() ?? '';
 	}
 
 	public function getName(int $id): ?string
@@ -97,8 +102,16 @@ class User extends Broker
 	{
 		$userList = UserTable::getList([
 			'select' => [
-				'ID', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'TITLE', 'PERSONAL_PHOTO', 'WORK_POSITION', 'IS_REAL_USER',
-			], 'filter' => [
+				'ID',
+				'NAME',
+				'SECOND_NAME',
+				'LAST_NAME',
+				'TITLE',
+				'PERSONAL_PHOTO',
+				'WORK_POSITION',
+				'IS_REAL_USER',
+			],
+			'filter' => [
 				'=ID' => $ids,
 			],
 		]);
@@ -123,7 +136,7 @@ class User extends Broker
 
 		if ($user['PERSONAL_PHOTO'] > 0)
 		{
-			$photo = \CFile::ResizeImageGet($user['PERSONAL_PHOTO'], [
+			$photo = CFile::ResizeImageGet($user['PERSONAL_PHOTO'], [
 				'width' => static::DEFAULT_PERSONAL_PHOTO_SIZE,
 				'height' => static::DEFAULT_PERSONAL_PHOTO_SIZE,
 			], BX_RESIZE_IMAGE_EXACT, true, false, true);

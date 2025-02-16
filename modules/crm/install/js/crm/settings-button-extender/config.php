@@ -53,7 +53,7 @@ return [
 		'isAIHasPackages' => $isAIHasPackages,
 		'allAIOperationTypes' => $allAIOperationTypes,
 		'transcribeAIOperationType' => $transcribeAIOperationType,
-		'aiDisabledSliderCode' => \Bitrix\Crm\Integration\AI\AIManager::AI_DISABLED_SLIDER_CODE,
+		'aiDisabledSliderCode' => \Bitrix\Crm\Integration\AI\Operation\Scenario::FILL_FIELDS_SCENARIO_OFF_SLIDER_CODE,
 		'aiPackagesEmptySliderCode' => \Bitrix\Crm\Integration\AI\AIManager::AI_PACKAGES_EMPTY_SLIDER_CODE,
 	],
 ];

@@ -4,20 +4,27 @@ namespace Bitrix\Crm\Activity\Mail;
 
 use Bitrix\Crm\Activity\Provider\Email;
 use Bitrix\Crm\ActivityTable;
+use Bitrix\Crm\Integration\UI\EntitySelector\MailRecipientProvider;
+use Bitrix\Crm\Item;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Mail\Internals\UserSignatureTable;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main;
 use Bitrix\Mail\Internals\MailboxAccessTable;
 use Bitrix\Mail\MailboxTable;
 use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Mail\Address;
 use Bitrix\Main\Mail\Sender;
 use Bitrix\Main\Mail\Converter;
 use Bitrix\Main\Web\Uri;
+use Bitrix\UI\EntitySelector\Dialog;
+use Bitrix\UI\EntitySelector\ItemCollection;
 
 class Message
 {
@@ -29,6 +36,14 @@ class Message
 		\CCrmOwnerType::DealName => 'deals',
 		\CCrmOwnerType::ContactName => 'contacts',
 		\CCrmOwnerType::CompanyName => 'companies',
+	];
+	protected const ENTITIES_THAT_HAVE_CONTACTS = [
+		\CCrmOwnerType::DealRecurringName,
+		\CCrmOwnerType::QuoteName,
+		\CCrmOwnerType::SmartInvoiceName,
+		\CCrmOwnerType::CompanyName,
+		\CCrmOwnerType::DealName,
+		\CCrmOwnerType::LeadName,
 	];
 
 	protected static function makeWebPathToMessageById(int $id): Uri
@@ -115,15 +130,15 @@ class Message
 		}
 	}
 
-	protected static function checkModules(): Main\Result
+	public static function checkModules(): Result
 	{
-		$result = new Main\Result();
-		if (!\Bitrix\Main\Loader::includeModule('mail'))
+		$result = new Result();
+		if (!Loader::includeModule('mail'))
 		{
 			$result->addError(new Error(Loc::getMessage('CRM_LIB_ACTIVITY_MAIL_CRM_MODULE_IS_NOT_INSTALLED')));
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('crm'))
+		if (!Loader::includeModule('crm'))
 		{
 			$result->addError(new Error(Loc::getMessage('CRM_LIB_ACTIVITY_MAIL_MAIL_MODULE_IS_NOT_INSTALLED')));
 		}
@@ -136,7 +151,7 @@ class Message
 		$result = new Main\Result();
 		if (count($activities) === 0)
 		{
-			$result->addError(new Error(Loc::getMessage('CRM_LIB_ACTIVITY_PERMISSION_DENIED', 'activity_not_specified')));
+			$result->addError(new Error(Loc::getMessage('CRM_LIB_ACTIVITY_PERMISSION_DENIED'), 'activity_not_specified'));
 			return $result;
 		}
 
@@ -144,7 +159,7 @@ class Message
 
 		if (!isset($activity['OWNER_TYPE_ID']) || !isset($activity['OWNER_ID']))
 		{
-			$result->addError(new Error(Loc::getMessage('CRM_LIB_ACTIVITY_PERMISSION_DENIED', 'owner_data_not_specified')));
+			$result->addError(new Error(Loc::getMessage('CRM_LIB_ACTIVITY_PERMISSION_DENIED'), 'owner_data_not_specified'));
 			return $result;
 		}
 
@@ -441,6 +456,514 @@ class Message
 		];
 	}
 
+	protected static function getOwnerTypeId(string $ownerType): int
+	{
+		return \CCrmOwnerType::ResolveID($ownerType);
+	}
+
+	protected static function buildRecipients(array $contactIDs, string $entityTypeName, bool $onlyWithEmail = true): array
+	{
+		$recipients = [];
+
+		foreach ($contactIDs as $id)
+		{
+			$contactName = '';
+
+			if ($entityTypeName === \CCrmOwnerType::CompanyName)
+			{
+				$contactName = \CCrmCompany::GetByID($id, false)['TITLE'];
+			}
+			else if($entityTypeName === \CCrmOwnerType::ContactName)
+			{
+				$contactName = \CCrmContact::GetByID($id, false)['FULL_NAME'];
+			}
+			else if($entityTypeName === \CCrmOwnerType::LeadName)
+			{
+				$contactName = \CCrmLead::GetByID($id, false)['TITLE'];
+			}
+
+			$contactEmailsField = \CCrmFieldMulti::GetEntityFields(
+				$entityTypeName,
+				$id,
+				\CCrmFieldMulti::EMAIL,
+			);
+
+			$contactEmails = array_map(function($item) {
+				return ['value' => $item['VALUE']];
+			}, $contactEmailsField);
+
+			$recipient = self::buildContact([
+				'email' => $contactEmails,
+				'name' => $contactName,
+				'id' => $id,
+				'typeName' => self::convertTypeToFormatForBinding($entityTypeName),
+			]);
+
+			if ($recipient['email'] === '')
+			{
+				$recipient['email'] = [];
+			}
+
+			if ($onlyWithEmail === false || count($recipient['email']))
+			{
+				$recipients[] = $recipient;
+			}
+
+		}
+
+		return $recipients;
+	}
+
+	protected static function getEntity(string $entityTypeName, int $ownerId): ?Item
+	{
+		$entityTypeId = self::getOwnerTypeId($entityTypeName);
+		$entityFactory = Container::getInstance()->getFactory($entityTypeId);
+
+		if (is_null($entityFactory))
+		{
+			return null;
+		}
+
+		return $entityFactory->getItem($ownerId);
+	}
+
+	protected static function getCompanies(string $entityTypeName, int $ownerId): array
+	{
+		$companies = [];
+
+		if (\CCrmOwnerType::CompanyName === $entityTypeName)
+		{
+			return $companies;
+		}
+
+		$ownerEntity = self::getEntity($entityTypeName, $ownerId);
+
+		if (!is_null($ownerEntity) && $ownerEntity->hasField('COMPANY') && $company = $ownerEntity->getCompany())
+		{
+			$companyId = $company->getId();
+
+			if ($companyId)
+			{
+				$companies = self::buildRecipients([$companyId], \CCrmOwnerType::CompanyName, false);
+			}
+		}
+
+		return $companies;
+	}
+
+	protected static function checkEntityCanHaveContacts($typeName): bool
+	{
+		$typeId = \CCrmOwnerType::ResolveID($typeName);
+		return (
+			in_array($typeName, self::ENTITIES_THAT_HAVE_CONTACTS) ||
+			\CCrmOwnerType::isPossibleSuspendedDynamicTypeId($typeId) ||
+			\CCrmOwnerType::isPossibleDynamicTypeId($typeId)
+		);
+	}
+
+	protected static function getAllowedContactIds(array $contactIDs): array
+	{
+		$contactIdsPermissions = [];
+
+		foreach ($contactIDs as $id)
+		{
+			if(Container::getInstance()->getUserPermissions()->checkReadPermissions(\CCrmOwnerType::Contact, $id))
+			{
+				$contactIdsPermissions[] = $id;
+			};
+		}
+
+		return $contactIdsPermissions;
+	}
+
+	protected static function getContacts(string $entityTypeName, int $ownerId): array
+	{
+		if (!self::checkEntityCanHaveContacts($entityTypeName))
+		{
+			return [];
+		}
+
+		$ownerEntity = self::getEntity($entityTypeName, $ownerId);
+
+		if (!is_null($ownerEntity))
+		{
+			$contacts = $ownerEntity->getContactBindings();
+			$contactIds = [];
+
+			foreach ($contacts as $binding)
+			{
+				$contactIds[] = (int) $binding['CONTACT_ID'];
+			}
+
+			$contactIDs = self::getAllowedContactIds($contactIds);
+			return self::buildRecipients($contactIDs, \CCrmOwnerType::ContactName);
+		}
+
+		return [];
+	}
+
+	protected static function prepareRecipientsForConversionToJson($recipients, $type): array
+	{
+		$result = [];
+
+		foreach ($recipients as $id)
+		{
+			$result[] = [$type, (int) $id];
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $recipients
+	 * These parameters must be passed to search and add related elements
+	 * in case processing the $recipients param will result in an empty collection:
+	 * @param string|null $ownerType
+	 * @param int|null $ownerId
+	 * @return ItemCollection
+	 * @throws \Exception
+	 */
+	public static function getSelectedRecipientsForDialog(array $recipients, string $ownerType, int $ownerId, bool $loadIfEmpty = false): ItemCollection
+	{
+		$items = [];
+		$itemsIds = [];
+
+		foreach ($recipients as $recipient)
+		{
+			$id = MailRecipientProvider::buildRecipientProviderId(($recipient['ENTITY_TYPE_NAME'] ?? $recipient['ENTITY_TYPE']), $recipient['ENTITY_ID'], ($recipient['VALUE_TYPE'] ?? MailRecipientProvider::EMAIL_TYPE_WORK), $recipient['VALUE']);
+			$items[] = [MailRecipientProvider::PROVIDER_ENTITY_ID, $id];
+			$itemsIds[] = $id;
+		}
+
+		if (count($itemsIds) !== 0)
+		{
+			$options = [
+				'entities' => [
+					[
+						'id' => 'mail_recipient',
+						'options' => [
+							'selectedItemIds' => $itemsIds,
+							'checkTheWhitelist' => false,
+						],
+					],
+				],
+			];
+
+			$itemCollection = Dialog::getItems($items, $options);
+
+			/*
+			 * Old addresses that were removed from the CRM element card are filtered out.
+			 * This may result in an empty collection.
+			*/
+			if ($itemCollection->count() > 0)
+			{
+				return $itemCollection;
+			}
+		}
+
+		$itemCollection = new ItemCollection();
+
+		if ($loadIfEmpty === false)
+		{
+			return $itemCollection;
+		}
+
+		$providerOptions = [
+			'ownerId' => $ownerId,
+			'ownerType' => $ownerType,
+			'checkTheWhitelist' => true,
+		];
+
+		$mailRecipientProvider = new MailRecipientProvider($providerOptions);
+		$dialog = new Dialog([]);
+		$mailRecipientProvider->fillDialog($dialog);
+
+		$fullItemCollection = $dialog->getItemCollection();
+		$iterator = $fullItemCollection->getIterator();
+
+		$selectedItemCollection = new ItemCollection();
+
+		/** @var \Bitrix\UI\EntitySelector\Item|null $firstItem */
+		$firstItem = $iterator->current();
+
+		if (!is_null($firstItem))
+		{
+			$selectedItemCollection->add($firstItem);
+		}
+
+		return $selectedItemCollection;
+	}
+
+	public static function entityRecipientsToCollectionForDialog($recipients = [], $sortByType = false, string $ownerTypeName = '', int $ownerId = 0): ItemCollection
+	{
+		if ($sortByType)
+		{
+			$recipients = self::sortRecipientsByType($recipients);
+		}
+
+		$companies = [];
+		$contacts = [];
+
+		$contactCategoryId = 0;
+		$companyCategoryId = 0;
+
+		if (isset($recipients['company']))
+		{
+			if (is_array($recipients['company']) && count($recipients['company']) > 0)
+			{
+				$companyCategoryId = self::getRecipientCategoryId(\CCrmOwnerType::Company, (int)$recipients['company'][0]);
+				$companies = self::prepareRecipientsForConversionToJson($recipients['company'], 'company');
+			}
+
+			unset($recipients['company']);
+		}
+
+		if (isset($recipients['contacts']))
+		{
+			if (is_array($recipients['contacts']) && count($recipients['contacts']) > 0)
+			{
+				$contactCategoryId = self::getRecipientCategoryId(\CCrmOwnerType::Contact, (int)$recipients['contacts'][0]);
+				$contacts = self::prepareRecipientsForConversionToJson($recipients['contacts'], 'contact');
+			}
+
+			unset($recipients['contacts']);
+		}
+
+		$ownerFields  = [];
+
+		if ($ownerTypeName !== '' && $ownerId !== 0)
+		{
+			$ownerFields  = self::prepareRecipientsForConversionToJson([$ownerId], mb_strtolower($ownerTypeName));
+		}
+
+		foreach ($recipients as $name => $recipient)
+		{
+			$ownerFields = array_merge($ownerFields, self::prepareRecipientsForConversionToJson($recipient, $name));
+		}
+
+		$items = [
+			...$companies,
+			...$contacts,
+			...$ownerFields,
+		];
+
+		$options = [
+			'entities' => [
+				[
+					'id' => 'contact',
+					'options' => [
+						'categoryId' => $contactCategoryId,
+					],
+				],
+				[
+					'id' => 'company',
+					'options' => [
+						'categoryId'=> $companyCategoryId,
+					],
+				],
+			],
+		];
+
+		return Dialog::getItems($items, $options);
+	}
+
+	private static function getRecipientCategoryId(int $typeId, int $id): ?int
+	{
+		if ($typeId !== \CCrmOwnerType::Contact && $typeId !== \CCrmOwnerType::Company)
+		{
+			return null;
+		}
+
+		return (int)Container::getInstance()->getFactory($typeId)->getItemCategoryId($id);
+	}
+
+	public static function getEntityRecipients(int $ownerId, string $ownerTypeName, bool $uploadRecipients = true, bool $uploadSenders = true, $inCollectionForDialog = false): Result
+	{
+		$includedNecessaryModulesResult = self::checkModules();
+		$result = new Result();
+		$recipients = [];
+
+		if ($ownerId === 0)
+		{
+			$result->addError(new Error(Loc::getMessage('CRM_LIB_ACTIVITY_NO_RECIPIENT_OWNER')));
+			return $result;
+		}
+
+		if ($inCollectionForDialog)
+		{
+			if (!Loader::includeModule('ui'))
+			{
+				$result->addError(new Error(Loc::getMessage('CRM_LIB_ACTIVITY_MAIL_CRM_UI_IS_NOT_INSTALLED')));
+				return $result;
+			}
+
+			$result->setData([new ItemCollection()]);
+		}
+		else
+		{
+			$result->setData($recipients);
+		}
+
+		$result->addErrors($includedNecessaryModulesResult->getErrors());
+
+		if (!$includedNecessaryModulesResult->isSuccess())
+		{
+			return $result;
+		}
+
+		if (!\CCrmPerms::IsAccessEnabled())
+		{
+			$result->addError(new Error(Loc::getMessage('CRM_LIB_ACTIVITY_PERMISSION_DENIED'), 'activity_not_specified'));
+			return $result;
+		}
+
+		$ownerTypeId = self::getOwnerTypeId($ownerTypeName);
+
+		$readPermissionResult = self::checkOwnerReadPermission($ownerTypeId, $ownerId);
+
+		if (!$readPermissionResult->isSuccess())
+		{
+			return $result;
+		}
+
+		if ($uploadRecipients)
+		{
+			$companies = self::getCompanies($ownerTypeName, $ownerId);
+			$companiesWithEmail = [];
+
+			$contacts = self::getContacts($ownerTypeName, $ownerId);
+
+			if ($ownerTypeName !== \CCrmOwnerType::ContactName)
+			{
+				foreach ($companies as $company)
+				{
+					$contacts = array_merge($contacts, self::getContacts(\CCrmOwnerType::CompanyName, $company['id']));
+				}
+			}
+
+			foreach ($companies as $company)
+			{
+				if (count($company['email']))
+				{
+					$companiesWithEmail[] = $company;
+				}
+			}
+
+			$emailFields = self::buildRecipients([$ownerId], $ownerTypeName);
+
+			$clientsByType = [
+				'company' => $companiesWithEmail,
+				'contacts' => $contacts,
+			];
+
+			$recipients['clients'] = array_merge(
+				$clientsByType['contacts'],
+				$clientsByType['company'],
+				$emailFields
+			);
+
+			/*
+				Iterate through the arrays and leave only the ID.
+			*/
+			$recipients['clientIdsByType'] = array_map(
+				function($item)
+				{
+					if (!is_array($item))
+					{
+						return [];
+					}
+
+					return array_map(
+						function($item)
+						{
+							if (isset($item['id']))
+							{
+								return (int)$item['id'];
+							}
+							return [];
+						},
+						$item,
+					);
+				},
+				$clientsByType,
+			);
+		}
+
+		if ($uploadSenders)
+		{
+			$recipients['senders'] = self::getSenderList();
+		}
+
+		if ($uploadRecipients && $inCollectionForDialog)
+		{
+			$result->setData([self::entityRecipientsToCollectionForDialog($recipients['clientIdsByType'], false, $ownerTypeName, $ownerId)]);
+		}
+		else
+		{
+			$result->setData($recipients);
+		}
+
+		return $result;
+	}
+
+	public static function sortRecipientsByType($list): array
+	{
+		$sorted = [
+			'company' => [],
+			'contacts' => [],
+		];
+
+		foreach ($list as $recipient)
+		{
+
+			if (($recipient['ENTITY_TYPE_NAME'] !== null && $recipient['ENTITY_TYPE_NAME'] !== MailRecipientProvider::EMAIL_TYPE_ID) || $recipient['ENTITY_TYPE_ID'] !== null)
+			{
+				if ((int) $recipient['ENTITY_TYPE_ID'] == \CCrmOwnerType::Company || $recipient['ENTITY_TYPE_NAME'] == \CCrmOwnerType::CompanyName)
+				{
+					$sorted['company'][] = (int) $recipient['ENTITY_ID'];
+				}
+				else if((int) $recipient['ENTITY_TYPE_ID'] == \CCrmOwnerType::Contact || $recipient['ENTITY_TYPE_NAME'] == \CCrmOwnerType::ContactName)
+				{
+					$sorted['contacts'][] = (int) $recipient['ENTITY_ID'];
+				}
+				else
+				{
+					if ($recipient['ENTITY_TYPE_NAME'] !== null)
+					{
+						$type = $recipient['ENTITY_TYPE_NAME'];
+					}
+					else
+					{
+						$type = \CCrmOwnerType::ResolveName($recipient['ENTITY_TYPE_ID']);
+					}
+
+					$type = mb_strtolower($type);
+
+					if (!isset($sorted[$type]))
+					{
+						$sorted[$type] = [];
+					}
+
+					$sorted[$type][] = (int) $recipient['ENTITY_ID'];
+				}
+			}
+		}
+
+		return $sorted;
+	}
+
+	protected static function checkOwnerReadPermission(int $typeId, int $id): Result
+	{
+		$result = new Result();
+
+		if(!Container::getInstance()->getUserPermissions()->checkReadPermissions($typeId, $id))
+		{
+			$result->addError(new Error(Loc::getMessage('CRM_LIB_ACTIVITY_PERMISSION_DENIED'), 'owner_data_not_specified'));
+		}
+
+		return $result;
+	}
+
 	public static function getHeader(array $activity, $showPortalContactNames = true): Main\Result
 	{
 		$header = [];
@@ -699,7 +1222,7 @@ class Message
 
 		if (!$provider)
 		{
-			return $result->addError(new Error(Loc::getMessage('CRM_MAIL_CONTROLLER_CAN_NOT_DETERMINE_THE_MESSAGE_FORMAT')));
+			return $result->addError(new Error(Loc::getMessage('CRM_LIB_ACTIVITY_CAN_NOT_DETERMINE_THE_MESSAGE_FORMAT')));
 		}
 
 		if ($provider::getId() === $type)
@@ -707,7 +1230,7 @@ class Message
 			return new Main\Result();
 		}
 
-		return (new Main\Result())->addError(new Error(Loc::getMessage('CRM_TIMELINE_EMAIL_ERROR_NOT_CHECK_TYPE_PROVIDER')));
+		return (new Main\Result())->addError(new Error(Loc::getMessage('CRM_LIB_ACTIVITY_CAN_NOT_DETERMINE_THE_MESSAGE_FORMAT')));
 	}
 
 	/*

@@ -30,9 +30,9 @@ final class SendDeleteEntityPullEvent implements Contract\Operation
 			return $result->addError(new Main\Error('Document entityType not b2e'));
 		}
 
-		if ($this->document->entityId === null)
+		if ((int)$this->document->entityId === 0)
 		{
-			return $result->addError(new Main\Error('Document entityId can\'t be null'));
+			return $result->addError(new Main\Error('Document entityId can\'t be empty'));
 		}
 
 		if ($this->sendDeleteEntityPullEvent($this->document->entityId) === false)

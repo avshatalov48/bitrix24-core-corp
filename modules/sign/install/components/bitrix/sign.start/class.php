@@ -773,9 +773,4 @@ class SignStartComponent extends SignBaseComponent
 			->getSmartB2eDocumentCategories()
 		;
 	}
-
-	private function getUrlPartForGridPageByEmployeeMode(): string
-	{
-		return  Feature::instance()->isSendDocumentByEmployeeEnabled() ? 'my-documents' : 'current';
-	}
 }

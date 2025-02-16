@@ -1,0 +1,14 @@
+.booking-booking-header {
+	display: flex;
+	border-bottom: 1px solid var(--ui-color-base-10);
+}
+
+.booking-booking-header-inner {
+	display: flex;
+	overflow: auto;
+	padding-right: 5px;
+}
+
+.booking-booking-header-inner::-webkit-scrollbar {
+	display: none;
+}

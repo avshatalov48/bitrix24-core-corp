@@ -2385,7 +2385,7 @@ class ConferenceApplication
 
 	onCallUserMicrophoneState(e)
 	{
-		if (e.userId == this.userId)
+		if (e.userId == this.currentCall.userId)
 		{
 			Call.Hardware.isMicrophoneMuted = !e.microphoneState;
 		}

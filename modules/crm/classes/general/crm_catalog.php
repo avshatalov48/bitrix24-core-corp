@@ -544,6 +544,8 @@ class CAllCrmCatalog
 		$fields['SECTION_CODE'] = $sectionCode;
 		unset($sectionCode, $code);
 
+		$isB24 = Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24');
+
 		//creation of iblock
 		$iblock = new CIBlock();
 		$iblockID = $iblock->Add(
@@ -560,7 +562,8 @@ class CAllCrmCatalog
 				'VERSION' => 1,
 				'GROUP_ID' => array(1 => 'X', 2 => 'R'),
 				'LIST_MODE' => Iblock\IblockTable::LIST_MODE_COMBINED,
-				'FIELDS' => $fields
+				'FIELDS' => $fields,
+				'FULLTEXT_INDEX' => $isB24 ? 'Y' : 'N',
 			)
 		);
 
@@ -603,7 +606,8 @@ class CAllCrmCatalog
 					'VERSION' => 1,
 					'GROUP_ID' => array(1 => 'X', 2 => 'R'),
 					'LIST_MODE' => 'S',
-					'FIELDS' => $fields
+					'FIELDS' => $fields,
+					'FULLTEXT_INDEX' => $isB24 ? 'Y' : 'N',
 				]
 			);
 			if ($offersId === false)

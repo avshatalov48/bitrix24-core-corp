@@ -49,7 +49,7 @@ final class Controller extends Timeline\Controller
 	{
 		$statusMethods = [
 			\CBPTaskChangedStatus::Add => 'onCreateTask',
-			\CBPTaskChangedStatus::Update => 'onCompleteTask',
+			\CBPTaskChangedStatus::Update => 'onUpdateTask',
 			\CBPTaskChangedStatus::Delegate => 'onDelegatedTask',
 			\CBPTaskChangedStatus::Delete => 'onDeletedTask',
 		];
@@ -105,7 +105,7 @@ final class Controller extends Timeline\Controller
 				'USERS' => $this->getUsers($changedTaskStatus->users),
 				'TASK_ID' => $changedTaskStatus->task->id,
 				'TASK_NAME' => $changedTaskStatus->task->name,
-				'IS_TASK_PARTICIPANT' => in_array($responsibleId, $changedTaskStatus->users, true)
+				'IS_TASK_PARTICIPANT' => in_array($responsibleId, $changedTaskStatus->users, true),
 			];
 			$authorId = (int)reset($createData['USERS'])['ID'];
 			$data = $this->prepareWorkflowData($changedTaskStatus->workflow->id, $authorId, $createData);
@@ -120,7 +120,11 @@ final class Controller extends Timeline\Controller
 	{
 		$responsibleId = $this->getResponsibleId($changedTaskStatus->documentId);
 		// create only if current responsible is member of task
-		if ($responsibleId <= 0 || !in_array($responsibleId, $changedTaskStatus->users, true))
+		if (
+			$responsibleId <= 0
+			|| !in_array($responsibleId, $changedTaskStatus->users, true)
+			|| ($changedTaskStatus->usersAdded && !in_array($responsibleId, $changedTaskStatus->usersAdded, true))
+		)
 		{
 			return;
 		}
@@ -135,10 +139,39 @@ final class Controller extends Timeline\Controller
 		$command->execute();
 	}
 
+	private function onUpdateTask(ChangedTaskStatus $changedTaskStatus): void
+	{
+		if ($changedTaskStatus->isPartiallyCompleted || $changedTaskStatus->isFullyCompleted)
+		{
+			$this->onCompleteTask($changedTaskStatus);
+
+			return;
+		}
+
+		if ($changedTaskStatus->isPartiallyUnCompleted)
+		{
+			$this->onUnCompleteTask($changedTaskStatus);
+
+			return;
+		}
+
+		$this->updateFacesInTaskActivity($changedTaskStatus->workflow);
+
+		if ($changedTaskStatus->usersAdded)
+		{
+			$this->onUsersAddedToTask($changedTaskStatus);
+		}
+
+		if ($changedTaskStatus->usersRemoved)
+		{
+			$this->onUsersRemovedFromTask($changedTaskStatus);
+		}
+	}
+
 	public function onCompleteTask(ChangedTaskStatus $changedTaskStatus): void
 	{
 		$isWorkflowShowInTimeline = $changedTaskStatus->workflow->isWorkflowShowInTimeline();
-		if ($changedTaskStatus->statusName === 'COMPLETED' && $isWorkflowShowInTimeline)
+		if ($changedTaskStatus->isPartiallyCompleted && $isWorkflowShowInTimeline)
 		{
 			$completeData = [
 				'USERS' => $this->getUsers($changedTaskStatus->users),
@@ -172,6 +205,47 @@ final class Controller extends Timeline\Controller
 				$command = (new Command\Task\MarkCompletedCommand($changedTaskStatus->task, (int)$userId));
 				$command->execute();
 			}
+		}
+	}
+
+	private function onUnCompleteTask(ChangedTaskStatus $changedTaskStatus): void
+	{
+		$responsibleId = $this->getResponsibleId($changedTaskStatus->documentId);
+		// only for current responsible
+		if ($responsibleId > 0 && in_array($responsibleId, $changedTaskStatus->users, true))
+		{
+			$this->markUnCompletedOrCreateTask($changedTaskStatus, $responsibleId);
+		}
+	}
+
+	private function onUsersAddedToTask(ChangedTaskStatus $changedTaskStatus): void
+	{
+		$responsibleId = $this->getResponsibleId($changedTaskStatus->documentId);
+		// only for current responsible
+		if ($responsibleId > 0 && in_array($responsibleId, $changedTaskStatus->usersAdded, true))
+		{
+			$this->markUnCompletedOrCreateTask($changedTaskStatus, $responsibleId);
+		}
+	}
+
+	private function markUnCompletedOrCreateTask(ChangedTaskStatus $changedTaskStatus, int $userId): void
+	{
+		$command = (new Command\Task\MarkUnCompletedCommand($changedTaskStatus->task, $userId));
+		$result = $command->execute();
+
+		// create task, if not found activity
+		if ($result->getData()['find'] === false)
+		{
+			$this->createTaskActivity($changedTaskStatus);
+		}
+	}
+
+	private function onUsersRemovedFromTask(ChangedTaskStatus $changedTaskStatus): void
+	{
+		foreach ($changedTaskStatus->usersRemoved as $userId)
+		{
+			$command = (new Command\Task\MarkCompletedCommand($changedTaskStatus->task, (int)$userId));
+			$command->execute();
 		}
 	}
 
@@ -305,7 +379,7 @@ final class Controller extends Timeline\Controller
 					$activity['SETTINGS'],
 					['COMMENTS_VIEWED' => true]
 				),
-				'COMPLETED' => $isWaitForClosure ? 'N' : 'Y'
+				'COMPLETED' => $isWaitForClosure ? 'N' : 'Y',
 			]);
 		}
 
@@ -387,7 +461,7 @@ final class Controller extends Timeline\Controller
 
 		if (!is_array($fields))
 		{
-			throw new \Exception('Workflow state info should be an array');
+			throw new \Bitrix\Main\SystemException('Workflow state info should be an array');
 		}
 
 		[$entityTypeId, $entityId] = \CCrmBizProcHelper::resolveEntityId($fields['DOCUMENT_ID']);

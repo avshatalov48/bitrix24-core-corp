@@ -1,0 +1,97 @@
+.booking-toolbar-after-title {
+	display: flex;
+	align-items: center;
+	cursor: default;
+}
+
+.booking-toolbar-after-title-date {
+	margin-right: 10px;
+	color: rgba(var(--ui-color-palette-white-base-rgb), 0.6);
+	font-size: 20px;
+	font-weight: var(--ui-font-weight-light);
+	white-space: nowrap;
+}
+
+.booking-toolbar-after-title-info {
+	font-size: var(--ui-font-size-sm);
+	white-space: nowrap;
+}
+
+.booking-toolbar-after-title-info-profit-container {
+	position: relative;
+	max-width: max-content;
+}
+
+.booking-toolbar-after-title-info-profit {
+	color: rgba(var(--ui-color-palette-white-base-rgb), 0.7);
+	font-weight: var(--ui-font-weight-medium);
+	margin-bottom: 4px;
+}
+
+.booking-toolbar-after-title-info-profit span {
+	border-bottom: 1px dashed rgba(var(--ui-color-palette-white-base-rgb), 0.4);
+	color: rgba(var(--ui-color-palette-white-base-rgb), 0.9);
+	font-weight: var(--ui-font-weight-normal);
+	cursor: pointer;
+}
+
+.booking-toolbar-after-title-profit-increased {
+	overflow: hidden;
+	position: absolute;
+	width: 100%;
+	left: -8px;
+	top: 50%;
+	transform: translateY(-50%);
+	padding: 3px 8px;
+	color: var(--ui-color-palette-white-base);
+	background-color: var(--ui-color-palette-green-50);
+	border-radius: 1in;
+	pointer-events: none;
+	animation: 300ms booking-toolbar-after-title-profit-increased 1300ms forwards;
+}
+
+@keyframes booking-toolbar-after-title-profit-increased {
+	to {
+		opacity: 0;
+		display: none;
+	}
+}
+
+.booking-toolbar-after-title-profit-increased:after {
+	content: '';
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(-45deg, #fff0 23%, #fff9 50%, #fff0 78%);
+	left: 0;
+	top: 0;
+	transform: translateX(-100%);
+	animation: 500ms booking-toolbar-after-title-profit-glance 500ms forwards;
+}
+
+@keyframes booking-toolbar-after-title-profit-glance {
+	to {
+		transform: translateX(100%);
+	}
+}
+
+/** region slider **/
+.bitrix24-default-theme .booking-toolbar-after-title-date,
+.bitrix24-dark-theme .booking-toolbar-after-title-date,
+.booking-booking-slider .booking-toolbar-after-title-date {
+	color: var(--ui-color-base-50);
+}
+
+.bitrix24-default-theme .booking-toolbar-after-title-info-profit,
+.bitrix24-dark-theme .booking-toolbar-after-title-info-profit,
+.booking-booking-slider .booking-toolbar-after-title-info-profit {
+	color: var(--ui-color-base-35);
+}
+
+.bitrix24-default-theme .booking-toolbar-after-title-info-profit span,
+.bitrix24-dark-theme .booking-toolbar-after-title-info-profit span,
+.booking-booking-slider .booking-toolbar-after-title-info-profit span {
+	color: var(--ui-color-base-50);
+	border-color: rgba(var(--ui-color-base-50-rgb), 0.4);
+}
+/** endregion slider **/

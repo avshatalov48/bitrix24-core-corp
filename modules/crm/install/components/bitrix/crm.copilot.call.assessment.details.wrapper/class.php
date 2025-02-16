@@ -13,11 +13,6 @@ class CrmCopilotCallAssessmentDetailsWrapper extends Base
 {
 	public function executeComponent(): void
 	{
-		if (!Feature::enabled(Feature\CopilotInCallGrading::class))
-		{
-			ResponseHelper::showPageNotFound();
-		}
-
 		$this->init();
 
 		$this->arResult = $this->arParams;

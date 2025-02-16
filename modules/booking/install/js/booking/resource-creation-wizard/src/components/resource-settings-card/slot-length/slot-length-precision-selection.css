@@ -1,0 +1,23 @@
+.resource-creation-wizard__form-slot-length-precision-selection {
+	display: flex;
+	justify-content: right;
+	padding: 0;
+}
+
+.resource-creation-wizard__form-slot-length-precision-selection .ui-form-row, .ui-form-row-inline {
+	margin-bottom: 0;
+}
+
+.resource-creation-wizard__form-slot-length-precision-selection .ui-ctl-time {
+	width: 50px;
+}
+
+.resource-creation-wizard__form-slot-length-precision-selection .ui-ctl-element {
+	text-align: center;
+	padding: 2px;
+}
+
+.resource-creation-wizard__form-slot-length-precision-selection .ui-form-row.--disabled {
+	opacity: .4;
+	pointer-events: none;
+}

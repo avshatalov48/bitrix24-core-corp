@@ -1,4 +1,4 @@
-import { ajax as Ajax, Reflection, Runtime, Text } from 'main.core';
+import { ajax as Ajax, Dom, Reflection, Runtime, Text } from 'main.core';
 import { UI } from 'ui.notification';
 
 const namespace = Reflection.namespace('BX.Crm.Copilot.CallAssessmentList');
@@ -38,6 +38,7 @@ export class ActiveField
 				},
 			});
 
+			Dom.clean(this.#targetNode);
 			switcher.renderTo(this.#targetNode);
 		});
 	}

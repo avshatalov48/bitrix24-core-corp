@@ -18,6 +18,7 @@ use Bitrix\Crm\Relation\RelationManager;
 use Bitrix\Crm\Service\Communication\Search\Ranking\RankingFactory;
 use Bitrix\Crm\Service\Factory\Dynamic;
 use Bitrix\Crm\Service\Integration\Sign\Kanban\PullService;
+use Bitrix\Crm\Service\Logger\LoggerFactory;
 use Bitrix\Crm\Service\Sale\Shipment\ProductService;
 use Bitrix\Crm\Service\Sale\Terminal\PaymentService;
 use Bitrix\Crm\Service\Sign\B2e\ItemService;
@@ -32,7 +33,6 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Loader;
-use Bitrix\Crm\Service\Logger\LoggerFactory;
 use Psr\Log\LoggerInterface;
 
 class Container
@@ -252,12 +252,7 @@ class Container
 			}
 			if($type)
 			{
-				ServiceLocator::getInstance()->addInstance($identifierByEntityTypeId, $type);
-				$identifierById = static::getIdentifierByClassName(
-					Type::class,
-					['id', $type->getId()]
-				);
-				ServiceLocator::getInstance()->addInstance($identifierById, $type);
+				$this->registerType($entityTypeId, $type);
 
 				return $type;
 			}
@@ -328,37 +323,45 @@ class Container
 		return ServiceLocator::getInstance()->get('crm.service.converter.automatedSolution');
 	}
 
+	// region Brokers
 	public function getEntityBroker(int $entityTypeId): ?Broker
 	{
 		if ($entityTypeId === \CCrmOwnerType::Lead)
 		{
 			return $this->getLeadBroker();
 		}
-		elseif ($entityTypeId === \CCrmOwnerType::Deal)
+
+		if ($entityTypeId === \CCrmOwnerType::Deal)
 		{
 			return $this->getDealBroker();
 		}
-		elseif ($entityTypeId === \CCrmOwnerType::Contact)
+
+		if ($entityTypeId === \CCrmOwnerType::Contact)
 		{
 			return $this->getContactBroker();
 		}
-		elseif ($entityTypeId === \CCrmOwnerType::Company)
+
+		if ($entityTypeId === \CCrmOwnerType::Company)
 		{
 			return $this->getCompanyBroker();
 		}
-		elseif ($entityTypeId === \CCrmOwnerType::Activity)
+
+		if ($entityTypeId === \CCrmOwnerType::Activity)
 		{
 			return $this->getActivityBroker();
 		}
-		elseif ($entityTypeId === \CCrmOwnerType::Quote)
+
+		if ($entityTypeId === \CCrmOwnerType::Quote)
 		{
 			return $this->getQuoteBroker();
 		}
-		elseif ($entityTypeId === \CCrmOwnerType::Order)
+
+		if ($entityTypeId === \CCrmOwnerType::Order)
 		{
 			return $this->getOrderBroker();
 		}
-		elseif (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
+
+		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 		{
 			return $this->getDynamicBroker()->setEntityTypeId($entityTypeId);
 		}
@@ -430,6 +433,7 @@ class Container
 	{
 		return ServiceLocator::getInstance()->get('crm.service.broker.quote');
 	}
+	// endregion
 
 	public function getBadge(string $type, string $value): Badge
 	{
@@ -669,5 +673,20 @@ class Container
 		}
 
 		return ServiceLocator::getInstance()->get($identifier);
+	}
+
+	public function registerType(int $entityTypeId, Type $type): void
+	{
+		$identifierByEntityTypeId = static::getIdentifierByClassName(Type::class, ['entityTypeId', $entityTypeId]);
+		if(!ServiceLocator::getInstance()->has($identifierByEntityTypeId))
+		{
+			ServiceLocator::getInstance()->addInstance($identifierByEntityTypeId, $type);
+			$identifierById = static::getIdentifierByClassName(
+				Type::class,
+				['id', $type->getId()]
+			);
+
+			ServiceLocator::getInstance()->addInstance($identifierById, $type);
+		}
 	}
 }

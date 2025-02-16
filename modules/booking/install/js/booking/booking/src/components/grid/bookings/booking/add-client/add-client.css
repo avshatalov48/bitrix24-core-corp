@@ -1,0 +1,22 @@
+.booking-booking-booking-add-client {
+	--color-opacity: 1;
+	--background-opacity: 0.8;
+
+	align-self: flex-end;
+	padding: 0 calc(4px * var(--quater-zoom)) 1px;
+	border-radius: 1in;
+	background: rgba(var(--ui-color-palette-white-base-rgb), var(--background-opacity));
+	color: rgba(var(--ui-color-text-primary-rgb), var(--color-opacity));
+	font-size: calc(var(--ui-font-size-xs)* var(--quater-zoom));
+	font-weight: var(--ui-font-weight-medium);
+	cursor: pointer;
+}
+
+.booking-booking-booking-add-client.--expired {
+	--color-opacity: 0.5;
+	--background-opacity: 0.5;
+}
+
+.booking-booking-booking-add-client:hover {
+	box-shadow: inset 0 0 0 100px rgba(var(--ui-color-palette-black-solid-rgb), 0.05);
+}

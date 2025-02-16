@@ -7,7 +7,8 @@ this.BX.Crm = this.BX.Crm || {};
 	let _ = t => t,
 	  _t,
 	  _t2,
-	  _t3;
+	  _t3,
+	  _t4;
 	const namespace = main_core.Reflection.namespace('BX.Crm.Activity');
 	var _isRobot = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isRobot");
 	var _colorSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("colorSelector");
@@ -325,7 +326,7 @@ this.BX.Crm = this.BX.Crm || {};
 	async function _renderLocation2(value) {
 	  this.renderControl('Duration');
 	  this.locations = await babelHelpers.classPrivateFieldLooseBase(this, _fetchRoomsManagerData)[_fetchRoomsManagerData]();
-	  const wrapper = main_core.Dom.create('div');
+	  const wrapper = main_core.Tag.render(_t || (_t = _`<div id="id_location"></div>`));
 	  babelHelpers.classPrivateFieldLooseBase(this, _getLocationSelectorDialog)[_getLocationSelectorDialog](value).renderTo(wrapper);
 	  return wrapper;
 	}
@@ -464,7 +465,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    color: getComputedStyle(document.body).getPropertyValue('--ui-color-palette-gray-50'),
 	    size: 25
 	  });
-	  return main_core.Tag.render(_t || (_t = _`
+	  return main_core.Tag.render(_t2 || (_t2 = _`
 			<span class="bizproc_automation-todo-activity-actions-menu-item">
 				<span class="bizproc_automation-todo-activity-actions-menu-item-icon">${0}</span>
 				${0}
@@ -511,13 +512,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 	function _renderAttachmentFile2(file) {
-	  const fileWrapper = main_core.Tag.render(_t2 || (_t2 = _`
+	  const fileWrapper = main_core.Tag.render(_t3 || (_t3 = _`
 			<div>
 				<input type="hidden" name="attachment[]" value="${0}"/>
 				<span style="color: grey">${0}</span>
 			</div>
 		`), file.id.toString().slice(1), BX.util.htmlspecialchars(file.name));
-	  const deleteButton = main_core.Tag.render(_t3 || (_t3 = _`
+	  const deleteButton = main_core.Tag.render(_t4 || (_t4 = _`
 			<a style="color: red; text-decoration: none; border-bottom: 1px dotted">x</a>
 		`));
 	  main_core.Event.bind(deleteButton, 'click', () => main_core.Dom.remove(fileWrapper));

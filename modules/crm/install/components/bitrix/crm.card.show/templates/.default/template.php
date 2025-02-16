@@ -1,7 +1,5 @@
 <?php
 
-use Bitrix\Crm\Feature;
-use Bitrix\Crm\Feature\CopilotInCallGrading;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Uri;

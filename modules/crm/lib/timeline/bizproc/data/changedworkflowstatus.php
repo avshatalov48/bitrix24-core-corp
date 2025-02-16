@@ -14,13 +14,13 @@ final class ChangedWorkflowStatus
 	{
 		$this->workflow = $workflow;
 		[$entityTypeId, $entityId] = \CCrmBizProcHelper::resolveEntityIdByDocumentId($documentId);
-		$this->documentId = \CCrmBizProcHelper::ResolveDocumentId($entityTypeId, $entityId);
+		$this->documentId = \CCrmBizProcHelper::ResolveDocumentId($entityTypeId, $entityId) ?? [];
 		$this->documentEventType = $documentEventType;
 	}
 
 	public static function createFromRequest(WorkflowStatusChangedDto $request): ?self
 	{
-		if (empty($request->workflowId))
+		if (empty($request->workflowId) || empty($request->documentId))
 		{
 			return null;
 		}

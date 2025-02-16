@@ -23,4 +23,9 @@ class Add extends Permission
 	{
 		return 2;
 	}
+
+	public function getManagerDefaultAttributeValue(): ?string
+	{
+		return \Bitrix\Crm\Service\UserPermissions::PERMISSION_SELF;
+	}
 }

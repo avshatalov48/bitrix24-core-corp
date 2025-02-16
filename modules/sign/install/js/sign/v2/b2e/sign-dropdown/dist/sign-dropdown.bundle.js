@@ -12,6 +12,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _dom = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dom");
 	var _selector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selector");
 	var _selectedItemId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedItemId");
+	var _selectedItemCaption = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedItemCaption");
 	var _onSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSelect");
 	class SignDropdown extends main_core_events.EventEmitter {
 	  constructor(dialogOptions) {
@@ -31,6 +32,10 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      value: void 0
 	    });
 	    Object.defineProperty(this, _selectedItemId, {
+	      writable: true,
+	      value: ''
+	    });
+	    Object.defineProperty(this, _selectedItemCaption, {
 	      writable: true,
 	      value: ''
 	    });
@@ -107,6 +112,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  getSelectedId() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _selectedItemId)[_selectedItemId];
 	  }
+	  getSelectedCaption() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _selectedItemCaption)[_selectedItemCaption];
+	  }
 	}
 	function _onSelect2(item) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _selectedItemId)[_selectedItemId] = item.id;
@@ -125,6 +133,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    });
 	    return;
 	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _selectedItemCaption)[_selectedItemCaption] = caption.text;
 	  titleNode.title = `${title} ${caption}`;
 	  titleNode.firstElementChild.textContent = title;
 	  titleNode.lastElementChild.textContent = caption;

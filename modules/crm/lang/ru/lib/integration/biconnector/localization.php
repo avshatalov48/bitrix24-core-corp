@@ -12,6 +12,7 @@ $MESS['CRM_SMART_PROC_FIELD_AUTOMATED_SOLUTION_DATASET_NAME_FULL'] = "Имя д�
 $MESS['CRM_SMART_PROC_FIELD_CUSTOM_SECTION_ID'] = "Идентификатор цифрового рабочего места";
 $MESS['CRM_SMART_PROC_FIELD_CUSTOM_SECTION_TITLE'] = "Название рабочего места";
 $MESS['CRM_SMART_PROC_FIELD_PRODUCT_DATASET_NAME'] = "Имя датасета товаров смарт-процесса";
+$MESS['CRM_SMART_PROC_FIELD_USER_FIELDS'] = "ID пользовательских полей";
 
 //CRM_STAGES fields description
 $MESS['CRM_STAGES_TABLE'] = "Стадии CRM";
@@ -161,3 +162,19 @@ $MESS['CRM_QUOTE_PRODUCT_ROW_FIELD_SORT'] = "Порядок сортировки
 $MESS['CRM_QUOTE_PRODUCT_ROW_FIELD_PARENT'] = "Раздел товара";
 $MESS['CRM_QUOTE_PRODUCT_ROW_FIELD_SUPERPARENT'] = "Раздел товара на уровень выше";
 $MESS['CRM_QUOTE_PRODUCT_ROW_FIELD_SUPERSUPERPARENT'] = "Раздел товара на два уровня выше";
+
+//CRM_ACT_BIND table/field for quote product descriptions
+$MESS['CRM_ACTIVITY_RELATION_TABLE'] = "Связи дел crm";
+$MESS['CRM_ACTIVITY_RELATION_FIELD_ACTIVITY_ID'] = "Идентификатор дела";
+$MESS['CRM_ACTIVITY_RELATION_FIELD_OWNER_ID'] = "Идентификатор элемента, к которому привязано дело";
+$MESS['CRM_ACTIVITY_RELATION_FIELD_OWNER_TYPE_ID'] = "Идентификатор типа элемента, к которому привязано дело";
+
+//CRM_AI_QUALITY_ASSESSMENT table/field for CoPilot quality assessment descriptions
+$MESS['CRM_AI_QUALITY_ASSESSMENT_TABLE'] = "Оценки разговоров по скриптам";
+$MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_ID'] = "ID";
+$MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_CREATED_AT'] = "Дата создания";
+$MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_ACTIVITY_ID'] = "ID дела звонка";
+$MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_ASSESSMENT'] = "Оценка";
+$MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_USE_IN_RATING'] = "Участвует в общем рейтинге";
+$MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_USE_IN_RATING_FULL'] = "Оценка является основной для звонка. Y - да, N - нет";
+$MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_RATED_USER_ID'] = "ID сотрудника";

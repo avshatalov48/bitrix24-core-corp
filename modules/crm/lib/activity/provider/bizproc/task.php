@@ -28,11 +28,16 @@ final class Task extends Base
 		return self::PROVIDER_TYPE_ID;
 	}
 
+	public static function getName()
+	{
+		return Loc::getMessage('CRM_ACTIVITY_PROVIDER_BIZPROC_TASK_NAME') ?? '';
+	}
+
 	public static function getTypes()
 	{
 		return [
 			[
-				'NAME' => Loc::getMessage('CRM_ACTIVITY_PROVIDER_BIZPROC_TASK_NAME') ?? '',
+				'NAME' => self::getName(),
 				'PROVIDER_ID' => self::PROVIDER_ID,
 				'PROVIDER_TYPE_ID' => self::PROVIDER_TYPE_ID,
 			],

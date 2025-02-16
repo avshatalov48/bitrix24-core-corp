@@ -627,16 +627,6 @@ if($enableToolbar && $arResult['ENABLE_CREATE_TOOLBAR_BUTTON'])
 		);
 	}
 
-	if($arResult['ENABLE_EMAIL_ADD'])
-	{
-		$toolbarButtons[] = array(
-			'TEXT' => GetMessage('CRM_ACTIVITY_LIST_ADD_EMAIL_SHORT'),
-			'TITLE' => GetMessage('CRM_ACTIVITY_LIST_ADD_EMAIL'),
-			'ICON' => 'btn-new crm-activity-command-add-email',
-			'ONCLICK' => $isSingleButtonMode ? 'BX.CrmActivityEditor.items["'.CUtil::JSEscape($gridEditorID).'"].addEmail();' : ''
-		);
-	}
-
 	if($arResult['ENABLE_CALENDAR_EVENT_ADD'])
 	{
 		$addedQty = ProviderManager::prepareToolbarButtons(

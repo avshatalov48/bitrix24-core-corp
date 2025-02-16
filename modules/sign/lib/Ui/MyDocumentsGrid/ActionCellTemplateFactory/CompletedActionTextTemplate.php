@@ -3,40 +3,26 @@
 namespace Bitrix\Sign\Ui\MyDocumentsGrid\ActionCellTemplateFactory;
 
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Sign\Type\Document\InitiatedByType;
-use Bitrix\Sign\Ui\MyDocumentsGrid\TextMapper;
+use Bitrix\Sign\Contract\Grid\MyDocuments\ActionCellTemplate;
+use Bitrix\Sign\Item\MyDocumentsGrid\Row;
+use Bitrix\Sign\Ui\MyDocumentsGrid\TextGenerator;
 
 class CompletedActionTextTemplate implements ActionCellTemplate
 {
 	use ActionDateTrait;
-
-	private string $secondSideMemberRole;
-	private InitiatedByType $initiatedByType;
-	private string $myMemberStatus;
-
-	private ?DateTime $actionDate;
+	private TextGenerator $textGenerator;
 
 	public function __construct(
-		string $secondSideMemberRole,
-		InitiatedByType $initiatedByType,
-		string $myMemberStatus,
-		?DateTime $actionDate,
+		private readonly Row $row,
+		private readonly ?DateTime $actionDate,
 	)
 	{
-		$this->secondSideMemberRole = $secondSideMemberRole;
-		$this->initiatedByType = $initiatedByType;
-		$this->myMemberStatus = $myMemberStatus;
-		$this->actionDate = $actionDate;
+		$this->textGenerator = new TextGenerator($this->row);
 	}
 
-	public function get(): string
+	public function render(): string
 	{
-		$completedActionText = TextMapper::getTextByRoleForCompleteAction(
-			$this->secondSideMemberRole,
-			$this->initiatedByType,
-			$this->myMemberStatus,
-		);
-
+		$completedActionText = $this->textGenerator->getTextByRoleForCompleteAction();
 		$formattedDate = self::getFormattedDate($this->actionDate);
 
 		return <<<HTML

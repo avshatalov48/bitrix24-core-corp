@@ -1,0 +1,3 @@
+.booking--multi-booking--cancel-button:hover > i {
+	background-color: rgba(var(--ui-color-palette-white-base-rgb), 0.5);
+}

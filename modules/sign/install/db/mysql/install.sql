@@ -38,6 +38,7 @@ create table if not exists b_sign_document
 	VERSION tinyint unsigned default 1,
 	CREATED_BY_ID int(18) not null,
 	MODIFIED_BY_ID int(18) not null,
+	GROUP_ID bigint unsigned null,
 	DATE_CREATE timestamp null,
 	DATE_MODIFY timestamp not null,
 	DATE_SIGN timestamp not null default 0,
@@ -62,6 +63,7 @@ create table if not exists b_sign_document
 	INDEX IX_B_UID (UID),
 	INDEX IX_B_COMPANY (COMPANY_UID),
 	INDEX IX_B_BLANK_ID (BLANK_ID),
+	INDEX IX_B_GROUP_ID (GROUP_ID),
 	INDEX IX_B_CREATED_BY_ID (CREATED_BY_ID),
 	UNIQUE UK_SIGN_DOCUMENT_HASH (HASH)
 );
@@ -242,6 +244,15 @@ CREATE TABLE IF NOT EXISTS `b_sign_document_template`
 	`VISIBILITY` TINYINT NOT NULL DEFAULT 0,
 	PRIMARY KEY (`ID`),
 	UNIQUE INDEX `UK_B_SIGN_DOCUMENT_TEMPLATE_UID` (`UID`)
+);
+
+CREATE TABLE IF NOT EXISTS `b_sign_document_group`
+(
+	`ID` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	`CREATED_BY_ID` INT NOT NULL,
+	`DATE_CREATE` DATETIME NOT NULL,
+	`DATE_MODIFY` DATETIME NULL,
+	PRIMARY KEY (`ID`)
 );
 
 CREATE TABLE IF NOT EXISTS b_sign_node_sync

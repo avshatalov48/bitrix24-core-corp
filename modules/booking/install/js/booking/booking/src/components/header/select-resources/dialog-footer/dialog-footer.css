@@ -1,0 +1,15 @@
+.booking--booking--select-resources-dialog-footer {
+	display: flex;
+	justify-content: end;
+	padding: 1rem;
+	transition: .2s;
+}
+
+.booking--booking--select-resources-dialog-footer__button {
+	color: var(--ui-color-base-60);
+	font-weight: var(--ui-font-weight-normal);
+}
+
+.booking--booking--select-resources-dialog-footer__button:hover {
+	color: var(--ui-color-base-80);
+}

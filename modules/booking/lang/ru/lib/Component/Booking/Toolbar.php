@@ -1,0 +1,3 @@
+<?php
+
+$MESS['BOOKING_TOOLBAR_BUTTON_CREATE'] = 'Создать';

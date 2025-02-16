@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Bitrix\Crm\Service\Broker;
-
 
 use Bitrix\Crm\Service\Broker;
 use Bitrix\Iblock;
@@ -17,6 +15,7 @@ class IBlockSection extends Broker
 		{
 			return null;
 		}
+
 		if ($id <= 0)
 		{
 			return null;
@@ -46,6 +45,7 @@ class IBlockSection extends Broker
 		}
 
 		Type\Collection::normalizeArrayValuesByInt($ids);
+
 		if (empty($ids))
 		{
 			return [];
@@ -63,6 +63,7 @@ class IBlockSection extends Broker
 					'@ID' => $pageIds,
 				],
 			]);
+			
 			while ($row = $iterator->fetch())
 			{
 				$row['ID'] = (int)$row['ID'];

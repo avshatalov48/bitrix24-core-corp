@@ -1,6 +1,8 @@
-import { Dom } from 'main.core';
+import { Dom, Loc } from 'main.core';
 import { Popup } from 'main.popup';
 import { PromoManager } from 'im.v2.lib.promo';
+
+import { Analytics } from 'call.lib.analytics';
 
 import '../css/copilot-notify.css'
 
@@ -17,6 +19,7 @@ export const CopilotNotifyType = {
 export class CopilotNotify {
 	constructor(config)
 	{
+		this.callId = config.callId || 0;
 		this.type = config.type || '';
 		this.popup = null;
 		this.notifyText = '';
@@ -97,7 +100,8 @@ export class CopilotNotify {
 				this.notifyColor = '#FF5752';
 				break;
 			default:
-				this.notifyText = '';
+				this.notifyText = Loc.getMessage('CALL_POPUP_AI_DEFAULT_TEXT');
+				this.notifyColor = '#FF5752';
 				break;
 		}
 	}
@@ -174,6 +178,14 @@ export class CopilotNotify {
 		if (!this.canShowCopilotNotify())
 		{
 			return;
+		}
+
+		if (this.type === CopilotNotifyType.COPILOT_ENABLED || this.type === CopilotNotifyType.COPILOT_DISABLED)
+		{
+			Analytics.getInstance().copilot.onCopilotNotifyShow({
+				isCopilotActive: this.type === CopilotNotifyType.COPILOT_ENABLED,
+				callId: this.callId,
+			});
 		}
 
 		if (this.popup)

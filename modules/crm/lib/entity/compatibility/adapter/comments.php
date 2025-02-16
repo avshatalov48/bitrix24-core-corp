@@ -47,7 +47,7 @@ final class Comments extends Adapter
 		{
 			if ($diff->isChanged($fieldName))
 			{
-				$fields[$fieldName] = CommentsHelper::normalizeComment($diff->getCurrentValue($fieldName));
+				$fields[$fieldName] = CommentsHelper::normalizeComment($diff->getCurrentValue($fieldName), ['p']);
 			}
 		}
 	}

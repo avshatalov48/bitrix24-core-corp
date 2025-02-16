@@ -25,8 +25,8 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 	class SyncService
 	{
 		/**
-		* @return {SyncService}
-		*/
+		 * @return {SyncService}
+		 */
 		static getInstance()
 		{
 			if (!this.instance)
@@ -194,8 +194,13 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 			return (this.isSyncInProgress && !extra.fromSyncService) || serviceLocator.get('core').getAppStatus() === AppStatus.connection;
 		}
 
+		/**
+		 * @deprecated
+		 */
 		storePullEvent(params, extra, command)
 		{
+			return;
+
 			logger.info('SyncService.storePullEvent: ', params, extra, command);
 
 			this.pullEventQueue.enqueue({ params, extra, command });
@@ -203,9 +208,14 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 
 		/**
 		 * @private
+		 * @deprecated This queue was needed to eliminate a potential data race with
+		 * the last page of the synchronization service.
+		 * A large queue of pools caused the entire application to hang, temporarily disabled.
 		 */
 		async emitStoredPullEvents()
 		{
+			return;
+
 			logger.log('SyncService.emitStoredPullEvents: pullEventQueue', [...this.pullEventQueue.queue]);
 
 			while (this.pullEventQueue.isEmpty() === false)

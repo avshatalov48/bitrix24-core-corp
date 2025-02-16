@@ -1,0 +1,35 @@
+.booking-booking-busy-slot {
+	position: absolute;
+	width: calc(280px * var(--zoom));
+	pointer-events: all;
+
+	--left: 0px;
+	--top: 0px;
+	--height: 0px;
+	left: var(--left);
+	top: max(var(--top), calc(-1 * var(--top-cells-height)));
+	bottom: max(calc(100% - var(--top) - var(--height)), 1px);
+	transition-property: left, opacity;
+	transition-duration: var(--booking-animation-duration);
+	transition-timing-function: var(--booking-animation-function);
+}
+
+.--booking-booking-no-transition .booking-booking-busy-slot {
+	transition: none;
+}
+
+.booking-booking-busy-slot:before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	margin: calc(3px * var(--zoom));
+	--line-size: calc(2px* var(--quater-zoom));
+	--background-size: calc(6px* var(--quater-zoom));
+	background-image: repeating-linear-gradient(-50deg, var(--ui-color-base-15) 0 var(--line-size), transparent var(--line-size) var(--background-size));
+	border-radius: 4px;
+}
+
+.booking-booking-busy-slot.--disabled {
+	pointer-events: none;
+	opacity: 0.5;
+}

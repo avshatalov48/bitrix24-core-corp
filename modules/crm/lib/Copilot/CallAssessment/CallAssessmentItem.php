@@ -9,6 +9,9 @@ use Bitrix\Crm\Integration\AI\Model\QueueTable;
 
 final class CallAssessmentItem
 {
+	public const LOW_BORDER_DEFAULT = 30;
+	public const HIGH_BORDER_DEFAULT = 70;
+
 	private ?int $id;
 	private string $title;
 	private string $prompt;
@@ -21,6 +24,8 @@ final class CallAssessmentItem
 	private int $jobId = 0;
 	private string $status = QueueTable::EXECUTION_STATUS_PENDING;
 	private ?string $code = null;
+	private int $lowBorder = self::LOW_BORDER_DEFAULT;
+	private int $highBorder = self::HIGH_BORDER_DEFAULT;
 
 	public static function createFromEntity(CopilotCallAssessment $callAssessmentItem): self
 	{
@@ -47,6 +52,8 @@ final class CallAssessmentItem
 		$instance->jobId = $callAssessmentItem->getJobId();
 		$instance->status = $callAssessmentItem->getStatus();
 		$instance->code = $callAssessmentItem->getCode();
+		$instance->lowBorder = $callAssessmentItem->getLowBorder();
+		$instance->highBorder = $callAssessmentItem->getHighBorder();
 
 		return $instance;
 	}
@@ -76,6 +83,8 @@ final class CallAssessmentItem
 		$instance->jobId = $data['jobId'] ?? 0;
 		$instance->status = $data['status'] ?? QueueTable::EXECUTION_STATUS_PENDING;
 		$instance->code = $data['code'] ?? null;
+		$instance->lowBorder = $data['lowBorder'] ?? self::LOW_BORDER_DEFAULT;
+		$instance->highBorder = $data['highBorder'] ?? self::HIGH_BORDER_DEFAULT;
 
 		return $instance;
 	}
@@ -94,6 +103,8 @@ final class CallAssessmentItem
 			'jobId' => $this->jobId,
 			'status' => $this->status,
 			'code' => $this->code,
+			'lowBorder' => $this->lowBorder,
+			'highBorder' => $this->highBorder,
 		];
 	}
 
@@ -190,5 +201,15 @@ final class CallAssessmentItem
 		$this->code = $code;
 
 		return $this;
+	}
+
+	public function getLowBorder(): int
+	{
+		return $this->lowBorder;
+	}
+
+	public function getHighBorder(): int
+	{
+		return $this->highBorder;
 	}
 }

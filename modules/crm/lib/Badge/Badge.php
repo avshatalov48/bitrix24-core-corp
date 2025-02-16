@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Badge;
 
 use Bitrix\Crm\Badge\Model\BadgeTable;
 use Bitrix\Crm\Badge\Type\AiCallFieldsFillingResult;
+use Bitrix\Crm\Badge\Type\AiCallScoringStatus;
 use Bitrix\Crm\Badge\Type\BizprocWorkflowStatus;
 use Bitrix\Crm\Badge\Type\CalendarSharingStatus;
 use Bitrix\Crm\Badge\Type\CallStatus;
@@ -37,6 +38,7 @@ abstract class Badge
 	public const BIZPROC_WORKFLOW_STATUS_TYPE = 'workflow_status';
 	public const WORKFLOW_COMMENT_STATUS_TYPE = 'workflow_comment_status';
 	public const COPILOT_CALL_ASSESSMENT_STATUS_TYPE = 'copilot_call_assessment_status';
+	public const AI_CALL_SCORING_STATUS = 'ai_call_scoring_status';
 
 	public static function createByType(string $type, string $value): Badge
 	{
@@ -108,6 +110,11 @@ abstract class Badge
 		if ($type === self::COPILOT_CALL_ASSESSMENT_STATUS_TYPE)
 		{
 			return new CopilotCallAssessmentStatus($value);
+		}
+
+		if ($type === self::AI_CALL_SCORING_STATUS)
+		{
+			return new AiCallScoringStatus($value);
 		}
 
 		throw new ArgumentException('Unknown badge type: ' . $type);
@@ -282,9 +289,6 @@ abstract class Badge
 		];
 	}
 
-	/**
-	 * @return mixed|string
-	 */
 	public function getValue(): string
 	{
 		return $this->value;

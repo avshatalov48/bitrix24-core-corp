@@ -1,14 +1,15 @@
-import { Tag, Loc, Dom, Reflection, Text, Type } from 'main.core';
+import { Dom, Loc, Reflection, Tag, Type } from 'main.core';
 import { MemoryCache } from 'main.core.cache';
+import { FeatureStorage } from 'sign.feature-storage';
 import type { AnalyticsOptions } from 'sign.v2.analytics';
-import { Wizard, type WizardOptions, type Metadata } from 'ui.wizard';
-import { type DocumentData } from 'sign.v2.document-setup';
-import { Preview } from 'sign.v2.preview';
 import { Analytics, Context } from 'sign.v2.analytics';
-import type { SignOptions, SignOptionsConfig } from './types';
+import { type DocumentDetails } from 'sign.v2.document-setup';
 import type { Editor } from 'sign.v2.editor';
 import './style.css';
+import { Preview } from 'sign.v2.preview';
+import { type Metadata, Wizard, type WizardOptions } from 'ui.wizard';
 import { decorateResultBeforeCompletion, isTemplateMode } from './functions';
+import type { SignOptions, SignOptionsConfig } from './types';
 
 export type { SignOptions, SignOptionsConfig };
 
@@ -36,22 +37,30 @@ export class SignSettings
 	#overlayContainer: HTMLElement | null = null;
 	#currentOverlay: HTMLElement | null = null;
 	documentMode: DocumentModeType;
+	documentsGroup: Map<string, DocumentDetails>;
+	documentsGroupUids: Array<string>;
 	#isEditMode: boolean = false;
+	#isSameBlankSelected: boolean = false;
+	editedDocument: DocumentDetails | null;
+	isB2bSignMaster: boolean = false;
+	hasPreviewUrls: boolean = false;
 
 	constructor(containerId: string, signOptions: SignOptions = {}, wizardOptions: WizardOptions = {})
 	{
 		this.#containerId = containerId;
-		this.#preview = new Preview();
 		this.#wizardOptions = wizardOptions;
 		const { type = '', config = {}, documentMode, initiatedByType } = signOptions;
 		this.documentMode = documentMode;
 		this.#type = type;
+		this.documentsGroup = new Map();
+		this.documentsGroupUids = [];
 		const { languages } = config.documentSendConfig ?? {};
 		const EditorConstructor = Reflection.getClass('top.BX.Sign.V2.Editor');
 		this.editor = new EditorConstructor(
 			type,
 			{ languages, isTemplateMode: this.isTemplateMode(), documentInitiatedByType: initiatedByType },
 		);
+		this.#preview = new Preview({ layout: { getAfterPreviewLayoutCallback: () => this.getAfterPreviewLayout() } });
 	}
 
 	#createHead(): HTMLElement
@@ -120,7 +129,9 @@ export class SignSettings
 					${this.#createHead()}
 					${this.wizard.getLayout()}
 				</div>
-				${this.#previewLayout}
+				<div style="display: flex; flex-direction: column;">
+					${this.#previewLayout}
+				</div>
 			</div>
 		`;
 
@@ -141,8 +152,12 @@ export class SignSettings
 	#showCompleteNotification(): void
 	{
 		const Notification = Reflection.getClass('top.BX.UI.Notification');
+		const notificationText = this.#isGroupDocuments()
+			? Loc.getMessage('SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT_GROUP')
+			: Loc.getMessage('SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT');
+
 		Notification.Center.notify({
-			content: Text.encode(Loc.getMessage('SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT')),
+			content: notificationText,
 			autoHideDelay: 4000,
 		});
 	}
@@ -154,41 +169,74 @@ export class SignSettings
 		{
 			this.#showCompleteNotification();
 		}
-		const queryString = window.location.search;
-		const urlParams = new URLSearchParams(queryString);
-		if (!urlParams.has('noRedirect'))
+
+		if (this.isSingleDocument())
 		{
-			const { entityTypeId, entityId } = this.documentSetup.setupData;
-			const detailsUrl = `/crm/type/${entityTypeId}/details/${entityId}/`;
-			BX.SidePanel.Instance.open(detailsUrl);
+			const queryString = window.location.search;
+			const urlParams = new URLSearchParams(queryString);
+			if (!urlParams.has('noRedirect'))
+			{
+				const { entityTypeId, entityId } = this.documentSetup.setupData;
+				const detailsUrl = `/crm/type/${entityTypeId}/details/${entityId}/`;
+				BX.SidePanel.Instance.open(detailsUrl);
+			}
 		}
 	}
 
-	#renderPages(blocks: DocumentData['blocks'], preparedPages: boolean = false): void
+	isSingleDocument(): boolean
 	{
-		this.#preview.ready = false;
-		this.#preview.setBlocks(blocks);
+		return this.documentsGroup.size === 1;
+	}
+
+	#isGroupDocuments(): boolean
+	{
+		return this.documentsGroup.size > 1;
+	}
+
+	async #renderPages(documentData: DocumentDetails, preparedPages: boolean = false): Promise<void>
+	{
+		this.#preview.urls = [];
+		this.disablePreviewReady();
+		this.#preview.setBlocks(documentData.blocks);
+
 		this.wizard.toggleBtnActiveState('back', true);
 		const handler = (urls, totalPages): void => {
-			this.#preview.ready = true;
+			this.enablePreviewReady();
 			this.#preview.urls = urls;
 			this.editor.setUrls(urls, totalPages);
 			this.wizard.toggleBtnActiveState('back', false);
 		};
 
-		this.documentSetup.waitForPagesList(handler, preparedPages);
+		this.documentSetup.waitForPagesList(documentData, handler, preparedPages);
+	}
+
+	getFirstDocumentUidFromGroup(): string
+	{
+		return this.documentsGroup.keys().next().value;
+	}
+
+	getFirstDocumentDataFromGroup(): DocumentDetails
+	{
+		return this.documentsGroup.values().next().value;
 	}
 
 	#subscribeOnEditorEvents(): void
 	{
 		this.editor.subscribe('save', ({ data }) => {
 			const blocks = data.blocks;
-			this.#preview.setBlocks(blocks);
-			this.documentSetup.setupData = {
-				...this.documentSetup.setupData,
-				blocks,
-			};
-			this.documentSend.documentData = { ...this.documentSend.documentData };
+			const uid = data.uid;
+
+			const selectedDocument = this.documentsGroup.get(uid);
+			selectedDocument.blocks = blocks;
+
+			if (uid === this.getFirstDocumentUidFromGroup())
+			{
+				this.#preview.setBlocks(blocks);
+				this.documentSetup.setupData = {
+					...this.documentSetup.setupData,
+					blocks,
+				};
+			}
 		});
 	}
 
@@ -225,7 +273,15 @@ export class SignSettings
 			{
 				type: 'showEditor',
 				stage: 'send',
-				method: () => this.editor.show(),
+				method: async (event) => {
+					const { uid } = event.getData();
+					if (uid && this.#isGroupDocuments())
+					{
+						await this.#executeEditorActionsForGroup(uid);
+					}
+
+					this.editor.show();
+				},
 			},
 			{
 				type: 'changeTitle',
@@ -281,6 +337,42 @@ export class SignSettings
 		this.#subscribeOnEditorEvents();
 	}
 
+	async #getPagesUrls(data: DocumentDetails): Promise
+	{
+		const documentUrls = [];
+		const handler = (urls): void => {
+			const targetDocument = this.documentsGroup.get(data.uid);
+			documentUrls.push(...urls);
+			targetDocument.urls = documentUrls;
+		};
+		await this.documentSetup.waitForPagesList(data, handler);
+	}
+
+	async #executeEditorActionsForGroup(uid: string): Promise<void>
+	{
+		this.editor.setUrls([], 0);
+
+		const setupData = this.documentsGroup.get(uid);
+
+		if (!setupData.urls)
+		{
+			const openEditorButton = this.#container.querySelector(`span[data-id="${setupData.id}"]`);
+			Dom.addClass(openEditorButton, 'ui-btn-clock');
+			await this.#getPagesUrls(setupData);
+			Dom.removeClass(openEditorButton, 'ui-btn-clock');
+			this.documentSetup.blankSelector.disableSelectedBlank(setupData.blankId);
+			this.documentSetup.resetDocument();
+			this.wizard.toggleBtnActiveState('next', false);
+		}
+
+		const targetDocument = this.documentsGroup.get(uid);
+		this.editor.documentData = targetDocument;
+		this.editor.setUrls(targetDocument.urls, targetDocument.urls.length);
+
+		await this.editor.waitForPagesUrls();
+		await this.editor.renderDocument();
+	}
+
 	#appendOverlay(overlay: ?HTMLElement): void
 	{
 		if (!overlay)
@@ -298,18 +390,23 @@ export class SignSettings
 		Dom.append(this.#currentOverlay, this.#overlayContainer);
 	}
 
-	async setupDocument(uid?: string, preparedPages: boolean = false): Promise<DocumentData> | null
+	async setupDocument(uid?: string, preparedPages: boolean = false): Promise<DocumentDetails> | null
 	{
 		if (this.documentSetup.isSameBlankSelected())
 		{
 			void await this.documentSetup.setup(uid);
+			this.#isSameBlankSelected = true;
 
 			return this.documentSetup.setupData;
 		}
 
-		this.#preview.urls = [];
-		this.editor.setUrls([], 0);
-		this.#preview.setBlocks();
+		if (this.documentsGroup.size === 0)
+		{
+			this.#preview.urls = [];
+			this.editor.setUrls([], 0);
+			this.#preview.setBlocks();
+		}
+
 		await this.documentSetup.setup(uid);
 		const { setupData } = this.documentSetup;
 		if (!setupData)
@@ -317,8 +414,24 @@ export class SignSettings
 			return null;
 		}
 
-		const { blocks } = setupData;
-		await this.#renderPages(blocks, preparedPages);
+		if (
+			this.documentsGroup.size === 0
+			|| (this.editedDocument && this.isFirstDocumentSelected(this.editedDocument.uid))
+			|| this.isTemplateMode()
+			|| this.isB2bSignMaster
+			|| !FeatureStorage.isGroupSendingEnabled()
+		)
+		{
+			this.#renderPages(setupData, preparedPages);
+		}
+
+		if (this.#preview.hasUrls())
+		{
+			this.hasPreviewUrls = true;
+			this.wizard.toggleBtnActiveState('next', false);
+		}
+
+		this.#isSameBlankSelected = false;
 
 		return setupData;
 	}
@@ -357,9 +470,10 @@ export class SignSettings
 	}
 
 	async applyTemplateData(templateUid: string): Promise<void>
+	// eslint-disable-next-line no-empty-function
 	{}
 
-	#render(uid): void
+	#render(uid: ?string): void
 	{
 		const container = document.getElementById(this.#containerId);
 		Dom.append(this.#getOverlayContainer(), container);
@@ -401,5 +515,47 @@ export class SignSettings
 	isEditMode(): boolean
 	{
 		return this.#isEditMode;
+	}
+
+	resetPreview(): void
+	{
+		this.#preview.urls = [];
+		this.#preview.setBlocks();
+	}
+
+	disablePreviewReady(): void
+	{
+		this.#preview.ready = false;
+	}
+
+	enablePreviewReady(): void
+	{
+		this.#preview.ready = true;
+	}
+
+	setSingleDocument(setupData: DocumentDetails): void
+	{
+		this.documentsGroup.clear();
+		this.documentsGroup.set(setupData.uid, setupData);
+		this.documentsGroupUids.length = 0;
+		this.documentsGroupUids.push(setupData.uid);
+		this.documentSend.setDocumentsBlock(this.documentsGroup);
+
+		if (!this.#isSameBlankSelected)
+		{
+			this.resetPreview();
+			this.editor.setUrls([]);
+			this.disablePreviewReady();
+		}
+	}
+
+	isFirstDocumentSelected(uid: string)
+	{
+		return this.documentsGroupUids[0] === uid;
+	}
+
+	getAfterPreviewLayout(): HTMLElement | null
+	{
+		return null;
 	}
 }

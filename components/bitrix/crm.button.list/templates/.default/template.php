@@ -7,9 +7,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
 use Bitrix\Crm\Security\Role\Manage\Manager\ButtonSelection;
-use Bitrix\Main\Web\Json;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Toolbar\ButtonLocation;
@@ -43,6 +43,11 @@ if ($arResult['PERM_CAN_EDIT'])
 }
 
 $permissionButton = new PermissionItem(new ButtonSelection());
+if (isset($arParams['ANALYTICS']) && is_array($arParams['ANALYTICS']))
+{
+	$permissionButton->setAnalytics($arParams['ANALYTICS']);
+}
+
 if ($permissionButton->canShow())
 {
 	$interfaceToolbarButtons[] = $permissionButton->toInterfaceToolbarButton();

@@ -12,6 +12,10 @@ use Bitrix\Crm\Service\Broker;
  */
 class Lead extends Broker
 {
+	protected ?string $eventEntityAdd = 'OnAfterCrmLeadAdd';
+	protected ?string $eventEntityUpdate = 'OnAfterCrmLeadUpdate';
+	protected ?string $eventEntityDelete = 'OnAfterCrmLeadDelete';
+
 	protected function loadEntry(int $id)
 	{
 		return LeadTable::getById($id)->fetchObject();

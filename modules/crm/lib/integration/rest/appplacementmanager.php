@@ -11,6 +11,11 @@ Loc::loadMessages(__FILE__);
 
 class AppPlacementManager
 {
+	public static function getDefaultGroupName(): string
+	{
+		return Loc::getMessage('CRM_APP_PLACEMENT_DEFAULT_GROUP');
+	}
+
 	public static function getHandlerInfos($placement)
 	{
 		if(!Main\Loader::includeModule('rest'))
@@ -29,7 +34,7 @@ class AppPlacementManager
 			$groupName = isset($handler['GROUP_NAME']) ? trim($handler['GROUP_NAME']) : '';
 			if($groupName === '')
 			{
-				$groupName = Loc::getMessage('CRM_APP_PLACEMENT_DEFAULT_GROUP');
+				$groupName = self::getDefaultGroupName();
 			}
 			if(!isset($results[$groupName]))
 			{

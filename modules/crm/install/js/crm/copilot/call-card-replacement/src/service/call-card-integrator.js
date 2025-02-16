@@ -22,13 +22,11 @@ export class CallCardIntegrator
 		return (new Controller())
 			.resolveCallAssessment(callId)
 			.then((response): ?CallCardReplacementApp => {
-				const { callAssessment, activeCallAssessmentCount } = response?.data ?? {};
+				const { callAssessment, hasAvailableSelectorItems } = response?.data ?? {};
 				if (!callAssessment)
 				{
 					return null;
 				}
-
-				const hasAvailableSelectorItems = activeCallAssessmentCount > 0;
 
 				const replacement = new CallCardReplacementApp({
 					hasAvailableSelectorItems,

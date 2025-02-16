@@ -6,6 +6,7 @@ use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Item\FieldImplementation;
 use Bitrix\Crm\Service\Broker;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\InvalidOperationException;
@@ -321,6 +322,11 @@ final class Binding implements FieldImplementation
 			{
 				$result->addErrors($updateResult->getErrors());
 			}
+		}
+
+		if (!$result->getErrors())
+		{
+			Container::getInstance()->getEntityBroker($this->boundEntityTypeId)?->resetAllCache();
 		}
 
 		return $result;

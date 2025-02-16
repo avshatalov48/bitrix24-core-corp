@@ -6,6 +6,7 @@ if(!CModule::IncludeModule('rest'))
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Rest\Exceptions\ArgumentTypeException;
 use Bitrix\Rest\OAuth;
 use Bitrix\Rest\APAuth;
 use Bitrix\Voximplant\Security;
@@ -469,8 +470,19 @@ class CVoxImplantRestService extends IRestService
 
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
-		$sort = $arParams['SORT'];
-		$order = $arParams['ORDER'];
+		if (isset($arParams['SORT']) && !is_string($arParams['SORT']))
+		{
+			unset($arParams['SORT']);
+			//throw new ArgumentTypeException('SORT', 'string');
+		}
+		if (isset($arParams['ORDER']) && !is_string($arParams['ORDER']))
+		{
+			unset($arParams['ORDER']);
+			//throw new ArgumentTypeException('ORDER', 'string');
+		}
+
+		$sort = isset($arParams['SORT']) ? self::filterSortParam(trim($arParams['SORT'])) : null;
+		$order = isset($arParams['ORDER']) ? self::filterOrderParam(trim($arParams['ORDER'])) : null;
 		$arFilter = self::checkStatisticFilter($arParams['FILTER']);
 
 		$allowedUserIds = Security\Helper::getAllowedUserIds(
@@ -644,6 +656,26 @@ class CVoxImplantRestService extends IRestService
 		}
 
 		return $arFilter;
+	}
+
+	private static function filterSortParam(string $field): ?string
+	{
+		if (StatisticTable::getEntity()->hasField($field))
+		{
+			return $field;
+		}
+
+		return null;
+	}
+
+	private static function filterOrderParam(string $order): ?string
+	{
+		if (in_array($order, ['ASC', 'DESC']))
+		{
+			return $order;
+		}
+
+		return null;
 	}
 
 	public static function lineGet()

@@ -433,6 +433,18 @@ final class JobRepository
 		return $fillFieldsJob->requireFinishedTime()->getTimestamp() - $transcribeJob->requireCreatedTime()->getTimestamp();
 	}
 
+	public function isUserHasJobs(int $userId): bool
+	{
+		$useJob = QueueTable::query()
+			->setSelect(['ID'])
+			->where('USER_ID', $userId)
+			->setLimit(1)
+			->fetchObject()
+		;
+
+		return (bool)$useJob;
+	}
+
 	/**
 	 * @internal
 	 */

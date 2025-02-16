@@ -123,8 +123,10 @@ this.BX.Sign = this.BX.Sign || {};
 	      uid,
 	      title
 	    } = documentData;
-	    babelHelpers.classPrivateFieldLooseBase(this, _documentSummary)[_documentSummary].uid = uid;
-	    babelHelpers.classPrivateFieldLooseBase(this, _documentSummary)[_documentSummary].title = title;
+	    babelHelpers.classPrivateFieldLooseBase(this, _documentSummary)[_documentSummary].addItem(uid, {
+	      uid,
+	      title
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _documentData)[_documentData] = documentData;
 	  }
 	  getLayout() {
@@ -196,6 +198,10 @@ this.BX.Sign = this.BX.Sign || {};
 	      }
 	      return false;
 	    }
+	  }
+	  setDocumentsBlock(documents) {
+	    const documentsObject = Object.fromEntries(documents);
+	    babelHelpers.classPrivateFieldLooseBase(this, _documentSummary)[_documentSummary].setItems(documentsObject);
 	  }
 	}
 	function _attachMenu2(idMeans, entityData) {

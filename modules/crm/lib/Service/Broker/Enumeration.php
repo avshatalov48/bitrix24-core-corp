@@ -1,19 +1,19 @@
 <?php
 
-
 namespace Bitrix\Crm\Service\Broker;
 
-
 use Bitrix\Crm\Service\Broker;
-use Bitrix\Crm\Service\Router;
-use Bitrix\Main\Application;
-use Bitrix\Main\UserTable;
+use CUserFieldEnum;
 
+/**
+ * @method array|null getById(int $id)
+ * @method array[] getBunchByIds(array $ids)
+ */
 class Enumeration extends Broker
 {
 	protected function loadEntry(int $id): ?array
 	{
-		$enums = \CUserFieldEnum::GetList(
+		$enums = CUserFieldEnum::GetList(
 			[],
 			[
 				'ID' => $id,
@@ -21,7 +21,7 @@ class Enumeration extends Broker
 		);
 		$enum = $enums->Fetch();
 
-		return (is_array($enum) ? $enum : null);
+		return is_array($enum) ? $enum : null;
 	}
 
 	/**
@@ -29,7 +29,7 @@ class Enumeration extends Broker
 	 */
 	protected function loadEntries(array $ids): array
 	{
-		$enums = \CUserFieldEnum::GetList(
+		$enums = CUserFieldEnum::GetList(
 			[],
 			[
 				'ID' => $ids,

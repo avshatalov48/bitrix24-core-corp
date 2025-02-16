@@ -1,3 +1,4 @@
+import type { ProviderCodeType } from 'sign.v2.api';
 import { post } from '../request';
 import type { Template, TemplateField, FieldValue } from './type';
 
@@ -17,7 +18,7 @@ export class TemplateApi
 
 	send(templateUid: string, fields: FieldValue[]): Promise<{
 		employeeMember: { id: number, uid: string },
-		document: { id: number }
+		document: { id: number, providerCode: ProviderCodeType },
 	}>
 	{
 		return post('sign.api_v1.b2e.document.template.send', { uid: templateUid, fields });

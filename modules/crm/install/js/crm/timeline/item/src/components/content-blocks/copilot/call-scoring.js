@@ -1,3 +1,4 @@
+import { Text } from 'main.core';
 import { AvatarRoundGuest } from 'ui.avatar';
 
 import { Action } from '../../../action';
@@ -13,6 +14,19 @@ export const CallScoring = {
 	inject: ['isReadOnly'],
 
 	computed: {
+		className(): Object
+		{
+			const assessment = Text.toInteger(this.scoringData?.ASSESSMENT);
+			const highBorder = Text.toInteger(this.scoringData?.HIGH_BORDER);
+			const lowBorder = Text.toInteger(this.scoringData?.LOW_BORDER);
+
+			return {
+				'crm-timeline__call-scoring': true,
+				'--success': assessment >= highBorder,
+				'--failed': assessment <= lowBorder,
+			};
+		},
+
 		assessmentScriptClassName(): []
 		{
 			return [
@@ -65,7 +79,7 @@ export const CallScoring = {
 	},
 
 	template: `
-		<div class='crm-timeline__call-scoring'>
+		<div :class='className'>
 			<div class='crm-timeline__call-scoring-wrapper'>
 				<div class='crm-timeline__call-scoring-responsible'>
 					<div class='crm-timeline__call-scoring-title'>
@@ -91,6 +105,7 @@ export const CallScoring = {
 							@click='executeAction'
 						>
 							<span class="value">{{ this.scoringData?.ASSESSMENT }}</span>
+							<div class="percent"></div>
 						</div>
 						<div class='script-layout'>
 							<div class='crm-timeline__call-scoring-title'>

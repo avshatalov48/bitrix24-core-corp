@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
 /** @var array $arResult */
@@ -100,7 +101,13 @@ if($arResult['PERM_CONFIG'])
 	$items['tab_content_printed_forms_of_documents']['PS_MARKETPLACE']['ICON_CLASS'] = 'img-app';
 	$items['tab_content_printed_forms_of_documents']['PS_MARKETPLACE']['NAME'] = GetMessage("CRM_CONFIGS_TAB_APPS_2");
 
-	$items['tab_content_rights']['PERMS']['URL'] = (string)Container::getInstance()->getRouter()->getPermissionsUrl();
+	$crmPermsViewEventBuilder = (new \Bitrix\Crm\Integration\Analytics\Builder\Security\ViewEvent())
+		->setSection(\Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CRM_SETTINGS)
+	;
+
+	$items['tab_content_rights']['PERMS']['URL'] = (string)$crmPermsViewEventBuilder->buildUri(
+		Container::getInstance()->getRouter()->getPermissionsUrl(),
+	);
 	$items['tab_content_rights']['PERMS']['ICON_CLASS'] = 'img-permissions';
 	$items['tab_content_rights']['PERMS']['NAME'] = GetMessage("CRM_CONFIGS_PERMS");
 
@@ -280,10 +287,12 @@ if($arResult['PERM_CONFIG'])
 
 	if($arResult['BITRIX24'])
 	{
-		$items['tab_content_apps']['CRM_APPLICATION']['URL'] = \Bitrix\Crm\Integration\Market\Router::getCategoryPath('crm');
+		$items['tab_content_apps']['CRM_APPLICATION']['URL'] = \Bitrix\Crm\Integration\Market\Router::getBasePath();
 		$items['tab_content_apps']['CRM_APPLICATION']['ICON_CLASS'] = 'img-app';
 		$items['tab_content_apps']['CRM_APPLICATION']['NAME'] = GetMessage("CRM_CONFIGS_CRM_APPLICATION");
-		$items['tab_content_apps']['MIGRATION_OTHER_CRM']['URL'] = \Bitrix\Crm\Integration\Market\Router::getCategoryPath('migration');
+		$items['tab_content_apps']['MIGRATION_OTHER_CRM']['URL'] = Loader::includeModule('market')
+			? \Bitrix\Crm\Integration\Market\Router::getBasePath() . 'collection/migration_crm/'
+			: \Bitrix\Crm\Integration\Market\Router::getCategoryPath('migration');
 		$items['tab_content_apps']['MIGRATION_OTHER_CRM']['ICON_CLASS'] = 'img-migration';
 		$items['tab_content_apps']['MIGRATION_OTHER_CRM']['NAME'] = GetMessage("CRM_CONFIGS_MIGRATION_OTHER_CRM");
 	}

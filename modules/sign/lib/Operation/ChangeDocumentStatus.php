@@ -39,7 +39,7 @@ final class ChangeDocumentStatus implements Contract\Operation
 		private Item\Document $document,
 		private string $status,
 		private ?DateTime $signDate = null,
-		private ?Item\Member $stopInitiatorMember = null,
+		private ?Item\Member $initiatorMember = null,
 	)
 	{
 		$this->documentRepository = Container::instance()->getDocumentRepository();
@@ -70,11 +70,6 @@ final class ChangeDocumentStatus implements Contract\Operation
 			return $result->addError(new Main\Error("Unknown document status '{$this->document->status}'"));
 		}
 
-		if ($this->document->status === $this->status)
-		{
-			return $result;
-		}
-
 		if ($this->status === Type\DocumentStatus::DONE)
 		{
 			$signDate = $this->signDate ?? new \DateTime();
@@ -86,7 +81,9 @@ final class ChangeDocumentStatus implements Contract\Operation
 		{
 			$this->document->dateStatusChanged = new DateTime();
 		}
+
 		$this->document->status = $this->status;
+
 		$updateResult = $this->documentRepository->update($this->document);
 		if (!$updateResult->isSuccess())
 		{
@@ -95,20 +92,25 @@ final class ChangeDocumentStatus implements Contract\Operation
 
 		if (Type\DocumentScenario::isB2EScenario($this->document->scenario ?? ''))
 		{
-			$this->legalLogService->registerDocumentChangedStatus($this->document, $this->stopInitiatorMember);
-				$sendMessageResult = $this->hrBotMessageService->handleDocumentStatusChangedMessage(
+			$this->legalLogService->registerDocumentChangedStatus($this->document, $this->initiatorMember);
+
+			$sendMessageResult = $this->hrBotMessageService->handleDocumentStatusChangedMessage(
 				$this->document,
 				$this->status,
-				$this->stopInitiatorMember,
+				$this->initiatorMember,
 			);
 			$result->addErrors($sendMessageResult->getErrors());
-			$this->eventHandlerService->handleCurrentDocumentStatus($this->document, $this->stopInitiatorMember);
+
+			$this->eventHandlerService->handleCurrentDocumentStatus($this->document, $this->initiatorMember);
+
 			$members = $this->memberRepository->listByDocumentId($this->document->id);
+
 			foreach ($members->toArray() as $member)
 			{
 				// TODO: remove this after the "My Documents" grid is released
 				$this->pullService->sendMemberStatusChanged($this->document, $member);
 			}
+
 			if ($this->status === Type\DocumentStatus::STOPPED)
 			{
 				$addMembersResult = (new Operation\DocumentChat\AddMembersByStoppedDocument($this->document))->launch();
@@ -127,7 +129,7 @@ final class ChangeDocumentStatus implements Contract\Operation
 					return $updateMyDocumentsCounterResult;
 				}
 
-				if ($this->stopInitiatorMember)
+				if ($this->initiatorMember)
 				{
 					$setDocumentStoppedByResult = $this->setDocumentStoppedBy();
 					if (!$setDocumentStoppedByResult->isSuccess())
@@ -149,7 +151,7 @@ final class ChangeDocumentStatus implements Contract\Operation
 					return $unsetDocumentSmartProcessResult;
 				}
 
-				$result = $this->myDocumentGridEventService->onDocumentStop($this->document, $this->stopInitiatorMember);
+				$result = $this->myDocumentGridEventService->onDocumentStop($this->document, $this->initiatorMember);
 				if (!$result->isSuccess())
 				{
 					return $result;
@@ -236,13 +238,13 @@ final class ChangeDocumentStatus implements Contract\Operation
 	{
 		$result = new Main\Result();
 
-		if ($this->stopInitiatorMember === null)
+		if ($this->initiatorMember === null)
 		{
 			return $result->addError(new Main\Error('Empty member'));
 		}
 
 		$userId = $this->memberService->getUserIdForMember(
-			$this->stopInitiatorMember,
+			$this->initiatorMember,
 			$this->document,
 		);
 

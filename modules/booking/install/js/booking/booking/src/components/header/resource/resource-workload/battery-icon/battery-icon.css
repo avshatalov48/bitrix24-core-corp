@@ -1,0 +1,3 @@
+#booking--battery-icon #booking--battery-icon-charge > rect {
+	transition: fill .4s ease-in-out;
+}

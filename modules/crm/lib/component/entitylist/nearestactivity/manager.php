@@ -68,17 +68,25 @@ class Manager
 		}
 		$result = [];
 
-		$activitiesIterator = \CCrmActivity::GetList([], ['ID' => array_keys($activitiesIds)], false, false, [
-			'ID',
-			'TYPE_ID',
-			'PROVIDER_ID',
-			'SUBJECT',
-			'RESPONSIBLE_ID',
-			'DEADLINE',
-			'ORIGIN_ID',
-			'IS_INCOMING_CHANNEL',
-			'LIGHT_COUNTER_AT',
-		]);
+		$activitiesIterator = \CCrmActivity::GetList(
+			[], [
+				'ID' => array_keys($activitiesIds),
+				'CHECK_PERMISSIONS' => 'N',
+			],
+			false,
+			false,
+			[
+				'ID',
+				'TYPE_ID',
+				'PROVIDER_ID',
+				'SUBJECT',
+				'RESPONSIBLE_ID',
+				'DEADLINE',
+				'ORIGIN_ID',
+				'IS_INCOMING_CHANNEL',
+				'LIGHT_COUNTER_AT',
+			]
+		);
 		while ($activity = $activitiesIterator->Fetch())
 		{
 			$entityId = $activitiesIds[$activity['ID']];

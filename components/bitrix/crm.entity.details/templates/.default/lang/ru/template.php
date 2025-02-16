@@ -44,4 +44,6 @@ $MESS["CRM_ENT_DETAIL_BUTTON_CANCEL"] = "Отмена";
 $MESS["CRM_ENT_DETAIL_DELETION_WARNING"] = "Обратите внимание, что удаление данных может привести к искажению аналитических отчётов.";
 $MESS["CRM_ENT_DETAIL_DELETION_GO_TO_DETAILS"] = "Подробнее";
 $MESS["CRM_ENT_DETAIL_BIZPROC_STARTER_LABEL"] = "Бизнес-процессы";
+$MESS["CRM_ENT_DETAIL_DYNAMIC_CATEGORY_DLG_TITLE"] = "Настройка смарт-процесса";
+$MESS["CRM_ENT_DETAIL_DYNAMIC_CATEGORY_DLG_FIELD"] = "Воронка";
 

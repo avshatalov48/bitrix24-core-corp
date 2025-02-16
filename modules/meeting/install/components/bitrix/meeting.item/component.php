@@ -25,13 +25,15 @@ if ($arParams['ITEM_ID'] <= 0)
 
 if (!CModule::IncludeModule("meeting"))
 {
-	return ShowError(GetMessage("ME_MODULE_NOT_INSTALLED"));
+	ShowError(GetMessage("ME_MODULE_NOT_INSTALLED"));
+	return;
 }
 
 $dbRes = CMeetingItem::GetList([], ['ID' => $arParams['ITEM_ID']]);
 if (!$arResult['ITEM'] = $dbRes->Fetch())
 {
-	return ShowError(GetMessage("ME_MEETING_ITEM_NOT_FOUND"));
+	ShowError(GetMessage("ME_MEETING_ITEM_NOT_FOUND"));
+	return;
 }
 
 $arResult['FROM_MEETING'] = (int)($_REQUEST['from'] ?? null);
@@ -174,7 +176,8 @@ while ($arInstance = $dbRes->Fetch())
 
 if (!$bHasAccess)
 {
-	return ShowError(GetMessage("ME_MEETING_ACCESS_DENIED"));
+	ShowError(GetMessage("ME_MEETING_ACCESS_DENIED"));
+	return;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save_item']) && check_bitrix_sessid())

@@ -1,0 +1,53 @@
+.booking-booking-sidebar-calendar {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	padding: 10px;
+	background: var(--ui-color-palette-white-base);
+	border-radius: 12px;
+	border: 1px solid var(--ui-color-base-10);
+	box-shadow: 0 0 30px 10px var(--ui-color-base-02);
+	pointer-events: all;
+}
+
+.booking-booking-sidebar-calendar-header {
+	display: flex;
+	align-items: center;
+}
+
+.booking-booking-sidebar-calendar-header .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-40);
+	--ui-icon-set__icon-size: 20px;
+}
+
+.booking-booking-sidebar-calendar-button {
+	display: flex;
+	cursor: pointer;
+}
+
+.booking-booking-sidebar-calendar-button:hover {
+	box-shadow: inset 0 0 999px rgba(0, 0, 0, 0.03);
+	border-radius: 4px;
+}
+
+.booking-booking-sidebar-calendar-button.--collapse {
+	margin-left: auto;
+}
+
+.booking-booking-sidebar-calendar-title {
+	min-width: 140px;
+	text-align: center;
+	color: var(--ui-color-base-90);
+	font-size: var(--ui-font-size-lg);
+	cursor: default;
+}
+
+.booking-booking-sidebar-calendar-date-picker {
+	overflow: hidden;
+	height: 0;
+	transition: height 180ms ease;
+}
+
+.booking-booking-sidebar-calendar-date-picker.--expanded {
+	height: 254px;
+}

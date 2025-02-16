@@ -18,7 +18,7 @@ type Block = {
 	style: { [$Keys<CSSStyleDeclaration>]: string; };
 };
 
-export type DocumentData = {
+export type DocumentDetails = {
 	blocks: Array<Block>;
 	companyUid: string | null;
 	createdById: number;

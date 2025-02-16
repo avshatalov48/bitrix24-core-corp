@@ -1557,6 +1557,132 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 	BatchExclusionManager.items = {};
 
+	var _observerIdList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("observerIdList");
+	class BatchObserversManager extends BatchManager {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _observerIdList, {
+	      writable: true,
+	      value: []
+	    });
+	  }
+	  static getItem(id) {
+	    var _BatchObserversManage;
+	    return (_BatchObserversManage = BatchObserversManager.items[id]) != null ? _BatchObserversManage : null;
+	  }
+	  static create(id, settings) {
+	    const self = new BatchObserversManager(id, settings);
+	    BatchObserversManager.items[self.getId()] = self;
+	    return self;
+	  }
+	  getCancelActionName() {
+	    return 'crm.api.autorun.observers.cancel';
+	  }
+	  getEventNamespacePostfix() {
+	    return 'BatchObserversManager';
+	  }
+	  getIdPrefix() {
+	    return 'crm_batch_observers_mgr';
+	  }
+	  getPrepareActionName() {
+	    return 'crm.api.autorun.observers.prepare';
+	  }
+	  getPrepareActionParams() {
+	    const params = super.getPrepareActionParams();
+	    params.observerIdList = babelHelpers.classPrivateFieldLooseBase(this, _observerIdList)[_observerIdList];
+	    return params;
+	  }
+	  getProcessActionName() {
+	    return 'crm.api.autorun.observers.process';
+	  }
+	  setObserverIdList(userIdList) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _observerIdList)[_observerIdList] = userIdList;
+	  }
+	}
+	BatchObserversManager.messages = {
+	  title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_TITLE'),
+	  summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_CAPTION'),
+	  summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_SUCCEEDED'),
+	  summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_FAILED')
+	};
+	BatchObserversManager.items = {};
+
+	/**
+	 * @memberOf BX.Crm.Autorun
+	 */
+	class BatchRefreshAccountingDataManager extends BatchManager {
+	  static getItem(id) {
+	    return BX.prop.get(BatchRefreshAccountingDataManager.items, id, null);
+	  }
+	  static create(id, settings) {
+	    const self = new BatchRefreshAccountingDataManager(id, settings);
+	    BatchRefreshAccountingDataManager.items[self.getId()] = self;
+	    return self;
+	  }
+	  getIdPrefix() {
+	    return 'crm_batch_refresh_accounting_data_mgr';
+	  }
+	  getEventNamespacePostfix() {
+	    return 'BatchRefreshAccountingDataManager';
+	  }
+	  getPrepareActionName() {
+	    return 'crm.api.autorun.refreshaccountingdata.prepare';
+	  }
+	  getProcessActionName() {
+	    return 'crm.api.autorun.refreshaccountingdata.process';
+	  }
+	  getCancelActionName() {
+	    return 'crm.api.autorun.refreshaccountingdata.cancel';
+	  }
+	}
+	BatchRefreshAccountingDataManager.messages = {
+	  // default messages, you can override them via settings.messages
+	  title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_TITLE'),
+	  summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_SUMMARY_CAPTION'),
+	  summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_SUMMARY_SUCCEEDED'),
+	  summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_SUMMARY_FAILED')
+	};
+	BatchRefreshAccountingDataManager.items = {};
+
+	/* eslint-disable no-underscore-dangle */
+
+	/**
+	 * @memberOf BX.Crm.Autorun
+	 */
+	class BatchRestartAutomationManager extends BatchManager {
+	  static getItem(id) {
+	    return BX.prop.get(BatchRestartAutomationManager.items, id, null);
+	  }
+	  static create(id, settings) {
+	    const self = new BatchRestartAutomationManager(id, settings);
+	    BatchRestartAutomationManager.items[self.getId()] = self;
+	    return self;
+	  }
+	  getIdPrefix() {
+	    return 'crm_batch_restart_automation_mgr';
+	  }
+	  getEventNamespacePostfix() {
+	    return 'BatchRestartAutomationManager';
+	  }
+	  getPrepareActionName() {
+	    return 'crm.api.autorun.restartAutomation.prepare';
+	  }
+	  getProcessActionName() {
+	    return 'crm.api.autorun.restartAutomation.process';
+	  }
+	  getCancelActionName() {
+	    return 'crm.api.autorun.restartAutomation.cancel';
+	  }
+	}
+	BatchRestartAutomationManager.messages = {
+	  // default messages, you can override them via settings.messages
+	  title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_RESTART_AUTOMATION_TITLE'),
+	  summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_RESTART_AUTOMATION_SUMMARY_CAPTION'),
+	  summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_RESTART_AUTOMATION_SUMMARY_SUCCEEDED'),
+	  summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_RESTART_AUTOMATION_SUMMARY_FAILED')
+	};
+	BatchRestartAutomationManager.items = {};
+
 	/* eslint-disable no-underscore-dangle */
 
 	/**
@@ -1799,84 +1925,6 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 	BatchSetStageManager.items = {};
 
-	/**
-	 * @memberOf BX.Crm.Autorun
-	 */
-	class BatchRefreshAccountingDataManager extends BatchManager {
-	  static getItem(id) {
-	    return BX.prop.get(BatchRefreshAccountingDataManager.items, id, null);
-	  }
-	  static create(id, settings) {
-	    const self = new BatchRefreshAccountingDataManager(id, settings);
-	    BatchRefreshAccountingDataManager.items[self.getId()] = self;
-	    return self;
-	  }
-	  getIdPrefix() {
-	    return 'crm_batch_refresh_accounting_data_mgr';
-	  }
-	  getEventNamespacePostfix() {
-	    return 'BatchRefreshAccountingDataManager';
-	  }
-	  getPrepareActionName() {
-	    return 'crm.api.autorun.refreshaccountingdata.prepare';
-	  }
-	  getProcessActionName() {
-	    return 'crm.api.autorun.refreshaccountingdata.process';
-	  }
-	  getCancelActionName() {
-	    return 'crm.api.autorun.refreshaccountingdata.cancel';
-	  }
-	}
-	BatchRefreshAccountingDataManager.messages = {
-	  // default messages, you can override them via settings.messages
-	  title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_TITLE'),
-	  summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_SUMMARY_CAPTION'),
-	  summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_SUMMARY_SUCCEEDED'),
-	  summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_SUMMARY_FAILED')
-	};
-	BatchRefreshAccountingDataManager.items = {};
-
-	let _ = t => t,
-	  _t;
-
-	/**
-	 * @memberOf BX.Crm.Autorun
-	 */
-	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
-	var _storage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("storage");
-	class ProgressBarRepository {
-	  constructor(container) {
-	    Object.defineProperty(this, _container, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _storage, {
-	      writable: true,
-	      value: new Map()
-	    });
-	    if (!main_core.Type.isElementNode(container)) {
-	      throw new TypeError('expected element node');
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = container;
-	  }
-	  getOrCreateProgressBarContainer(id) {
-	    const fullId = ProgressBarRepository.getFullId(id);
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _storage)[_storage].has(fullId)) {
-	      return babelHelpers.classPrivateFieldLooseBase(this, _storage)[_storage].get(fullId);
-	    }
-	    let progressBarContainer = babelHelpers.classPrivateFieldLooseBase(this, _container)[_container].querySelector(`div#${fullId}`);
-	    if (!progressBarContainer) {
-	      progressBarContainer = main_core.Tag.render(_t || (_t = _`<div id="${0}"></div>`), fullId);
-	      main_core.Dom.append(progressBarContainer, babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _storage)[_storage].set(fullId, progressBarContainer);
-	    return progressBarContainer;
-	  }
-	  static getFullId(id) {
-	    return `crm-autorun-progress-bar-${id}`;
-	  }
-	}
-
 	/* eslint-disable no-underscore-dangle */
 	var _templateParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templateParams");
 	var _instances = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instances");
@@ -1944,6 +1992,47 @@ this.BX.Crm = this.BX.Crm || {};
 	  value: new Map()
 	});
 
+	let _ = t => t,
+	  _t;
+
+	/**
+	 * @memberOf BX.Crm.Autorun
+	 */
+	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	var _storage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("storage");
+	class ProgressBarRepository {
+	  constructor(container) {
+	    Object.defineProperty(this, _container, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _storage, {
+	      writable: true,
+	      value: new Map()
+	    });
+	    if (!main_core.Type.isElementNode(container)) {
+	      throw new TypeError('expected element node');
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = container;
+	  }
+	  getOrCreateProgressBarContainer(id) {
+	    const fullId = ProgressBarRepository.getFullId(id);
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _storage)[_storage].has(fullId)) {
+	      return babelHelpers.classPrivateFieldLooseBase(this, _storage)[_storage].get(fullId);
+	    }
+	    let progressBarContainer = babelHelpers.classPrivateFieldLooseBase(this, _container)[_container].querySelector(`div#${fullId}`);
+	    if (!progressBarContainer) {
+	      progressBarContainer = main_core.Tag.render(_t || (_t = _`<div id="${0}"></div>`), fullId);
+	      main_core.Dom.append(progressBarContainer, babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _storage)[_storage].set(fullId, progressBarContainer);
+	    return progressBarContainer;
+	  }
+	  static getFullId(id) {
+	    return `crm-autorun-progress-bar-${id}`;
+	  }
+	}
+
 	// region Compatibility
 	const bxNamespace = main_core.Reflection.namespace('BX');
 	bxNamespace.AutorunProcessManager = Processor;
@@ -1970,6 +2059,8 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.BatchExclusionManager = BatchExclusionManager;
 	exports.BatchWhatsappMessageManager = BatchWhatsappMessageManager;
 	exports.BatchRefreshAccountingDataManager = BatchRefreshAccountingDataManager;
+	exports.BatchRestartAutomationManager = BatchRestartAutomationManager;
+	exports.BatchObserversManager = BatchObserversManager;
 
 }((this.BX.Crm.Autorun = this.BX.Crm.Autorun || {}),BX,BX.Crm.Integration.Analytics,BX.UI.Analytics,BX.UI.Dialogs,BX));
 //# sourceMappingURL=autorun.bundle.js.map

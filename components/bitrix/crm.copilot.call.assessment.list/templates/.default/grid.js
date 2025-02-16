@@ -30,7 +30,7 @@ export class Grid {
 
 		if (!id)
 		{
-			this.#showError(Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_NOT_FOUND'));
+			this.#showError(Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_NOT_FOUND_MSGVER_1'));
 
 			return;
 		}

@@ -132,7 +132,7 @@ class UpdateRoleCommand
 		$roleModelBuilder = RoleManagementModelBuilder::getInstance();
 		foreach ($permissions as $uiRightId => $permission)
 		{
-			$controlType = $roleModelBuilder->getPermissionByCode($permission['entityCode'], $permission['permissionCode'])?->getControlType();
+			$controlType = $roleModelBuilder->getPermissionByCode($permission['entityCode'], $permission['permissionCode'])?->getControlMapper();
 			if ($controlType)
 			{
 				$permissionValue = $permission['value'];

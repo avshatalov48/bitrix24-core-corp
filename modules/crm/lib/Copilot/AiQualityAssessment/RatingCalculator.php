@@ -21,6 +21,33 @@ class RatingCalculator
 
 		$assessmentList = $this->getAssessmentList($userId, $newAssessment);
 
+		return $this->calculateRatingByAssessmentList($assessmentList, $method);
+	}
+
+	/**
+	 * @param int[] $assessmentIds
+	 * @param int $method
+	 * @return int[]
+	 */
+	final public function calculateRatingByAssessmentIds(array $assessmentIds, int $method = self::METHOD_FIBONACCI): array
+	{
+		if (empty($assessmentIds))
+		{
+			return [];
+		}
+
+		$result = [];
+		foreach ($assessmentIds as $assessmentId)
+		{
+			$assessments = $this->getAssessmentListBySettingsId($assessmentId);
+			$result[$assessmentId] = $this->calculateRatingByAssessmentList($assessments, $method);
+		}
+
+		return $result;
+	}
+
+	private function calculateRatingByAssessmentList(array $assessmentList, int $method): int
+	{
 		if ($method === self::METHOD_SIMPLE_AVG)
 		{
 			return round(array_sum($assessmentList)/count($assessmentList));
@@ -77,6 +104,25 @@ class RatingCalculator
 		$assessmentList[] = $newAssessment;
 
 		return $assessmentList;
+	}
+
+	protected function getAssessmentListBySettingsId(int $assessmentSettingsId): array
+	{
+		return AiQualityAssessmentController::getInstance()->getList([
+			'select' => ['ASSESSMENT'],
+			'filter' => [
+				'=ASSESSMENT_SETTING_ID' => $assessmentSettingsId,
+				'=USE_IN_RATING' => true,
+				'=ACTIVITY_TYPE' => AiQualityAssessmentTable::ACTIVITY_TYPE_CALL,
+			],
+			'order' => [
+				'ID' => 'DESC',
+			],
+			'limit' => self::ASSESSMENT_ITEMS_LIMIT,
+			'cache' => [
+				'ttl' => 3600,
+			],
+		])->getAssessmentList();
 	}
 
 	private function calculateFibonacciRating(array $ratings): int

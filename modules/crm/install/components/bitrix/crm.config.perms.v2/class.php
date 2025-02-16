@@ -2,6 +2,7 @@
 
 use Bitrix\Crm\Component\Base;
 use Bitrix\Crm\Controller\ErrorCode;
+use Bitrix\Crm\Integration\Analytics;
 use Bitrix\Crm\Security\Role\Manage\RoleManagerSelectionFactory;
 use Bitrix\Crm\Security\Role\Manage\RoleSelectionManager;
 use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\AccessRightsDTO;
@@ -78,6 +79,7 @@ class CrmConfigPermsV2 extends Base implements Controllerable
 		$this->arResult['accessRightsData'] = $accessRightsDto;
 		$this->arResult['maxVisibleUserGroups'] = $this->getMaxVisibleUserGroups($accessRightsDto);
 		$this->arResult['controllerData'] = $this->getControllerData();
+		$this->arResult['analytics'] = $this->getAnalytics();
 
 		$this->IncludeComponentTemplate();
 	}
@@ -126,5 +128,19 @@ class CrmConfigPermsV2 extends Base implements Controllerable
 			'sectionCode' => $this->sectionCode,
 			'isAutomation' => $this->isAutomation,
 		];
+	}
+
+	private function getAnalytics(): ?array
+	{
+		$builder = Analytics\Builder\Security\ViewEvent::createFromRequest($this->request);
+		if (!$builder->validate()->isSuccess())
+		{
+			return null;
+		}
+
+		$data = $builder->buildData();
+		unset($data['event']);
+
+		return $data;
 	}
 }

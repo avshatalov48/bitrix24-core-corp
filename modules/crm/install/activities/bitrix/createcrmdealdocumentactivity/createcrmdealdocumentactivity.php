@@ -73,11 +73,7 @@ class CBPCreateCrmDealDocumentActivity extends CBPCreateDocumentActivity
 			$this->ErrorMessage = $e->getMessage();
 		}
 
-		if (
-			$this->DealId
-			&& (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024')
-			&& method_exists($this, 'fixResult')
-		)
+		if ($this->DealId)
 		{
 			$this->fixResult($this->makeResultFromId($this->DealId));
 		}

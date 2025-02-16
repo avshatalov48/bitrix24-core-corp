@@ -150,6 +150,10 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 					: \CCrmOwnerType::Contact
 			);
 
+			Settings\ActivitySettings::getCurrent()->setEnableUnconnectedRecipients(
+				isset($_POST['ENABLE_UNCONNECTED_RECIPIENTS']) && mb_strtoupper($_POST['ENABLE_UNCONNECTED_RECIPIENTS']) !== 'N'
+			);
+
 			if(Bitrix\Crm\Integration\Bitrix24Email::isEnabled()
 				&& Bitrix\Crm\Integration\Bitrix24Email::allowDisableSignature())
 			{
@@ -1043,24 +1047,45 @@ $arResult['FIELDS']['tab_activity_config'][] = array(
 	'type' => 'section'
 );
 
+
+$enableUnconnectedRecipientsValue = Settings\ActivitySettings::getCurrent()->getEnableUnconnectedRecipients() ? 'checked' : '';
+
+$removeEntityBadgesIntervalDaysHint = GetMessage('CRM_MODULE_SETTINGS_ENABLE_UNCONNECTED_RECIPIENTS_HINT');
+
+$enableUnconnectedRecipientsHtml = <<<HTML
+<div>
+	<input type="checkbox" name="ENABLE_UNCONNECTED_RECIPIENTS" $enableUnconnectedRecipientsValue>
+	<span data-hint-html data-hint="$removeEntityBadgesIntervalDaysHint" class="ui-hint"></span>
+</div>
+HTML;
+
+$arResult['FIELDS']['tab_activity_config'][] = [
+	'id' => 'ENABLE_UNCONNECTED_RECIPIENTS',
+	'name' => GetMessage('CRM_MODULE_SETTINGS_ENABLE_UNCONNECTED_RECIPIENTS_TITLE'),
+	'type' => 'custom',
+	'value' => $enableUnconnectedRecipientsHtml,
+	'required' => false
+];
+
+$arResult['FIELDS']['tab_activity_config'][] = [
+	'id' => 'OUTGOING_EMAIL_OWNER_TYPE',
+	'name' => GetMessage('CRM_MODULE_SETTINGS_EMAIL_RECIPIENTS_OUTGOING_EMAIL_OWNER_TYPE_TITLE'),
+	'items' => [
+		\CCrmOwnerType::Lead => \CCrmOwnerType::getDescription(\CCrmOwnerType::Lead),
+		\CCrmOwnerType::Contact => \CCrmOwnerType::getDescription(\CCrmOwnerType::Contact),
+	],
+	'show' => Settings\ActivitySettings::getCurrent()->getEnableUnconnectedRecipients() ? 'Y' : 'N',
+	'type' => 'list',
+	'value' => Settings\ActivitySettings::getCurrent()->getOutgoingEmailOwnerTypeId(),
+	'required' => false
+];
+
 $arResult['FIELDS']['tab_activity_config'][] = array(
 	'id' => 'SERVICE_CODE_ALLOCATION',
 	'name' => GetMessage('CRM_FIELD_SERVICE_CODE_ALLOCATION'),
 	'items' => CCrmEMailCodeAllocation::GetAllDescriptions(),
 	'type' => 'list',
 	'value' => CCrmEMailCodeAllocation::GetCurrent(),
-	'required' => false
-);
-
-$arResult['FIELDS']['tab_activity_config'][] = array(
-	'id' => 'OUTGOING_EMAIL_OWNER_TYPE',
-	'name' => GetMessage('CRM_FIELD_OUTGOING_EMAIL_OWNER_TYPE2'),
-	'items' => array(
-		\CCrmOwnerType::Lead => \CCrmOwnerType::getDescription(\CCrmOwnerType::Lead),
-		\CCrmOwnerType::Contact => \CCrmOwnerType::getDescription(\CCrmOwnerType::Contact),
-	),
-	'type' => 'list',
-	'value' => Settings\ActivitySettings::getCurrent()->getOutgoingEmailOwnerTypeId(),
 	'required' => false
 );
 

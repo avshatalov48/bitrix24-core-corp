@@ -8,6 +8,7 @@
 namespace Bitrix\Crm\Binding;
 
 use Bitrix\Crm\DealTable;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
@@ -358,7 +359,7 @@ class DealContactTable extends Entity\DataManager
 			$processed++;
 		}
 
-		if($processed > 0)
+		if ($processed > 0)
 		{
 			Main\Application::getConnection()->queryExecute(
 				/** @lang text*/
@@ -366,6 +367,7 @@ class DealContactTable extends Entity\DataManager
 				(SELECT MIN(CONTACT_ID) FROM b_crm_deal_contact WHERE IS_PRIMARY = 'Y' AND DEAL_ID = {$dealID})
 				WHERE ID = {$dealID}"
 			);
+			Container::getInstance()->getDealBroker()?->deleteCache($dealID);
 		}
 	}
 	/**
@@ -403,6 +405,7 @@ class DealContactTable extends Entity\DataManager
 			(SELECT MIN(CONTACT_ID) FROM b_crm_deal_contact WHERE IS_PRIMARY = 'Y' AND DEAL_ID = {$dealID})
 			WHERE ID = {$dealID}"
 		);
+		Container::getInstance()->getDealBroker()?->deleteCache($dealID);
 	}
 	/**
 	 * Unbind specified deal from specified contacts.
@@ -444,6 +447,7 @@ class DealContactTable extends Entity\DataManager
 			/** @lang text */
 			"UPDATE b_crm_deal SET CONTACT_ID = NULL WHERE ID = {$dealID}"
 		);
+		Container::getInstance()->getDealBroker()?->deleteCache($dealID);
 	}
 	/**
 	 * Unbind specified contact from all deals.
@@ -470,6 +474,7 @@ class DealContactTable extends Entity\DataManager
 			(SELECT MIN(CONTACT_ID) FROM b_crm_deal_contact t WHERE t.DEAL_ID = b_crm_deal.ID)
 			WHERE CONTACT_ID = {$contactID}"
 		);
+		Container::getInstance()->getDealBroker()?->resetAllCache();
 	}
 	/**
 	 * Prepage SQL join filter condition for specified entity.

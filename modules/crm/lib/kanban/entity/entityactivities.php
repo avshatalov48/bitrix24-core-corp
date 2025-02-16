@@ -344,7 +344,7 @@ class EntityActivities
 			$counterUserIds[] = $currentUserId;
 		}
 
-		return array_merge(
+		return array_merge_recursive(
 			$filter,
 			$counter->prepareEntityListFilter(
 				[
@@ -353,7 +353,7 @@ class EntityActivities
 					'USER_IDS' => $counterUserIds,
 					'EXCLUDE_USERS' => $excludeUsers,
 				]
-			)
+			),
 		);
 	}
 

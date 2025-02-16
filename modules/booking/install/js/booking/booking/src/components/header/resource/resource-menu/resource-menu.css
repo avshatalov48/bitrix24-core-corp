@@ -1,0 +1,18 @@
+.booking-resource-menu-popup .menu-popup-item.menu-item-divider {
+	height: 15px;
+	width: 100%;
+}
+
+.booking-resource-menu-popup .menu-popup-item.menu-item-divider::before {
+	position: absolute;
+	display: block;
+	top: 50%;
+	left: 0;
+	width: 100%;
+	content: "";
+	border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.booking-resource-menu-popup .alert-text {
+	color: var(--ui-color-text-alert);
+}

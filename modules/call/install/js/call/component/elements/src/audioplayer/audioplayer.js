@@ -24,6 +24,11 @@ export const AudioPlayer = BitrixVue.cloneComponent(UIAudioPlayer, {
 			required: false,
 			default: true,
 		},
+		analyticsCallback: {
+			type: Function,
+			required: false,
+			default: () => {},
+		},
 	},
 	data() {
 		return {
@@ -67,6 +72,15 @@ export const AudioPlayer = BitrixVue.cloneComponent(UIAudioPlayer, {
 		},
 	},
 	methods: {
+		choosePlaybackTime(seconds)
+		{
+			if (!this.source())
+			{
+				return;
+			}
+			this.source().currentTime = seconds;
+			this.audioEventRouter('timeupdate');
+		},
 		startSeeking(event): void
 		{
 			this.isSeeking = true;
@@ -192,6 +206,15 @@ export const AudioPlayer = BitrixVue.cloneComponent(UIAudioPlayer, {
 				this.$refs.source.playbackRate = playbackRate;
 			}
 		},
+		onClickControlButton()
+		{
+			if (this.state !== AudioPlayerState.play)
+			{
+				this.analyticsCallback();
+			}
+
+			this.clickToButton();
+		},
 	},
 	template: `
 		<div 
@@ -203,7 +226,7 @@ export const AudioPlayer = BitrixVue.cloneComponent(UIAudioPlayer, {
 					'bx-call-audio-player__control-loader': loading,
 					'bx-call-audio-player__control-play': !loading && state !== State.play,
 					'bx-call-audio-player__control-pause': !loading && state === State.play,
-				}]" @click="clickToButton"></button>
+				}]" @click="onClickControlButton"></button>
 			</div>
 			<div class="bx-call-audio-player__timeline-container">
 				<div class="bx-call-audio-player__track-container" @mousedown="startSeeking" ref="track">

@@ -74,8 +74,9 @@ class MessageParameter
 			self::IMOL_FORM => [
 				'type' => Param::TYPE_STRING,
 			],
+			// Not TYPE_DATE_TIME because it is not stored as a timestamp
 			self::IMOL_DATE_CLOSE_VOTE => [
-				'type' => Param::TYPE_DATE_TIME,
+				'type' => Param::TYPE_STRING,
 			],
 			// Vote time limit
 			self::IMOL_TIME_LIMIT_VOTE => [

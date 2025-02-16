@@ -38,12 +38,15 @@ final class AiQualityAssessmentController
 		$offset = $params['offset'] ?? 0;
 		$limit = $params['limit'] ?? 10;
 
+		$cacheTtl = $params['cache']['ttl'] ?? 0;
+
 		$query = AiQualityAssessmentTable::query()
 			->setSelect($select)
 			->setFilter($filter)
 			->setOrder($order)
 			->setOffset($offset)
 			->setLimit($limit)
+			->setCacheTtl($cacheTtl)
 		;
 
 		return $query->exec()->fetchCollection();
@@ -71,6 +74,9 @@ final class AiQualityAssessmentController
 			'ASSESSMENT_AVG',
 			'RATED_USER_ID',
 			'USE_IN_RATING',
+			'LOW_BORDER' => 'SETTINGS.LOW_BORDER',
+			'HIGH_BORDER' => 'SETTINGS.HIGH_BORDER',
+			'ASSESSMENT_SETTINGS_STATUS' => 'SETTINGS.STATUS',
 			'TITLE' => 'SETTINGS.TITLE',
 			'IS_ENABLED' => 'SETTINGS.IS_ENABLED',
 			'ACTUAL_PROMPT' => 'SETTINGS.PROMPT',

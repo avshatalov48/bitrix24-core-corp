@@ -4,12 +4,14 @@ namespace Bitrix\Call;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Call\Model\EO_CallTrack;
 use Bitrix\Call\Track\TrackError;
-use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\Localization\Loc;
+use Bitrix\Call\Model\CallTrackTable;
+
 
 class Track extends EO_CallTrack
 {
@@ -47,6 +49,7 @@ class Track extends EO_CallTrack
 			->setFileId($fileId)
 			->setFileSize((int)$attachFile['size'])
 			->unsetTempPath()
+			->unsetDownloadUrl()
 			->setDownloaded(true)
 			->save()
 		;
@@ -258,5 +261,18 @@ class Track extends EO_CallTrack
 		$this->setTempPath(\CFile::GetTempName('', $tempFilePath));
 
 		return $this;
+	}
+
+	public static function getTrackForCall(int $callId, string $type): ?self
+	{
+		return CallTrackTable::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'=CALL_ID' => $callId,
+				'=TYPE' => $type,
+			],
+			'order' => ['ID' => 'DESC'],
+			'limit' => 1,
+		])?->fetchObject();
 	}
 }

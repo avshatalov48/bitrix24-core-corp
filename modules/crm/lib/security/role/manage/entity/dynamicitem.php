@@ -54,16 +54,14 @@ class DynamicItem implements PermissionEntity, FilterableByTypes, FilterableByCa
 
 			$perms = $this->permissions($isAutomationEnabled, $isStagesEnabled);
 
-			$stagesFieldName = htmlspecialcharsbx($typesMap->getStagesFieldName($type->getEntityTypeId()));
+			$stagesFieldName = $typesMap->getStagesFieldName($type->getEntityTypeId());
 
 			$categories = $typesMap->getCategories($type->getEntityTypeId());
 			$categories = $this->filterItemCategories($categories);
 
 			foreach ($categories as $category)
 			{
-				$entityName = htmlspecialcharsbx(
-					Service\UserPermissions::getPermissionEntityType($type->getEntityTypeId(), $category->getId())
-				);
+				$entityName = Service\UserPermissions::getPermissionEntityType($type->getEntityTypeId(), $category->getId());
 
 				$fields = [];
 				if ($type->getIsStagesEnabled())
@@ -71,7 +69,7 @@ class DynamicItem implements PermissionEntity, FilterableByTypes, FilterableByCa
 					$stages = [];
 					foreach ($typesMap->getStages($type->getEntityTypeId(), $category->getId()) as $stage)
 					{
-						$stages[htmlspecialcharsbx($stage->getStatusId())] = $stage->getName();
+						$stages[$stage->getStatusId()] = $stage->getName();
 					}
 
 					$fields = [$stagesFieldName => $stages];

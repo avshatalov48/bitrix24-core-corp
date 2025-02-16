@@ -6,7 +6,7 @@ import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { isTemplateMode } from 'sign.v2.sign-settings';
 import { Layout } from 'ui.sidepanel.layout';
 import { TileWidget } from 'ui.uploader.tile-widget';
-import { UploaderEvent, type UploaderFile } from 'ui.uploader.core';
+import { Uploader, UploaderEvent, type UploaderFile } from 'ui.uploader.core';
 import { Api } from 'sign.v2.api';
 import { ListItem } from './list-item';
 import { Blank } from './blank';
@@ -48,7 +48,7 @@ const errorPopupOptions = {
 	},
 };
 
-export { BlankField };
+export { BlankField, ListItem };
 export type { BlankSelectorConfig };
 
 export class BlankSelector extends EventEmitter
@@ -310,10 +310,47 @@ export class BlankSelector extends EventEmitter
 		await uploadPromise;
 	}
 
+	async createBlankFromOuterUploaderFiles(files: Array<UploaderFile>): Promise<number>
+	{
+		if (files.length === 0)
+		{
+			return;
+		}
+		const firstFile = files.at(0);
+		const blank = new Blank({ title: firstFile.getName() });
+		blank.setReady(false);
+		Dom.prepend(blank.getLayout(), this.#blanksContainer);
+		try
+		{
+			const filesIds = files.map((file) => file.getServerFileId());
+			const blankData = await this.#api.createBlank(
+				filesIds,
+				this.#config.type ?? null,
+				isTemplateMode(this.#config.documentMode),
+			);
+			this.#setupBlank({
+				...blankData,
+				userName: Loc.getMessage('SIGN_BLANK_SELECTOR_CREATED_MYSELF'),
+			}, blank);
+
+			return blankData.id;
+		}
+		catch (ex)
+		{
+			blank?.remove?.();
+			console.log(ex);
+			throw ex;
+		}
+	}
+
 	async createBlank(): ?Promise<number>
 	{
 		const uploader = this.#tileWidget.getUploader();
 		const files = uploader.getFiles();
+		if (files.length === 0)
+		{
+			return;
+		}
 		const [firstFile] = files;
 		await this.#resumeUploading();
 		const blank = firstFile.getCustomData(firstFile.getId());
@@ -345,8 +382,8 @@ export class BlankSelector extends EventEmitter
 		loader.show();
 		try
 		{
-			const data = await this.#api.loadBlanks(page, this.#config.type ?? null);
-			const blanksOnPage = 10;
+			const blanksOnPage = 3;
+			const data = await this.#api.loadBlanks(page, this.#config.type ?? null, blanksOnPage);
 			if (data.length < blanksOnPage)
 			{
 				Dom.addClass(this.#loadMoreButton, '--hidden');
@@ -418,18 +455,26 @@ export class BlankSelector extends EventEmitter
 		Dom.append(blank.getLayout(), this.#blanksContainer);
 	}
 
-	resetSelectedBlank(blankId: ?number, relatedTarget: ?HTMLElement)
+	resetSelectedBlank()
 	{
 		const blank = this.#blanks.get(this.selectedBlankId);
 		blank?.deselect();
 		this.selectedBlankId = 0;
-		this.emit('toggleSelection', { selected: false });
+		if (blank)
+		{
+			this.emit('toggleSelection', { selected: false });
+		}
 		this.#enableSaveButtonIntoSlider();
 	}
 
-	modifyBlankTitle(blankId: number, blankTitle: string): void
+	async modifyBlankTitle(blankId: number, blankTitle: string): void
 	{
-		const blank = this.#blanks.get(blankId);
+		let blank = this.#blanks.get(blankId);
+		if (!blank)
+		{
+			await this.loadBlankById(blankId);
+			blank = this.#blanks.get(blankId);
+		}
 		blank.setTitle(blankTitle);
 	}
 
@@ -453,7 +498,7 @@ export class BlankSelector extends EventEmitter
 		}
 	}
 
-	selectBlank(blankId: number)
+	async selectBlank(blankId: number)
 	{
 		if (blankId !== this.selectedBlankId)
 		{
@@ -462,7 +507,13 @@ export class BlankSelector extends EventEmitter
 
 		this.selectedBlankId = blankId;
 		this.#toggleTileVisibility(false);
-		const blank = this.#blanks.get(blankId);
+		let blank = this.#blanks.get(blankId);
+
+		if (!blank)
+		{
+			await this.loadBlankById(blankId);
+			blank = this.#blanks.get(blankId);
+		}
 		const { title } = blank.getProps();
 		blank.select();
 		this.emit('toggleSelection', { id: blankId, selected: true, title: this.#normalizeTitle(title) });
@@ -581,5 +632,25 @@ export class BlankSelector extends EventEmitter
 	#getSaveButtonIntoSlider(): any
 	{
 		return this.#cache.get('saveButton');
+	}
+
+	disableSelectedBlank(blankId: number): void
+	{
+		const blank = this.#blanks.get(blankId);
+
+		if (blank)
+		{
+			Dom.addClass(blank.getLayout(), '--disabled');
+		}
+	}
+
+	enableSelectedBlank(blankId: number): void
+	{
+		const blank = this.#blanks.get(blankId);
+
+		if (blank)
+		{
+			Dom.removeClass(blank.getLayout(), '--disabled');
+		}
 	}
 }

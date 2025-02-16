@@ -151,13 +151,15 @@ export class B2EEmployeeSignSettings
 				submitDocumentInfo.subscribeOnce(
 					submitDocumentInfo.events.documentSendedSuccessFully,
 					(event: DocumentSendedSuccessFullyEvent) => {
+						const document = event.getData().document;
 						this.#analytics.sendWithProviderTypeAndDocId(
 							{
 								event: 'sent_document_to_sign',
 								c_element: 'create_button',
 								status: 'success',
 							},
-							event.getData().documentId,
+							document.id,
+							document.providerCode,
 						);
 					},
 				);

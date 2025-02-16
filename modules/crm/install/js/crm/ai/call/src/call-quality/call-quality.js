@@ -30,6 +30,8 @@ export class CallQuality extends Base
 		super(data);
 
 		this.#jobId = Type.isNumber(data.jobId) ? data.jobId : null;
+		this.sliderId = `${this.id}-${this.#jobId ?? this.activityId}`;
+
 		this.#clientDetailUrl = Type.isStringFilled(data.clientDetailUrl) ? data.clientDetailUrl : null;
 		this.#clientFullName = Type.isStringFilled(data.clientFullName) ? data.clientFullName : null;
 		this.#userPhotoUrl = Type.isStringFilled(data.userPhotoUrl) ? data.userPhotoUrl : null;

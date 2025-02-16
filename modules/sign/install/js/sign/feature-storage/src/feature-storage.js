@@ -8,4 +8,14 @@ export class FeatureStorage
 	{
 		return settings.get('isSendDocumentByEmployeeEnabled', false);
 	}
+
+	static isMultiDocumentLoadingEnabled(): boolean
+	{
+		return settings.get('isMultiDocumentLoadingEnabled', false);
+	}
+
+	static isGroupSendingEnabled(): boolean
+	{
+		return settings.get('isGroupSendingEnabled', false);
+	}
 }

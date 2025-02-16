@@ -63,6 +63,8 @@ final class FillPreliminaryCallAssessments
 			'jobId' => 0,
 			'status' => QueueTable::EXECUTION_STATUS_SUCCESS,
 			'code' => 'first_impression',
+			'low_border' => CallAssessmentItem::LOW_BORDER_DEFAULT,
+			'high_border' => CallAssessmentItem::HIGH_BORDER_DEFAULT,
 		];
 	}
 
@@ -79,6 +81,8 @@ final class FillPreliminaryCallAssessments
 			'jobId' => 0,
 			'status' => QueueTable::EXECUTION_STATUS_SUCCESS,
 			'code' => 'deal_support',
+			'low_border' => CallAssessmentItem::LOW_BORDER_DEFAULT,
+			'high_border' => CallAssessmentItem::HIGH_BORDER_DEFAULT,
 		];
 	}
 
@@ -95,6 +99,8 @@ final class FillPreliminaryCallAssessments
 			'jobId' => 0,
 			'status' => QueueTable::EXECUTION_STATUS_SUCCESS,
 			'code' => 'communication_etiquette',
+			'low_border' => CallAssessmentItem::LOW_BORDER_DEFAULT,
+			'high_border' => CallAssessmentItem::HIGH_BORDER_DEFAULT,
 		];
 	}
 
@@ -111,6 +117,8 @@ final class FillPreliminaryCallAssessments
 			'jobId' => 0,
 			'status' => QueueTable::EXECUTION_STATUS_SUCCESS,
 			'code' => 'objection_management',
+			'low_border' => CallAssessmentItem::LOW_BORDER_DEFAULT,
+			'high_border' => CallAssessmentItem::HIGH_BORDER_DEFAULT,
 		];
 	}
 
@@ -127,6 +135,8 @@ final class FillPreliminaryCallAssessments
 			'jobId' => 0,
 			'status' => QueueTable::EXECUTION_STATUS_SUCCESS,
 			'code' => 'complaint_handling',
+			'low_border' => CallAssessmentItem::LOW_BORDER_DEFAULT,
+			'high_border' => CallAssessmentItem::HIGH_BORDER_DEFAULT,
 		];
 	}
 
@@ -143,6 +153,8 @@ final class FillPreliminaryCallAssessments
 			'jobId' => 0,
 			'status' => QueueTable::EXECUTION_STATUS_SUCCESS,
 			'code' => 'presentation_of_new',
+			'low_border' => CallAssessmentItem::LOW_BORDER_DEFAULT,
+			'high_border' => CallAssessmentItem::HIGH_BORDER_DEFAULT,
 		];
 	}
 
@@ -159,6 +171,8 @@ final class FillPreliminaryCallAssessments
 			'jobId' => 0,
 			'status' => QueueTable::EXECUTION_STATUS_SUCCESS,
 			'code' => 'increase_loyalty',
+			'low_border' => CallAssessmentItem::LOW_BORDER_DEFAULT,
+			'high_border' => CallAssessmentItem::HIGH_BORDER_DEFAULT,
 		];
 	}
 
@@ -175,6 +189,8 @@ final class FillPreliminaryCallAssessments
 			'jobId' => 0,
 			'status' => QueueTable::EXECUTION_STATUS_SUCCESS,
 			'code' => 'special_offer',
+			'low_border' => CallAssessmentItem::LOW_BORDER_DEFAULT,
+			'high_border' => CallAssessmentItem::HIGH_BORDER_DEFAULT,
 		];
 	}
 }

@@ -1,4 +1,4 @@
-import { Event, Runtime, Type } from 'main.core';
+import { Event, Runtime, Type, Dom } from 'main.core';
 import { PULL } from 'pull.client';
 
 type MyDocumentsGridOptions = {
@@ -24,21 +24,21 @@ export class MyDocuments
 				return;
 			}
 
-			gridContainer.addEventListener('click', async (event) => {
+			Event.bind(gridContainer, 'click', async (event) => {
 				let target = event.target;
-				if (BX.Dom.hasClass(target, 'ui-btn-text'))
+				if (Dom.hasClass(target, 'ui-btn-text'))
 				{
 					target = target.parentNode;
 				}
 
-				if (!target.classList.contains('ui-btn') || !target.dataset.memberId)
+				if (!Dom.hasClass(target, 'ui-btn') || !target.dataset.memberId)
 				{
 					return;
 				}
 
-				if (target.classList.contains('sign-action-button'))
+				if (Dom.hasClass(target, 'sign-action-button'))
 				{
-					BX.Dom.addClass(target, 'ui-btn-wait');
+					Dom.addClass(target, 'ui-btn-wait');
 
 					const memberId = Number(target.dataset.memberId);
 					Runtime.loadExtension('sign.v2.b2e.sign-link')
@@ -60,8 +60,11 @@ export class MyDocuments
 								},
 							});
 						})
+						.catch((error) => {
+							console.error(error);
+						})
 						.finally(() => {
-							BX.Dom.removeClass(target, 'ui-btn-wait');
+							Dom.removeClass(target, 'ui-btn-wait');
 						});
 					event.preventDefault();
 				}

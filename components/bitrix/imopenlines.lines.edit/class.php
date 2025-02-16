@@ -548,7 +548,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 	 * @param $configId
 	 * @return array
 	 */
-	protected function getPagesMenu($pathToList, $configId): array
+	protected function getPagesMenu($pathToList = '', $configId = 0): array
 	{
 		$menuList = [
 			'queue-crm' => [
@@ -1025,7 +1025,16 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 		$this->arResult['SHOW_QUEUE_SETTINGS'] = htmlspecialcharsbx($this->request->get('SHOW_QUEUE_SETTINGS'));
 		$this->arResult['SHOW_AUTO_ACTION_SETTINGS'] = htmlspecialcharsbx($this->request->get('SHOW_AUTO_ACTION_SETTINGS'));
 		$this->arResult['SHOW_WORKERS_TIME'] = htmlspecialcharsbx($this->request->get('SHOW_WORKERS_TIME'));
-		$this->arResult['PAGE'] = (htmlspecialcharsbx($this->request->get('PAGE')) ? : 'queue-crm');
+
+		$availablePages = $this->getPagesMenu();
+		if (in_array($this->request->get('PAGE'), array_keys($availablePages), true))
+		{
+			$this->arResult['PAGE'] = htmlspecialcharsbx($this->request->get('PAGE'));
+		}
+		else
+		{
+			$this->arResult['PAGE'] = 'queue-crm';
+		}
 
 		$uri = new Uri(htmlspecialchars_decode(POST_FORM_ACTION_URI));
 		$uriParams['action-line'] = 'edit';

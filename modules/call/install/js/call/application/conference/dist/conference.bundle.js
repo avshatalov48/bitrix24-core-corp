@@ -2170,7 +2170,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "onCallUserMicrophoneState",
 	    value: function onCallUserMicrophoneState(e) {
-	      if (e.userId == this.userId) {
+	      if (e.userId == this.currentCall.userId) {
 	        Call.Hardware.isMicrophoneMuted = !e.microphoneState;
 	      } else {
 	        this.callView.setUserMicrophoneState(e.userId, e.microphoneState);

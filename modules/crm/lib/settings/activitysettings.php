@@ -38,6 +38,7 @@ class ActivitySettings
 	private $outgoingEmailOwnerType = null;
 	/** @var BooleanSetting */
 	private $enableDeadlineSync = null;
+	private $enableUnconnectedRecipients = null;
 	private IntegerSetting $deleteEntityBadgesIntervalDays;
 
 	public function __construct()
@@ -45,6 +46,7 @@ class ActivitySettings
 		$this->defaultListView = new IntegerSetting('activity_default_list_view', self::VIEW_LIST);
 		$this->outgoingEmailOwnerType = new IntegerSetting('activity_outgoing_email_owner_type', \CCrmOwnerType::Contact);
 		$this->enableDeadlineSync = new BooleanSetting('activity_enable_deadline_sync', true);
+		$this->enableUnconnectedRecipients = new BooleanSetting('activity_enable_unconnected_recipients', true);
 		$this->deleteEntityBadgesIntervalDays = new IntegerSetting(
 			'activity_remove_entity_badges_interval_days',
 			self::REMOVE_DAYS_30,
@@ -219,6 +221,16 @@ class ActivitySettings
 	public function getOutgoingEmailOwnerTypeId()
 	{
 		return $this->outgoingEmailOwnerType->get();
+	}
+
+	public function setEnableUnconnectedRecipients(bool $enabled): void
+	{
+		$this->enableUnconnectedRecipients->set($enabled);
+	}
+
+	public function getEnableUnconnectedRecipients(): bool
+	{
+		return $this->enableUnconnectedRecipients->get();
 	}
 
 	public function setOutgoingEmailOwnerTypeId($ownerTypeId)

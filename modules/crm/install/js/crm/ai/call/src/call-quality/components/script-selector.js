@@ -1,19 +1,26 @@
 import { CallAssessmentSelector } from 'crm.copilot.call-assessment-selector';
+import { Router } from 'crm.router';
 import { DatetimeConverter } from 'crm.timeline.tools';
-import { Dom, Loc } from 'main.core';
+import { Dom, Loc, Runtime } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 import { HtmlFormatter } from 'ui.bbcode.formatter.html-formatter';
 import { SidePanel } from 'ui.sidepanel';
 import { ScriptSelectorDisplayStrategy } from '../script-selector-display-strategy';
-import { ViewMode } from './view-mode';
+import { ViewMode } from './common/view-mode';
 
 const ARTICLE_CODE = '23240682';
+const SUCCESS_STATUS = 'SUCCESS';
+const PENDING_STATUS = 'PENDING';
 
 export const ScriptSelector = {
 	props: {
 		assessmentSettingsId: {
 			type: Number,
 			required: true,
+		},
+		assessmentSettingsStatus: {
+			type: String,
+			default: SUCCESS_STATUS,
 		},
 		assessmentSettingsTitle: {
 			type: String,
@@ -83,26 +90,20 @@ export const ScriptSelector = {
 		},
 		onEditCallAssessmentSettings({ target }): void
 		{
-			top.BX.UI.Hint.popupParameters = {
-				closeByEsc: true,
-				autoHide: true,
-				angle: false,
-			};
+			if (this.assessmentSettingsStatus === PENDING_STATUS)
+			{
+				this.showDisabledButtonHint(target);
 
-			top.BX.UI.Hint.show(
-				target,
-				Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_EDIT_HINT'),
-				false,
+				return;
+			}
+
+			Router.openSlider(
+				`/crm/copilot-call-assessment/details/${this.assessmentSettingsId}/`,
+				{
+					width: 700,
+					cacheable: false,
+				},
 			);
-
-			// temporary disabled
-			// Router.openSlider(
-			// 	`/crm/copilot-call-assessment/details/${this.#itemIdentifier.id}/`,
-			// 	{
-			// 		width: 700,
-			// 		cacheable: false,
-			// 	},
-			// );
 		},
 		onShowActualPrompt(): void
 		{
@@ -128,9 +129,45 @@ export const ScriptSelector = {
 		{
 			this.callAssessmentSelector?.enable();
 		},
-		doAssessment(): void
+		doAssessment({ target }): void
 		{
+			if (this.assessmentSettingsStatus === PENDING_STATUS)
+			{
+				this.showDisabledButtonHint(target);
+
+				return;
+			}
+
 			this.$emit('doAssessment');
+		},
+		showDisabledButtonHint(target: HTMLElement): void
+		{
+			top.BX.UI.Hint.popupParameters = {
+				closeByEsc: true,
+				autoHide: true,
+				angle: null,
+				events: {},
+			};
+
+			Runtime.debounce(
+				() => {
+					top.BX.UI.Hint.show(
+						target,
+						Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_DISABLED_DO_ASSESSMENT_HINT'),
+						true,
+					);
+				},
+				150,
+				this,
+			)();
+		},
+		isDisabledAssessmentButton(): boolean
+		{
+			return (this.assessmentSettingsStatus !== SUCCESS_STATUS);
+		},
+		isDisabledEditButton(): boolean
+		{
+			return (this.assessmentSettingsStatus === PENDING_STATUS);
 		},
 	},
 
@@ -175,19 +212,28 @@ export const ScriptSelector = {
 				&& this.assessmentSettingsId > 0
 			);
 		},
-		footerButtonClassList(): Object
+		footerButtonClassList(): Array
 		{
-			const isErrorViewMode = (this.viewMode === ViewMode.error);
-
-			return {
-				'ui-btn': true,
-				'ui-btn-xs': true,
-				'ui-btn-no-caps': true,
-				'ui-btn-light-border': !isErrorViewMode,
-				'ui-btn-round': true,
-				'ui-btn-active': !isErrorViewMode,
-				'ui-btn-success': isErrorViewMode,
-			};
+			return [
+				'ui-btn',
+				'ui-btn-xs',
+				'ui-btn-no-caps',
+				'ui-btn-light-border',
+				'ui-btn-round',
+				{ 'ui-btn-disabled': this.isDisabledAssessmentButton() },
+			];
+		},
+		footerEditButtonClassList(): Array
+		{
+			return [
+				'ui-btn',
+				'ui-btn-xs',
+				'ui-btn-no-caps',
+				'ui-btn-round',
+				'ui-btn-light',
+				'edit-button',
+				{ 'ui-btn-disabled': this.isDisabledEditButton() },
+			];
 		},
 		isEmptyScriptListViewMode(): boolean
 		{
@@ -250,7 +296,7 @@ export const ScriptSelector = {
 						{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_ASSESSMENT_REPLY') }}
 					</button>
 					<button 
-						class="ui-btn ui-btn-xs ui-btn-no-caps ui-btn-round ui-btn-light ui-btn-active edit-button"
+						:class="footerEditButtonClassList"
 						@click="onEditCallAssessmentSettings"
 					>
 						{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_EDIT') }}

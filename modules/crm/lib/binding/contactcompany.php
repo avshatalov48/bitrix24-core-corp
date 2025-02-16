@@ -9,6 +9,7 @@ namespace Bitrix\Crm\Binding;
 
 use Bitrix\Crm\CompanyTable;
 use Bitrix\Crm\ContactTable;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
@@ -418,7 +419,7 @@ class ContactCompanyTable extends Entity\DataManager
 			$processed++;
 		}
 
-		if($processed > 0)
+		if ($processed > 0)
 		{
 			Main\Application::getConnection()->queryExecute(
 				/** @lang text*/
@@ -426,6 +427,7 @@ class ContactCompanyTable extends Entity\DataManager
 				(SELECT MIN(COMPANY_ID) FROM b_crm_contact_company WHERE IS_PRIMARY = 'Y' AND CONTACT_ID = {$contactID})
 				WHERE ID = {$contactID}"
 			);
+			Container::getInstance()->getContactBroker()->deleteCache($contactID);
 		}
 	}
 	/**
@@ -489,6 +491,7 @@ class ContactCompanyTable extends Entity\DataManager
 				(SELECT MIN(COMPANY_ID) FROM b_crm_contact_company t WHERE t.IS_PRIMARY = 'Y' AND t.CONTACT_ID = b_crm_contact.ID)
 				WHERE ID IN({$values})"
 			);
+			Container::getInstance()->getContactBroker()->resetAllCache();
 		}
 	}
 	/**
@@ -526,6 +529,7 @@ class ContactCompanyTable extends Entity\DataManager
 			(SELECT MIN(COMPANY_ID) FROM b_crm_contact_company t WHERE t.IS_PRIMARY = 'Y' AND t.CONTACT_ID = b_crm_contact.ID)
 			WHERE ID = {$contactID}"
 		);
+		Container::getInstance()->getContactBroker()->deleteCache($contactID);
 	}
 	/**
 	 * Unbind specified contact from specified companies.
@@ -567,6 +571,7 @@ class ContactCompanyTable extends Entity\DataManager
 			/** @lang text */
 			"UPDATE b_crm_contact SET COMPANY_ID = NULL WHERE ID = {$contactID}"
 		);
+		Container::getInstance()->getContactBroker()->deleteCache($contactID);
 	}
 	/**
 	 * Unbind specified company from specified contacts.
@@ -603,6 +608,7 @@ class ContactCompanyTable extends Entity\DataManager
 			(SELECT MIN(COMPANY_ID) FROM b_crm_contact_company t WHERE t.CONTACT_ID = b_crm_contact.ID)
 			WHERE COMPANY_ID = {$companyID} AND ID IN({$values})"
 		);
+		Container::getInstance()->getContactBroker()->deleteCache($contactID);
 	}
 	/**
 	 * Unbind specified company from specified contacts.
@@ -640,12 +646,14 @@ class ContactCompanyTable extends Entity\DataManager
 			/** @lang text */
 			"DELETE FROM b_crm_contact_company WHERE COMPANY_ID = {$companyID}"
 		);
+
 		$connection->queryExecute(
 			/** @lang text */
 			"UPDATE b_crm_contact SET COMPANY_ID =
 			(SELECT MIN(COMPANY_ID) FROM b_crm_contact_company t WHERE t.CONTACT_ID = b_crm_contact.ID)
 			WHERE COMPANY_ID = {$companyID}"
 		);
+		Container::getInstance()->getContactBroker()->deleteCache($contactID);
 	}
 	/**
 	 * Prepare SQL join filter condition for specified entity.
@@ -793,6 +801,7 @@ class ContactCompanyTable extends Entity\DataManager
 		/** @lang text */
 			"UPDATE b_crm_contact SET COMPANY_ID = {$targCompanyID} WHERE COMPANY_ID = {$seedCompanyID}"
 		);
+		Container::getInstance()->getContactBroker()->resetAllCache();
 	}
 	/**
 	 * Unbind all companies from seed contact and bind to target contact

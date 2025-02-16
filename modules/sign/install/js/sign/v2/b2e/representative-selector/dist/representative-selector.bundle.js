@@ -38,6 +38,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _refreshView = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("refreshView");
 	class RepresentativeSelector {
 	  constructor(options = {}) {
+	    var _options$context;
 	    Object.defineProperty(this, _refreshView, {
 	      value: _refreshView2
 	    });
@@ -107,7 +108,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].id = main_core.Type.isInteger(options.userId) ? options.userId : null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _description)[_description] = options.description;
 	    babelHelpers.classPrivateFieldLooseBase(this, _userSelector)[_userSelector] = new sign_v2_b2e_userSelector.UserSelector({
-	      multiple: false
+	      multiple: false,
+	      context: (_options$context = options.context) != null ? _options$context : 'sign_b2e_representative_selector'
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].container = this.getLayout();
 	  }

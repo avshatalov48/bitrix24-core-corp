@@ -2085,6 +2085,8 @@ class CAllCrmDeal
 
 			$result = $arFields['ID'] = $ID;
 
+			self::clearStageCache($ID);
+
 			//Restore BEGINDATE and CLOSEDATE
 			if(isset($arFields['__BEGINDATE']))
 			{
@@ -2765,6 +2767,8 @@ class CAllCrmDeal
 		{
 			$connection->queryExecute("UPDATE b_crm_deal SET IS_RETURN_CUSTOMER = 'N' WHERE ID = {$sourceID}");
 		}
+
+		Container::getInstance()->getDealBroker()?->resetAllCache();
 		//endregion
 	}
 
@@ -3724,6 +3728,15 @@ class CAllCrmDeal
 				$filler->fill($options['CURRENT_FIELDS'], $arFields);
 
 				if (
+					is_array($arRow)
+					&& is_array($arFields)
+					&& ComparerBase::compareEntityFields($arRow, $arFields)->isChanged('STAGE_ID')
+				)
+				{
+					self::clearStageCache($ID);
+				}
+
+				if (
 					isset($arRow['STAGE_ID'], $currentFields['STAGE_ID'])
 					&& ComparerBase::isMovedToFinalStage(
 						CCrmOwnerType::Deal,
@@ -3861,6 +3874,7 @@ class CAllCrmDeal
 				$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_deal');
 			}
 			self::clearCategoryCache($ID);
+			self::clearStageCache($ID);
 
 			self::SynchronizeCustomerData($ID, $arFields, array('ENABLE_SOURCE' => false));
 
@@ -4538,6 +4552,11 @@ class CAllCrmDeal
 	public static function clearCategoryCache($ID)
 	{
 		Container::getInstance()->getFactory(CCrmOwnerType::Deal)->clearItemCategoryCache((int)$ID);
+	}
+
+	private static function clearStageCache($ID)
+	{
+		Container::getInstance()->getFactory(CCrmOwnerType::Deal)->clearItemStageCache((int)$ID);
 	}
 
 	protected static function GetPermittedCategoryIDs($permissionType, CCrmPerms $userPermissions = null)
@@ -5376,6 +5395,9 @@ class CAllCrmDeal
 		$permissionEntityController->unregister(DealCategory::convertToPermissionEntityType($categoryID), $ID);
 
 		self::clearCategoryCache($ID);
+		self::clearStageCache($ID);
+		Container::getInstance()->getDealBroker()?->deleteCache($ID);
+
 		$entityAttrs = self::BuildEntityAttr(
 			$assignedByID,
 				array(

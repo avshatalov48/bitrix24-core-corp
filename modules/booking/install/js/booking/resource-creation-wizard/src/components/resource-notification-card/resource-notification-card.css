@@ -1,0 +1,153 @@
+.resource-notification-card select {
+	-moz-appearance: none;
+	-webkit-appearance: none;
+	appearance: none;
+	background-color: unset;
+}
+
+.resource-creation-wizard__form-notification {
+	display: flex;
+	flex-direction: column;
+	gap: 22px;
+	padding: 18px 24px 24px 18px;
+	border-radius: 18px;
+	background-color: var(--ui-color-palette-white-base, #fff);
+}
+
+.resource-creation-wizard__form-notification-info {
+	border: solid 1px;
+	border-radius: 10px;
+	padding: 10px;
+	border-color: var(--ui-color-palette-gray-10);
+}
+.resource-creation-wizard__form-notification-info-switcher {
+	margin-left: auto;
+}
+
+.resource-creation-wizard__form-notification__info-text-row-message-text {
+	font-size: 13px;
+	color: #959CA4;
+}
+
+.resource-creation-wizard__form-notification-info-title-row {
+	display: flex;
+	gap: 7px;
+	align-items: center;
+	border-bottom: solid 1px;
+	border-color: var(--ui-color-palette-gray-10);
+	padding-bottom: 10px;
+	margin-bottom: 10px;
+}
+
+.resource-creation-wizard__form-notification-info-title {
+	color: var(--ui-color-palette-black-solid);
+	font-size: 18px;
+	font-weight: 400;
+	text-align: left;
+}
+
+.resource-creation-wizard__form-notification-info-title.--disabled {
+	color: var(--ui-color-palette-gray-90);
+}
+
+.resource-creation-wizard__form-notification-info-title-row .ui-icon-set {
+	--ui-icon-set__icon-size: 28px;
+	--ui-icon-set__icon-color: var(--ui-color-primary);
+}
+
+.resource-creation-wizard__form-notification-info-title-row .ui-icon-set.--disabled {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-30);
+}
+
+.resource-creation-wizard__form-notification-info-text-row {
+	display: flex;
+	flex-direction: row;
+}
+
+.resource-creation-wizard__form-notification-text-row {
+	display: flex;
+	flex-direction: row;
+}
+
+.resource-creation-wizard__form-notification-text-row-icon {
+	width: 18px;
+	height: 18px;
+	background: var(--ui-color-palette-gray-50);
+	margin-right: 5px;
+}
+
+.resource-creation-wizard__form-notification-text-row-checkbox {
+	margin-right: 5px;
+}
+
+.resource-creation-wizard__form-notification__info-text-row-message-text.--dotted,
+.resource-creation-wizard__form-notification-info-text-row-template-edit-btn.--dotted {
+	border-bottom: 1px dotted;
+	border-top: 0;
+	border-left: 0;
+	border-right: 0;
+	cursor: pointer;
+}
+
+.resource-creation-wizard__form-notification-info-text-row-template-edit-btn {
+	font-size: 13px;
+	color: #959CA4;
+	margin-left: auto;
+}
+
+.resource-creation-wizard__form-notification-text {
+	align-self: center;
+	color: var(--ui-color-palette-gray-90);
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 15px;
+	text-align: left;
+}
+
+.resource-creation-wizard__form-notification-info-template {
+	display: block;
+	padding: 10px 0 10px;
+}
+
+.resource-creation-wizard__form-notification-text.--more,
+.resource-creation-wizard__form-notification-info-template span {
+	color: var(--ui-color-link-primary-base);
+	cursor: pointer;
+}
+
+.notification-label {
+	margin-right: 0;
+}
+
+.notification-label:hover {
+	cursor: pointer;
+}
+
+.notification-label.--active {
+	border: 1px solid var(--ui-color-palette-blue-40);
+	background: var(--ui-color-palette-blue-15);
+}
+
+.resource-creation-wizard__form-notification-info-template-choose-buttons {
+	margin-top: 10px;
+}
+
+.resource-creation-wizard__form-notification-info-template-choose-buttons button {
+	text-transform: initial;
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-regular);
+}
+
+.resource-creation-wizard__form-notification__info-text-row-message-text .channel-menu-btn {
+	font-weight: var(--ui-font-weight-normal);
+	text-transform: initial;
+	border-bottom: 1px dotted;
+	border-top: 0;
+	border-left: 0;
+	border-right: 0;
+	cursor: pointer;
+	background: none;
+	border-radius: 0;
+	color: var(--ui-color-palette-gray-60);
+	font-size: var(--ui-font-size-sm);
+}

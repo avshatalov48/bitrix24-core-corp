@@ -36,10 +36,7 @@ final class CopilotLauncher
 			$this->fillResult = $jobRepo->getFillItemFieldsFromCallTranscriptionResult($this->fillTarget, $activityId);
 		}
 
-		if (Scenario::isMultiScenarioEnabled())
-		{
-			$this->callScoringResult = $jobRepo->getCallScoringResult($activityId);
-		}
+		$this->callScoringResult = $jobRepo->getCallScoringResult($activityId);
 	}
 
 	public function run(): ?Result
@@ -145,11 +142,7 @@ final class CopilotLauncher
 	public function runFullScenario(): ?Result
 	{
 		$result = $this->runFillFieldsScenario();
-
-		if (
-			Scenario::isMultiScenarioEnabled()
-			&& !$result?->isPending()
-		)
+		if (!$result?->isPending())
 		{
 			return $this->runCallScoringScenario();
 		}

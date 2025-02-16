@@ -237,8 +237,13 @@ class RelationTable extends Main\Entity\DataManager
 
 	public static function deleteJunks()
 	{
-		Main\Application::getConnection()->queryExecute(
-			"DELETE FROM b_crm_recycling_relation WHERE SRC_RECYCLE_BIN_ID = 0 AND DST_RECYCLE_BIN_ID = 0"
-		);
+		$connection = Main\Application::getConnection();
+		$exists = $connection->query('SELECT SRC_RECYCLE_BIN_ID FROM b_crm_recycling_relation WHERE SRC_RECYCLE_BIN_ID = 0 AND DST_RECYCLE_BIN_ID = 0 LIMIT 1')->fetch();
+		if ($exists)
+		{
+			$connection->queryExecute(
+				"DELETE FROM b_crm_recycling_relation WHERE SRC_RECYCLE_BIN_ID = 0 AND DST_RECYCLE_BIN_ID = 0"
+			);
+		}
 	}
 }

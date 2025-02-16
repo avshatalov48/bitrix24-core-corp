@@ -2,8 +2,8 @@
 
 namespace Bitrix\Crm\Security\Role\Manage\Permissions;
 
-use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\BaseControlType;
-use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\Variables;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\BaseControlMapper;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\Variables;
 use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\Variants;
 
 /**
@@ -12,13 +12,13 @@ use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\Variants;
  */
 abstract class Permission
 {
-	public function __construct(private ?Variants $variants = null, private ?BaseControlType $controlType = null)
+	public function __construct(private ?Variants $variants = null, private ?BaseControlMapper $controlMapper = null)
 	{
-		if (!isset($this->controlType))
+		if (!isset($this->controlMapper))
 		{
-			$this->controlType = $this->createDefaultControlType();
+			$this->controlMapper = $this->createDefaultControlMapper();
 		}
-		$this->controlType->setPermission($this);
+		$this->controlMapper->setPermission($this);
 	}
 
 	abstract public function code(): string;
@@ -87,7 +87,7 @@ abstract class Permission
 	 */
 	public function getControlTypeCode(): string
 	{
-		return $this->createDefaultControlType()->getType();
+		return $this->createDefaultControlMapper()->getType();
 	}
 
 	public function getMaxSettingsValue(): array
@@ -100,13 +100,53 @@ abstract class Permission
 		return [];
 	}
 
-	public function getControlType(): BaseControlType
+	public function getControlMapper(): BaseControlMapper
 	{
-		return $this->controlType;
+		return $this->controlMapper;
 	}
 
-	protected function createDefaultControlType(): BaseControlType
+	protected function createDefaultControlMapper(): BaseControlMapper
 	{
 		return new Variables();
+	}
+
+	public function getObserverDefaultAttributeValue(): ?string
+	{
+		return null;
+	}
+
+	public function getHeadDefaultAttributeValue(): ?string
+	{
+		return \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL;
+	}
+
+	public function getDeputyDefaultAttributeValue(): ?string
+	{
+		return \Bitrix\Crm\Service\UserPermissions::PERMISSION_DEPARTMENT;
+	}
+
+	public function getManagerDefaultAttributeValue(): ?string
+	{
+		return \Bitrix\Crm\Service\UserPermissions::PERMISSION_NONE;
+	}
+
+	public function getObserverDefaultSettings(): array
+	{
+		return [];
+	}
+
+	public function getHeadDefaultSettings(): array
+	{
+		return [];
+	}
+
+	public function getDeputyDefaultSettings(): array
+	{
+		return [];
+	}
+
+	public function getManagerDefaultSettings(): array
+	{
+		return [];
 	}
 }

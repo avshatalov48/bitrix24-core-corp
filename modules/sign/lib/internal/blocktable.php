@@ -72,14 +72,12 @@ class BlockTable extends Entity\DataManager
 			]),
 			'POSITION' => (new \Bitrix\Main\ORM\Fields\ArrayField('BLANK_POSITION', [
 				'title' => 'Block position within blank',
-				'required' => true
 			]))->configureSerializationJson(),
 			'STYLE' => (new \Bitrix\Main\ORM\Fields\ArrayField('BLANK_STYLE', [
 				'title' => 'Block style'
 			]))->configureSerializationJson(),
 			'DATA' => (new \Bitrix\Main\ORM\Fields\ArrayField('BLANK_DATA', [
 				'title' => 'Block data',
-				'required' => true
 			]))->configureSerializationJson(),
 			'PART' => new Entity\IntegerField('PART', [
 				'title' => 'Sign part number',

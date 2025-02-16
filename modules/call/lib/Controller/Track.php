@@ -5,7 +5,6 @@ namespace Bitrix\Call\Controller;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Engine;
 use Bitrix\Main\Engine\Response\BFile;
-use Bitrix\Im\V2\Chat;
 use Bitrix\Im\Call\Call;
 use Bitrix\Im\Call\Registry;
 use Bitrix\Call\Error;
@@ -15,7 +14,6 @@ use Bitrix\Call\Track\TrackCollection;
 use Bitrix\Call\Model\CallTrackTable;
 use Bitrix\Call\ControllerClient;
 use Bitrix\Call\Integration\AI\CallAIError;
-use Bitrix\Call\Integration\AI\ChatMessage;
 use Bitrix\Call\Integration\AI\CallAISettings;
 
 
@@ -124,39 +122,35 @@ class Track extends Engine\Controller
 			|| !CallAISettings::isTariffAvailable()
 		)
 		{
-			$error = new CallAIError(CallAIError::AI_UNAVAILABLE_ERROR, 'Module AI is unavailable');
+			$error = new CallAIError(CallAIError::AI_UNAVAILABLE_ERROR);// AI service unavailable by tariff
 		}
 		elseif (!CallAISettings::isEnableBySettings())
 		{
-			$error = new CallAIError(CallAIError::AI_SETTINGS_ERROR, 'Module AI is disabled by settings');
+			$error = new CallAIError(CallAIError::AI_SETTINGS_ERROR);// Module AI is disabled by settings
 		}
 		elseif (!CallAISettings::isAgreementAccepted())
 		{
-			$error = new CallAIError(CallAIError::AI_AGREEMENT_ERROR, 'AI service agreement must be accepted');
+			$error = new CallAIError(CallAIError::AI_AGREEMENT_ERROR);// AI service agreement must be accepted
 		}
 		elseif (!CallAISettings::isAutoStartRecordingEnable())
 		{
 			if (!CallAISettings::isBaasServiceHasPackage())
 			{
-				$error = new CallAIError(CallAIError::AI_NOT_ENOUGH_BAAS_ERROR, 'It is not enough baas packages');
+				$error = new CallAIError(CallAIError::AI_NOT_ENOUGH_BAAS_ERROR);// It's not enough baas packages
 			}
 		}
 		if ($error)
 		{
 			$this->addError($error);
+			NotifyService::getInstance()->sendCallError($error, $call);
 
-			$chat = Chat::getInstance($call->getChatId());
+			return null;
+		}
 
-			if (NotifyService::getInstance()->findMessage($chat, $callId, NotifyService::MESSAGE_TYPE_ERROR, 2) === null)
-			{
-				$errorMessage = ChatMessage::generateErrorMessage($error, $chat, $call);
-				if ($errorMessage)
-				{
-					$notifyService = \Bitrix\Call\NotifyService::getInstance();
-					$notifyService->sendError($chat, $errorMessage);
-				}
-			}
-
+		$result = (new ControllerClient)->startTrack($call);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
 			return null;
 		}
 
@@ -166,13 +160,6 @@ class Track extends Engine\Controller
 			->enableAiAnalyze()
 			->save()
 		;
-
-		$result = (new ControllerClient)->startTrack($call);
-		if (!$result->isSuccess())
-		{
-			$this->addErrors($result->getErrors());
-			return null;
-		}
 
 		$this->sendSwitchTrackRecordStatus($call, true);
 
@@ -192,18 +179,18 @@ class Track extends Engine\Controller
 			return null;
 		}
 
-		$call
-			->setActionUserId($this->getCurrentUser()->getId())
-			->disableAudioRecord()
-			->save()
-		;
-
 		$result = (new ControllerClient)->stopTrack($call);
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($result->getErrors());
 			return null;
 		}
+
+		$call
+			->setActionUserId($this->getCurrentUser()->getId())
+			->disableAudioRecord()
+			->save()
+		;
 
 		$this->sendSwitchTrackRecordStatus($call, false);
 

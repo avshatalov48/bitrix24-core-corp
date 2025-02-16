@@ -513,20 +513,28 @@ class NodeMemberService implements Contract\Service\NodeMemberService
 			);
 
 			$userAlreadyBelongsToNode = [];
+			$checkedUserIds = [];
 			foreach ($userCollection as $userMember)
 			{
-				if (
-					$userMember->nodeId === $node->id
-				)
+				if (!in_array($userMember->entityId, $checkedUserIds, true))
 				{
-					$userAlreadyBelongsToNode[] = $userMember->entityId;
-
-					continue;
+					if ($this->nodeMemberRepository->findByEntityTypeAndEntityIdAndNodeId(
+						entityType: MemberEntityType::USER,
+						entityId: $userMember->entityId,
+						nodeId: $node->id,
+					))
+					{
+						$userAlreadyBelongsToNode[] = $userMember->entityId;
+					}
+					$checkedUserIds[] = $userMember->entityId;
 				}
 
 				if (
 					$nodeMemberCollectionToUpdate->getFirstByEntityId($userMember->entityId)
-					|| in_array($userMember->entityId, $userAlreadyBelongsToNode, true)
+					|| (
+						in_array($userMember->entityId, $userAlreadyBelongsToNode, true)
+						&& $userMember->nodeId !== $node->id
+					)
 				)
 				{
 					$nodeMemberCollectionToRemove->add($userMember);
@@ -566,8 +574,8 @@ class NodeMemberService implements Contract\Service\NodeMemberService
 		}
 
 		$this->nodeMemberRepository->createByCollection($nodeMemberCollectionToAdd);
-		$this->nodeMemberRepository->updateByCollection($nodeMemberCollectionToUpdate);
 		$this->nodeMemberRepository->removeByCollection($nodeMemberCollectionToRemove);
+		$this->nodeMemberRepository->updateByCollection($nodeMemberCollectionToUpdate);
 
 		return $nodeMemberCollection;
 	}

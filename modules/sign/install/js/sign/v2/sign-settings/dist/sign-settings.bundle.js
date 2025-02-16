@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
-(function (exports,main_core,main_core_cache,ui_wizard,sign_v2_preview,sign_v2_analytics) {
+(function (exports,main_core,main_core_cache,sign_featureStorage,sign_v2_analytics,sign_v2_preview,ui_wizard) {
 	'use strict';
 
 	function decorateResultBeforeCompletion$$1(innerCallback, onSuccess, onFail) {
@@ -43,14 +43,18 @@ this.BX.Sign = this.BX.Sign || {};
 	var _overlayContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("overlayContainer");
 	var _currentOverlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentOverlay");
 	var _isEditMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isEditMode");
+	var _isSameBlankSelected = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSameBlankSelected");
 	var _createHead = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createHead");
 	var _getHeaderTitleSubText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getHeaderTitleSubText");
 	var _getHeaderTitleText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getHeaderTitleText");
 	var _getLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLayout");
 	var _getOverlayContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOverlayContainer");
 	var _showCompleteNotification = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showCompleteNotification");
+	var _isGroupDocuments = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isGroupDocuments");
 	var _renderPages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPages");
 	var _subscribeOnEditorEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeOnEditorEvents");
+	var _getPagesUrls = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPagesUrls");
+	var _executeEditorActionsForGroup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("executeEditorActionsForGroup");
 	var _appendOverlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appendOverlay");
 	var _render = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("render");
 	var _showOverlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showOverlay");
@@ -70,11 +74,20 @@ this.BX.Sign = this.BX.Sign || {};
 	    Object.defineProperty(this, _appendOverlay, {
 	      value: _appendOverlay2
 	    });
+	    Object.defineProperty(this, _executeEditorActionsForGroup, {
+	      value: _executeEditorActionsForGroup2
+	    });
+	    Object.defineProperty(this, _getPagesUrls, {
+	      value: _getPagesUrls2
+	    });
 	    Object.defineProperty(this, _subscribeOnEditorEvents, {
 	      value: _subscribeOnEditorEvents2
 	    });
 	    Object.defineProperty(this, _renderPages, {
 	      value: _renderPages2
+	    });
+	    Object.defineProperty(this, _isGroupDocuments, {
+	      value: _isGroupDocuments2
 	    });
 	    Object.defineProperty(this, _showCompleteNotification, {
 	      value: _showCompleteNotification2
@@ -134,8 +147,13 @@ this.BX.Sign = this.BX.Sign || {};
 	      writable: true,
 	      value: false
 	    });
+	    Object.defineProperty(this, _isSameBlankSelected, {
+	      writable: true,
+	      value: false
+	    });
+	    this.isB2bSignMaster = false;
+	    this.hasPreviewUrls = false;
 	    babelHelpers.classPrivateFieldLooseBase(this, _containerId)[_containerId] = containerId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview] = new sign_v2_preview.Preview();
 	    babelHelpers.classPrivateFieldLooseBase(this, _wizardOptions)[_wizardOptions] = wizardOptions;
 	    const {
 	      type = '',
@@ -145,6 +163,8 @@ this.BX.Sign = this.BX.Sign || {};
 	    } = signOptions;
 	    this.documentMode = documentMode;
 	    babelHelpers.classPrivateFieldLooseBase(this, _type)[_type] = type;
+	    this.documentsGroup = new Map();
+	    this.documentsGroupUids = [];
 	    const {
 	      languages
 	    } = (_config$documentSendC = config.documentSendConfig) != null ? _config$documentSendC : {};
@@ -153,6 +173,11 @@ this.BX.Sign = this.BX.Sign || {};
 	      languages,
 	      isTemplateMode: this.isTemplateMode(),
 	      documentInitiatedByType: initiatedByType
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview] = new sign_v2_preview.Preview({
+	      layout: {
+	        getAfterPreviewLayoutCallback: () => this.getAfterPreviewLayout()
+	      }
 	    });
 	  }
 	  isTemplateMode() {
@@ -166,16 +191,27 @@ this.BX.Sign = this.BX.Sign || {};
 	    if (showNotification) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _showCompleteNotification)[_showCompleteNotification]();
 	    }
-	    const queryString = window.location.search;
-	    const urlParams = new URLSearchParams(queryString);
-	    if (!urlParams.has('noRedirect')) {
-	      const {
-	        entityTypeId,
-	        entityId
-	      } = this.documentSetup.setupData;
-	      const detailsUrl = `/crm/type/${entityTypeId}/details/${entityId}/`;
-	      BX.SidePanel.Instance.open(detailsUrl);
+	    if (this.isSingleDocument()) {
+	      const queryString = window.location.search;
+	      const urlParams = new URLSearchParams(queryString);
+	      if (!urlParams.has('noRedirect')) {
+	        const {
+	          entityTypeId,
+	          entityId
+	        } = this.documentSetup.setupData;
+	        const detailsUrl = `/crm/type/${entityTypeId}/details/${entityId}/`;
+	        BX.SidePanel.Instance.open(detailsUrl);
+	      }
 	    }
+	  }
+	  isSingleDocument() {
+	    return this.documentsGroup.size === 1;
+	  }
+	  getFirstDocumentUidFromGroup() {
+	    return this.documentsGroup.keys().next().value;
+	  }
+	  getFirstDocumentDataFromGroup() {
+	    return this.documentsGroup.values().next().value;
 	  }
 	  subscribeOnEvents() {
 	    const settingsEvents = [{
@@ -212,7 +248,15 @@ this.BX.Sign = this.BX.Sign || {};
 	    }, {
 	      type: 'showEditor',
 	      stage: 'send',
-	      method: () => this.editor.show()
+	      method: async event => {
+	        const {
+	          uid
+	        } = event.getData();
+	        if (uid && babelHelpers.classPrivateFieldLooseBase(this, _isGroupDocuments)[_isGroupDocuments]()) {
+	          await babelHelpers.classPrivateFieldLooseBase(this, _executeEditorActionsForGroup)[_executeEditorActionsForGroup](uid);
+	        }
+	        this.editor.show();
+	      }
 	    }, {
 	      type: 'changeTitle',
 	      stage: 'send',
@@ -275,11 +319,14 @@ this.BX.Sign = this.BX.Sign || {};
 	  async setupDocument(uid, preparedPages = false) {
 	    if (this.documentSetup.isSameBlankSelected()) {
 	      void (await this.documentSetup.setup(uid));
+	      babelHelpers.classPrivateFieldLooseBase(this, _isSameBlankSelected)[_isSameBlankSelected] = true;
 	      return this.documentSetup.setupData;
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].urls = [];
-	    this.editor.setUrls([], 0);
-	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].setBlocks();
+	    if (this.documentsGroup.size === 0) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].urls = [];
+	      this.editor.setUrls([], 0);
+	      babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].setBlocks();
+	    }
 	    await this.documentSetup.setup(uid);
 	    const {
 	      setupData
@@ -287,10 +334,14 @@ this.BX.Sign = this.BX.Sign || {};
 	    if (!setupData) {
 	      return null;
 	    }
-	    const {
-	      blocks
-	    } = setupData;
-	    await babelHelpers.classPrivateFieldLooseBase(this, _renderPages)[_renderPages](blocks, preparedPages);
+	    if (this.documentsGroup.size === 0 || this.editedDocument && this.isFirstDocumentSelected(this.editedDocument.uid) || this.isTemplateMode() || this.isB2bSignMaster || !sign_featureStorage.FeatureStorage.isGroupSendingEnabled()) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _renderPages)[_renderPages](setupData, preparedPages);
+	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].hasUrls()) {
+	      this.hasPreviewUrls = true;
+	      this.wizard.toggleBtnActiveState('next', false);
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _isSameBlankSelected)[_isSameBlankSelected] = false;
 	    return setupData;
 	  }
 	  async init(uid, templateUid) {
@@ -324,7 +375,9 @@ this.BX.Sign = this.BX.Sign || {};
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _render)[_render](uid);
 	  }
-	  async applyTemplateData(templateUid) {}
+	  async applyTemplateData(templateUid)
+	  // eslint-disable-next-line no-empty-function
+	  {}
 	  getStepsMetadata(signSettings, documentUid, templateUid) {
 	    return {};
 	  }
@@ -339,6 +392,34 @@ this.BX.Sign = this.BX.Sign || {};
 	  }
 	  isEditMode() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _isEditMode)[_isEditMode];
+	  }
+	  resetPreview() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].urls = [];
+	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].setBlocks();
+	  }
+	  disablePreviewReady() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].ready = false;
+	  }
+	  enablePreviewReady() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].ready = true;
+	  }
+	  setSingleDocument(setupData) {
+	    this.documentsGroup.clear();
+	    this.documentsGroup.set(setupData.uid, setupData);
+	    this.documentsGroupUids.length = 0;
+	    this.documentsGroupUids.push(setupData.uid);
+	    this.documentSend.setDocumentsBlock(this.documentsGroup);
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isSameBlankSelected)[_isSameBlankSelected]) {
+	      this.resetPreview();
+	      this.editor.setUrls([]);
+	      this.disablePreviewReady();
+	    }
+	  }
+	  isFirstDocumentSelected(uid) {
+	    return this.documentsGroupUids[0] === uid;
+	  }
+	  getAfterPreviewLayout() {
+	    return null;
 	  }
 	}
 	function _createHead2() {
@@ -379,7 +460,9 @@ this.BX.Sign = this.BX.Sign || {};
 					${0}
 					${0}
 				</div>
-				${0}
+				<div style="display: flex; flex-direction: column;">
+					${0}
+				</div>
 			</div>
 		`), className, babelHelpers.classPrivateFieldLooseBase(this, _createHead)[_createHead](), this.wizard.getLayout(), babelHelpers.classPrivateFieldLooseBase(this, _previewLayout)[_previewLayout]);
 	  return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container];
@@ -393,37 +476,71 @@ this.BX.Sign = this.BX.Sign || {};
 	}
 	function _showCompleteNotification2() {
 	  const Notification = main_core.Reflection.getClass('top.BX.UI.Notification');
+	  const notificationText = babelHelpers.classPrivateFieldLooseBase(this, _isGroupDocuments)[_isGroupDocuments]() ? main_core.Loc.getMessage('SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT_GROUP') : main_core.Loc.getMessage('SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT');
 	  Notification.Center.notify({
-	    content: main_core.Text.encode(main_core.Loc.getMessage('SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT')),
+	    content: notificationText,
 	    autoHideDelay: 4000
 	  });
 	}
-	function _renderPages2(blocks, preparedPages = false) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].ready = false;
-	  babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].setBlocks(blocks);
+	function _isGroupDocuments2() {
+	  return this.documentsGroup.size > 1;
+	}
+	async function _renderPages2(documentData, preparedPages = false) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].urls = [];
+	  this.disablePreviewReady();
+	  babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].setBlocks(documentData.blocks);
 	  this.wizard.toggleBtnActiveState('back', true);
 	  const handler = (urls, totalPages) => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].ready = true;
+	    this.enablePreviewReady();
 	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].urls = urls;
 	    this.editor.setUrls(urls, totalPages);
 	    this.wizard.toggleBtnActiveState('back', false);
 	  };
-	  this.documentSetup.waitForPagesList(handler, preparedPages);
+	  this.documentSetup.waitForPagesList(documentData, handler, preparedPages);
 	}
 	function _subscribeOnEditorEvents2() {
 	  this.editor.subscribe('save', ({
 	    data
 	  }) => {
 	    const blocks = data.blocks;
-	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].setBlocks(blocks);
-	    this.documentSetup.setupData = {
-	      ...this.documentSetup.setupData,
-	      blocks
-	    };
-	    this.documentSend.documentData = {
-	      ...this.documentSend.documentData
-	    };
+	    const uid = data.uid;
+	    const selectedDocument = this.documentsGroup.get(uid);
+	    selectedDocument.blocks = blocks;
+	    if (uid === this.getFirstDocumentUidFromGroup()) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].setBlocks(blocks);
+	      this.documentSetup.setupData = {
+	        ...this.documentSetup.setupData,
+	        blocks
+	      };
+	    }
 	  });
+	}
+	async function _getPagesUrls2(data) {
+	  const documentUrls = [];
+	  const handler = urls => {
+	    const targetDocument = this.documentsGroup.get(data.uid);
+	    documentUrls.push(...urls);
+	    targetDocument.urls = documentUrls;
+	  };
+	  await this.documentSetup.waitForPagesList(data, handler);
+	}
+	async function _executeEditorActionsForGroup2(uid) {
+	  this.editor.setUrls([], 0);
+	  const setupData = this.documentsGroup.get(uid);
+	  if (!setupData.urls) {
+	    const openEditorButton = babelHelpers.classPrivateFieldLooseBase(this, _container)[_container].querySelector(`span[data-id="${setupData.id}"]`);
+	    main_core.Dom.addClass(openEditorButton, 'ui-btn-clock');
+	    await babelHelpers.classPrivateFieldLooseBase(this, _getPagesUrls)[_getPagesUrls](setupData);
+	    main_core.Dom.removeClass(openEditorButton, 'ui-btn-clock');
+	    this.documentSetup.blankSelector.disableSelectedBlank(setupData.blankId);
+	    this.documentSetup.resetDocument();
+	    this.wizard.toggleBtnActiveState('next', false);
+	  }
+	  const targetDocument = this.documentsGroup.get(uid);
+	  this.editor.documentData = targetDocument;
+	  this.editor.setUrls(targetDocument.urls, targetDocument.urls.length);
+	  await this.editor.waitForPagesUrls();
+	  await this.editor.renderDocument();
 	}
 	function _appendOverlay2(overlay) {
 	  if (!overlay) {
@@ -458,5 +575,5 @@ this.BX.Sign = this.BX.Sign || {};
 	exports.isTemplateMode = isTemplateMode$$1;
 	exports.SignSettings = SignSettings;
 
-}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX,BX.Cache,BX.Ui,BX.Sign.V2,BX.Sign.V2));
+}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX,BX.Cache,BX.Sign,BX.Sign.V2,BX.Sign.V2,BX.Ui));
 //# sourceMappingURL=sign-settings.bundle.js.map

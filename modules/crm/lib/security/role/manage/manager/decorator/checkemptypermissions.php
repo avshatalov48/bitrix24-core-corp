@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Security\Role\Manage\Manager\Decorator;
 
+use Bitrix\Crm\Security\Role\Manage\DTO\PermissionModel;
 use Bitrix\Crm\Security\Role\Manage\DTO\RoleSelectionManager\CreateSettingsDto;
 use Bitrix\Crm\Security\Role\Manage\RoleManagementModelBuilder;
 use Bitrix\Crm\Security\Role\Manage\RoleSelectionManager;
@@ -11,7 +12,6 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Web\Uri;
-use Bitrix\Crm\Security\Role\Manage\DTO\PermissionModel;
 
 class CheckEmptyPermissions implements RoleSelectionManager
 {
@@ -64,7 +64,7 @@ class CheckEmptyPermissions implements RoleSelectionManager
 					continue;
 				}
 
-				$control = $permission->getControlType();
+				$control = $permission->getControlMapper();
 				$value = is_array($accessRight->value) ? $accessRight->value : [$accessRight->value];
 
 				if ($value === [\Bitrix\Crm\Security\Role\Manage\AttrPreset\UserRoleAndHierarchy::INHERIT])
@@ -94,7 +94,7 @@ class CheckEmptyPermissions implements RoleSelectionManager
 					'#ROLE_TITLE#' => htmlspecialcharsbx($userGroup->title),
 				]);
 
-				$result->addError(new Error($message));
+				$result->addError(new Error($message, 'EMPTY_PERMISSIONS'));
 			}
 		}
 

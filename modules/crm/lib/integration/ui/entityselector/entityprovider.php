@@ -279,6 +279,15 @@ abstract class EntityProvider extends BaseProvider
 		return 0;
 	}
 
+	/**
+	 * @param string $context
+	 * @return array
+	 *
+	 * Generates a list of the last found items.
+	 * If the filters narrow down the list of potentially available elements too much
+	 * (for example, selecting contacts linked to a deal),
+	 * we recommend redefining this method in the successor class and filtering at the selection stage.
+	 */
 	protected function getRecentItemIds(string $context): array
 	{
 		$ids = [];

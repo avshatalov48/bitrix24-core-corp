@@ -8,8 +8,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
 use Bitrix\Crm\Security\Role\Manage\Manager\WebFormSelection;
 use Bitrix\Main;
-use Bitrix\Main\Web\Json;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 use Bitrix\UI;
 
@@ -310,6 +310,11 @@ foreach ($arResult["ITEMS"] as $index => $data)
 $interfaceToolbarButtons = [];
 
 $permissionButton = new PermissionItem(new WebFormSelection());
+if (isset($arParams['ANALYTICS']) && is_array($arParams['ANALYTICS']))
+{
+	$permissionButton->setAnalytics($arParams['ANALYTICS']);
+}
+
 if ($permissionButton->canShow())
 {
 	$interfaceToolbarButtons[] = $permissionButton->toInterfaceToolbarButton();

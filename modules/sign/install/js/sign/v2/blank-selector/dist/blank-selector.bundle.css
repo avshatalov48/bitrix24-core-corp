@@ -125,6 +125,13 @@
 	border-color: var(--ui-color-palette-blue-50);
 }
 
+.sign-blank-selector__list_item.--blank.--disabled {
+	opacity: .5;
+	pointer-events: none;
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
 .sign-blank-selector__list_item.--blank:before {
 	display: none;
 }

@@ -7,11 +7,11 @@ use Bitrix\Crm\Category\EditorHelper;
 use Bitrix\Crm\Controller\Copilot\CallQualityAssessment;
 use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Copilot\AiQualityAssessment\Controller\AiQualityAssessmentController;
-use Bitrix\Crm\Copilot\AiQualityAssessment\PullManager;
 use Bitrix\Crm\Copilot\AiQualityAssessment\ViewModeEnum;
 use Bitrix\Crm\Copilot\CallAssessment\CallAssessmentItemChecker;
 use Bitrix\Crm\Copilot\CallAssessment\ItemFactory;
 use Bitrix\Crm\Copilot\CallAssessment\PromptsChecker;
+use Bitrix\Crm\Copilot\PullManager;
 use Bitrix\Crm\Entity\FieldDataProvider;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\CopilotLauncher;
@@ -113,10 +113,10 @@ class AI extends Activity
 			&& in_array($ownerTypeId, AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
 		)
 		{
-			$scenario = Scenario::filterScenarioByGlobalSettings($scenario);
-			if ($scenario === null)
+			$scenario = Scenario::filterFullScenarioByGlobalSettings($scenario);
+			if (!Scenario::isEnabledScenario($scenario))
 			{
-				$this->addError(AIErrorCode::getAIDisabledError(['sliderCode' => AIManager::AI_DISABLED_SLIDER_CODE]));
+				$this->addError(AIErrorCode::getAIDisabledError(['sliderCode' => Scenario::SLIDER_CODE_MAP[$scenario]]));
 
 				return null;
 			}

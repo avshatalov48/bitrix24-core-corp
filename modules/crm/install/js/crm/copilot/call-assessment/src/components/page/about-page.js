@@ -1,9 +1,9 @@
 import { Loc, Type } from 'main.core';
+import { BBCodeParser } from 'ui.bbcode.parser';
 import { TextEditor, TextEditorComponent } from 'ui.text-editor';
 import { TextEditorWrapperComponent } from '../common/text-editor-wrapper-component';
-import { BasePage } from './base-page';
 import { PromptLength as PromptLengthValidator } from './../../validator/prompt-length';
-import { BBCodeParser } from 'ui.bbcode.parser';
+import { BasePage } from './base-page';
 
 export const AboutPage = {
 	extends: BasePage,
@@ -81,7 +81,8 @@ export const AboutPage = {
 					</div>
 				</header>
 				<div class="crm-copilot__call-assessment_page-section-body">
-					<div class="crm-copilot__call-assessment_page-section-body-field">
+					<AiDisabledInSettings v-if="!isEnabled" />
+					<div :class="this.getBodyFieldClassList()">
 						<TextEditorWrapperComponent
 							:textEditor="textEditor"
 							@change="onChange"

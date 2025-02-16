@@ -27,6 +27,7 @@ final class WorkflowStarted extends Base
 		}
 
 		$menuItems['timeline'] = $this->createTimelineMenuItem($workflowId);
+		$menuItems['log'] = $this->createLogMenuItem($workflowId);
 		$terminateMenuItem = $this->createTerminateMenuItem($workflowId);
 		if (isset($terminateMenuItem))
 		{

@@ -1,0 +1,23 @@
+.booking-booking-booking-time {
+	align-self: flex-start;
+	margin-right: auto;
+	font-size: var(--ui-font-size-xs);
+	cursor: pointer;
+}
+
+.booking-booking-booking-time.--lock {
+	cursor: default;
+}
+
+.booking-booking-booking.--small .booking-booking-booking-time {
+	align-self: center;
+	font-size: calc(var(--ui-font-size-xs) * var(--zoom));
+}
+
+.booking-booking-booking-name-container + .booking-booking-booking-time {
+	margin-right: initial;
+}
+
+.booking-booking-booking:not(.--compact-mode) .booking-booking-booking-content-row:not(.--lower) .booking-booking-booking-time {
+	display: none;
+}

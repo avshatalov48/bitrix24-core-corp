@@ -309,13 +309,14 @@ export class Editor extends EventEmitter
 						onclick="${async ({ target }) => {
 							Dom.addClass(target, 'ui-btn-wait');
 							const blocks = await this.#blocksManager.save();
+							const uid = this.#blocksManager.getDocumentUid();
 							Dom.removeClass(target, 'ui-btn-wait');
 							if (!blocks)
 							{
 								return;
 							}
 							EventEmitter.subscribeOnce('SidePanel.Slider:onCloseComplete', () => {
-								this.emit('save', { blocks });
+								this.emit('save', { uid, blocks });
 							});
 							this.#needSaveBlocksOnSidePanelClose = false;
 							this.#sidePanel.close();
@@ -601,10 +602,11 @@ export class Editor extends EventEmitter
 			{
 				return;
 			}
+			const uid = this.#blocksManager.getDocumentUid();
 			this.#needToLockSidePanelClose = false;
 			this.#sidePanel.close();
 			this.#needToLockSidePanelClose = true;
-			this.emit('save', { blocks });
+			this.emit('save', { uid, blocks });
 		});
 	}
 

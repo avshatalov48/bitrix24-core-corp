@@ -16,7 +16,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _dialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialog");
 	class UserSelector extends main_core_events.EventEmitter {
 	  constructor(options) {
-	    var _options$multiple, _options$preselectedI;
+	    var _options$multiple, _options$context, _options$preselectedI;
 	    super();
 	    Object.defineProperty(this, _container, {
 	      writable: true,
@@ -33,6 +33,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      height: 363,
 	      multiple: (_options$multiple = options.multiple) != null ? _options$multiple : true,
 	      targetNode: babelHelpers.classPrivateFieldLooseBase(this, _container)[_container],
+	      context: (_options$context = options.context) != null ? _options$context : 'sign_b2e_user_selector',
 	      entities: [{
 	        id: userEntityTypeId,
 	        options: {

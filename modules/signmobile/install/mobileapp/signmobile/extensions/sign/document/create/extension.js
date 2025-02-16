@@ -128,7 +128,7 @@ jn.define('sign/document/create', (require, exports, module) => {
 						if (this.openSigningSliderAfterPending)
 						{
 							this.openSigningSliderAfterPending = false;
-							this.openSigning(memberResponse.data.id, memberResponse.data.document.id)
+							this.openSigning(memberResponse.data.id, sendTemplateResponse.data.document.id)
 						}
 						this.state.pending = false;
 					}

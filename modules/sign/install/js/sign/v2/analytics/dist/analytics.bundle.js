@@ -24,8 +24,10 @@ this.BX.Sign = this.BX.Sign || {};
 	  }
 	}
 
+	var _documentUidToIdCache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentUidToIdCache");
 	var _context = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("context");
 	var _api = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("api");
+	var _loadDocumentIdByUid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadDocumentIdByUid");
 	var _sendWithProviderType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendWithProviderType");
 	var _convertProviderCodeToP1IntegrationType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("convertProviderCodeToP1IntegrationType");
 	class Analytics {
@@ -36,6 +38,13 @@ this.BX.Sign = this.BX.Sign || {};
 	    });
 	    Object.defineProperty(this, _sendWithProviderType, {
 	      value: _sendWithProviderType2
+	    });
+	    Object.defineProperty(this, _loadDocumentIdByUid, {
+	      value: _loadDocumentIdByUid2
+	    });
+	    Object.defineProperty(this, _documentUidToIdCache, {
+	      writable: true,
+	      value: {}
 	    });
 	    Object.defineProperty(this, _context, {
 	      writable: true,
@@ -60,8 +69,8 @@ this.BX.Sign = this.BX.Sign || {};
 	  getContext() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _context)[_context];
 	  }
-	  sendWithProviderTypeAndDocId(options, documentUidOrId) {
-	    void babelHelpers.classPrivateFieldLooseBase(this, _sendWithProviderType)[_sendWithProviderType](options, documentUidOrId);
+	  sendWithProviderTypeAndDocId(options, documentUidOrId, providerCode) {
+	    void babelHelpers.classPrivateFieldLooseBase(this, _sendWithProviderType)[_sendWithProviderType](options, documentUidOrId, providerCode);
 	  }
 	  sendWithDocId(options, documentUidOrId) {
 	    if (main_core.Type.isNumber(documentUidOrId)) {
@@ -72,24 +81,42 @@ this.BX.Sign = this.BX.Sign || {};
 	      return;
 	    }
 	    (async () => {
-	      const document = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadDocument(documentUidOrId);
+	      const documentId = await babelHelpers.classPrivateFieldLooseBase(this, _loadDocumentIdByUid)[_loadDocumentIdByUid](documentUidOrId);
 	      this.send({
 	        ...options,
-	        p5: `docId_${document.id}`
+	        p5: `docId_${documentId}`
 	      });
 	    })();
 	  }
 	}
-	async function _sendWithProviderType2(options, documentUidOrId) {
-	  const document = main_core.Type.isString(documentUidOrId) ? await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadDocument(documentUidOrId) : await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadDocumentById(documentUidOrId);
-	  if (!document) {
-	    console.warn('Document not found by identifier', documentUidOrId);
-	    return;
+	async function _loadDocumentIdByUid2(documentUid) {
+	  if (main_core.Type.isNumber(babelHelpers.classPrivateFieldLooseBase(this, _documentUidToIdCache)[_documentUidToIdCache][documentUid])) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _documentUidToIdCache)[_documentUidToIdCache][documentUid];
+	  }
+	  const document = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadDocument(documentUid);
+	  if (document) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _documentUidToIdCache)[_documentUidToIdCache][documentUid] = document.id;
+	    return document.id;
+	  }
+	  return null;
+	}
+	async function _sendWithProviderType2(options, documentUidOrId, providerCode) {
+	  var _babelHelpers$classPr;
+	  let documentId = main_core.Type.isNumber(documentUidOrId) ? documentUidOrId : (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _documentUidToIdCache)[_documentUidToIdCache][documentUidOrId]) != null ? _babelHelpers$classPr : null;
+	  let providerType = providerCode;
+	  if (main_core.Type.isNull(documentId) || main_core.Type.isUndefined(providerCode)) {
+	    const document = main_core.Type.isString(documentUidOrId) ? await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadDocument(documentUidOrId) : await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadDocumentById(documentUidOrId);
+	    if (!document) {
+	      console.warn('Document not found by identifier', documentUidOrId);
+	      return;
+	    }
+	    documentId = document.id;
+	    providerType = document.providerCode;
 	  }
 	  this.send({
 	    ...options,
-	    p1: babelHelpers.classPrivateFieldLooseBase(this, _convertProviderCodeToP1IntegrationType)[_convertProviderCodeToP1IntegrationType](document.providerCode),
-	    p5: `docId_${document.id}`
+	    p1: babelHelpers.classPrivateFieldLooseBase(this, _convertProviderCodeToP1IntegrationType)[_convertProviderCodeToP1IntegrationType](providerType),
+	    p5: `docId_${documentId}`
 	  });
 	}
 	function _convertProviderCodeToP1IntegrationType2(providerType) {

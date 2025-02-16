@@ -2,9 +2,10 @@
 
 namespace Bitrix\Crm\Service\Scenario;
 
+use Bitrix\Crm\CategoryIdentifier;
 use Bitrix\Crm\Feature;
+use Bitrix\Crm\Security\Role\RolePreset;
 use Bitrix\Crm\Service;
-use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use Bitrix\Crm\Security\Role\Utils\RolePermissionLogContext;
 use Bitrix\Main\Application;
@@ -31,11 +32,11 @@ class DefaultCategoryPermissions extends Service\Scenario
 
 		Service\Container::getInstance()->getFactory($this->entityTypeId)?->clearCategoriesCache();
 
-		$categoryIdentifier = new \Bitrix\Crm\CategoryIdentifier($this->entityTypeId, $this->categoryId);
+		$categoryIdentifier = new CategoryIdentifier($this->entityTypeId, $this->categoryId);
 		$defaultPermissionSet =
 			$this->needSetOpenPermissions
-			? \CCrmRole::getDefaultPermissionSetForEntity($categoryIdentifier)
-			: \CCrmRole::getBasePermissionSetForEntity($categoryIdentifier)
+			? RolePreset::getDefaultPermissionSetForEntity($categoryIdentifier)
+			: RolePreset::getBasePermissionSetForEntity($categoryIdentifier)
 		;
 
 		if (empty($defaultPermissionSet))
@@ -61,11 +62,11 @@ class DefaultCategoryPermissions extends Service\Scenario
 
 		$systemRolesIds = \Bitrix\Crm\Security\Role\RolePermission::getSystemRolesIds();
 
-		$categoryIdentifier = new \Bitrix\Crm\CategoryIdentifier($this->entityTypeId, $this->categoryId);
+		$categoryIdentifier = new CategoryIdentifier($this->entityTypeId, $this->categoryId);
 		$defaultPermissionSet =
 			$this->needSetOpenPermissions
-				? \CCrmRole::getDefaultPermissionSetForEntity($categoryIdentifier)
-				: \CCrmRole::getBasePermissionSetForEntity($categoryIdentifier)
+				? RolePreset::getDefaultPermissionSetForEntity($categoryIdentifier)
+				: RolePreset::getBasePermissionSetForEntity($categoryIdentifier)
 		;
 
 		if (empty($defaultPermissionSet))
@@ -104,6 +105,14 @@ class DefaultCategoryPermissions extends Service\Scenario
 				continue;
 			}
 			$roleRelation[$permissionEntity] = $defaultPermissionSet;
+
+			if ($roleFields['CODE'])
+			{
+				$roleRelation[$permissionEntity] = RolePreset::getDefaultPermissionSetForEntityByCode(
+					$roleFields['CODE'],
+					$categoryIdentifier
+				);
+			}
 
 			$fields = ['RELATION' => $roleRelation];
 			$role->Update($roleID, $fields);

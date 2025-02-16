@@ -66,8 +66,8 @@ export class DocumentSend extends EventEmitter
 	set documentData(documentData: DocumentData)
 	{
 		const { uid, title } = documentData;
-		this.#documentSummary.uid = uid;
-		this.#documentSummary.title = title;
+		this.#documentSummary.addItem(uid, { uid, title });
+
 		this.#documentData = documentData;
 	}
 
@@ -415,5 +415,11 @@ export class DocumentSend extends EventEmitter
 		return new Promise((resolve) => {
 			setTimeout(resolve, ms);
 		});
+	}
+
+	setDocumentsBlock(documents): void
+	{
+		const documentsObject = Object.fromEntries(documents);
+		this.#documentSummary.setItems(documentsObject);
 	}
 }

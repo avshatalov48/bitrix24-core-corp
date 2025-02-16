@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Component\EntityList\Settings;
 
+use Bitrix\Crm\Integration\Analytics\Builder\Security\ViewEvent;
 use Bitrix\Crm\Security\Role\Manage\RoleManagerSelectionFactory;
 use Bitrix\Crm\Security\Role\Manage\RoleSelectionManager;
 use Bitrix\Crm\Security\Role\Utils\RoleManagerUtils;
@@ -16,11 +17,20 @@ final class PermissionItem implements \JsonSerializable, Arrayable
 	public const ID = 'permission-item';
 	public const DELIMITER_ID = 'permission-item-delimiter';
 
+	private array $analytics = [];
+
 	public function __construct(
 		private readonly ?RoleSelectionManager $manager = null,
 	)
 	{
 		Container::getInstance()->getLocalization()->loadMessages();
+	}
+
+	public function setAnalytics(array $analytics): self
+	{
+		$this->analytics = $analytics;
+
+		return $this;
 	}
 
 	public function jsonSerialize(): array
@@ -63,7 +73,19 @@ final class PermissionItem implements \JsonSerializable, Arrayable
 
 	private function getUrl(): ?Uri
 	{
-		return $this->manager?->getUrl();
+		$baseUrl = $this->manager?->getUrl();
+		if (!$baseUrl)
+		{
+			return null;
+		}
+
+		$viewEvent = ViewEvent::createFromArray($this->analytics);
+		if ($viewEvent->validate()->isSuccess())
+		{
+			return $viewEvent->buildUri($baseUrl);
+		}
+
+		return $baseUrl;
 	}
 
 	public function canShow(): bool

@@ -10,6 +10,7 @@ use Bitrix\Crm\AutomatedSolution\Entity\AutomatedSolutionTable;
 use Bitrix\Crm\Component\Base;
 use Bitrix\Crm\Component\EntityList\Grid;
 use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Security\Role\Manage\Manager\CustomSectionListSelection;
 use Bitrix\Crm\Summary\SummaryFactory;
 use Bitrix\Main\Grid\Settings;
@@ -128,6 +129,10 @@ class CrmAutomatedSolutionListComponent extends Base
 		$items = [];
 
 		$permissionItem = new PermissionItem(new CustomSectionListSelection());
+		$permissionItem->setAnalytics([
+			'c_section' => Dictionary::SECTION_AUTOMATION,
+			'c_sub_section' => Dictionary::SUB_SECTION_LIST,
+		]);
 		if ($permissionItem->canShow())
 		{
 			$items[] = $permissionItem->toArray();

@@ -31,6 +31,8 @@ class EventHandler
 		$result['crm_entity_relation'] = EntityRelationMapping::getMapping();
 		$result['crm_quote'] = QuoteMapping::getMapping();
 		$result['crm_quote_product_row'] = QuoteProductMapping::getMapping($helper);
+		$result['crm_activity_relation'] = ActivityRelationMapping::getMapping();
+		$result['crm_ai_quality_assessment'] = AiQualityAssessmentMapping::getMapping();
 		$result = array_merge(
 			$result,
 			AutomatedSolutionMapping::getMapping($languageId),
@@ -43,6 +45,8 @@ class EventHandler
 			'crm_entity_relation',
 			'crm_quote',
 			'crm_quote_product_row',
+			'crm_activity_relation',
+			'crm_ai_quality_assessment',
 		], $result, $languageId);
 	}
 

@@ -628,3 +628,7 @@ input.pagetitle-item {
 	overflow: hidden;
 }
 
+.document-status-label
+{
+	margin-left: 10px;
+}

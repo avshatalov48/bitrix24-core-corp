@@ -236,3 +236,38 @@ $MESS["CRM_PERMISSION_STAGE_TRANSITION_NOT_ALLOWED"] = "Недостаточно
 $MESS["CRM_LIST_ALL"] = "Всего";
 $MESS["CRM_LIST_ALL_COUNT"] = "Всего: #COUNT#";
 $MESS["CRM_LIST_SHOW_ROW_COUNT"] = "Показать количество";
+
+$MESS["CRM_ENTITY_DETAIL_ERROR_DEAL_NOT_EXIST"] = "Сделка удалена или в ссылке допущена ошибка";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_ACCESS_TO_DEAL"] = "Недостаточно прав на просмотр сделок";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_READ_PERMISSION_TO_DEAL"] = "Недостаточно прав на просмотр сделки";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_CREATE_PERMISSION_TO_DEAL"] = "Недостаточно прав на создание сделки";
+
+$MESS["CRM_ENTITY_DETAIL_ERROR_LEAD_NOT_EXIST"] = "Лид удалён или в ссылке допущена ошибка";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_ACCESS_TO_LEAD"] = "Недостаточно прав на просмотр лидов";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_READ_PERMISSION_TO_LEAD"] = "Недостаточно прав на просмотр лида";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_CREATE_PERMISSION_TO_LEAD"] = "Недостаточно прав на создание лида";
+
+$MESS["CRM_ENTITY_DETAIL_ERROR_QUOTE_NOT_EXIST"] = "Предложение удалено или в ссылке допущена ошибка";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_ACCESS_TO_QUOTE"] = "Недостаточно прав на просмотр предложений";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_READ_PERMISSION_TO_QUOTE"] = "Недостаточно прав на просмотр предложения";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_CREATE_PERMISSION_TO_QUOTE"] = "Недостаточно прав на создание предложения";
+
+$MESS["CRM_ENTITY_DETAIL_ERROR_COMPANY_NOT_EXIST"] = "Компания удалена или в ссылке допущена ошибка";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_ACCESS_TO_COMPANY"] = "Недостаточно прав на просмотр компаний";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_READ_PERMISSION_TO_COMPANY"] = "Недостаточно прав на просмотр компании";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_CREATE_PERMISSION_TO_COMPANY"] = "Недостаточно прав на создание компании";
+
+$MESS["CRM_ENTITY_DETAIL_ERROR_CONTACT_NOT_EXIST"] = "Контакт удалён или в ссылке допущена ошибка";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_ACCESS_TO_CONTACT"] = "Недостаточно прав на просмотр контактов";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_READ_PERMISSION_TO_CONTACT"] = "Недостаточно прав на просмотр контакта";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_CREATE_PERMISSION_TO_CONTACT"] = "Недостаточно прав на создание контакта";
+
+$MESS["CRM_ENTITY_DETAIL_ERROR_DYNAMIC_NOT_EXIST"] = "Элемент удалён или в ссылке допущена ошибка";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_ACCESS_TO_DYNAMIC"] = "Недостаточно прав на просмотр элементов";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_READ_PERMISSION_TO_DYNAMIC"] = "Недостаточно прав на просмотр элемента";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_CREATE_PERMISSION_TO_DYNAMIC"] = "Недостаточно прав на создание элемента";
+
+$MESS["CRM_ENTITY_DETAIL_ERROR_SMART_INVOICE_NOT_EXIST"] = "Счёт удалён или в ссылке допущена ошибка";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_ACCESS_TO_SMART_INVOICE"] = "Недостаточно прав на просмотр счетов";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_READ_PERMISSION_TO_SMART_INVOICE"] = "Недостаточно прав на просмотр счёта";
+$MESS["CRM_ENTITY_DETAIL_ERROR_NO_CREATE_PERMISSION_TO_SMART_INVOICE"] = "Недостаточно прав на создание счёта";

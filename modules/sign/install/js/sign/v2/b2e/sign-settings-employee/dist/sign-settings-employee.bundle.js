@@ -213,11 +213,12 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    title: main_core.Loc.getMessage('SIGN_SETTINGS_EMPLOYEE_SUBMIT_INFO'),
 	    beforeCompletion: async () => {
 	      submitDocumentInfo.subscribeOnce(submitDocumentInfo.events.documentSendedSuccessFully, event => {
+	        const document = event.getData().document;
 	        babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics].sendWithProviderTypeAndDocId({
 	          event: 'sent_document_to_sign',
 	          c_element: 'create_button',
 	          status: 'success'
-	        }, event.getData().documentId);
+	        }, document.id, document.providerCode);
 	      });
 	      let result = false;
 	      try {

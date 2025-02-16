@@ -1,0 +1,23 @@
+.booking-actions-popup__item-full-form-content {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+
+	/** soon **/
+	opacity: 0.5;
+	user-select: none;
+}
+
+.booking-actions-popup__item-full-form-label {
+	color: var(--ui-color-palette-gray-90);
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 15px;
+	text-align: left;
+}
+
+.booking-actions-popup__item-full-form-icon > div {
+	display: flex;
+	align-self: center;
+}

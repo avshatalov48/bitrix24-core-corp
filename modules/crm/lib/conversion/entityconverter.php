@@ -55,6 +55,8 @@ class EntityConverter
 	private $isFinished = false;
 	private $isInitialized = false;
 
+	private ?\Psr\Log\LoggerInterface $logger = null;
+
 	protected function __construct(EntityConversionConfig $config)
 	{
 		$this->config = $config;
@@ -1255,4 +1257,30 @@ class EntityConverter
 	}
 
 	//endregion
+
+	protected function getLogContext(): array
+	{
+		return array_merge(
+			$this->getContextData(),
+			$this->externalize(),
+			[
+				'currentUserId' => Container::getInstance()->getContext()->getUserId(),
+			]
+		);
+	}
+
+	public function log(string $message, array $context = [], string $level = \Psr\Log\LogLevel::INFO): void
+	{
+		if (!$this->logger)
+		{
+			$this->logger = new \Bitrix\Crm\Service\Logger\DbLogger(
+				'crm.conversion',
+				(int)\Bitrix\Main\Config\Option::get('crm', 'conversion_logger_ttl', 24*14)
+			);
+			$this->logger->setLevel(\Bitrix\Main\Config\Option::get('crm', 'conversion_logger_level', \Psr\Log\LogLevel::CRITICAL));
+		}
+		$context['context'] = $this->getLogContext();
+
+		$this->logger->log($level, $message, $context);
+	}
 }

@@ -158,12 +158,12 @@ final class CallCardPlacement extends Controller
 
 		$this->subscribePullEvent($callId);
 
-		$activeCallAssessmentCount = $this->getActiveCallAssessmentCount();
+		$hasAvailableSelectorItems = $this->hasAvailableSelectorItems();
 		$assessment = ItemFactory::getByCallId($callId);
 
 		return [
 			'callAssessment' => $assessment?->toArray() ?? [],
-			'activeCallAssessmentCount' => $activeCallAssessmentCount,
+			'hasAvailableSelectorItems' => $hasAvailableSelectorItems,
 		];
 	}
 
@@ -182,9 +182,7 @@ final class CallCardPlacement extends Controller
 	 */
 	private function isCallAssessmentEnabled(): bool
 	{
-		return
-			Feature::enabled(Feature\CopilotInCallGrading::class)
-			&& AIManager::isAiCallProcessingEnabled()
+		return AIManager::isAiCallProcessingEnabled()
 			&& AIManager::isEnabledInGlobalSettings(GlobalSetting::CallAssessment)
 		;
 	}
@@ -266,11 +264,16 @@ final class CallCardPlacement extends Controller
 		return "CRM_COPILOT_CALL_CARD_REPLACEMENT_{$callId}";
 	}
 
-	private function getActiveCallAssessmentCount(): int
+	private function hasAvailableSelectorItems(): bool
 	{
-		return (int)CopilotCallAssessmentTable::query()
+		$activeCallAssessment = CopilotCallAssessmentTable::query()
+			->setSelect(['ID'])
 			->where('IS_ENABLED', true)
-			->queryCountTotal()
+			->setLimit(1)
+			->setCacheTtl(3600)
+			->fetchObject()
 		;
+
+		return $activeCallAssessment !== null;
 	}
 }

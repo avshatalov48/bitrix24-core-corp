@@ -37,7 +37,7 @@ class RelationManager
 	public const ERROR_CODE_UNBIND_ITEMS_TYPES_NOT_BOUND = 'CRM_UNBIND_ITEMS_TYPES_NOT_BOUND';
 	public const ERROR_CODE_UNBIND_ITEMS_ITEMS_NOT_BOUND = 'CRM_UNBIND_ITEMS_ITEMS_NOT_BOUND';
 
-	protected const TAB_NAME_RELATION = 'tab_relation_';
+	public const TAB_NAME_RELATION = 'tab_relation_';
 	protected const RELATION_TYPE = RelationType::BINDING;
 
 	/** @var EntityConversionMapTable */

@@ -27,6 +27,7 @@ export class UserSelector extends EventEmitter
 			height: 363,
 			multiple: options.multiple ?? true,
 			targetNode: this.#container,
+			context: options.context ?? 'sign_b2e_user_selector',
 			entities: [
 				{
 					id: userEntityTypeId,

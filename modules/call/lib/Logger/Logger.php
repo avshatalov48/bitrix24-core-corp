@@ -55,12 +55,16 @@ class Logger extends FileLogger
 
 	private static function getLogPath(): string
 	{
+		$fileLog = \Bitrix\Main\Config\Option::get('call', 'call_log_file', '');
+		if (!empty($fileLog))
+		{
+			return $fileLog;
+		}
 		if (isset($_SERVER['DOCUMENT_ROOT']))
 		{
 			return $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/call.log';
 		}
-
-		return __DIR__ . '/../../../call.log';
+		return '';
 	}
 
 	private static function getLogMaxSize(): int

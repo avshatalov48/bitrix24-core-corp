@@ -21,6 +21,7 @@ use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Multifield\Type\Phone;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
@@ -445,7 +446,10 @@ class ToDo extends Base
 			return null;
 		}
 
-		if ($prevResponsibleId !== null && $responsibleId !== $prevResponsibleId)
+		if (
+			$prevResponsibleId !== null
+			&& $responsibleId !== $prevResponsibleId
+		)
 		{
 			$this->notifyResponsibleAboutUpdate($todo, $prevResponsibleId);
 		}
@@ -848,22 +852,24 @@ class ToDo extends Base
 
 	private function notifyResponsibleAboutAdd(Entity\ToDo $todo): void
 	{
-		$currentUserId = $this->getCurrentUserId();
+		$currentUserId = $this->getCurrentUserId($todo);
 
-		$this->getToDoResponsibleNotification($todo)
-			->sendWhenAdd($currentUserId, $todo->getResponsibleId())
+		$this
+			->getToDoResponsibleNotification($todo)
+			->sendWhenAdd($todo->getResponsibleId(), $currentUserId)
 		;
 	}
 
 	private function notifyResponsibleAboutUpdate(Entity\ToDo $todo, int $prevResponsibleId): void
 	{
-		$currentUserId = $this->getCurrentUserId();
+		$currentUserId = $this->getCurrentUserId($todo);
 
-		$this->getToDoResponsibleNotification($todo)
+		$this
+			->getToDoResponsibleNotification($todo)
 			->sendWhenUpdate(
-				$currentUserId,
 				$todo->getResponsibleId(),
 				$prevResponsibleId,
+				$currentUserId,
 			)
 		;
 	}
@@ -876,8 +882,17 @@ class ToDo extends Base
 		return new ToDoResponsibleNotification($todo, $messageBuilder);
 	}
 
-	private function getCurrentUserId(): int
+	private function getCurrentUserId(?Entity\ToDo $todo = null): ?int
 	{
+		$context = $todo?->getContext();
+		$userId = $context?->getUserId();
+		$scope = $context?->getScope();
+
+		if ($userId)
+		{
+			return ($scope === Context::SCOPE_AUTOMATION ? null : $userId);
+		}
+
 		return $this->getCurrentUser()?->getId() ?? Container::getInstance()->getContext()->getUserId();
 	}
 }

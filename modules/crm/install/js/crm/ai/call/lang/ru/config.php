@@ -18,6 +18,7 @@ $MESS['CRM_COPILOT_CALL_QUALITY_COMPLIANCE_EMPTY_SCRIPT_LIST_VALUE'] = 'по с�
 $MESS['CRM_COPILOT_CALL_QUALITY_EXPLANATION_TITLE'] = 'CoPilot оценил разговор';
 $MESS['CRM_COPILOT_CALL_QUALITY_EXPLANATION_NOT_IN_RATING'] = 'Не участвует в общем рейтинге';
 $MESS['CRM_COPILOT_CALL_QUALITY_EXPLANATION_IS_PENDING_TITLE'] = 'CoPilot анализирует разговор';
+$MESS['CRM_COPILOT_CALL_QUALITY_EXPLANATION_DISCLAIMER'] = 'Oтветы CoPilot могут быть #LINK_START#неточны#LINK_END#, проверяйте важную информацию';
 
 $MESS['CRM_COPILOT_CALL_QUALITY_OLD_EXPLANATION_TITLE'] = 'Запустите анализ разговора ещё&nbsp;раз';
 $MESS['CRM_COPILOT_CALL_QUALITY_OLD_EXPLANATION_TEXT'] = 'CoPilot уже проанализировал этот разговор, но&nbsp;текст скрипта изменился после оценки. Вы&nbsp;можете оценить разговор ещё&nbsp;раз или&nbsp;посмотреть оценку по&nbsp;предыдущей версии скрипта';
@@ -31,6 +32,9 @@ $MESS['CRM_COPILOT_CALL_QUALITY_NO_EXPLANATION_ASSESSMENT'] = 'Запустит�
 $MESS['CRM_COPILOT_CALL_QUALITY_PENDING_TITLE'] = 'CoPilot анализирует разговор';
 $MESS['CRM_COPILOT_CALL_QUALITY_PENDING_TEXT'] = 'Скоро всё будет готово';
 
+$MESS['CRM_COPILOT_CALL_QUALITY_ASSESSMENT_SETTINGS_PENDING_TITLE'] = 'CoPilot обрабатывает скрипт';
+$MESS['CRM_COPILOT_CALL_QUALITY_ASSESSMENT_SETTINGS_PENDING_TEXT'] = 'Скоро всё будет готово';
+
 $MESS['CRM_COPILOT_CALL_QUALITY_ERROR_TITLE'] = 'CoPilot не смог оценить разговор';
 $MESS['CRM_COPILOT_CALL_QUALITY_ERROR_TEXT'] = 'Попробуйте запустить анализ ещё раз немного позже. Если ситуация повторится, проверьте запросы к CoPilot';
 
@@ -43,6 +47,7 @@ $MESS['CRM_COPILOT_CALL_QUALITY_SCRIPT_SELECTOR_TITLE'] = 'Скрипт';
 $MESS['CRM_COPILOT_CALL_QUALITY_SCRIPT_ASSESSMENT_REPLY'] = 'Оценить разговор повторно';
 $MESS['CRM_COPILOT_CALL_QUALITY_SCRIPT_EDIT'] = 'Редактировать скрипт';
 $MESS['CRM_COPILOT_CALL_QUALITY_SCRIPT_EDIT_HINT'] = 'Эта возможность скоро будет доступна. Вы можете отредактировать скрипт в разделе Скрипты и Речевая аналитика с AI';
+$MESS['CRM_COPILOT_CALL_QUALITY_SCRIPT_DISABLED_DO_ASSESSMENT_HINT'] = 'CoPilot ещё обрабатывает скрипт, скоро всё будет готово';
 
 $MESS['CRM_COPILOT_CALL_QUALITY_SCRIPT_INFO_UPDATED'] = 'Этот скрипт был изменён #UPDATED_AT#';
 $MESS['CRM_COPILOT_CALL_QUALITY_SCRIPT_INFO_SHOW_NEW_PROMPT'] = 'Показать новый текст';

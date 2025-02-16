@@ -3,3 +3,4 @@ $MESS['CRM_TIMELINE_ACTIVITY_AI_CALL_SCORING_RESULT_TITLE'] = 'CoPilot оцен�
 $MESS['CRM_TIMELINE_ACTIVITY_AI_CALL_SCORING_OPEN_BTN'] = 'Анализ разговора';
 $MESS['CRM_TIMELINE_ACTIVITY_AI_CALL_SCORING_OPEN_SETTINGS_BTN'] = 'Редактировать скрипт';
 $MESS['CRM_TIMELINE_ACTIVITY_AI_CALL_SCORING_TAG_USE_IN_RATING'] = 'Участвует в общем рейтинге';
+$MESS['CRM_TIMELINE_ACTIVITY_AI_CALL_SCORING_TAG_FAILED'] = 'Отклонения от скрипта';

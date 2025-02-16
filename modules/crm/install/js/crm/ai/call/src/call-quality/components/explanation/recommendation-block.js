@@ -1,4 +1,7 @@
+import { Loc } from 'main.core';
+
 const ARTICLE_CODE = '23240682';
+const DISCLAIMER_ARTICLE_CODE = '20412666';
 
 export const RecommendationBlock = {
 	props: {
@@ -20,6 +23,16 @@ export const RecommendationBlock = {
 		showArticle(): void
 		{
 			window.top.BX?.Helper?.show(`redirect=detail&code=${ARTICLE_CODE}`);
+		},
+	},
+
+	computed: {
+		disclaimer(): string
+		{
+			return Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_DISCLAIMER', {
+				'#LINK_START#': `<a onclick='window.top.BX?.Helper?.show(\`redirect=detail&code=${DISCLAIMER_ARTICLE_CODE}\`)' href="#">`,
+				'#LINK_END#': '</a>',
+			});
 		},
 	},
 
@@ -48,6 +61,8 @@ export const RecommendationBlock = {
 					<p>
 						{{ recommendations }}
 					</p>
+				</div>
+				<div class="call-quality__explanation-disclaimer" v-html="disclaimer">
 				</div>
 			</div>
 		</div>

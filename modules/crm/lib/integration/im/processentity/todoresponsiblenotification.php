@@ -22,39 +22,23 @@ final class ToDoResponsibleNotification
 	{
 	}
 
-	public function sendWhenAdd(int $fromUserId, int $toUserId): void
+	public function sendWhenAdd(int $toUserId, ?int $fromUserId = null): void
 	{
-		if (
-			$fromUserId === $toUserId
-			|| !$this->canSend()
-		)
+		if ($fromUserId === $toUserId || !$this->canSend())
 		{
 			return;
 		}
 
-		$message = $this->getNotifyMessage($this->messageBuilder::BECOME);
-		$messageOut = $this->getNotifyMessageOut($this->messageBuilder::BECOME);
-
-		$notifyData = $this->getDefaultNotifyData()
-			->setFromUserId($fromUserId)
-			->setToUserId($toUserId)
-			->setNotifyMessage($message)
-			->setNotifyMessageOut($messageOut)
-		;
-
-		\CIMNotify::Add($notifyData->toArray());
+		$this->send($this->messageBuilder::BECOME, $toUserId, $fromUserId);
 	}
 
 	public function sendWhenUpdate(
-		int $fromUserId,
 		int $currentResponsibleId,
 		int $previousResponsibleId,
+		?int $fromUserId = null,
 	): void
 	{
-		if (
-			$previousResponsibleId === $currentResponsibleId
-			|| !$this->canSend()
-		)
+		if ($previousResponsibleId === $currentResponsibleId || !$this->canSend())
 		{
 			return;
 		}
@@ -66,17 +50,7 @@ final class ToDoResponsibleNotification
 
 		foreach ($receivers as $receiver)
 		{
-			$message = $this->getNotifyMessage($receiver->getMessageType());
-			$messageOut = $this->getNotifyMessageOut($receiver->getMessageType());
-
-			$notifyData = $this->getDefaultNotifyData()
-				->setFromUserId($fromUserId)
-				->setToUserId($receiver->getId())
-				->setNotifyMessage($message)
-				->setNotifyMessageOut($messageOut)
-			;
-
-			\CIMNotify::Add($notifyData->toArray());
+			$this->send($receiver->getMessageType(), $receiver->getId(), $fromUserId);
 		}
 	}
 
@@ -210,5 +184,32 @@ final class ToDoResponsibleNotification
 			$this->todo->getOwner()->getEntityTypeId(),
 			$this->todo->getOwner()->getEntityId(),
 		);
+	}
+
+	private function send(string $messageType, int $toUserId, ?int $fromUserId = null): void
+	{
+		$message = $this->getNotifyMessage($messageType);
+		$messageOut = $this->getNotifyMessageOut($messageType);
+
+		$notifyData = $this->getDefaultNotifyData()
+			->setToUserId($toUserId)
+			->setNotifyMessage($message)
+			->setNotifyMessageOut($messageOut)
+		;
+
+		if ($fromUserId)
+		{
+			$notifyData->setFromUserId($fromUserId);
+		}
+		else
+		{
+			$notifyData
+				->setFromUserId(0)
+				->setMessageType(IM_MESSAGE_SYSTEM)
+				->setNotifyType(IM_NOTIFY_SYSTEM)
+			;
+		}
+
+		\CIMNotify::Add($notifyData->toArray());
 	}
 }

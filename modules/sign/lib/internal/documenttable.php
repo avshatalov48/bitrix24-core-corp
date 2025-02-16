@@ -6,6 +6,7 @@ use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\Security\Random;
 use Bitrix\Sign\File;
+use Bitrix\Sign\Internal\Document\TemplateTable;
 use Bitrix\Sign\Type\Document\InitiatedByType;
 use Bitrix\Sign\Type\DocumentStatus;
 
@@ -183,6 +184,15 @@ class DocumentTable extends Entity\DataManager
 				->configureTitle('Template ID')
 				->configureNullable()
 			,
+			(new IntegerField('GROUP_ID'))
+				->configureTitle('Group ID')
+				->configureNullable()
+			,
+			(new Entity\ReferenceField(
+				'TEMPLATE',
+				TemplateTable::class,
+				['=this.TEMPLATE_ID' => 'ref.ID']
+			)),
 			(new IntegerField('CHAT_ID'))
 				->configureTitle('Chat ID')
 				->configureNullable()

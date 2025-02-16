@@ -73,6 +73,8 @@ class TypeTable extends UserField\Internal\TypeDataManager
 	protected const MAX_TRIES_GENERATE_NAME = 5;
 	protected const NAME_RANDOM_STRING_LENGTH = 10;
 
+	private static bool $skipEvents = false;
+
 	public static function getTableName(): string
 	{
 		return 'b_crm_dynamic_type';
@@ -246,6 +248,10 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			{
 				return Container::getInstance()->getContext()->getUserId();
 			});
+		$fieldsMap[] = (new ORM\Fields\BooleanField('IS_INITIALIZED'))
+			->configureStorageValues('N', 'Y')
+			->configureDefaultValue('N')
+		;
 
 		return $fieldsMap;
 	}
@@ -298,21 +304,59 @@ class TypeTable extends UserField\Internal\TypeDataManager
 		return static::getList([
 			'filter' => [
 				'=ENTITY_TYPE_ID' => $entityTypeId,
+				'=IS_INITIALIZED' => true,
 			],
 		]);
+	}
+
+	public static function isCreatingInProgress(int $entityTypeId): bool
+	{
+		return (bool)static::query()
+			->where('ENTITY_TYPE_ID', $entityTypeId)
+			->where('IS_INITIALIZED', false)
+			->where('CREATED_TIME', '>', (new DateTime())->add('-30sec'))
+			->setSelect(['ID'])
+			->setLimit(1)
+			->fetch()
+		;
 	}
 
 	public static function onBeforeAdd(Event $event): ORM\EventResult
 	{
 		$fields = $event->getParameter('fields');
 		$result = new ORM\EventResult();
+		$modifiedFields = [];
+
 		if(!empty($fields['NAME']))
 		{
 			$fields['NAME'] = static::prepareName($fields['NAME']);
-			$result->modifyFields([
+			$modifiedFields = [
 				'NAME' => $fields['NAME'],
 				'TABLE_NAME' => static::getItemTableName((string)$fields['ENTITY_TYPE_ID']),
-			]);
+			];
+		}
+		$modifiedFields['IS_INITIALIZED'] = false;
+		$result->modifyFields($modifiedFields);
+
+		if (!empty($fields['ENTITY_TYPE_ID']))
+		{
+			$existedType = static::query()
+				->where('ENTITY_TYPE_ID', $fields['ENTITY_TYPE_ID'])
+				->where('IS_INITIALIZED', false)
+				->setSelect(['*'])
+				->fetchObject();
+			if ($existedType) // delete previous uncompleted version of this smart process
+			{
+				$elementsTableName = $existedType->getTableName();
+				$connection = Application::getConnection();
+				if ($connection->isTableExists($elementsTableName))
+				{
+					$connection->dropTable($elementsTableName);
+				}
+				static::$skipEvents = true;
+				$existedType->delete();
+				static::$skipEvents = false;
+			}
 		}
 
 		return $result;
@@ -320,22 +364,29 @@ class TypeTable extends UserField\Internal\TypeDataManager
 
 	public static function onAfterAdd(Event $event): ORM\EventResult
 	{
-		Container::getInstance()->getDynamicTypesMap()->invalidateTypesCollectionCache();
+		$type = $event->getParameter('object');
 
+		Container::getInstance()->getDynamicTypesMap()->invalidateTypesCollectionCache();
+		Container::getInstance()->registerType($type->getEntityTypeId(), $type);
 		$result = parent::onAfterAdd($event);
 
 		if (!$result->getErrors())
 		{
-			$type = $event->getParameter('object');
-
 			static::createIndexes($type->getId());
 			static::createItemIndexTable($type->getId());
 			static::createItemFieldsContextTable($type->getId());
+			DynamicBasedAttrTableLifecycle::getInstance()
+				->createTable(\CCrmOwnerType::ResolveName($type->getEntityTypeId()));
+
+			$type->set('IS_INITIALIZED', true);
+			static::$skipEvents = true;
+			static::update($type->getId(), ['IS_INITIALIZED' => true]);
+			static::$skipEvents = false;
+
+			Container::getInstance()->getDynamicTypesMap()->invalidateTypesCollectionCache(); // clear cache again to avoid invalid cached TABLE_NAME field value
 
 			$factory = Container::getInstance()->getFactory($type->getEntityTypeId());
 			$factory?->createDefaultCategoryIfNotExist();
-
-			DynamicBasedAttrTableLifecycle::getInstance()->createTable($factory->getEntityName());
 
 			static::clearBindingMenuCache();
 		}
@@ -345,6 +396,10 @@ class TypeTable extends UserField\Internal\TypeDataManager
 
 	public static function onAfterDelete(Event $event): ORM\EventResult
 	{
+		if (static::$skipEvents)
+		{
+			return new EventResult();
+		}
 		Container::getInstance()->getDynamicTypesMap()->invalidateTypesCollectionCache();
 
 		$result = new ORM\EventResult();
@@ -457,6 +512,13 @@ class TypeTable extends UserField\Internal\TypeDataManager
 		return $result;
 	}
 
+	public static function createItemIndexTableInAgent($type): string
+	{
+		static::createItemIndexTable($type);
+
+		return '';
+	}
+
 	public static function deleteItemIndexTable($type): Result
 	{
 		$result = new Result();
@@ -556,6 +618,10 @@ class TypeTable extends UserField\Internal\TypeDataManager
 
 	public static function onBeforeUpdate(Event $event): ORM\EventResult
 	{
+		if (static::$skipEvents)
+		{
+			return new EventResult();
+		}
 		$result = parent::onBeforeUpdate($event);
 
 		$fields = $event->getParameter('fields');
@@ -636,6 +702,10 @@ class TypeTable extends UserField\Internal\TypeDataManager
 
 	public static function onAfterUpdate(Event $event): EventResult
 	{
+		if (static::$skipEvents)
+		{
+			return new EventResult();
+		}
 		Container::getInstance()->getDynamicTypesMap()->invalidateTypesCollectionCache();
 
 		$id = static::getTemporaryStorage()->getIdByPrimary($event->getParameter('primary'));
@@ -833,6 +903,10 @@ class TypeTable extends UserField\Internal\TypeDataManager
 
 	public static function onBeforeDelete(Event $event): EventResult
 	{
+		if (static::$skipEvents)
+		{
+			return new EventResult();
+		}
 		$result = new EventResult();
 
 		$id = $event->getParameter('id');

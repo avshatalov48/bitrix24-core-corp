@@ -8,7 +8,6 @@ use Bitrix\Crm\Security\Role\Model\RoleRelationTable;
 use Bitrix\Crm\Security\Role\RolePermission;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
-use Bitrix\Crm\CategoryIdentifier;
 use Bitrix\Crm\Security\Role\Utils\RolePermissionLogContext;
 
 class CCrmRole
@@ -534,7 +533,7 @@ class CCrmRole
 
 	/**
 	 * @deprecated Method doesn't contain complete data. To avoid losing some default permissions use CCrmRole::getDefaultPermissionSetForEntity
-	 * @see CCrmRole::getDefaultPermissionSetForEntity
+	 * @see \Bitrix\Crm\Security\Role\RolePreset::getDefaultPermissionSetForEntity
 	 */
 	public static function GetDefaultPermissionSet(): array
 	{
@@ -546,65 +545,6 @@ class CCrmRole
 			'WRITE' => ['-' => 'X'],
 			'DELETE' => ['-' => 'X'],
 		];
-	}
-
-	/**
-	 * Permissions that must be set for new ($entityTypeId + $categoryId) by default
-	 *
-	 * @param CategoryIdentifier $categoryIdentifier
-	 * @return array
-	 */
-	public static function getBasePermissionSetForEntity(CategoryIdentifier $categoryIdentifier): array
-	{
-		return self::getPermissionSetForEntityByCondition(
-			$categoryIdentifier->getPermissionEntityCode(),
-			fn(\Bitrix\Crm\Security\Role\Manage\Permissions\Permission $permission) => $permission->getDefaultAttribute(),
-			fn(\Bitrix\Crm\Security\Role\Manage\Permissions\Permission $permission) => $permission->getDefaultSettings()
-		);
-	}
-
-	/**
-	 * Maximal permissions that can be set for ($entityTypeId + $categoryId)
-	 *
-	 * @param CategoryIdentifier $categoryIdentifier
-	 * @return array
-	 */
-	public static function getMaxPermissionSetForEntity(CategoryIdentifier $categoryIdentifier): array
-	{
-		return self::getPermissionSetForEntityByCondition(
-			$categoryIdentifier->getPermissionEntityCode(),
-			fn(\Bitrix\Crm\Security\Role\Manage\Permissions\Permission $permission) => $permission->getMaxAttributeValue(),
-			fn(\Bitrix\Crm\Security\Role\Manage\Permissions\Permission $permission) => $permission->getMaxSettingsValue()
-		);
-	}
-
-	/**
-	 * Minimal permissions that can be set for ($entityTypeId + $categoryId)
-	 *
-	 * @param CategoryIdentifier $categoryIdentifier
-	 * @return array
-	 */
-	public static function getMinPermissionSetForEntity(CategoryIdentifier $categoryIdentifier): array
-	{
-		return self::getPermissionSetForEntityByCondition(
-			$categoryIdentifier->getPermissionEntityCode(),
-			fn(\Bitrix\Crm\Security\Role\Manage\Permissions\Permission $permission) => $permission->getMinAttributeValue(),
-			fn(\Bitrix\Crm\Security\Role\Manage\Permissions\Permission $permission) => $permission->getMinSettingsValue()
-		);
-	}
-
-	/**
-	 * Typical default permissions for ($entityTypeId + $categoryId)
-	 *
-	 * @param CategoryIdentifier $categoryIdentifier
-	 * @return array
-	 */
-	public static function getDefaultPermissionSetForEntity(CategoryIdentifier $categoryIdentifier): array
-	{
-		return array_merge(
-			self::GetDefaultPermissionSet(),
-			self::getBasePermissionSetForEntity($categoryIdentifier)
-		);
 	}
 
 	public static function normalizePermissions(array $permissions): array
@@ -678,39 +618,6 @@ class CCrmRole
 			$logData .= "\n" . print_r($extraData, true);
 		}
 		AddMessage2Log($logData, 'crm', 10);
-	}
-
-	private static function getPermissionSetForEntityByCondition(string $permissionEntityCode, callable $getAttrValueCallback, callable $getSettingsValueCallback): array
-	{
-		$permissionSet = [];
-		$permissionEntities = \Bitrix\Crm\Security\Role\Manage\RoleManagementModelBuilder::getInstance()->buildModels();
-		foreach ($permissionEntities as $permissionEntity)
-		{
-			if ($permissionEntityCode === $permissionEntity->code())
-			{
-				foreach ($permissionEntity->permissions() as $permission)
-				{
-					$defaultAttr = $getAttrValueCallback($permission);
-					$defaultSettings = $getSettingsValueCallback($permission);
-					$permissionCode = $permission->code();
-					if (!is_null($defaultAttr) || !empty($defaultSettings))
-					{
-						if (!isset($permissionSet[$permissionCode]))
-						{
-							$permissionSet[$permissionCode] = [
-								'-' => []
-							];
-						}
-						$permissionSet[$permissionCode]['-']['ATTR'] = $defaultAttr;
-						$permissionSet[$permissionCode]['-']['SETTINGS'] = empty($defaultSettings) ? null : $defaultSettings;
-					}
-				}
-
-				break;
-			}
-		}
-
-		return $permissionSet;
 	}
 
 	/**

@@ -3,6 +3,8 @@
 namespace Bitrix\Crm\Tour;
 
 use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\AI\JobRepository;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 use CCrmOwnerType;
 
@@ -43,8 +45,8 @@ class CopilotInCall extends Base
 
 		if ($this->isUserSeenTour())
 		{
-			$userId = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId();
-			if (AIManager::isUserHasJobs($userId))
+			$userId = Container::getInstance()->getContext()->getUserId();
+			if (JobRepository::getInstance()->isUserHasJobs($userId))
 			{
 				return false;
 			}

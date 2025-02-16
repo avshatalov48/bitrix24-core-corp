@@ -33,7 +33,7 @@ class Input extends Base\Input
 		if ($this->command === 'receivingMessage')
 		{
 			$this->params = $this->prepareMessageParams($params);
-			$subjectId = (int)$params['imSubject'];
+			$subjectId = isset($params['imSubjectId']) ? (int)$params['imSubjectId'] : (int)$params['imSubject'];
 		}
 		else
 		{

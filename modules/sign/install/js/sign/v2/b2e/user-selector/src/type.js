@@ -6,5 +6,6 @@ export type UserSelectorOptions = {
 	events?: {
 		[key: string]: (event: BaseEvent) => void
 	},
-	multiple: boolean
+	multiple: boolean,
+	context?: string,
 }

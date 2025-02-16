@@ -57,6 +57,7 @@ class Icon
 	public const VISIT = 'visit';
 	public const CAMERA = 'camera';
 	public const COPY = 'copy';
+	public const ROBOT = 'robot';
 
 	public const CYCLE_EQUAL = 'cycle-equal';
 	public const BIZPROC = 'bizproc';

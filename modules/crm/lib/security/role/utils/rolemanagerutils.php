@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Security\Role\Utils;
 
+use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Security\Role\Repositories\PermissionRepository;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Traits\Singleton;
@@ -34,7 +35,7 @@ class RoleManagerUtils
 			$result->addError(
 				new Error(
 					Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED'),
-					0,
+					ErrorCode::RESTRICTED_BY_TARIFF,
 					[
 						'sliderCode' => $restriction->sliderCode(),
 					],

@@ -62,6 +62,7 @@ use Bitrix\Report\VisualConstructor\Handler\BaseWidget;
 use Bitrix\Report\VisualConstructor\Helper\Util;
 use Bitrix\Report\VisualConstructor\Views\Component\Number;
 use Bitrix\Report\VisualConstructor\Views\JsComponent\AmChart\LinearGraph;
+use Bitrix\Rest\Marketplace\Url;
 use Bitrix\Voximplant\Integration\Report\Dashboard\CallDynamics\CallDynamicsBoard;
 
 /**
@@ -173,9 +174,13 @@ class EventHandler
 
 		$batchList[] = $myReports;
 
-		$restApps = AppPlacementManager::getHandlerInfos(AppPlacement::ANALYTICS_MENU);
+		$restAppsCategories = array_keys(AppPlacementManager::getHandlerInfos(AppPlacement::ANALYTICS_MENU));
+		if (!in_array(AppPlacementManager::getDefaultGroupName(), $restAppsCategories))
+		{
+			$restAppsCategories[] = AppPlacementManager::getDefaultGroupName();
+		}
 		$i = 0;
-		foreach (array_keys($restApps) as $categoryName)
+		foreach ($restAppsCategories as $categoryName)
 		{
 			$key = static::REST_BOARD_BATCH_KEY_TEMPLATE . $categoryName;
 
@@ -938,6 +943,7 @@ class EventHandler
 				$analyticPageList[] = $board;
 			}
 		}
+		$analyticPageList[] = self::getMarketplaceAnalyticsBoard();
 	}
 
 	protected static function appendTelephonyPageList(array &$analyticPageList): void
@@ -1234,5 +1240,22 @@ class EventHandler
 				'.Loc::getMessage('CRM_REPORT_MY_REPORTS_ADD').'
 			</button>
 		');
+	}
+
+	private static function getMarketplaceAnalyticsBoard()
+	{
+		$batchKey = static::REST_BOARD_BATCH_KEY_TEMPLATE . AppPlacementManager::getDefaultGroupName();
+
+		$marketplaceExternalLink = new AnalyticBoard();
+		$marketplaceExternalLink->setBoardKey('crm_marketplace_external_link');
+		$marketplaceExternalLink->setTitle(Loc::getMessage('CRM_REPORT_EXTERNAL_LINK_MARKETPLACE_BOARD_TITLE'));
+		$marketplaceExternalLink->setExternal(true);
+		$marketplaceExternalLink->setExternalUrl(
+			Url::getCategoryByPlacement('CRM_ANALYTICS_MENU')
+		);
+		$marketplaceExternalLink->setBatchKey($batchKey);
+		$marketplaceExternalLink->setGroup(self::BATCH_GROUP_CRM_GENERAL);
+
+		return $marketplaceExternalLink;
 	}
 }

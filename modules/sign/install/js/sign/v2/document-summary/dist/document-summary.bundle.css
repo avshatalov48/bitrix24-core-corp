@@ -126,3 +126,7 @@
 	width: 14px;
 	height: 14px;
 }
+
+.sign-document-summary + .sign-document-summary {
+	margin-top: 10px;
+}

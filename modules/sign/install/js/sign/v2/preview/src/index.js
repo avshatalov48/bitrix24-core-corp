@@ -1,8 +1,14 @@
-import { Tag, Loc, Dom, Text, Event } from 'main.core';
+import { Tag, Type, Loc, Dom, Text, Event } from 'main.core';
 import { Loader } from 'main.loader';
 import './style.css';
 
 const ratio = 0.25;
+
+export type Options = {
+	layout?: {
+		getAfterPreviewLayoutCallback?: () => ?HTMLElement
+	},
+};
 
 export class Preview
 {
@@ -16,9 +22,11 @@ export class Preview
 	#urls: string[];
 	#loader: Loader;
 	#content: HTMLElement;
+	#options: Options;
 
-	constructor()
+	constructor(options: Options = {})
 	{
+		this.#options = options;
 		this.#placeholder = Tag.render`
 			<div class="sign-preview__placeholder">
 				<p class="sign-preview__placeholder_text">
@@ -213,6 +221,7 @@ export class Preview
 			<div class="sign-preview">
 				${this.#content}
 				${this.#controls}
+				${this.#options?.layout?.getAfterPreviewLayoutCallback?.() ?? ''}
 			</div>
 		`;
 		this.#render();
@@ -330,6 +339,11 @@ export class Preview
 		] : [];
 		this.#renderContent();
 		this.#renderControls();
+	}
+
+	hasUrls(): boolean
+	{
+		return Type.isArrayFilled(this.#urls);
 	}
 
 	set ready(isReady: boolean)

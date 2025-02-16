@@ -26,6 +26,7 @@ use Bitrix\Crm\Recurring;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Loader;
 
 Container::getInstance()->getLocalization()->loadMessages();
 
@@ -91,7 +92,10 @@ $arResult['PATH_TO_DEAL_CATEGORY_EDIT'] = CrmCheckPath(
 	$arParams['PATH_TO_DEAL_CATEGORY_EDIT'] ?? '',
 	COption::GetOptionString('crm', 'path_to_deal_category_edit')
 );
-$arParams['PATH_TO_MIGRATION'] = \Bitrix\Crm\Integration\Market\Router::getCategoryPath('migration');
+
+$arParams['PATH_TO_MIGRATION'] = Loader::includeModule('market')
+	? \Bitrix\Crm\Integration\Market\Router::getBasePath() . 'collection/migration_crm/'
+	: \Bitrix\Crm\Integration\Market\Router::getCategoryPath('migration');
 $arParams['PATH_TO_DEAL_WIDGET'] = CrmCheckPath(
 	'PATH_TO_DEAL_WIDGET',
 	$arParams['PATH_TO_DEAL_WIDGET'] ?? '',
@@ -839,6 +843,10 @@ if($arParams['TYPE'] === 'list')
 	}
 
 	$permissionItem = PermissionItem::createByEntity(CCrmOwnerType::Deal, $arResult['CATEGORY_ID']);
+	if (isset($arParams['ANALYTICS']) && is_array($arParams['ANALYTICS']))
+	{
+		$permissionItem->setAnalytics($arParams['ANALYTICS']);
+	}
 	if ($permissionItem->canShow())
 	{
 		$arResult['BUTTONS'][] = $permissionItem->interfaceToolbarDelimiter();

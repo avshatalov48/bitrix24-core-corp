@@ -1,0 +1,62 @@
+.booking-booking-off-hours {
+	position: absolute;
+	top: 10px;
+	right: 0;
+	box-sizing: border-box;
+	min-width: calc(var(--left-panel-width) - 7px);
+	min-height: 13px;
+	--off-hours-additional-height: calc(2px + 10px + var(--booking-off-hours-cell-height) / (50 * var(--zoom)) * 13);
+	height: calc(var(--top-cells-height) + var(--off-hours-additional-height));
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	border-radius: 8px 0 0 8px;
+	transition: 200ms box-shadow;
+	cursor: pointer;
+}
+
+.booking-booking-off-hours.--bottom {
+	top: initial;
+	bottom: 9px;
+	height: calc(var(--bottom-cells-height) + var(--off-hours-additional-height));
+}
+
+.booking-booking-off-hours-border {
+	position: absolute;
+	inset: 0;
+	border-radius: 8px 0 0 8px;
+	border: 1px solid var(--ui-color-base-20);
+	border-right: 0;
+	clip-path: polygon(5px 100%, 0 100%, 0 0, 8px 0, 8px 100%, calc(var(--left-panel-width) - 15px) 100%, calc(var(--left-panel-width) - 15px) 0, 100% 0, 100% 100%);
+	transition: 200ms border-color;
+}
+
+.booking-booking-off-hours span {
+	color: var(--ui-color-base-40);
+	font-size: var(--ui-font-size-6xs);
+	line-height: var(--ui-font-line-height-lg);
+	transition: var(--booking-animation-duration) opacity var(--booking-animation-function);
+}
+
+/** hover **/
+.booking-booking-off-hours.--hover {
+	box-shadow: inset 0 0 0 999px rgba(0, 0, 0, 0.02);
+}
+
+.booking-booking-off-hours.--hover .booking-booking-off-hours-border {
+	border-color: var(--ui-color-base-40);
+}
+
+/** expand **/
+.--booking-booking-expand .booking-booking-off-hours {
+	box-shadow: inset 0 0 0 999px rgba(0, 0, 0, 0.02);
+}
+
+.--booking-booking-expand .booking-booking-off-hours-border {
+	clip-path: none;
+}
+
+.--booking-booking-expand .booking-booking-off-hours span {
+	opacity: 0;
+}

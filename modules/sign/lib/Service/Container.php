@@ -401,6 +401,16 @@ class Container
 		return static::getService('sign.service.integration.crm.myCompany');
 	}
 
+	public function getDocumentGroupRepository(): Repository\Document\GroupRepository
+	{
+		return static::getService('sign.repository.document.group');
+	}
+
+	public function getDocumentGroupService(): Service\Sign\Document\GroupService
+	{
+		return static::getService('sign.service.document.group');
+	}
+
 	public function getMemberDynamicFieldProvider(): Service\Providers\MemberDynamicFieldInfoProvider
 	{
 		return static::getService('sign.service.provider.memberDynamic');
@@ -444,6 +454,11 @@ class Container
 	public function getTourService(): Service\Tour
 	{
 		return static::getService('sign.service.tour');
+	}
+
+	public function getActionStatusService(): Service\B2e\MyDocumentsGrid\ActionStatusService
+	{
+		return static::getService('sign.service.b2e.myDocumentsGrid.actionStatus');
 	}
 
 	public function getAnalyticService(): Service\Analytic\AnalyticService

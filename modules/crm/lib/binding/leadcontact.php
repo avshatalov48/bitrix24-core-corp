@@ -8,7 +8,7 @@
 namespace Bitrix\Crm\Binding;
 
 use Bitrix\Crm\LeadTable;
-use Bitrix\Crm\QuoteTable;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
@@ -330,7 +330,7 @@ class LeadContactTable extends Entity\DataManager
 			$processed++;
 		}
 
-		if($processed > 0)
+		if ($processed > 0)
 		{
 			Main\Application::getConnection()->queryExecute(
 			/** @lang text*/
@@ -338,6 +338,7 @@ class LeadContactTable extends Entity\DataManager
 				(SELECT MIN(CONTACT_ID) FROM b_crm_lead_contact WHERE IS_PRIMARY = 'Y' AND LEAD_ID = {$leadID})
 				WHERE ID = {$leadID}"
 			);
+			Container::getInstance()->getLeadBroker()?->deleteCache($leadID);
 		}
 	}
 	/**
@@ -375,6 +376,7 @@ class LeadContactTable extends Entity\DataManager
 			(SELECT MIN(CONTACT_ID) FROM b_crm_lead_contact WHERE IS_PRIMARY = 'Y' AND LEAD_ID = {$leadID})
 			WHERE ID = {$leadID}"
 		);
+		Container::getInstance()->getLeadBroker()?->deleteCache($leadID);
 	}
 	/**
 	 * Unbind specified Lead from specified Contacts.
@@ -416,6 +418,7 @@ class LeadContactTable extends Entity\DataManager
 		/** @lang text */
 			"UPDATE b_crm_lead SET CONTACT_ID = NULL WHERE ID = {$leadID}"
 		);
+		Container::getInstance()->getLeadBroker()?->deleteCache($leadID);
 	}
 	/**
 	 * Unbind specified Contact from all Leads.
@@ -442,6 +445,7 @@ class LeadContactTable extends Entity\DataManager
 			(SELECT MIN(CONTACT_ID) FROM b_crm_lead_contact t WHERE t.LEAD_ID = b_crm_lead.ID)
 			WHERE CONTACT_ID = {$contactID}"
 		);
+		Container::getInstance()->getLeadBroker()?->resetAllCache();
 	}
 	/**
 	 * Prepare SQL join filter condition for specified entity.

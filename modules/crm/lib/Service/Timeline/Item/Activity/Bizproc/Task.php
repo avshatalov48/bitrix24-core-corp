@@ -451,6 +451,7 @@ class Task extends Base
 
 		return [
 			'timeline' => $this->createTimelineMenuItem($workflowId),
+			'log' => $this->createLogMenuItem($workflowId),
 			'terminate' => $this->createTerminateMenuItem($workflowId),
 		];
 	}

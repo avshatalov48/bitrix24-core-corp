@@ -3,8 +3,8 @@
 namespace Bitrix\Crm\Security\Role\Manage\Permissions\CopilotCallAssessment;
 
 use Bitrix\Crm\Security\Role\Manage\Permissions\Permission;
-use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\BaseControlType;
-use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\Toggler;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\BaseControlMapper;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\Toggler;
 use Bitrix\Main\Localization\Loc;
 
 class Read extends Permission
@@ -24,7 +24,7 @@ class Read extends Permission
 		return false;
 	}
 
-	protected function createDefaultControlType(): BaseControlType
+	protected function createDefaultControlMapper(): BaseControlMapper
 	{
 		return new Toggler();
 	}

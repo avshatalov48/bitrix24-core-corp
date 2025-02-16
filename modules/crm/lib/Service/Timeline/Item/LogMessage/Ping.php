@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Service\Timeline\Item\LogMessage;
 
 use Bitrix\Crm\Model\ActivityPingOffsetsTable;
+use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Service\Timeline\Item\AssociatedEntityModel;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
@@ -94,6 +95,15 @@ class Ping extends LogMessage
 			else
 			{
 				$pingText = (string)$this->entityModel->get('SUBJECT');
+			}
+		}
+		else
+		{
+			// Temporarily removes [p] for mobile compatibility
+			$descriptionType = (int)$this->getHistoryItemModel()?->get('ASSOCIATED_ENTITY')['DESCRIPTION_TYPE'] ?? null;
+			if ($this->getContext()->getType() === Context::MOBILE && $descriptionType === \CCrmContentType::BBCode)
+			{
+				$pingText = \Bitrix\Crm\Format\TextHelper::removeParagraphs($pingText);
 			}
 		}
 

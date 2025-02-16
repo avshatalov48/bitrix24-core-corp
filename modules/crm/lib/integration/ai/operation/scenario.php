@@ -2,8 +2,6 @@
 
 namespace Bitrix\Crm\Integration\AI\Operation;
 
-use Bitrix\Crm\Feature;
-use Bitrix\Crm\Feature\CopilotInCallGrading;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Enum\GlobalSetting;
 
@@ -15,18 +13,24 @@ final class Scenario
 	public const CALL_SCORING_SCENARIO = 'call_scoring';
 	public const EXTRACT_SCORING_CRITERIA_SCENARIO = 'extract_scoring_criteria';
 
+	public const FULL_OFF_SLIDER_CODE = 'limit_copilot_off';
+	public const FILL_FIELDS_SCENARIO_OFF_SLIDER_CODE = 'limit_v2_crm_copilot_fill_item_from_call_off';
+	public const CALL_SCORING_SCENARIO_SLIDER_CODE = 'limit_v2_crm_copilot_call_assessment_off';
+
+	public const SLIDER_CODE_MAP = [
+		self::FULL_SCENARIO => self::FULL_OFF_SLIDER_CODE,
+		self::FILL_FIELDS_SCENARIO => self::FILL_FIELDS_SCENARIO_OFF_SLIDER_CODE,
+		self::CALL_SCORING_SCENARIO => self::CALL_SCORING_SCENARIO_SLIDER_CODE,
+	];
+
 	public static function isSupportedScenario(string $scenario): bool
 	{
 		$scenarioList = [
 			self::FULL_SCENARIO,
 			self::FILL_FIELDS_SCENARIO,
+			self::CALL_SCORING_SCENARIO,
+			self::EXTRACT_SCORING_CRITERIA_SCENARIO
 		];
-
-		if (self::isMultiScenarioEnabled())
-		{
-			$scenarioList[] = self::CALL_SCORING_SCENARIO;
-			$scenarioList[] = self::EXTRACT_SCORING_CRITERIA_SCENARIO;
-		}
 
 		return in_array($scenario, $scenarioList, true);
 	}
@@ -39,42 +43,36 @@ final class Scenario
 		}
 
 		$isFillFieldsEnabled = AIManager::isEnabledInGlobalSettings();
-		if (!self::isMultiScenarioEnabled())
-		{
-			return $isFillFieldsEnabled; // only fill fields scenario when multi scenario disabled
-		}
-
 		$isScoreCallEnabled = AIManager::isEnabledInGlobalSettings(GlobalSetting::CallAssessment);
 
-		return $isFillFieldsEnabled || $isScoreCallEnabled;
+		return match ($scenario)
+		{
+			self::FILL_FIELDS_SCENARIO => $isFillFieldsEnabled,
+			self::CALL_SCORING_SCENARIO, self::EXTRACT_SCORING_CRITERIA_SCENARIO => $isScoreCallEnabled,
+			self::FULL_SCENARIO => $isFillFieldsEnabled || $isScoreCallEnabled,
+			default => false,
+		};
 	}
 
-	public static function filterScenarioByGlobalSettings(string $scenario): ?string
+	public static function filterFullScenarioByGlobalSettings(string $scenario): string
 	{
-		if (!self::isEnabledScenario($scenario))
+		if ($scenario === self::FULL_SCENARIO)
 		{
-			return null;
-		}
+			if (
+				self::isEnabledScenario(self::FILL_FIELDS_SCENARIO)
+				&& !self::isEnabledScenario(self::CALL_SCORING_SCENARIO)
+			)
+			{
+				return self::FILL_FIELDS_SCENARIO;
+			}
 
-		if (!self::isMultiScenarioEnabled())
-		{
-			return $scenario;
-		}
-
-		if (!AIManager::isEnabledInGlobalSettings())
-		{
-			return match ($scenario) {
-				self::CALL_SCORING_SCENARIO => self::CALL_SCORING_SCENARIO,
-				default => null,
-			};
-		}
-
-		if (!AIManager::isEnabledInGlobalSettings(GlobalSetting::CallAssessment))
-		{
-			return match ($scenario) {
-				self::FILL_FIELDS_SCENARIO => self::FILL_FIELDS_SCENARIO,
-				default => null,
-			};
+			if (
+				self::isEnabledScenario(self::CALL_SCORING_SCENARIO)
+				&& !self::isEnabledScenario(self::FILL_FIELDS_SCENARIO)
+			)
+			{
+				return self::CALL_SCORING_SCENARIO;
+			}
 		}
 
 		return $scenario;
@@ -93,17 +91,5 @@ final class Scenario
 		}
 
 		return null; // FULL_SCENARIO
-	}
-
-	public static function isMultiScenarioEnabled(?int $timestamp = null): bool
-	{
-		$isFeatureEnabled = Feature::enabled(CopilotInCallGrading::class);
-
-		if (isset($timestamp))
-		{
-			return $isFeatureEnabled && $timestamp > CopilotInCallGrading::getCopilotInCallGradingTs();
-		}
-
-		return $isFeatureEnabled;
 	}
 }

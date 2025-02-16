@@ -14,6 +14,7 @@ $MESS['SIGN_SETTINGS_B2E_COMPANY'] = 'Компания';
 $MESS['SIGN_SETTINGS_B2E_ROUTES'] = 'Маршрут';
 $MESS['SIGN_SETTINGS_B2E_EMPLOYEES'] = 'Сотрудники';
 $MESS['SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT'] = 'Документ отправлен на подпись';
+$MESS['SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT_GROUP'] = 'Документы отправлены на подпись';
 $MESS['SIGN_SETTINGS_TEMPLATES_LIST'] = 'Все шаблоны';
 $MESS['SIGN_SETTINGS_TEMPLATE_CREATED'] = 'Шаблон создан';
 $MESS['SIGN_SETTINGS_TEMPLATE_CHANGED'] = 'Шаблон изменён';

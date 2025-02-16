@@ -14,6 +14,7 @@ export class SignDropdown extends EventEmitter
 	#dom: HTMLElement;
 	#selector: Dialog;
 	#selectedItemId: string = '';
+	#selectedItemCaption: string = '';
 
 	constructor(dialogOptions: {
 		className?: string,
@@ -112,6 +113,11 @@ export class SignDropdown extends EventEmitter
 		return this.#selectedItemId;
 	}
 
+	getSelectedCaption(): string
+	{
+		return this.#selectedItemCaption;
+	}
+
 	#onSelect(item: ItemOptions): void
 	{
 		this.#selectedItemId = item.id;
@@ -125,7 +131,7 @@ export class SignDropdown extends EventEmitter
 
 			return;
 		}
-
+		this.#selectedItemCaption = caption.text;
 		titleNode.title = `${title} ${caption}`;
 		titleNode.firstElementChild.textContent = title;
 		titleNode.lastElementChild.textContent = caption;

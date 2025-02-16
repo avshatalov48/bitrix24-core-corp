@@ -275,4 +275,9 @@ class Delete extends Operation
 	{
 		return true;
 	}
+
+	protected function isClearItemStageCacheNeeded(): bool
+	{
+		return true;
+	}
 }

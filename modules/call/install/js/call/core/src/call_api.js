@@ -1548,7 +1548,23 @@ export class Call {
 			}
 		}
 		let track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
-		if (track && this.#privateProperties.localTracks[MediaStreamsKinds.Microphone])
+		const canUseUnpauseSignal = track && this.#privateProperties.localTracks[MediaStreamsKinds.Microphone];
+		const needToGetNewTrack = track?.readyState !== 'live';
+
+		if (needToGetNewTrack)
+		{
+			track = await this.getLocalAudio();
+		}
+
+		if (!track)
+		{
+
+			this.setLog('Enabling audio failed: has no track', LOG_LEVEL.ERROR);
+			this.#releaseStream(MediaStreamsKinds.Microphone);
+			this.triggerEvents('PublishFailed', [MediaStreamsKinds.Microphone]);
+		}
+
+		if (canUseUnpauseSignal)
 		{
 			this.setLog('Enabling audio via unpause signal', LOG_LEVEL.INFO);
 			track.enabled = true;
@@ -1557,23 +1573,13 @@ export class Call {
 		}
 		else
 		{
-			track = await this.getLocalAudio();
-			if (track)
+			this.setLog('Enabling audio via publish', LOG_LEVEL.INFO);
+			track.enabled = !disabled;
+			if (disabled)
 			{
-				this.setLog('Enabling audio via publish', LOG_LEVEL.INFO);
-				track.enabled = !disabled;
-				if (disabled)
-				{
-					this.#privateProperties.needToDisableAudioAfterPublish = true;
-				}
-				await this.publishTrack(MediaStreamsKinds.Microphone, track);
+				this.#privateProperties.needToDisableAudioAfterPublish = true;
 			}
-			else
-			{
-				this.setLog('Enabling audio failed: has no track', LOG_LEVEL.ERROR);
-				this.#releaseStream(MediaStreamsKinds.Microphone);
-				this.triggerEvents('PublishFailed', [MediaStreamsKinds.Microphone]);
-			}
+			await this.publishTrack(MediaStreamsKinds.Microphone, track);
 		}
 	}
 
@@ -1952,10 +1958,13 @@ export class Call {
 		}
 
 		let error;
+		let fulfilled = false;
 		this.setLog(`Start switching an audio device to ${deviceId}`, LOG_LEVEL.INFO);
 		const promise = new Promise(async (resolve, reject) =>
 		{
 			this.#privateProperties.audioDeviceId = deviceId;
+			const prevStream = this.#privateProperties.microphoneStream;
+
 			try
 			{
 				const prevTrack = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
@@ -1986,6 +1995,10 @@ export class Call {
 			{
 				error = e;
 				this.setLog(`Switching an audio device failed: ${e}`, LOG_LEVEL.ERROR);
+				if (!this.#privateProperties.microphoneStream)
+				{
+					this.#privateProperties.microphoneStream = prevStream;
+				}
 			}
 			finally
 			{
@@ -1997,13 +2010,14 @@ export class Call {
 				}
 				else
 				{
+					fulfilled = true;
 					this.#privateProperties.switchActiveAudioDeviceInProgress = null;
 					return error ? reject(error) : resolve();
 				}
 			}
 		});
 
-		if (!force)
+		if (!force && !fulfilled)
 		{
 			this.#privateProperties.switchActiveAudioDeviceInProgress = promise;
 		}
@@ -2020,10 +2034,13 @@ export class Call {
 		}
 
 		let error;
+		let fulfilled = false;
 		this.setLog(`Start switching a video device to ${deviceId}`, LOG_LEVEL.INFO);
 		const promise = new Promise(async (resolve, reject) =>
 		{
 			this.#privateProperties.videoDeviceId = deviceId;
+			const prevStream = this.#privateProperties.cameraStream;
+
 			try
 			{
 				const sender = this.#getSender(MediaStreamsKinds.Camera);
@@ -2032,6 +2049,7 @@ export class Call {
 					this.setLog('Have sender for video, start replacing track', LOG_LEVEL.INFO);
 					this.#privateProperties.cameraStream?.getVideoTracks()[0].stop();
 					this.#privateProperties.cameraStream = null;
+
 					const videoTrack = await this.getLocalVideo();
 					videoTrack.source = MediaStreamsKinds.Camera;
 					await sender.replaceTrack(videoTrack);
@@ -2041,7 +2059,12 @@ export class Call {
 			}
 			catch (e)
 			{
+				error = e;
 				this.setLog(`Switching a video device failed: ${e}`, LOG_LEVEL.ERROR);
+				if (!this.#privateProperties.cameraStream)
+				{
+					this.#privateProperties.cameraStream = prevStream;
+				}
 			}
 			finally
 			{
@@ -2053,13 +2076,14 @@ export class Call {
 				}
 				else
 				{
+					fulfilled = true;
 					this.#privateProperties.switchActiveVideoDeviceInProgress = null;
 					return error ? reject(error) : resolve();
 				}
 			}
 		});
 
-		if (!force)
+		if (!force && !fulfilled)
 		{
 			this.#privateProperties.switchActiveVideoDeviceInProgress = promise;
 		}

@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Integration\UI\EntitySelector;
 
 use Bitrix\Crm\ContactTable;
 use Bitrix\Crm\Integration\UI\EntitySelector\Traits\FilterByIds;
+use Bitrix\Crm\Integration\UI\EntitySelector\Traits\FilterByEmails;
 use Bitrix\Crm\Multifield\Type\Email;
 use Bitrix\Crm\Multifield\Type\Phone;
 
@@ -18,6 +19,7 @@ class ContactProvider extends EntityProvider
 	protected bool $hideReadMoreLink = false;
 
 	use FilterByIds;
+	use FilterByEmails;
 
 	public function __construct(array $options = [])
 	{
@@ -30,6 +32,7 @@ class ContactProvider extends EntityProvider
 		$this->showMails = (bool)($options['showMails'] ?? $this->showMails);
 		$this->hideReadMoreLink = (bool)($options['hideReadMoreLink'] ?? $this->hideReadMoreLink);
 		$this->setIdsForFilter($options['idsForFilterContact'] ?? []);
+		$this->setEmailOnlyMode($options['onlyWithEmail'] ?? false);
 
 		$this->options['showPhones'] = $this->showPhones;
 		$this->options['showMails'] = $this->showMails;
@@ -59,7 +62,7 @@ class ContactProvider extends EntityProvider
 			'=CATEGORY_ID' =>  $this->categoryId,
 		];
 
-		return array_merge($filter, $this->getFilterIds());
+		return array_merge($filter, $this->getFilterIds(), $this->getEmailFilters());
 	}
 
 	public function getRecentItemIds(string $context): array

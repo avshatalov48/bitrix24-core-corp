@@ -109,7 +109,8 @@ export const ClientPage = {
 					</div>
 				</header>
 				<div class="crm-copilot__call-assessment_page-section-body">
-					<div class="crm-copilot__call-assessment_page-section-body-field">
+					<AiDisabledInSettings v-if="!isEnabled" />
+					<div :class="this.getBodyFieldClassList()">
 						<div v-for="(clientType, index) in clientTypes">
 							<div
 								:class=getClientTypeClassList(clientType.id)

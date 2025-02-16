@@ -12,8 +12,11 @@ use Bitrix\Call\Logger\Logger;
 use Bitrix\Call\Track\TrackError;
 use Bitrix\Call\Track\TrackService;
 use Bitrix\Call\DTO\TrackFileRequest;
+use Bitrix\Call\DTO\TrackErrorRequest;
 use Bitrix\Call\DTO\ControllerRequest;
 use Bitrix\Call\Model\CallTrackTable;
+use Bitrix\Call\Integration\AI\CallAIError;
+use Bitrix\Call\Integration\AI\CallAISettings;
 
 
 class CallController extends BaseReceiver
@@ -24,6 +27,14 @@ class CallController extends BaseReceiver
 			new ExactParameter(
 				TrackFileRequest::class,
 				'trackFile',
+				function ($className, $params = [])
+				{
+					return new $className($this->getSourceParametersList()[0]);
+				}
+			),
+			new ExactParameter(
+				TrackErrorRequest::class,
+				'trackError',
 				function ($className, $params = [])
 				{
 					return new $className($this->getSourceParametersList()[0]);
@@ -103,7 +114,7 @@ class CallController extends BaseReceiver
 	{
 		Loader::includeModule('im');
 
-		if ($log = \Bitrix\Call\Integration\AI\CallAISettings::isLoggingEnable())
+		if ($log = CallAISettings::isLoggingEnable())
 		{
 			$logger = Logger::getInstance();
 		}
@@ -116,11 +127,17 @@ class CallController extends BaseReceiver
 			return null;
 		}
 
-		$minDuration = \Bitrix\Call\Integration\AI\CallAISettings::getRecordMinDuration();
+		$minDuration = CallAISettings::getRecordMinDuration();
 		if ($call->getDuration() < $minDuration)
 		{
 			$log && $logger->error("Ignoring track:{$trackFile->url}, track #{$trackFile->trackId}. Call #{$call->getId()} was too short.");
-			$this->addError(new Error(TrackError::SHORT_CALL_DURATION));
+			$this->addError(new CallAIError(CallAIError::AI_RECORD_TOO_SHORT));
+
+			$call
+				->disableAudioRecord()
+				->disableAiAnalyze()
+				->save();
+
 			return null;
 		}
 
@@ -185,7 +202,6 @@ class CallController extends BaseReceiver
 		if (!$processResult->isSuccess())
 		{
 			$this->addErrors($processResult->getErrors());
-			//return null;
 		}
 
 		if ($trackService->doNeedDownloadTrack($track))
@@ -198,6 +214,37 @@ class CallController extends BaseReceiver
 			}
 		}
 
+		return ['result' => true];
+	}
+
+	/**
+	 * @restMethod call.CallController.trackError
+	 */
+	public function trackErrorAction(TrackErrorRequest $trackError): ?array
+	{
+		Loader::includeModule('im');
+
+		if ($log = CallAISettings::isLoggingEnable())
+		{
+			$logger = Logger::getInstance();
+		}
+
+		$call = CallFactory::searchActiveByUuid(Call::PROVIDER_BITRIX, $trackError->callUuid);
+		if (!isset($call))
+		{
+			$log && $logger->error("Call uuid:{$trackError->callUuid} not found");
+			$this->addError(new Error(Error::CALL_NOT_FOUND));
+			return null;
+		}
+
+		$log && $logger->error("Got track error: ".($trackError->errorCode ?? '-'));
+
+		$call
+			->disableAudioRecord()
+			->save();
+
+		$call->getSignaling()
+			->sendSwitchTrackRecordStatus(0, false);
 
 		return ['result' => true];
 	}

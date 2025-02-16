@@ -146,7 +146,8 @@ export const SettingsPage = {
 				</header>
 				
 				<div class="crm-copilot__call-assessment_page-section-body">
-					<div class="crm-copilot__call-assessment_page-section-body-field ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+					<AiDisabledInSettings v-if="!isEnabled" />
+					<div :class="this.getBodyFieldClassList(['ui-ctl', 'ui-ctl-after-icon', 'ui-ctl-dropdown', 'ui-ctl-w100'])">
 						<label>{{ pageSectionSettingsCallType }}</label>
 						<div class="ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown">
 							<div class="ui-ctl-after ui-ctl-icon-angle"></div>
@@ -166,8 +167,11 @@ export const SettingsPage = {
 					</div>
 				</div>
 				
-				<div v-if="isBaasAvailable" class="crm-copilot__call-assessment_page-section-body">
-					<div class="crm-copilot__call-assessment_page-section-body-field ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+				<div 
+					v-if="isBaasAvailable"
+					class="crm-copilot__call-assessment_page-section-body"
+				>
+					<div :class="this.getBodyFieldClassList(['ui-ctl', 'ui-ctl-after-icon', 'ui-ctl-dropdown', 'ui-ctl-w100'])">
 						<label>{{ pageSectionSettingsCheck }}</label>
 						<div class="ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown">
 							<div class="ui-ctl-after ui-ctl-icon-angle"></div>

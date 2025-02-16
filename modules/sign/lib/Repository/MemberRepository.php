@@ -1147,7 +1147,7 @@ class MemberRepository
 		;
 	}
 
-	public function listB2eMembersWithNotWaitStatus(
+	public function listB2eMembersForMyDocumentsGrid(
 		int $entityId,
 		int $limit,
 		int $offset,
@@ -1229,12 +1229,9 @@ class MemberRepository
 		return !empty($query->fetch());
 	}
 
-	public function getSecondSideMemberForEmployee(
-		int $userId,
-		int $documentId,
-		int $limit,
-		int $offset,
-		int $memberId,
+	public function getSecondSideMembersForMyDocumentsGrid(
+		array $documentIds,
+		array $memberIds,
 	): Item\MemberCollection
 	{
 		$filter = Query::filter()
@@ -1242,9 +1239,6 @@ class MemberRepository
 			->where(
 				Query::filter()
 					->logic('and')
-					->where('DOCUMENT_ID', '=', $documentId)
-					->where('ID',  '!=', $memberId)
-					->where('DOCUMENT.ENTITY_TYPE', '=', Type\Document\EntityType::SMART_B2E)
 					->whereIn('DOCUMENT.STATUS', [DocumentStatus::DONE, DocumentStatus::STOPPED])
 					->where(
 						Query::filter()
@@ -1257,10 +1251,7 @@ class MemberRepository
 			->where(
 				Query::filter()
 					->logic('and')
-					->where('DOCUMENT_ID', '=', $documentId)
-					->where('ID',  '!=', $memberId)
 					->where('SIGNED', MemberStatus::READY)
-					->where('DOCUMENT.ENTITY_TYPE', '=', Type\Document\EntityType::SMART_B2E)
 				,
 			);
 
@@ -1268,13 +1259,13 @@ class MemberRepository
 			::query()
 			->addSelect('*')
 			->where($filter)
+			->whereIn('DOCUMENT_ID', $documentIds)
+			->whereNotIn('ID', $memberIds)
+			->where('DOCUMENT.ENTITY_TYPE', '=', Type\Document\EntityType::SMART_B2E)
 		;
-		$query->setOffset($offset);
-		$query->setLimit($limit);
 		$query->setOrder(['PART' => 'ASC']);
 
 		return $this->extractItemCollectionFromModelCollection($query->fetchCollection())
-			->setQueryTotal((int)$query->queryCountTotal())
 			;
 	}
 
@@ -1516,10 +1507,24 @@ class MemberRepository
 	{
 		$statusesFilter->where(
 			Query::filter()
-				 ->logic('and')
-				 ->where('SIGNED', MemberStatus::DONE)
-				 ->where('ROLE', $this->convertRoleToInt(Role::ASSIGNEE))
-				 ->whereIn('DOCUMENT.STATUS', [DocumentStatus::SIGNING, DocumentStatus::DONE]),
+				->logic('or')
+				->where(
+					Query::filter()
+						->logic('and')
+						->whereIn('SIGNED', [MemberStatus::DONE])
+						->where('ROLE', $this->convertRoleToInt(Role::ASSIGNEE))
+						->whereIn('DOCUMENT.STATUS', [DocumentStatus::SIGNING, DocumentStatus::DONE, DocumentStatus::STOPPED])
+				)
+				->where(
+					Query::filter()
+						->logic('and')
+						->whereIn('SIGNED', [MemberStatus::STOPPED])
+						->where('ROLE', $this->convertRoleToInt(Role::ASSIGNEE))
+						->whereIn('DOCUMENT.STATUS', [DocumentStatus::STOPPED, DocumentStatus::DONE])
+						// if someone signed in by-company scenario, document not considered stopped
+						->where('DOCUMENT.INITIATED_BY_TYPE', Type\Document\InitiatedByType::COMPANY->toInt())
+						->whereExpr("EXISTS({$this->getSomeSignedSubQuery()->getQuery()})", ['DOCUMENT_ID']),
+				)
 		);
 	}
 
@@ -1604,9 +1609,15 @@ class MemberRepository
 				 ->where(
 					 Query::filter()
 						  ->logic('and')
-						  ->whereNot('SIGNED', MemberStatus::DONE)
 						  ->where('DOCUMENT.STATUS', DocumentStatus::STOPPED)
-						  ->where('DOCUMENT.STOPPED_BY_ID', $userId),
+						  ->where('DOCUMENT.STOPPED_BY_ID', $userId)
+						  // if someone signed in by-company scenario, document not considered stopped
+						  ->where(
+							  Query::filter()
+								  ->logic('or')
+								  ->where('DOCUMENT.INITIATED_BY_TYPE', Type\Document\InitiatedByType::EMPLOYEE->toInt())
+								  ->whereExpr("NOT EXISTS({$this->getSomeSignedSubQuery()->getQuery()})", ['DOCUMENT_ID']),
+						  )
 				 ),
 		);
 	}
@@ -2138,25 +2149,14 @@ class MemberRepository
 		return $flatArray;
 	}
 
-	public function getCancellationInitiatorIdByDocumentId(int $documentId): ?int
+	private function getSomeSignedSubQuery(): Query
 	{
-		$query = Internal\MemberTable::query()
-			->setSelect(['ID'])
-			->where('DOCUMENT_ID', $documentId)
-			->where('DOCUMENT.INITIATED_BY_TYPE', Type\Document\InitiatedByType::COMPANY->toInt())
-			->whereNot('ROLE', $this->convertRoleToInt(Role::SIGNER))
-			->where('DOCUMENT.STATUS', DocumentStatus::STOPPED)
-			->whereIn('SIGNED', MemberStatus::getStatusesIsFinished())
-			->setOrder(['PART' => 'DESC'])
+		return Internal\MemberTable::query()
+			->setCustomBaseTableAlias("sign_internal_member_someone_signed")
+			->where('DOCUMENT_ID', new \Bitrix\Main\DB\SqlExpression('%s'))
+			->where('ROLE', Role::SIGNER)
+			->whereNotIn('SIGNED', [MemberStatus::STOPPABLE_READY, MemberStatus::WAIT, MemberStatus::STOPPED, MemberStatus::REFUSED])
 			->setLimit(1)
-			->exec()
-			;
-
-		if ($row = $query->fetch())
-		{
-			return (int)$row['ID'];
-		}
-
-		return null;
+		;
 	}
 }

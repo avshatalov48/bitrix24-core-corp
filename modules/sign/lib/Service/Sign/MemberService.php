@@ -1034,10 +1034,9 @@ class MemberService
 	public function countReadySigners(int $documentId): int
 	{
 		return $this->memberRepository->countMembersByDocumentIdAndRoleAndStatus(
-				$documentId,
-				[MemberStatus::READY, MemberStatus::STOPPABLE_READY],
-			)
-		;
+			$documentId,
+			[MemberStatus::READY, MemberStatus::STOPPABLE_READY],
+		);
 	}
 
 	public function countWaitingSigners(int $documentId): int
@@ -1078,5 +1077,14 @@ class MemberService
 			&& $member->party === 1
 			&& $this->getUserIdForMember($member) === $document->createdById
 		;
+	}
+
+	public function isDocumentHasSuccessfulSigners(int $documentId): bool
+	{
+		return !$this->memberRepository->listByDocumentIdAndRoleAndStatus(
+			$documentId,
+			Type\Member\Role::SIGNER, 1,
+			[MemberStatus::DONE]
+		)->isEmpty();
 	}
 }

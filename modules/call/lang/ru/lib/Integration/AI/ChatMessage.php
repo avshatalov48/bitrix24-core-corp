@@ -7,7 +7,6 @@ $MESS['CALL_NOTIFY_TASK_BOOST'] = "Закончились запросы к CoPi
 $MESS['CALL_NOTIFY_FEEDBACK'] = "[url=#FEEDBACK_URL#]Сообщить о проблеме[/url]";
 $MESS['CALL_NOTIFY_COPILOT_AGENDA'] = "Повестка встречи";
 $MESS['CALL_NOTIFY_COPILOT_AGREEMENTS'] = "Итоги";
-$MESS['CALL_NOTIFY_COPILOT_TASKS'] = "Что делать";
 $MESS['CALL_NOTIFY_COPILOT_INSIGHTS'] = "Рекомендации";
 $MESS['CALL_NOTIFY_COPILOT_DETAIL'] = "[url=#CALL_DETAIL#]Подробный анализ встречи[/url]";
 $MESS['CALL_NOTIFY_COPILOT_EFFICIENCY'] = "CoPilot оценил эффективность звонка #EFFICIENCY#";

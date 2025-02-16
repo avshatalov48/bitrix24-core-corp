@@ -57,20 +57,20 @@ class TranscriptionInsights extends AITask
 		$outcome = $this->task->getOutcome() ?? $this->task->fillOutcome();
 		if (!$outcome)
 		{
-			return $result->addError(new CallAIError(CallAIError::AI_EMPTY_PAYLOAD_ERROR, 'Empty outcome content'));
+			return $result->addError(new CallAIError(CallAIError::AI_EMPTY_PAYLOAD_ERROR));// Empty outcome content
 		}
 
 		$call = \Bitrix\Im\Call\Registry::getCallWithId($outcome->getCallId());
 		if (!$call)
 		{
-			return $result->addError(new CallAIError(CallAIError::AI_EMPTY_PAYLOAD_ERROR, 'Empty outcome content'));
+			return $result->addError(new CallAIError(CallAIError::AI_EMPTY_PAYLOAD_ERROR));// Empty outcome content
 		}
 
 		/** @var \Bitrix\Call\Integration\AI\Outcome\Transcription $transcription */
 		$transcription = $outcome->getSenseContent();
 		if ($transcription->isEmpty)
 		{
-			return $result->addError(new CallAIError(CallAIError::AI_EMPTY_PAYLOAD_ERROR, 'Empty outcome content'));
+			return $result->addError(new CallAIError(CallAIError::AI_EMPTY_PAYLOAD_ERROR));// Empty outcome content
 		}
 
 		$mentionService = MentionService::getInstance();

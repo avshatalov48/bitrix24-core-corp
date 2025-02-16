@@ -415,14 +415,12 @@ class CCrmTimelineComponent extends CBitrixComponent
 
 	private function prepareAutomationTourData()
 	{
-		$isAvailable = (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024', 0);
 		$this->arResult['BIZPROC_AVAILABLE'] = false;
 
 		if (
 			Main\Loader::includeModule('bizproc')
 			&& \CCrmBizProcHelper::ResolveDocumentType($this->entityTypeID)
 			&& CBPRuntime::isFeatureEnabled()
-			&& $isAvailable
 		)
 		{
 			$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();

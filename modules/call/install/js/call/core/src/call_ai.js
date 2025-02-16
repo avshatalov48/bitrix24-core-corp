@@ -1,4 +1,5 @@
 import { Extension } from 'main.core';
+import { CopilotNotifyType } from './view/copilot-notify';
 
 
 export type CallAiOptions = {
@@ -11,6 +12,13 @@ export type CallAiOptions = {
 	feedBackLink?: string;
 	baasPromoSlider?: string;
 	helpSlider?: string;
+};
+
+export const CallAiError = {
+	AI_UNAVAILABLE_ERROR: 'AI_UNAVAILABLE_ERROR',
+	AI_SETTINGS_ERROR: 'AI_SETTINGS_ERROR',
+	AI_AGREEMENT_ERROR: 'AI_AGREEMENT_ERROR',
+	AI_NOT_ENOUGH_BAAS_ERROR: 'AI_NOT_ENOUGH_BAAS_ERROR',
 };
 
 class CallAi
@@ -152,6 +160,28 @@ class CallAi
 	set helpSlider(value: string)
 	{
 		this._helpSlider = value;
+	}
+
+	handleCopilotError(errorType: string)
+	{
+		switch (errorType)
+		{
+			case CallAiError.AI_UNAVAILABLE_ERROR:
+				this.tariffAvailable = false;
+				break;
+			case CallAiError.AI_SETTINGS_ERROR:
+				this.settingsEnabled = false;
+				break;
+			case CallAiError.AI_AGREEMENT_ERROR:
+				this.agreementAccepted = false;
+				break;
+			case CallAiError.AI_NOT_ENOUGH_BAAS_ERROR:
+				this.baasAvailable = false;
+				break;
+			default:
+				console.error('there are no such errorTypes');
+				break;
+		}
 	}
 }
 

@@ -3,8 +3,8 @@
 namespace Bitrix\Crm\Security\Role\Manage\Permissions\AutomatedSolution;
 
 use Bitrix\Crm\Security\Role\Manage\Permissions\Permission;
-use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\BaseControlType;
-use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\Toggler;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\BaseControlMapper;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\Toggler;
 use Bitrix\Main\Localization\Loc;
 
 final class Config extends Permission
@@ -24,7 +24,7 @@ final class Config extends Permission
 		return false;
 	}
 
-	protected function createDefaultControlType(): BaseControlType
+	protected function createDefaultControlMapper(): BaseControlMapper
 	{
 		return new Toggler();
 	}

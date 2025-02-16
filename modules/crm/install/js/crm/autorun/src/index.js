@@ -3,7 +3,9 @@ import { BatchAssignmentManager } from './managers/batch-assignment-manager';
 import { BatchConversionManager } from './managers/batch-conversion-manager';
 import { BatchDeletionManager } from './managers/batch-deletion-manager';
 import { BatchExclusionManager } from './managers/batch-exclusion-manager';
+import { BatchObserversManager } from './managers/batch-observers-manager';
 import { BatchRefreshAccountingDataManager } from './managers/batch-refresh-accounting-data-manager';
+import { BatchRestartAutomationManager } from './managers/batch-restart-automation-manager';
 import { BatchSetCategoryManager } from './managers/batch-set-category-manager';
 import { BatchSetExportManager } from './managers/batch-set-export-manager';
 import { BatchSetOpenedManager } from './managers/batch-set-opened-manager';
@@ -47,4 +49,6 @@ export {
 	BatchExclusionManager,
 	BatchWhatsappMessageManager,
 	BatchRefreshAccountingDataManager,
+	BatchRestartAutomationManager,
+	BatchObserversManager,
 };

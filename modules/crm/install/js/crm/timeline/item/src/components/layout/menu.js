@@ -1,8 +1,6 @@
-import { Type } from 'main.core';
 import { MenuManager } from 'main.popup';
 
 import { Action } from '../../action';
-import { ButtonState } from '../enums/button-state';
 
 export class Menu
 {
@@ -26,6 +24,11 @@ export class Menu
 		}
 	}
 
+	getMenuItems(): Array
+	{
+		return this.#menuOptions.items;
+	}
+
 	show(): void
 	{
 		MenuManager.show(this.#menuOptions);
@@ -45,24 +48,6 @@ export class Menu
 			text: item.title,
 			value: item.title,
 		};
-
-		if (Type.isStringFilled(item.state))
-		{
-			switch (item.state)
-			{
-				case ButtonState.AI_LOADING:
-					result.className = 'menu-popup-item-add-to-tm menu-popup-item-disabled';
-					break;
-				case ButtonState.AI_SUCCESS:
-					result.className = 'menu-popup-item-accept menu-popup-item-disabled';
-					break;
-				case ButtonState.DISABLED:
-					result.className = 'menu-popup-no-icon menu-popup-item-disabled';
-					break;
-				default:
-					result.className = '';
-			}
-		}
 
 		if (item.icon)
 		{

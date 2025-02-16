@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\Activity\Mail\Message;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Viewer;
@@ -96,35 +97,43 @@ $rcptSelected = array();
 $rcptAllSelected = array();
 $rcptCcSelected = array();
 
-foreach (array('REPLY_TO', 'REPLY_ALL', 'REPLY_CC') as $field)
+$selectedRecipients = [];
+$replyTo = [];
+$replyCC = [];
+
+foreach (array('REPLY_TO', 'REPLY_ALL', 'REPLY_CC', 'COMMUNICATIONS') as $field)
 {
 	foreach ($activity[$field] as $k => $item)
 	{
 		if (\CCrmOwnerType::isDefined($item['ENTITY_TYPE_ID']))
 		{
 			$item['ENTITY_TYPE'] = \CCrmOwnerType::resolveName($item['ENTITY_TYPE_ID']);
-//			$id = 'CRM'.$item['ENTITY_TYPE'].$item['ENTITY_ID'].':'.hash('crc32b', $item['TYPE'].':'.$item['VALUE']);
 			$id = 'CRM'.$item['ENTITY_TYPE'].$item['ENTITY_ID'];
 			$id = \Bitrix\Crm\Integration\Main\UISelector\CrmEntity::getMultiKey($id, $item['VALUE']);
 			$type = $socNetLogDestTypes[$item['ENTITY_TYPE']].'_MULTI';
 		}
 		else
 		{
-//			$id   = 'U'.md5($item['VALUE']);
 			$id   = 'MC'.$item['VALUE'];
 			$type = 'mailcontacts';
 		}
 
 		switch ($field)
 		{
+			case 'COMMUNICATIONS':
+				$selectedRecipients[] = $item;
+				break;
 			case 'REPLY_TO':
 				$rcptSelected[$id] = $type;
+				$replyTo[] = $item;
 				break;
 			case 'REPLY_ALL':
 				$rcptAllSelected[$id] = $type;
+				$replyTo[] = $item;
 				break;
 			case 'REPLY_CC':
 				$rcptCcSelected[$id] = $type;
+				$replyCC[] = $item;
 				break;
 		}
 	}
@@ -372,7 +381,13 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 	<input type="hidden" name="ACTION" value="SAVE_EMAIL">
 	<input type="hidden" name="DATA[ownerType]" value="<?=\CCrmOwnerType::resolveName($activity['OWNER_TYPE_ID']) ?>">
 	<input type="hidden" name="DATA[ownerID]" value="<?=$activity['OWNER_ID'] ?>">
-	<? if (preg_grep(sprintf('/^%s:/i', preg_quote($ownerUid, '/')), array_keys($rcptSelected + $rcptCcSelected))): ?>
+	<?
+	/**
+	 * @todo Remove it when switching to a new controller.
+	 * This is used to avoid double binding of a message to an object if the entity is both the owner
+	 * of the message and the recipient (the entity is mentioned in the recipients field).
+	 */
+	if (preg_grep(sprintf('/^%s:/i', preg_quote($ownerUid, '/')), array_keys($rcptSelected + $rcptCcSelected))): ?>
 		<input type="hidden" name="DATA[ownerRcpt]" value="Y">
 	<? endif ?>
 	<input type="hidden" name="DATA[storageTypeID]" value="<?=\CCrmActivityStorageType::Disk ?>">
@@ -436,6 +451,9 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 		$fromValue = $activity['SETTINGS']['EMAIL_META']['__email'];
 	}
 
+	$ownerType = \CCrmOwnerType::ResolveName((int)$arParams['ACTIVITY']['OWNER_TYPE_ID']);
+	$ownerId = (int)$arParams['ACTIVITY']['OWNER_ID'];
+
 	$APPLICATION->includeComponent(
 		'bitrix:main.mail.form', '',
 		array(
@@ -448,6 +466,9 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 			'USE_SIGNATURES' => true,
 			'USE_CALENDAR_SHARING' => true,
 			'COPILOT_PARAMS' => $arParams['COPILOT_PARAMS'],
+			'REPLY_FIELD_TO_JSON' => Message::getSelectedRecipientsForDialog($replyTo, $ownerType, $ownerId)->toJsObject(),
+			'REPLY_FIELD_CC_JSON' => Message::getSelectedRecipientsForDialog($replyCC, $ownerType, $ownerId)->toJsObject(),
+			'SELECTED_RECIPIENTS_JSON' => Message::getSelectedRecipientsForDialog($selectedRecipients, $ownerType, $ownerId, true)->toJsObject(),
 			'FIELDS' => array(
 				array(
 					'name'     => 'DATA[from]',
@@ -459,19 +480,11 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 					'folded'   => true,
 					'copy' => 'DATA[from_copy]',
 				),
-				//array(
-				//	'type' => 'separator',
-				//),
 				array(
 					'name'        => 'DATA[to]',
 					'title'       => getMessage('CRM_ACT_EMAIL_CREATE_TO'),
 					'placeholder' => getMessage('CRM_ACT_EMAIL_REPLY_ADD_RCPT'),
 					'type'        => 'rcpt',
-					//'value'       => $rcptSelected,
-					'selector'    => array_merge(
-						$selectorParams,
-						array('itemsSelected' => $rcptSelected)
-					),
 					'required' => true,
 				),
 				array(
@@ -479,20 +492,14 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 					'title'       => getMessage('CRM_ACT_EMAIL_CREATE_CC'),
 					'placeholder' => getMessage('CRM_ACT_EMAIL_REPLY_ADD_RCPT'),
 					'type'        => 'rcpt',
-					'folded'      => empty($rcptCcSelected),
-					//'value'       => $rcptCcSelected,
-					'selector'    => array_merge(
-						$selectorParams,
-						array('itemsSelected' => $rcptCcSelected)
-					),
+					'folded'      => false,
 				),
 				array(
 					'name'        => 'DATA[bcc]',
 					'title'       => getMessage('CRM_ACT_EMAIL_CREATE_BCC2'),
 					'placeholder' => getMessage('CRM_ACT_EMAIL_REPLY_ADD_RCPT'),
 					'type'        => 'rcpt',
-					'folded'      => true,
-					'selector'    => $selectorParams,
+					'folded'      => false,
 				),
 				array(
 					'name'        => 'DATA[subject]',
@@ -555,9 +562,6 @@ BX.ready(function()
 	var instance = new BXCrmActivityEmail({
 		activityId: <?=intval($activity['ID']) ?>,
 		formId: '<?=\CUtil::jsEscape($formId) ?>',
-		rcptSelected: <?=\Bitrix\Main\Web\Json::encode($rcptSelected) ?>,
-		rcptAllSelected: <?=\Bitrix\Main\Web\Json::encode($rcptAllSelected) ?>,
-		rcptCcSelected: <?=\Bitrix\Main\Web\Json::encode($rcptCcSelected) ?>,
 		templates: <?= \Bitrix\Main\Web\Json::encode($arParams['TEMPLATES']) ?>,
 		bodyElementId: '<?= \CUtil::jsEscape($bodyElementId) ?>',
 		controlElementId: '<?= \CUtil::jsEscape($controlElementId) ?>',

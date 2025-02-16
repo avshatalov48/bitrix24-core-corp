@@ -49,6 +49,7 @@ use Bitrix\UI\Buttons;
 use Bitrix\UI\Toolbar\ButtonLocation;
 use CCrmComponentHelper;
 use CLists;
+use Bitrix\Crm\Component\EntityDetails;
 
 abstract class FactoryBased extends BaseComponent implements Controllerable, SupportsEditorProvider
 {
@@ -159,7 +160,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 
 		$this->entityTypeId = $entityTypeId;
 		//@codingStandardsIgnoreStart
-		$id = (int) $this->arParams['ENTITY_ID'];
+		$id = (int) ($this->arParams['ENTITY_ID'] ?? 0);
 		//@codingStandardsIgnoreEnd
 
 		if( ($id <= 0) || ($this->isCopyMode()) )
@@ -2005,5 +2006,83 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 	protected function getProductsData(): ?array
 	{
 		return $this->editorAdapter->getSrcItemProductsEntityData();
+	}
+
+	protected function tryShowCustomErrors(): bool
+	{
+		if (empty($this->entityTypeId))
+		{
+			return false;
+		}
+
+		$userPermission = Container::getInstance()->getUserPermissions();
+
+		if (!$this->item)
+		{
+			EntityDetails\Error::showError(EntityDetails\Error::EntityNotExist, $this->entityTypeId);
+
+			return true;
+		}
+
+		if ($this->entityID <= 0)
+		{
+			if (!$userPermission->checkAddPermissions($this->entityTypeId, $this->category?->getId()))
+			{
+				EntityDetails\Error::showError(EntityDetails\Error::NoAddPermission, $this->entityTypeId);
+
+				return true;
+			}
+			elseif (
+				!$userPermission->checkReadPermissions($this->entityTypeId, $this->entityID, $this->category?->getId())
+				|| $this->isIframe()
+			)
+			{
+				EntityDetails\Error::showError(EntityDetails\Error::NoAccessToEntityType, $this->entityTypeId);
+
+				return true;
+			}
+		}
+		else
+		{
+			if (!$this->checkIfEntityExists())
+			{
+				EntityDetails\Error::showError(EntityDetails\Error::EntityNotExist, $this->entityTypeId);
+
+				return true;
+			}
+
+			if ($this->isCopyMode())
+			{
+				if (!$userPermission->checkReadPermissions($this->entityTypeId, $this->entityID, $this->category?->getId()))
+				{
+					EntityDetails\Error::showError(EntityDetails\Error::NoReadPermission, $this->entityTypeId);
+
+					return true;
+				}
+				elseif (!$userPermission->checkAddPermissions($this->entityTypeId, $this->category?->getId()))
+				{
+					EntityDetails\Error::showError(EntityDetails\Error::NoAddPermission, $this->entityTypeId);
+
+					return true;
+				}
+			}
+			else
+			{
+				if (!$userPermission->checkReadPermissions($this->entityTypeId))
+				{
+					EntityDetails\Error::showError(EntityDetails\Error::NoAccessToEntityType, $this->entityTypeId);
+
+					return true;
+				}
+				elseif (!$userPermission->canReadItem($this->item))
+				{
+					EntityDetails\Error::showError(EntityDetails\Error::NoReadPermission, $this->entityTypeId);
+
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 }

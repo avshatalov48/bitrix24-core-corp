@@ -96,17 +96,14 @@ $APPLICATION->IncludeComponent('bitrix:ui.sidepanel.wrappermenu', '', [
 		<input type="hidden" name="form" value="imopenlines_edit_form" />
 		<input type="hidden" name="action" value="apply" id="imol_config_edit_form_action" />
 		<input type="hidden" name="PAGE" value="<?=$arResult['PAGE']?>" id="imol_config_current_page">
-		<?
-		foreach ($arResult['CONFIG_MENU'] as $key => $menuItem)
-		{
-			?>
-			<div data-imol-page="<?=$key?>" class="<?if($key === $arResult['PAGE']){?>imopenlines-page-show<?}else{?>imopenlines-page-hide invisible<?}?>">
-				<?include $menuItem['PAGE']; ?>
-				<div data-imol-title="<?=$menuItem['NAME']?>" class="invisible"></div>
+		<?php foreach ($arResult['CONFIG_MENU'] as $key => $menuItem): ?>
+				<?php if ((new \Bitrix\Main\IO\File(__DIR__ . '/' . $menuItem['PAGE']))->isExists()): ?>
+					<div data-imol-page="<?=$key?>" class="<?php if($key === $arResult['PAGE']): ?>imopenlines-page-show<?php else: ?>imopenlines-page-hide invisible<?php endif; ?>">
+					<?php include $menuItem['PAGE']; ?>
+					<div data-imol-title="<?=$menuItem['NAME']?>" class="invisible"></div>
+				<?php endif; ?>
 			</div>
-			<?
-		}
-		?>
+			<?php endforeach; ?>
 
 		<?
 		if ($arResult['CAN_EDIT'])

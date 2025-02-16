@@ -2,9 +2,7 @@
 
 namespace Bitrix\Sign\Result;
 
-use Bitrix\Main;
 use Bitrix\Main\Error;
-use Bitrix\Main\ErrorCollection;
 use Bitrix\Sign\Exception\Result\InvalidResultUseException;
 
 abstract class SuccessResult extends Result

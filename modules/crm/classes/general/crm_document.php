@@ -2394,20 +2394,16 @@ class CCrmDocument
 	 */
 	public static function onTaskChange(string $documentId, int $taskId, array $taskData, int $status): void
 	{
-		$isAvailable = (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024', 0);
-		if ($isAvailable)
-		{
-			$taskData['TASK_ID'] = $taskId;
-			\Bitrix\Crm\Timeline\Bizproc\Controller::getInstance()
-				->onTaskStatusChange(
-					new Crm\Timeline\Bizproc\Dto\TaskStatusChangedDto(
-						(string)($taskData['WORKFLOW_ID'] ?? ''),
-						$status,
-						$documentId,
-						$taskData,
-					)
-				);
-		}
+		$taskData['TASK_ID'] = $taskId;
+		\Bitrix\Crm\Timeline\Bizproc\Controller::getInstance()
+			->onTaskStatusChange(
+				new Crm\Timeline\Bizproc\Dto\TaskStatusChangedDto(
+					(string)($taskData['WORKFLOW_ID'] ?? ''),
+					$status,
+					$documentId,
+					$taskData,
+				)
+			);
 	}
 
 	/**
@@ -2418,18 +2414,14 @@ class CCrmDocument
 	 */
 	public static function onWorkflowCommentAdded(array $documentId, string $workflowId, int $authorId): void
 	{
-		$isAvailable = (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024', 0);
-		if ($isAvailable)
-		{
-			\Bitrix\Crm\Timeline\Bizproc\Controller::getInstance()->onCommentStatusChange(
-				new Crm\Timeline\Bizproc\Dto\CommentStatusChangedDto(
-					$workflowId,
-					$documentId,
-					$authorId,
-					Crm\Timeline\Bizproc\Data\CommentStatus::Created
-				)
-			);
-		}
+		\Bitrix\Crm\Timeline\Bizproc\Controller::getInstance()->onCommentStatusChange(
+			new Crm\Timeline\Bizproc\Dto\CommentStatusChangedDto(
+				$workflowId,
+				$documentId,
+				$authorId,
+				Crm\Timeline\Bizproc\Data\CommentStatus::Created
+			)
+		);
 	}
 
 	/**
@@ -2440,18 +2432,14 @@ class CCrmDocument
 	 */
 	public static function onWorkflowCommentDeleted(array $documentId, string $workflowId, int $authorId): void
 	{
-		$isAvailable = (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024', 0);
-		if ($isAvailable)
-		{
-			\Bitrix\Crm\Timeline\Bizproc\Controller::getInstance()->onCommentStatusChange(
-				new Crm\Timeline\Bizproc\Dto\CommentStatusChangedDto(
-					$workflowId,
-					$documentId,
-					$authorId,
-					Crm\Timeline\Bizproc\Data\CommentStatus::Deleted
-				)
-			);
-		}
+		\Bitrix\Crm\Timeline\Bizproc\Controller::getInstance()->onCommentStatusChange(
+			new Crm\Timeline\Bizproc\Dto\CommentStatusChangedDto(
+				$workflowId,
+				$documentId,
+				$authorId,
+				Crm\Timeline\Bizproc\Data\CommentStatus::Deleted
+			)
+		);
 	}
 
 	/**
@@ -2462,22 +2450,18 @@ class CCrmDocument
 	 */
 	public static function onWorkflowAllCommentViewed(array $documentId, string $workflowId, int $authorId): void
 	{
-		$isAvailable = (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024', 0);
-		if ($isAvailable)
-		{
-			\Bitrix\Crm\Timeline\Bizproc\Controller::getInstance()->onCommentStatusChange(
-				new Crm\Timeline\Bizproc\Dto\CommentStatusChangedDto(
-					$workflowId,
-					$documentId,
-					$authorId,
-					Crm\Timeline\Bizproc\Data\CommentStatus::Viewed
-				)
-			);
-		}
+		\Bitrix\Crm\Timeline\Bizproc\Controller::getInstance()->onCommentStatusChange(
+			new Crm\Timeline\Bizproc\Dto\CommentStatusChangedDto(
+				$workflowId,
+				$documentId,
+				$authorId,
+				Crm\Timeline\Bizproc\Data\CommentStatus::Viewed
+			)
+		);
 	}
 
 	/**
-	 * @param array $documentId
+	 * @param string $documentId
 	 * @param string $workflowId
 	 * @param int $status
 	 * @param null|CBPActivity $rootActivity
@@ -2503,28 +2487,14 @@ class CCrmDocument
 			$status = CBPWorkflowStatus::Created;
 		}
 
-		$isAvailable = (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024', 0);
-		if ($isAvailable)
-		{
-			\Bitrix\Crm\Timeline\Bizproc\Controller::getInstance()->onWorkflowStatusChange(
-				new Crm\Timeline\Bizproc\Dto\WorkflowStatusChangedDto(
-					$workflowId,
-					$documentId,
-					$rootActivity->getDocumentEventType(),
-					(int)$status
-				)
-			);
-		}
-		else
-		{
-			if ($rootActivity->getDocumentEventType() === CBPDocumentEventType::Manual)
-			{
-				\Bitrix\Crm\Timeline\BizprocController::getInstance()->onWorkflowStatusChange(
-					$workflowId,
-					$status
-				);
-			}
-		}
+		\Bitrix\Crm\Timeline\Bizproc\Controller::getInstance()->onWorkflowStatusChange(
+			new Crm\Timeline\Bizproc\Dto\WorkflowStatusChangedDto(
+				$workflowId,
+				$documentId,
+				$rootActivity->getDocumentEventType(),
+				(int)$status
+			)
+		);
 
 		if (
 			$rootActivity->getDocumentEventType() === CBPDocumentEventType::Script
@@ -2911,5 +2881,17 @@ class CCrmDocument
 		unset($value, $prevValue);
 
 		return $values;
+	}
+
+	public static function getBizprocEditorUrl($documentType): ?string
+	{
+		if (isset($documentType[2]))
+		{
+			$entityTypeName = $documentType[2];
+
+			return "/crm/configs/bp/CRM_{$entityTypeName}/edit/#ID#/";
+		}
+
+		return null;
 	}
 }

@@ -2,9 +2,8 @@
 
 namespace Bitrix\Crm\Security\Role\Manage\Permissions;
 
-use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\BaseControlType;
-use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlType\DependentVariables;
-use Bitrix\Main\Access\Permission\PermissionDictionary;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\BaseControlMapper;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\DependentVariables;
 use Bitrix\Main\Localization\Loc;
 
 class Transition extends Permission
@@ -50,11 +49,6 @@ class Transition extends Permission
 		return [self::TRANSITION_ANY];
 	}
 
-	public function getControlTypeCode(): string
-	{
-		return PermissionDictionary::TYPE_MULTIVARIABLES;
-	}
-
 	public function getMaxSettingsValue(): array
 	{
 		return [self::TRANSITION_ANY];
@@ -65,8 +59,18 @@ class Transition extends Permission
 		return [self::TRANSITION_BLOCKED];
 	}
 
-	protected function createDefaultControlType(): BaseControlType
+	protected function createDefaultControlMapper(): BaseControlMapper
 	{
-		return (new DependentVariables());
+		return (new DependentVariables\ValuesAsSettings());
+	}
+
+	public function getHeadDefaultSettings(): array
+	{
+		return [self::TRANSITION_ANY];
+	}
+
+	public function getDeputyDefaultSettings(): array
+	{
+		return [self::TRANSITION_ANY];
 	}
 }

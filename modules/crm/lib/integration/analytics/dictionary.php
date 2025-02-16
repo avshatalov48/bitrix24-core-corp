@@ -14,6 +14,7 @@ final class Dictionary
 	public const CATEGORY_AI_OPERATIONS = 'ai_operations';
 	public const CATEGORY_AUTOMATION_OPERATIONS = 'automation_operations';
 	public const CATEGORY_KANBAN_OPERATIONS = 'kanban_operations';
+	public const CATEGORY_SETTINGS_OPERATIONS = 'settings_operations';
 
 	// region Event const
 	public const EVENT_ENTITY_ADD_OPEN = 'entity_add_open';
@@ -41,6 +42,8 @@ final class Dictionary
 	public const EVENT_BLOCK_CLOSE = 'block_close';
 	public const EVENT_BLOCK_ENABLE = 'block_enable';
 	public const EVENT_BLOCK_LINK = 'block_link';
+
+	public const EVENT_SETTINGS_VIEW = 'settings_view';
 	// endregion
 
 	// region Type const
@@ -79,6 +82,9 @@ final class Dictionary
 	 * @see \Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository::COMPANY_CODE
 	 */
 	public const SECTION_CATALOG_CONTRACTOR_COMPANY = 'catalog_contractor_company_section';
+	public const SECTION_CRM_SETTINGS = 'crm_settings';
+	public const SECTION_WEBFORM = 'webform';
+	public const SECTION_SITE_WIDGET = 'site_widget_section';
 	// endregion
 
 	// region Sub Section const
@@ -90,6 +96,7 @@ final class Dictionary
 	public const SUB_SECTION_DETAILS = 'details';
 	public const SUB_SECTION_KANBAN_DROPZONE = 'kanban_dropzone';
 	public const SUB_SECTION_ACTION_BUTTON = 'action_button';
+	public const SUB_SECTION_CONTROL_PANEL = 'control_panel';
 
 	public const SUB_SECTION_DEAL = 'deal';
 	public const SUB_SECTION_LEAD = 'lead';

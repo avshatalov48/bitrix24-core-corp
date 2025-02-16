@@ -39,24 +39,24 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	              }
 	              return _context3.abrupt("return");
 	            case 3:
-	              gridContainer.addEventListener('click', /*#__PURE__*/function () {
+	              main_core.Event.bind(gridContainer, 'click', /*#__PURE__*/function () {
 	                var _ref2 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2(event) {
 	                  var target, memberId;
 	                  return _regeneratorRuntime().wrap(function _callee2$(_context2) {
 	                    while (1) switch (_context2.prev = _context2.next) {
 	                      case 0:
 	                        target = event.target;
-	                        if (BX.Dom.hasClass(target, 'ui-btn-text')) {
+	                        if (main_core.Dom.hasClass(target, 'ui-btn-text')) {
 	                          target = target.parentNode;
 	                        }
-	                        if (!(!target.classList.contains('ui-btn') || !target.dataset.memberId)) {
+	                        if (!(!main_core.Dom.hasClass(target, 'ui-btn') || !target.dataset.memberId)) {
 	                          _context2.next = 4;
 	                          break;
 	                        }
 	                        return _context2.abrupt("return");
 	                      case 4:
-	                        if (target.classList.contains('sign-action-button')) {
-	                          BX.Dom.addClass(target, 'ui-btn-wait');
+	                        if (main_core.Dom.hasClass(target, 'sign-action-button')) {
+	                          main_core.Dom.addClass(target, 'ui-btn-wait');
 	                          memberId = Number(target.dataset.memberId);
 	                          main_core.Runtime.loadExtension('sign.v2.b2e.sign-link').then(function (exports) {
 	                            return new exports.SignLink({
@@ -92,8 +92,10 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	                                }()
 	                              }
 	                            });
+	                          })["catch"](function (error) {
+	                            console.error(error);
 	                          })["finally"](function () {
-	                            BX.Dom.removeClass(target, 'ui-btn-wait');
+	                            main_core.Dom.removeClass(target, 'ui-btn-wait');
 	                          });
 	                          event.preventDefault();
 	                        }

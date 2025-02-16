@@ -8,6 +8,12 @@ this.BX = this.BX || {};
 	  static isSendDocumentByEmployeeEnabled() {
 	    return settings.get('isSendDocumentByEmployeeEnabled', false);
 	  }
+	  static isMultiDocumentLoadingEnabled() {
+	    return settings.get('isMultiDocumentLoadingEnabled', false);
+	  }
+	  static isGroupSendingEnabled() {
+	    return settings.get('isGroupSendingEnabled', false);
+	  }
 	}
 
 	exports.FeatureStorage = FeatureStorage;

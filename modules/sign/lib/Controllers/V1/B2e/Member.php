@@ -64,6 +64,7 @@ class Member extends Controller
 		}
 
 		$base64Content = $file->getBase64Content();
+
 		return [
 			'file' => [
 				'type' => $file?->getType() ?? '',

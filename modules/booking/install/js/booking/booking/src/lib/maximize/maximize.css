@@ -1,0 +1,34 @@
+.booking-booking-slider-label {
+	position: absolute;
+	transition: none;
+	transform: translate(-100%, 17px);
+}
+
+.booking-booking-overlay {
+	--right: 65px;
+	position: absolute;
+	inset: 0 var(--right) 0 0;
+	background: rgba(0, 0, 0, 0.4);
+}
+
+.booking-booking-overlay.--closing,
+.booking-booking-overlay.--opening {
+	animation: 300ms ease booking-booking-overlay-opening forwards;
+}
+
+.booking-booking-overlay.--closing {
+	animation-direction: reverse;
+}
+
+.booking-booking-overlay.--closing .booking-booking-slider-label {
+	display: none;
+}
+
+@keyframes booking-booking-overlay-opening {
+	0% {
+		background: rgba(0, 0, 0, 0);
+	}
+	100% {
+		background: rgba(0, 0, 0, 0.4);
+	}
+}

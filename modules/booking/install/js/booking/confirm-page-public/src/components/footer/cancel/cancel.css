@@ -1,0 +1,84 @@
+.cancel-booking{
+	margin-top: 10px;
+	display: flex;
+	align-items: center;
+}
+
+.cancel-booking-icon{
+
+}
+
+.cancel-booking-link{
+	color: #A8ADB4;
+	font-size: var(--ui-font-size-md);
+	border-bottom: 1px #A8ADB4 dotted;
+}
+
+.cancel-booking-link:hover{
+	color: #A8ADB4;
+	cursor: pointer;
+}
+
+.cancel-booking-popup-content{
+	padding: 10px;
+	word-wrap: break-word;
+	width: 375px;
+}
+
+.cancel-booking-popup-content-title{
+	font-weight: var(--ui-font-weight-bold);
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-size-md2);
+}
+
+.cancel-booking-popup-content-text{
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-md);
+	padding-top: 8px;
+	padding-bottom: 18px;
+}
+
+.cancel-booking-popup-content-buttons {
+	display: flex;
+	justify-content: right;
+	gap: 10px;
+}
+
+.cancel-booking-popup-content-buttons-yes{
+	background: #FFA902;
+	border: none;
+	text-transform: initial;
+	color: var(--ui-color-palette-white-base);
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-regular);
+}
+
+.cancel-booking-popup-content-buttons-yes.--confirm {
+	background: var(--ui-color-palette-green-60);
+}
+
+.cancel-booking-popup-content-buttons-yes.ui-btn-wait.--confirm,
+.cancel-booking-popup-content-buttons-yes.ui-btn-wait.--confirm:hover {
+	background: var(--ui-color-palette-green-60);
+	background-image: var(--ui-btn-wait-loader);
+}
+
+.cancel-booking-popup-content-buttons-yes.ui-btn-wait,
+.cancel-booking-popup-content-buttons-yes.ui-btn-wait:hover{
+	background: #FFA902;
+	background-image: var(--ui-btn-wait-loader);
+}
+
+.cancel-booking-popup-content-buttons-yes:hover{
+	background: #FFA902;
+}
+.cancel-booking-popup-content-buttons-yes.--confirm:hover{
+	background: var(--ui-color-palette-green-60);
+}
+
+.cancel-booking-popup-content-buttons-no{
+	text-transform: initial;
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-regular);
+}

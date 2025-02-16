@@ -13,6 +13,10 @@ use Bitrix\Main\Localization\Loc;
 
 class Config
 {
+	private const CACHE_TIME = 3600;
+	public const CACHE_DIR = '/imopenlines/livechat/';
+	public const CACHE_ID_PREFIX_ = 'livechat_config_';
+
 	static private $error = null;
 
 	/**
@@ -40,95 +44,103 @@ class Config
 			return false;
 		}
 
-		$result = \Bitrix\ImOpenLines\Model\LivechatTable::getList([
-			'select' => ['CONFIG_ID', 'TEXT_PHRASES', 'SHOW_SESSION_ID'],
-			'filter' => ['=URL_CODE' => $code]
-		])->fetch();
-		if (!$result)
+		$cache = \Bitrix\Main\Data\Cache::createInstance();
+		if ($cache->initCache(self::CACHE_TIME, self::CACHE_ID_PREFIX_ . $code, self::CACHE_DIR))
 		{
-			self::setError(__METHOD__, 'CONFIG_ERROR', Loc::getMessage('IMOL_WIDGET_CONFIG_CONFIG_ERROR'));
-			return false;
+			$data = $cache->getVars();
 		}
-
-		$configManager = new \Bitrix\ImOpenLines\Config();
-		$config = $configManager->get($result['CONFIG_ID']);
-
-		$queue = [];
-		$operatorDataType = \Bitrix\ImOpenLines\Config::operatorDataConfig($result['CONFIG_ID']);
-
-		foreach ($config['QUEUE'] as $userId)
+		elseif ($cache->startDataCache())
 		{
-			$userArray = \Bitrix\ImOpenLines\Queue::getUserData($result['CONFIG_ID'], $userId);
-			if (!$userArray)
+			$result = \Bitrix\ImOpenLines\Model\LivechatTable::getList([
+				'select' => ['CONFIG_ID', 'TEXT_PHRASES', 'SHOW_SESSION_ID'],
+				'filter' => ['=URL_CODE' => $code]
+			])->fetch();
+
+			if (!$result)
 			{
-				continue;
+				self::setError(__METHOD__, 'CONFIG_ERROR', Loc::getMessage('IMOL_WIDGET_CONFIG_CONFIG_ERROR'));
+				$cache->abortDataCache();
+				return false;
 			}
 
-			$queue[] = $userArray;
+			$configManager = new \Bitrix\ImOpenLines\Config();
+			$config = $configManager->get($result['CONFIG_ID']);
 
-			if ($operatorDataType == \Bitrix\ImOpenLines\Config::OPERATOR_DATA_HIDE)
+			$queue = [];
+			$operatorDataType = \Bitrix\ImOpenLines\Config::operatorDataConfig($result['CONFIG_ID']);
+
+			foreach ($config['QUEUE'] as $userId)
 			{
-				break;
+				$userArray = \Bitrix\ImOpenLines\Queue::getUserData($result['CONFIG_ID'], $userId);
+				if (!$userArray)
+				{
+					continue;
+				}
+
+				$queue[] = $userArray;
+
+				if ($operatorDataType == \Bitrix\ImOpenLines\Config::OPERATOR_DATA_HIDE)
+				{
+					break;
+				}
 			}
-		}
 
-		$connectors = [];
-		$activeConnectors = \Bitrix\ImConnector\Connector::infoConnectorsLine($result['CONFIG_ID']);
+			$connectors = [];
+			$activeConnectors = \Bitrix\ImConnector\Connector::infoConnectorsLine($result['CONFIG_ID']);
 
-		$classMap = \Bitrix\ImConnector\Connector::getIconClassMap();
-		foreach ($activeConnectors as $code => $params)
-		{
-			if (\Bitrix\ImOpenLines\Connector::isLiveChat($code) || empty($params['url']))
-				continue;
+			$classMap = \Bitrix\ImConnector\Connector::getIconClassMap();
+			foreach ($activeConnectors as $code => $params)
+			{
+				if (\Bitrix\ImOpenLines\Connector::isLiveChat($code) || empty($params['url']))
+					continue;
 
-			$connectors[] = [
-				'TITLE' => $params['name']? $params['name']:'',
-				'CODE' => $code,
-				'ICON' => $classMap[$code],
-				'LINK' => $params['url_im']? $params['url_im']: $params['url'],
+				$connectors[] = [
+					'TITLE' => $params['name'] ? $params['name'] : '',
+					'CODE' => $code,
+					'ICON' => $classMap[$code],
+					'LINK' => $params['url_im'] ? $params['url_im'] : $params['url'],
+				];
+			}
+
+			$result['TEXT_PHRASES'] = !empty($result['TEXT_PHRASES']) && is_array($result['TEXT_PHRASES']) ? $result['TEXT_PHRASES'] : array();
+			foreach ($result['TEXT_PHRASES'] as &$phrase)
+			{
+				$phrase = (string)$phrase;
+			}
+
+			$data = [
+				'CONFIG_ID' => (int)$config['ID'],
+				'CONFIG_NAME' => $config['LINE_NAME'],
+				'VOTE_ENABLE' => $config['VOTE_MESSAGE'] === 'Y',
+				'CONSENT_URL' => $config['AGREEMENT_ID'] && $config['AGREEMENT_MESSAGE'] == 'Y' ? \Bitrix\ImOpenLines\Common::getAgreementLink($config['AGREEMENT_ID'], $config['LANGUAGE_ID'], true) : '',
+				'OPERATORS' => $queue,
+				'ONLINE' => $config['QUEUE_ONLINE'] === 'Y',
+				'CONNECTORS' => $connectors,
+				'DISK' => [
+					'ENABLED' => \Bitrix\Main\ModuleManager::isModuleInstalled('disk'),
+					'MAX_FILE_SIZE' => min(\CUtil::Unformat(ini_get("post_max_size")), 5242880)
+				],
+				'VOTE' => [
+					'ENABLE' => $config['VOTE_MESSAGE'] === 'Y',
+					'BEFORE_FINISH' => $config['VOTE_BEFORE_FINISH'] === 'Y',
+					'MESSAGE_TEXT' => (string)$config['VOTE_MESSAGE_1_TEXT'],
+					'MESSAGE_LIKE' => (string)$config['VOTE_MESSAGE_1_LIKE'],
+					'MESSAGE_DISLIKE' => (string)$config['VOTE_MESSAGE_1_DISLIKE'],
+				],
+				'TEXT_MESSAGES' => $result['TEXT_PHRASES'],
+				'WATCH_TYPING' => $config['WATCH_TYPING'] === 'Y',
+				'SHOW_SESSION_ID' => $result['SHOW_SESSION_ID'] === 'Y',
+				'CRM_FORMS_SETTINGS' => [
+					'USE_WELCOME_FORM' => $config['USE_WELCOME_FORM'],
+					'WELCOME_FORM_ID' => $config['WELCOME_FORM_ID'],
+					'WELCOME_FORM_DELAY' => $config['WELCOME_FORM_DELAY']
+				]
 			];
+
+			$cache->endDataCache($data);
 		}
 
-		$maxFileSize = \CUtil::Unformat(ini_get("post_max_size"));
-		if ($maxFileSize > 5242880)
-		{
-			$maxFileSize = 5242880;
-		}
-
-		$result['TEXT_PHRASES'] = !empty($result['TEXT_PHRASES']) && is_array($result['TEXT_PHRASES']) ? $result['TEXT_PHRASES'] : array();
-		foreach ($result['TEXT_PHRASES'] as &$phrase)
-		{
-			$phrase = (string)$phrase;
-		}
-
-		return [
-			'CONFIG_ID' => (int)$config['ID'],
-			'CONFIG_NAME' => $config['LINE_NAME'],
-			'VOTE_ENABLE' => $config['VOTE_MESSAGE'] === 'Y', //TODO - remove in next version
-			'CONSENT_URL' => $config['AGREEMENT_ID'] && $config['AGREEMENT_MESSAGE'] == 'Y'? \Bitrix\ImOpenLines\Common::getAgreementLink($config['AGREEMENT_ID'], $config['LANGUAGE_ID'], true): '',
-			'OPERATORS' => $queue,
-			'ONLINE' => $config['QUEUE_ONLINE'] === 'Y',
-			'CONNECTORS' => $connectors,
-			'DISK' => [
-				'ENABLED' => \Bitrix\Main\ModuleManager::isModuleInstalled('disk'),
-				'MAX_FILE_SIZE' => $maxFileSize
-			],
-			'VOTE' => [
-				'ENABLE' => $config['VOTE_MESSAGE'] === 'Y',
-				'BEFORE_FINISH' => $config['VOTE_BEFORE_FINISH'] === 'Y',
-				'MESSAGE_TEXT' => (string)$config['VOTE_MESSAGE_1_TEXT'],
-				'MESSAGE_LIKE' => (string)$config['VOTE_MESSAGE_1_LIKE'],
-				'MESSAGE_DISLIKE' => (string)$config['VOTE_MESSAGE_1_DISLIKE'],
-			],
-			'TEXT_MESSAGES' => $result['TEXT_PHRASES'],
-			'WATCH_TYPING' => $config['WATCH_TYPING'] === 'Y',
-			'SHOW_SESSION_ID' => $result['SHOW_SESSION_ID'] === 'Y',
-			'CRM_FORMS_SETTINGS' => [
-				'USE_WELCOME_FORM' => $config['USE_WELCOME_FORM'],
-				'WELCOME_FORM_ID' => $config['WELCOME_FORM_ID'],
-				'WELCOME_FORM_DELAY' => $config['WELCOME_FORM_DELAY']
-			]
-		];
+		return $data;
 	}
 
 
@@ -143,6 +155,12 @@ class Config
 		}
 
 		return static::$error;
+	}
+
+	public static function clearCache(): void
+	{
+		$cache = \Bitrix\Main\Data\Cache::createInstance();
+		$cache->cleanDir(self::CACHE_DIR);
 	}
 
 	/**

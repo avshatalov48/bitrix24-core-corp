@@ -1,0 +1,15 @@
+.booking--rcw--error-message-container {
+	padding-top: 5px;
+}
+
+.booking--rcw--error-message {
+	display: flex;
+	align-items: center;
+	color: var(--ui-field-color-danger);
+	font-size: var(--ui-font-size-xs);
+}
+
+.booking--rcw--error-message .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-field-color-danger);
+	height: 18px;
+}

@@ -3,7 +3,7 @@ import { Loc } from 'main.core';
 import 'ui.icon-set.main';
 import { Button } from './button';
 
-const ARTICLE_CODE = '23240682'
+const ARTICLE_CODE = '23240682';
 
 export const Navigation = {
 	components: {
@@ -25,6 +25,14 @@ export const Navigation = {
 			type: Boolean,
 			default: false,
 		},
+	},
+
+	data(): Object
+	{
+		return {
+			firstPage: 'about',
+			lastPage: 'control',
+		};
 	},
 
 	computed: {
@@ -55,13 +63,13 @@ export const Navigation = {
 	template: `
 		<div class="crm-copilot__call-assessment_navigation-container">
 			<div class="crm-copilot__call-assessment_navigation-buttons-wrapper">
-				<Button v-if="activeTabId !== 'settings'" id="continue" :is-enabled="isEnabled" />
-				<Button v-if="activeTabId === 'settings' && !readOnly" id="submit" />
-				<Button v-if="activeTabId === 'settings' && readOnly" id="close" />
-				<Button v-if="activeTabId === 'about'" id="cancel" />
-				<Button v-if="activeTabId !== 'about'" id="back" />
+				<Button v-if="activeTabId !== lastPage" id="continue" :is-enabled="isEnabled" />
+				<Button v-if="activeTabId === lastPage && !readOnly" id="submit" />
+				<Button v-if="activeTabId === lastPage && readOnly" id="close" />
+				<Button v-if="activeTabId === firstPage" id="cancel" />
+				<Button v-if="activeTabId !== firstPage" id="back" />
 			</div>
-			<div v-if="showSaveButton && activeTabId !== 'settings'">
+			<div v-if="showSaveButton && activeTabId !== lastPage">
 				<Button id="update" :is-enabled="isEnabled" />
 			</div>
 			<div v-else class="crm-copilot__call-assessment_article" @click="showArticle">

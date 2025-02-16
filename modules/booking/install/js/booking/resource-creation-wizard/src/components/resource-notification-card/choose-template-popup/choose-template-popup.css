@@ -1,0 +1,138 @@
+.booking-resource-wizard-choose-template-popup-header-title {
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-medium);
+	display: flex;
+	justify-content: space-between;
+}
+
+.booking-resource-wizard-choose-template-popup-header-title {
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.booking-resource-wizard-choose-template-popup-header-title .channel-menu-btn {
+	font-weight: var(--ui-font-weight-normal);
+	text-transform: initial;
+}
+
+.booking-resource-wizard-choose-template-popup-header-title .--close-btn:hover {
+	cursor: pointer;
+}
+
+.booking-resource-wizard-choose-template-popup-header-line {
+	margin-top: 10px;
+	margin-bottom: 10px;
+	border: 1px solid var(--ui-color-palette-gray-10);
+}
+
+.booking-resource-wizard-choose-template-popup-container {
+	max-height: 450px;
+	overflow-y: auto;
+}
+
+.booking-resource-wizard-choose-template-popup-content {
+	margin-bottom: 10px;
+}
+
+.booking-resource-wizard-choose-template-popup-content-title {
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.booking-resource-wizard-choose-template-popup-content-desc {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-palette-gray-60);
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example {
+	margin-top: 10px;
+	border: 1px solid var(--ui-color-palette-gray-15);
+	border-radius: var(--ui-border-radius-xl);
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-body {
+	color: var(--ui-color-palette-black-solid);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+
+	padding: 12px;
+	border-top-left-radius: var(--ui-border-radius-lg);
+	border-top-right-radius: var(--ui-border-radius-lg);
+
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-body.wha {
+	overflow: hidden;
+	background: url('../images/whatsapp-msg-bg.svg') no-repeat;
+	background-size: cover;
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-body-text {
+	padding-top: 7px;
+	padding-bottom: 12px;
+	padding-left: 7px;
+	padding-right: 7px;
+	border-radius: 8px;
+	justify-content: center;
+	align-items: center;
+	gap: 10px;
+	display: inline-flex;
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-body-text.wha {
+	background: var(--ui-color-palette-white-base);
+	box-shadow: 0 1px 7px rgba(0, 0, 0, 0.14);
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-body-text.sms {
+	background: var(--ui-color-palette-gray-15);
+	border-radius: 16px;
+	padding-left: 14px;
+	padding-right: 14px;
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-body-text-tail.wha {
+	display: none;
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-body-text-tail.sms {
+	width: 19px;
+	height: 19px;
+	background: url('../images/tail.svg') no-repeat;
+	margin-top: -15px;
+	margin-left: -5px;
+}
+
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-body-text-time.wha {
+	display: block;
+	text-align: right;
+	color: var(--ui-color-palette-gray-60);
+	font-size: var(--ui-font-size-3xs);
+	font-weight: var(--ui-font-weight-normal);
+	word-wrap: break-word;
+	align-self: flex-end;
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-body-text-time.sms {
+	display: none;
+}
+
+
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-actions {
+	padding-left: 12px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	justify-content: flex-start;
+	align-items: flex-start;
+	gap: 6px;
+	display: inline-flex;
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-actions button.--selected {
+	background: none;
+	border: 0;
+	padding-left: 0;
+}

@@ -1,0 +1,32 @@
+.booking-booking-column-off-hours {
+	position: absolute;
+	z-index: 2;
+	top: 10px;
+	width: 100%;
+	min-height: 11px;
+	--off-hours-additional-height: calc(10px + var(--booking-off-hours-cell-height) / (50 * var(--zoom)) * 13);
+	height: calc(var(--top-cells-height) + var(--off-hours-additional-height));
+	border: 1px solid var(--ui-color-base-20);
+	border-left: none;
+	border-right: none;
+	cursor: pointer;
+	transition: 200ms border-color, 200ms box-shadow;
+}
+
+.booking-booking-column-off-hours.--bottom {
+	top: initial;
+	bottom: 10px;
+	height: calc(var(--bottom-cells-height) + var(--off-hours-additional-height));
+}
+
+/** hover **/
+.booking-booking-column-off-hours.--hover {
+	border-color: var(--ui-color-base-40);
+	box-shadow: inset 0 0 0 999px rgba(0, 0, 0, 0.02);
+}
+
+/** expand **/
+.--booking-booking-expand .booking-booking-column-off-hours {
+	box-shadow: inset 0 0 0 999px rgba(0, 0, 0, 0.02);
+	pointer-events: none;
+}

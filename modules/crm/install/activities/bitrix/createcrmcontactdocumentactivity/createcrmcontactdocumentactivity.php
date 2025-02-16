@@ -56,11 +56,7 @@ class CBPCreateCrmContactDocumentActivity extends CBPCreateDocumentActivity
 			$this->ErrorMessage = $e->getMessage();
 		}
 
-		if (
-			$this->ContactId
-			&& (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024')
-			&& method_exists($this, 'fixResult')
-		)
+		if ($this->ContactId)
 		{
 			$this->fixResult($this->makeResultFromId($this->ContactId));
 		}

@@ -48,6 +48,7 @@ abstract class Factory
 	protected $editorAdapter;
 	protected $isParentFieldsAdded = false;
 	protected $itemsCategoryCache = [];
+	private array $itemsStageCache = [];
 
 	/** @var StatusTable */
 	protected $statusTableClassName = StatusTable::class;
@@ -418,6 +419,8 @@ abstract class Factory
 					'filter' => ['@' . Item::FIELD_NAME_ID => $itemIds],
 					'limit' => null,
 				] + $parameters;
+
+			unset($params['runtime']['permissions']);
 
 			$list = $this->getDataClass()::getList($params);
 		}
@@ -2038,10 +2041,35 @@ abstract class Factory
 
 	public function clearItemCategoryCache(int $id): void
 	{
-		if (array_key_exists($id, $this->itemsCategoryCache))
+		unset($this->itemsCategoryCache[$id]);
+	}
+
+	final public function getItemStageId(int $id): ?string
+	{
+		if ($id === 0)
 		{
-			unset($this->itemsCategoryCache[$id]);
+			return null;
 		}
+		if (!$this->isStagesEnabled())
+		{
+			return null;
+		}
+
+		if (array_key_exists($id, $this->itemsStageCache))
+		{
+			return $this->itemsStageCache[$id];
+		}
+
+		$item = $this->getItem($id, [Item::FIELD_NAME_STAGE_ID]);
+
+		$this->itemsStageCache[$id] = $item?->getStageId();
+
+		return $this->itemsStageCache[$id];
+	}
+
+	public function clearItemStageCache(int $id): void
+	{
+		unset($this->itemsStageCache[$id]);
 	}
 
 	public function isInCustomSection(): bool

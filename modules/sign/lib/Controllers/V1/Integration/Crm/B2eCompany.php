@@ -3,8 +3,10 @@
 namespace Bitrix\Sign\Controllers\V1\Integration\Crm;
 
 use Bitrix\Main\Context;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Sign\Access\ActionDictionary;
 use Bitrix\Sign\Attribute\Access\LogicOr;
@@ -51,13 +53,65 @@ class B2eCompany extends \Bitrix\Sign\Engine\Controller
 		}
 
 		$myCompanyService = $this->container->getCrmMyCompanyService();
-		$companies = $myCompanyService->listWithTaxIds();
+		$myCompanies = $myCompanyService->listWithTaxIds();
+
+		$companies = $this->getFilledRegisteredCompanies($myCompanies, $initiatedByType);
+
+		$aciveCompanyUuids = [];
+		/** @var Company $company */
+		foreach ($companies as $company)
+		{
+			foreach ($company->providers as $provider)
+			{
+				$aciveCompanyUuids[] = $provider->uid;
+			}
+		}
+
+		$lastProviders = $this->container
+			->getDocumentRepository()
+			->getLastCompanyProvidersByUser(
+				(int)CurrentUser::get()->getId(),
+				$aciveCompanyUuids,
+			)
+		;
+
+		// sort providers
+		$companies = $companies->sortProviders(
+			function(CompanyProvider $a, CompanyProvider $b) use ($lastProviders) {
+				$dateA = $lastProviders->getByUid($a->uid)?->dateCreate ?? null;
+				$dateB = $lastProviders->getByUid($b->uid)?->dateCreate ?? null;
+
+				$tsForCompareA = max($dateA?->getTimestamp() ?? 0, $a->timestamp);
+				$tsForCompareB = max($dateB?->getTimestamp() ?? 0, $b->timestamp);
+
+				return $tsForCompareB <=> $tsForCompareA;
+			},
+		);
+
+		// sort companies using providers
+		$companies = $companies->getSorted(
+			function(Company $a, Company $b) use ($lastProviders) {
+				$recentProviderA = $a->providers[0] ?? null;
+				$recentProviderB = $b->providers[0] ?? null;
+
+				if (!$recentProviderA || !$recentProviderB)
+				{
+					return $recentProviderB ? 1 : -1;
+				}
+
+				$dateA = $lastProviders->getByUid($recentProviderA->uid)?->dateCreate ?? null;
+				$dateB = $lastProviders->getByUid($recentProviderB->uid)?->dateCreate ?? null;
+
+				$tsForCompareA = max($dateA?->getTimestamp() ?? 0, $recentProviderA->timestamp);
+				$tsForCompareB = max($dateB?->getTimestamp() ?? 0, $recentProviderB->timestamp);
+
+				return $tsForCompareB <=> $tsForCompareA;
+			}
+		);
 
 		return [
 			'showTaxId' => !$myCompanyService->isTaxIdIsCompanyId(),
-			'companies' => $this->getFilledRegisteredCompanies($companies, $initiatedByType)
-				->sortProviders()
-				->toArray(),
+			'companies' => $companies->toArray(),
 		];
 	}
 

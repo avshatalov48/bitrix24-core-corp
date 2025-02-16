@@ -134,6 +134,9 @@ class DynamicTypesMap
 					'filter' => [
 						'@ENTITY_TYPE_ID' => $entityTypeIds,
 					],
+					'cache' => [
+						'ttl' => self::DYNAMIC_COLLECTION_CACHE_TTL,
+					],
 				])->fetchCollection() as $category)
 			{
 				$entityTypeId = $category->getEntityTypeId();
@@ -167,6 +170,9 @@ class DynamicTypesMap
 					],
 					'filter' => [
 						'@ENTITY_ID' => array_keys($this->stageEntityIds),
+					],
+					'cache' => [
+						'ttl' => self::DYNAMIC_COLLECTION_CACHE_TTL,
 					],
 				])->fetchCollection() as $stage)
 			{
@@ -341,7 +347,11 @@ class DynamicTypesMap
 			{
 				try
 				{
-					$typesData = $this->typeDataClass::getList()->fetchAll();
+					$typesData = $this->typeDataClass::getList([
+						'filter' => [
+							'=IS_INITIALIZED' => true,
+						],
+					])->fetchAll();
 				}
 				catch (SqlQueryException $e)
 				{

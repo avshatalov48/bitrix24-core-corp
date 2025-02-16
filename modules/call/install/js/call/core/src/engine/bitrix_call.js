@@ -510,6 +510,7 @@ export class BitrixCall extends AbstractCall
 				{
 					this.log(e);
 					console.error(e);
+					this.#onBeforeLocalMediaRendererRemoved(MediaStreamsKinds.Camera);
 				});
 		}
 	};
@@ -549,6 +550,10 @@ export class BitrixCall extends AbstractCall
 				{
 					this.log(e);
 					console.error(e);
+					this.runCallback(CallEvent.onUserMicrophoneState, {
+						userId: this.userId,
+						microphoneState: false,
+					})
 				})
 				.finally(() => {
 					this.#setPublishingState(MediaStreamsKinds.Microphone, false);

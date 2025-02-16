@@ -217,6 +217,9 @@ class CrmActivityEmailComponent extends CBitrixComponent
 			{
 				case 'FWD':
 					$subjectPrefix = 'Fwd';
+					$activity['OWNER_TYPE_ID'] = $activity['__parent']['OWNER_TYPE_ID'];
+					$activity['OWNER_ID'] = $activity['__parent']['OWNER_ID'];
+					$activity['HIDE_EMPTY_CONTACT_ERROR'] = !empty($activity['COMMUNICATIONS']);
 					$activity['FORWARDED_ID'] = $activity['__parent']['ID'];
 					$activity['BINDINGS'] = $activity['__parent']['BINDINGS'];
 					$activity['STORAGE_TYPE_ID'] = $activity['__parent']['STORAGE_TYPE_ID'];
@@ -966,9 +969,15 @@ class CrmActivityEmailComponent extends CBitrixComponent
 				false,
 				['PHOTO', 'LOGO']
 			)->fetch();
+
 			if (!$entity)
 			{
 				return;
+			}
+
+			if ($item['ENTITY_TYPE_ID'] && \CCrmOwnerType::isDefined($item['ENTITY_TYPE_ID']))
+			{
+				$item['ENTITY_TYPE'] = \CCrmOwnerType::resolveName($item['ENTITY_TYPE_ID']);
 			}
 
 			if (

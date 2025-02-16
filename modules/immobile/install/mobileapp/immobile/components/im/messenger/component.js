@@ -139,6 +139,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.promotion = new Promotion();
 			this.communication = new Communication();
 			EntityReady.addCondition('chat', () => this.isReady);
+
+			/** @type {JSSharedStorage} */
+			this.departmentColleaguesStore = Application.sharedStorage('immobileDepartmentColleagues');
 		}
 
 		initCore()
@@ -523,13 +526,19 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 				...this.getBaseInitRestMethods(),
 				MessengerInitRestMethod.userData,
 			];
+
 			if (!shortMode)
 			{
 				methodList.push(
 					MessengerInitRestMethod.promotion,
-					MessengerInitRestMethod.departmentColleagues,
 					MessengerInitRestMethod.tariffRestriction,
 				);
+			}
+
+			const isNeedDepartmentColleagues = !this.departmentColleaguesStore.get('isRequested') && !shortMode;
+			if (isNeedDepartmentColleagues)
+			{
+				methodList.push(MessengerInitRestMethod.departmentColleagues);
 			}
 
 			return this.chatInitService.runAction(methodList)
@@ -570,6 +579,12 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			ChatTimer.stop('recent', 'error', true);
 
 			Counters.update();
+
+			const isRequestedDepartmentColleagues = this.departmentColleaguesStore.get('isRequested');
+			if (!isRequestedDepartmentColleagues)
+			{
+				this.departmentColleaguesStore.set('isRequested', true);
+			}
 
 			if (!Feature.isLocalStorageEnabled)
 			{

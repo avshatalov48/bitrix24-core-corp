@@ -3,21 +3,19 @@
 namespace Bitrix\Sign\Ui\MyDocumentsGrid\ActionCellTemplateFactory;
 
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Sign\Contract\Grid\MyDocuments\ActionCellTemplate;
 
 class DefaultCompletedActionTextTemplate implements ActionCellTemplate
 {
 	use ActionDateTrait;
 
-	private ?string $textForActionColumn;
-	private ?DateTime $actionDate;
+	public function __construct(
+		private readonly ?string $textForActionColumn,
+		private readonly ?DateTime $actionDate
+	)
+	{}
 
-	public function __construct(?string $textForActionColumn, ?DateTime $actionDate)
-	{
-		$this->textForActionColumn = $textForActionColumn;
-		$this->actionDate = $actionDate;
-	}
-
-	public function get(): string
+	public function render(): string
 	{
 		$formattedDate = self::getFormattedDate($this->actionDate);
 

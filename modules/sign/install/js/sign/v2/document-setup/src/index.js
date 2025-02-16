@@ -6,10 +6,10 @@ import type { DocumentModeType } from 'sign.v2.sign-settings';
 import { isTemplateMode } from 'sign.v2.sign-settings';
 import { Button } from 'ui.buttons';
 import { Alert } from 'ui.alerts';
-import type { DocumentData } from './type';
+import type { DocumentDetails } from './type';
 import './style.css';
 
-export type { DocumentData };
+export type { DocumentDetails };
 export type DocumentInitiatedType = 'employee' | 'company';
 export const DocumentInitiated: Readonly<Record<string, DocumentInitiatedType>> = Object.freeze({
 	employee: 'employee',
@@ -54,6 +54,7 @@ export class DocumentSetup extends EventEmitter
 		});
 		const { type, portalConfig, documentMode, chatId } = blankSelectorConfig;
 		this.setupData = null;
+		this.blankIsNotSelected = true;
 		this.#scenarioType = type;
 		this.#api = new Api();
 		this.#uids = new Map();
@@ -255,7 +256,7 @@ export class DocumentSetup extends EventEmitter
 		this.blankSelector.deleteBlank(blankId);
 	}
 
-	loadBlocks(uid: string): Promise<DocumentData['blocks']>
+	loadBlocks(uid: string): Promise<DocumentDetails['blocks']>
 	{
 		return this.#api.loadBlocksByDocument(uid);
 	}
@@ -296,6 +297,12 @@ export class DocumentSetup extends EventEmitter
 				this.ready = false;
 				const isBlankChanged = selectedBlankId || this.blankSelector.isFilesReadyForUpload();
 				blankId = selectedBlankId || await this.blankSelector.createBlank();
+				if (!blankId)
+				{
+					this.blankIsNotSelected = true;
+
+					return;
+				}
 				let documentUid = this.setupData?.uid;
 
 				let documentTemplateUid = null;
@@ -337,13 +344,12 @@ export class DocumentSetup extends EventEmitter
 		this.ready = true;
 	}
 
-	async waitForPagesList(cb: (urls: string[]) => void, preparedPages: boolean = false)
+	async waitForPagesList(documentData, cb?: (urls: string[]) => void, preparedPages: boolean = false)
 	{
 		let interval = 0;
 		let isPagesReady = false;
 		const requestTime = 10 * 1000;
-		const uid = this.setupData.uid;
-		const { blankId, isTemplate } = this.setupData;
+		const { uid, blankId, isTemplate } = documentData;
 		if (!isTemplate)
 		{
 			this.blankSelector.selectBlank(blankId);
@@ -404,7 +410,7 @@ export class DocumentSetup extends EventEmitter
 
 		clearInterval(interval);
 		isPagesReady = true;
-		this.#processPages(urls, cb);
+		await this.#processPages(urls, cb);
 	}
 
 	set ready(isReady: boolean)
@@ -422,5 +428,10 @@ export class DocumentSetup extends EventEmitter
 	isTemplateMode(): boolean
 	{
 		return isTemplateMode(this.#documentMode);
+	}
+
+	deleteDocumentFromList(blankId: string): void
+	{
+		this.#uids.delete(blankId);
 	}
 }

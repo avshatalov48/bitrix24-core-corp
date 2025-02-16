@@ -1,5 +1,6 @@
-import {Dom, Type} from 'main.core';
+import { Dom, Loc } from 'main.core';
 import { Popup } from 'main.popup';
+import { Analytics } from 'call.lib.analytics';
 import '../css/copilot-popup.css';
 import Util from '../util';
 import { CallAI } from '../call_ai';
@@ -12,7 +13,7 @@ export class CopilotPopup
 		this.popupTemplate = null;
 		this.isCopilotActive = config.isCopilotActive;
 		this.isCopilotFeaturesEnabled = config.isCopilotFeaturesEnabled;
-
+		this.callId = config.callId;
 
 		this.callbacks = {
 			updateCopilotState: BX.type.isFunction(config.updateCopilotState) ? config.updateCopilotState : BX.DoNothing,
@@ -39,6 +40,8 @@ export class CopilotPopup
 
 			if (!this.isCopilotFeaturesEnabled)
 			{
+				this.sendAnalytics('private_coming_soon');
+
 				return {
 					props: { className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_transparent' },
 					text: BX.message('CALL_COPILOT_POPUP_BUTTON_COMING_SOON'),
@@ -47,20 +50,34 @@ export class CopilotPopup
 
 			if (!CallAI.tariffAvailable)
 			{
+				this.sendAnalytics('tariff_limit');
+
 				return {
 					props: { className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_green' },
 					text: BX.message('CALL_COPILOT_POPUP_TARIFF_UP'),
 					events: {
 						click: () => {
-							Util.openArticle(CallAI.baasPromoSlider);
+							Util.openArticle(CallAI.helpSlider);
 							this.close();
 						},
 					}
 				}
 			}
 
+			if (!CallAI.settingsEnabled)
+			{
+				this.sendAnalytics('error_turnedoff');
+
+				return {
+					props: { className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_transparent' },
+					text: Loc.getMessage('CALL_COPILOT_POPUP_SETTINGS_DISABLED'),
+				};
+			}
+
 			if (!CallAI.agreementAccepted)
 			{
+				this.sendAnalytics('agreement_limit');
+
 				return {
 					props: { className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_transparent' },
 					text: BX.message('CALL_COPILOT_POPUP_CONCERN_NOT_ACCEPTED'),
@@ -69,6 +86,8 @@ export class CopilotPopup
 
 			if (!CallAI.baasAvailable)
 			{
+				this.sendAnalytics('baas_limit');
+
 				return {
 					props: { className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_green' },
 					text: BX.message('CALL_COPILOT_POPUP_BUTTON_BUY_BOOST'),
@@ -257,5 +276,13 @@ export class CopilotPopup
 		}
 
 		this.close();
+	}
+
+	sendAnalytics(popupType)
+	{
+		Analytics.getInstance().copilot.onAIRestrictionsPopupShow({
+			callId: this.callId,
+			popupType,
+		});
 	}
 }

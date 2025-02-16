@@ -63,6 +63,8 @@ class AccessRightsEntitySerializer
 						);
 
 						// prefer 'inherit' on group actions
+						$right['setEmptyOnSetMinMaxValueInColumn'] = true;
+						// todo compatibility, remove when fresh ui update is out
 						$right['setEmptyOnGroupActions'] = true;
 
 						$rights[] = $right;
@@ -110,7 +112,7 @@ class AccessRightsEntitySerializer
 			'hint' => $permission->explanation(),
 			'group' => $parentCode,
 		];
-		$controlType = $permission->getControlType();
+		$controlType = $permission->getControlMapper();
 		$result['type'] = $controlType->getType();
 		$result['minValue'] = $controlType->getMinValue();
 		$result['maxValue'] = $controlType->getMaxValue();

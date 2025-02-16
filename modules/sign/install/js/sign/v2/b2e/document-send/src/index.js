@@ -1,6 +1,7 @@
 import { Tag, Loc, Type, Dom } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 import type { DocumentModeType } from 'sign.v2.sign-settings';
+import { type DocumentDetails } from 'sign.v2.document-setup';
 import { isTemplateMode } from 'sign.v2.sign-settings';
 import { UserParty } from 'sign.v2.b2e.user-party';
 import { ReminderSelector, type Options as ReminderOptions, ReminderType } from 'sign.v2.b2e.reminder-selector';
@@ -75,7 +76,7 @@ export class DocumentSend extends EventEmitter
 
 	#partiesData: ?PartiesData = null;
 	#documentSummary: DocumentSummary;
-	#documentData: DocumentData;
+	#documentData: Map<string, DocumentDetails>;
 	#langSelector: LangSelector;
 	#progress: ProgressBar;
 	#progressOverlay: ?HTMLElement;
@@ -87,6 +88,8 @@ export class DocumentSend extends EventEmitter
 
 	#hcmLinkMapping: HcmLinkMapping;
 	#analytics: ?Analytics;
+
+	#hcmLinkEnabled: boolean = false;
 
 	constructor(documentSendConfig: DocumentSendConfig)
 	{
@@ -101,10 +104,12 @@ export class DocumentSend extends EventEmitter
 			events: {
 				changeTitle: (event: BaseEvent) => {
 					const data = event.getData();
-					this.#documentData.title = data.title;
 					this.emit('changeTitle', data);
 				},
-				showEditor: (event: BaseEvent) => this.emit('showEditor'),
+				showEditor: (event: BaseEvent) => {
+					const data = event.getData();
+					this.emit('showEditor', data);
+				},
 			},
 		});
 		const { region, languages, documentMode, analytics } = documentSendConfig;
@@ -139,18 +144,26 @@ export class DocumentSend extends EventEmitter
 		return this.#documentData;
 	}
 
-	set documentData(documentData: DocumentData)
+	set hcmLinkEnabled(value: boolean): void
 	{
-		const { uid, title, blocks, externalId } = documentData;
-		this.#documentSummary.uid = uid;
-		this.#documentSummary.title = title;
-		this.#documentSummary.blocks = blocks;
-		this.#documentSummary.setNumber(externalId);
+		this.#hcmLinkEnabled = value;
+	}
+
+	set documentData(documentData: Map<string, DocumentDetails>)
+	{
+		documentData.forEach((data) => {
+			const { uid, id, title, blocks, externalId, isTemplate, entityId, urls } = data;
+			this.#documentSummary.addItem(uid, { uid, id, title, blocks, externalId, isTemplate, entityId, urls });
+		});
+
 		this.#documentData = documentData;
-		this.#langSelector.setDocumentUid(uid);
-		this.#items.employees.setDocumentUid(uid);
-		this.#hcmLinkMapping.setEnabled(documentData.integrationId > 0);
-		this.#hcmLinkMapping.setDocumentUid(uid);
+
+		const lastUid = [...documentData.values()].pop().uid;
+
+		this.#langSelector.setDocumentUid(lastUid);
+		this.#items.employees.setDocumentUid(lastUid);
+		this.#hcmLinkMapping.setEnabled(this.#hcmLinkEnabled);
+		this.#hcmLinkMapping.setDocumentUid(lastUid);
 	}
 
 	#getCompanyCommunication(): CommunicationType | null
@@ -387,12 +400,14 @@ export class DocumentSend extends EventEmitter
 	resetUserPartyPopup(): DocumentSend
 	{
 		this.#items.employees.resetUserPartyPopup();
+
 		return this;
 	}
 
 	setPartiesData(parties: PartiesData): DocumentSend
 	{
 		this.#partiesData = parties;
+
 		if (Type.isNumber(parties?.company?.entityId))
 		{
 			this.#items.company.setItemData({
@@ -432,7 +447,6 @@ export class DocumentSend extends EventEmitter
 	async sendForSign(): Promise<boolean>
 	{
 		const api = new Api();
-		const { uid, templateUid } = this.#documentData;
 
 		try
 		{
@@ -442,13 +456,26 @@ export class DocumentSend extends EventEmitter
 			this.#showProgressOverlay();
 			if (this.#isTemplateMode())
 			{
-				const { template: { id: templateId } } = await api.template.completeTemplate(templateUid);
+				const { template: { id: templateId } } = await api.template.completeTemplate(this.documentData.values().next().value.templateUid);
 				this.emit('onTemplateComplete', { templateId });
+			}
+			else if (this.#isGroupDocuments())
+			{
+				const groupId = this.#getGroupIdFromGroup();
+				const configureDocumentGroupPromise = api.configureDocumentGroup(groupId);
+				const groupCheckFillAndStartProgressPromise = this.#groupCheckFillAndStartProgress(groupId);
+
+				await Promise.all([configureDocumentGroupPromise, groupCheckFillAndStartProgressPromise]);
 			}
 			else
 			{
-				await api.configureDocument(uid);
-				await this.#checkFillAndStartProgress(uid);
+				for (const [uid] of this.documentData)
+				{
+					const configureDocumentPromise = api.configureDocument(uid);
+					const checkFillAndStartProgressPromise = this.#checkFillAndStartProgress(uid);
+
+					await Promise.all([configureDocumentPromise, checkFillAndStartProgressPromise]);
+				}
 			}
 
 			return true;
@@ -463,6 +490,17 @@ export class DocumentSend extends EventEmitter
 		}
 	}
 
+	deleteDocument(uid: string): void
+	{
+		this.#documentSummary.deleteItem(uid);
+	}
+
+	setDocumentsBlock(documents): void
+	{
+		const documentsObject = Object.fromEntries(documents);
+		this.#documentSummary.setItems(documentsObject);
+	}
+
 	async #checkFillAndStartProgress(uid: string): Promise<void>
 	{
 		const api = new Api();
@@ -475,6 +513,21 @@ export class DocumentSend extends EventEmitter
 			this.#progress.update(Math.round(result.progress));
 			// eslint-disable-next-line no-await-in-loop
 			await this.#sleep(1000);
+		}
+	}
+
+	async #groupCheckFillAndStartProgress(groupId: number): Promise<void>
+	{
+		const api = new Api();
+		let completed = false;
+		while (!completed)
+		{
+			// eslint-disable-next-line no-await-in-loop
+			const result = await api.getDocumentGroupFillAndStartProgress(groupId);
+			completed = result.completed;
+			this.#progress.update(Math.round(result.progress));
+			// eslint-disable-next-line no-await-in-loop
+			await this.#sleep(2000);
 		}
 	}
 
@@ -550,16 +603,32 @@ export class DocumentSend extends EventEmitter
 
 	#saveReminderTypesForRoles(): Promise<void>
 	{
+		const uid = this.#getFirstDocumentUidFromGroup();
 		const promises: Array<Promise> = Object.entries(this.#reminderSelectorByRole)
-			.map(([role, selector]) => selector.save(this.#documentData.uid, role))
+			.map(([role, selector]) => selector.save(uid, role))
 		;
 
 		return Promise.all(promises);
 	}
 
+	#getFirstDocumentUidFromGroup(): string
+	{
+		return this.documentData.keys().next().value;
+	}
+
 	#isTemplateMode(): boolean
 	{
 		return isTemplateMode(this.#documentMode);
+	}
+
+	#isGroupDocuments(): boolean
+	{
+		return this.documentData.size > 1;
+	}
+
+	#getGroupIdFromGroup(): string
+	{
+		return this.documentData.values().next().value.groupId;
 	}
 
 	#onHcmLinkMappingValidUpdate(event: BaseEvent): void

@@ -1,0 +1,12 @@
+.booking-booking-booking-communication {
+	align-self: flex-end;
+	display: flex;
+	align-items: center;
+	margin-left: 5px;
+	opacity: 0.5;
+}
+
+.booking-booking-booking-communication .ui-icon-set {
+	--ui-icon-set__icon-color: rgba(var(--ui-color-palette-white-base-rgb), 0.8);
+	--ui-icon-set__icon-size: calc(18px * var(--zoom));
+}

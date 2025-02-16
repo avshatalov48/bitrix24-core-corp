@@ -142,6 +142,7 @@ class CrmConfigPermsV2AjaxController extends \Bitrix\Main\Engine\JsonController
 
 		return [
 			'USER_GROUPS' => $rolesData->userGroups,
+			// it's unnecessary, can be removed safely after the UI update is out
 			'ACCESS_RIGHTS' => $rolesData->accessRights
 		];
 	}

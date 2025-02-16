@@ -43,6 +43,7 @@ $config = [
 	'copilotSettings' => $arResult['copilotSettings'] ?? [],
 	'baasSettings' => $arResult['baasSettings'] ?? [],
 	'readOnly' => $arResult['readOnly'] ?? true,
+	'isEnabled' => $arResult['isEnabled'] ?? true,
 	'isCopy' => $arResult['isCopy'] ?? false,
 ];
 ?>

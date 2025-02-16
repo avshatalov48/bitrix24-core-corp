@@ -227,12 +227,12 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      return false;
 	    }
 	    let employeeMember = null;
-	    let documentId = null;
+	    let document = null;
 	    main_core_events.EventEmitter.emit('BX.Sign.SignSettingsEmployee:onBeforeTemplateSend');
 	    try {
 	      const sendResult = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].template.send(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].template.uid, babelHelpers.classPrivateFieldLooseBase(this, _getFieldValues)[_getFieldValues]());
 	      employeeMember = sendResult.employeeMember;
-	      documentId = sendResult.document.id;
+	      document = sendResult.document;
 	    } catch (e) {
 	      console.error(e);
 	      return false;
@@ -244,7 +244,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      id: memberId
 	    } = employeeMember;
 	    this.emit(this.events.documentSendedSuccessFully, {
-	      documentId
+	      document
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _showProgress)[_showProgress]();
 	    let pending = true;

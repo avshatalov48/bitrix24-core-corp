@@ -1,0 +1,54 @@
+.resource-creation-wizard__form-work-time-selector {
+	display: flex;
+	flex-direction: column;
+	padding: 18px 24px 18px 24px;
+	gap: 4px;
+	border-radius: 8px;
+	background-color: white;
+	border: 1px solid var(--ui-color-palette-gray-10);
+}
+
+.resource-creation-wizard__form-work-time-selector .ui-form-row-inline {
+	margin-top: 0;
+}
+
+.resource-creation-wizard__form-work-time-selector .ui-form-row, .ui-form-row-inline {
+	margin-bottom: 0;
+}
+
+.resource-creation-wizard__form-work-time-selector .work-time-selector-label-text:not(.--disabled) span {
+	cursor: pointer;
+	color: var(--ui-color-link-primary-base);
+	text-decoration: underline dashed;
+	text-underline-offset: 3px;
+}
+
+.resource-creation-wizard__form-work-time-selector-slots.--disabled {
+	opacity: 0.5;
+}
+
+.resource-creation-wizard__form-work-time-selector-slots {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.resource-creation-wizard__form-work-time-selector-slots-timezone {
+	display: flex;
+	gap: 4px;
+	padding: 10px;
+	border-radius: 8px;
+	background-color: var(--ui-color-palette-gray-03);
+}
+
+.resource-creation-wizard__form-work-time-selector-slots-timezone-text {
+	color: var(--ui-color-palette-gray-80);
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-normal);
+}
+
+.resource-creation-wizard__form-work-time-selector-slots-timezone-text span {
+	color: var(--ui-color-link-primary-base);
+	text-decoration: underline dashed;
+	text-underline-offset: 3px;
+}

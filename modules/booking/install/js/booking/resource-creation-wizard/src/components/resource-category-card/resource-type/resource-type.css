@@ -1,0 +1,80 @@
+.rcw__resource-type {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	margin: 0 14px;
+	cursor: pointer;
+}
+
+.booking--rcw--resource-type__icon {
+	height: 42px;
+	width: 42px;
+	background-image: url(../images/advertising-resource-type/none.svg);
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.booking--rcw--resource-type__icon--medicalServices
+{
+	background-image: url(../images/advertising-resource-type/medicalServices.svg);
+}
+
+.booking--rcw--resource-type__icon--carRent
+{
+	background-image: url(../images/advertising-resource-type/carRent.svg);
+}
+
+.booking--rcw--resource-type__icon--equipmentRent
+{
+	background-image: url(../images/advertising-resource-type/equipmentRent.svg);
+}
+
+.booking--rcw--resource-type__icon--expertServices
+{
+	background-image: url(../images/advertising-resource-type/expertServices.svg);
+}
+
+.booking--rcw--resource-type__icon--roomRent
+{
+	background-image: url(../images/advertising-resource-type/roomRent.svg);
+}
+
+.rcw__resource-type__row {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	padding: 12px 0;
+}
+
+.booking--rcw--resource-type-item:hover {
+	background-color: rgba(var(--ui-color-palette-blue-50-rgb), .07);
+	border-radius: var(--ui-border-radius-lg);
+}
+
+.booking--rcw--resource-type-item:not(:last-child) .rcw__resource-type__row {
+	border-bottom: 1px solid var(--ui-color-base-05);
+}
+
+.rcw__resource-type__label {
+	flex: 1;
+}
+
+.rcw__resource-type__label-title {
+	line-height: 18px;
+	color: var(--ui-color-base-90);
+}
+
+.rcw__resource-type__label-description {
+	font-size: var(--ui-font-size-xs);
+	line-height: 15px;
+	color: var(--ui-color-base-70);
+}
+
+.booking--rcw--resource-type-item .ui-icon-set {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-base-35);
+}
+
+.booking--rcw--resource-type-item:hover .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-palette-blue-50);
+}

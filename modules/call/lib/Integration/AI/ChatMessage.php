@@ -22,7 +22,7 @@ class ChatMessage
 
 	public static function generateErrorMessage(\Bitrix\Main\Error $error, Chat $chat, Call $call): ?Message
 	{
-		$errorMessage = self::getErrorMessageByCode($error->getCode(), $chat) ?: $error->getMessage();
+		$errorMessage = self::getErrorMessage($error, $chat) ?: $error->getMessage();
 
 		$message = new Message();
 		$message
@@ -32,33 +32,58 @@ class ChatMessage
 		// todo: Add COMPONENT_ID  for call message
 		//$message->getParams()->get(Params::COMPONENT_ID)->setValue(NotifyService::MESSAGE_COMPONENT_ID);
 		$message->getParams()->get(Params::COMPONENT_PARAMS)->setValue([
-			'MESSAGE_TYPE' => NotifyService::MESSAGE_TYPE_ERROR,
+			'MESSAGE_TYPE' => NotifyService::MESSAGE_TYPE_AI_FAILED,
 			'CALL_ID' => $call->getId(),
 		]);
 
 		return $message;
 	}
 
-	public static function getErrorMessageByCode(string $errorCode, Chat $chat): string
+	public static function getErrorMessage(\Bitrix\Main\Error $error, Chat $chat): string
 	{
 		$errorMessage = '';
+		$errorCode = $error->getCode();
+
+		if (
+			$error instanceof CallAIError
+			&& $error->isAiGeneratedError()
+		)
+		{
+			$errorMessage = $error->getMessage();
+		}
+
 		switch ($errorCode)
 		{
+			case CallAIError::AI_RECORD_TOO_SHORT:
+			case CallAIError::AI_EMPTY_PAYLOAD_ERROR:
+				$errorMessage = $error->getMessage();
+				break;
+
+			case 'AI_ENGINE_ERROR_PROVIDER':
+			case 'AI_ENGINE_ERROR_OTHER':
+				//$helpUrl = CallAISettings::getHelpUrl();
+				break;
+
 			case CallAIError::AI_UNAVAILABLE_ERROR:
+			case 'AI_ENGINE_ERROR_SERVICE_IS_NOT_AVAILABLE_BY_TARIFF':
 				$errorMessage = Loc::getMessage('CALL_NOTIFY_COPILOT_ERROR_TARIFF_RESTRICTION');
 				break;
 
 			case CallAIError::AI_SETTINGS_ERROR:
-				$errorMessage = Loc::getMessage('CALL_NOTIFY_COPILOT_ERROR_SETTINGS_RESTRICTION');
+				$errorMessage = Loc::getMessage('CALL_NOTIFY_COPILOT_ERROR_SETTINGS_RESTRICTION', [
+					'#LINK#' => CallAISettings::getHelpUrl(),
+				]);
 				break;
 
 			case CallAIError::AI_NOT_ENOUGH_BAAS_ERROR:
+			case 'AI_ENGINE_ERROR_LIMIT_IS_EXCEEDED':
 				$errorMessage = Loc::getMessage('CALL_NOTIFY_COPILOT_ERROR_ERROR_LIMIT_BAAS', [
 					'#LINK#' => CallAISettings::getBaasUrl(),
 				]);
 				break;
 
 			case CallAIError::AI_AGREEMENT_ERROR:
+			case 'AI_ENGINE_ERROR_MUST_AGREE_WITH_AGREEMENT':
 				if (CallAISettings::isB24Mode())
 				{
 					//b24
@@ -332,13 +357,16 @@ class ChatMessage
 		return $message;
 	}
 
-	public static function generateTaskFailedMessage(AITask $task, \Bitrix\Main\Error $error, Chat $chat): ?Message
+	public static function generateTaskFailedMessage(int $callId, \Bitrix\Main\Error $error, Chat $chat): ?Message
 	{
-		$callId = $task->getCallId();
-
 		$linkMess = self::makeCallStartMessageLink($callId, $chat);
 
 		$mess = Loc::getMessage('CALL_NOTIFY_TASK_FAILED', ['#CALL_START#' => $linkMess, '#CALL_ID#' => $callId]);
+
+		if ($errorMessage = self::getErrorMessage($error, $chat))
+		{
+			$mess .= '[br]'. $errorMessage;
+		}
 
 		$feedbackLink = \Bitrix\Call\Library::getCallAiFeedbackUrl($callId);
 		if ($feedbackLink)

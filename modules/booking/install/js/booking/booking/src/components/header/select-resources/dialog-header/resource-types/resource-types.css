@@ -1,0 +1,53 @@
+.booking-booking-resources-dialog-header-types {
+	box-sizing: border-box;
+	max-height: 110px;
+	display: flex;
+	flex-direction: column;
+	padding: 10px 10px 0;
+	background-color: var(--ui-color-base-02);
+	border-bottom: 1px solid var(--ui-color-base-10);
+	border-radius: var(--popup-window-border-radius) var(--popup-window-border-radius) 0 0;
+}
+
+.booking-booking-resources-dialog-header-items {
+	overflow-y: scroll;
+	padding: 0 5px 10px 0;
+	margin-right: -5px;
+	color: var(--ui-color-base-90);
+}
+
+.booking-booking-resources-dialog-header-items::-webkit-scrollbar {
+	background-color: rgba(0, 0, 0, 0);
+	width: 5px;
+	margin-bottom: 10px;
+}
+
+.booking-booking-resources-dialog-header-items::-webkit-scrollbar-thumb {
+	background: rgba(0, 0, 0, 0.21);
+	border-radius: 5px;
+	cursor: pointer;
+	transition: .2s;
+}
+
+.booking-booking-resources-dialog-header-items::-webkit-scrollbar-track {
+	background: transparent;
+	margin-bottom: 10px;
+}
+
+.booking-booking-resources-dialog-header-item {
+	padding: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.booking-booking-resources-dialog-header-item:hover {
+	box-shadow: inset 0 0 0 999px rgba(0, 0, 0, 0.03);
+}
+
+.booking-booking-resources-dialog-header-item input[type="checkbox"] {
+	filter: grayscale(1) brightness(1.41);
+	cursor: pointer;
+}

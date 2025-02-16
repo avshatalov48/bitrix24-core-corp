@@ -16,32 +16,32 @@ type DocumentSummaryOptions = {
 	}
 };
 
+type ItemDetails = {
+	blocks: Array<{ party: number; }>;
+	entityId: number;
+	id: number;
+	isTemplate: boolean;
+	title: string;
+	uid: string;
+	urls: Array<string>;
+};
+
 export class DocumentSummary extends EventEmitter
 {
-	uid: string;
-	title: string;
-	#blocks: Array<{ party: number; }>;
-	#editDocumentBtn: HTMLElement;
-	#number: string | null = null;
+	items: {
+		[uid: string]: ItemDetails
+	};
 
 	constructor(options: DocumentSummaryOptions = {})
 	{
 		super();
 		this.setEventNamespace('BX.Sign.V2.DocumentSummary');
 		this.subscribeFromOptions(options.events);
-		this.#editDocumentBtn = Tag.render`
-			<span
-				class="${buttonClassList.join(' ')}"
-				onclick="${() => this.emit('showEditor')}"
-			>
-				${Loc.getMessage('SIGN_DOCUMENT_SUMMARY_EDIT')}
-			</span>
-		`;
 	}
 
-	#createDocumentDetails(): HTMLElement
+	#createDocumentDetails(item: Object): HTMLElement
 	{
-		const title = Text.encode(this.title ?? '');
+		const title = Text.encode(item.title ?? '');
 
 		return Tag.render`
 			<div class="sign-document-summary__details">
@@ -55,25 +55,53 @@ export class DocumentSummary extends EventEmitter
 					<span
 						class="sign-document-summary__details_edit-title-btn"
 						onclick="${({ target: button }) => {
-							this.#toggleTitleEditor(button, true);
+							this.#toggleTitleEditor(item, button, true);
 						}}"
 					>
 					</span>
 				</div>
-				${this.#createNumber()}
+				${this.#createNumber(item.externalId)}
 			</div>
 		`;
 	}
 
-	#createNumber(): ?HTMLElement
+	addItem(uid: string, itemDetails: ItemDetails): void
 	{
-		if (!this.#number)
+		if (!this.items)
+		{
+			this.items = {};
+		}
+		this.items[uid] = itemDetails;
+	}
+
+	deleteItem(uid: string): void
+	{
+		if (!this.items || !this.items[uid])
+		{
+			return;
+		}
+
+		delete this.items[uid];
+	}
+
+	setItems(documentObject): void
+	{
+		this.items = {};
+
+		Object.keys(documentObject).forEach((uid) => {
+			this.items[uid] = documentObject[uid];
+		});
+	}
+
+	#createNumber(number: number): ?HTMLElement
+	{
+		if (!number)
 		{
 			return null;
 		}
 
 		const title = Loc.getMessage('SIGN_DOCUMENT_SUMMARY_REG_NUMBER', {
-			'#NUMBER#': Text.encode(this.#number),
+			'#NUMBER#': Text.encode(number),
 		});
 
 		return Tag.render`
@@ -83,7 +111,7 @@ export class DocumentSummary extends EventEmitter
 		`;
 	}
 
-	#createTitleEditor(): HTMLElement
+	#createTitleEditor(item: ItemDetails): HTMLElement
 	{
 		const okButtonClassName = [
 			...buttonClassList.slice(0, 2),
@@ -95,7 +123,7 @@ export class DocumentSummary extends EventEmitter
 			'sign-document-summary__title-editor_discard-btn',
 		].join(' ');
 		const input = Tag.render`<input type="text" class="ui-ctl-element" maxlength="255" />`;
-		input.value = this.title ?? '';
+		input.value = item.title ?? '';
 		this.#focusInput(input);
 
 		return Tag.render`
@@ -108,16 +136,16 @@ export class DocumentSummary extends EventEmitter
 						class="${okButtonClassName}"
 						onclick="${async ({ target }) => {
 							Dom.addClass(target, 'ui-btn-wait');
-							await this.#modifyDocumentTitle(input.value);
+							await this.#modifyDocumentTitle(item, input.value);
 							Dom.removeClass(target, 'ui-btn-wait');
-							this.#toggleTitleEditor(target, false);
+							this.#toggleTitleEditor(item, target, false);
 						}}"
 					>
 					</span>
 					<span
 						class="${discardButtonClassName}"
 						onclick="${({ target }) => {
-							this.#toggleTitleEditor(target, false);
+							this.#toggleTitleEditor(item, target, false);
 						}}"
 					>
 					</span>
@@ -129,19 +157,19 @@ export class DocumentSummary extends EventEmitter
 		`;
 	}
 
-	#toggleTitleEditor(button: HTMLElement, shouldShow: boolean)
+	#toggleTitleEditor(item: ItemDetails, button: HTMLElement, shouldShow: boolean)
 	{
 		const summaryNode = button.closest('.sign-document-summary');
 		if (shouldShow)
 		{
 			Dom.clean(summaryNode);
-			Dom.append(this.#createTitleEditor(), summaryNode);
+			Dom.append(this.#createTitleEditor(item), summaryNode);
 
 			return;
 		}
 
-		Dom.replace(summaryNode.firstElementChild, this.#createDocumentDetails());
-		Dom.append(this.#editDocumentBtn, summaryNode);
+		Dom.replace(summaryNode.firstElementChild, this.#createDocumentDetails(item));
+		Dom.append(this.#createEditDocumentBtn(item.id, item.uid), summaryNode);
 	}
 
 	#focusInput(input: HTMLElement)
@@ -156,9 +184,9 @@ export class DocumentSummary extends EventEmitter
 		observer.observe(document.body, { childList: true, subtree: true });
 	}
 
-	async #modifyDocumentTitle(newValue: string)
+	async #modifyDocumentTitle(item: ItemDetails, newValue: string)
 	{
-		if (this.title === newValue)
+		if (item.title === newValue)
 		{
 			return;
 		}
@@ -166,9 +194,9 @@ export class DocumentSummary extends EventEmitter
 		try
 		{
 			const api = new Api();
-			const titleData = await api.modifyTitle(this.uid, newValue);
-			this.title = newValue;
-			this.emit('changeTitle', { title: newValue, blankTitle: titleData.blankTitle });
+			const titleData = await api.modifyTitle(item.uid, newValue);
+			this.items[item.uid].title = newValue;
+			this.emit('changeTitle', { uid: item.uid, title: newValue, blankTitle: titleData.blankTitle });
 		}
 		catch (ex)
 		{
@@ -176,24 +204,41 @@ export class DocumentSummary extends EventEmitter
 		}
 	}
 
-	set blocks(blocks: Array<{ party: number; }>)
+	setNumber(uid: string, number: ?string): void
 	{
-		this.#blocks = blocks;
-		this.emit('reloadEntities');
+		this.items[uid].number = number;
 	}
 
-	setNumber(number: ?string): void
+	#createEditDocumentBtn(id: number, uid: string): HTMLElement
 	{
-		this.#number = number;
+		return Tag.render`
+			<span
+				class="${buttonClassList.join(' ')}" data-id="${id}"
+				onclick="${() => this.emit('showEditor', { uid })}"
+			>
+				${Loc.getMessage('SIGN_DOCUMENT_SUMMARY_EDIT')}
+			</span>
+		`;
 	}
 
 	getLayout(): HTMLElement
 	{
-		return Tag.render`
-			<div class="sign-document-summary">
-				${this.#createDocumentDetails()}
-				${this.#editDocumentBtn}
-			</div>
+		const container = Tag.render`
+			<div class="sign-document-summary-wrapper"></div>
 		`;
+
+		for (const item of Object.values(this.items))
+		{
+			const itemBlock = Tag.render`
+				<div class="sign-document-summary">
+					${this.#createDocumentDetails(item)}
+					${this.#createEditDocumentBtn(item.id, item.uid)}
+				</div>
+			`;
+
+			Dom.append(itemBlock, container);
+		}
+
+		return container;
 	}
 }

@@ -1306,4 +1306,3 @@ if (\Bitrix\Crm\Settings\Crm::isWhatsAppScenarioEnabled()):
 	</script>
 <?php
 endif;
-

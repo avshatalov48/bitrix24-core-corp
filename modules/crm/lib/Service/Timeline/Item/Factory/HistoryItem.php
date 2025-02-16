@@ -193,6 +193,8 @@ class HistoryItem
 					return new Item\LogMessage\Binding\Moved($context, $model);
 				case LogMessageType::BOOKING_CREATED:
 					return new Item\LogMessage\Booking\BookingCreated($context, $model);
+				case LogMessageType::RESTART_AUTOMATION:
+					return new Item\LogMessage\RecordRestartAutomation($context, $model);
 			}
 		}
 
@@ -512,8 +514,7 @@ class HistoryItem
 			return new Item\LogMessage\ElementCompletion($context, $model);
 		}
 
-		$isAvailable = (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024', 0);
-		if ($typeId === TimelineType::BIZPROC && $isAvailable)
+		if ($typeId === TimelineType::BIZPROC)
 		{
 			$status = $model->getHistoryItemModel()?->get('WORKFLOW_STATUS_NAME');
 			if (empty($typeCategoryId) && isset($status))

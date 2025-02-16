@@ -88,6 +88,11 @@ class TranscribeCallRecord extends AITask
 		return SenseType::TRANSCRIBE->value;
 	}
 
+	public function getCost(): int
+	{
+		return 7;
+	}
+
 	public function getAIEngineCode(): string
 	{
 		$engineItem = (new \Bitrix\AI\Tuning\Manager)->getItem(CallAISettings::TRANSCRIBE_CALL_RECORD_ENGINE);

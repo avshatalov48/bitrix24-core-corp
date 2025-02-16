@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\Activity\Mail\Message;
 use Bitrix\Crm\Tour;
 use Bitrix\Mail\Helper;
 use Bitrix\Main\Loader;
@@ -309,6 +310,7 @@ foreach ($arParams['DOCS_BINDINGS'] as $item)
 			'USE_SIGNATURES' => true,
 			'USE_CALENDAR_SHARING' => true,
 			'COPILOT_PARAMS' => $arParams['COPILOT_PARAMS'],
+			'SELECTED_RECIPIENTS_JSON' => Message::getSelectedRecipientsForDialog($activity['COMMUNICATIONS'], $activity['INITIAL_OWNER_TYPE'], $activity['INITIAL_OWNER_ID'], true)->toJsObject(),
 			'FIELDS' => array(
 				array(
 					'name'     => 'DATA[from]',
@@ -462,7 +464,9 @@ BX.ready(function ()
 	{
 		var mailForm = BXMainMailForm.getForm('<?=\CUtil::jsEscape($formId) ?>');
 
-		mailForm.init();
+		mailForm.init({
+			hideEmptyContactError: <?= !empty($activity['HIDE_EMPTY_CONTACT_ERROR']) ? 1 : 0 ?>,
+		});
 
 		BX.bind(BX('crm_act_email_create_batch'), 'change', function ()
 		{

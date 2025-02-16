@@ -26,6 +26,8 @@ use Bitrix\Crm\Tracking;
 use Bitrix\Crm\WebForm;
 use Bitrix\Iblock;
 use Bitrix\Main;
+use Bitrix\Main\Application;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -3895,6 +3897,7 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 		if ($this->properties === null)
 			$this->properties = CCrmProductPropsHelper::GetProps($catalogID, $this->userTypes);
 	}
+
 	/**
 	 * @return array
 	 */
@@ -3916,6 +3919,7 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 		}
 		return $this->FIELDS_INFO;
 	}
+
 	protected function preparePropertyFieldsInfo(&$fieldsInfo)
 	{
 		$catalogID = CCrmCatalog::GetDefaultID();
@@ -4021,13 +4025,39 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 		if(count($propertyValues) > 0)
 			$fields['PROPERTY_VALUES'] = $propertyValues;
 
-		$result = CCrmProduct::Add($fields);
-		if(!is_int($result))
+		$conn = Application::getConnection();
+		$conn->startTransaction();
+		$result = false;
+		$internalError = '';
+		try
 		{
-			$errors[] = CCrmProduct::GetLastError();
+			$result = CCrmProduct::Add($fields);
+			if (!is_int($result))
+			{
+				$internalError = CCrmProduct::GetLastError();
+				if ($internalError === '')
+				{
+					$internalError = 'Unable to create product.';
+				}
+			}
 		}
+		catch (SqlQueryException)
+		{
+			$internalError = 'Internal error adding product. Try adding again.';
+		}
+		if ($internalError === '')
+		{
+			$conn->commitTransaction();
+		}
+		else
+		{
+			$conn->rollbackTransaction();
+			$errors[] = $internalError;
+		}
+
 		return $result;
 	}
+
 	protected function innerGet($ID, &$errors)
 	{
 		if(!CModule::IncludeModule('iblock'))
@@ -4062,6 +4092,7 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 
 		return $result;
 	}
+
 	public function getList($order, $filter, $select, $start)
 	{
 		if(!CModule::IncludeModule('iblock'))
@@ -4238,6 +4269,7 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 
 		return CCrmRestService::setNavData($result, $dbResult);
 	}
+
 	public function getProperties($catalogID, &$fields, $propertiesSelect)
 	{
 		if ($catalogID <= 0)
@@ -4319,6 +4351,7 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 			}
 		}
 	}
+
 	protected function innerUpdate($ID, &$fields, &$errors, array $params = null)
 	{
 		if(!is_array($fields))
@@ -4423,11 +4456,36 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 			}
 		}
 
-		$result = CCrmProduct::Update($ID, $fields);
-		if($result !== true)
+		$conn = Application::getConnection();
+		$conn->startTransaction();
+		$result = false;
+		$internalError = '';
+		try
 		{
-			$errors[] = CCrmProduct::GetLastError();
+			$result = CCrmProduct::Update($ID, $fields);
+			if ($result !== true)
+			{
+				$internalError = CCrmProduct::GetLastError();
+				if ($internalError === '')
+				{
+					$internalError = 'Unable to update product.';
+				}
+			}
 		}
+		catch (SqlQueryException)
+		{
+			$internalError = 'Internal error updating product. Try updating again.';
+		}
+		if ($internalError === '')
+		{
+			$conn->commitTransaction();
+		}
+		else
+		{
+			$conn->rollbackTransaction();
+			$errors[] = $internalError;
+		}
+
 		return $result;
 	}
 	protected function innerDelete($ID, &$errors, array $params = null)
@@ -4443,11 +4501,36 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		$result = CCrmProduct::Delete($ID);
-		if($result !== true)
+		$conn = Application::getConnection();
+		$conn->startTransaction();
+		$result = false;
+		$internalError = '';
+		try
 		{
-			$errors[] = CCrmProduct::GetLastError();
+			$result = CCrmProduct::Delete($ID);
+			if ($result !== true)
+			{
+				$internalError = CCrmProduct::GetLastError();
+				if ($internalError === '')
+				{
+					$internalError = 'Unable to delete product.';
+				}
+			}
 		}
+		catch (SqlQueryException)
+		{
+			$internalError = 'Internal error deleting product. Try deleting again.';
+		}
+		if ($internalError === '')
+		{
+			$conn->commitTransaction();
+		}
+		else
+		{
+			$conn->rollbackTransaction();
+			$errors[] = $internalError;
+		}
+
 		return $result;
 	}
 
@@ -5188,6 +5271,7 @@ class CCrmProductSectionRestProxy extends CCrmRestProxyBase
 		}
 		return $this->FIELDS_INFO;
 	}
+
 	protected function innerAdd(&$fields, &$errors, array $params = null)
 	{
 		if(!CCrmProduct::CheckCreatePermission())
@@ -5196,13 +5280,36 @@ class CCrmProductSectionRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		$result = CCrmProductSection::Add($fields);
-		if(!(is_int($result) && $result > 0))
+		$conn = Application::getConnection();
+		$conn->startTransaction();
+		$internalError = '';
+		$result = false;
+		try
 		{
-			$errors[] = CCrmProductSection::GetLastError();
+			$result = CCrmProductSection::Add($fields);
+			if (!(is_int($result) && $result > 0))
+			{
+				$internalError = CCrmProductSection::GetLastError();
+			}
 		}
+		catch (SqlQueryException)
+		{
+			$internalError = 'Internal error adding product section. Try adding again.';
+		}
+		if ($internalError === '')
+		{
+			$conn->commitTransaction();
+		}
+		else
+		{
+			$conn->rollbackTransaction();
+			$errors[] = $internalError;
+
+		}
+
 		return $result;
 	}
+
 	protected function innerGet($ID, &$errors)
 	{
 		if(!CCrmProduct::CheckReadPermission($ID))
@@ -5220,6 +5327,7 @@ class CCrmProductSectionRestProxy extends CCrmRestProxyBase
 
 		return $result;
 	}
+
 	protected function innerGetList($order, $filter, $select, $navigation, &$errors)
 	{
 		if(!CCrmProduct::CheckReadPermission(0))
@@ -5230,6 +5338,7 @@ class CCrmProductSectionRestProxy extends CCrmRestProxyBase
 
 		return CCrmProductSection::GetList($order, $filter, $select, $navigation);
 	}
+
 	protected function innerUpdate($ID, &$fields, &$errors, array $params = null)
 	{
 		if(!CCrmProduct::CheckUpdatePermission($ID))
@@ -5238,13 +5347,35 @@ class CCrmProductSectionRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		$result = CCrmProductSection::Update($ID, $fields);
-		if($result !== true)
+		$conn = Application::getConnection();
+		$conn->startTransaction();
+		$internalError = '';
+		$result = false;
+		try
 		{
-			$errors[] = CCrmProductSection::GetLastError();
+			$result = CCrmProductSection::Update($ID, $fields);
+			if (!$result)
+			{
+				$internalError = CCrmProductSection::GetLastError();
+			}
 		}
+		catch (SqlQueryException)
+		{
+			$internalError = 'Internal error updating product section. Try updating again.';
+		}
+		if ($internalError === '')
+		{
+			$conn->commitTransaction();
+		}
+		else
+		{
+			$conn->rollbackTransaction();
+			$errors[] = $internalError;
+		}
+
 		return $result;
 	}
+
 	protected function innerDelete($ID, &$errors, array $params = null)
 	{
 		if(!CCrmProduct::CheckDeletePermission($ID))
@@ -5253,13 +5384,35 @@ class CCrmProductSectionRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		$result = CCrmProductSection::Delete($ID);
-		if($result !== true)
+		$conn = Application::getConnection();
+		$conn->startTransaction();
+		$internalError = '';
+		$result = false;
+		try
 		{
-			$errors[] = CCrmProductSection::GetLastError();
+			$result = CCrmProductSection::Delete($ID);
+			if (!$result)
+			{
+				$internalError = CCrmProductSection::GetLastError();
+			}
 		}
+		catch (SqlQueryException)
+		{
+			$internalError = 'Internal error deleting product section. Try deleting again.';
+		}
+		if ($internalError === '')
+		{
+			$conn->commitTransaction();
+		}
+		else
+		{
+			$conn->rollbackTransaction();
+			$errors[] = $internalError;
+		}
+
 		return $result;
 	}
+
 	public static function registerEventBindings(array &$bindings)
 	{
 		if(!isset($bindings[CRestUtil::EVENTS]))

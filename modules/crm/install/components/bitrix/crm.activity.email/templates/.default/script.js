@@ -472,8 +472,8 @@
 			var deleteLink   = BX.findChildByClassName(this.__wrapper, 'crm-task-list-mail-item-control-icon-delete', true);
 
 			BX.bind(replyButton, 'click', this.showReplyForm.bind(this));
-			BX.bind(replyAllLink, 'click', this.showReplyForm.bind(this));
-			BX.bind(replyLink, 'click', this.showReplyForm.bind(this, true));
+			BX.bind(replyAllLink, 'click', this.showReplyForm.bind(this, true));
+			BX.bind(replyLink, 'click', this.showReplyForm.bind(this));
 
 			BX.bind(forwardLink, 'click', function ()
 			{
@@ -694,7 +694,7 @@
 		}
 	};
 
-	BXCrmActivityEmail.prototype.showReplyForm = function (min)
+	BXCrmActivityEmail.prototype.showReplyForm = function(isReplyAll)
 	{
 		var mailForm = BXMainMailForm.getForm(this.options.formId);
 		var replyButton = BX.findChildByClassName(this.__wrapper, 'crm-task-list-mail-message-panel', true);
@@ -702,20 +702,21 @@
 		if (this.htmlForm.parentNode === this.__dummyNode)
 			this.htmlForm.__wrapper.appendChild(this.htmlForm);
 
-		mailForm.init();
+		var isInit = mailForm.init({
+			isReplyAll,
+		});
 
-		if (min === true)
+		if (isInit === false)
 		{
-			mailForm.getField('DATA[to]').setValue(this.options.rcptSelected);
-			mailForm.getField('DATA[cc]').setValue();
+			if (isReplyAll === true)
+			{
+				mailForm.fillFieldsForReplyAll();
+			}
+			else
+			{
+				mailForm.fillFieldsForReply();
+			}
 		}
-		else
-		{
-			mailForm.getField('DATA[to]').setValue(this.options.rcptAllSelected);
-			mailForm.getField('DATA[cc]').setValue(this.options.rcptCcSelected);
-		}
-
-		mailForm.getField('DATA[bcc]').setValue();
 
 		BX.onCustomEvent('CrmActivityEmail:replyButtonClick', [this]);
 

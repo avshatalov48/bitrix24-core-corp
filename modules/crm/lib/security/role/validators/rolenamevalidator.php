@@ -24,7 +24,7 @@ class RoleNameValidator
 		if (!empty($lastError))
 		{
 			$lastError = strip_tags($lastError);
-			$result->addError(new Error($lastError));
+			$result->addError(new Error($lastError, 'INVALID_ROLE_NAME'));
 		}
 
 		return $result;

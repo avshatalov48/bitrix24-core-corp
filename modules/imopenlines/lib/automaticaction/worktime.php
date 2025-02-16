@@ -224,4 +224,54 @@ class WorkTime
 
 		return $result;
 	}
+
+	public function getNextWorkDayStart(): DateTime
+	{
+		$timezone = !empty($this->config["WORKTIME_TIMEZONE"]) ? new \DateTimeZone($this->config["WORKTIME_TIMEZONE"]) : null;
+		$currentDate = new DateTime(null, null, $timezone);
+
+		$workStartTime = number_format((float)$this->config['WORKTIME_FROM'], 2, '.', '');
+
+		$allWeekDays = [
+			'MO' => 1,
+			'TU' => 2,
+			'WE' => 3,
+			'TH' => 4,
+			'FR' => 5,
+			'SA' => 6,
+			'SU' => 7
+		];
+
+		$dayOffs = !empty($this->config['WORKTIME_DAYOFF']) ? (is_array($this->config['WORKTIME_DAYOFF']) ? $this->config['WORKTIME_DAYOFF'] : explode(',', $this->config['WORKTIME_DAYOFF'])) : [];
+		$holidays = !empty($this->config['WORKTIME_HOLIDAYS']) ? (is_array($this->config['WORKTIME_HOLIDAYS']) ? $this->config['WORKTIME_HOLIDAYS'] : explode(',', $this->config['WORKTIME_HOLIDAYS'])) : [];
+
+		$currentWeekDay = $currentDate->format('N');
+		$isDayOff = in_array($currentWeekDay, array_map(fn($day) => $allWeekDays[$day], $dayOffs));
+		$isHoliday = in_array($currentDate->format('d.m'), $holidays);
+
+		if (!$isDayOff && !$isHoliday)
+		{
+			if ($currentDate->format('G.i') < $workStartTime)
+			{
+				$nextWorkDayStart = clone $currentDate;
+				$nextWorkDayStart->setTime(...explode('.', $workStartTime));
+				return $nextWorkDayStart;
+			}
+		}
+
+		$nextWorkDayStart = clone $currentDate;
+		$iterationCount = 0;
+		do
+		{
+			$nextWorkDayStart->add('+1 day');
+			$nextWeekDay = $nextWorkDayStart->format('N');
+			$isNextDayOff = in_array($nextWeekDay, array_map(fn($day) => $allWeekDays[$day], $dayOffs));
+			$isNextHoliday = in_array($nextWorkDayStart->format('d.m'), $holidays);
+			$iterationCount++;
+		}
+		while (($isNextDayOff || $isNextHoliday) && $iterationCount < 366);
+
+		$nextWorkDayStart->setTime(...explode('.', $workStartTime));
+		return $nextWorkDayStart;
+	}
 }

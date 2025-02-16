@@ -198,6 +198,12 @@ export class Call extends Base
 			throw new Error('"CoPilot" button is not found in layout');
 		}
 		const aiCopilotBtnUI: ButtonUI = aiCopilotBtn.getUiButton();
+		const aiCopilotBtnUIPrevState = aiCopilotBtnUI.getState();
+
+		if (aiCopilotBtnUI.getState() === ButtonState.AI_WAITING)
+		{
+			return;
+		}
 
 		// start call record transcription
 		aiCopilotBtnUI.setState(ButtonState.AI_WAITING);
@@ -246,7 +252,7 @@ export class Call extends Base
 
 					this.#showAdditionalInfo(customData, item, actionData);
 
-					aiCopilotBtnUI.setState(ButtonState.ACTIVE);
+					aiCopilotBtnUI.setState(aiCopilotBtnUIPrevState || ButtonState.ACTIVE);
 				}
 				else
 				{
@@ -311,10 +317,10 @@ export class Call extends Base
 						const bindElement = item.getLayoutFooterButtonById('aiButton')?.getUiButton()?.getContainer();
 
 						serviceWidget.bind(bindElement, Analytics.CONTEXT_CRM);
+						serviceWidget.show(bindElement);
 						serviceWidget.getPopup().adjustPosition({
 							forceTop: true,
 						});
-						serviceWidget.show();
 					})
 					.catch(() => {
 						BX?.UI?.InfoHelper.show('limit_boost_copilot');

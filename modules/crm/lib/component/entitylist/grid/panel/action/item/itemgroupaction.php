@@ -10,7 +10,9 @@ use Bitrix\Crm\Component\EntityList\Grid\Panel\Action\Item\Group\ConvertChildAct
 use Bitrix\Crm\Component\EntityList\Grid\Panel\Action\Item\Group\CreateTaskChildAction;
 use Bitrix\Crm\Component\EntityList\Grid\Panel\Action\Item\Group\ExcludeChildAction;
 use Bitrix\Crm\Component\EntityList\Grid\Panel\Action\Item\Group\MergeChildAction;
+use Bitrix\Crm\Component\EntityList\Grid\Panel\Action\Item\Group\ObserversChildAction;
 use Bitrix\Crm\Component\EntityList\Grid\Panel\Action\Item\Group\RefreshAccountingDataChildAction;
+use Bitrix\Crm\Component\EntityList\Grid\Panel\Action\Item\Group\RestartAutomationChildAction;
 use Bitrix\Crm\Component\EntityList\Grid\Panel\Action\Item\Group\SetCategoryChildAction;
 use Bitrix\Crm\Component\EntityList\Grid\Panel\Action\Item\Group\SetExportChildAction;
 use Bitrix\Crm\Component\EntityList\Grid\Panel\Action\Item\Group\SetOpenedChildAction;
@@ -90,6 +92,14 @@ final class ItemGroupAction extends BaseItemGroupAction
 		$actions[] = new AssignChildAction($this->factory->getEntityTypeId());
 
 		if (
+			ObserversChildAction::isEntityTypeSupported($this->factory)
+			&& ObserversChildAction::isChangeObserverPermitted($this->factory->getEntityTypeId(), $this->userPermissions, $this->gridSettings->getCategoryId())
+		)
+		{
+			$actions[] = new ObserversChildAction($this->factory->getEntityTypeId());
+		}
+
+		if (
 			ConvertChildAction::isEntityTypeSupported($this->factory->getEntityTypeId())
 			&& ConvertChildAction::isConversionPermitted($this->factory->getEntityTypeId(), $this->userPermissions)
 		)
@@ -126,6 +136,11 @@ final class ItemGroupAction extends BaseItemGroupAction
 		if (SetExportChildAction::isEntityTypeSupported($this->factory->getEntityTypeId()))
 		{
 			$actions[] = new SetExportChildAction($this->factory->getEntityTypeId());
+		}
+
+		if ($this->factory->isAutomationEnabled() && \Bitrix\Crm\Automation\Factory::isAutomationRunnable($this->factory->getEntityTypeId()))
+		{
+			$actions[] = new RestartAutomationChildAction($this->factory->getEntityTypeId());
 		}
 
 		return $actions;

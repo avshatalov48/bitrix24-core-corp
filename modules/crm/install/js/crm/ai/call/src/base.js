@@ -57,7 +57,7 @@ export class Base
 			attentions: this.getTextboxAttentions(),
 		});
 
-		this.sliderId = `${this.id}-${Math.floor(Math.random() * 1000)}`;
+		this.sliderId = `${this.id}-${this.activityId}`;
 		this.wrapperSlider = new Slider({
 			url: this.sliderId,
 			sliderTitle: this.sliderTitle,

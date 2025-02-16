@@ -568,12 +568,16 @@ this.BX.Sign = this.BX.Sign || {};
 		`), () => babelHelpers.classPrivateFieldLooseBase(this, _loadBlanks)[_loadBlanks](babelHelpers.classPrivateFieldLooseBase(this, _page)[_page] + 1), main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_LOAD_MORE'));
 	    babelHelpers.classPrivateFieldLooseBase(this, _api)[_api] = new sign_v2_api.Api();
 	  }
-	  async createBlank() {
-	    const uploader = babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getUploader();
-	    const files = uploader.getFiles();
-	    const [firstFile] = files;
-	    await babelHelpers.classPrivateFieldLooseBase(this, _resumeUploading)[_resumeUploading]();
-	    const blank = firstFile.getCustomData(firstFile.getId());
+	  async createBlankFromOuterUploaderFiles(files) {
+	    if (files.length === 0) {
+	      return;
+	    }
+	    const firstFile = files.at(0);
+	    const blank = new Blank({
+	      title: firstFile.getName()
+	    });
+	    blank.setReady(false);
+	    main_core.Dom.prepend(blank.getLayout(), babelHelpers.classPrivateFieldLooseBase(this, _blanksContainer)[_blanksContainer]);
 	    try {
 	      var _babelHelpers$classPr;
 	      const filesIds = files.map(file => file.getServerFileId());
@@ -584,21 +588,51 @@ this.BX.Sign = this.BX.Sign || {};
 	      }, blank);
 	      return blankData.id;
 	    } catch (ex) {
+	      blank == null ? void 0 : blank.remove == null ? void 0 : blank.remove();
+	      console.log(ex);
+	      throw ex;
+	    }
+	  }
+	  async createBlank() {
+	    const uploader = babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getUploader();
+	    const files = uploader.getFiles();
+	    if (files.length === 0) {
+	      return;
+	    }
+	    const [firstFile] = files;
+	    await babelHelpers.classPrivateFieldLooseBase(this, _resumeUploading)[_resumeUploading]();
+	    const blank = firstFile.getCustomData(firstFile.getId());
+	    try {
+	      var _babelHelpers$classPr2;
+	      const filesIds = files.map(file => file.getServerFileId());
+	      const blankData = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].createBlank(filesIds, (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].type) != null ? _babelHelpers$classPr2 : null, sign_v2_signSettings.isTemplateMode(babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].documentMode));
+	      babelHelpers.classPrivateFieldLooseBase(this, _setupBlank)[_setupBlank]({
+	        ...blankData,
+	        userName: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_CREATED_MYSELF')
+	      }, blank);
+	      return blankData.id;
+	    } catch (ex) {
 	      blank.remove();
 	      throw ex;
 	    }
 	  }
-	  resetSelectedBlank(blankId, relatedTarget) {
+	  resetSelectedBlank() {
 	    const blank = babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].get(this.selectedBlankId);
 	    blank == null ? void 0 : blank.deselect();
 	    this.selectedBlankId = 0;
-	    this.emit('toggleSelection', {
-	      selected: false
-	    });
+	    if (blank) {
+	      this.emit('toggleSelection', {
+	        selected: false
+	      });
+	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _enableSaveButtonIntoSlider)[_enableSaveButtonIntoSlider]();
 	  }
-	  modifyBlankTitle(blankId, blankTitle) {
-	    const blank = babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].get(blankId);
+	  async modifyBlankTitle(blankId, blankTitle) {
+	    let blank = babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].get(blankId);
+	    if (!blank) {
+	      await this.loadBlankById(blankId);
+	      blank = babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].get(blankId);
+	    }
 	    blank.setTitle(blankTitle);
 	  }
 	  hasBlank(blankId) {
@@ -616,13 +650,17 @@ this.BX.Sign = this.BX.Sign || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _addBlank)[_addBlank](blankData, blank);
 	    }
 	  }
-	  selectBlank(blankId) {
+	  async selectBlank(blankId) {
 	    if (blankId !== this.selectedBlankId) {
 	      this.resetSelectedBlank();
 	    }
 	    this.selectedBlankId = blankId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _toggleTileVisibility)[_toggleTileVisibility](false);
-	    const blank = babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].get(blankId);
+	    let blank = babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].get(blankId);
+	    if (!blank) {
+	      await this.loadBlankById(blankId);
+	      blank = babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].get(blankId);
+	    }
 	    const {
 	      title
 	    } = blank.getProps();
@@ -651,10 +689,10 @@ this.BX.Sign = this.BX.Sign || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getUploader().getFiles().every(file => file.getErrors().length <= 0);
 	  }
 	  getLayout() {
-	    var _babelHelpers$classPr2;
+	    var _babelHelpers$classPr3;
 	    babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].renderTo(babelHelpers.classPrivateFieldLooseBase(this, _tileWidgetContainer)[_tileWidgetContainer]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _toggleTileVisibility)[_toggleTileVisibility](false);
-	    const canUploadNewBlank = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].canUploadNewBlank) != null ? _babelHelpers$classPr2 : true;
+	    const canUploadNewBlank = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].canUploadNewBlank) != null ? _babelHelpers$classPr3 : true;
 	    const selectorContainer = main_core.Tag.render(_t6 || (_t6 = _$3`
 			<div class="sign-blank-selector">
 				${0}
@@ -703,6 +741,18 @@ this.BX.Sign = this.BX.Sign || {};
 	          });
 	        }
 	      });
+	    }
+	  }
+	  disableSelectedBlank(blankId) {
+	    const blank = babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].get(blankId);
+	    if (blank) {
+	      main_core.Dom.addClass(blank.getLayout(), '--disabled');
+	    }
+	  }
+	  enableSelectedBlank(blankId) {
+	    const blank = babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].get(blankId);
+	    if (blank) {
+	      main_core.Dom.removeClass(blank.getLayout(), '--disabled');
 	    }
 	  }
 	}
@@ -754,8 +804,8 @@ this.BX.Sign = this.BX.Sign || {};
 	  event.preventDefault();
 	}
 	function _getImagesLimit2() {
-	  var _babelHelpers$classPr3, _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6;
-	  return main_core.Type.isInteger(parseInt((_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config]) == null ? void 0 : (_babelHelpers$classPr4 = _babelHelpers$classPr3.uploaderOptions) == null ? void 0 : _babelHelpers$classPr4.maxFileCount, 10)) ? (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config]) == null ? void 0 : (_babelHelpers$classPr6 = _babelHelpers$classPr5.uploaderOptions) == null ? void 0 : _babelHelpers$classPr6.maxFileCount : uploaderOptions.maxFileCount;
+	  var _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6, _babelHelpers$classPr7;
+	  return main_core.Type.isInteger(parseInt((_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config]) == null ? void 0 : (_babelHelpers$classPr5 = _babelHelpers$classPr4.uploaderOptions) == null ? void 0 : _babelHelpers$classPr5.maxFileCount, 10)) ? (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config]) == null ? void 0 : (_babelHelpers$classPr7 = _babelHelpers$classPr6.uploaderOptions) == null ? void 0 : _babelHelpers$classPr7.maxFileCount : uploaderOptions.maxFileCount;
 	}
 	function _onFileAdd2(event) {
 	  const title = event.data.file.getName();
@@ -845,9 +895,9 @@ this.BX.Sign = this.BX.Sign || {};
 	  });
 	  loader.show();
 	  try {
-	    var _babelHelpers$classPr7;
-	    const data = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadBlanks(page, (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].type) != null ? _babelHelpers$classPr7 : null);
-	    const blanksOnPage = 10;
+	    var _babelHelpers$classPr8;
+	    const blanksOnPage = 3;
+	    const data = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadBlanks(page, (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].type) != null ? _babelHelpers$classPr8 : null, blanksOnPage);
 	    if (data.length < blanksOnPage) {
 	      main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _loadMoreButton)[_loadMoreButton], '--hidden');
 	    } else {
@@ -919,6 +969,7 @@ this.BX.Sign = this.BX.Sign || {};
 	}
 
 	exports.BlankField = BlankField$$1;
+	exports.ListItem = ListItem;
 	exports.BlankSelector = BlankSelector;
 
 }((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX.Main,BX.Main,BX.Sign.V2,BX.UI.SidePanel,BX.UI.Uploader,BX.UI.Uploader,BX,BX,BX,BX.Event,BX.Sign.V2,BX.UI.EntitySelector));

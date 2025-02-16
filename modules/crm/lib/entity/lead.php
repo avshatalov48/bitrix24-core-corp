@@ -1,9 +1,11 @@
 <?php
+
 namespace Bitrix\Crm\Entity;
 
-use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Crm\LeadTable;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main;
 
 class Lead extends EntityBase
 {
@@ -256,6 +258,7 @@ class Lead extends EntityBase
 			/** @lang text*/
 				"UPDATE b_crm_contact SET LEAD_ID = {$ID} WHERE ID IN({$slug})"
 			);
+			Container::getInstance()->getContactBroker()->resetAllCache();
 		}
 		elseif($childEntityTypeID === \CCrmOwnerType::Company)
 		{
@@ -263,6 +266,7 @@ class Lead extends EntityBase
 			/** @lang text*/
 				"UPDATE b_crm_company SET LEAD_ID = {$ID} WHERE ID IN({$slug})"
 			);
+			Container::getInstance()->getCompanyBroker()->resetAllCache();
 		}
 		elseif($childEntityTypeID === \CCrmOwnerType::Deal)
 		{
@@ -270,6 +274,7 @@ class Lead extends EntityBase
 			/** @lang text*/
 				"UPDATE b_crm_deal SET LEAD_ID = {$ID} WHERE ID IN({$slug})"
 			);
+			Container::getInstance()->getDealBroker()->resetAllCache();
 		}
 		elseif($childEntityTypeID === \CCrmOwnerType::Quote)
 		{
@@ -277,6 +282,7 @@ class Lead extends EntityBase
 			/** @lang text*/
 				"UPDATE b_crm_quote SET LEAD_ID = {$ID} WHERE ID IN({$slug})"
 			);
+			Container::getInstance()->getQuoteBroker()->resetAllCache();
 		}
 		else
 		{

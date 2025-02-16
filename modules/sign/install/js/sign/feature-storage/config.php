@@ -9,9 +9,15 @@ use Bitrix\Main\Loader;
 use Bitrix\Sign\Config;
 
 
-$isSendDocumentByEmployeeEnabled = Loader::includeModule('sign')
-	&& Config\Feature::instance()->isSendDocumentByEmployeeEnabled()
-;
+$featureStorage = null;
+if (Loader::includeModule('sign'))
+{
+	$featureStorage = Config\Feature::instance();
+}
+
+$isSendDocumentByEmployeeEnabled = $featureStorage?->isSendDocumentByEmployeeEnabled() ?? false;;
+$isMultiDocumentLoadingEnabled = $featureStorage?->isMultiDocumentLoadingEnabled() ?? false;
+$isGroupSendingEnabled = $featureStorage?->isGroupSendingEnabled() ?? false;
 
 return [
 	'css' => 'dist/feature-storage.bundle.css',
@@ -21,6 +27,8 @@ return [
 	],
 	'settings' => [
 		'isSendDocumentByEmployeeEnabled' => $isSendDocumentByEmployeeEnabled,
+		'isMultiDocumentLoadingEnabled' => $isMultiDocumentLoadingEnabled,
+		'isGroupSendingEnabled' => $isGroupSendingEnabled,
 	],
 	'skip_core' => false,
 ];

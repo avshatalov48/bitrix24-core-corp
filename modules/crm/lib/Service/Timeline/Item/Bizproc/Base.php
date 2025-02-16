@@ -101,6 +101,7 @@ abstract class Base extends Configurable
 		}
 
 		$menuItems['timeline'] = $this->createTimelineMenuItem($workflowId);
+		$menuItems['log'] = $this->createLogMenuItem($workflowId);
 
 		return $menuItems;
 	}

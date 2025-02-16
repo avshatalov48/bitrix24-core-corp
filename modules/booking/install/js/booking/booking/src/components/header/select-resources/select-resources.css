@@ -1,0 +1,38 @@
+.booking-booking-select-resources {
+	min-width: var(--left-panel-width);
+	min-height: 57px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #F7F7F8;
+	cursor: pointer;
+}
+
+.booking-booking-select-resources:hover {
+	background: #E6EDF0;
+}
+
+.booking-booking-select-resources.--disabled {
+	filter: grayscale(0.4);
+	opacity: 0.5;
+	pointer-events: none;
+}
+
+.booking-booking-select-resources .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-palette-blue-40);
+	--ui-icon-set__icon-size: 22px;
+}
+
+.booking-booking-select-resources-workload-container {
+	display: none;
+}
+
+.booking-booking-select-resources-workload {
+	--zoom: 1;
+	--half-zoom: calc(var(--zoom) / 2 + 0.5);
+	--quater-zoom: calc(var(--zoom) / 4 + 0.75);
+}
+
+.booking-booking-select-resources-workload .booking-booking-header-resource-workload {
+	cursor: pointer;
+}

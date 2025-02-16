@@ -1,0 +1,27 @@
+.resource-category-card__header {
+	display: flex;
+	padding: 20px 24px 16px 24px;
+	flex-direction: column;
+	gap: 8px;
+	opacity: 0.8;
+	border-radius: var(--ui-border-radius-md) var(--ui-border-radius-md) 0 0;
+	background: rgba(255, 255, 255, 0.70);
+}
+
+.resource-category-card__header a {
+	text-decoration-color: var(--ui-color-link-primary-base, #2066b0);
+	mix-blend-mode: normal;
+}
+
+.resource-category-card__header__title {
+	color: var(--ui-color-base-solid);
+	font-size: var(--ui-font-size-2xl);
+}
+
+.booking--resource-category-card__header__sub-title {
+	letter-spacing: -0.2px;
+}
+
+.resource-category-card__content {
+	padding: 14px 10px;
+}

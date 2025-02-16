@@ -5464,6 +5464,7 @@ font-weight: var(--ui-font-weight-medium, 400);
 	color: rgba(255, 255, 255, 0.3);
 	border-color: transparent;
 	background: transparent;
+	padding: 0;
 }
 
 .bx-call-copilot-popup__button_gray {

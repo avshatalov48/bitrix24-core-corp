@@ -14,7 +14,7 @@ use Psr\Log\LoggerInterface;
 
 final class SuitableAudiosChecker
 {
-	private const AUDIO_FILE_MIN_SIZE = 5 * 1024;
+	private const AUDIO_FILE_MIN_SIZE = 60 * 1024;
 	private const AUDIO_FILE_MAX_SIZE = 25 * 1024 * 1024;
 	private const AUDIO_MIN_CALL_TIME = 10;
 	private const AUDIO_MAX_CALL_TIME = 60 * 60;

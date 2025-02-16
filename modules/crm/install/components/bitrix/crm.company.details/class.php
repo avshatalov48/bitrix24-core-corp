@@ -189,7 +189,8 @@ class CCrmCompanyDetailsComponent
 
 		if ($this->entityID > 0 && !\CCrmCompany::Exists($this->entityID))
 		{
-			ShowError(GetMessage('CRM_COMPANY_NOT_FOUND'));
+			Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::EntityNotExist, CCrmOwnerType::Company);
+
 			return;
 		}
 
@@ -208,35 +209,51 @@ class CCrmCompanyDetailsComponent
 		{
 			if (!$this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 			{
-				ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAddPermission, CCrmOwnerType::Company);
+
 				return;
 			}
 		}
-		else if ($this->isCopyMode)
+		elseif ($this->isCopyMode)
 		{
-			if (
-				!\CCrmCompany::CheckReadPermission($this->entityID, $this->userPermissions, $this->arResult['CATEGORY_ID'])
-				|| !\CCrmCompany::CheckCreatePermission($this->userPermissions, $this->arResult['CATEGORY_ID'])
-			)
+			if (!\CCrmCompany::CheckReadPermission($this->entityID, $this->userPermissions, $this->arResult['CATEGORY_ID']))
 			{
-				ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoReadPermission, CCrmOwnerType::Company);
+
+				return;
+			}
+			elseif (!\CCrmCompany::CheckCreatePermission($this->userPermissions, $this->arResult['CATEGORY_ID']))
+			{
+				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAddPermission, CCrmOwnerType::Company);
+
 				return;
 			}
 		}
 		elseif ($this->isEditMode)
 		{
 			if (
+				!\CCrmCompany::CheckUpdatePermission(0)
+				&& !\CCrmCompany::CheckReadPermission()
+			)
+			{
+				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAccessToEntityType, CCrmOwnerType::Company);
+
+				return;
+			}
+			elseif (
 				!\CCrmCompany::CheckUpdatePermission($this->entityID, $this->userPermissions, $this->arResult['CATEGORY_ID'])
 				&& !\CCrmCompany::CheckReadPermission($this->entityID, $this->userPermissions, $this->arResult['CATEGORY_ID'])
 			)
 			{
-				ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoReadPermission, CCrmOwnerType::Company);
+
 				return;
 			}
 		}
 		elseif (!\CCrmCompany::CheckCreatePermission($this->userPermissions, $this->arResult['CATEGORY_ID']))
 		{
-			ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+			Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAddPermission, CCrmOwnerType::Company);
+
 			return;
 		}
 		//endregion

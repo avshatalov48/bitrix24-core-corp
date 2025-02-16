@@ -296,7 +296,7 @@ abstract class Base
 		if (
 			$timeFilterColumn
 			&& array_key_exists($timeFilterColumn, $tableFields)
-			&& $tableFields[$timeFilterColumn]['FIELD_TYPE'] === 'datetime'
+			&& in_array($tableFields[$timeFilterColumn]['FIELD_TYPE'], ['date', 'datetime'], true)
 		)
 		{
 			$filterColumnName = $timeFilterColumn;
@@ -305,7 +305,7 @@ abstract class Base
 		{
 			foreach ($tableFields as $fieldName => $fieldInfo)
 			{
-				if ($fieldInfo['FIELD_TYPE'] === 'datetime')
+				if (in_array($fieldInfo['FIELD_TYPE'], ['date', 'datetime'], true))
 				{
 					$filterColumnName = $fieldName;
 					break;

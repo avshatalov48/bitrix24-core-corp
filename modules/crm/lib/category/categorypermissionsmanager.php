@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Category;
 
+use Bitrix\Crm\Security\Role\RolePreset;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Security\Role\RolePermission;
 use Bitrix\Main\Result;
@@ -17,8 +18,8 @@ class CategoryPermissionsManager
 	{
 		$permissions = match($permissionLevel)
 		{
-			\Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL => \CCrmRole::getDefaultPermissionSetForEntity($categoryIdentifier),
-			\Bitrix\Crm\Service\UserPermissions::PERMISSION_NONE => \CCrmRole::getMinPermissionSetForEntity($categoryIdentifier),
+			\Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL => RolePreset::getDefaultPermissionSetForEntity($categoryIdentifier),
+			\Bitrix\Crm\Service\UserPermissions::PERMISSION_NONE => RolePreset::getMinPermissionSetForEntity($categoryIdentifier),
 			\Bitrix\Crm\Service\UserPermissions::PERMISSION_SELF => $this->getSelfPermissionSetForEntity($categoryIdentifier),
 			default => [],
 		};

@@ -15,9 +15,12 @@ final class ChangedTaskStatus
 
 	public readonly array $users;
 	public readonly array $usersRemoved;
+	public readonly array $usersAdded;
 	public readonly string $statusName;
 	public readonly int $status;
 	public readonly bool $isFullyCompleted;
+	public readonly bool $isPartiallyCompleted;
+	public readonly bool $isPartiallyUnCompleted;
 
 	private function __construct(
 		Workflow $workflow,
@@ -32,7 +35,7 @@ final class ChangedTaskStatus
 		[$entityTypeId, $entityId] = \CCrmBizProcHelper::resolveEntityIdByDocumentId($documentId);
 		$this->entityTypeId = $entityTypeId;
 		$this->entityId = $entityId;
-		$this->documentId = \CCrmBizProcHelper::ResolveDocumentId($entityTypeId, $entityId);
+		$this->documentId = \CCrmBizProcHelper::ResolveDocumentId($entityTypeId, $entityId) ?? [];
 
 		$this->initData($data);
 	}
@@ -54,9 +57,12 @@ final class ChangedTaskStatus
 	{
 		$this->users = (array)($data['USERS'] ?? []);
 		$this->usersRemoved = (array)($data['USERS_REMOVED'] ?? []);
+		$this->usersAdded = (array)($data['USERS_ADDED'] ?? []);
 		$this->statusName = (string)($data['STATUS_NAME'] ?? '');
 		$this->status = (int)($data['STATUS'] ?? -1);
 
 		$this->isFullyCompleted = $this->status !== -1 && $this->status !== 0;
+		$this->isPartiallyCompleted = $this->statusName === 'COMPLETED';
+		$this->isPartiallyUnCompleted = $this->statusName === 'UNCOMPLETED';
 	}
 }

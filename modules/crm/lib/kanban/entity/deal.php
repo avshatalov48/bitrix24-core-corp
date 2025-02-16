@@ -18,6 +18,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Field;
 use Bitrix\Crm\Settings\DealSettings;
 use Bitrix\Main\Error;
+use Bitrix\Main\Filter\EntitySettings;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\UI\Filter\Options;
@@ -125,12 +126,17 @@ class Deal extends Entity
 	{
 		if(!$this->filter)
 		{
-			$flags = \Bitrix\Crm\Filter\DealSettings::FLAG_NONE | \Bitrix\Crm\Filter\DealSettings::FLAG_ENABLE_CLIENT_FIELDS;
+			$flags = EntitySettings::FLAG_NONE | Filter\DealSettings::FLAG_ENABLE_CLIENT_FIELDS;
+			$userPermissions = Container::getInstance()->getUserPermissions()->getCrmPermissions();
+
 			$this->filter = Filter\Factory::createEntityFilter(
 				new Filter\DealSettings([
 					'ID' => $this->getGridId(),
 					'categoryID' => $this->getCategoryId(),
 					'flags' => $flags,
+					'categoryAccess' => [
+						'READ' => \CCrmDeal::getPermittedToReadCategoryIDs($userPermissions),
+					],
 				])
 			);
 		}

@@ -1084,6 +1084,7 @@ class UserPermissions
 				identityColumnName: $primary
 			)
 		);
+		$optionsBuilder->setSkipCheckOtherEntityTypes(!empty($permissionEntityTypes));
 
 		if ($operation)
 		{
@@ -1158,6 +1159,7 @@ class UserPermissions
 
 		$filter = $filter ?? [];
 		$optionsBuilder = new OptionsBuilder($queryResult);
+		$optionsBuilder->setSkipCheckOtherEntityTypes(!empty($permissionEntityTypes));
 
 		if ($operation)
 		{

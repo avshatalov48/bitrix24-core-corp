@@ -64,14 +64,14 @@ class HrBotMessageService
 		return new Result();
 	}
 
-	public function handleDocumentStatusChangedMessage(Document $document, string $newStatus, ?Member $stopInitiatorMember = null): Result
+	public function handleDocumentStatusChangedMessage(Document $document, string $newStatus, ?Member $initiatorMember = null): Result
 	{
 		if ($this->isByEmployee($document))
 		{
 			switch ($newStatus)
 			{
 				case Type\DocumentStatus::STOPPED:
-					return $this->handleByEmployeeDocumentStoppedStatus($document, $stopInitiatorMember);
+					return $this->handleByEmployeeDocumentStoppedStatus($document, $initiatorMember);
 				case Type\DocumentStatus::DONE:
 					$result = $this->byEmployeeSendDoneMessageToEmployee($document);
 					$result->addErrors(
@@ -86,7 +86,7 @@ class HrBotMessageService
 		switch ($newStatus)
 		{
 			case Type\DocumentStatus::STOPPED:
-				return $this->handleByCompanyDocumentStoppedStatus($document, $stopInitiatorMember);
+				return $this->handleByCompanyDocumentStoppedStatus($document, $initiatorMember);
 
 			case Type\DocumentStatus::DONE:
 				$signedDone = $this->memberService->countSuccessfulSigners($document->id);

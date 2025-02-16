@@ -384,6 +384,11 @@ class Update extends Operation
 		return $this->item->isCategoriesSupported() && $this->item->isChangedCategoryId();
 	}
 
+	protected function isClearItemStageCacheNeeded(): bool
+	{
+		return $this->item->isStagesEnabled() && $this->item->isChangedStageId();
+	}
+
 	public function isFinalizedWithStages(): bool
 	{
 		$factory = Container::getInstance()->getFactory($this->getItem()->getEntityTypeId());

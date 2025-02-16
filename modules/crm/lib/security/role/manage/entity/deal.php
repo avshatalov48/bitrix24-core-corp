@@ -70,7 +70,7 @@ class Deal implements PermissionEntity, FilterableByCategory
 		$result = [];
 		foreach ($stageIdFields as $stageId => $stageName)
 		{
-			$result[htmlspecialcharsbx($stageId)] = $stageName;
+			$result[$stageId] = $stageName;
 		}
 
 		return ['STAGE_ID' => $result];

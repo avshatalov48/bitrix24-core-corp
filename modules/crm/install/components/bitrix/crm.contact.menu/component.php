@@ -17,6 +17,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
 if (!CModule::IncludeModule('crm'))
@@ -69,7 +70,10 @@ $arParams['PATH_TO_CONTACT_PORTRAIT'] = CrmCheckPath(
 	$arParams['PATH_TO_CONTACT_PORTRAIT'] ?? '',
 	$APPLICATION->GetCurPage().'?contact_id=#contact_id#&portrait'
 );
-$arParams['PATH_TO_MIGRATION'] = \Bitrix\Crm\Integration\Market\Router::getCategoryPath('migration');
+
+$arParams['PATH_TO_MIGRATION'] = Loader::includeModule('market')
+	? \Bitrix\Crm\Integration\Market\Router::getBasePath() . 'collection/migration_crm/'
+	: \Bitrix\Crm\Integration\Market\Router::getCategoryPath('migration');
 
 $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE'])
 	? CSite::GetNameFormat(false)
@@ -605,6 +609,10 @@ if($arParams['TYPE'] === 'list')
 	}
 
 	$permissionItem = PermissionItem::createByEntity(CCrmOwnerType::Contact, $arResult['CATEGORY_ID']);
+	if (isset($arParams['ANALYTICS']) && is_array($arParams['ANALYTICS']))
+	{
+		$permissionItem->setAnalytics($arParams['ANALYTICS']);
+	}
 	if ($permissionItem->canShow())
 	{
 		$arResult['BUTTONS'][] = $permissionItem->interfaceToolbarDelimiter();
