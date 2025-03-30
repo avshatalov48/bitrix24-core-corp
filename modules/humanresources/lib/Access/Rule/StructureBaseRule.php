@@ -20,11 +20,6 @@ class StructureBaseRule extends AbstractRule
 			return false;
 		}
 
-		if ($this->user->isAdmin())
-		{
-			return true;
-		}
-
 		$permissionValue = $this->user->getPermission($params[self::PERMISSION_ID_KEY]);
 		if ($permissionValue === PermissionVariablesDictionary::VARIABLE_NONE)
 		{

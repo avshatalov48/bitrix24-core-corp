@@ -11,6 +11,7 @@ namespace Bitrix\Extranet;
 
 use Bitrix\Extranet\Enum\User\ExtranetRole;
 use Bitrix\Extranet\Service\ServiceContainer;
+use Bitrix\Extranet\Settings\CollaberInvitation;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -39,6 +40,11 @@ class PortalSettings
 		}
 
 		return Option::get('extranet', 'collaba_enabled', 'N') === 'Y';
+	}
+
+	public function isEnabledCollabersInvitation(): bool
+	{
+		return (new CollaberInvitation())->isEnabled();
 	}
 
 	public function canBeDeleted(): bool

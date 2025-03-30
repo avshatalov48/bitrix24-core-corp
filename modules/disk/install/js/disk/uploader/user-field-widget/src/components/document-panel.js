@@ -14,6 +14,12 @@ export const DocumentPanel: BitrixVueComponentProps = {
 			default: {},
 		},
 	},
+	data(): Object
+	{
+		return {
+			isBoardsEnabled: this.userFieldControl.isBoardsEnabled(),
+		};
+	},
 	created(): void
 	{
 		this.menu = null;
@@ -59,7 +65,13 @@ export const DocumentPanel: BitrixVueComponentProps = {
 				BX.Disk.saveDocumentService('l');
 			}
 
-			if (BX.Disk.Document.Local.Instance.isSetWorkWithLocalBDisk())
+			let newTab = null;
+			if (documentType === 'board')
+			{
+				newTab = window.open('', '_blank');
+			}
+
+			if (BX.Disk.Document.Local.Instance.isSetWorkWithLocalBDisk() || documentType === 'board')
 			{
 				BX.Disk.Document.Local.Instance.createFile({ type: documentType }).then((response): void => {
 					if (response.status === 'success')
@@ -73,6 +85,11 @@ export const DocumentPanel: BitrixVueComponentProps = {
 						);
 
 						this.userFieldControl.showUploaderPanel();
+
+						if (newTab !== null && response.openUrl)
+						{
+							newTab.location.href = response.openUrl;
+						}
 					}
 				});
 			}
@@ -180,6 +197,13 @@ export const DocumentPanel: BitrixVueComponentProps = {
 						<div class="disk-user-field-panel-card-icon"></div>
 						<div class="disk-user-field-panel-card-btn"></div>
 						<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_CREATE_PPTX') }}</div>
+					</div>
+				</div>
+				<div class="disk-user-field-panel-card-box" @click="createDocument('board')" v-if="isBoardsEnabled">
+					<div class="disk-user-field-panel-card disk-user-field-panel-card--board">
+						<div class="disk-user-field-panel-card-icon"></div>
+						<div class="disk-user-field-panel-card-btn"></div>
+						<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_CREATE_BOARD') }}</div>
 					</div>
 				</div>
 			</div>

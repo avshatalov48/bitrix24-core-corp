@@ -41,21 +41,16 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  }
 	  getResources() {
 	    var _babelHelpers$classPr, _babelHelpers$classPr2;
-	    const resourcesIds = new Set();
-	    const resourcesModels = ((_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _response)[_response].favorites) == null ? void 0 : _babelHelpers$classPr2.resources) != null ? _babelHelpers$classPr : []).map(resourceDto => {
-	      resourcesIds.add(resourceDto.id);
-	      return booking_provider_service_resourcesService.ResourceMappers.mapDtoToModel(resourceDto);
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _response)[_response].bookings.flatMap(({
+	    const favoriteResources = (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _response)[_response].favorites) == null ? void 0 : _babelHelpers$classPr2.resources) != null ? _babelHelpers$classPr : [];
+	    const bookingResources = babelHelpers.classPrivateFieldLooseBase(this, _response)[_response].bookings.flatMap(({
 	      resources
-	    }) => resources).forEach(resourceDto => {
-	      if (resourcesIds.has(resourceDto.id)) {
-	        return;
-	      }
-	      resourcesIds.add(resourceDto.id);
-	      resourcesModels.push(booking_provider_service_resourcesService.ResourceMappers.mapDtoToModel(resourceDto));
+	    }) => resources);
+	    const result = {};
+	    [...favoriteResources, ...bookingResources].forEach(resourceDto => {
+	      var _resourceDto$id, _result$_resourceDto$;
+	      (_result$_resourceDto$ = result[_resourceDto$id = resourceDto.id]) != null ? _result$_resourceDto$ : result[_resourceDto$id] = booking_provider_service_resourcesService.ResourceMappers.mapDtoToModel(resourceDto);
 	    });
-	    return resourcesModels;
+	    return Object.values(result);
 	  }
 	  getResourceTypes() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _response)[_response].resourceTypes.map(resourceTypeDto => {
@@ -173,7 +168,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    dateTs
 	  });
 	  const extractor = new MainPageDataExtractor(data);
-	  booking_lib_resourcesDateCache.resourcesDateCache.upsertIds(dateTs, extractor.getResources().map(it => it.id));
+	  booking_lib_resourcesDateCache.resourcesDateCache.upsertIds(dateTs, extractor.getFavoriteIds());
 	  await Promise.all([booking_core.Core.getStore().dispatch(`${booking_const.Model.Favorites}/set`, extractor.getFavoriteIds()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setResourcesIds`, extractor.getFavoriteIds()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setIntersectionMode`, extractor.getIntersectionMode()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Resources}/upsertMany`, extractor.getResources()), booking_core.Core.getStore().dispatch(`${booking_const.Model.ResourceTypes}/upsertMany`, extractor.getResourceTypes()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Counters}/set`, extractor.getCounters()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/upsertMany`, extractor.getBookings()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Clients}/upsertMany`, extractor.getClients()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Clients}/setProviderModuleId`, extractor.getClientsProviderModuleId()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setIsCurrentSenderAvailable`, extractor.getIsCurrentSenderAvailable())]);
 	}
 	async function _requestDataForBooking2(dateTs) {

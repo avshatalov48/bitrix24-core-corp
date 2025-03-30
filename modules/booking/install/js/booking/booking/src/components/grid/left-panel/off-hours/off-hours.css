@@ -1,5 +1,6 @@
 .booking-booking-off-hours {
 	position: absolute;
+	z-index: 1;
 	top: 10px;
 	right: 0;
 	box-sizing: border-box;
@@ -39,6 +40,45 @@
 	transition: var(--booking-animation-duration) opacity var(--booking-animation-function);
 }
 
+/** grip **/
+.booking-booking-off-hours-border:before,
+.booking-booking-off-hours-border:after {
+	content: '';
+	position: absolute;
+	left: 50%;
+	--offset: 7px;
+	--angle-offset: calc(var(--offset) + 1px);
+	height: 3px;
+	transform: translateX(-50%);
+	background: var(--ui-color-base-20);
+	transition: background 300ms;
+}
+
+.booking-booking-off-hours-border:before {
+	width: 18px;
+}
+
+.booking-booking-off-hours-border:after {
+	transform: translateX(-50%) rotate(45deg);
+	width: 3px;
+}
+
+.booking-booking-off-hours.--top .booking-booking-off-hours-border:before {
+	top: var(--offset);
+}
+
+.booking-booking-off-hours.--top .booking-booking-off-hours-border:after {
+	top: var(--angle-offset);
+}
+
+.booking-booking-off-hours.--bottom .booking-booking-off-hours-border:before {
+	bottom: var(--offset);
+}
+
+.booking-booking-off-hours.--bottom .booking-booking-off-hours-border:after {
+	bottom: var(--angle-offset);
+}
+
 /** hover **/
 .booking-booking-off-hours.--hover {
 	box-shadow: inset 0 0 0 999px rgba(0, 0, 0, 0.02);
@@ -46,6 +86,11 @@
 
 .booking-booking-off-hours.--hover .booking-booking-off-hours-border {
 	border-color: var(--ui-color-base-40);
+}
+
+.booking-booking-off-hours.--hover .booking-booking-off-hours-border:before,
+.booking-booking-off-hours.--hover .booking-booking-off-hours-border:after {
+	background: var(--ui-color-base-40);
 }
 
 /** expand **/

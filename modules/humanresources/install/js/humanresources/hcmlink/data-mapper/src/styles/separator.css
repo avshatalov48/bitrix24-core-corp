@@ -1,0 +1,20 @@
+.hr-hcmlink-separator__container {
+	flex: 1;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 0 15px;
+}
+
+.hr-hcmlink-separator__container-icon {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: #D5D7DB;
+}
+
+.hr-hcmlink-separator__container-icon.--color-orange {
+	--ui-icon-set__icon-color:var(--ui-color-palette-orange-40);
+}
+
+.hr-hcmlink-separator__container-icon.--color-blue {
+	--ui-icon-set__icon-color: var(--ui-color-palette-blue-40);
+}

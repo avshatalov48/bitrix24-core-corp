@@ -47,7 +47,6 @@ $MESS["INTRANET_SETTINGS_DOMAIN_RENAMING_FORMAT_ERROR"] = "Adresse kann nur late
 $MESS["INTRANET_SETTINGS_DOMAIN_RENAMING_LENGTH_ERROR"] = "Adresse kann zwischen 3 und 60 Zeichen enthalten.";
 $MESS["INTRANET_SETTINGS_ELEMENT_PERMISSION_MSG"] = "Nur Ihr Bitrix24 Administrator kann diese Einstellungen ändern.";
 $MESS["INTRANET_SETTINGS_ERROR_FETCH_DATA"] = "Fehler beim Erhalten von Daten.";
-$MESS["INTRANET_SETTINGS_FIELD_DELETE_PORTAL_CHECKWORD_PLACEHOLDER"] = "Geben Sie #CHECKWORD# ein, wenn Sie diesen Bitrix24 Account wikrlich löschen möchten";
 $MESS["INTRANET_SETTINGS_FIELD_HELP_MESSAGE"] = "Diese Option ist nur in den kostenpflichtigen Tarifen verfügbar. <a onclick=\"BX.Bitrix24.License.openPurchasePage(); return false;\" href=\"#\">Einen Tarif auswählen</a>";
 $MESS["INTRANET_SETTINGS_FIELD_HELP_MESSAGE_DISABLED"] = "Der Menüpunkt #TOOL# kann nicht entfernt werden.";
 $MESS["INTRANET_SETTINGS_FIELD_HELP_MESSAGE_ENT"] = "Diese Option ist nur im Enterprise Tarif verfügbar. <a onclick=\"BX.Bitrix24.License.openPurchasePage(\'#TARIFF#\'); return false;\" href=\"#\">Upgraden</a>";
@@ -200,10 +199,9 @@ $MESS["INTRANET_SETTINGS_PORTAL_DELETE_MAIL_SUBJECT"] = "Anfrage wegen Löschung
 $MESS["INTRANET_SETTINGS_SEARCH"] = "suchen";
 $MESS["INTRANET_SETTINGS_SEARCH_NOT_FOUND"] = "Es wurden keine Einträge gefunden.";
 $MESS["INTRANET_SETTINGS_SEARCH_PLACEHOLDER"] = "Suchen";
-$MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL"] = "Diese Aktion löscht alle Daten einschließlich Dateien und Nutzeraccounts.<br><br>Sie werden die Daten nicht wiederherstellen können. Vergewissern Sie sich, dass Sie wirklich fortfahren wollen. #MORE_DETAILS#";
-$MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_CHECKWORD"] = "Dieser Bitrix24 und alle Daten werden permanent gelöscht. Bitte geben Sie #CHECKWORD# ein, um zu bestätigen, dass Sie wirklich fortfahren wollen.";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_EMPLOYEE"] = "Dieser Bitrix24 muss vor der Löschung nur den Administrator enthalten. Sie müssen alle Mitarbeiter deaktivieren, um fortfahren zu können. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_MAIL"] = "Möchten Sie diesen Bitrix24 Account löschen, senden Sie uns eine Nachricht an <a class=\"ui-section__link --mail\" href=\"#MAIL_LINK#\">#MAIL#</a>.<br><br> Alle Daten werden permanent gelöscht. #MORE_DETAILS#";
+$MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_MSGVER_1"] = "Nur der Administrator kann Bitrix24 löschen. Sie müssen alle Mitarbeiter deaktivieren, um fortzufahren. Durch diese Aktion werden alle Daten gelöscht, einschließlich Dateien und Nutzerprofile. <br><br>Nachdem dieses Bitrix24 gelöscht wird, können Sie ein anderes mit der gleichen Adresse erstellen. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_NOT_ADMIN"] = "Nur der Administrator kann den Bitrix24 Account löschen";
 $MESS["INTRANET_SETTINGS_SECTION_CRM_MAPS_DESCRIPTION"] = "Schlüssel Google API ist zur Nutzung von Google Maps erforderlich.  <a target=\"_blank\" class=\"ui-section__link\" href=\"#GOOGLE_API_URL#\">Schlüssel anfordern</a>";
 $MESS["INTRANET_SETTINGS_SECTION_CRM_MAPS_YANDEX_DESCRIPTION"] = "Yandex.Maps erfordert Yandex API Key. <a target=\"_blank\" class=\"ui-section__link\" href=\"#YANDEX_API_URL#\"  \">Den Key anfordern</a>";

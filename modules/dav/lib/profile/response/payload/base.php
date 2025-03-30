@@ -96,8 +96,23 @@ class Base extends ResponseBase
 	{
 		$dictionaries = new Decorator($this->resources, $this->accessToken);
 		$params['dicts'] = $dictionaries->prepareBodyContent();
-		$params['profileIdentifier'] = $dictionaries->getProfileIdentifier();
-		$params['host'] = Context::getCurrent()->getServer()->getHttpHost();;
+
+		if (count($this->resources) === 1)
+		{
+			/** @var CalDav|CardDav $resource */
+			$resource = $this->resources[0];
+
+			$params['profileIdentifier'] = $dictionaries->getProfileIdentifier() . $resource::TEMPLATE_DICT_NAME;
+			$params['profileType'] = ' ' . ucfirst($resource::TEMPLATE_DICT_NAME);
+		}
+		else
+		{
+			$params['profileIdentifier'] = $dictionaries->getProfileIdentifier();
+			$params['profileType'] = '';
+		}
+
+		$params['host'] = Context::getCurrent()->getServer()->getHttpHost();
+
 		$templatePath = IO\Path::getDirectory(__DIR__ . '/templates/') . '/base.mobileconfig';
 		$this->setBody(static::render($templatePath, $params));
 	}

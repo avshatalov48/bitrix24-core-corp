@@ -14,15 +14,17 @@ class Signing extends \Bitrix\Sign\Engine\Controller
 	 *
 	 * @return array
 	 */
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid',
-	)]
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid',
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid',
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid',
+		)
 	)]
 	public function startAction(string $uid): array
 	{
@@ -41,15 +43,17 @@ class Signing extends \Bitrix\Sign\Engine\Controller
 	 *
 	 * @return array
 	 */
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid',
-	)]
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid',
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid',
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid',
+		)
 	)]
 	public function stopAction(string $uid): array
 	{

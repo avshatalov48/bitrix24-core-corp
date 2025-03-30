@@ -1,14 +1,13 @@
 import { Tag, Type, Dom, Loc, Text as TextFormat } from 'main.core';
 import { Loader } from 'main.loader';
-import type { Role } from 'sign.v2.api';
+import type { MemberRoleType } from 'sign.type';
 import { Dialog } from 'ui.entity-selector';
-
 import { Api } from 'sign.v2.api';
 
 export type ItemData = {
 	entityType: string,
 	entityId: number,
-	role?: Role,
+	role?: MemberRoleType,
 };
 
 type ItemViewData = {

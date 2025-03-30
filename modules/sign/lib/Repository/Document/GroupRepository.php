@@ -9,6 +9,7 @@ use Bitrix\Sign\Internal\Document\Group as GroupModel;
 use Bitrix\Sign\Internal\Document\GroupCollection as GroupCollectionModel;
 use Bitrix\Sign\Internal\Document\GroupTable;
 use Bitrix\Sign\Item;
+use Bitrix\Sign\Model\ItemBinder\BaseItemToModelBinder;
 use Bitrix\Sign\Type;
 
 final class GroupRepository
@@ -29,6 +30,7 @@ final class GroupRepository
 		}
 
 		$item->id = $saveResult->getId();
+		$item->initOriginal();
 
 		return (new Result());
 	}
@@ -59,16 +61,18 @@ final class GroupRepository
 	{
 		$now = new DateTime();
 		$model = GroupTable::getByPrimary($item->id)->fetchObject();
-		$filledMemberEntity = $this->getFilledModelFromItem($item, $model)
-			->setDateModify($now)
-		;
 
-		$saveResult = $filledMemberEntity->save();
+		$binder = new BaseItemToModelBinder($item, $model);
+		$binder->setChangedItemPropertiesToModel();
+		$model->setDateModify($now);
+
+		$saveResult = $model->save();
 
 		if (!$saveResult->isSuccess())
 		{
 			return (new Result())->addErrors($saveResult->getErrors());
 		}
+		$item->initOriginal();
 
 		return (new Result());
 	}

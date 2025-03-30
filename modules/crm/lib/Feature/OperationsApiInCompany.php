@@ -27,11 +27,13 @@ class OperationsApiInCompany extends BaseFeature
 	public function enable(): void
 	{
 		CompanySettings::getCurrent()->setFactoryEnabled(true);
+		$this->logEnabled();
 	}
 
 	public function disable(): void
 	{
 		CompanySettings::getCurrent()->setFactoryEnabled(false);
+		$this->logDisabled();
 	}
 
 	public function getSort(): int

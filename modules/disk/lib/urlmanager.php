@@ -645,6 +645,11 @@ class UrlManager implements IErrorable
 		return '/bitrix/tools/disk/document.php?' . http_build_query($params);
 	}
 
+	public function getUrlForViewBoard(int $fileId, $absolute = false)
+	{
+		return ($absolute ? $this->getHostUrl() : '') . '/disk/boards/' . $fileId . '/openDocument';
+	}
+
 	/**
 	 * Gets url to download file.
 	 * @param File $file Target file.

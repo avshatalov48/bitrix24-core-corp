@@ -47,7 +47,6 @@ $MESS["INTRANET_SETTINGS_DOMAIN_RENAMING_FORMAT_ERROR"] = "Address can only incl
 $MESS["INTRANET_SETTINGS_DOMAIN_RENAMING_LENGTH_ERROR"] = "Address has to be 3 to 60 characters long.";
 $MESS["INTRANET_SETTINGS_ELEMENT_PERMISSION_MSG"] = "Only your Bitrix24 administrator can change these preferences.";
 $MESS["INTRANET_SETTINGS_ERROR_FETCH_DATA"] = "Error getting data.";
-$MESS["INTRANET_SETTINGS_FIELD_DELETE_PORTAL_CHECKWORD_PLACEHOLDER"] = "Enter #CHECKWORD# if you really want to delete this Bitrix24 account";
 $MESS["INTRANET_SETTINGS_FIELD_HELP_MESSAGE"] = "This option is available on commercial plans only. <a onclick=\"BX.Bitrix24.License.openPurchasePage(); return false;\" href=\"#\">Select a plan</a>";
 $MESS["INTRANET_SETTINGS_FIELD_HELP_MESSAGE_DISABLED"] = "Cannot remove menu item #TOOL#.";
 $MESS["INTRANET_SETTINGS_FIELD_HELP_MESSAGE_ENT"] = "This option is available on Enterprise plan only. <a onclick=\"BX.Bitrix24.License.openPurchasePage(\'#TARIFF#\'); return false;\" href=\"#\">Upgrade</a>";
@@ -198,10 +197,9 @@ $MESS["INTRANET_SETTINGS_PORTAL_DELETE_MAIL_SUBJECT"] = "Request to delete #PORT
 $MESS["INTRANET_SETTINGS_SEARCH"] = "search";
 $MESS["INTRANET_SETTINGS_SEARCH_NOT_FOUND"] = "No entries have been found.";
 $MESS["INTRANET_SETTINGS_SEARCH_PLACEHOLDER"] = "Search";
-$MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL"] = "This action will delete all the data including files and user profiles.<br><br>You will not be able to recover the data. Please make sure you really want to proceed. #MORE_DETAILS#";
-$MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_CHECKWORD"] = "This Bitrix24 account and all the data are going to be deleted permanently. Please enter #CHECKWORD# to confirm you really want to proceed.";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_EMPLOYEE"] = "This Bitrix24 account must contain only the administrator before deleting. You have to dismiss all the employees to proceed. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_MAIL"] = "If you want to delete this Bitrix24 account, send us a message to <a class=\"ui-section__link --mail\" href=\"#MAIL_LINK#\">#MAIL#</a>.<br><br> All the data will be deleted permanently. #MORE_DETAILS#";
+$MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_MSGVER_1"] = "Only the administrator can delete Bitrix24. You have to dismiss all the employees to proceed. This action will delete all the data including files and user profiles.<br><br>After this Bitrix24 has been deleted, you can create another one with the same address. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_NOT_ADMIN"] = "Only the administrator can delete Bitrix24 account.";
 $MESS["INTRANET_SETTINGS_SECTION_CRM_MAPS_DESCRIPTION"] = "Google API key is required to use Google Maps.  <a target=\"_blank\" class=\"ui-section__link\" href=\"#GOOGLE_API_URL#\">Get your key</a>";
 $MESS["INTRANET_SETTINGS_SECTION_CRM_MAPS_YANDEX_DESCRIPTION"] = "Yandex.Maps require Yandex API key. <a target=\"_blank\" class=\"ui-section__link\" href=\"#YANDEX_API_URL#\"  \">Get the key</a>";

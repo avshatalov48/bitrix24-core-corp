@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Uf;
 
+use Bitrix\Disk\Analytics\DiskAnalytics;
 use Bitrix\Disk\AttachedObject;
 use Bitrix\Disk\BaseObject;
 use Bitrix\Disk\Driver;
@@ -9,12 +10,11 @@ use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
 use Bitrix\Disk\Integration\Collab\CollabService;
 use Bitrix\Disk\Search\ContentManager;
-use Bitrix\Disk\Internals\Error\Error;
-use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\SystemUser;
 use Bitrix\Disk\ProxyType;
 use Bitrix\Disk\User;
 use Bitrix\Main\Application;
+use Bitrix\Main\Diag\Debug;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Disk\Internals\AttachedViewTypeTable;
 
@@ -310,7 +310,10 @@ final class FileUserType
 			return false;
 		}
 
-		if (!($storage->getProxyType() instanceof ProxyType\User))
+		$collabService = new CollabService();
+		if (!($storage->getProxyType() instanceof ProxyType\User)
+			&& !$collabService->isCollabStorage($storage)
+		)
 		{
 			return false;
 		}
@@ -349,12 +352,17 @@ final class FileUserType
 
 			$collabService = new CollabService();
 			$collabStorage = $collabService->getCollabStorageByEntity($userField['VALUE_ID'], $userField['ENTITY_ID']);
-			if ($collabStorage)
+
+			if (
+				$collabStorage
+				&& $collabStorage->getFolderForUploadedFiles()?->getId() !== $fileModel->getParentId()
+			)
 			{
 				if (self::isNewUploadedFile($fileModel))
 				{
 					$originalStorage = $fileModel->getStorage();
 					$moveStatus = $fileModel->moveToAnotherFolder($collabStorage->getFolderForUploadedFiles(), $fileModel->getCreatedBy(), true);
+
 					if ($moveStatus && $originalStorage)
 					{
 						$folderForUploadedFiles = $originalStorage->getFolderForUploadedFiles();
@@ -403,6 +411,13 @@ final class FileUserType
 			if (!$attachedModel)
 			{
 				return '';
+			}
+
+			if (self::isNewUploadedFile($fileModel))
+			{
+				Application::getInstance()->addBackgroundJob(function () use ($fileModel, $attachedModel) {
+					DiskAnalytics::sendUploadFileToAttachEvent($fileModel, $attachedModel);
+				});
 			}
 
 			return $attachedModel->getId();

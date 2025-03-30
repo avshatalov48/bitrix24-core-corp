@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Internals;
 
-use Bitrix\Booking\Integration\Booking\ProviderManager;
-use Bitrix\Booking\Internals\Journal\JournalServiceInterface;
+use Bitrix\Booking\Internals\Service\Journal\JournalServiceInterface;
 use Bitrix\Booking\Internals\Repository\AdvertisingResourceTypeRepository;
 use Bitrix\Booking\Internals\Repository\BookingClientRepositoryInterface;
 use Bitrix\Booking\Internals\Repository\BookingRepositoryInterface;
@@ -25,6 +24,8 @@ use Bitrix\Booking\Internals\Repository\ResourceRepositoryInterface;
 use Bitrix\Booking\Internals\Repository\ResourceSlotRepositoryInterface;
 use Bitrix\Booking\Internals\Repository\ResourceTypeRepositoryInterface;
 use Bitrix\Booking\Internals\Repository\TransactionHandlerInterface;
+use Bitrix\Booking\Internals\Service\Notifications\MessageSender;
+use Bitrix\Booking\Internals\Service\ProviderManager;
 use Bitrix\Main\Access\BaseAccessController;
 use Bitrix\Main\DI\ServiceLocator;
 
@@ -162,5 +163,10 @@ class Container
 	public static function getOptionRepository(): OptionRepositoryInterface
 	{
 		return self::getService('booking.option.repository');
+	}
+
+	public static function getMessageSender(): MessageSender
+	{
+		return self::getService('booking.message.sender');
 	}
 }

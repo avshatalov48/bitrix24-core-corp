@@ -1,0 +1,27 @@
+<?php
+$MESS["MARKET_POPUP_INSTALL_JS_1C_STORE_MANAGEMENT"] = "Қосымшаны ашып, нұсқаулықтың барлық қадамдарын орындаңыз";
+$MESS["MARKET_POPUP_INSTALL_JS_ACCESS"] = "Қолжетімділіктер";
+$MESS["MARKET_POPUP_INSTALL_JS_APPLICATION"] = "#APP_NAME#<br> қосымшасы Сіздің Битрикс24-ке орнатылған";
+$MESS["MARKET_POPUP_INSTALL_JS_APPLICATION_SHORT"] = "#APP_NAME# қосымшасы орнатылды";
+$MESS["MARKET_POPUP_INSTALL_JS_APP_REQUESTS_PERMISSIONS_TO_WORK"] = "Қосымша жұмыс істеуге рұқсат сұрайды:";
+$MESS["MARKET_POPUP_INSTALL_JS_APP_WILL_OPEN_AUTO_AFTER"] = "Қосымша автоматты түрде <span class=\"market-popup__info-app-launch_counter\">#COUNTER#</span> арқылы ашылады";
+$MESS["MARKET_POPUP_INSTALL_JS_APP_WORKS_AUTOMATICALLY"] = "Қосымша автоматты режимде жұмыс істейді. Қосымшаны \"Орнатылған қосымшалар\" қойындысынан жоюға болады";
+$MESS["MARKET_POPUP_INSTALL_JS_AVAILABLE_IN_SUBSCRIPTION"] = "Жазылымда қолжетімді";
+$MESS["MARKET_POPUP_INSTALL_JS_IMAGE_ESTABLISHED"] = "/bitrix/js/market/images/market-app-established-img. jpg";
+$MESS["MARKET_POPUP_INSTALL_JS_IMAGE_ESTABLISHED_INTERFACE"] = "/bitrix/js/market/images/market-app-established-interface-img.jpg";
+$MESS["MARKET_POPUP_INSTALL_JS_INSTALLED_APP_LOCATED_APP_TAB"] = "Барлық орнатылған қосымшалар Битрикс24 бас мәзіріндегі \"Қосымшалар\" қойындысында орналасқан";
+$MESS["MARKET_POPUP_INSTALL_JS_INSTALLING_THE_APP_ON_YOUR_BITRIX"] = "Битрикс24-ке қосымшаны орнату";
+$MESS["MARKET_POPUP_INSTALL_JS_INSTALL_TITLE"] = "<span class=\"market-popup__header-title_highlight\" title=\"#APP_NAME#\">#APP_NAME#</span>? орнату";
+$MESS["MARKET_POPUP_INSTALL_JS_IN_APP_PURCHASES"] = "Кіріктірілген сатып алулар";
+$MESS["MARKET_POPUP_INSTALL_JS_IS_FREE"] = "Тегін";
+$MESS["MARKET_POPUP_INSTALL_JS_MORE"] = "Толығырақ";
+$MESS["MARKET_POPUP_INSTALL_JS_NEW_VERSION"] = "Жаңа нұсқа ";
+$MESS["MARKET_POPUP_INSTALL_JS_OPEN_APP"] = "Қосымшаны ашыңыз";
+$MESS["MARKET_POPUP_INSTALL_JS_PREVIOUS_VERSION"] = "Алдыңғы нұсқа";
+$MESS["MARKET_POPUP_INSTALL_JS_READY"] = "Дайын";
+$MESS["MARKET_POPUP_INSTALL_JS_SHOW_ALL_ACCESSES"] = "Барлық рұқсаттарды көрсету";
+$MESS["MARKET_POPUP_INSTALL_JS_THERE_ARE_UPDATES"] = "Жаңартулар бар";
+$MESS["MARKET_POPUP_INSTALL_JS_UPDATE_TITLE"] = "<span class=\"market-popup__header-title_highlight\" title=\"#APP_NAME#\">#APP_NAME#</span>? жаңарту";
+$MESS["MARKET_POPUP_INSTALL_JS_VERSION"] = "#APP_VERSION# нұсқасы";
+$MESS["MARKET_POPUP_INSTALL_JS_VERSIONS"] = "Нұсқалар";
+$MESS["MARKET_POPUP_INSTALL_JS_YOU_HAVE_A_PREVIOUS_VERSION"] = "Сізде қосымшаның алдыңғы нұсқасы орнатылған, жаңартуларды қараңыз";

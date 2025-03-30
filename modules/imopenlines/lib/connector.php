@@ -2121,13 +2121,30 @@ class Connector
 			return false;
 		}
 
+		$userId = 0;
+		if (!self::isEnableGroupByChat($params['connector']))
+		{
+			if (empty($params['user_id']))
+			{
+				return false;
+			}
+
+			$user = \Bitrix\ImConnector\Connector::initConnectorHandler($params['connector'])->getUserByUserCode(['id' => $params['user_id']]);
+			if (!$user->isSuccess())
+			{
+				return false;
+			}
+
+			$userId = $user->getResult()['ID'];
+		}
+
 		$fields = [
 			'name' => $params['name'],
 			'connector' => [
 				'connector_id' => $params['connector'],
 				'line_id' => $params['line'],
 				'chat_id' => $params['chat_id'],
-				'user_id' => 0,
+				'user_id' => $userId,
 			]
 		];
 

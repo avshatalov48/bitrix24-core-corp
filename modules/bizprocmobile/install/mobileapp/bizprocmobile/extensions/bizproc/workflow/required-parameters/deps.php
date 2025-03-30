@@ -7,7 +7,6 @@ return [
 	'extensions' => [
 		'apptheme',
 		'bottom-sheet',
-		'feature',
 		'loc',
 		'notify-manager',
 		'type',

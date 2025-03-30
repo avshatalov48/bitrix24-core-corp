@@ -84,7 +84,7 @@ if (
 {
 	$menuItems[] = [
 		Loc::getMessage('EXTRANET_LEFT_MENU_IM_COLLAB'),
-		$isCollaber ? '/extranet/?IM_COLLAB=0' : '/extranet/online/?IM_COLLAB=0',
+		$isCollaber ? '/extranet/?IM_COLLAB' : '/extranet/online/?IM_COLLAB',
 		[],
 		[
 			'menu_item_id' => 'menu_im_collab',

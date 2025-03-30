@@ -24,6 +24,7 @@ Extension::load([
 	'ui.viewer',
 	'sidepanel',
 	'disk.viewer.document-item',
+	'disk.viewer.board-item',
 	'ui.notification',
 	'ui.fonts.opensans',
 ]);

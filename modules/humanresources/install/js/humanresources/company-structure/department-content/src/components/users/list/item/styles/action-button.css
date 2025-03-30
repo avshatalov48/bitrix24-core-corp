@@ -1,0 +1,15 @@
+.hr-department-detail-content__user-action-btn {
+	--ui-icon-set__icon-size: 16px;
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-50);
+	margin-right: 4px;
+	cursor: pointer;
+}
+
+.hr-department-detail-content__user-action-btn:hover {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-60);
+}
+
+.hr-department-detail-content__user-action-btn.--focused {
+	opacity: 1;
+	--ui-icon-set__icon-color: var(--ui-color-palette-blue-60);
+}

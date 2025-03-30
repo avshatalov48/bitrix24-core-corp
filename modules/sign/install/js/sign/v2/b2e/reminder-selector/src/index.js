@@ -1,26 +1,19 @@
 import { Loc, Tag, Type } from 'main.core';
 import { Button } from 'ui.buttons';
 import { Api } from 'sign.v2.api';
+import { Reminder, type ReminderType } from 'sign.type';
 
 import './style.css';
 import type { MenuItemOptions } from 'main.popup';
 
-export const ReminderType: $ReadOnly<{ [key: ReminderTypeId]: ReminderTypeId }> = Object.freeze({
-	none: 'none',
-	oncePerDay: 'oncePerDay',
-	twicePerDay: 'twicePerDay',
-	threeTimesPerDay: 'threeTimesPerDay',
-});
-
-export type ReminderTypeId = 'none' | 'oncePerDay' | 'twicePerDay' | 'threeTimesPerDay';
-export type Options = { preSelectedType?: ReminderTypeId };
+export type Options = { preSelectedType?: ReminderType };
 
 export class ReminderSelector
 {
 	#api: Api;
 	#button: Button;
 	#options: Options;
-	#chosenTypeId: ReminderTypeId = ReminderType.none;
+	#chosenTypeId: ReminderType = Reminder.none;
 
 	constructor(options: Options = {})
 	{
@@ -63,7 +56,7 @@ export class ReminderSelector
 	#getButton(): Button
 	{
 		return new Button({
-			text: this.#getOptionById(ReminderType.none).name,
+			text: this.#getOptionById(Reminder.none).name,
 			dropdown: true,
 			closeByEsc: true,
 			autoHide: true,
@@ -77,7 +70,7 @@ export class ReminderSelector
 		});
 	}
 
-	#chooseTypeById(reminderTypeId: ReminderTypeId): void
+	#chooseTypeById(reminderTypeId: ReminderType): void
 	{
 		this.#button.menuWindow.close();
 
@@ -91,30 +84,30 @@ export class ReminderSelector
 		this.#chosenTypeId = option.id;
 	}
 
-	#getOptionById(reminderTypeId: ReminderTypeId): { id: string, name: string } | null
+	#getOptionById(reminderTypeId: ReminderType): { id: string, name: string } | null
 	{
 		return this.#getAvailableOptions()
 			.find((option) => option.id === reminderTypeId) ?? null
 		;
 	}
 
-	#getAvailableOptions(): Array<{ id: ReminderTypeId, name: string }>
+	#getAvailableOptions(): Array<{ id: ReminderType, name: string }>
 	{
 		return [
 			{
-				id: ReminderType.none,
+				id: Reminder.none,
 				name: Loc.getMessage('SIGN_V2_REMINDER_SELECTOR_OPTION_NONE'),
 			},
 			{
-				id: ReminderType.oncePerDay,
+				id: Reminder.oncePerDay,
 				name: Loc.getMessage('SIGN_V2_REMINDER_SELECTOR_OPTION_ONCE_PER_DAY'),
 			},
 			{
-				id: ReminderType.twicePerDay,
+				id: Reminder.twicePerDay,
 				name: Loc.getMessage('SIGN_V2_REMINDER_SELECTOR_OPTION_TWICE_PER_DAY'),
 			},
 			{
-				id: ReminderType.threeTimesPerDay,
+				id: Reminder.threeTimesPerDay,
 				name: Loc.getMessage('SIGN_V2_REMINDER_SELECTOR_OPTION_THREE_TIMES_PER_DAY'),
 			},
 		];

@@ -52,22 +52,47 @@ class WorkflowCompleted extends Base
 		$efficiency = $settings['EFFICIENCY'] ?? null;
 		$executionTime = $settings['EXECUTION_TIME'] ?? null;
 		$workflowAuthor = $settings['WORKFLOW_AUTHOR'] ?? [];
-		$workflowResult = \CBPViewHelper::getWorkflowResult($workflowId, $this->getContext()->getUserId()) ?? [];
+		$userId = $this->getContext()->getUserId();
 
-		if (empty($workflowResult) && empty($workflowAuthor))
+		{ //TODO has a dependency on bizproc, delete after update
+			$mobileConstant = \CBPViewHelper::class . '::MOBILE_CONTEXT';
+			$mobileContext = defined($mobileConstant) ? \CBPViewHelper::MOBILE_CONTEXT : null;
+		}
+
+		$webResult = \CBPViewHelper::getWorkflowResult($workflowId, $userId) ?? [];
+		if ($mobileContext)
+		{
+			$mobileResult = \CBPViewHelper::getWorkflowResult($workflowId, $userId, $mobileContext) ?? [];
+		}
+
+		if (empty($workflowAuthor))
 		{
 			$authorId = $this->getModel()->getAuthorId();
 			$workflowAuthor = $this->getUser($authorId);
 		}
 
-		$result['workflowEfficiencyBlock'] =
+		$result['workflowEfficiencyBlockWeb'] =
 			(new Layout\Body\ContentBlock\WorkflowEfficiency())
 				->setAverageDuration($averageDuration)
 				->setEfficiency($efficiency)
 				->setExecutionTime($executionTime)
-				->setWorkflowResult($workflowResult)
+				->setWorkflowResult($webResult)
 				->setAuthor($workflowAuthor)
+				->setScopeWeb()
 		;
+
+		if ($mobileContext)
+		{
+			$result['workflowEfficiencyBlockMobile'] =
+				(new Layout\Body\ContentBlock\WorkflowEfficiency())
+					->setAverageDuration($averageDuration)
+					->setEfficiency($efficiency)
+					->setExecutionTime($executionTime)
+					->setWorkflowResult($mobileResult)
+					->setAuthor($workflowAuthor)
+					->setScopeMobile()
+			;
+		}
 
 		return $result;
 	}
@@ -89,6 +114,7 @@ class WorkflowCompleted extends Base
 			'timeline' =>
 				$this->createTimelineButton($workflowId)
 					->setState(!$this->isBizprocEnabled() ? 'hidden' : null)
+					->setScopeWeb()
 			,
 		];
 	}
@@ -106,5 +132,20 @@ class WorkflowCompleted extends Base
 			Loc::getMessage('CRM_TIMELINE_ACTIVITY_BIZPROC_COMPLETED') ?? '',
 			Tag::TYPE_SUCCESS
 		);
+	}
+
+	public function getMenuItems(): array
+	{
+		$settings = $this->getActivityModel()?->get('SETTINGS');
+		$workflowId = $settings['WORKFLOW_ID'] ?? null;
+		if (empty($workflowId))
+		{
+			return [];
+		}
+
+		return [
+			'log' => $this->createLogMenuItem($workflowId)?->setScopeWeb(),
+			'timeline' => $this->createTimelineMenuItem($workflowId)?->setScopeMobile()
+		];
 	}
 }

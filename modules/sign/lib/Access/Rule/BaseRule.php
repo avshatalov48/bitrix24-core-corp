@@ -13,6 +13,7 @@ use Bitrix\Sign\Access\Permission\SignPermissionDictionary;
 use Bitrix\Sign\Access\Service\RolePermissionService;
 use Bitrix\Sign\Contract;
 use Bitrix\Sign\Item\Access\Document;
+use Bitrix\Sign\Service\Container;
 
 class BaseRule extends AbstractRule
 {
@@ -48,6 +49,17 @@ class BaseRule extends AbstractRule
 			return false;
 		}
 		$permissionId = (string)$permissionId;
+
+		$user = $this->user;
+		if (!$user instanceof UserModel)
+		{
+			return false;
+		}
+
+		if ($item instanceof Document && $item->isTemplated() && $this->checkDocumentTemplateAccess($action, $item, $user))
+		{
+			return true;
+		}
 
 		if ($this->checkBinarySignPermission($permissionId))
 		{
@@ -91,10 +103,6 @@ class BaseRule extends AbstractRule
 			return false;
 		}
 
-		if ($item instanceof Document && $item->isTemplated() && $this->checkDocumentTemplateAccess($action, $item, $user))
-		{
-			return true;
-		}
 		$itemOwnerId = $item->getOwnerId();
 
 		return $this->checkSignPermission(ActionDictionary::getPermissionIdByAction($action), $user, $itemOwnerId);
@@ -116,7 +124,7 @@ class BaseRule extends AbstractRule
 
 	private function checkSignPermission(string|int $permissionId, UserModel $user, ?int $itemOwnerId = null): bool
 	{
-		$permissionValue = (new RolePermissionService())->getValueForPermission(
+		$permissionValue = Container::instance()->getRolePermissionService()->getValueForPermission(
 			$user->getRoles(),
 			$permissionId,
 		);

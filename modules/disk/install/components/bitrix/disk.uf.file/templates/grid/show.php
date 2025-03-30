@@ -307,6 +307,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 	if (!empty($arResult['FILES']) || !empty($arResult['DELETED_FILES']))
 	{
 		?>
+		<script>BX.load(['/bitrix/js/disk/css/legacy_uf_common.css']);</script>
 		<div class="feed-com-files">
 			<div class="feed-com-files-title"><?=GetMessage('WDUF_FILES')?></div>
 			<div class="feed-com-files-cont"><?

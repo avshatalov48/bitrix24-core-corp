@@ -14,7 +14,7 @@ use Bitrix\Booking\Internals\Model\BookingTable;
 use Bitrix\Booking\Internals\Model\EO_BookingResource;
 use Bitrix\Booking\Internals\Model\EO_Resource;
 use Bitrix\Booking\Internals\Model\EO_Booking;
-use Bitrix\Booking\Internals\Rrule;
+use Bitrix\Booking\Internals\Service\Rrule;
 use Bitrix\Main\Type\DateTime;
 use DateTimeImmutable;
 use DateTimeZone;

@@ -14,3 +14,4 @@ $MESS["DISK_UF_WIDGET_ALLOW_PHOTO_COLLAGE"] = "Разрешить коллаж �
 $MESS["DISK_UF_WIDGET_CREATE_DOCX"] = "Документ";
 $MESS["DISK_UF_WIDGET_CREATE_XLSX"] = "Таблица";
 $MESS["DISK_UF_WIDGET_CREATE_PPTX"] = "Презентация";
+$MESS["DISK_UF_WIDGET_CREATE_BOARD"] = "Доска";

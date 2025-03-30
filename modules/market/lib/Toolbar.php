@@ -36,6 +36,9 @@ class Toolbar
 			'ADDITIONAL_SEARCH_ACTION' => $totalAppsResponse['ADDITIONAL_SEARCH_ACTION'] ?? '',
 			'ADDITIONAL_HIT_ACTION' => $totalAppsResponse['ADDITIONAL_HIT_ACTION'] ?? '',
 			'SEARCH_FILTERS' => $totalAppsResponse['MARKET_SEARCH_FILTERS'] ?? [],
+			'MARKET_LOGO_TITLE' => $totalAppsResponse['MARKET_LOGO_TITLE'] ?? '',
+			'MARKET_TOOLBAR_TITLE' => $totalAppsResponse['MARKET_TOOLBAR_TITLE'] ?? '',
+			'MARKET_NAME_MESSAGE_CODE' => $totalAppsResponse['MARKET_NAME_MESSAGE_CODE'] ?? '',
 		];
 	}
 }

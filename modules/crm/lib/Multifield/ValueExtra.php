@@ -27,7 +27,7 @@ class ValueExtra implements Arrayable, \JsonSerializable
 		];
 	}
 
-	final public function jsonSerialize()
+	final public function jsonSerialize(): array
 	{
 		return [
 			'countryCode' => $this->getCountryCode(),

@@ -6,13 +6,14 @@ namespace Bitrix\Booking\Controller\V1;
 
 use Bitrix\Booking\Controller\V1\Response\ResourceWizardResponseResponse;
 use Bitrix\Booking\Entity\Slot\Range;
-use Bitrix\Booking\Integration;
-use Bitrix\Booking\Integration\Notifications\TemplateRepository;
-use Bitrix\Booking\Internals\Notifications\MessageSenderPicker;
-use Bitrix\Booking\Internals\NotificationType;
-use Bitrix\Booking\Internals\Query\AdvertisingResourceType\GetListHandler;
+use Bitrix\Booking\Internals\Exception\ErrorBuilder;
+use Bitrix\Booking\Internals\Exception\Exception;
+use Bitrix\Booking\Internals\Integration;
+use Bitrix\Booking\Internals\Integration\Notifications\TemplateRepository;
+use Bitrix\Booking\Internals\Service\Notifications\MessageSenderPicker;
+use Bitrix\Booking\Internals\Service\Notifications\NotificationType;
+use Bitrix\Booking\Provider\AdsProvider;
 use Bitrix\Main\Engine\CurrentUser;
-use Bitrix\Main\Loader;
 use Bitrix\Main\Request;
 
 class ResourceWizard extends BaseController
@@ -26,18 +27,24 @@ class ResourceWizard extends BaseController
 		$this->templateRepository = new TemplateRepository();
 	}
 
-	public function getAction(): ResourceWizardResponseResponse
+	public function getAction(): ResourceWizardResponseResponse|null
 	{
-		return $this->handleRequest(function()
+		try
 		{
 			return new ResourceWizardResponseResponse(
-				advertisingResourceTypes: (new GetListHandler())(),
+				advertisingResourceTypes: (new AdsProvider())->getAdsResourceTypes(),
 				notificationsSettings: $this->getNotificationsSettings(),
 				companyScheduleSlots: $this->getCompanyScheduleSlots(),
 				isCompanyScheduleAccess: $this->isCompanyScheduleAccess(),
 				weekStart: $this->getWeekStart(),
 			);
-		});
+		}
+		catch (Exception $e)
+		{
+			$this->addError(ErrorBuilder::buildFromException($e));
+
+			return null;
+		}
 	}
 
 	private function getNotificationsSettings(): array

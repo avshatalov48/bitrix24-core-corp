@@ -905,40 +905,25 @@ class CopilotChatBot extends Base
 		}
 	}
 
-	/**
-	 * Translate ai error message to human.
-	 * @param Error|null $error
-	 * @return string
-	 */
 	protected static function translateErrorMessage(?Error $error): string
 	{
-		$errorMessage = Loc::getMessage('IMBOT_COPILOT_JOB_FAIL_MSGVER_1');
-		if ($error)
+		$customData = $error?->getCustomData();
+		$defaultMessage = Loc::getMessage('IMBOT_COPILOT_JOB_FAIL_MSGVER_1');
+
+		$message = match (true)
 		{
-			switch (true)
-			{
-				case is_numeric($error->getCode()):
-				case $error->getCode() == 'HASH_EXPIRED':
-					break;
+			$error === null || is_numeric($error->getCode()) || $error->getCode() === 'HASH_EXPIRED' => $defaultMessage,
+			is_array($customData) && isset($customData['msgForIm']) => $customData['msgForIm'],
+			$error->getCode() === self::LIMIT_IS_EXCEEDED_BAAS => Loc::getMessage(
+				'IMBOT_COPILOT_ERROR_LIMIT_BAAS',
+				['#LINK#' => '/online/?FEATURE_PROMOTER=limit_boost_copilot']
+			),
+			$error->getCode() === 'NETWORK' => Loc::getMessage('IMBOT_COPILOT_ERROR_NETWORK_MSGVER_1'),
+			(bool)$error->getMessage() => $error->getMessage(),
+			default => $defaultMessage,
+		};
 
-				case $error->getCode() === self::LIMIT_IS_EXCEEDED_BAAS;
-					$errorMessage = Loc::getMessage(
-						'IMBOT_COPILOT_ERROR_LIMIT_BAAS',
-						['#LINK#' => '/online/?FEATURE_PROMOTER=limit_boost_copilot',]
-					);
-					break;
-
-				case ($errorDesc = Loc::getMessage('IMBOT_COPILOT_ERROR_' . $error->getCode() . '_MSGVER_1')):
-					$errorMessage = $errorDesc;
-					break;
-
-				case ($errorDesc = $error->getMessage()):
-					$errorMessage = $errorDesc;
-					break;
-			}
-		}
-
-		return $errorMessage;
+		return is_string($message) ? $message : $defaultMessage;
 	}
 
 	//endregion

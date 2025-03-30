@@ -8,7 +8,7 @@ import './channel-menu.css';
 
 export const ChannelMenu = {
 	name: 'ChannelMenu',
-	emits: ['popupShown', 'popupClosed', 'update:value'],
+	emits: ['popupShown', 'popupClosed', 'updateChannel'],
 	props: {
 		currentChannel: {
 			type: String,
@@ -98,7 +98,7 @@ export const ChannelMenu = {
 					text: this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_SELECT_WHA'),
 					onclick: () => {
 						this.channel = this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_SELECT_WHA');
-						this.$emit('update:value', NotificationChannel.WhatsApp);
+						this.$emit('updateChannel', NotificationChannel.WhatsApp);
 						this.destroy();
 					},
 				},
@@ -106,7 +106,7 @@ export const ChannelMenu = {
 					text: this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_SELECT_SMS'),
 					onclick: () => {
 						this.channel = this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_SELECT_SMS');
-						this.$emit('update:value', NotificationChannel.Sms);
+						this.$emit('updateChannel', NotificationChannel.Sms);
 						this.destroy();
 					},
 				},
@@ -135,13 +135,12 @@ export const ChannelMenu = {
 		Icon,
 	},
 	template: `
-		<button
+		<span
+			class="booking-resource-creation-wizard-channel-menu-button"
 			ref="menu-button"
-			:class="['channel-menu-btn', 'ui-btn ui-btn-round', ButtonSize.EXTRA_SMALL, ButtonColor.SECONDARY]"
-			type="button"
 			@click="openMenu"
 		>
 			{{ channel }}
-		</button>
+		</span>
 	`,
 };

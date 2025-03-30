@@ -5,6 +5,7 @@ namespace Bitrix\CatalogMobile\ProductWizard;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\Access\Permission\PermissionDictionary;
+use Bitrix\Catalog\Config\CatalogSettings;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
@@ -140,10 +141,13 @@ final class ConfigQuery
 
 		$accounting = Container::getInstance()->getAccounting();
 
+		$vatIncluded = (new CatalogSettings())->get()->toArray()['defaultProductVatIncluded'] ?? 'N';
+
 		return [
 			'isTaxMode' => $accounting->isTaxMode(),
 			'vatRates' => $vatRates,
-			'vatIncluded' => false,
+			'vatIncluded' => $vatIncluded === 'Y',
+			'defaultVatId' => \CCrmTax::GetDefaultVatRateInfo()['ID'] ?? 0,
 		];
 	}
 

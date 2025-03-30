@@ -2,17 +2,11 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports,main_core,ui_buttons,sign_v2_api) {
+(function (exports,main_core,ui_buttons,sign_v2_api,sign_type) {
 	'use strict';
 
 	let _ = t => t,
 	  _t;
-	const ReminderType = Object.freeze({
-	  none: 'none',
-	  oncePerDay: 'oncePerDay',
-	  twicePerDay: 'twicePerDay',
-	  threeTimesPerDay: 'threeTimesPerDay'
-	});
 	var _api = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("api");
 	var _button = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("button");
 	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
@@ -53,7 +47,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    });
 	    Object.defineProperty(this, _chosenTypeId, {
 	      writable: true,
-	      value: ReminderType.none
+	      value: sign_type.Reminder.none
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _options)[_options] = options;
 	    babelHelpers.classPrivateFieldLooseBase(this, _button)[_button] = babelHelpers.classPrivateFieldLooseBase(this, _getButton)[_getButton]();
@@ -86,7 +80,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	}
 	function _getButton2() {
 	  return new ui_buttons.Button({
-	    text: babelHelpers.classPrivateFieldLooseBase(this, _getOptionById)[_getOptionById](ReminderType.none).name,
+	    text: babelHelpers.classPrivateFieldLooseBase(this, _getOptionById)[_getOptionById](sign_type.Reminder.none).name,
 	    dropdown: true,
 	    closeByEsc: true,
 	    autoHide: true,
@@ -114,22 +108,21 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	}
 	function _getAvailableOptions2() {
 	  return [{
-	    id: ReminderType.none,
+	    id: sign_type.Reminder.none,
 	    name: main_core.Loc.getMessage('SIGN_V2_REMINDER_SELECTOR_OPTION_NONE')
 	  }, {
-	    id: ReminderType.oncePerDay,
+	    id: sign_type.Reminder.oncePerDay,
 	    name: main_core.Loc.getMessage('SIGN_V2_REMINDER_SELECTOR_OPTION_ONCE_PER_DAY')
 	  }, {
-	    id: ReminderType.twicePerDay,
+	    id: sign_type.Reminder.twicePerDay,
 	    name: main_core.Loc.getMessage('SIGN_V2_REMINDER_SELECTOR_OPTION_TWICE_PER_DAY')
 	  }, {
-	    id: ReminderType.threeTimesPerDay,
+	    id: sign_type.Reminder.threeTimesPerDay,
 	    name: main_core.Loc.getMessage('SIGN_V2_REMINDER_SELECTOR_OPTION_THREE_TIMES_PER_DAY')
 	  }];
 	}
 
-	exports.ReminderType = ReminderType;
 	exports.ReminderSelector = ReminderSelector;
 
-}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX,BX.UI,BX.Sign.V2));
+}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX,BX.UI,BX.Sign.V2,BX.Sign));
 //# sourceMappingURL=reminder-selector.bundle.js.map

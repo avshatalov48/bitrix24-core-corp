@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Crm\Feature\Entity\FeatureRepository;
+use Bitrix\Crm\Tour\TourRepository;
 use Bitrix\Main\ModuleManager;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
@@ -12,17 +13,26 @@ class CrmFeaturesList extends CBitrixComponent implements \Bitrix\Main\Engine\Co
 {
 	protected ?\Bitrix\Main\ErrorCollection $errors;
 	private FeatureRepository $featureRepository;
+	private TourRepository $tourRepository;
 
 	public function __construct($component = null)
 	{
 		parent::__construct($component);
 
 		\Bitrix\Main\Loader::requireModule('crm');
+		$this->errors = new \Bitrix\Main\ErrorCollection();
+
 		$this->featureRepository = new FeatureRepository();
+		$this->tourRepository = new TourRepository();
 	}
 
 	public function executeComponent()
 	{
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
+		{
+			LocalRedirect('/crm/configs/');
+		}
+
 		if ($this->request->get('enableFeature'))
 		{
 			$this->enableFeature((string)$this->request->get('enableFeature'));
@@ -33,15 +43,30 @@ class CrmFeaturesList extends CBitrixComponent implements \Bitrix\Main\Engine\Co
 			$this->disableFeature((string)$this->request->get('disableFeature'));
 			LocalRedirect('/crm/configs/');
 		}
+		elseif ($this->request->get('resetTour'))
+		{
+			$this->resetTour((string)$this->request->get('resetTour'));
+			LocalRedirect('/crm/configs/');
+		}
 
 		if (!$this->checkAccess())
 		{
 			LocalRedirect('/crm/configs/');
 		}
+		$this->arResult['mode'] = $this->getCurrentMode();
 
-		$this->arResult['items'] = $this->prepareItems();
+		switch ($this->arResult['mode'])
+		{
+			case 'features':
+				$this->arResult['features'] = $this->prepareFeatures();
+				break;
+			case 'tours':
+				$this->arResult['toursEnabled'] = \Bitrix\Main\Config\Option::get('crm.tour', 'HIDE_ALL_TOURS', 'N') === 'N';
+				$this->arResult['tours'] = $this->tourRepository->getAllByCategory();
+				break;
+		}
 
-		$this->includeComponentTemplate();
+		$this->includeComponentTemplate($this->arResult['mode']);
 	}
 
 	public function enableFeatureAction(string $featureId)
@@ -90,11 +115,63 @@ class CrmFeaturesList extends CBitrixComponent implements \Bitrix\Main\Engine\Co
 		}
 	}
 
+	public function enableToursAction()
+	{
+		if (!$this->checkAccess())
+		{
+			$this->errors->setError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
+
+			return null;
+		}
+
+		\Bitrix\Main\Config\Option::set('crm.tour', 'HIDE_ALL_TOURS', 'N');
+
+		return true;
+	}
+
+	public function disableToursAction()
+	{
+		if (!$this->checkAccess())
+		{
+			$this->errors->setError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
+
+			return null;
+		}
+
+		\Bitrix\Main\Config\Option::set('crm.tour', 'HIDE_ALL_TOURS', 'Y');
+
+		return true;
+	}
+
+	public function resetTourAction(string $tourId)
+	{
+		if (!$this->checkAccess())
+		{
+			$this->errors->setError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
+
+			return null;
+		}
+
+		$tour = $this->tourRepository->getById($tourId);
+		if ($tour)
+		{
+			CUserOptions::DeleteOptionsByName($tour['optionCategory'], $tour['optionName']);
+
+			return true;
+		}
+		else
+		{
+			$this->errors->setError(\Bitrix\Crm\Controller\ErrorCode::getNotFoundError());
+
+			return null;
+		}
+	}
+
 	public function configureActions()
 	{
 	}
 
-	private function prepareItems(): array
+	private function prepareFeatures(): array
 	{
 		return $this->featureRepository->getAllByCategory();
 	}
@@ -129,5 +206,27 @@ class CrmFeaturesList extends CBitrixComponent implements \Bitrix\Main\Engine\Co
 		{
 			$feature->disable();
 		}
+	}
+
+	private function resetTour(string $tourId): void
+	{
+		$tour = $this->tourRepository->getById($tourId);
+		if ($tour)
+		{
+			CUserOptions::DeleteOptionsByName($tour['optionCategory'], $tour['optionName']);
+		}
+	}
+
+	private function getCurrentMode(): string
+	{
+		$valueFromRequest = $this->request->get('expertMode');
+		if (in_array($valueFromRequest, ['features', 'tours'], true))
+		{
+			\Bitrix\Main\Config\Option::set('crm', 'expertMode', $valueFromRequest);
+
+			return $valueFromRequest;
+		}
+
+		return \Bitrix\Main\Config\Option::get('crm', 'expertMode', 'features');
 	}
 }

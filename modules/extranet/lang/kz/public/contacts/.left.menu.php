@@ -1,0 +1,3 @@
+<?php
+$MESS["EXTRANET_CONTACTS_LEFT_MENU_EMPLOYEES"] = "Қызметкерлер";
+$MESS["EXTRANET_CONTACTS_LEFT_MENU_SEARCH"] = "Байланысты іздеу";

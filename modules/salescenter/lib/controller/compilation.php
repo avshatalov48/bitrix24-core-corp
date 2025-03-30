@@ -41,18 +41,25 @@ class Compilation extends Base
 		return true;
 	}
 
-	private function createDealForCompilation(): ?int
+	private function createDealForCompilation(array $options = []): ?int
 	{
-		$contactFields = [
-			'SOURCE_ID' => 'STORE',
-		];
-		$contactId = Contact::getInstance()->create($contactFields);
-
 		$dealFields = [
 			'ASSIGNED_BY_ID' => \CCrmSecurityHelper::GetCurrentUserID(),
-			'CONTACT_ID' => $contactId,
 			'OPPORTUNITY' => 0,
 		];
+		$clientInfo = (new \Bitrix\SalesCenter\Controller\Order())->getClientInfo($options);
+		if (isset($clientInfo['CONTACT_IDS']))
+		{
+			$dealFields['CONTACT_IDS'] = $clientInfo['CONTACT_IDS'];
+		}
+		if (isset($clientInfo['COMPANY_ID']))
+		{
+			$dealFields['COMPANY_ID'] = $clientInfo['COMPANY_ID'];
+		}
+		if (!isset($clientInfo['CONTACT_IDS']) && !isset($clientInfo['COMPANY_ID']))
+		{
+			$dealFields['CONTACT_ID'] = Contact::getInstance()->create(['SOURCE_ID' => 'STORE']);
+		}
 
 		$deal = new \CCrmDeal(false);
 		$options = [
@@ -260,9 +267,9 @@ class Compilation extends Base
 		$dialogId = $options['dialogId'] ?? null;
 		$chatId =$this->normalizeChatId($dialogId);
 
-		if (!$dealId)
+		if (!$dealId || !CrmManager::getInstance()->isOwnerEntityExists($dealId, \CCrmOwnerType::Deal))
 		{
-			$dealId = $this->createDealForCompilation();
+			$dealId = $this->createDealForCompilation($options);
 			$this->onAfterDealAdd($dealId, (int)$options['sessionId']);
 			ImOpenLinesManager::getInstance()->sendDealNotify($dealId, $dialogId);
 		}
@@ -292,14 +299,16 @@ class Compilation extends Base
 		}
 
 		$dealId = (int)$options['ownerId'];
+		$isNewDeal = false;
 
 		$dialogId = $options['dialogId'] ?? null;
-		$chatId =$this->normalizeChatId($dialogId);
+		$chatId = $this->normalizeChatId($dialogId);
 
-		if (!$dealId)
+		if (!$dealId || !CrmManager::getInstance()->isOwnerEntityExists($dealId, \CCrmOwnerType::Deal))
 		{
-			$dealId = $this->createDealForCompilation();
+			$dealId = $this->createDealForCompilation($options);
 			$this->onAfterDealAdd($dealId, $options['sessionId']);
+			$isNewDeal = true;
 		}
 
 		if (isset($options['stageOnOrderPaid']))
@@ -362,7 +371,7 @@ class Compilation extends Base
 		elseif ($options['dialogId'])
 		{
 			$r = new Main\Result();
-			if ($dealId && (int)$options['ownerId'] <= 0)
+			if ($dealId && $isNewDeal)
 			{
 				$r = ImOpenLinesManager::getInstance()->sendDealNotify($dealId, $options['dialogId']);
 			}

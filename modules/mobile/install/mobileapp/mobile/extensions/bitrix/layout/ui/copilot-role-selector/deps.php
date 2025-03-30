@@ -26,5 +26,6 @@ return [
 		'./src/views',
 		'./src/feedback',
 		'./src/types',
+		'./src/api',
 	],
 ];

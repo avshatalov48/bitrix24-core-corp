@@ -171,7 +171,7 @@ class ItemIdentifier implements \JsonSerializable
 		return 'type_' . $this->getEntityTypeId() . '_id_' . $this->getEntityId();
 	}
 
-	final public function jsonSerialize()
+	final public function jsonSerialize(): array
 	{
 		return [
 			'entityTypeId' => $this->getEntityTypeId(),

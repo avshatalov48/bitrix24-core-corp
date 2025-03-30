@@ -5,7 +5,6 @@ jn.define('layout/ui/copilot-role-selector', (require, exports, module) => {
 	const { PureComponent } = require('layout/pure-component');
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
-	const { isNil } = require('utils/type');
 	const { CopilotRoleSelectorListFactory } = require('layout/ui/copilot-role-selector/src/list-factory');
 	const { ListType, ListItemType } = require('layout/ui/copilot-role-selector/src/types');
 
@@ -28,7 +27,6 @@ jn.define('layout/ui/copilot-role-selector', (require, exports, module) => {
 				case ListItemType.INDUSTRY:
 					CopilotRoleSelector.open({
 						parentLayout: this.props.layout,
-						selectedIndustry: item,
 						isControlRoot: false,
 						showOpenFeedbackItem: this.props.showOpenFeedbackItem,
 						skipButtonText: this.props.skipButtonText,
@@ -72,22 +70,13 @@ jn.define('layout/ui/copilot-role-selector', (require, exports, module) => {
 				universalRoleItemData: this.props.universalRoleItemData,
 			};
 
-			if (!isNil(this.props.selectedIndustry))
-			{
-				factoryCreateProps.selectedIndustry = this.props.selectedIndustry;
-			}
-
-			return CopilotRoleSelectorListFactory.create(
-				isNil(this.props.selectedIndustry) ? ListType.INDUSTRIES : ListType.ROLES,
-				factoryCreateProps,
-			);
+			return CopilotRoleSelectorListFactory.create(ListType.ROLES, factoryCreateProps);
 		}
 
 		/**
 		 * @public
 		 * @function open
 		 * @params {object} params
-		 * @params {object} [params.selectedIndustry = null]
 		 * @params {layout} [params.parentLayout = null]
 		 * @params {boolean} [params.isControlRoot = true]
 		 * @params {boolean} [params.closeLayoutAfterContextSelection = true]
@@ -100,7 +89,6 @@ jn.define('layout/ui/copilot-role-selector', (require, exports, module) => {
 		 */
 		static open({
 			parentLayout = null,
-			selectedIndustry = null,
 			isControlRoot = true,
 			closeLayoutAfterContextSelection = true,
 			showOpenFeedbackItem = true,
@@ -111,20 +99,16 @@ jn.define('layout/ui/copilot-role-selector', (require, exports, module) => {
 		})
 		{
 			return new Promise((resolve) => {
-				const titleText = isNil(selectedIndustry)
-					? Loc.getMessage('COPILOT_CONTEXT_STEPPER_CHOOSE_SUBJECT_TITLE')
-					: Loc.getMessage('COPILOT_CONTEXT_STEPPER_CHOOSE_ROLE_TITLE');
 				const config = {
 					enableNavigationBarBorder: false,
 					titleParams: {
-						text: titleText,
+						text: Loc.getMessage('COPILOT_CONTEXT_STEPPER_CHOOSE_ROLE_TITLE'),
 					},
 					...openWidgetConfig,
 					onReady: (readyLayout) => {
 						readyLayout.enableNavigationBarBorder(config.enableNavigationBarBorder);
 						const stepperInstance = new CopilotRoleSelector({
 							layout: readyLayout,
-							selectedIndustry,
 							contextSelectedHandler: (selectedContext) => {
 								resolve(selectedContext);
 								if (isControlRoot && closeLayoutAfterContextSelection)

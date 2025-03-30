@@ -1,27 +1,25 @@
 import { memberRoles } from 'humanresources.company-structure.api';
+import type { UserData } from 'humanresources.company-structure.utils';
 
 type WizardData = {
-	shown: boolean;
 	stepIndex: number;
 	waiting: boolean;
 	isValidStep: boolean;
-};
-
-type User = {
-	id: number;
-	avatar: ?string;
-	name: string;
-	role: string;
-	url: string;
-	workPosition: ?string;
+	departmentData: DepartmentData;
+	removedUsers: UserData[];
+	employeesIds: number[];
+	shouldErrorHighlight: boolean;
+	visibleSteps: Array<Step.id>;
+	saveMode: 'moveUsers' | 'addUsers';
 };
 
 type DepartmentData = {
-	title: string;
+	id: number;
+	name: string;
 	description: string;
 	parentId: number;
-	heads: Array<User>;
-	employees: Array<User>;
+	heads: Array<UserData>;
+	employees: Array<UserData>;
 	userCount: number;
 };
 

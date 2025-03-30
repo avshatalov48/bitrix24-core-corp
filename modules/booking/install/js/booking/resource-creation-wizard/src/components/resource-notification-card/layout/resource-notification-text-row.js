@@ -9,7 +9,7 @@ export const ResourceNotificationTextRow = {
 	template: `
 		<div class="resource-creation-wizard__form-notification-text-row">
 			<div :class="[icon, 'ui-icon-set', 'resource-creation-wizard__form-notification-text-row-icon']"></div>
-			<slot />
+			<slot/>
 		</div>
 	`,
 };

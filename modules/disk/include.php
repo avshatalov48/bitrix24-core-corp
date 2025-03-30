@@ -165,7 +165,7 @@ CJSCore::RegisterExt('file_dialog', array(
 	'js' => '/bitrix/js/disk/file_dialog.js',
 	'css' => '/bitrix/js/disk/css/file_dialog.css',
 	'lang' => '/bitrix/modules/disk/lang/'.LANGUAGE_ID.'/install/js/file_dialog.php',
-	'rel' => array('core', 'popup', 'json', 'ajax', 'disk', 'ui.design-tokens'),
+	'rel' => array('core', 'popup', 'ajax', 'disk', 'ui.design-tokens'),
 ));
 
 CJSCore::RegisterExt('disk_desktop', array(

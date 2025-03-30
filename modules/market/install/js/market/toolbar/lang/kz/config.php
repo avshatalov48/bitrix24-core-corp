@@ -1,0 +1,14 @@
+<?php
+$MESS["MARKET_TOOLBAR_JS_CATALOG_TITLE"] = "Каталог";
+$MESS["MARKET_TOOLBAR_JS_DETAILED"] = "Толығырақ";
+$MESS["MARKET_TOOLBAR_JS_DIDNT_FIND_SUITABLE_SOLUTION"] = "Дұрыс шешім таппадыңыз ба?";
+$MESS["MARKET_TOOLBAR_JS_FAVORITES_TITLE"] = "Таңдаулы";
+$MESS["MARKET_TOOLBAR_JS_LOOKING_RIGHT_APPS"] = "Сәйкес қосымшаларды іздеуді бастаңыз";
+$MESS["MARKET_TOOLBAR_JS_MAKE_OR_PUBLISH_YOUR_INTEGRATION"] = "Өзіңіздің интеграцияңызды жасаңыз немесе жариялаңыз";
+$MESS["MARKET_TOOLBAR_JS_MARKET_PLUS_TITLE"] = "Маркет плюс";
+$MESS["MARKET_TOOLBAR_JS_MARKET_TITLE"] = "Маркет";
+$MESS["MARKET_TOOLBAR_JS_MARKET_TOTAL_APPS"] = "#TOTAL_APPS#+ қосымшалар";
+$MESS["MARKET_TOOLBAR_JS_MORE"] = "Тағы";
+$MESS["MARKET_TOOLBAR_JS_NO_SEARCH_RESULT"] = "Сұраныс бойынша нәтиже жоқ";
+$MESS["MARKET_TOOLBAR_JS_SEARCH_PLACEHOLDER"] = "Маркетте іздеу...";
+$MESS["MARKET_TOOLBAR_JS_SEARCH_RESULT_COUNT"] = "Нәтижелер табылды: #RESULT_COUNT#";

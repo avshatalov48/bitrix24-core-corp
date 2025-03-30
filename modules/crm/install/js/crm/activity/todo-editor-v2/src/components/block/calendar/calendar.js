@@ -52,9 +52,9 @@ export const TodoEditorBlocksCalendar = {
 
 	data(): Object
 	{
-		const ownerId = this.settings.ownerId || this.context.ownerId;
+		const ownerId = this.settings.ownerId || this.context.userId;
 
-		const selectedUserIds: Set<number> = new Set();
+		const selectedUserIds: Set<number> = new Set([this.settings.userId]);
 		selectedUserIds.add(ownerId);
 
 		const timestamp = (this.settings.from || Timezone.UserTime.getTimestamp()) * 1000;
@@ -377,43 +377,49 @@ export const TodoEditorBlocksCalendar = {
 		showUserSelectorDialog(): void
 		{
 			setTimeout(() => {
-				this.getUserSelectorDialog().show();
+				const dialog = Dialog.getById('todo-editor-calendar-user-selector-dialog');
+
+				if (dialog?.isOpen())
+				{
+					dialog.hide();
+				}
+				else
+				{
+					this.getUserSelectorDialog().show();
+				}
 			}, 5);
 		},
 		getUserSelectorDialog(): Dialog
 		{
-			if (Type.isNil(this.userSelectorDialog))
-			{
-				const preselectedItems = [];
-				this.selectedUsersIdsArray.forEach((id) => {
-					preselectedItems.push(['user', id]);
-				});
+			const preselectedItems = [];
 
-				const undeselectedItems = [
-					['user', this.context.userId],
-				];
+			this.selectedUsersIdsArray.forEach((id) => {
+				preselectedItems.push(['user', id]);
+			});
 
-				this.userSelectorDialog = new Dialog({
-					id: 'todo-editor-calendar-user-selector-dialog',
-					targetNode: this.$refs.userSelector,
-					context: 'CRM_ACTIVITY_TODO_CALENDAR_RESPONSIBLE_USER',
-					multiple: true,
-					dropdownMode: true,
-					showAvatars: true,
-					enableSearch: true,
-					width: 450,
-					zIndex: 2500,
-					entities: [{ id: 'user' }],
-					preselectedItems,
-					undeselectedItems,
-					events: {
-						'Item:onSelect': this.onSelectUser,
-						'Item:onDeselect': this.onDeselectUser,
-					},
-				});
-			}
+			const undeselectedItems = [
+				['user', this.context.userId],
+				['user', this.settings.userId],
+			];
 
-			return this.userSelectorDialog;
+			return new Dialog({
+				id: 'todo-editor-calendar-user-selector-dialog',
+				targetNode: this.$refs.userSelector,
+				context: 'CRM_ACTIVITY_TODO_CALENDAR_RESPONSIBLE_USER',
+				multiple: true,
+				dropdownMode: true,
+				showAvatars: true,
+				enableSearch: true,
+				width: 450,
+				zIndex: 2500,
+				entities: [{ id: 'user' }],
+				preselectedItems,
+				undeselectedItems,
+				events: {
+					'Item:onSelect': this.onSelectUser,
+					'Item:onDeselect': this.onDeselectUser,
+				},
+			});
 		},
 		onSelectUser({ data: { item } }): void
 		{
@@ -489,6 +495,9 @@ export const TodoEditorBlocksCalendar = {
 
 			// eslint-disable-next-line no-param-reassign
 			data.settings.ownerId = params.responsibleUserId;
+
+			// eslint-disable-next-line no-param-reassign
+			data.settings.userId = params.userId;
 		},
 		fetchConfig(): Promise
 		{

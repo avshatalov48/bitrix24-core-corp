@@ -17,6 +17,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      canTurnOnTrial: this.getVariable('canTurnOnTrial', false),
 	      canTurnOnDemo: this.getVariable('canTurnOnDemo', false),
 	      editingBookingId: this.getVariable('editingBookingId', 0),
+	      draggedBookingId: 0,
+	      draggedBookingResourceId: 0,
+	      resizedBookingId: 0,
 	      isLoaded: false,
 	      zoom: 1,
 	      expanded: false,
@@ -43,6 +46,11 @@ this.BX.Booking = this.BX.Booking || {};
 	      totalNewClientsToday: this.getVariable('totalNewClientsToday', 0),
 	      moneyStatistics: this.getVariable('moneyStatistics', null),
 	      intersections: {},
+	      quickFilter: {
+	        hovered: {},
+	        active: {},
+	        ignoredBookingIds: {}
+	      },
 	      timezone: this.getVariable('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone),
 	      mousePosition: {
 	        top: 0,
@@ -52,6 +60,8 @@ this.BX.Booking = this.BX.Booking || {};
 	      isShownTrialPopup: false
 	    };
 	  }
+
+	  // eslint-disable-next-line max-lines-per-function
 	  getGetters() {
 	    return {
 	      /** @function interface/isFeatureEnabled */
@@ -68,6 +78,14 @@ this.BX.Booking = this.BX.Booking || {};
 	      editingBookingId: state => state.editingBookingId,
 	      /** @function interface/isEditingBookingMode */
 	      isEditingBookingMode: state => state.editingBookingId > 0,
+	      /** @function interface/draggedBookingId */
+	      draggedBookingId: state => state.draggedBookingId,
+	      /** @function interface/draggedBookingResourceId */
+	      draggedBookingResourceId: state => state.draggedBookingResourceId,
+	      /** @function interface/resizedBookingId */
+	      resizedBookingId: state => state.resizedBookingId,
+	      /** @function interface/isDragMode */
+	      isDragMode: state => state.draggedBookingId || state.resizedBookingId,
 	      /** @function interface/isLoaded */
 	      isLoaded: state => state.isLoaded,
 	      /** @function interface/zoom */
@@ -100,9 +118,14 @@ this.BX.Booking = this.BX.Booking || {};
 	      disabledBusySlots: state => state.disabledBusySlots,
 	      /** @function interface/resourcesIds */
 	      resourcesIds: (state, getters, rootState, rootGetters) => {
-	        const extraResourcesIds = new Set(state.resourcesIds);
-	        rootGetters[`${booking_const.Model.Bookings}/getByDate`](state.selectedDateTs).filter(booking => booking.counter > 0).forEach(booking => extraResourcesIds.add(booking.resourcesIds[0]));
-	        return [...extraResourcesIds];
+	        const extraResourcesIds = rootGetters[`${booking_const.Model.Bookings}/getByDate`](state.selectedDateTs).filter(booking => booking.counter > 0).map(booking => booking.resourcesIds[0]);
+	        const resourcesIds = [...new Set([...state.resourcesIds, ...extraResourcesIds])];
+	        const excludeResources = new Set(getters.getOccupancy(resourcesIds, Object.values(state.quickFilter.ignoredBookingIds)).filter(occupancy => Object.values(state.quickFilter.active).some(hour => {
+	          const fromTs = new Date(state.selectedDateTs).setHours(hour) - getters.offset;
+	          const toTs = new Date(state.selectedDateTs).setHours(hour + 1) - getters.offset;
+	          return toTs > occupancy.fromTs && fromTs < occupancy.toTs;
+	        })).flatMap(occupancy => occupancy.resourcesIds));
+	        return resourcesIds.filter(id => !excludeResources.has(id));
 	      },
 	      extraResourcesIds: (state, getters) => {
 	        const resourcesIds = state.resourcesIds;
@@ -130,12 +153,10 @@ this.BX.Booking = this.BX.Booking || {};
 	        }
 	        return state.counterMarks.filter(date => filterDates.includes(date));
 	      },
-	      /** @function interface/selectedIntersectingResourcesIds */
-	      selectedIntersectingResourcesIds: state => state.intersection.selectedIntersectingResourcesIds,
-	      /** @function interface/isMultipleIntersectionMode */
-	      isMultipleIntersectionMode: state => state.intersection.isMultipleMode,
 	      /** @function interface/intersections */
 	      intersections: state => state.intersections,
+	      /** @function interface/quickFilter */
+	      quickFilter: state => state.quickFilter,
 	      /** @function interface/timezone */
 	      timezone: state => state.timezone,
 	      /** @function interface/timezoneOffset */
@@ -157,14 +178,66 @@ this.BX.Booking = this.BX.Booking || {};
 	      /** @function interface/mousePosition */
 	      mousePosition: state => state.mousePosition,
 	      /** @function interface/isCurrentSenderAvailable */
-	      isCurrentSenderAvailable: state => state.isCurrentSenderAvailable
+	      isCurrentSenderAvailable: state => state.isCurrentSenderAvailable,
+	      /** @function interface/getColliding */
+	      getColliding: (state, getters) => {
+	        return (resourceId, excludedBookingIds) => [...getters.getOccupancy([resourceId], excludedBookingIds), ...Object.values(state.selectedCells).filter(cell => cell.resourceId === resourceId).map(cell => ({
+	          fromTs: cell.fromTs,
+	          toTs: cell.toTs,
+	          resourcesIds: [cell.resourceId]
+	        }))];
+	      },
+	      /** @function interface/getOccupancy */
+	      getOccupancy: (state, getters, rootState, rootGetters) => {
+	        return (resourcesIds, excludedBookingIds = []) => {
+	          const resources = new Set(resourcesIds);
+	          const bookings = rootGetters[`${booking_const.Model.Bookings}/get`].filter(booking => {
+	            const belongsToResources = booking.resourcesIds.some(id => resources.has(id));
+	            const isNotExcluded = !excludedBookingIds.includes(booking.id);
+	            return belongsToResources && isNotExcluded;
+	          }).map(booking => ({
+	            fromTs: booking.dateFromTs,
+	            toTs: booking.dateToTs,
+	            resourcesIds: booking.resourcesIds
+	          }));
+	          const busySlots = Object.values(state.busySlots).filter(busySlot => {
+	            const isDragOffHours = getters.isDragMode && busySlot.type === booking_const.BusySlot.OffHours;
+	            const isActive = !(busySlot.id in state.disabledBusySlots) && !isDragOffHours;
+	            const belongsToResources = resources.has(busySlot.resourceId);
+	            return isActive && belongsToResources;
+	          }).map(({
+	            fromTs,
+	            toTs,
+	            resourceId
+	          }) => ({
+	            fromTs,
+	            toTs,
+	            resourcesIds: [resourceId]
+	          }));
+	          return [...bookings, ...busySlots];
+	        };
+	      }
 	    };
 	  }
+
+	  // eslint-disable-next-line max-lines-per-function
 	  getActions() {
 	    return {
 	      /** @function interface/setEditingBookingId */
 	      setEditingBookingId: (store, editingBookingId) => {
 	        store.commit('setEditingBookingId', editingBookingId);
+	      },
+	      /** @function interface/setDraggedBookingId */
+	      setDraggedBookingId: (store, draggedBookingId) => {
+	        store.commit('setDraggedBookingId', draggedBookingId);
+	      },
+	      /** @function interface/setDraggedBookingResourceId */
+	      setDraggedBookingResourceId: (store, draggedBookingResourceId) => {
+	        store.commit('setDraggedBookingResourceId', draggedBookingResourceId);
+	      },
+	      /** @function interface/setResizedBookingId */
+	      setResizedBookingId: (store, resizedBookingId) => {
+	        store.commit('setResizedBookingId', resizedBookingId);
 	      },
 	      /** @function interface/setIsLoaded */
 	      setIsLoaded: (store, isLoaded) => {
@@ -285,6 +358,28 @@ this.BX.Booking = this.BX.Booking || {};
 	      setIntersections: (store, intersections) => {
 	        store.commit('setIntersections', intersections);
 	      },
+	      /** @function interface/hoverQuickFilter */
+	      hoverQuickFilter: (store, hour) => {
+	        store.commit('hoverQuickFilter', hour);
+	      },
+	      /** @function interface/fleeQuickFilter */
+	      fleeQuickFilter: (store, hour) => {
+	        store.commit('fleeQuickFilter', hour);
+	      },
+	      /** @function interface/activateQuickFilter */
+	      activateQuickFilter: (store, hour) => {
+	        store.commit('activateQuickFilter', hour);
+	        store.commit('clearQuickFilterIgnoredBookingIds');
+	      },
+	      /** @function interface/deactivateQuickFilter */
+	      deactivateQuickFilter: (store, hour) => {
+	        store.commit('deactivateQuickFilter', hour);
+	        store.commit('clearQuickFilterIgnoredBookingIds');
+	      },
+	      /** @function interface/addQuickFilterIgnoredBookingId */
+	      addQuickFilterIgnoredBookingId: (store, bookingId) => {
+	        store.commit('addQuickFilterIgnoredBookingId', bookingId);
+	      },
 	      /** @function interface/setMousePosition */
 	      setMousePosition: (store, mousePosition) => {
 	        store.commit('setMousePosition', mousePosition);
@@ -307,10 +402,21 @@ this.BX.Booking = this.BX.Booking || {};
 	      }
 	    };
 	  }
+
+	  // eslint-disable-next-line max-lines-per-function
 	  getMutations() {
 	    return {
 	      setEditingBookingId: (state, editingBookingId) => {
 	        state.editingBookingId = editingBookingId;
+	      },
+	      setDraggedBookingId: (state, draggedBookingId) => {
+	        state.draggedBookingId = draggedBookingId;
+	      },
+	      setResizedBookingId: (state, resizedBookingId) => {
+	        state.resizedBookingId = resizedBookingId;
+	      },
+	      setDraggedBookingResourceId: (state, draggedBookingResourceId) => {
+	        state.draggedBookingResourceId = draggedBookingResourceId;
 	      },
 	      setIsLoaded: (state, isLoaded) => {
 	        state.isLoaded = isLoaded;
@@ -403,6 +509,24 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      setIntersections: (state, intersections) => {
 	        state.intersections = intersections;
+	      },
+	      hoverQuickFilter: (state, hour) => {
+	        state.quickFilter.hovered[hour] = hour;
+	      },
+	      fleeQuickFilter: (state, hour) => {
+	        delete state.quickFilter.hovered[hour];
+	      },
+	      activateQuickFilter: (state, hour) => {
+	        state.quickFilter.active[hour] = hour;
+	      },
+	      deactivateQuickFilter: (state, hour) => {
+	        delete state.quickFilter.active[hour];
+	      },
+	      addQuickFilterIgnoredBookingId: (state, bookingId) => {
+	        state.quickFilter.ignoredBookingIds[bookingId] = bookingId;
+	      },
+	      clearQuickFilterIgnoredBookingIds: state => {
+	        state.quickFilter.ignoredBookingIds = {};
 	      },
 	      setMousePosition: (state, mousePosition) => {
 	        state.mousePosition = mousePosition;

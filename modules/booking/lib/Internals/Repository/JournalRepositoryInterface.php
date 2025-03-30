@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Internals\Repository;
 
-use Bitrix\Booking\Internals\Journal\JournalEvent;
-use Bitrix\Booking\Internals\Journal\JournalEventCollection;
-use Bitrix\Booking\Internals\Journal\JournalStatus;
+use Bitrix\Booking\Internals\Service\Journal\JournalEvent;
+use Bitrix\Booking\Internals\Service\Journal\JournalEventCollection;
+use Bitrix\Booking\Internals\Service\Journal\JournalStatus;
 
 interface JournalRepositoryInterface
 {

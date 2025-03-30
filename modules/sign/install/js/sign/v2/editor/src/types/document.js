@@ -1,4 +1,4 @@
-import type { DocumentInitiatedType } from 'sign.v2.document-setup';
+import type { DocumentInitiatedType } from 'sign.type';
 
 export type MemberItem = {
 	part: number,

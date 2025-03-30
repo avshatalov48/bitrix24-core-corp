@@ -46,6 +46,7 @@ class StyledPicture extends Payload implements IPayload
 		return json_encode([
 			'prompt' => $this->payload,
 			'markers' => $this->markers,
+			static::PROPERTY_CUSTOM_COST => $this->customCost
 		]);
 	}
 
@@ -56,7 +57,11 @@ class StyledPicture extends Payload implements IPayload
 		$prompt = $unpackedData['prompt'] ?? '';
 		$markers = $unpackedData['markers'] ?? [];
 
-		return (new self($prompt))->setMarkers($markers);
+		$payload = (new self($prompt))->setMarkers($markers);
+
+		static::setCustomCost($payload, $unpackedData);
+
+		return $payload;
 	}
 
 	private function prepareStylePrompt(string $promptCode): string

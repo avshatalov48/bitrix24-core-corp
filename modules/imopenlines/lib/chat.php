@@ -266,7 +266,12 @@ class Chat
 		$chatColorCode = '';
 		if ($params['USER_ID'])
 		{
-			$rawUser = UserTable::getById($params['USER_ID']);
+			$rawUser = UserTable::getByPrimary($params['USER_ID'], [
+				'select' => [
+					'PERSONAL_PHOTO',
+					'NAME',
+				]
+			]);
 			if ($user = $rawUser->fetch())
 			{
 				if ($user['PERSONAL_PHOTO'] > 0)
@@ -968,7 +973,7 @@ class Chat
 				}
 				if ($transferUserId > 0)
 				{
-					if (!$fakeRelation || in_array($mode, [self::TRANSFER_MODE_MANUAL], true))
+					if (!$fakeRelation || in_array($mode, [self::TRANSFER_MODE_MANUAL, self::TRANSFER_MODE_BOT], true))
 					{
 						$chat->AddUser($this->chat['ID'], $transferUserId, false, true);
 					}
@@ -984,11 +989,7 @@ class Chat
 				if (
 					$transferUserId > 0
 					&& $params['FROM'] > 0
-					&&
-					(
-						$mode === self::TRANSFER_MODE_MANUAL
-						|| $mode === self::TRANSFER_MODE_BOT
-					)
+					&& in_array($mode, [self::TRANSFER_MODE_MANUAL, self::TRANSFER_MODE_BOT], true)
 				)
 				{
 					$message = Loc::getMessage('IMOL_CHAT_TRANSFER_'.$userFrom->getGender(), [
@@ -1015,7 +1016,7 @@ class Chat
 				]);
 
 				if (
-					in_array($mode, [self::TRANSFER_MODE_MANUAL], true)
+					in_array($mode, [self::TRANSFER_MODE_MANUAL, self::TRANSFER_MODE_BOT], true)
 					&& $session->getData('STATUS') < Session::STATUS_ANSWER
 				)
 				{
@@ -1041,7 +1042,7 @@ class Chat
 					$updateDataSession['TIME_BOT'] = $currentDate->getTimestamp()-$session->getData('DATE_CREATE')->getTimestamp();
 				}
 
-				if ($mode === self::TRANSFER_MODE_MANUAL)
+				if (in_array($mode, [self::TRANSFER_MODE_MANUAL, self::TRANSFER_MODE_BOT], true))
 				{
 					$answerResult = $this->answer($transferUserId, false, true, true);
 					if ($answerResult->isSuccess())

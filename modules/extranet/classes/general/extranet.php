@@ -308,6 +308,16 @@ class CExtranet
 							}
 						}
 
+						if (preg_match('/^\/call\/(?:\?callId=|detail\/)(\d+)/', $curPage, $matches))
+						{
+							$uri = (new Uri($URLToRedirect . 'call/detail/' . $matches[1]));
+						}
+
+						if (preg_match('/^\/video\/([a-zA-Z0-9]+)/', $curPage, $matches))
+						{
+							$uri = (new Uri($URLToRedirect . 'video/' . $matches[1]));
+						}
+
 						$URLToRedirect = $uri->getLocator();
 					}
 				}

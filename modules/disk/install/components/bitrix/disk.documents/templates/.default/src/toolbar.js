@@ -71,6 +71,28 @@ export default class Toolbar
 		return null;
 	}
 
+	static createBoard()
+	{
+		const newTab = window.open('', '_blank');
+		BX.ajax.runAction('disk.integration.flipchart.createDocument')
+			.then(response => {
+				if (response.status === 'success' && response.data.file)
+				{
+					const manager = BX.Main.gridManager || BX.Main.tileGridManager;
+					const grid = manager.getById('diskDocumentsGrid')?.instance;
+					if (grid)
+					{
+						grid.reload();
+					}
+
+					if (response.data.viewUrl)
+					{
+						newTab.location.href = response.data.viewUrl;
+					}
+				}
+			});
+	}
+
 	static createDocx(service)
 	{
 		const code = this.resolveServiceCode(service);

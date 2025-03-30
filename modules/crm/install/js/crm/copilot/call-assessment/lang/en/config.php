@@ -27,7 +27,7 @@ $MESS["CRM_COPILOT_CALL_ASSESSMENT_PAGE_CLIENT_TYPE_RETURN_CUSTOMER_DESCRIPTION"
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_PAGE_CLIENT_TYPE_RETURN_CUSTOMER_TITLE"] = "Repeat contact";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL"] = "Results and notifications";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_DESCRIPTION"] = "CoPilot will analyze the customer phone call and match it against a sample script to derive the script match score. You can specify score threshold values to qualify the call as good or bad.";
-$MESS["CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_HIGH_BORDER_ADDITIONAL"] = "This score will be visible in the timeline.";
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_HIGH_BORDER_ADDITIONAL"] = "This score will be visible in the timeline";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_HIGH_BORDER_DESCRIPTION"] = "CoPilot will qualify the call as good if the score is above or equal to this value.";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_HIGH_BORDER_TITLE"] = "Good call";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_LOW_BORDER_ADDITIONAL"] = "This score will be visible in the timeline; a special tag will be added to the kanban board.";

@@ -17,6 +17,7 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Sign\Document;
 use Bitrix\Sign\Internal;
 use Bitrix\Sign\Item;
+use Bitrix\Sign\Model\ItemBinder\DocumentBinder;
 use Bitrix\Sign\Type\Document\EntityType;
 use Bitrix\Sign\Type\Document\InitiatedByType;
 use Bitrix\Sign\Type\Document\SchemeType;
@@ -85,10 +86,16 @@ class DocumentRepository
 			->setHcmlinkCompanyId($item->hcmLinkCompanyId)
 			->setDateStatusChanged($item->dateStatusChanged)
 			->setGroupId($item->groupId)
+			->setRepresentativeId($item->representativeId)
 			->save()
 		;
 
 		$item->id = $addResult->getId();
+
+		if ($addResult->isSuccess())
+		{
+			$item->initOriginal();
+		}
 
 		return $addResult->setData(['document' => $item]);
 	}
@@ -112,46 +119,13 @@ class DocumentRepository
 			return (new UpdateResult())->addError(new Error('Document not found'));
 		}
 
-		if (isset($item->blankId))
-		{
-			$document->setBlankId($item->blankId);
-		}
+		$binder = new DocumentBinder($item, $document, $this);
+		$binder->setChangedItemPropertiesToModel();
 
-		if (isset($item->uid))
+		if ($document->isUidChanged())
 		{
-			$document->setUid($item->uid);
 			// Backward compatibility
 			$document->setHash($item->uid);
-		}
-
-		if (isset($item->title))
-		{
-			$document->setTitle($item->title);
-		}
-
-		if (isset($item->status))
-		{
-			$document->setStatus($item->status);
-		}
-
-		if (isset($item->langId))
-		{
-			$document->setLangId($item->langId);
-		}
-
-		if (isset($item->entityId))
-		{
-			$document->setEntityId($item->entityId);
-		}
-
-		if (isset($item->entityType))
-		{
-			$document->setEntityType($item->entityType);
-		}
-
-		if (isset($item->resultFileId))
-		{
-			$document->setResultFileId($item->resultFileId);
 		}
 
 		if (isset($item->scenario))
@@ -161,106 +135,20 @@ class DocumentRepository
 			{
 				return (new Result())->addError(new Error("Scenario with name: `{$item->scenario}` doesnt exist"));
 			}
-
-			$document->setScenario($scenarioId);
 		}
 
-		if (isset($item->companyUid))
-		{
-			$document->setCompanyUid($item->companyUid);
-		}
+		$document->setDateModify(new DateTime());
 
-		if (isset($item->representativeId))
-		{
-			$document->setRepresentativeId($item->representativeId);
-		}
-
-		if (isset($item->dateCreate))
-		{
-			$document->setDateCreate($item->dateCreate);
-		}
-
-		if (isset($item->dateSign))
-		{
-			$document->setDateSign($item->dateSign);
-		}
-
-		if (isset($item->parties))
-		{
-			$document->setParties($item->parties);
-		}
-
-		if (isset($item->regionDocumentType))
-		{
-			$document->setRegionDocumentType($item->regionDocumentType);
-		}
-
-		if (isset($item->externalId))
-		{
-			$document->setExternalId($item->externalId);
-		}
-
-		$document->setGroupId($item->groupId);
-
-		if (isset($item->scheme))
-		{
-			$document->setScheme(
-				$this->getSchemeIdByType($item->scheme),
-			);
-		}
-
-		if (isset($item->stoppedById))
-		{
-			$document->setStoppedById($item->stoppedById);
-		}
-
-		if (isset($item->externalDateCreate))
-		{
-			$document->setExternalDateCreate($item->externalDateCreate);
-		}
-
-		if (isset($item->providerCode))
-		{
-			$document->setProviderCode($item->providerCode);
-		}
-
-		if (isset($item->templateId))
-		{
-			$document->setTemplateId($item->templateId);
-		}
-
-		if (isset($item->chatId))
-		{
-			$document->setChatId($item->chatId);
-		}
-
-		if (isset($item->createdFromDocumentId))
-		{
-			$document->setCreatedFromDocumentId($item->createdFromDocumentId);
-		}
-
-		if (isset($item->initiatedByType))
-		{
-			$document->setInitiatedByType($item->initiatedByType->toInt());
-		}
-
-		if (isset($item->hcmLinkCompanyId))
-		{
-			$document->setHcmlinkCompanyId(
-				empty($item->hcmLinkCompanyId) ? null : $item->hcmLinkCompanyId,
-			);
-		}
-
-		if (isset($item->dateStatusChanged))
-		{
-			$document->setDateStatusChanged($item->dateStatusChanged);
-		}
-
-		$document->setMeta($this->getModelMetaByItem($item));
-
-		return $document->save()
+		$result = $document->save()
 			->setData(['document' => $item])
 		;
+
+		if ($result->isSuccess())
+		{
+			$item->initOriginal();
+		}
+
+		return $result;
 	}
 
 	public function unsetEntityId(Item\Document $item): Result
@@ -445,7 +333,7 @@ class DocumentRepository
 		);
 	}
 
-	private function getScenarioIdByName(string $scenarioName): ?int
+	public function getScenarioIdByName(string $scenarioName): ?int
 	{
 		return self::SCENARIO_NAME_TO_ID_MAP[$scenarioName] ?? null;
 	}
@@ -456,7 +344,7 @@ class DocumentRepository
 		return $scenarioIdToNameMap[$scenarioId] ?? null;
 	}
 
-	private function getSchemeIdByType(?string $scheme): int
+	public function getSchemeIdByType(?string $scheme): int
 	{
 		return self::SCHEME_TYPE_TO_ID_MAP[$scheme] ?? 0;
 	}
@@ -514,7 +402,7 @@ class DocumentRepository
 		));
 	}
 
-	private function getModelMetaByItem(Item\Document $item): array
+	public function getModelMetaByItem(Item\Document $item): array
 	{
 		$documentModelMeta = [];
 

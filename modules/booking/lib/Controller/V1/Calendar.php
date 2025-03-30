@@ -6,13 +6,17 @@ namespace Bitrix\Booking\Controller\V1;
 
 use Bitrix\Booking\Controller\V1\Response\CalendarGetResourceOccupationResponse;
 use Bitrix\Booking\Controller\V1\Response\CalendarGetBookingsDatesResponse;
+use Bitrix\Booking\Entity\Booking\BookingCollection;
 use Bitrix\Booking\Entity\DatePeriod;
 use Bitrix\Booking\Entity\DateTimeCollection;
 use Bitrix\Booking\Entity\Resource\ResourceCollection;
-use Bitrix\Booking\Internals\Query\FreeTime\MultiResourceEachDayFirstOccurrenceHandler;
-use Bitrix\Booking\Internals\Query\FreeTime\MultiResourceEachDayFirstOccurrenceRequest;
 use Bitrix\Booking\Provider\BookingProvider;
+use Bitrix\Booking\Provider\Params\Booking\BookingFilter;
+use Bitrix\Booking\Provider\Params\Booking\BookingSelect;
+use Bitrix\Booking\Provider\Params\GridParams;
+use Bitrix\Booking\Provider\Params\Resource\ResourceFilter;
 use Bitrix\Booking\Provider\ResourceProvider;
+use Bitrix\Booking\Provider\TimeProvider;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Booking\Entity;
 use Bitrix\Main\Request;
@@ -44,42 +48,32 @@ class Calendar extends BaseController
 		$dateFrom = (new DateTimeImmutable('@' . $dateFromTs))->setTimezone(new DateTimeZone($timezone));
 		$dateTo = (new DateTimeImmutable('@' . $dateToTs))->setTimezone(new DateTimeZone($timezone));
 
-		$resourceCollections = [];
-		foreach ($resources as $resourceIds)
-		{
-			$resourceCollections[] = $this->resourceProvider->getList(
-				$userId,
-				null,
-				null,
-				['ID' => $resourceIds]
-			);
-		}
+		$resourceCollection = $this->getResourceCollection($resources, $userId);
 
-		$multiResourceEachDayFirstOccurrenceResponse = (new MultiResourceEachDayFirstOccurrenceHandler())(
-			new MultiResourceEachDayFirstOccurrenceRequest(
-				resourceCollections: $resourceCollections,
+		$multiResourceEachDayFirstOccurrenceResponse = (new TimeProvider())
+			->getMultiResourceEachDayFirstOccurrence(
+				resourceCollections: [$resourceCollection],
 				eventCollection:
-					(empty($resourceIds))
-						? new Entity\Booking\BookingCollection()
-						: $this->bookingProvider->getList(
-							userId: $userId,
-							filter: [
-								'RESOURCE_ID' => $this->getAllResourceIds($resourceCollections),
-								'WITHIN' => [
-									'DATE_FROM' => $dateFrom->getTimestamp(),
-									'DATE_TO' => $dateTo->getTimestamp(),
-								],
+				(empty($resourceCollection->isEmpty()))
+					? new Entity\Booking\BookingCollection()
+					: $this->bookingProvider->getList(
+					gridParams: new GridParams(
+						filter: new BookingFilter([
+							'RESOURCE_ID' => $this->getAllResourceIds([$resourceCollection]),
+							'WITHIN' => [
+								'DATE_FROM' => $dateFrom->getTimestamp(),
+								'DATE_TO' => $dateTo->getTimestamp(),
 							],
-							select: [
-								'RESOURCES',
-							],
-						),
+						]),
+						select: new BookingSelect(['RESOURCES']),
+					),
+					userId: $userId,
+				),
 				searchDates: (new DatePeriod($dateFrom, $dateTo))->getDateTimeCollection(),
-			),
-		);
+			);
 
 		return new CalendarGetResourceOccupationResponse(
-			freeDates: $multiResourceEachDayFirstOccurrenceResponse->foundDates,
+			freeDates: $multiResourceEachDayFirstOccurrenceResponse['foundDates'],
 		);
 	}
 
@@ -90,55 +84,72 @@ class Calendar extends BaseController
 		array $filter = [],
 	): CalendarGetBookingsDatesResponse
 	{
+		$dateFrom = (new DateTimeImmutable('@' . $dateFromTs))->setTimezone(new DateTimeZone($timezone));
+		$dateTo = (new DateTimeImmutable('@' . $dateToTs))->setTimezone(new DateTimeZone($timezone));
+
+		$bookings = $this->getBookingsByFilter(
+			userId: (int)CurrentUser::get()->getId(),
+			dateFrom: $dateFrom,
+			dateTo: $dateTo,
+			filter: $filter,
+		);
+
 		return new CalendarGetBookingsDatesResponse(
 			foundDates: $this->getBookingsDates(
-				$timezone,
-				$dateFromTs,
-				$dateToTs,
-				$filter
+				bookingCollection: $bookings,
+				dateFrom: $dateFrom,
+				dateTo: $dateTo,
+				withCounters: false,
 			),
 			foundDatesWithCounters: $this->getBookingsDates(
-				$timezone,
-				$dateFromTs,
-				$dateToTs,
-				array_merge(
-					$filter,
-					[
-						'HAS_COUNTERS_USER_ID' => (int)CurrentUser::get()->getId(),
-					]
-				)
+				bookingCollection: $bookings,
+				dateFrom: $dateFrom,
+				dateTo: $dateTo,
+				withCounters: true,
 			),
 		);
 	}
 
-	private function getBookingsDates(
-		string $timezone,
-		int $dateFromTs,
-		int $dateToTs,
-		array $filter = [],
-	): DateTimeCollection
+	private function getBookingsByFilter(
+		int $userId,
+		DateTimeImmutable $dateFrom,
+		DateTimeImmutable $dateTo,
+		array $filter = []
+	): BookingCollection
 	{
-		$dateFrom = (new DateTimeImmutable('@' . $dateFromTs))->setTimezone(new DateTimeZone($timezone));
-		$dateTo = (new DateTimeImmutable('@' . $dateToTs))->setTimezone(new DateTimeZone($timezone));
-
-		$bookingsCollection = $this->bookingProvider->getList(
-			userId: (int)CurrentUser::get()->getId(),
-			filter: array_merge(
-				$filter,
-				[
-					'WITHIN' => [
-						'DATE_FROM' => $dateFrom->getTimestamp(),
-						'DATE_TO' => $dateTo->getTimestamp(),
-					],
-				]
+		$bookings = $this->bookingProvider->getList(
+			gridParams: new GridParams(
+				filter: new BookingFilter(array_merge(
+					$filter,
+					[
+						'WITHIN' => [
+							'DATE_FROM' => $dateFrom->getTimestamp(),
+							'DATE_TO' => $dateTo->getTimestamp(),
+						],
+					]
+				))
 			),
+			userId: $userId,
 		);
 
+		$this->bookingProvider->withCounters($bookings, $userId);
+
+		return $bookings;
+	}
+
+	private function getBookingsDates(
+		BookingCollection $bookingCollection,
+		DateTimeImmutable $dateFrom,
+		DateTimeImmutable $dateTo,
+		bool $withCounters = false,
+	): DateTimeCollection
+	{
 		$foundDates = new DateTimeCollection();
 		$searchDates = (new DatePeriod($dateFrom, $dateTo))->getDateTimeCollection();
+
 		foreach ($searchDates as $searchDate)
 		{
-			foreach ($bookingsCollection as $booking)
+			foreach ($bookingCollection as $booking)
 			{
 				$dayDateFrom = DateTimeImmutable::createFromFormat(
 					'Y-m-d H:i:s',
@@ -148,9 +159,19 @@ class Calendar extends BaseController
 
 				if ($booking->doEventsIntersect(new DatePeriod($dayDateFrom, $dayDateTo)))
 				{
-					$foundDates->add($searchDate);
+					if ($withCounters === false)
+					{
+						$foundDates->add($searchDate);
 
-					break;
+						break;
+					}
+
+					if ($booking->getCounter() > 0)
+					{
+						$foundDates->add($searchDate);
+
+						break;
+					}
 				}
 			}
 		}
@@ -175,5 +196,32 @@ class Calendar extends BaseController
 		}
 
 		return array_unique($result);
+	}
+
+	private function getResourceCollection(array $resources, int $userId): ResourceCollection
+	{
+		$resourceIdsToSelect = [];
+
+		foreach ($resources as $resourceIds)
+		{
+			foreach ($resourceIds as $resourceId)
+			{
+				$resourceIdsToSelect[] = $resourceId;
+			}
+		}
+
+		if (!empty($resourceIdsToSelect))
+		{
+			return $this->resourceProvider->getList(
+				gridParams: new GridParams(
+					filter: new ResourceFilter([
+						'ID' => $resourceIdsToSelect],
+					),
+				),
+				userId: $userId,
+			);
+		}
+
+		return new ResourceCollection(...[]);
 	}
 }

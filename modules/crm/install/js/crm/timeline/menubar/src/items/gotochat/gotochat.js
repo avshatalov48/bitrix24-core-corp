@@ -3,7 +3,7 @@ import { ConditionChecker, Types as SenderTypes } from 'crm.messagesender';
 import { ajax, Dom, Event, Loc, Tag, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
-import { MenuItem, MenuItemOptions, MenuManager, Menu } from 'main.popup';
+import { Menu, MenuItem, MenuItemOptions, MenuManager } from 'main.popup';
 import { Dialog } from 'ui.entity-selector';
 import 'ui.icon-set.actions';
 import { Icon } from 'ui.icon-set.api.core';
@@ -38,6 +38,7 @@ export default class GoToChat extends Item
 	toName: ?string = null;
 	toPhoneId: ?string = null;
 	openLineItems: OpenLinesList = null;
+	hasClients: boolean = false;
 
 	isFetchedConfig: boolean = false;
 	isSending: boolean = false;
@@ -136,11 +137,14 @@ export default class GoToChat extends Item
 			openLineItems,
 			marketplaceUrl,
 			services,
+			hasClients,
 		} = data;
 
 		this.currentChannelId = currentChannelId;
 		this.channels = channels;
+
 		this.communications = communications;
+		this.hasClients = hasClients;
 		this.openLineItems = openLineItems;
 		this.marketplaceUrl = marketplaceUrl;
 		this.#services = services;
@@ -153,6 +157,10 @@ export default class GoToChat extends Item
 	{
 		if (this.communications.length === 0)
 		{
+			this.toPhoneId = null;
+			this.selectedClient = null;
+			this.toName = null;
+
 			return;
 		}
 
@@ -790,7 +798,7 @@ export default class GoToChat extends Item
 			await this.#showEditorInEditModePopup();
 		}
 
-		if (!this.selectedClient)
+		if (!this.selectedClient && !this.hasClients)
 		{
 			this.#showNotSelectedClientNotify();
 

@@ -12,6 +12,7 @@ class Context
 	protected $isCheckAccess;
 	protected $region;
 	protected $culture;
+	protected $userId = 0;
 
 	public function __construct()
 	{
@@ -26,6 +27,7 @@ class Context
 	{
 		$context = new static();
 		$context->setIsCheckAccess($document->getIsCheckAccess());
+		$context->setUserId($document->getUserId());
 
 		$template = $document->getTemplate();
 		if($template)
@@ -51,6 +53,18 @@ class Context
 	public function setIsCheckAccess(bool $isCheckAccess): Context
 	{
 		$this->isCheckAccess = $isCheckAccess;
+		return $this;
+	}
+
+	public function getUserId(): int
+	{
+		return $this->userId;
+	}
+
+	public function setUserId(int $userId): Context
+	{
+		$this->userId = $userId;
+
 		return $this;
 	}
 

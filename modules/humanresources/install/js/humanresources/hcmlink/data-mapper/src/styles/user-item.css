@@ -8,10 +8,6 @@
 	background-color: var(--ui-color-palette-white-base);
 }
 
-.hr-hcmlink-item-user__container_person {
-	border: 2px solid #FFE1A6;
-}
-
 .hr-hcmlink-item-user_info {
 	display: flex;
 	flex-direction: column;

@@ -4,13 +4,14 @@ namespace Bitrix\HumanResources\Access\Role\System;
 
 use Bitrix\HumanResources\Access\Permission\PermissionDictionary;
 use Bitrix\HumanResources\Access\Permission\PermissionVariablesDictionary;
-use Bitrix\HumanResources\Access\Role\RoleDictionary;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
 
 class Employee extends Base
 {
 	public function getPermissions(): array
 	{
-		return [
+		$basePermissions = [
 			PermissionDictionary::HUMAN_RESOURCES_STRUCTURE_VIEW => PermissionVariablesDictionary::VARIABLE_ALL,
 			PermissionDictionary::HUMAN_RESOURCES_DEPARTMENT_CREATE => PermissionVariablesDictionary::VARIABLE_NONE,
 			PermissionDictionary::HUMAN_RESOURCES_DEPARTMENT_DELETE => PermissionVariablesDictionary::VARIABLE_NONE,
@@ -23,5 +24,12 @@ class Employee extends Base
 			PermissionDictionary::HUMAN_RESOURCES_CHAT_UNBIND_TO_STRUCTURE => PermissionVariablesDictionary::VARIABLE_NONE,
 			PermissionDictionary::HUMAN_RESOURCES_CHANEL_UNBIND_TO_STRUCTURE => PermissionVariablesDictionary::VARIABLE_NONE,
 		];
+
+		if (Loader::includeModule('bitrix24'))
+		{
+			$basePermissions[PermissionDictionary::HUMAN_RESOURCES_USER_INVITE] = Option::get('bitrix24', 'allow_invite_users', 'N') === 'Y' ? 1 : 0;
+		}
+
+		return $basePermissions;
 	}
 }

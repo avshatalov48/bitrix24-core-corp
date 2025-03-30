@@ -135,14 +135,7 @@ abstract class BaseCollection implements ItemCollection
 
 	public function empty(): bool
 	{
-		try
-		{
-			return $this->getIterator()->count() === 0;
-		}
-		catch (\Exception)
-		{
-			return true;
-		}
+		return empty($this->itemMap);
 	}
 
 	public function count(): int

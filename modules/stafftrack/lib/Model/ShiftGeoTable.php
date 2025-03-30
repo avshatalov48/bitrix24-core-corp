@@ -4,6 +4,7 @@ namespace Bitrix\StaffTrack\Model;
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\TextField;
 
@@ -36,6 +37,8 @@ use Bitrix\Main\ORM\Fields\TextField;
 
 class ShiftGeoTable extends DataManager
 {
+	use DeleteByFilterTrait;
+
 	/**
 	 * Returns DB table name for entity.
 	 *

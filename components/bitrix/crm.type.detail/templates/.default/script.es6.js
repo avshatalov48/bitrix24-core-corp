@@ -2,12 +2,13 @@ import { Builder, Dictionary } from 'crm.integration.analytics';
 import { Router } from 'crm.router';
 import { ToolbarComponent } from 'crm.toolbar-component';
 import { CustomSection, TypeModel, TypeModelData } from 'crm.type-model';
-import { Dom, Event, Loc, Reflection, Tag, Text, Type, Uri } from 'main.core';
+import { Dom, Event, Loc, Reflection, Tag, Text, Type, Uri, Runtime } from 'main.core';
 import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { sendData as sendAnalyticsData } from 'ui.analytics';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { TagSelector } from 'ui.entity-selector';
+import { Alert, AlertSize, AlertColor } from 'ui.alerts';
 
 declare type Preset = {
 	fields: {
@@ -60,6 +61,7 @@ class TypeDetail
 	isSaveFromTypeDetail: boolean = true;
 	isCreateSectionsViaAutomatedSolutionDetails: boolean = false;
 	canEditAutomatedSolution: boolean = false;
+	permissionsUrl: ?string = null;
 
 	#isCancelEventRegistered: boolean = false;
 
@@ -79,6 +81,7 @@ class TypeDetail
 		restrictionErrorMessage: string,
 		restrictionSliderCode: ?string,
 		canEditAutomatedSolution: boolean,
+		permissionsUrl: ?string,
     })
 	{
 		if (Type.isPlainObject(params))
@@ -99,6 +102,10 @@ class TypeDetail
 			this.isExternal = Boolean(params.isExternal);
 			this.isCreateSectionsViaAutomatedSolutionDetails = Boolean(params.isCreateSectionsViaAutomatedSolutionDetails);
 			this.canEditAutomatedSolution = Boolean(params.canEditAutomatedSolution);
+			if (Type.isStringFilled(params.permissionsUrl))
+			{
+				this.permissionsUrl = params.permissionsUrl;
+			}
 		}
 
 		this.buttonsPanel = document.getElementById('ui-button-panel');
@@ -811,6 +818,8 @@ class TypeDetail
 			customSections: this.type.getCustomSections() || [],
 			isCreateSectionsViaAutomatedSolutionDetails: this.isCreateSectionsViaAutomatedSolutionDetails,
 			canEditAutomatedSolution: this.canEditAutomatedSolution,
+			isNew: this.isNew,
+			permissionsUrl: this.permissionsUrl,
 		});
 	}
 
@@ -1062,14 +1071,19 @@ class CustomSectionsController
 	container: HTMLDivElement;
 	selectorContainer: HTMLDivElement;
 	customSections: CustomSection[];
+	originallySelectedCustomSection: ?CustomSection;
 	selector: TagSelector;
 	settingsContainer: HTMLDivElement;
 	sectionsListContainer: HTMLDivElement;
 	saveButton: Element;
 	cancelButton: Element;
 	addSectionItemButton: Element;
+	isNew: boolean;
 	isCreateSectionsViaAutomatedSolutionDetails: false;
 	canEditAutomatedSolution: false;
+	permissionsResetAlert: ?Alert = null;
+	isPermissionsResetAlertShown: boolean = false;
+	permissionsUrl: ?string = null;
 
 	constructor(options: {
 		switcher: {},
@@ -1078,6 +1092,8 @@ class CustomSectionsController
 		customSections?: CustomSection[],
 		isCreateSectionsViaAutomatedSolutionDetails: boolean,
 		canEditAutomatedSolution: boolean,
+		isNew: boolean,
+		permissionsUrl: ?string,
 	})
 	{
 		this.switcher = options.switcher;
@@ -1091,7 +1107,11 @@ class CustomSectionsController
 		{
 			this.customSections = [];
 		}
+		this.originallySelectedCustomSection = this.customSections.find((section: CustomSection) => section.isSelected)
+			?? null
+		;
 
+		this.isNew = Type.isBoolean(options.isNew) ? options.isNew : false;
 		if (Type.isBoolean(options.isCreateSectionsViaAutomatedSolutionDetails))
 		{
 			this.isCreateSectionsViaAutomatedSolutionDetails = options.isCreateSectionsViaAutomatedSolutionDetails;
@@ -1100,6 +1120,11 @@ class CustomSectionsController
 		if (Type.isBoolean(options.canEditAutomatedSolution))
 		{
 			this.canEditAutomatedSolution = options.canEditAutomatedSolution;
+		}
+
+		if (Type.isStringFilled(options.permissionsUrl))
+		{
+			this.permissionsUrl = options.permissionsUrl;
 		}
 
 		this.initSelector();
@@ -1145,6 +1170,7 @@ class CustomSectionsController
 			}
 		});
 
+		const adjustResetPermissionsAlertDebounce = Runtime.debounce(this.adjustResetPermissionsAlert.bind(this), 200);
 		const tagSelectorOptions = {
 			multiple: false,
 			dialogOptions: {
@@ -1153,6 +1179,10 @@ class CustomSectionsController
 				dropdownMode: true,
 				height: 200,
 				showAvatars: false,
+			},
+			events: {
+				onAfterTagRemove: adjustResetPermissionsAlertDebounce,
+				onAfterTagAdd: adjustResetPermissionsAlertDebounce,
 			},
 		};
 
@@ -1182,6 +1212,63 @@ class CustomSectionsController
 
 		this.selector = new TagSelector(tagSelectorOptions);
 		this.selector.renderTo(this.selectorContainer);
+	}
+
+	adjustResetPermissionsAlert(): void
+	{
+		if (
+			!FeatureManager.getInstance().isPermissionsLayoutV2Enabled()
+			|| this.permissionsUrl === null
+			|| this.isNew
+		)
+		{
+			return;
+		}
+
+		const selectedItems = this.selector.getDialog().getSelectedItems();
+		const item = selectedItems[0] ?? null;
+		const alert = this.getPermissionsResetAlert();
+
+		const isItemChanged = item?.getId() !== this.originallySelectedCustomSection?.id && this.switcher.isChecked();
+		const isDetachCustomSection = this.originallySelectedCustomSection && !this.switcher.isChecked();
+
+		const isShow = isItemChanged || isDetachCustomSection;
+		if (isShow)
+		{
+			if (!this.isPermissionsResetAlertShown)
+			{
+				this.isPermissionsResetAlertShown = true;
+				alert.renderTo(this.container.parentNode);
+				alert.show();
+			}
+
+			return;
+		}
+
+		if (this.isPermissionsResetAlertShown)
+		{
+			this.isPermissionsResetAlertShown = false;
+			alert.hide();
+		}
+	}
+
+	getPermissionsResetAlert(): Alert
+	{
+		if (this.permissionsResetAlert === null)
+		{
+			const text = Loc.getMessage('CRM_TYPE_DETAIL_PERMISSIONS_WILL_BE_RESET_ALERT')
+				.replace('#LINK#', this.permissionsUrl)
+			;
+
+			this.permissionsResetAlert = new Alert({
+				size: AlertSize.MD,
+				color: AlertColor.WARNING,
+				customClass: 'crm-type-permissions-reset-alert',
+				text,
+			});
+		}
+
+		return this.permissionsResetAlert;
 	}
 
 	reInitSelector()
@@ -1218,6 +1305,7 @@ class CustomSectionsController
 		this.onAutomatedSolutionUpdate = this.onAutomatedSolutionUpdate.bind(this);
 
 		EventEmitter.subscribe(this.switcher, 'toggled', this.adjust);
+		EventEmitter.subscribe(this.switcher, 'toggled', this.adjustResetPermissionsAlert.bind(this));
 		if (this.isCreateSectionsViaAutomatedSolutionDetails)
 		{
 			ToolbarComponent.Instance.subscribeAutomatedSolutionUpdatedEvent(
@@ -1516,3 +1604,34 @@ class CustomSectionItem
 		return this.value || '';
 	}
 }
+
+class FeatureManager
+{
+	static #instance: ?FeatureManager = null;
+
+	#isPermissionsLayoutV2Enabled: boolean = false;
+
+	static getInstance(): FeatureManager
+	{
+		if (this.#instance === null)
+		{
+			this.#instance = new FeatureManager();
+		}
+
+		return this.#instance;
+	}
+
+	setPermissionsLayoutV2Enabled(isEnabled: boolean): FeatureManager
+	{
+		this.#isPermissionsLayoutV2Enabled = isEnabled;
+
+		return this;
+	}
+
+	isPermissionsLayoutV2Enabled(): boolean
+	{
+		return this.#isPermissionsLayoutV2Enabled;
+	}
+}
+
+namespace.FeatureManager = FeatureManager;

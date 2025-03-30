@@ -81,7 +81,7 @@ export const ConfirmationPopup = {
 		},
 		performAction(): Promise<void>
 		{
-			if (this.lockActionButton)
+			if (this.lockActionButton || this.showActionButtonLoader)
 			{
 				return;
 			}

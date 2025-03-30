@@ -21,6 +21,7 @@ if (empty($arResult['IMAGES']) && empty($arResult['FILES']))
 	'disk.document',
 	'disk.viewer.actions',
 	'disk.viewer.document-item',
+	'disk.viewer.board-item',
 ]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/disk/css/legacy_uf_common.css');

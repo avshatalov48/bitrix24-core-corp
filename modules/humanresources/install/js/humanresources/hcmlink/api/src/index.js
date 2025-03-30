@@ -6,11 +6,17 @@ type ApiOptions = {
 	token: string;
 };
 
-type MapperConfig = {
-	items: Array,
-	countMappedPersons: number,
-	countUnmappedPersons: number,
+type LoadMapperConfig = {
+	items: $ReadOnlyArray<{
+		id: number,
+		name: string,
+		avatarLink: string,
+		position: string,
+		suggestId: number | null
+	}>,
 	isHideInfoAlert: boolean,
+	countUnmappedPersons: number,
+	countMappedPersons: number,
 	mappedUserIds: Array,
 };
 
@@ -33,12 +39,12 @@ export class Api
 		return this.#post('humanresources.HcmLink.Mapper.save', data, true);
 	}
 
-	loadMapperConfig(data): Promise<MapperConfig>
+	loadMapperConfig(data): Promise<LoadMapperConfig>
 	{
 		return this.#post('humanresources.HcmLink.Mapper.load', data, true);
 	}
 
-	getJobStatus(data): Promise<{status?: string, jobId?: number}>
+	getJobStatus(data): Promise<{status?: string, jobId?: number, finishedAt: string}>
 	{
 		return this.#post('humanresources.HcmLink.Mapper.getJobStatus', data, true);
 	}
@@ -61,6 +67,16 @@ export class Api
 	createUpdateEmployeeListJob(data)
 	{
 		return this.#post('humanresources.HcmLink.Mapper.start', data, true);
+	}
+
+	getLastJob(data): Promise<{status?: string, jobId?: number, finishedAt: string}>
+	{
+		return this.#post('humanresources.HcmLink.Mapper.getLastJob', data, true);
+	}
+
+	cancelJob(data): Promise<void>
+	{
+		return this.#post('humanresources.HcmLink.Mapper.cancelJob', data, true);
 	}
 
 	createCompleteMappingEmployeeListJob(data)

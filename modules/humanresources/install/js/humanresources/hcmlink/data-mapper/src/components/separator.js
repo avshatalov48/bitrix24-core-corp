@@ -1,5 +1,7 @@
 import 'ui.icon-set.actions';
 
+import '../styles/separator.css';
+
 export const Separator = {
 	name: 'Separator',
 
@@ -8,25 +10,36 @@ export const Separator = {
 			required: true,
 			type: Boolean,
 		},
+		mode: {
+			type: String,
+			required: true,
+		},
 	},
 
 	computed: {
-		styleObject()
+		styleObject(): Object
 		{
 			return {
 				'--ui-icon-set__icon-color': this.hasLink ? '#FFC34D' : '#D5D7DB',
+			};
+		},
+		iconClasses(): Object
+		{
+			return {
+				'--arrow-right': this.hasLink,
+				'--delete-hyperlink': !this.hasLink,
+				'--color-orange': this.hasLink && this.mode === 'direct',
+				'--color-blue': this.hasLink && this.mode === 'reverse',
 			};
 		},
 	},
 
 	template: `
 		<div class="hr-hcmlink-separator__container" ref="container">
-            <div 
-	            style="--ui-icon-set__icon-size: 24px;"
-	            :style="styleObject"
-                class="ui-icon-set"
-	            :class="[ hasLink ? '--arrow-right' : '--delete-hyperlink']"
-            ></div>
+			<div
+				class="ui-icon-set hr-hcmlink-separator__container-icon"
+				:class="iconClasses"
+			></div>
 		</div>
 	`,
 };

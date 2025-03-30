@@ -16,6 +16,7 @@ return [
 		'sign.v2.b2e.sign-dropdown',
 		'sign.feature-storage',
 		'sign.v2.b2e.document-counters',
+		'sign.type',
 		'sign.v2.document-setup',
 		'sign.v2.helper',
 		'sign.v2.sign-settings',

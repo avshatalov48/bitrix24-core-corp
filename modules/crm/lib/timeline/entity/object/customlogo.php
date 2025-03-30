@@ -7,7 +7,7 @@ use JsonSerializable;
 
 class CustomLogo extends EO_CustomLogo implements JsonSerializable
 {
-	public function jsonSerialize()
+	public function jsonSerialize(): array
 	{
 		return [
 			'code' => $this->getCode(),

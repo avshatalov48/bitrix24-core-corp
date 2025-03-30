@@ -255,6 +255,36 @@ class CCrmTax
 			return null;
 		}
 
+		$defaultVatIdInProductCatalog = 0;
+
+		$defaultProductCatalogId = \Bitrix\Crm\Product\Catalog::getDefaultId();
+
+		if ($defaultProductCatalogId > 0)
+		{
+			$vatInfo = Catalog\CatalogIblockTable::getRow([
+				'select' => [
+					'VAT_ID',
+				],
+				'filter' => [
+					'=IBLOCK_ID' => $defaultProductCatalogId,
+				],
+			]);
+
+			if (!empty($vatInfo['VAT_ID']))
+			{
+				$defaultVatIdInProductCatalog = (int)$vatInfo['VAT_ID'];
+			}
+		}
+
+		$filter = [
+			'=ACTIVE' => 'Y',
+		];
+
+		if ($defaultVatIdInProductCatalog > 0)
+		{
+			$filter['=ID'] = $defaultVatIdInProductCatalog;
+		}
+
 		$fields = Catalog\VatTable::getRow([
 			'select' => [
 				'ID',
@@ -263,11 +293,9 @@ class CCrmTax
 				'RATE',
 				'EXCLUDE_VAT',
 			],
-			'filter' => [
-				'=ACTIVE' => 'Y',
-			],
+			'filter' => $filter,
 			'order' => [
-				'SORT' => 'ASC',
+				'RATE' => 'ASC',
 				'ID' => 'ASC',
 			]
 		]);

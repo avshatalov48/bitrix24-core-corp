@@ -6,7 +6,7 @@ import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { isTemplateMode } from 'sign.v2.sign-settings';
 import { Layout } from 'ui.sidepanel.layout';
 import { TileWidget } from 'ui.uploader.tile-widget';
-import { Uploader, UploaderEvent, type UploaderFile } from 'ui.uploader.core';
+import { UploaderEvent, type UploaderFile } from 'ui.uploader.core';
 import { Api } from 'sign.v2.api';
 import { ListItem } from './list-item';
 import { Blank } from './blank';

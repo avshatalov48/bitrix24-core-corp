@@ -25,8 +25,8 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 	class SyncService
 	{
 		/**
-		 * @return {SyncService}
-		 */
+		* @return {SyncService}
+		*/
 		static getInstance()
 		{
 			if (!this.instance)

@@ -89,8 +89,9 @@ class CatalogMobile extends CModule
 		return true;
 	}
 
-	public function uninstallFiles()
+	public function uninstallFiles(): void
 	{
+		DeleteDirFilesEx('/bitrix/mobileapp/' . $this->MODULE_ID);
 	}
 
 	public function installEvents()

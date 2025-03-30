@@ -67,8 +67,11 @@ CJSCore::Init(array(
 	'disk.model.external-link.description',
 	'disk.document',
 	'disk.viewer.document-item',
+	'disk.viewer.board-item',
 	'disk.viewer.actions',
 	'clipboard',
+	'ui.hint',
+	'ui.tour',
 ));
 
 Asset::getInstance()->addCss('/bitrix/components/bitrix/disk.interface.grid/templates/.default/bitrix/main.interface.grid/.default/style.css');
@@ -283,6 +286,7 @@ if (
 			"click" => new JsCode($filterJsAction),
 			"text" => Loc::getMessage('DISK_FOLDER_LIST_TITLE_ADD_COMPLEX'),
 		]);
+		$addBtn->addDataAttribute('hint-no-icon');
 		$addBtn->setDropdown();
 
 		Toolbar::addButton($addBtn, $isCollab ? ButtonLocation::AFTER_TITLE : ButtonLocation::RIGHT);
@@ -514,7 +518,10 @@ BX.message({
 	DISK_FOLDER_LIST_SEARCH_INDEX_NOTICE_1: '<?= GetMessageJS('DISK_FOLDER_LIST_SEARCH_INDEX_NOTICE_1')?>',
 	DISK_TRASHCAN_TRASH_RESTORE_DESCR_MULTIPLE: '<?= GetMessageJS('DISK_TRASHCAN_TRASH_RESTORE_DESCR_MULTIPLE')?>',
 	DISK_TRASHCAN_TRASH_RESTORE_SUCCESS: '<?= GetMessageJS('DISK_TRASHCAN_TRASH_RESTORE_SUCCESS')?>',
-	DISK_FOLDER_LIST_SEARCH_PROGRESS_LABEL: '<?= GetMessageJS('DISK_FOLDER_LIST_SEARCH_PROGRESS_LABEL')?>'
+	DISK_FOLDER_LIST_SEARCH_PROGRESS_LABEL: '<?= GetMessageJS('DISK_FOLDER_LIST_SEARCH_PROGRESS_LABEL')?>',
+	DISK_FOLDER_LIST_COLLABER_HINT: '<?= GetMessageJS('DISK_FOLDER_LIST_COLLABER_HINT')?>',
+	DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TITLE: '<?= GetMessageJS('DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TITLE')?>',
+	DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TEXT: '<?= GetMessageJS('DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TEXT')?>'
 });
 </script>
 
@@ -605,7 +612,10 @@ BX(function () {
 		filterValueToSkipSearchUnderLinks: {
 			SEARCH_IN_CURRENT_FOLDER: 1,
 			SHARED: <?= CDiskFolderListComponent::FILTER_SHARED_TO_ME ?>
-		}
+		},
+		isUserCollaber: <?= $arResult['IS_USER_COLLABER']? 'true' : 'false' ?>,
+		collaberTourOnAddButtonId: '<?= CUtil::JSEscape($arResult['COLLABER_TOUR_ON_ADD_BUTTON_ID']) ?>',
+		isCollaberTourOnAddButtonViewed: <?= $arResult['IS_COLLABER_TOUR_ON_ADD_BUTTON_VIEWED']? 'true' : 'false' ?>,
 	});
 
 	var btnSettings = document.querySelector('.js-disk-settings-button');
@@ -722,7 +732,7 @@ BX(function () {
 					);
 
 					BX.bind(addButton, "click", function()	{
-						if (!BX.hasClass(BX("bx-disk-add-menu"), 'ui-btn-disabled'))
+						if (!BX.hasClass(addButton, 'ui-btn-disabled'))
 						{
 							menu.popupWindow.show();
 						}

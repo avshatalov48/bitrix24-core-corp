@@ -14,15 +14,17 @@ use Bitrix\Sign\Type\Access\AccessibleItemType;
 
 class Pages extends \Bitrix\Sign\Engine\Controller
 {
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_READ,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid'
-	)]
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_READ,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid'
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_READ,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_READ,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		)
 	)]
 	public function listAction(string $uid): array
 	{

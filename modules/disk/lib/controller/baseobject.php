@@ -6,6 +6,7 @@ use Bitrix\Disk;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\ExternalLink;
 use Bitrix\Disk\Internals;
+use Bitrix\Main\Diag\Debug;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
@@ -201,7 +202,7 @@ abstract class BaseObject extends Internals\Engine\Controller
 			return null;
 		}
 
-		return $this->parseExternalLinkObject($extLink);
+		return $this->parseExternalLinkObject($extLink, $object);
 	}
 
 	protected function getExternalLink(Disk\BaseObject $object): ?array
@@ -212,7 +213,7 @@ abstract class BaseObject extends Internals\Engine\Controller
 		{
 			return null;
 		}
-		return $this->parseExternalLinkObject($extLink);
+		return $this->parseExternalLinkObject($extLink, $object);
 	}
 
 	protected function disableExternalLink(Disk\BaseObject $object)
@@ -246,7 +247,7 @@ abstract class BaseObject extends Internals\Engine\Controller
 		return array_pop($extLinks);
 	}
 
-	private function parseExternalLinkObject(Disk\ExternalLink $extLink): array
+	private function parseExternalLinkObject(Disk\ExternalLink $extLink, Disk\BaseObject $object): array
 	{
 		$driver = Driver::getInstance();
 		$link = new Uri($driver->getUrlManager()->getShortUrlExternalLink(array(
@@ -259,6 +260,14 @@ abstract class BaseObject extends Internals\Engine\Controller
 		if ($availableEdit)
 		{
 			$canEditDocument = $extLink->getAccessRight() === $extLink::ACCESS_RIGHT_EDIT;
+			// todo: temporary restriction for board, remove it when it is no longer needed
+			if ($object instanceof Disk\File)
+			{
+				$fileType = (int)$object->getTypeFile();
+				$isNotBoard = $fileType !== Disk\TypeFile::FLIPCHART;
+				$canEditDocument = $canEditDocument && $isNotBoard;
+				$availableEdit = $isNotBoard;
+			}
 		}
 
 		return [

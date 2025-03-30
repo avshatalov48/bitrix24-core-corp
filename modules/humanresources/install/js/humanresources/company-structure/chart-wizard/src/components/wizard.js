@@ -1,16 +1,15 @@
-
+import { mapState } from 'ui.vue3.pinia';
 import { Event } from 'main.core';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { memberRoles } from 'humanresources.company-structure.api';
 import { TreePreview } from './tree-preview/tree-preview';
-import { Department } from './department';
-import { Employees } from './employees';
-import { BindChat } from './bind-chat';
-import { Entities } from './entities';
+import { Department } from './steps/department';
+import { Employees } from './steps/employees';
+import { BindChat } from './steps/bind-chat';
+import { Entities } from './steps/entities';
 import { WizardAPI } from '../api';
+import { chartWizardActions } from '../actions';
 import { sendData as analyticsSendData } from 'ui.analytics';
-import { mapWritableState } from 'ui.vue3.pinia';
-import { refreshDepartments } from 'humanresources.company-structure.utils';
 import type { WizardData, Step, DepartmentData, DepartmentUserIds } from '../types';
 import 'ui.buttons';
 import 'ui.forms';
@@ -95,7 +94,7 @@ export const ChartWizard = {
 		this.init();
 	},
 
-	beforeUnmount()
+	beforeUnmount(): void
 	{
 		Event.unbind(window, 'beforeunload', this.handleBeforeUnload);
 	},
@@ -169,7 +168,15 @@ export const ChartWizard = {
 		{
 			return this.visibleSteps.filter((step) => step !== 'entities');
 		},
-		...mapWritableState(useChartStore, ['departments']),
+		rootId(): number
+		{
+			const { id } = [...this.departments.values()].find((department) => {
+				return department.parentId === 0;
+			});
+
+			return id;
+		},
+		...mapState(useChartStore, ['departments', 'userId', 'currentDepartments']),
 	},
 
 	methods: {
@@ -220,10 +227,7 @@ export const ChartWizard = {
 				return;
 			}
 
-			const { id } = [...this.departments.values()].find((department) => {
-				return department.parentId === 0;
-			});
-			this.departmentData.parentId = id;
+			this.departmentData.parentId = this.rootId;
 
 			analyticsSendData({
 				tool: 'structure',
@@ -259,35 +263,7 @@ export const ChartWizard = {
 			}
 
 			this.stepIndex = buttonId === 'back' ? this.stepIndex - 1 : this.stepIndex + 1;
-
-			// eslint-disable-next-line default-case
-			switch (this.currentStep.id)
-			{
-				case 'department':
-					analyticsSendData({
-						tool: 'structure',
-						category: 'structure',
-						event: 'create_dept_step1',
-						c_element: this.source,
-					});
-					break;
-				case 'employees':
-					analyticsSendData({
-						tool: 'structure',
-						category: 'structure',
-						event: 'create_dept_step2',
-						c_element: this.source,
-					});
-					break;
-				case 'bindChat':
-					analyticsSendData({
-						tool: 'structure',
-						category: 'structure',
-						event: 'create_dept_step3',
-						c_element: this.source,
-					});
-					break;
-			}
+			this.pickStepsAnalitics();
 		},
 		close(sendEvent: boolean = false): void
 		{
@@ -303,9 +279,9 @@ export const ChartWizard = {
 				});
 			}
 		},
-		onApplyData(data: { isValid?: boolean, ...Partial<DepartmentData> }): void
+		onApplyData(data: { isValid?: boolean, removedUsers?: User, ...Partial<DepartmentData> }): void
 		{
-			const { isValid = true, removedUsers, ...departmentData } = data;
+			const { isValid = true, removedUsers = [], ...departmentData } = data;
 			this.isValidStep = isValid;
 			if (departmentData)
 			{
@@ -315,11 +291,7 @@ export const ChartWizard = {
 				};
 			}
 
-			if (removedUsers?.length > 0)
-			{
-				this.removedUsers = removedUsers;
-			}
-
+			this.removedUsers = removedUsers;
 			if (isValid)
 			{
 				this.shouldErrorHighlight = false;
@@ -400,7 +372,11 @@ export const ChartWizard = {
 				const data = await this.getUsersPromise(departmentId);
 				if (data?.updatedDepartmentIds)
 				{
-					void refreshDepartments(data.updatedDepartmentIds);
+					chartWizardActions.refreshDepartments(data.updatedDepartmentIds);
+				}
+				else
+				{
+					chartWizardActions.tryToAddCurrentDepartment(this.departmentData, departmentId);
 				}
 			}
 			finally
@@ -408,13 +384,7 @@ export const ChartWizard = {
 				this.waiting = false;
 			}
 
-			const parent = this.departments.get(parentId);
-			parent.children = [...parent.children ?? [], departmentId];
-			this.departments.set(departmentId, {
-				...this.departmentData,
-				id: departmentId,
-				accessCode,
-			});
+			chartWizardActions.createDepartment({ ...this.departmentData, id: departmentId, accessCode });
 			this.$emit('modifyTree', { id: departmentId, parentId, showConfetti: true });
 
 			const { headsIds, deputiesIds, employeesIds } = this.calculateEmployeeIds();
@@ -452,60 +422,35 @@ export const ChartWizard = {
 				? WizardAPI.updateDepartment(id, targetNodeId, name, description)
 				: Promise.resolve();
 
-			// eslint-disable-next-line default-case
-			switch (this.entity)
-			{
-				case 'department':
-					analyticsSendData({
-						tool: 'structure',
-						category: 'structure',
-						event: 'edit_dept_name',
-						c_element: this.source,
-						p1: currentNode?.parentId === parentId ? 'editHead_N' : 'editHeadDept_Y',
-						p2: currentNode?.name === name ? 'editName_N' : 'editName_Y',
-					});
-					break;
-				case 'employees':
-					// eslint-disable-next-line no-case-declarations
-					const { headsIds, deputiesIds, employeesIds } = this.calculateEmployeeIds();
-					analyticsSendData({
-						tool: 'structure',
-						category: 'structure',
-						event: 'edit_dept_employee',
-						c_element: this.source,
-						p2: `headAmount_${headsIds.length}`,
-						p3: `secondHeadAmount_${deputiesIds.length}`,
-						p4: `employeeAmount_${employeesIds.length}`,
-					});
-					break;
-			}
-
+			this.pickEditAnalitics(id, parentId);
 			try
 			{
 				const [usersResponse] = await Promise.all([usersPromise, departmentPromise]);
-				const userMovedToRootIds = usersResponse?.userMovedToRootIds ?? 0;
-				if (
-					userMovedToRootIds?.length > 0
-					&& this.removedUsers.length > 0
-				)
+				let userMovedToRootIds = [];
+				if (this.removedUsers.length > 0)
 				{
-					const rootEmployees = this.removedUsers.filter((user) => userMovedToRootIds.includes(user.id));
-					const rootNode = [...this.departments.values()].find((department) => department.parentId === 0);
-					rootNode.employees = [...(rootNode.employees || []), ...rootEmployees];
-					rootNode.userCount += rootEmployees.length;
+					userMovedToRootIds = usersResponse?.userMovedToRootIds ?? [];
+					if (userMovedToRootIds.length > 0)
+					{
+						chartWizardActions.moveUsersToRootDepartment(this.removedUsers, userMovedToRootIds);
+					}
 				}
 
-				this.departments.set(id, { ...this.departmentData });
-				const prevParent = [...this.departments.values()].find((department) => {
-					return department.children?.includes(id);
-				});
-				if (parentId !== 0 && prevParent.id !== parentId)
+				const store = useChartStore();
+				if (userMovedToRootIds.includes(this.userId))
 				{
-					prevParent.children = prevParent.children.filter((childId) => childId !== id);
-					const newParent = this.departments.get(parentId);
-					newParent.children = [...(newParent.children ?? []), id];
-					this.departments.set(id, { ...this.departmentData, prevParentId: prevParent.id });
+					store.changeCurrentDepartment(id, this.rootId);
 				}
+				else if (this.removedUsers.some((user) => user.id === this.userId))
+				{
+					store.changeCurrentDepartment(id);
+				}
+				else
+				{
+					chartWizardActions.tryToAddCurrentDepartment(this.departmentData, id);
+				}
+
+				chartWizardActions.editDepartment(this.departmentData);
 			}
 			catch (e)
 			{
@@ -524,6 +469,71 @@ export const ChartWizard = {
 		handleSaveModeChanged(actionId: string): void
 		{
 			this.saveMode = actionId;
+		},
+		pickEditAnalitics(departmentId: number, parentId: number): void
+		{
+			const currentNode = this.departments.get(departmentId);
+			switch (this.entity)
+			{
+				case 'department':
+					analyticsSendData({
+						tool: 'structure',
+						category: 'structure',
+						event: 'edit_dept_name',
+						c_element: this.source,
+						p1: currentNode?.parentId === parentId ? 'editHead_N' : 'editHeadDept_Y',
+						p2: currentNode?.name === name ? 'editName_N' : 'editName_Y',
+					});
+					break;
+				case 'employees':
+				{
+					const { headsIds, deputiesIds, employeesIds } = this.calculateEmployeeIds();
+					analyticsSendData({
+						tool: 'structure',
+						category: 'structure',
+						event: 'edit_dept_employee',
+						c_element: this.source,
+						p2: `headAmount_${headsIds.length}`,
+						p3: `secondHeadAmount_${deputiesIds.length}`,
+						p4: `employeeAmount_${employeesIds.length}`,
+					});
+					break;
+				}
+				default:
+					break;
+			}
+		},
+		pickStepsAnalitics(): void
+		{
+			switch (this.currentStep.id)
+			{
+				case 'department':
+					analyticsSendData({
+						tool: 'structure',
+						category: 'structure',
+						event: 'create_dept_step1',
+						c_element: this.source,
+					});
+					break;
+				case 'employees':
+					analyticsSendData({
+						tool: 'structure',
+						category: 'structure',
+						event: 'create_dept_step2',
+						c_element: this.source,
+					});
+					break;
+				case 'bindChat':
+					analyticsSendData({
+						tool: 'structure',
+						category: 'structure',
+						event: 'create_dept_step3',
+						c_element: this.source,
+					});
+					break;
+				default:
+					break;
+			}
 		},
 	},
 

@@ -4,7 +4,7 @@
 jn.define('stafftrack/check-in/cancel-reason-view', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Indent, Color, Corner } = require('tokens');
-	const { Avatar } = require('layout/ui/user/avatar');
+	const { Avatar } = require('ui-system/blocks/avatar');
 
 	const { Text3 } = require('ui-system/typography/text');
 
@@ -65,9 +65,10 @@ jn.define('stafftrack/check-in/cancel-reason-view', (require, exports, module) =
 			},
 		},
 		Avatar({
+			testId: 'stafftrack-shift-cancel-description-avatar',
 			id: userInfo.id,
 			size: 36,
-			image: userInfo.avatar,
+			uri: userInfo.avatar,
 			name: userInfo.name,
 		}),
 	);

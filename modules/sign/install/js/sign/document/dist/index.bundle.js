@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,ui_dialogs_messagebox,main_popup,ui_progressround,main_loader,date,sign_ui,color_picker,ui_stamp_uploader,sign_backend,crm_form_fields_selector,crm_requisite_fieldsetViewer,sign_document,main_core,ui_draganddrop_draggable,main_core_events,ui_buttons,sign_tour) {
 	'use strict';

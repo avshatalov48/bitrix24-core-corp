@@ -162,6 +162,13 @@ export const TodoEditorResponsibleUserSelector = {
 		},
 	},
 
+	watch: {
+		imageUrl(imageUrl: string): void
+		{
+			this.userAvatarUrl = imageUrl;
+		},
+	},
+
 	template: `
 		<div 
 			class="crm-activity__todo-editor-v2_responsible-user-selector"

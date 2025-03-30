@@ -19,7 +19,7 @@ trait Singleton
 	{
 	}
 
-	public static function getInstance(): self
+	public static function getInstance(): static
 	{
 		$code = Container::getIdentifierByClassName(static::class);
 		$serviceLocator = ServiceLocator::getInstance();

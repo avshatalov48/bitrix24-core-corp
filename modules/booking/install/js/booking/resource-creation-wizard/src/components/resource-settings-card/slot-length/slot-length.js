@@ -49,7 +49,7 @@ export const SlotLength = {
 			/>
 			<TextLayout
 				type="SlotLength"
-				:text="loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_TEXT')"
+				:text="loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_TEXT_MSGVER_1')"
 			/>
 			<div>
 				<SlotLengthSelector

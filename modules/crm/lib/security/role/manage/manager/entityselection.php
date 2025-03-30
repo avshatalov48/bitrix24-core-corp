@@ -151,4 +151,9 @@ abstract class EntitySelection implements RoleSelectionManager
 	{
 		return \Bitrix\Crm\Security\Role\GroupCodeGenerator::getGroupCodeByEntityTypeId($this->entityTypeId);
 	}
+
+	public function getMenuId(): ?string
+	{
+		return null;
+	}
 }

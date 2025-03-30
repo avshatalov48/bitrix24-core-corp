@@ -32,11 +32,7 @@ use Bitrix\Main\SystemException;
 final class Node extends Controller
 {
 	private readonly NodeService $nodeService;
-	private readonly NodeMemberService $nodeMemberService;
-	private readonly UserService $userService;
-	private readonly NodeMemberRepository $nodeMemberRepository;
 	private readonly NodeRepository $nodeRepository;
-	private readonly RoleRepository $roleRepository;
 	private StructureAccessController $accessController;
 
 	public function __construct(Request $request = null)
@@ -49,11 +45,7 @@ final class Node extends Controller
 
 		parent::__construct($request);
 		$this->nodeService = Container::getNodeService();
-		$this->nodeMemberService = Container::getNodeMemberService();
-		$this->userService = Container::getUserService();
 		$this->nodeRepository = Container::getNodeRepository(true);
-		$this->nodeMemberRepository = Container::getNodeMemberRepository();
-		$this->roleRepository = Container::getRoleRepository();
 		$this->accessController = StructureAccessController::getInstance($userId);
 	}
 
@@ -201,7 +193,23 @@ final class Node extends Controller
 
 		foreach ($nodeCollection as $node)
 		{
-			$result[$node->id] = StructureHelper::getNodeInfo($node);
+			$result[$node->id] = StructureHelper::getNodeInfo(node: $node, withHeads: true);
+		}
+
+		return $result;
+	}
+
+	#[Attribute\StructureActionAccess(
+		permission: StructureActionDictionary::ACTION_STRUCTURE_VIEW_ACCESS
+	)]
+	public function getHeadsByIdsAction(array $nodeIds): array
+	{
+		$result = [];
+		$nodeCollection = $this->nodeRepository->findAllByIds($nodeIds);
+
+		foreach ($nodeCollection as $node)
+		{
+			$result[$node->id] = StructureHelper::getNodeHeads($node);
 		}
 
 		return $result;

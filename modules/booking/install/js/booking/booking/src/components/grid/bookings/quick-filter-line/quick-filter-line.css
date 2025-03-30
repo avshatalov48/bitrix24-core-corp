@@ -1,0 +1,12 @@
+.booking-booking-quick-filter-line {
+	box-sizing: border-box;
+	position: absolute;
+	left: 0;
+	height: calc(50px * var(--zoom) + 1px);
+	border: 1px dashed var(--ui-color-palette-blue-50);
+
+	--top: 0px;
+	--width: 100%;
+	top: var(--top);
+	width: calc(var(--width) * var(--zoom));
+}

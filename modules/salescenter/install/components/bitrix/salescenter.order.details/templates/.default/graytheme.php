@@ -63,11 +63,14 @@ else
 				<div class="salescenter-order-details__product_items">
 					<?php foreach ($arResult['BASKET'] as $basketItem)
 					{
-						$src = htmlspecialcharsbx($basketItem['PICTURE']['SRC']);
-						if ($basketItem['PICTURE']['SRC'] == '')
+						if (empty($basketItem['PICTURE']['SRC']))
 						{
 							$fileName = ($arParams['TEMPLATE_MODE'] === 'darkmode') ? 'item-black.svg' : 'item-white.svg';
 							$src = "/bitrix/components/bitrix/salescenter.order.details/templates/.default/images/{$fileName}";
+						}
+						else
+						{
+							$src = htmlspecialcharsbx($basketItem['PICTURE']['SRC']);
 						}
 						?>
 						<div class="salescenter-order-details__product_item">
@@ -215,11 +218,11 @@ else
 					"INCLUDED_IN_ORDER_TEMPLATE" => "Y",
 					"ALLOW_PAYMENT_REDIRECT" => "Y",
 					"ACTIVE_DATE_FORMAT" => "d F Y, H:i",
-					"USER_CONSENT" => $arParams['USER_CONSENT'],
-					"USER_CONSENT_ID" => $arParams['USER_CONSENT_ID'],
-					"USER_CONSENT_IS_CHECKED" => $arParams['USER_CONSENT_IS_CHECKED'],
-					"USER_CONSENT_IS_LOADED" => $arParams['USER_CONSENT_IS_LOADED'],
-					"ALLOW_SELECT_PAY_SYSTEM" => $arParams["ALLOW_SELECT_PAYMENT_PAY_SYSTEM"],
+					"USER_CONSENT" => $arParams['USER_CONSENT'] ?? null,
+					"USER_CONSENT_ID" => $arParams['USER_CONSENT_ID'] ?? null,
+					"USER_CONSENT_IS_CHECKED" => $arParams['USER_CONSENT_IS_CHECKED'] ?? null,
+					"USER_CONSENT_IS_LOADED" => $arParams['USER_CONSENT_IS_LOADED'] ?? null,
+					"ALLOW_SELECT_PAY_SYSTEM" => $arParams["ALLOW_SELECT_PAYMENT_PAY_SYSTEM"] ?? null,
 					"TEMPLATE_MODE" => "graymode",
 				];
 

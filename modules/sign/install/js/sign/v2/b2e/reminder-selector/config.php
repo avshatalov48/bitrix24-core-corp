@@ -11,6 +11,7 @@ return [
 		'main.core',
 		'ui.buttons',
 		'sign.v2.api',
+		'sign.type',
 	],
 	'skip_core' => false,
 ];

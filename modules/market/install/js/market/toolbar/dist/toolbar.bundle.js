@@ -55,6 +55,12 @@ this.BX = this.BX || {};
 	    },
 	    existOrder: function () {
 	      return Object.keys(this.search.order.currentValue).length > 0;
+	    },
+	    getMarketLogoTitle: function () {
+	      return this.$root.marketLogoTitle.length ? this.$root.marketLogoTitle : this.$Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_MARKET_TITLE');
+	    },
+	    getMarketToolbarTitle: function () {
+	      return this.$root.marketToolbarTitle.length ? this.$root.marketToolbarTitle : this.$Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_MARKET_PLUS_TITLE');
 	    }
 	  },
 	  created: function () {
@@ -474,14 +480,19 @@ this.BX = this.BX || {};
 						<path d="M22.1018 5.70465C23.7726 2.55406 27.6635 1.38682 30.7926 3.09754V3.09754C30.9882 3.20446 31.0621 3.45077 30.9576 3.64768L18.9608 26.2708C18.0732 27.9446 16.0061 28.5647 14.3438 27.6559V27.6559C12.6815 26.747 12.0535 24.6534 12.941 22.9797L22.1018 5.70465Z" fill="#9DCF00"/>
 					</svg>
 					<div class="market-toolbar__title-text">
-						<span v-if="$root.isMainPage">{{ $Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_MARKET_TITLE') }}</span>
+						<span v-if="$root.isMainPage">
+							{{ getMarketLogoTitle }}
+						</span>
 						<a class="market-toolbar__logo_link market-link-to-home"
+						   v-else
 						   data-slider-ignore-autobinding="true"
 						   :href="MarketLinks.mainLink()"
-						   v-else
 						   data-load-content="main"
 						   @click.prevent="$root.emitLoadContent"
-						>{{ $Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_MARKET_TITLE') }}</a>
+						>
+							{{ getMarketLogoTitle }}
+						</a>
+
 						<div class="market-toolbar__title-description" 
 							 v-if="$root.totalApps > 0"
 						>{{ $Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_MARKET_TOTAL_APPS', {'#TOTAL_APPS#': $root.totalApps}) }}</div>
@@ -505,7 +516,7 @@ this.BX = this.BX || {};
 					<input type="text"
 						   id="market-search-input"
 						   ref="marketSearchInput"
-						   :placeholder="$Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_SEARCH_PLACEHOLDER')"
+						   :placeholder="$Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_SEARCH_PLACEHOLDER'+ $root.marketNameMessageCode)"
 						   autocomplete="off"
 						   v-model="search.text"
 						   class="ui-ctl-element ui-ctl-textbox"
@@ -577,7 +588,7 @@ this.BX = this.BX || {};
 									<path fill-rule="evenodd" clip-rule="evenodd" d="M17.9577 15.7818C17.9316 15.8309 17.918 15.8858 17.918 15.9416L17.9181 19.4999C17.9182 20.8637 19.0076 21.9697 20.3507 21.9697C21.6925 21.9697 22.7797 20.8658 22.7796 19.5034L22.7791 8.02715C22.779 7.67686 22.3182 7.5589 22.1546 7.86732L17.9577 15.7818Z" fill="#A8ADB4"/>
 								</svg>
 							</div>
-							<span class="market-toolbar__nav_text">{{ $Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_MARKET_PLUS_TITLE') }}</span>
+							<span class="market-toolbar__nav_text">{{ getMarketToolbarTitle }}</span>
 						</a>
 					</div>
 					<div class="market-toolbar__nav_item">

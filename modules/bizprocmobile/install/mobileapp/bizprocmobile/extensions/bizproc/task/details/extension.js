@@ -5,7 +5,6 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Alert, confirmClosing } = require('alert');
 	const { EventEmitter } = require('event-emitter');
-	const { Feature } = require('feature');
 	const { Haptics } = require('haptics');
 	const { inAppUrl } = require('in-app-url');
 	const { Loc } = require('loc');
@@ -98,11 +97,8 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 
 		componentDidMount()
 		{
-			if (Feature.isPreventBottomSheetDismissSupported())
-			{
-				this.layout.preventBottomSheetDismiss(true);
-				this.layout.on('preventDismiss', this.handleExitFromTask);
-			}
+			this.layout.preventBottomSheetDismiss(true);
+			this.layout.on('preventDismiss', this.handleExitFromTask);
 
 			this.customEventEmitter.on('TaskFields:onChangeFieldValue', this.handleChangeFields);
 
@@ -111,11 +107,8 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 
 		componentWillUnmount()
 		{
-			if (Feature.isPreventBottomSheetDismissSupported())
-			{
-				this.layout.preventBottomSheetDismiss(false);
-				this.layout.off('preventDismiss', this.handleExitFromTask);
-			}
+			this.layout.preventBottomSheetDismiss(false);
+			this.layout.off('preventDismiss', this.handleExitFromTask);
 
 			this.customEventEmitter.off('TaskFields:onChangeFieldValue', this.handleChangeFields);
 		}

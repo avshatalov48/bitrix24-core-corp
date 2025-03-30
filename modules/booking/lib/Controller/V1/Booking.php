@@ -4,12 +4,20 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Controller\V1;
 
-use Bitrix\Booking\BookingFeature;
+use Bitrix\Booking\Internals\Exception\ErrorBuilder;
+use Bitrix\Booking\Internals\Exception\Exception;
+use Bitrix\Booking\Internals\Container;
+use Bitrix\Booking\Service\BookingFeature;
+use Bitrix\Booking\Command\Booking\AddBookingCommand;
+use Bitrix\Booking\Command\Booking\RemoveBookingCommand;
+use Bitrix\Booking\Command\Booking\UpdateBookingCommand;
 use Bitrix\Booking\Entity;
 use Bitrix\Booking\Provider\BookingProvider;
-use Bitrix\Booking\Service\BookingService;
+use Bitrix\Booking\Provider\Params\Booking\BookingFilter;
+use Bitrix\Booking\Provider\Params\Booking\BookingSelect;
+use Bitrix\Booking\Provider\Params\Booking\BookingSort;
+use Bitrix\Booking\Provider\Params\GridParams;
 use Bitrix\Main\Engine\CurrentUser;
-use Bitrix\Main\Error;
 use Bitrix\Main\UI\PageNavigation;
 
 class Booking extends BaseController
@@ -24,129 +32,229 @@ class Booking extends BaseController
 		bool $withExternalData = false,
 	): Entity\Booking\BookingCollection
 	{
-		return (new BookingProvider())->getList(
-			userId: (int)CurrentUser::get()->getId(),
-			limit: $navigation->getLimit(),
-			offset: $navigation->getOffset(),
-			filter: $filter,
-			sort: $sort,
-			select: $select,
-			withCounters: $withCounters,
-			withClientData: $withClientData,
-			withExternalData: $withExternalData,
+		$userId = (int)CurrentUser::get()->getId();
+		$provider = new BookingProvider();
+
+		$bookings = $provider->getList(
+			new GridParams(
+				limit: $navigation->getLimit(),
+				offset: $navigation->getOffset(),
+				filter: new BookingFilter($filter),
+				sort: new BookingSort($sort),
+				select: new BookingSelect($select),
+			),
+			userId: $userId,
 		);
+
+		if ($withCounters)
+		{
+			$provider->withCounters($bookings, $userId);
+		}
+
+		if ($withClientData)
+		{
+			$provider->withClientsData($bookings);
+		}
+
+		if ($withExternalData)
+		{
+			$provider->withExternalData($bookings);
+		}
+
+		return $bookings;
 	}
 
 	public function getAction(int $id): Entity\Booking\Booking|null
 	{
-		return $this->handleRequest(function() use ($id)
+		try
 		{
 			return (new BookingProvider())->getById(
 				userId: (int)CurrentUser::get()->getId(),
 				id: $id,
 			);
-		});
+		}
+		catch (Exception $e)
+		{
+			$this->addError(ErrorBuilder::buildFromException($e));
+
+			return null;
+		}
 	}
 
-	public function getIntersectionsListAction(Entity\Booking\Booking $booking): Entity\Booking\BookingCollection
+	public function getIntersectionsListAction(array $booking): Entity\Booking\BookingCollection|null
 	{
-		return $this->handleRequest(function() use ($booking)
+		try
 		{
 			return (new BookingProvider())->getIntersectionsList(
 				userId: (int)CurrentUser::get()->getId(),
-				booking: $booking,
+				booking: Entity\Booking\Booking::mapFromArray($booking),
 			);
-		});
+		}
+		catch (Exception $e)
+		{
+			$this->addError(ErrorBuilder::buildFromException($e));
+
+			return null;
+		}
 	}
 
-	public function addAction(Entity\Booking\Booking $booking): Entity\Booking\Booking|null
+	public function addAction(array $booking): Entity\Booking\Booking|null
 	{
 		if (!BookingFeature::isFeatureEnabled())
 		{
-			$this->addError(new Error('Access denied'));
+			$this->addError(ErrorBuilder::build('Access denied'));
 
 			return null;
 		}
 
-		return $this->handleRequest(function() use ($booking)
+		try
 		{
-			return (new BookingService())->create(
-				userId: (int)CurrentUser::get()->getId(),
-				booking: $booking,
-			);
-		});
-	}
-
-	public function addListAction(Entity\Booking\BookingCollection $bookingList): ?Entity\Booking\BookingCollection
-	{
-		if (!BookingFeature::isFeatureEnabled())
+			$booking = Entity\Booking\Booking::mapFromArray($booking);
+		}
+		catch (Exception $exception)
 		{
-			$this->addError(new Error('Access denied'));
+			$this->addError(ErrorBuilder::buildFromException($exception));
 
 			return null;
 		}
 
-		return $this->handleRequest(function() use ($bookingList)
-		{
-			$result = new Entity\Booking\BookingCollection();
+		$addBookingCommand = new AddBookingCommand(
+			createdBy: (int)CurrentUser::get()->getId(),
+			booking: $booking,
+		);
 
-			foreach ($bookingList as $booking)
+		$result = $addBookingCommand->run();
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		return $result->getBooking();
+	}
+
+	public function addListAction(array $bookingList): Entity\Booking\BookingCollection|null
+	{
+		if (!BookingFeature::isFeatureEnabled())
+		{
+			$this->addError(ErrorBuilder::build('Access denied'));
+
+			return null;
+		}
+
+		$collection = new Entity\Booking\BookingCollection();
+
+		foreach ($bookingList as $fields)
+		{
+			try
 			{
-				$result->add(
-					(new BookingService())->create(
-						userId: (int)CurrentUser::get()->getId(),
-						booking: $booking,
-					)
-				);
+				$booking = Entity\Booking\Booking::mapFromArray($fields);
+			}
+			catch (Exception $exception)
+			{
+				$booking = null;
 			}
 
-			return $result;
-		});
+			if ($booking === null)
+			{
+				continue;
+			}
+
+			$addBookingCommand = new AddBookingCommand(
+				createdBy: (int)CurrentUser::get()->getId(),
+				booking: Entity\Booking\Booking::mapFromArray($fields),
+			);
+
+			$result = $addBookingCommand->run();
+			if ($result->isSuccess() && $result->getBooking())
+			{
+				$collection->add($result->getBooking());
+			}
+		}
+
+		return $collection;
 	}
 
-	public function updateAction(Entity\Booking\Booking $booking): Entity\Booking\Booking|null
+	public function updateAction(array $booking): Entity\Booking\Booking|null
 	{
 		if (!BookingFeature::isFeatureEnabled())
 		{
-			$this->addError(new Error('Access denied'));
+			$this->addError(ErrorBuilder::build('Access denied'));
 
 			return null;
 		}
 
-		return $this->handleRequest(function() use ($booking)
+		if (empty($booking['id']))
 		{
-			return (new BookingService())->update(
-				userId: (int)CurrentUser::get()->getId(),
-				booking: $booking,
-			);
-		});
+			$this->addError(ErrorBuilder::build('Booking identifier is not specified.'));
+
+			return null;
+		}
+
+		$entity = Container::getBookingRepository()->getById((int)$booking['id']);
+		if (!$entity)
+		{
+			$this->addError(ErrorBuilder::build('Booking has not been found.'));
+
+			return null;
+		}
+
+		try
+		{
+			$booking = Entity\Booking\Booking::mapFromArray([...$entity->toArray(), ...$booking]);
+		}
+		catch (Exception $exception)
+		{
+			$this->addError(ErrorBuilder::buildFromException($exception));
+
+			return null;
+		}
+
+		$command = new UpdateBookingCommand(
+			updatedBy: (int)CurrentUser::get()->getId(),
+			booking: $booking,
+		);
+
+		$result = $command->run();
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		return $result->getBooking();
 	}
 
-	public function deleteAction(int $id): array
+	public function deleteAction(int $id): array|null
 	{
-		return $this->handleRequest(function() use ($id)
-		{
-			(new BookingService())->delete(
-				userId: (int)CurrentUser::get()->getId(),
-				id: $id,
-			);
+		$command = new RemoveBookingCommand(
+			id: $id,
+			removedBy: (int)CurrentUser::get()->getId(),
+		);
 
-			return [];
-		});
+		$result = $command->run();
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		return $result->getData();
 	}
 
 	public function deleteListAction(array $ids): array
 	{
-		$userId = (int)CurrentUser::get()->getId();
 		foreach ($ids as $id)
 		{
-			$this->handleRequest(function() use ($id, $userId)
-			{
-				(new BookingService())->delete(
-					userId: $userId,
-					id: (int)$id,
-				);
-			});
+			$command = new RemoveBookingCommand(
+				id: $id,
+				removedBy: (int)CurrentUser::get()->getId(),
+			);
+
+			$command->run();
 		}
 
 		return [];

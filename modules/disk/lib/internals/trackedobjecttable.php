@@ -43,6 +43,7 @@ final class TrackedObjectTable extends DataManager
 			),
 			new Entity\IntegerField('REAL_OBJECT_ID', ['required' => true]),
 			new Entity\IntegerField('ATTACHED_OBJECT_ID', ['required' => false]),
+			new Entity\IntegerField('TYPE_FILE', ['required' => false]),
 			new Entity\DatetimeField('CREATE_TIME', ['default_value' => function(){return new DateTime();}]),
 			new Entity\DatetimeField('UPDATE_TIME', ['default_value' => function(){return new DateTime();}]),
 		];

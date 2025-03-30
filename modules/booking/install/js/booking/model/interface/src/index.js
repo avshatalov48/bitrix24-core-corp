@@ -1,2 +1,2 @@
 export { Interface } from './interface';
-export type { MoneyStatistics } from './types';
+export type { Intersections, MoneyStatistics } from './types';

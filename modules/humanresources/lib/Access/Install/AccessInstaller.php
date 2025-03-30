@@ -2,13 +2,19 @@
 
 namespace Bitrix\HumanResources\Access\Install;
 
+use Bitrix\HumanResources\Access\Permission\PermissionDictionary;
 use Bitrix\HumanResources\Access\Role;
+use Bitrix\HumanResources\Access\Role\RoleDictionary;
+use Bitrix\HumanResources\Access\Rule\UserInviteRule;
 use Bitrix\HumanResources\Item\Collection\Access\PermissionCollection;
 use Bitrix\HumanResources\Repository\Access\RoleRepository;
 use Bitrix\HumanResources\Repository\Access\PermissionRepository;
+use Bitrix\HumanResources\Repository\Access\RoleRelationRepository;
 use Bitrix\HumanResources\Item;
 use Bitrix\Main\Access\AccessCode;
 use Bitrix\Main\Access\Exception\RoleRelationSaveException;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
 
 class AccessInstaller
 {
@@ -21,6 +27,11 @@ class AccessInstaller
 	public static function reInstallAgent(): string
 	{
 		self::reInstall();
+		return '';
+	}
+
+	public static function reInstallInviteRuleAgent():string
+	{
 		return '';
 	}
 
@@ -84,7 +95,13 @@ class AccessInstaller
 
 		if (!$permissionCollection->empty())
 		{
-			$permissionRepository->createByCollection($permissionCollection);
+			try
+			{
+				$permissionRepository->createByCollection($permissionCollection);
+			}
+			catch (\Exception $e)
+			{
+			}
 		}
 	}
 
@@ -114,6 +131,69 @@ class AccessInstaller
 		{
 			$roleUtil = new Role\RoleUtil($role->getId());
 			$roleUtil->updateRoleRelations(array_flip([self::getRelation($roleName)]));
+		}
+	}
+
+	private static function reInstallInviteRule(): void
+	{
+		$permissionRepository = new PermissionRepository();
+		$roleRepository = new RoleRepository();
+		if (
+			!Loader::includeModule('bitrix24')
+			|| Option::get('bitrix24', 'allow_invite_users', 'N') !== 'Y'
+		)
+		{
+			$role = $roleRepository->getRoleObjectByName(RoleDictionary::ROLE_ADMIN);
+			if (!$role)
+			{
+				return;
+			}
+
+			$permissionRepository->setPermissionByRoleId(
+				$role->getId(),
+				PermissionDictionary::HUMAN_RESOURCES_USER_INVITE,
+				UserInviteRule::VARIABLE_AVAILABLE,
+			);
+
+			return;
+		}
+
+		$roles = $roleRepository->getRoleList();
+		foreach ($roles as $role)
+		{
+			$permissionRepository->setPermissionByRoleId(
+				(int)$role['ID'],
+				PermissionDictionary::HUMAN_RESOURCES_USER_INVITE,
+				UserInviteRule::VARIABLE_AVAILABLE,
+			);
+		}
+	}
+
+	private static function resetStandartRoleKeys()
+	{
+		$roleRelationRepository = new RoleRelationRepository();
+		$adminAccessCode = 'G1';
+		$adminRoleIds = $roleRelationRepository->getRolesByRelationCodes([$adminAccessCode]);
+		if (!empty($adminRoleIds))
+		{
+			$adminRoleUtil = new Role\RoleUtil($adminRoleIds[0]);
+			$adminRoleUtil->updateTitle(Role\RoleDictionary::ROLE_ADMIN);
+		}
+
+		$directorAccessCode = AccessCode::ACCESS_DIRECTOR . '0';
+		$directorRoleIds = $roleRelationRepository->getRolesByRelationCodes([$directorAccessCode]);
+		if (!empty($directorRoleIds))
+		{
+			$directorRoleUtil = new Role\RoleUtil($directorRoleIds[0]);
+			$directorRoleUtil->updateTitle(Role\RoleDictionary::ROLE_DIRECTOR);
+		}
+
+		$employeeAccessCode = AccessCode::ACCESS_EMPLOYEE . '0';
+		$employeeRoleIds = $roleRelationRepository->getRolesByRelationCodes([$employeeAccessCode]);
+		if (!empty($employeeRoleIds))
+		{
+			$employeeRoleUtil = new Role\RoleUtil($employeeRoleIds[0]);
+			$employeeRoleUtil->updateTitle(Role\RoleDictionary::ROLE_EMPLOYEE);
 		}
 	}
 }

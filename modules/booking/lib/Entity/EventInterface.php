@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Entity;
 
-use Bitrix\Booking\Internals\Rrule;
+use Bitrix\Booking\Internals\Service\Rrule;
 
 interface EventInterface
 {

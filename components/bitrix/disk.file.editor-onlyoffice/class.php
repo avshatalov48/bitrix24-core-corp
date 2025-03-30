@@ -2,7 +2,7 @@
 
 use Bitrix\Disk;
 use Bitrix\Disk\Document\LocalDocumentController;
-use Bitrix\Disk\Document\OnlyOffice\Models\DocumentSessionTable;
+use Bitrix\Disk\Document\Models\DocumentSessionTable;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals\BaseComponent;
@@ -61,7 +61,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		}
 		else
 		{
-			$this->currentUser = OnlyOffice\Models\GuestUser::create();
+			$this->currentUser = Disk\Document\Models\GuestUser::create();
 		}
 	}
 
@@ -83,7 +83,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		{
 			$this->arParams['SHOW_BUTTON_OPEN_NEW_WINDOW'] = true;
 		}
-		/** @var OnlyOffice\Models\DocumentSession $documentSession */
+		/** @var Disk\Document\Models\DocumentSession $documentSession */
 		$documentSession = $this->arParams['DOCUMENT_SESSION'];
 
 		$bitrix24Scenario = new OnlyOffice\Bitrix24Scenario();
@@ -201,7 +201,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 			$documentSession->getObject()->getRealObjectId()
 		);
 
-		$this->arResult['CURRENT_USER_AS_GUEST'] = $this->currentUser instanceof OnlyOffice\Models\GuestUser;
+		$this->arResult['CURRENT_USER_AS_GUEST'] = $this->currentUser instanceof Disk\Document\Models\GuestUser;
 		$this->arResult['CURRENT_USER'] = Json::encode([
 			'id' => $this->getUserIdForOnline(),
 			'name' => $this->currentUser->getFormattedName(),
@@ -362,7 +362,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		$this->restrictionManager->unlock();
 	}
 
-	protected function getLinkToEdit(OnlyOffice\Models\DocumentSession $documentSession)
+	protected function getLinkToEdit(Disk\Document\Models\DocumentSession $documentSession)
 	{
 		if (isset($this->arParams['LINK_TO_EDIT']))
 		{
@@ -379,7 +379,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		);
 	}
 
-	protected function getLinkToDownload(OnlyOffice\Models\DocumentSession $documentSession)
+	protected function getLinkToDownload(Disk\Document\Models\DocumentSession $documentSession)
 	{
 		if (isset($this->arParams['LINK_TO_DOWNLOAD']))
 		{
@@ -396,7 +396,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		);
 	}
 
-	protected function getSharingControlType(OnlyOffice\Models\DocumentSession $documentSession): ?string
+	protected function getSharingControlType(Disk\Document\Models\DocumentSession $documentSession): ?string
 	{
 		if ($this->arResult['EXTERNAL_LINK_MODE'] || !$documentSession->getObject())
 		{
@@ -428,7 +428,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		return 'without-edit';
 	}
 
-	protected function processSavingTemplate(OnlyOffice\Models\DocumentSession $documentSession): void
+	protected function processSavingTemplate(Disk\Document\Models\DocumentSession $documentSession): void
 	{
 		$this->arResult['DOCUMENT_SESSION'] = [
 			'ID' => $documentSession->getId(),
@@ -445,7 +445,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 
 	protected function getUserIdForOnline(): int
 	{
-		if ($this->currentUser instanceof OnlyOffice\Models\GuestUser)
+		if ($this->currentUser instanceof Disk\Document\Models\GuestUser)
 		{
 			return $this->currentUser->getUniqueId();
 		}
@@ -565,7 +565,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		return rtrim(ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getServer(), '/');
 	}
 
-	protected function isEditAllowed(OnlyOffice\Models\DocumentSession $documentSession): bool
+	protected function isEditAllowed(Disk\Document\Models\DocumentSession $documentSession): bool
 	{
 		$allowEdit = false;
 

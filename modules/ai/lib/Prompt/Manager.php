@@ -22,6 +22,11 @@ class Manager
 	{
 		static $prompts = [];
 
+		if (empty($promptCode))
+		{
+			return null;
+		}
+
 		if (array_key_exists($promptCode, $prompts))
 		{
 			return $prompts[$promptCode];

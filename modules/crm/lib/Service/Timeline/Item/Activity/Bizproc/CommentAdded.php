@@ -94,7 +94,9 @@ class CommentAdded extends Base
 		$btnType = $commentsViewed || !$isScheduled ? Button::TYPE_SECONDARY : Button::TYPE_PRIMARY;
 
 		return [
-			'open' => $this->createOpenButton($workflowId, $btnType)
+			'open' =>
+				$this->createOpenButton($workflowId, $btnType)
+					->setState(!$this->isBizprocEnabled() ? 'hidden' : null)
 		];
 	}
 

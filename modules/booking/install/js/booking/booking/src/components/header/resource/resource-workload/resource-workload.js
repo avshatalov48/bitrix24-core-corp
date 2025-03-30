@@ -2,10 +2,10 @@ import { mapGetters } from 'ui.vue3.vuex';
 
 import { AhaMoment, DateFormat, HelpDesk, Model } from 'booking.const';
 import { ahaMoments } from 'booking.lib.aha-moments';
+import { busySlots } from 'booking.lib.busy-slots';
 import type { ResourceModel } from 'booking.model.resources';
 import type { BookingModel } from 'booking.model.bookings';
 
-import { busySlots } from '../../../../lib/busy-slots/busy-slots';
 import { BatteryIcon, BATTERY_ICON_HEIGHT, BATTERY_ICON_WIDTH } from './battery-icon/battery-icon';
 import { WorkloadPopup } from './workload-popup/workload-popup';
 import './resource-workload.css';

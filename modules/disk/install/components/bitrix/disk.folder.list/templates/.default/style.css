@@ -1103,3 +1103,8 @@ div.disk-folder-list-search-progress {
 .bitrix24-light-theme .disk-collab__subtitle  {
 	color: #fff;
 }
+
+.ui-icon.ui-icon-file-board > i {
+	background-image: url(./images/disk-board-card-icon.svg);
+	background-size: cover;
+}

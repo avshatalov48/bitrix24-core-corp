@@ -451,7 +451,7 @@ class Task extends Base
 
 		return [
 			'timeline' => $this->createTimelineMenuItem($workflowId),
-			'log' => $this->createLogMenuItem($workflowId),
+			'log' => $this->createLogMenuItem($workflowId)?->setScopeWeb(),
 			'terminate' => $this->createTerminateMenuItem($workflowId),
 		];
 	}

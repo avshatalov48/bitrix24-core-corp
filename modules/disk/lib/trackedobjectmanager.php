@@ -133,6 +133,7 @@ final class TrackedObjectManager
 					'OBJECT_ID' => $object->getId(),
 					'REAL_OBJECT_ID' => $object->getRealObjectId(),
 					'ATTACHED_OBJECT_ID' => $attachedObject?->getId(),
+					'TYPE_FILE' => $object->getTypeFile(),
 				]);
 			}
 			catch (DuplicateEntryException)
@@ -150,6 +151,7 @@ final class TrackedObjectManager
 					],
 					'attachedObject' => [
 						'id' => $attachedObject?->getId(),
+						'TYPE_FILE' => $object->getTypeFile(),
 					],
 				],
 			);

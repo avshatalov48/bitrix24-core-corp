@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Internals\Repository\ORM;
 
-use Bitrix\Booking\Exception\OptionSetException;
+use Bitrix\Booking\Internals\Exception\OptionSetException;
 use Bitrix\Booking\Internals\Model\OptionTable;
-use Bitrix\Booking\Internals\OptionDictionary;
+use Bitrix\Booking\Internals\Service\OptionDictionary;
 use Bitrix\Booking\Internals\Repository\OptionRepositoryInterface;
 
 class OptionRepository implements OptionRepositoryInterface

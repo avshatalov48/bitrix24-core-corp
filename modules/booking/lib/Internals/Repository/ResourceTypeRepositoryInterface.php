@@ -5,19 +5,20 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Internals\Repository;
 
 use Bitrix\Booking\Entity;
-use Bitrix\Booking\Internals\Query\FilterInterface;
-use Bitrix\Booking\Internals\Query\SortInterface;
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 
 interface ResourceTypeRepositoryInterface
 {
 	public function getList(
 		int|null $limit = null,
 		int|null $offset = null,
-		FilterInterface|null $filter = null,
-		SortInterface|null $sort = null,
+		ConditionTree|null $filter = null,
+		array|null $sort = null,
+		int|null $userId = null,
 	): Entity\ResourceType\ResourceTypeCollection;
-	public function getById(int $id): Entity\ResourceType\ResourceType|null;
+	public function getById(int $id, int|null $userId = null): Entity\ResourceType\ResourceType|null;
+	public function isExists(int $id): bool;
 	public function getByModuleIdAndCode(string $moduleId, string $code): Entity\ResourceType\ResourceType|null;
-	public function save(Entity\ResourceType\ResourceType $resourceType): Entity\ResourceType\ResourceType;
+	public function save(Entity\ResourceType\ResourceType $resourceType): int;
 	public function remove(int $resourceTypeId): void;
 }

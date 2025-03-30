@@ -191,7 +191,12 @@ class DocumentTable extends Entity\DataManager
 			(new Entity\ReferenceField(
 				'TEMPLATE',
 				TemplateTable::class,
-				['=this.TEMPLATE_ID' => 'ref.ID']
+				['=this.TEMPLATE_ID' => 'ref.ID'],
+			)),
+			(new Entity\ReferenceField(
+				'MEMBER',
+				MemberTable::class,
+				['=this.ID' => 'ref.DOCUMENT_ID'],
 			)),
 			(new IntegerField('CHAT_ID'))
 				->configureTitle('Chat ID')

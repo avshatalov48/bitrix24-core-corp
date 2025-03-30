@@ -10,7 +10,7 @@ use Bitrix\Booking\Entity\Booking\ClientCollection;
 use Bitrix\Booking\Entity\Booking\ClientType;
 use Bitrix\Booking\Entity\Booking\ExternalDataCollection;
 use Bitrix\Booking\Entity\Booking\ExternalDataItem;
-use Bitrix\Booking\Integration\Booking\DataProviderInterface;
+use Bitrix\Booking\Interfaces\DataProviderInterface;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;
 use CCrmOwnerType;

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports,main_core,main_core_cache,sign_featureStorage,sign_v2_api,sign_v2_b2e_companySelector,sign_v2_b2e_documentSend,sign_v2_b2e_documentSetup,sign_v2_b2e_parties,sign_v2_b2e_userParty,sign_v2_documentSetup,sign_v2_editor,sign_v2_helper,sign_v2_signSettings,ui_sidepanel_layout,ui_uploader_core) {
+(function (exports,main_core,main_core_cache,sign_featureStorage,sign_type,sign_v2_api,sign_v2_b2e_documentSend,sign_v2_b2e_documentSetup,sign_v2_b2e_parties,sign_v2_b2e_userParty,sign_v2_editor,sign_v2_helper,sign_v2_signSettings,ui_sidepanel_layout,ui_uploader_core) {
 	'use strict';
 
 	let _ = t => t,
@@ -31,6 +31,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _saveUpdatedDocumentData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveUpdatedDocumentData");
 	var _deleteDocument = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deleteDocument");
 	var _setupParties = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setupParties");
+	var _isTemplateModeForCompany = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTemplateModeForCompany");
 	var _syncMembersWithDepartments = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("syncMembersWithDepartments");
 	var _sleep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sleep");
 	var _documentUid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentUid");
@@ -46,6 +47,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _executeEditorActions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("executeEditorActions");
 	var _getSendStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSendStep");
 	var _setSecondPartySectionVisibility = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setSecondPartySectionVisibility");
+	var _setHcmLinkIntegrationSectionVisibility = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setHcmLinkIntegrationSectionVisibility");
+	var _isInitiatedByEmployee = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isInitiatedByEmployee");
 	var _decorateStepsBeforeCompletionWithAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("decorateStepsBeforeCompletionWithAnalytics");
 	var _sendAnalyticsOnSetupStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalyticsOnSetupStep");
 	var _sendAnalyticsOnSetupError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalyticsOnSetupError");
@@ -59,7 +62,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _scrollToTop = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scrollToTop");
 	var _scrollToDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scrollToDown");
 	var _resetDocument = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetDocument");
-	var _checkDocumentLimit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkDocumentLimit");
+	var _disableDocumentSectionIfLimitReached = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disableDocumentSectionIfLimitReached");
 	var _onBeforePreviewBtnClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onBeforePreviewBtnClick");
 	var _getMultiDocumentAddSidePanelContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMultiDocumentAddSidePanelContent");
 	var _getDocumentNumber = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDocumentNumber");
@@ -123,8 +126,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    Object.defineProperty(this, _onBeforePreviewBtnClick, {
 	      value: _onBeforePreviewBtnClick2
 	    });
-	    Object.defineProperty(this, _checkDocumentLimit, {
-	      value: _checkDocumentLimit2
+	    Object.defineProperty(this, _disableDocumentSectionIfLimitReached, {
+	      value: _disableDocumentSectionIfLimitReached2
 	    });
 	    Object.defineProperty(this, _resetDocument, {
 	      value: _resetDocument2
@@ -164,6 +167,12 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    });
 	    Object.defineProperty(this, _decorateStepsBeforeCompletionWithAnalytics, {
 	      value: _decorateStepsBeforeCompletionWithAnalytics2
+	    });
+	    Object.defineProperty(this, _isInitiatedByEmployee, {
+	      value: _isInitiatedByEmployee2
+	    });
+	    Object.defineProperty(this, _setHcmLinkIntegrationSectionVisibility, {
+	      value: _setHcmLinkIntegrationSectionVisibility2
 	    });
 	    Object.defineProperty(this, _setSecondPartySectionVisibility, {
 	      value: _setSecondPartySectionVisibility2
@@ -211,6 +220,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    });
 	    Object.defineProperty(this, _syncMembersWithDepartments, {
 	      value: _syncMembersWithDepartments2
+	    });
+	    Object.defineProperty(this, _isTemplateModeForCompany, {
+	      value: _isTemplateModeForCompany2
 	    });
 	    Object.defineProperty(this, _setupParties, {
 	      value: _setupParties2
@@ -274,7 +286,6 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      documentSendConfig: _documentSendConfig,
 	      userPartyConfig
 	    } = babelHelpers.classPrivateFieldLooseBase(this, _prepareConfig)[_prepareConfig](_signOptions);
-	    _blankSelectorConfig.hideValidationParty = sign_v2_signSettings.isTemplateMode(this.documentMode);
 	    this.documentSetup = new sign_v2_b2e_documentSetup.DocumentSetup(_blankSelectorConfig);
 	    this.documentSend = new sign_v2_b2e_documentSend.DocumentSend(_documentSendConfig);
 	    babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty] = new sign_v2_b2e_parties.Parties({
@@ -408,9 +419,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	        this.documentSetup.renderDocumentBlock(updatedItem);
 	        this.documentSetup.blankSelector.disableSelectedBlank(updatedItem.blankId);
 	      }
-	      babelHelpers.classPrivateFieldLooseBase(this, _resetDocument)[_resetDocument]();
 	      this.groupId = setupData.groupId;
 	      this.documentSetup.documentCounters.update(this.documentsGroup.size);
+	      babelHelpers.classPrivateFieldLooseBase(this, _resetDocument)[_resetDocument]();
 	    } else {
 	      this.documentsGroup.set(setupData.uid, setupData);
 	      this.addInDocumentsGroupUids(setupData.uid);
@@ -423,7 +434,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      hcmLinkCompanyId
 	    } = firstDocument;
 	    this.documentSend.documentData = this.documentsGroup;
-	    babelHelpers.classPrivateFieldLooseBase(this, _checkDocumentLimit)[_checkDocumentLimit]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _disableDocumentSectionIfLimitReached)[_disableDocumentSectionIfLimitReached]();
 	    if (this.isSingleDocument()) {
 	      this.editor.documentData = firstDocument;
 	    }
@@ -446,10 +457,10 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _userParty)[_userParty].load(signers);
 	    }
 	    if (reviewers.length > 0) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].loadValidator(reviewers[0], sign_v2_api.MemberRole.reviewer);
+	      babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].loadValidator(reviewers[0], sign_type.MemberRole.reviewer);
 	    }
 	    if (editors.length > 0) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].loadValidator(editors[0], sign_v2_api.MemberRole.editor);
+	      babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].loadValidator(editors[0], sign_type.MemberRole.editor);
 	    }
 	    return true;
 	  }
@@ -457,6 +468,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    super.applyTemplateData(templateUid);
 	    this.documentSetup.setupData.templateUid = templateUid;
 	    this.documentSend.setExistingTemplate();
+	    babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].setIntegrationSelectorAvailability(babelHelpers.classPrivateFieldLooseBase(this, _isTemplateModeForCompany)[_isTemplateModeForCompany]());
 	    return true;
 	  }
 	  getStepsMetadata(signSettings, documentUid, templateUid) {
@@ -474,10 +486,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  }
 	  async init(uid, templateUid) {
 	    await super.init(uid, templateUid);
-	    if (this.isEditMode()) {
-	      if (!main_core.Type.isNull(this.getAfterPreviewLayout())) {
-	        BX.hide(this.getAfterPreviewLayout());
-	      }
+	    if (this.isEditMode() && !main_core.Type.isNull(this.getAfterPreviewLayout())) {
+	      BX.hide(this.getAfterPreviewLayout());
 	    }
 	  }
 	  onComplete() {
@@ -520,7 +530,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    await babelHelpers.classPrivateFieldLooseBase(this, _saveUpdatedDocumentData)[_saveUpdatedDocumentData](this.editedDocument.uid);
 	  }
 	  if (!this.documentSetup.editMode) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _checkDocumentLimit)[_checkDocumentLimit]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _disableDocumentSectionIfLimitReached)[_disableDocumentSectionIfLimitReached]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _resetDocument)[_resetDocument]();
 	    return;
 	  }
@@ -641,6 +651,10 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    };
 	  });
 	}
+	function _isTemplateModeForCompany2() {
+	  const isInitiatedByCompany = this.documentSetup.setupData.initiatedByType === sign_type.DocumentInitiated.company;
+	  return sign_v2_signSettings.isTemplateMode(this.documentMode) && isInitiatedByCompany;
+	}
 	async function _syncMembersWithDepartments2(uid, signerParty) {
 	  let syncFinished = false;
 	  while (!syncFinished) {
@@ -660,14 +674,14 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  return this.documentSetup.setupData.uid;
 	}
 	function _get_isDocumentInitiatedByEmployee() {
-	  return this.documentSetup.setupData.initiatedByType === sign_v2_documentSetup.DocumentInitiated.employee;
+	  return this.documentSetup.setupData.initiatedByType === sign_type.DocumentInitiated.employee;
 	}
 	function _getAssignee2(currentParty, companyId) {
 	  return {
 	    entityType: 'company',
 	    entityId: companyId,
 	    party: currentParty,
-	    role: sign_v2_api.MemberRole.assignee
+	    role: sign_type.MemberRole.assignee
 	  };
 	}
 	function _getSigner2(currentParty, entity) {
@@ -675,7 +689,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    entityType: entity.entityType,
 	    entityId: entity.entityId,
 	    party: currentParty,
-	    role: sign_v2_api.MemberRole.signer
+	    role: sign_type.MemberRole.signer
 	  };
 	}
 	function _makeSetupMembers2() {
@@ -751,7 +765,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      }
 	      babelHelpers.classPrivateFieldLooseBase(this, _resetDocument)[_resetDocument]();
 	      babelHelpers.classPrivateFieldLooseBase(this, _processSetupData)[_processSetupData]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _checkDocumentLimit)[_checkDocumentLimit]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _disableDocumentSectionIfLimitReached)[_disableDocumentSectionIfLimitReached]();
 	      if (!main_core.Type.isNull(this.getAfterPreviewLayout())) {
 	        BX.hide(this.getAfterPreviewLayout());
 	      }
@@ -764,21 +778,28 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  return {
 	    get content() {
 	      const layout = babelHelpers.classPrivateFieldLooseBase(signSettings, _companyParty)[_companyParty].getLayout();
+	      const isTemplateModeForCompany = babelHelpers.classPrivateFieldLooseBase(signSettings, _isTemplateModeForCompany)[_isTemplateModeForCompany]();
+	      if (signSettings.isTemplateMode()) {
+	        babelHelpers.classPrivateFieldLooseBase(signSettings, _companyParty)[_companyParty].setEditorAvailability(isTemplateModeForCompany);
+	      }
 	      sign_v2_helper.SignSettingsItemCounter.numerate(layout);
 	      return layout;
 	    },
 	    title: main_core.Loc.getMessage(titleLocCode),
 	    beforeCompletion: async () => {
 	      const {
-	        uid
+	        uid,
+	        initiatedByType
 	      } = this.documentSetup.setupData;
 	      try {
 	        for (const [uid] of this.documentsGroup) {
 	          await babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].save(uid);
 	        }
+	        this.editor.setSenderType(initiatedByType);
 	        this.documentSetup.setupData.integrationId = babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].getSelectedIntegrationId();
 	        this.documentSend.hcmLinkEnabled = this.documentSetup.setupData.integrationId > 0;
 	        babelHelpers.classPrivateFieldLooseBase(this, _setSecondPartySectionVisibility)[_setSecondPartySectionVisibility]();
+	        babelHelpers.classPrivateFieldLooseBase(this, _setHcmLinkIntegrationSectionVisibility)[_setHcmLinkIntegrationSectionVisibility]();
 	        if (this.isTemplateMode()) {
 	          const entityData = await babelHelpers.classPrivateFieldLooseBase(this, _setupParties)[_setupParties]();
 	          this.editor.entityData = entityData;
@@ -855,6 +876,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  this.documentSend.setPartiesData(partiesData);
 	}
 	async function _executeEditorActions2(editorData) {
+	  if (this.isTemplateCreateMode()) {
+	    this.editor.setAnalytics(this.getAnalytics());
+	  }
 	  this.wizard.toggleBtnLoadingState('next', false);
 	  if (this.isSingleDocument()) {
 	    this.editor.documentData = editorData;
@@ -877,13 +901,20 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	}
 	function _setSecondPartySectionVisibility2() {
 	  const selectedProvider = babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].getSelectedProvider();
-	  const isNotSesRuProvider = selectedProvider.code !== sign_v2_b2e_companySelector.ProviderCode.sesRu;
-	  const isInitiatedByEmployee = this.documentSetup.setupData.initiatedByType === sign_v2_documentSetup.DocumentInitiated.employee;
-	  const isInitiatedByCompany = this.documentSetup.setupData.initiatedByType === sign_v2_documentSetup.DocumentInitiated.company;
-	  const isSecondPartySectionVisible = isNotSesRuProvider || sign_v2_signSettings.isTemplateMode(this.documentMode) && isInitiatedByEmployee;
-	  const isHcmLinkIntegrationSectionVisible = this.documentSetup.setupData.integrationId > 0;
-	  this.editor.setSectionVisibilityByType(sign_v2_editor.SectionType.HcmLinkIntegration, isHcmLinkIntegrationSectionVisible);
+	  const isNotSesRuProvider = selectedProvider.code !== sign_type.ProviderCode.sesRu;
+	  const isSecondPartySectionVisible = isNotSesRuProvider || sign_v2_signSettings.isTemplateMode(this.documentMode) && babelHelpers.classPrivateFieldLooseBase(this, _isInitiatedByEmployee)[_isInitiatedByEmployee]();
 	  this.editor.setSectionVisibilityByType(sign_v2_editor.SectionType.SecondParty, isSecondPartySectionVisible);
+	}
+	async function _setHcmLinkIntegrationSectionVisibility2() {
+	  const isInitiatedByCompany = this.documentSetup.setupData.initiatedByType === sign_type.DocumentInitiated.company;
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isInitiatedByEmployee)[_isInitiatedByEmployee]() && this.documentSetup.isRuRegion()) {
+	    await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].changeIntegrationId(this.documentSetup.setupData.uid, null);
+	  }
+	  const isHcmLinkIntegrationSectionVisible = this.documentSetup.setupData.integrationId > 0 && isInitiatedByCompany;
+	  this.editor.setSectionVisibilityByType(sign_v2_editor.SectionType.HcmLinkIntegration, isHcmLinkIntegrationSectionVisible);
+	}
+	function _isInitiatedByEmployee2() {
+	  return this.documentSetup.setupData.initiatedByType === sign_type.DocumentInitiated.employee;
 	}
 	function _decorateStepsBeforeCompletionWithAnalytics2(steps, documentUid) {
 	  const analytics = this.getAnalytics();
@@ -987,6 +1018,10 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  const firstDocumentData = this.getFirstDocumentDataFromGroup();
 	  babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].setInitiatedByType(firstDocumentData.initiatedByType);
 	  babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].setEntityId(firstDocumentData.entityId);
+	  if (this.isTemplateMode()) {
+	    await babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].reloadCompanyProviders();
+	    babelHelpers.classPrivateFieldLooseBase(this, _companyParty)[_companyParty].setIntegrationSelectorAvailability(babelHelpers.classPrivateFieldLooseBase(this, _isTemplateModeForCompany)[_isTemplateModeForCompany]());
+	  }
 	  this.editedDocument = null;
 	  if (this.hasPreviewUrls) {
 	    this.wizard.toggleBtnActiveState('next', false);
@@ -1032,8 +1067,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  this.documentSetup.resetDocument();
 	  this.editedDocument = null;
 	}
-	function _checkDocumentLimit2() {
-	  if (this.documentsGroup.size === babelHelpers.classPrivateFieldLooseBase(this, _maxDocumentCount)[_maxDocumentCount]) {
+	function _disableDocumentSectionIfLimitReached2() {
+	  if (this.documentsGroup.size >= babelHelpers.classPrivateFieldLooseBase(this, _maxDocumentCount)[_maxDocumentCount]) {
 	    this.documentSetup.setAvailabilityDocumentSection(false);
 	  }
 	}
@@ -1257,11 +1292,10 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  if (totalFileSize > uploaderConfig.maxTotalFileSize) {
 	    alert(main_core.Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_MAX_TOTAL_FILE_SIZE_EXCEEDED'));
 	    event.preventDefault();
-	    return;
 	  }
 	}
 
 	exports.B2ESignSettings = B2ESignSettings;
 
-}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX,BX.Cache,BX.Sign,BX.Sign.V2,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX.UI.SidePanel,BX.UI.Uploader));
+}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX,BX.Cache,BX.Sign,BX.Sign,BX.Sign.V2,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX.UI.SidePanel,BX.UI.Uploader));
 //# sourceMappingURL=sign-settings.bundle.js.map

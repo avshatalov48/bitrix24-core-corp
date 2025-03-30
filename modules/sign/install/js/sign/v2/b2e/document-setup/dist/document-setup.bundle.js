@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports,main_popup,sign_v2_api,sign_v2_b2e_signDropdown,sign_featureStorage,sign_v2_b2e_documentCounters,sign_v2_documentSetup,sign_v2_helper,sign_v2_signSettings,main_core,main_date) {
+(function (exports,main_popup,sign_v2_api,sign_v2_b2e_signDropdown,sign_featureStorage,sign_v2_b2e_documentCounters,sign_type,sign_v2_documentSetup,sign_v2_helper,sign_v2_signSettings,main_core,main_date) {
 	'use strict';
 
 	let _ = t => t,
@@ -135,6 +135,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _getDocumentTitleLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDocumentTitleLayout");
 	var _getAddDocumentLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAddDocumentLayout");
 	var _getAddDocumentButtonText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAddDocumentButtonText");
+	var _setDocumentLimitNoticeText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setDocumentLimitNoticeText");
+	var _setAddDocumentNoticeText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setAddDocumentNoticeText");
 	var _onClickAddDocument = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClickAddDocument");
 	var _createDocumentBlock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDocumentBlock");
 	var _getDocumentTypeDropdownLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDocumentTypeDropdownLayout");
@@ -193,6 +195,12 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    });
 	    Object.defineProperty(this, _onClickAddDocument, {
 	      value: _onClickAddDocument2
+	    });
+	    Object.defineProperty(this, _setAddDocumentNoticeText, {
+	      value: _setAddDocumentNoticeText2
+	    });
+	    Object.defineProperty(this, _setDocumentLimitNoticeText, {
+	      value: _setDocumentLimitNoticeText2
 	    });
 	    Object.defineProperty(this, _getAddDocumentButtonText, {
 	      value: _getAddDocumentButtonText2
@@ -293,7 +301,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _api)[_api] = new sign_v2_api.Api();
 	    babelHelpers.classPrivateFieldLooseBase(this, _region)[_region] = region;
 	    babelHelpers.classPrivateFieldLooseBase(this, _regionDocumentTypes)[_regionDocumentTypes] = regionDocumentTypes;
-	    babelHelpers.classPrivateFieldLooseBase(this, _senderDocumentTypes)[_senderDocumentTypes] = Object.values(sign_v2_documentSetup.DocumentInitiated);
+	    babelHelpers.classPrivateFieldLooseBase(this, _senderDocumentTypes)[_senderDocumentTypes] = Object.values(sign_type.DocumentInitiated);
 	    babelHelpers.classPrivateFieldLooseBase(this, _b2eDocumentLimitCount)[_b2eDocumentLimitCount] = b2eDocumentLimitCount;
 	    this.editMode = false;
 	    this.onClickShowHintPopup = this.showHintPopup.bind(this);
@@ -312,12 +320,14 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _dateSelector)[_dateSelector] = new DateSelector();
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _disableDocumentInputs)[_disableDocumentInputs]();
+	    this.disableAddButton();
 	    this.blankSelector.subscribe('toggleSelection', ({
 	      data
 	    }) => {
 	      this.setDocumentTitle(data.title);
 	      if (data.selected) {
 	        babelHelpers.classPrivateFieldLooseBase(this, _enableDocumentInputs)[_enableDocumentInputs]();
+	        this.enableAddButton();
 	      }
 	    });
 	    this.blankSelector.subscribe('addFile', ({
@@ -326,6 +336,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      this.isFileAdded = true;
 	      this.setDocumentTitle(data.title);
 	      babelHelpers.classPrivateFieldLooseBase(this, _enableDocumentInputs)[_enableDocumentInputs]();
+	      this.enableAddButton();
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _init)[_init]();
 	  }
@@ -357,11 +368,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  }
 	  disableAddButton() {
 	    main_core.Dom.addClass(this.getAddDocumentButton(), '--disabled');
-	    this.getAddDocumentNotice().textContent = main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_LIMIT_NOTICE');
 	  }
 	  enableAddButton() {
 	    main_core.Dom.removeClass(this.getAddDocumentButton(), '--disabled');
-	    this.getAddDocumentNotice().textContent = main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_DOCUMENT_NOTICE');
 	  }
 	  toggleDeleteBtnLoadingState(deleteButton) {
 	    main_core.Dom.toggleClass(deleteButton, 'ui-btn-wait');
@@ -395,12 +404,14 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      // eslint-disable-next-line no-param-reassign
 	      editButton.textContent = main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_EDIT_BUTTON');
 	      babelHelpers.classPrivateFieldLooseBase(this, _disableDocumentInputs)[_disableDocumentInputs]();
+	      this.disableAddButton();
 	      this.editMode = false;
 	    } else {
 	      // eslint-disable-next-line no-param-reassign
 	      editButton.textContent = main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_CANCEL_BUTTON');
 	      this.editMode = true;
 	      babelHelpers.classPrivateFieldLooseBase(this, _enableDocumentInputs)[_enableDocumentInputs]();
+	      this.enableAddButton();
 	      babelHelpers.classPrivateFieldLooseBase(this, _currentEditedId)[_currentEditedId] = id;
 	      babelHelpers.classPrivateFieldLooseBase(this, _currentEditButton)[_currentEditButton] = editButton;
 	      babelHelpers.classPrivateFieldLooseBase(this, _currentEditBlock)[_currentEditBlock] = documentBlock;
@@ -455,12 +466,14 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 		`), this.getHeaderLayout(), this.getDocumentSectionLayout());
 	  }
 	  getDocumentSectionLayout() {
-	    this.documentSectionLayout = main_core.Tag.render(_t7 || (_t7 = _$1`
-			<div class="sign-b2e-settings__item">
-				${0}
-			</div>
-		`), this.getDocumentSectionInnerLayout());
-	    this.createHintPopup();
+	    if (!this.documentSectionLayout) {
+	      this.documentSectionLayout = main_core.Tag.render(_t7 || (_t7 = _$1`
+				<div class="sign-b2e-settings__item">
+					${0}
+				</div>
+			`), this.getDocumentSectionInnerLayout());
+	      this.createHintPopup();
+	    }
 	    return this.documentSectionLayout;
 	  }
 	  getDocumentSectionInnerLayout() {
@@ -583,6 +596,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    }
 	    this.isFileAdded = false;
 	    babelHelpers.classPrivateFieldLooseBase(this, _disableDocumentInputs)[_disableDocumentInputs]();
+	    this.disableAddButton();
 	  }
 	}
 	function _init2() {
@@ -607,10 +621,12 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    });
 	    this.documentCounters.subscribe('limitNotExceeded', () => {
 	      this.enableAddButton();
+	      babelHelpers.classPrivateFieldLooseBase(this, _setAddDocumentNoticeText)[_setAddDocumentNoticeText]();
 	      this.emit('documentsLimitNotExceeded');
 	    });
 	    this.documentCounters.subscribe('limitExceeded', () => {
 	      this.disableAddButton();
+	      babelHelpers.classPrivateFieldLooseBase(this, _setDocumentLimitNoticeText)[_setDocumentLimitNoticeText]();
 	      this.emit('documentsLimitExceeded');
 	    });
 	    main_core.Dom.append(this.documentCounters.getLayout(), this.layout);
@@ -695,7 +711,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    }],
 	    className: 'sign-b2e-document-setup__sender-type-selector',
 	    withCaption: true,
-	    isEnableSearch: false
+	    isEnableSearch: false,
+	    height: 110,
+	    width: 350
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _senderDocumentTypes)[_senderDocumentTypes].forEach(item => {
 	    if (main_core.Type.isStringFilled(item)) {
@@ -784,6 +802,14 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				<span class="sign-b2e-document-setup__add-button_text">${0}</span>
 			`), main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_ANOTHER_DOCUMENT'));
 	  });
+	}
+	function _setDocumentLimitNoticeText2() {
+	  main_core.Dom.addClass(this.getAddDocumentNotice(), '--warning');
+	  this.getAddDocumentNotice().textContent = main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_LIMIT_NOTICE');
+	}
+	function _setAddDocumentNoticeText2() {
+	  main_core.Dom.removeClass(this.getAddDocumentNotice(), '--warning');
+	  this.getAddDocumentNotice().textContent = main_core.Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_DOCUMENT_NOTICE');
 	}
 	function _onClickAddDocument2() {
 	  this.emit('addDocument');
@@ -929,5 +955,5 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 
 	exports.DocumentSetup = DocumentSetup;
 
-}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX.Main,BX.Sign.V2,BX.Sign.V2.B2e,BX.Sign,BX.Sign.V2.B2e,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX,BX.Main));
+}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX.Main,BX.Sign.V2,BX.Sign.V2.B2e,BX.Sign,BX.Sign.V2.B2e,BX.Sign,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX,BX.Main));
 //# sourceMappingURL=document-setup.bundle.js.map

@@ -55,6 +55,11 @@ $this->getComponent()->addTopPanel($this);
 
 /** @see \Bitrix\Crm\Component\Base::addToolbar() */
 $this->getComponent()->addToolbar($this);
+
+echo \Bitrix\Crm\Tour\Permissions\AutomatedSolution::getInstance()
+	->setEntityTypeId($arParams['entityTypeId'])
+	->build()
+;
 ?>
 
 <div class="ui-alert ui-alert-danger" style="display: none;">

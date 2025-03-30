@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Bitrix\Crm\Integration\Booking;
 
-use Bitrix\Booking\Integration\Booking\ClientProviderInterface;
-use Bitrix\Booking\Integration\Booking\DataProviderInterface;
-use Bitrix\Booking\Integration\Booking\ProviderInterface;
+use Bitrix\Booking\Interfaces\ClientProviderInterface;
+use Bitrix\Booking\Interfaces\DataProviderInterface;
+use Bitrix\Booking\Interfaces\ProviderInterface;
 use Bitrix\Main\Loader;
 
 if (!Loader::includeModule('booking'))
@@ -23,12 +23,12 @@ class Provider implements ProviderInterface
 		return self::MODULE_ID;
 	}
 
-	public function getClientProvider(): ?ClientProviderInterface
+	public function getClientProvider(): ClientProviderInterface|null
 	{
 		return new ClientProvider();
 	}
 
-	public function getDataProvider(): ?DataProviderInterface
+	public function getDataProvider(): DataProviderInterface|null
 	{
 		return new DataProvider();
 	}

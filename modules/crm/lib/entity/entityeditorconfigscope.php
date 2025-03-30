@@ -29,7 +29,7 @@ class EntityEditorConfigScope
 	 */
 	public static function getCaptions(string $entityTypeId = '', ?string $moduleId = null): array
 	{
-		if(!isset(self::$captions[LANGUAGE_ID]))
+		if (!isset(self::$captions[LANGUAGE_ID]))
 		{
 			Loc::loadMessages(__FILE__);
 
@@ -39,13 +39,15 @@ class EntityEditorConfigScope
 			);
 
 			$customScopes = method_exists(\Bitrix\Ui\EntityForm\Scope::class, 'getAllUserScopes')
-				? Scope::getInstance()->getAllUserScopes($entityTypeId, $moduleId)
-				: Scope::getInstance()->getUserScopes($entityTypeId, $moduleId)
+				? Scope::getInstance()->getAllUserScopes($entityTypeId, $moduleId, false)
+				: Scope::getInstance()->getUserScopes($entityTypeId, $moduleId, false)
 			;
+
 			if ($entityTypeId && $customScopes)
 			{
 				self::$captions[LANGUAGE_ID] = array_merge(
-					self::$captions[LANGUAGE_ID], ['CUSTOM' => $customScopes]
+					self::$captions[LANGUAGE_ID],
+					['CUSTOM' => $customScopes],
 				);
 			}
 		}

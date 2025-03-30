@@ -715,7 +715,7 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 				$arFields["PROPERTY_PERIOD_TYPE"] = $rrule["FREQ"];
 				$arFields["PROPERTY_PERIOD_COUNT"] = isset($rrule["INTERVAL"]) ? $rrule["INTERVAL"] : 1;
 
-				if ($arFields["PROPERTY_PERIOD_TYPE"] == "WEEKLY")
+				if ($arFields["PROPERTY_PERIOD_TYPE"] === "WEEKLY")
 				{
 					if (isset($rrule["BYDAY"]))
 					{
@@ -776,17 +776,23 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 		{
 			$number = intval($number);
 			if ($number < 1)
+			{
 				$number = 1;
+			}
 
 			if (!isset($arParams["interval"]))
+			{
 				$arParams["interval"] = 1;
+			}
 			$arParams["interval"] = intval($arParams["interval"]);
 
 			if (!isset($arParams["freq"]) || !in_array(mb_strtoupper($arParams["freq"]), array('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY')))
+			{
 				$arParams["freq"] = "DAILY";
+			}
 			$arParams["freq"] = mb_strtoupper($arParams["freq"]);
 
-			if ($arParams["freq"] == 'WEEKLY')
+			if ($arParams["freq"] === 'WEEKLY')
 			{
 				if (isset($arParams["byday"]))
 				{
@@ -799,7 +805,9 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 						{
 							$v = intval($v);
 							if ($v >= 0 && $v < 7)
+							{
 								$arNew[] = intval($v);
+							}
 						}
 					}
 					if (count($arNew) > 0)
@@ -817,7 +825,9 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 				{
 					$arParams["byday"] = date("w", $eventDate) - 1;
 					if ($arParams["byday"] < 0)
+					{
 						$arParams["byday"] = 6;
+					}
 				}
 			}
 
@@ -831,7 +841,9 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 				case 'WEEKLY':
 					$newEventDateDay = date("w", $newEventDate) - 1;
 					if ($newEventDateDay < 0)
+					{
 						$newEventDateDay = 6;
+					}
 
 					$bStartFound = false;
 					$arDays = explode(",", $arParams["byday"]);
@@ -866,7 +878,9 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 
 						$i++;
 						if ($i >= $number - 1)
+						{
 							break;
+						}
 					}
 
 					while ($i < $number - 1)
@@ -875,9 +889,13 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 						foreach ($arDays as $day)
 						{
 							if ($bFirst)
+							{
 								$d += ($arParams["interval"] - 1) * 7 + (6 - $priorDay) + $day + 1;
+							}
 							else
+							{
 								$d += $day - $priorDay;
+							}
 							$bFirst = false;
 
 							$priorDay = $day;
@@ -904,7 +922,9 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 		{
 			$calendarId = $this->GetCalendarId($siteId, $account, $arPath);
 			if ($calendarId == null)
+			{
 				return '404 Not Found';
+			}
 
 			$request = $this->groupdav->GetRequest();
 
@@ -923,11 +943,11 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 
 		public function Put($id, $siteId, $account, $arPath)
 		{
-			$params = [];
-			$params['caldav'] = true;
 			$calendarId = $this->GetCalendarId($siteId, $account, $arPath);
 			if ($calendarId == null)
+			{
 				return '404 Not Found';
+			}
 
 			CDav::Report("CDavCalendarHandler::Put", "calendarId", $calendarId);
 
@@ -935,13 +955,12 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 
 			$oldEvent = $this->GetEntry('PUT', $id, $calendarId);
 			if (!is_null($oldEvent) && !is_array($oldEvent))
+			{
 				return $oldEvent;
+			}
 
 			$charset = "utf-8";
 			$arContentParameters = $request->GetContentParameters();
-
-			//CDav::Report("CDavCalendarHandler::Put", "arContentParameters", $arContentParameters);
-
 			if (!empty($arContentParameters['CONTENT_TYPE']))
 			{
 				$arContentType = explode(';', $arContentParameters['CONTENT_TYPE']);
@@ -952,8 +971,10 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 					{
 						$attribute = trim($attribute);
 						[$key, $value] = explode('=', $attribute);
-						if (mb_strtolower($key) == 'charset')
+						if (mb_strtolower($key) === 'charset')
+						{
 							$charset = mb_strtolower($value);
+						}
 					}
 				}
 			}
@@ -961,7 +982,6 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 			$content = $request->GetRequestBody();
 			$content = htmlspecialcharsback($content);
 
-			//CDav::Report("CDavCalendarHandler::Put", "content", $content);
 			if (is_array($oldEvent))
 			{
 				$eventId = $oldEvent['ID'];
@@ -973,8 +993,10 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 			}
 
 			$cs = CDav::GetCharset($siteId);
-			if (is_null($cs) || empty($cs))
+			if (empty($cs))
+			{
 				$cs = "utf-8";
+			}
 
 			$content = \Bitrix\Main\Text\Encoding::convertEncoding($content, $charset, $cs);
 
@@ -983,18 +1005,26 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 			$cal = new CDavICalendar($content, $siteId);
 
 			$arEvents = $cal->GetComponents('VTIMEZONE', false);
-			if (count($arEvents) <= 0)
+			if (empty($arEvents))
+			{
 				return '404 Not Found';
+			}
 
 			$arFields = $this->ConvertICalToArray($arEvents[0], $cal);
 
 			if ($eventId > 0)
+			{
 				$arFields['ID'] = $eventId;
+			}
 			else
+			{
 				$arFields['CREATED_BY'] = $arFields['MODIFIED_BY'];
+			}
 
 			if (isset($arFields['DAV_XML_ID']))
+			{
 				$arFields['XML_ID'] = $arFields['DAV_XML_ID'];
+			}
 
 			CDav::Report("CDavCalendarHandler::Put", "arFields", $arFields);
 
@@ -1013,41 +1043,43 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 				'instances' => $recEvents
 			]);
 
-			if (is_bool($eventId))
-			{
-				return $eventId;
-			}
-
 			if (!is_numeric($eventId))
 			{
-				return false;
+				return '403 Forbidden';
 			}
 
-			//header('ETag: '.$this->GetETag($calendarId, $xmlId));
-			//$path = preg_replace('|(.*)/[^/]*|', '\1/', $request->GetPath());
-			//header('Location: '.$request->GetBaseUri().$path.$this->GetPath($xmlId));
-
-			return "201 Created";
+			return '201 Created';
 		}
 
 		public function Delete($id, $siteId, $account, $arPath)
 		{
 			$calendarId = $this->GetCalendarId($siteId, $account, $arPath);
 			if ($calendarId == null)
+			{
 				return '404 Not Found';
+			}
 
 			$request = $this->groupdav->GetRequest();
 
 			$event = $this->GetEntry('DELETE', $id, $calendarId);
 			if (!is_array($event))
+			{
 				return $event;
+			}
 
 			CDav::Report("CDavCalendarHandler::Delete", "id", $id);
 
-			return SyncConnector::deleteEvent($calendarId,[
+			$result = SyncConnector::deleteEvent($calendarId,[
 				'eventId' => $event["ID"],
 				'userId' => $request->GetPrincipal()->Id()
 			]);
+
+			if (!is_bool($result))
+			{
+				return '403 Forbidden';
+			}
+
+			return $result ? '204 No Content' : '403 Forbidden';
 		}
 
 		public static function GetAttendees($codeAttendees)

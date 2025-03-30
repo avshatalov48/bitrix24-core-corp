@@ -37,6 +37,7 @@ use Bitrix\SalesCenter\Component\VatRate;
 use CCrmLead;
 use CCrmOwnerType;
 use CCrmSecurityHelper;
+use Bitrix\Sale\Internals\OrderTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -926,6 +927,17 @@ class Order extends Base
 			return [];
 		}
 
+		if (
+			(int)$options['orderId'] > 0
+			&& !OrderTable::getRow([
+				'select' => ['ID'],
+				'filter' => ['=ID' => $options['orderId']],
+			])
+		)
+		{
+			$options['orderId'] = 0;
+		}
+
 		// if pay from chat - find lead id
 		$crmInfo = ImOpenLinesManager::getInstance()->setSessionId($options['sessionId'])->getCrmInfo();
 		$dialogLeadId = $crmInfo ? (int)$crmInfo['LEAD'] : null;
@@ -1113,7 +1125,16 @@ class Order extends Base
 					{
 						$dealId = $binding->getOwnerId();
 
-						if ($dealId && (int)$options['ownerId'] <= 0)
+						if (
+							$dealId
+							&& (
+								(int)$options['ownerId'] <= 0
+								|| !CrmManager::getInstance()->isOwnerEntityExists(
+									(int)$options['ownerId'],
+									\CCrmOwnerType::Deal
+								)
+							)
+						)
 						{
 							$r = ImOpenLinesManager::getInstance()->sendDealNotify($dealId, $options['dialogId']);
 						}
@@ -1480,7 +1501,11 @@ class Order extends Base
 		}
 
 		$clientInfo = $this->getClientInfo($options);
-		if (isset($clientInfo['OWNER_ID']) && isset($clientInfo['OWNER_TYPE_ID']))
+		if (
+			isset($clientInfo['OWNER_ID'])
+			&& isset($clientInfo['OWNER_TYPE_ID'])
+			&& CrmManager::getInstance()->isOwnerEntityExists($clientInfo['OWNER_ID'], $clientInfo['OWNER_TYPE_ID'])
+		)
 		{
 			if (
 				!isset($options['context'])

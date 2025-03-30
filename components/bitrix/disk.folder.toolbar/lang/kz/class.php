@@ -1,0 +1,20 @@
+<?php
+$MESS["DISK_FOLDER_TOOLBAR_CREATE_DOC_TEXT"] = "Құжатты жасау";
+$MESS["DISK_FOLDER_TOOLBAR_CREATE_DOC_TITLE"] = "Құжатты жасау";
+$MESS["DISK_FOLDER_TOOLBAR_CREATE_FOLDER_TEXT"] = "Бума құру";
+$MESS["DISK_FOLDER_TOOLBAR_CREATE_FOLDER_TITLE"] = "Тіркемеленген буманы құру";
+$MESS["DISK_FOLDER_TOOLBAR_EMPTY_TRASHCAN_TEXT"] = "Себетті босату";
+$MESS["DISK_FOLDER_TOOLBAR_EMPTY_TRASHCAN_TITLE"] = "Себеттен барлық файлдар мен бумаларды біржола жою";
+$MESS["DISK_FOLDER_TOOLBAR_ERROR_COULD_NOT_FIND_OBJECT"] = "Объектті табу мүмкін болмады.";
+$MESS["DISK_FOLDER_TOOLBAR_EXTERNAL_LINK_LIST_GO_BACK_TEXT"] = "Артқа";
+$MESS["DISK_FOLDER_TOOLBAR_EXTERNAL_LINK_LIST_GO_BACK_TITLE"] = "Файлдар мен бумалар тізіміне оралу";
+$MESS["DISK_FOLDER_TOOLBAR_EXTERNAL_LINK_LIST_TEXT"] = "Жарияланды";
+$MESS["DISK_FOLDER_TOOLBAR_EXTERNAL_LINK_LIST_TEXT_2"] = "Жария файлдар";
+$MESS["DISK_FOLDER_TOOLBAR_EXTERNAL_LINK_LIST_TITLE"] = "Жария сілтемелері бар файлдарды тізімдеу";
+$MESS["DISK_FOLDER_TOOLBAR_FOLDER_LIST_TEXT"] = "Барлығы";
+$MESS["DISK_FOLDER_TOOLBAR_FOLDER_LIST_TITLE"] = "Барлық файлдар мен бумалардың тізімін шығару";
+$MESS["DISK_FOLDER_TOOLBAR_TRASHCAN_TEXT"] = "Жойылғандар";
+$MESS["DISK_FOLDER_TOOLBAR_TRASHCAN_TEXT_2"] = "Себет";
+$MESS["DISK_FOLDER_TOOLBAR_TRASHCAN_TITLE"] = "Жойылған файлдар мен бумалардың тізімін шығару";
+$MESS["DISK_FOLDER_TOOLBAR_UPLOAD_FILE_TEXT"] = "Жүктеу";
+$MESS["DISK_FOLDER_TOOLBAR_UPLOAD_FILE_TITLE"] = "Ағымдағы бумаға жаңа құжаттарды жүктеу";

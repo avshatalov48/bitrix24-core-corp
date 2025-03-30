@@ -1,9 +1,9 @@
 import { TagSelector } from 'ui.entity-selector';
-import { Loc } from 'main.core';
+import { Loc, Dom, Type } from 'main.core';
+import { BaseEvent } from 'main.core.events';
 import 'ui.icon-set.actions';
 
 import '../styles/employee-item.css';
-import { BaseEvent } from 'main.core.events';
 
 export const PersonItem = {
 	name: 'PersonItem',
@@ -11,15 +11,23 @@ export const PersonItem = {
 	props: {
 		config: {
 			required: true,
-			type: Object,
+			type: {
+				companyId: Number,
+				mode: String,
+				isHideInfoAlert: Boolean,
+			},
 		},
 		mappedUserIds: {
 			required: true,
 			type: Array,
 		},
+		suggestId: {
+			required: false,
+			type: [Number, null],
+		},
 	},
 
-	data() {
+	data(): Object {
 		return {
 			isBorderedEmployee: this.config.mode === 'direct',
 		};
@@ -30,7 +38,7 @@ export const PersonItem = {
 		'removeEntity',
 	],
 
-	mounted()
+	mounted(): void
 	{
 		const selector = this.config.mode === 'direct'
 			? this.getPersonTagSelector()
@@ -41,8 +49,15 @@ export const PersonItem = {
 	},
 
 	methods: {
-		getUserTagSelector()
+		getUserTagSelector(): TagSelector
 		{
+			let preselectedItem = [];
+			if (Type.isNumber(this.suggestId))
+			{
+				preselectedItem = ['user', this.suggestId];
+				this.$emit('addEntity', { id: this.suggestId });
+			}
+
 			const selector = new TagSelector({
 				multiple: false,
 				events: {
@@ -73,6 +88,7 @@ export const PersonItem = {
 							},
 						},
 					],
+					preselectedItems: [preselectedItem],
 					tabs: [
 						{
 							id: 'user',
@@ -85,13 +101,20 @@ export const PersonItem = {
 				},
 			});
 
-			selector.getOuterContainer().style.width = '100%';
+			Dom.addClass(selector.getOuterContainer(), 'hr-hcmlink-item-employee__user-container');
 
 			return selector;
 		},
 
-		getPersonTagSelector()
+		getPersonTagSelector(): TagSelector
 		{
+			let preselectedItem = [];
+			if (Type.isNumber(this.suggestId))
+			{
+				preselectedItem = ['hcmlink-person-data', this.suggestId];
+				this.$emit('addEntity', { id: this.suggestId });
+			}
+
 			const selector = new TagSelector({
 				multiple: false,
 				events: {
@@ -128,6 +151,7 @@ export const PersonItem = {
 							enableSearch: true,
 						},
 					],
+					preselectedItems: [preselectedItem],
 					tabs: [
 						{
 							id: 'persons',
@@ -140,8 +164,7 @@ export const PersonItem = {
 				},
 			});
 
-			selector.getOuterContainer().style.border = 'none';
-			selector.getOuterContainer().style.width = '100%';
+			Dom.addClass(selector.getOuterContainer(), 'hr-hcmlink-item-employee__person-container');
 
 			return selector;
 		},
@@ -160,7 +183,6 @@ export const PersonItem = {
 	template: `
 		<div 
 			class="hr-hcmlink-item-employee__container"
-			:class="{'hr-hcmlink-selector-entity__border': isBorderedEmployee}"
 			ref="container"
 		></div>
 	`,

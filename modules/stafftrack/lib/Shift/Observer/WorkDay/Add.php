@@ -12,8 +12,11 @@ class Add implements ObserverInterface
 {
 	/**
 	 * @param ShiftDto $shiftDto
+	 *
 	 * @return void
 	 * @throws LoaderException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function update(ShiftDto $shiftDto): void
 	{

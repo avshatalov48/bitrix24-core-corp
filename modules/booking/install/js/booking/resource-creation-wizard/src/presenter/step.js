@@ -14,15 +14,7 @@ export class Step implements IStep
 		this.hidden = hidden;
 	}
 
-	get store(): Store | null | undefined
-	{
-		return this.getStore();
-	}
-
-	/**
-	 * @protected
-	 */
-	getStore(): Store | null
+	get store(): Store
 	{
 		return Core.getStore();
 	}
@@ -37,12 +29,12 @@ export class Step implements IStep
 		return Loc.getMessage('BRCW_BUTTON_CANCEL');
 	}
 
-	async next()
+	async next(): Promise<void>
 	{
 		await this.store.dispatch('resource-creation-wizard/nextStep');
 	}
 
-	async back()
+	async back(): Promise<void>
 	{
 		await this.store.dispatch('resource-creation-wizard/prevStep');
 	}

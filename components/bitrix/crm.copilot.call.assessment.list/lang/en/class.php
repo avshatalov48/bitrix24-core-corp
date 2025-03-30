@@ -19,4 +19,4 @@ $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_FORMAT_DATE_NOW"] = "just now";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_ITEM_DELETE_ERROR"] = "Cannot delete item(s).";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_NOT_FOUND_MSGVER_1"] = "Script was not found.";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_TITLE"] = "AI Speech analytics and Sales scripts";
-$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_TOOLBAR_GUIDE_TITLE"] = "Copilot for CRM: A new way to improve sales efficiency";
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_TOOLBAR_GUIDE_TITLE"] = "CoPilot for CRM: A new way to improve sales efficiency";

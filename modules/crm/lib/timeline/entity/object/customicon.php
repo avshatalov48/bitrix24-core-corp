@@ -7,7 +7,7 @@ use JsonSerializable;
 
 class CustomIcon extends EO_CustomIcon implements JsonSerializable
 {
-	public function jsonSerialize()
+	public function jsonSerialize(): array
 	{
 		return [
 			'code' => $this->getCode(),

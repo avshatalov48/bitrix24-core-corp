@@ -85,7 +85,10 @@ return [
 					'feedBackLink' => CallAISettings::getFeedBackLink(),
 					'baasPromoSlider' => CallAISettings::getBaasSliderCode(),
 					'helpSlider' => CallAISettings::getHelpSliderCode(),
-				]
+				],
+				'isUserControlFeatureEnabled' => Settings::isUserControlFeatureEnabled(),
+				'isPictureInPictureFeatureEnabled' => Settings::isPictureInPictureFeatureEnabled(),
+				'isNewQOSEnabled' => Settings::isNewQOSEnabled(),
 			],
 		];
 	},

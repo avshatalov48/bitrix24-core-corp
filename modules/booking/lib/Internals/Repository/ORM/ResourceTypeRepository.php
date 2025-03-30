@@ -5,17 +5,15 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Internals\Repository\ORM;
 
 use Bitrix\Booking\Entity;
-use Bitrix\Booking\Exception\Resource\CreateResourceException;
-use Bitrix\Booking\Exception\ResourceType\CreateResourceTypeException;
-use Bitrix\Booking\Exception\ResourceType\RemoveResourceTypeException;
-use Bitrix\Booking\Exception\ResourceType\UpdateResourceTypeException;
+use Bitrix\Booking\Internals\Exception\Resource\CreateResourceException;
+use Bitrix\Booking\Internals\Exception\ResourceType\CreateResourceTypeException;
+use Bitrix\Booking\Internals\Exception\ResourceType\RemoveResourceTypeException;
+use Bitrix\Booking\Internals\Exception\ResourceType\UpdateResourceTypeException;
 use Bitrix\Booking\Internals\Model\ResourceTypeNotificationSettingsTable;
 use Bitrix\Booking\Internals\Model\ResourceTypeTable;
-use Bitrix\Booking\Internals\Query\FilterInterface;
-use Bitrix\Booking\Internals\Query\ResourceType\ResourceTypeFilter;
-use Bitrix\Booking\Internals\Query\SortInterface;
 use Bitrix\Booking\Internals\Repository\ORM\Mapper\ResourceTypeMapper;
 use Bitrix\Booking\Internals\Repository\ResourceTypeRepositoryInterface;
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 
 class ResourceTypeRepository implements ResourceTypeRepositoryInterface
 {
@@ -30,8 +28,9 @@ class ResourceTypeRepository implements ResourceTypeRepositoryInterface
 	public function getList(
 		int|null $limit = null,
 		int|null $offset = null,
-		FilterInterface|null $filter = null,
-		SortInterface|null $sort = null,
+		ConditionTree|null $filter = null,
+		array|null $sort = null,
+		int|null $userId = null,
 	): Entity\ResourceType\ResourceTypeCollection
 	{
 		$query = ResourceTypeTable::query()
@@ -51,16 +50,14 @@ class ResourceTypeRepository implements ResourceTypeRepositoryInterface
 			$query->setOffset($offset);
 		}
 
-		$preparedFilter = $filter?->prepareFilter();
-		if ($preparedFilter)
+		if ($filter !== null)
 		{
-			$query->where($preparedFilter);
+			$query->where($filter);
 		}
 
-		$preparedSort = $sort?->prepareSort();
-		if ($preparedSort)
+		if ($sort !== null)
 		{
-			$query->setOrder($preparedSort);
+			$query->setOrder($sort);
 		}
 
 		$queryResult = $query->exec();
@@ -75,25 +72,35 @@ class ResourceTypeRepository implements ResourceTypeRepositoryInterface
 		return	new Entity\ResourceType\ResourceTypeCollection(...$resourceTypes);
 	}
 
-	public function getById(int $id): Entity\ResourceType\ResourceType|null
+	public function getById(int $id, int|null $userId = null): Entity\ResourceType\ResourceType|null
 	{
 		return $this->getList(
 			limit: 1,
-			filter: new ResourceTypeFilter([
-				'ID' => $id,
-			]),
+			filter: (new ConditionTree())->where('ID', '=', $id),
+			userId: $userId,
 		)->getFirstCollectionItem();
+	}
+
+	public function isExists(int $id): bool
+	{
+		$result = ResourceTypeTable::query()
+			->setSelect(['ID'])
+			->where('ID', $id)
+			->setLimit(1)
+			->exec()
+			->fetch()
+		;
+
+		return isset($result['ID']);
 	}
 
 	public function getByModuleIdAndCode(string $moduleId, string $code): Entity\ResourceType\ResourceType|null
 	{
-		$filter = new ResourceTypeFilter(['MODULE_ID' => $moduleId, 'CODE' => $code]);
-		$preparedFilter = $filter->prepareFilter();
-
 		$rowResourceType = ResourceTypeTable::query()
 			->setSelect(['*'])
 			->setLimit(1)
-			->where($preparedFilter)
+			->where('MODULE_ID', '=', $moduleId)
+			->where('CODE', '=', $code)
 			->exec()
 			->fetchObject()
 		;
@@ -106,7 +113,7 @@ class ResourceTypeRepository implements ResourceTypeRepositoryInterface
 		return $this->mapper->convertFromOrm($rowResourceType);
 	}
 
-	public function save(Entity\ResourceType\ResourceType $resourceType): Entity\ResourceType\ResourceType
+	public function save(Entity\ResourceType\ResourceType $resourceType): int
 	{
 		return $resourceType->getId()
 			? $this->update($resourceType)
@@ -139,7 +146,7 @@ class ResourceTypeRepository implements ResourceTypeRepositoryInterface
 		}
 	}
 
-	private function insert(Entity\ResourceType\ResourceType $resourceType): Entity\ResourceType\ResourceType
+	private function insert(Entity\ResourceType\ResourceType $resourceType): int
 	{
 		$result = $this->mapper->convertToOrm($resourceType)->save();
 
@@ -147,6 +154,8 @@ class ResourceTypeRepository implements ResourceTypeRepositoryInterface
 		{
 			throw new CreateResourceTypeException($result->getErrors()[0]->getMessage());
 		}
+
+		$resourceType->setId($result->getId());
 
 		$notificationSettingsSaveResult = ResourceTypeNotificationSettingsTable
 			::createObject()
@@ -168,10 +177,10 @@ class ResourceTypeRepository implements ResourceTypeRepositoryInterface
 			throw new CreateResourceException($notificationSettingsSaveResult->getErrors()[0]->getMessage());
 		}
 
-		return $this->getById($result->getId());
+		return $result->getId();
 	}
 
-	private function update(Entity\ResourceType\ResourceType $resourceType): Entity\ResourceType\ResourceType
+	private function update(Entity\ResourceType\ResourceType $resourceType): int
 	{
 		$ormResourceType = $this->mapper->convertToOrm($resourceType);
 		$resourceTypeSaveResult = $ormResourceType->save();
@@ -205,6 +214,6 @@ class ResourceTypeRepository implements ResourceTypeRepositoryInterface
 			throw new UpdateResourceTypeException($notificationSettingsSaveResult->getErrors()[0]->getMessage());
 		}
 
-		return $this->getById($ormResourceType->getId());
+		return $resourceType->getId();
 	}
 }

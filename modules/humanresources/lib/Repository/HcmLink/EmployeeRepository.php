@@ -14,11 +14,17 @@ use Bitrix\HumanResources\Model\HcmLink\EmployeeTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\UserTable;
 
 class EmployeeRepository implements Contract\Repository\HcmLink\EmployeeRepository
 {
+	private const AVATAR_SIZE_HEIGHT = 36;
+	private const AVATAR_SIZE_WIDTH = 36;
+	private const AVATAR_DEFAULT_PATH = '/bitrix/js/socialnetwork/entity-selector/src/images/default-user.svg';
+
 	public function save(Item\HcmLink\Employee $item): Item\HcmLink\Employee
 	{
 		$model = $item->id
@@ -254,7 +260,7 @@ class EmployeeRepository implements Contract\Repository\HcmLink\EmployeeReposito
 			->setGroup(['PERSON.USER_ID'])
 			->registerRuntimeField('CNT', new ExpressionField('ROWS_CNT', 'COUNT(*)'))
 			->registerRuntimeField('MIN_EMPLOYEE_ID', new ExpressionField('PERSON_ID', 'MIN(%s)', 'ID'))
-			//->having('CNT', '=', 1) @TODO any employee count for now
+			->having('CNT', '=', 1)
 			->setSelect([
 				'USER_ID' => 'PERSON.USER_ID',
 				'MIN_EMPLOYEE_ID' => 'MIN_EMPLOYEE_ID',
@@ -271,6 +277,63 @@ class EmployeeRepository implements Contract\Repository\HcmLink\EmployeeReposito
 		}
 
 		return $employeesByUsers;
+	}
+
+	public function listMultipleVacancyEmployeesByUserIdsAndCompany(int $companyId, int ...$userIds): array
+	{
+		if (empty($userIds))
+		{
+			return [];
+		}
+
+		$employees = [];
+
+		$subQuery = EmployeeTable::query()
+			->where('PERSON.COMPANY_ID', $companyId)
+			->whereIn('PERSON.USER_ID', $userIds)
+			->having('CNT', '>', 1)
+			->registerRuntimeField('CNT', new ExpressionField('ROWS_CNT', 'COUNT(*)'))
+			->setGroup(['PERSON_ID'])
+			->setSelect(['PERSON_ID'])
+		;
+
+		$employeesDb = EmployeeTable::query()
+			->whereIn('PERSON_ID', $subQuery)
+			->setSelect(['*', 'USER_ID' => 'PERSON.USER_ID', 'TITLE' => 'PERSON.TITLE'])
+			->exec()
+			->fetchAll()
+		;
+
+		$selectedUserIds = array_column($employeesDb, 'USER_ID');
+
+		$usersMap = $this->getUsersMapById(...$selectedUserIds);
+
+		foreach ($employeesDb as $item)
+		{
+			if (empty($item['DATA']['position']))
+			{
+				continue;
+			}
+
+			$userId = (int)$item['USER_ID'];
+			if (!isset($employees[$userId]))
+			{
+				$avatarLink = $this->getAvatarLink($usersMap[$userId]['photo']);
+				$employees[$userId] = [
+					'userId' => $userId,
+					'fullName' => $usersMap[$userId]['title'],
+					'avatarLink' => $avatarLink,
+					'positions' => [],
+				];
+			}
+
+			$employees[$userId]['positions'][] = [
+				'position' => (string)$item['DATA']['position'],
+				'employeeId' => (int)$item['ID'],
+			];
+		}
+
+		return array_values($employees);
 	}
 
 	public function getByPersonIds(array $personIds): EmployeeCollection
@@ -291,5 +354,63 @@ class EmployeeRepository implements Contract\Repository\HcmLink\EmployeeReposito
 
 		return new EmployeeCollection(...$result);
 
+	}
+
+	private function getAvatarLink(int $imageId): mixed
+	{
+		$avatarLink = self::AVATAR_DEFAULT_PATH;
+
+		if ($imageId > 0)
+		{
+			$image = \CFile::resizeImageGet(
+				$imageId,
+				[
+					'width' => self::AVATAR_SIZE_WIDTH,
+					'height' => self::AVATAR_SIZE_HEIGHT,
+				],
+				BX_RESIZE_IMAGE_EXACT,
+			);
+
+			$avatarLink = !empty($image['src'])
+				? $image['src']
+				: self::AVATAR_DEFAULT_PATH
+			;
+		}
+
+		return $avatarLink;
+	}
+
+	/**
+	 * @param int[] $userIds
+	 * @return array
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public function getUsersMapById(int ...$userIds): array
+	{
+		if (empty($userIds))
+		{
+			return [];
+		}
+
+		$result = [];
+
+		$usersDb = UserTable::query()
+			->setSelect(['ID', 'NAME', 'LAST_NAME', 'PERSONAL_PHOTO'])
+			->whereIn('ID', $userIds)
+			->fetchCollection()
+			->getAll()
+		;
+
+		foreach ($usersDb as $user)
+		{
+			$result[$user->getId()] = [
+				'title' => $user->getName() . ' ' . $user->getLastName(),
+				'photo' => $user->getPersonalPhoto(),
+			];
+		}
+
+		return $result;
 	}
 }

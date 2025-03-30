@@ -2,6 +2,7 @@
 
 namespace Bitrix\Transformer;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\ArgumentTypeException;
@@ -213,6 +214,7 @@ class Command
 				}
 				catch (\Throwable $throwable)
 				{
+					Application::getInstance()->getExceptionHandler()->writeToLog($throwable);
 					$resultCallback = $throwable->getMessage();
 				}
 				if($resultCallback === true)
@@ -227,6 +229,9 @@ class Command
 							'resultCallback' => $resultCallback,
 							'guid' => $this->guid,
 							'isThrowable' => $throwable instanceof \Throwable,
+							'throwableClass' => $throwable ? $throwable::class : null,
+							'throwableFile' => $throwable?->getFile(),
+							'throwableTrace' => $throwable?->getTraceAsString(),
 						],
 					);
 				}

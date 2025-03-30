@@ -1,3 +1,4 @@
+/* eslint-disable no-constructor-return */
 import { chartAPI } from '../../org-chart/src/api';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
 
@@ -13,7 +14,7 @@ export const PermissionActions = Object.freeze({
 	employeeAddToDepartment: 'ACTION_EMPLOYEE_ADD_TO_DEPARTMENT',
 	employeeRemoveFromDepartment: 'ACTION_EMPLOYEE_REMOVE_FROM_DEPARTMENT',
 	accessEdit: 'ACTION_USERS_ACCESS_EDIT',
-	inviteToDepartment: 'ACTION_CAN_INVITE_USERS',
+	inviteToDepartment: 'ACTION_USER_INVITE',
 });
 
 class PermissionCheckerClass
@@ -23,7 +24,8 @@ class PermissionCheckerClass
 	static SELF = 10;
 	static NONE = 0;
 
-	constructor() {
+	constructor(): PermissionCheckerClass
+	{
 		if (!PermissionCheckerClass.instance)
 		{
 			this.currentUserPermissions = {};

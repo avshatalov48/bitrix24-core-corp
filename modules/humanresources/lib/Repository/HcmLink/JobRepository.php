@@ -12,6 +12,7 @@ use Bitrix\HumanResources\Model\HcmLink\JobTable;
 use Bitrix\HumanResources\Type\HcmLink\JobStatus;
 use Bitrix\HumanResources\Type\HcmLink\JobType;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Error;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
@@ -95,6 +96,7 @@ class JobRepository implements Contract\Repository\HcmLink\JobRepository
 			status: JobStatus::tryFrom($model->getStatus()) ?? JobStatus::UNKNOWN,
 			done: $model->getProgressReceived(),
 			total: $model->getProgressTotal(),
+			eventCount: $model->getEventCount(),
 			createdAt: $model->getCreatedAt(),
 			updatedAt: $model->getUpdatedAt(),
 			finishedAt: $model->getFinishedAt(),
@@ -134,6 +136,10 @@ class JobRepository implements Contract\Repository\HcmLink\JobRepository
 			->setOutputData($item->outputData)
 		;
 
+		if ($item->eventCount)
+		{
+			$model->setEventCount($item->eventCount);
+		}
 		if ($item->createdAt)
 		{
 			$model->setCreatedAt($item->createdAt);
@@ -189,7 +195,7 @@ class JobRepository implements Contract\Repository\HcmLink\JobRepository
 		return $ids;
 	}
 
-	public function listByStatusListAndDate(array $statusList, DateTime $date, int $limit = 100): Item\Collection\HcmLink\JobCollection
+	public function listByStatusListAndDate(array $statusList, ?DateTime $date = null, int $limit = 100): Item\Collection\HcmLink\JobCollection
 	{
 		if (empty($statusList))
 		{
@@ -199,13 +205,39 @@ class JobRepository implements Contract\Repository\HcmLink\JobRepository
 		$query = JobTable::query()
 			->setSelect(['*'])
 			->whereIn('STATUS', $statusList)
-			->where('UPDATED_AT', '<', $date)
 		;
+
+		if ($date)
+		{
+			$query->where('UPDATED_AT', '<', $date);
+		}
 
 		if ($limit)
 		{
 			$query->setLimit($limit);
 		}
+
+		$modelCollection = $query->fetchCollection();
+
+		return $this->getItemCollectionFromModelCollection($modelCollection);
+	}
+
+	public function getLastByTypeAndDate(JobType $type, ?DateTime $date, int $companyId, array $statuses, int $limit = 1): Item\Collection\HcmLink\JobCollection
+	{
+		$query = JobTable::query()
+			->setSelect(['*'])
+			->where('TYPE', $type->value);
+
+		if (isset($date))
+		{
+			$query->where('CREATED_AT', '>', $date);
+		}
+
+		$query->where('COMPANY_ID', $companyId)
+			->whereIn('STATUS', $statuses)
+			->addOrder('CREATED_AT', 'DESC')
+			->setLimit($limit)
+		;
 
 		$modelCollection = $query->fetchCollection();
 
@@ -220,6 +252,23 @@ class JobRepository implements Contract\Repository\HcmLink\JobRepository
 		}
 
 		$result = JobTable::updateMulti($ids, ['STATUS' => $status->value]);
+		if (!$result->isSuccess())
+		{
+			throw (new UpdateFailedException())->setErrors($result->getErrorCollection());
+		}
+	}
+
+	public function increaseEventCountByIds(array $ids): void
+	{
+		if (empty($ids))
+		{
+			return;
+		}
+
+		$result = JobTable::updateMulti($ids, [
+			'EVENT_COUNT' => new SqlExpression('?# + 1', 'EVENT_COUNT'),
+			'UPDATED_AT' => new DateTime(),
+		]);
 		if (!$result->isSuccess())
 		{
 			throw (new UpdateFailedException())->setErrors($result->getErrorCollection());

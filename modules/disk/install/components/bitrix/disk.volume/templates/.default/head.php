@@ -17,6 +17,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 
 CJSCore::Init(array('disk', 'ui.viewer', 'disk.viewer.document-item', 'ui.fonts.opensans'));
+CJSCore::Init(array('disk', 'ui.viewer', 'disk.viewer.board-item', 'ui.fonts.opensans'));
 
 Loc::loadMessages(__FILE__);
 

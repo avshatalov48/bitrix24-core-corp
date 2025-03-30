@@ -5,8 +5,8 @@ namespace Bitrix\Disk\Controller;
 use Bitrix\Disk;
 use Bitrix\Disk\Document;
 use Bitrix\Disk\Document\OnlyOffice\BlankFileData;
-use Bitrix\Disk\Document\OnlyOffice\Models;
-use Bitrix\Disk\Document\OnlyOffice\Models\DocumentSession;
+use Bitrix\Disk\Document\Models;
+use Bitrix\Disk\Document\Models\DocumentSession;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Internals\Engine;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
@@ -83,10 +83,10 @@ final class OnlyOffice extends Engine\Controller
 	{
 		return [
 			new ExactParameter(
-				Models\DocumentSession::class,
+				DocumentSession::class,
 				'documentSession',
 				function($className, $documentSessionHash) {
-					return Models\DocumentSession::load([
+					return DocumentSession::load([
 						'=EXTERNAL_HASH' => $documentSessionHash,
 					]);
 				}
@@ -658,7 +658,7 @@ final class OnlyOffice extends Engine\Controller
 	{
 		if ($this->documentSessions === null)
 		{
-			$this->documentSessions = Models\DocumentSession::getModelList([
+			$this->documentSessions = DocumentSession::getModelList([
 				'filter' => [
 					'=EXTERNAL_HASH' => $documentSessionHash,
 				]
@@ -675,7 +675,7 @@ final class OnlyOffice extends Engine\Controller
 		});
 	}
 
-	protected function commentAttachedObjects(Models\DocumentSession $documentSession): void
+	protected function commentAttachedObjects(DocumentSession $documentSession): void
 	{
 		$file = $documentSession->getFile();
 		if (!$file)
@@ -697,7 +697,7 @@ final class OnlyOffice extends Engine\Controller
 		Models\DocumentSessionTable::deactivateByHash($documentSessionHash);
 	}
 
-	protected function saveDocument(Models\DocumentSession $documentSession, array $payloadData): bool
+	protected function saveDocument(DocumentSession $documentSession, array $payloadData): bool
 	{
 		if (!in_array($payloadData['status'], [
 			self::STATUS_IS_READY_FOR_SAVE,
@@ -942,7 +942,7 @@ final class OnlyOffice extends Engine\Controller
 			return $this->showNotFoundPageAction();
 		}
 
-		return $this->loadDocumentEditor($object, null, $attachedObject, Models\DocumentSession::TYPE_EDIT, $editorMode);
+		return $this->loadDocumentEditor($object, null, $attachedObject, DocumentSession::TYPE_EDIT, $editorMode);
 	}
 
 	public function loadDocumentViewerAction(
@@ -991,7 +991,7 @@ final class OnlyOffice extends Engine\Controller
 			return $this->showNotFoundPageAction();
 		}
 
-		return $this->loadDocumentEditor($object, $version, $attachedObject, Models\DocumentSession::TYPE_VIEW, $editorMode);
+		return $this->loadDocumentEditor($object, $version, $attachedObject, DocumentSession::TYPE_VIEW, $editorMode);
 	}
 
 	protected function loadDocumentEditor(

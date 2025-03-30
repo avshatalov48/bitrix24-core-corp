@@ -5,19 +5,17 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Internals\Repository\ORM;
 
 use Bitrix\Booking\Entity;
-use Bitrix\Booking\Exception\Resource\CreateResourceException;
-use Bitrix\Booking\Exception\Resource\RemoveResourceException;
-use Bitrix\Booking\Exception\Resource\UpdateResourceException;
+use Bitrix\Booking\Internals\Exception\Resource\CreateResourceException;
+use Bitrix\Booking\Internals\Exception\Resource\RemoveResourceException;
+use Bitrix\Booking\Internals\Exception\Resource\UpdateResourceException;
 use Bitrix\Booking\Internals\Model\ResourceNotificationSettingsTable;
 use Bitrix\Booking\Internals\Model\ResourceTable;
-use Bitrix\Booking\Internals\Query\FilterInterface;
-use Bitrix\Booking\Internals\Query\Resource\ResourceFilter;
-use Bitrix\Booking\Internals\Query\SortInterface;
 use Bitrix\Booking\Internals\Repository\ORM\Mapper\ResourceDataMapper;
 use Bitrix\Booking\Internals\Repository\ORM\Mapper\ResourceMapper;
 use Bitrix\Booking\Internals\Repository\ResourceRepositoryInterface;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Query\QueryHelper;
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 
 class ResourceRepository implements ResourceRepositoryInterface
 {
@@ -34,8 +32,9 @@ class ResourceRepository implements ResourceRepositoryInterface
 	public function getList(
 		int|null $limit = null,
 		int|null $offset = null,
-		FilterInterface|null $filter = null,
-		SortInterface|null $sort = null,
+		ConditionTree|null $filter = null,
+		array|null $sort = null,
+		int|null $userId = null,
 	): Entity\Resource\ResourceCollection
 	{
 		$query = ResourceTable::query()
@@ -58,16 +57,14 @@ class ResourceRepository implements ResourceRepositoryInterface
 			$query->setOffset($offset);
 		}
 
-		$preparedFilter = $filter?->prepareFilter();
-		if ($preparedFilter)
+		if ($filter !== null)
 		{
-			$query->where($preparedFilter);
+			$query->where($filter);
 		}
 
-		$preparedSort = $sort?->prepareSort();
-		if ($preparedSort)
+		if ($sort !== null)
 		{
-			$query->setOrder($preparedSort);
+			$query->setOrder($sort);
 		}
 
 		$ormResources = QueryHelper::decompose($query);
@@ -80,34 +77,29 @@ class ResourceRepository implements ResourceRepositoryInterface
 		return new Entity\Resource\ResourceCollection(...$resources);
 	}
 
-	public function getTotal(
-		FilterInterface|null $filter = null,
-	): int
+	public function getTotal(ConditionTree|null $filter = null, int|null $userId = null): int
 	{
 		$query = ResourceTable::query()
 			->setSelect(['COUNT'])
 			->registerRuntimeField('COUNT', new ExpressionField('COUNT', 'COUNT(*)'));
 
-		$preparedFilter = $filter?->prepareFilter();
-		if ($preparedFilter)
+		if ($filter !== null)
 		{
-			$query->where($preparedFilter);
+			$query->where($filter);
 		}
 
 		return (int)$query->fetch()['COUNT'];
 	}
 
-	public function getById(int $id): Entity\Resource\Resource|null
+	public function getById(int $id, int|null $userId = null): Entity\Resource\Resource|null
 	{
 		return $this->getList(
 			limit: 1,
-			filter: new ResourceFilter([
-				'ID' => $id,
-			]),
+			filter: (new ConditionTree())->where('ID', '=', $id),
 		)->getFirstCollectionItem();
 	}
 
-	public function save(Entity\Resource\Resource $resource): Entity\Resource\Resource
+	public function save(Entity\Resource\Resource $resource): int
 	{
 		return $resource->getId()
 			? $this->update($resource)
@@ -153,7 +145,7 @@ class ResourceRepository implements ResourceRepositoryInterface
 	/**
 	 * @throws CreateResourceException
 	 */
-	private function insert(Entity\Resource\Resource $resource): Entity\Resource\Resource
+	private function insert(Entity\Resource\Resource $resource): int
 	{
 		$ormResource = $this->mapper->convertToOrm($resource);
 		$resourceSaveResult = $ormResource->save();
@@ -193,10 +185,10 @@ class ResourceRepository implements ResourceRepositoryInterface
 			throw new CreateResourceException($notificationSettingsSaveResult->getErrors()[0]->getMessage());
 		}
 
-		return $this->getById($resourceSaveResult->getId());
+		return $resourceSaveResult->getId();
 	}
 
-	private function update(Entity\Resource\Resource $resource): Entity\Resource\Resource
+	private function update(Entity\Resource\Resource $resource): int
 	{
 		$ormResource = $this->mapper->convertToOrm($resource);
 		$resourceSaveResult = $ormResource->save();
@@ -236,6 +228,6 @@ class ResourceRepository implements ResourceRepositoryInterface
 			throw new UpdateResourceException($notificationSettingsSaveResult->getErrors()[0]->getMessage());
 		}
 
-		return $this->getById($resource->getId());
+		return $resource->getId();
 	}
 }

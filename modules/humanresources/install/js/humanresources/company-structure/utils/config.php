@@ -10,7 +10,6 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'humanresources.company-structure.api',
-		'humanresources.company-structure.chart-store',
 	],
 	'skip_core' => true,
 ];

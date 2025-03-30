@@ -696,7 +696,11 @@ class StructureBackwardConverter
 		}
 		catch (\Throwable $e)
 		{
-			AddMessage2Log($e->getMessage(), self::MODULE_NAME);
+			Container::getStructureLogger()->write([
+				'entityType' => LoggerEntityType::STRUCTURE->name,
+				'entityId' => 0,
+				'message' => $e->getMessage(),
+			]);
 
 			return "Bitrix\\HumanResources\\Compatibility\\Converter\\StructureBackwardConverter::moveEmployees($limit, $offset);";
 		}
@@ -732,7 +736,11 @@ class StructureBackwardConverter
 		}
 		catch (\Throwable $e)
 		{
-			AddMessage2Log($e->getMessage(), self::MODULE_NAME);
+			Container::getStructureLogger()->write([
+				'entityType' => LoggerEntityType::STRUCTURE->name,
+				'entityId' => 0,
+				'message' => $e->getMessage(),
+			]);
 
 			return "Bitrix\\HumanResources\\Compatibility\\Converter\\StructureBackwardConverter::checkInactiveEmployees($limit, $offset);";
 		}

@@ -1,5 +1,7 @@
 declare type MessengerLocatorServices = {
 	'core': CoreApplication,
+	'emitter': JNEventEmitter,
+	'messenger-init-service': MessengerInitService,
 }
 
 export interface IServiceLocator<T>

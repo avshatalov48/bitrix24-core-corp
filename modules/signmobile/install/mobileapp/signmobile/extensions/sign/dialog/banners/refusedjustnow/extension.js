@@ -10,6 +10,7 @@ jn.define('sign/dialog/banners/refusedjustnow', (require, exports, module) => {
 	} = require('ui-system/form/buttons/button');
 	const { BannerTemplate } = require('sign/dialog/banners/template');
 	const { InitiatedByType } = require('sign/type/initiated-by-type');
+	const { MemberRole } = require('sign/type/member-role');
 	const { BBCodeParser } = require('bbcode/parser');
 	const { Color } = require('tokens');
 	const parser = new BBCodeParser();
@@ -24,11 +25,13 @@ jn.define('sign/dialog/banners/refusedjustnow', (require, exports, module) => {
 				documentTitle,
 				layoutWidget,
 				initiatedByType,
+				role,
 			} = props;
 
 			this.documentTitle = documentTitle;
 			this.layoutWidget = layoutWidget;
 			this.initiatedByType = initiatedByType;
+			this.role = role;
 		}
 
 		closeLayout()
@@ -38,16 +41,23 @@ jn.define('sign/dialog/banners/refusedjustnow', (require, exports, module) => {
 
 		render()
 		{
-			let title = Loc.getMessage('SIGN_MOBILE_DIALOG_REFUSED_JUST_NOW_TITLE')
+			let title = Loc.getMessage(
+				MemberRole.isReviewerRole(this.role)
+					? 'SIGN_MOBILE_DIALOG_REFUSED_JUST_NOW_BY_REVIEWER_TITLE'
+					: 'SIGN_MOBILE_DIALOG_REFUSED_JUST_NOW_TITLE'
+			);
+
 			let description = Loc.getMessage(
-				'SIGN_MOBILE_DIALOG_REFUSED_JUST_NOW_DESCRIPTION',
+				MemberRole.isReviewerRole(this.role)
+					? 'SIGN_MOBILE_DIALOG_REFUSED_JUST_NOW_BY_REVIEWER_DESCRIPTION'
+					: 'SIGN_MOBILE_DIALOG_REFUSED_JUST_NOW_DESCRIPTION',
 				{
 					'#DOCUMENT_TITLE#': parser.parse(this.documentTitle).toPlainText(),
 					'#COLOR_OF_HIGHLIGHTED_TEXT#': Color.base1.toHex(),
 				},
 			);
 
-			if (InitiatedByType.isInitiatedByEmployee(this.initiatedByType))
+			if (InitiatedByType.isInitiatedByEmployee(this.initiatedByType) && MemberRole.isSignerRole(this.role))
 			{
 				title = Loc.getMessage('SIGN_MOBILE_DIALOG_REFUSED_JUST_NOW_BY_EMPLOYEE_TITLE');
 				description = Loc.getMessage('SIGN_MOBILE_DIALOG_REFUSED_JUST_NOW_BY_EMPLOYEE_DESCRIPTION');

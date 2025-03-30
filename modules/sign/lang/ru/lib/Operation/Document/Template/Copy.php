@@ -1,0 +1,3 @@
+<?php
+
+$MESS['SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_COPY_TITLE'] = '#TITLE# (копия)';

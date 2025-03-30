@@ -1,14 +1,18 @@
 <?php
 
 use Bitrix\Disk;
+use Bitrix\Disk\Controller\Integration\Flipchart;
 use Bitrix\Disk\Internals\BaseComponent;
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\Type\DocumentGridVariant;
 use Bitrix\Disk\TypeFile;
 use Bitrix\Disk\User;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Main;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\UiTour;
+use Bitrix\Main\Web\Uri;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
@@ -24,6 +28,8 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 	private $storage;
 	private $nowTime;
 	private $fullFormatWithoutSec;
+
+	private Disk\Type\DocumentGridVariant $variant = Disk\Type\DocumentGridVariant::All;
 
 	public function __construct($component = null)
 	{
@@ -61,6 +67,17 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 			$this->storage = $storage;
 		}
 
+		$this->arResult['VARIANT'] = Disk\Type\DocumentGridVariant::All;
+		if (isset($this->arParams['VARIANT']) && ($this->arParams['VARIANT'] instanceof Disk\Type\DocumentGridVariant))
+		{
+			$this->variant = $this->arParams['VARIANT'];
+			$this->arResult['VARIANT'] = $this->arParams['VARIANT'];
+		}
+		if ($this->variant == Disk\Type\DocumentGridVariant::FlipchartList)
+		{
+			$this->arResult['HIDE_BUTTONS'] = true;
+		}
+
 		return parent::prepareParams();
 	}
 
@@ -80,7 +97,7 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 		return true;
 	}
 
-	protected function prepareItems(array $files, array $visibleColumns = []): array
+	public function prepareItems(array $files, array $visibleColumns = []): array
 	{
 		$items = [];
 		$driver = Driver::getInstance();
@@ -125,6 +142,7 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 				'EXT' => $file->getExtension(),
 				'TYPE' => $file->getType(),
 				'object' => $file,
+				'OPEN_DOCUMENT_LINK' => $this->getUrlManager()->getUrlForViewBoard($file->getId()),
 			];
 
 			$sourceUri = new Main\Web\Uri($urlManager->getUrlForDownloadFile($file));
@@ -159,22 +177,38 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 				$attr->setAttribute('data-open-edit-instead-preview', true);
 			}
 
-			$attr->addAction([
-				'type' => 'edit',
-				'action' => 'BX.Disk.Viewer.Actions.runActionDefaultEdit',
-				'buttonIconClass' => ' ',
-				'params' => [
-					'objectId' => $fileId,
-					'name' => $documentName,
-					'dependsOnService' => null,
-				],
-				'items' => array_map(static function($handler) use ($documentName, $fileId) {
-					return [
-						'text' => $handler['name'],
-						'onclick' => "BX.Disk.Viewer.Actions.runActionEdit({name: '{$documentName}', objectId: {$fileId}, serviceCode: '{$handler['code']}'})",
-					];
-				},  $this->arResult['DOCUMENT_HANDLERS']),
-			]);
+			if ($file->getTypeFile() == TypeFile::FLIPCHART)
+			{
+				$openUrl = $this->getUrlManager()->getUrlForViewBoard($fileId);
+				$attr->addAction([
+					'type' => 'open',
+					'buttonIconClass' => ' ',
+					'action' => 'BX.Disk.Viewer.Actions.openInNewTab',
+					'params' => [
+						'objectId' => $fileId,
+						'url' => $openUrl,
+					],
+				]);
+			}
+			else
+			{
+				$attr->addAction([
+					'type' => 'edit',
+					'action' => 'BX.Disk.Viewer.Actions.runActionDefaultEdit',
+					'buttonIconClass' => ' ',
+					'params' => [
+						'objectId' => $fileId,
+						'name' => $documentName,
+						'dependsOnService' => null,
+					],
+					'items' => array_map(static function($handler) use ($documentName, $fileId) {
+						return [
+							'text' => $handler['name'],
+							'onclick' => "BX.Disk.Viewer.Actions.runActionEdit({name: '{$documentName}', objectId: {$fileId}, serviceCode: '{$handler['code']}'})",
+						];
+					},  $this->arResult['DOCUMENT_HANDLERS']),
+				]);
+			}
 
 			$item['ATTRIBUTES'] = $attr;
 
@@ -194,9 +228,27 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 		return formatDate('x', $time, $this->nowTime);
 	}
 
-	protected function getItems(array $filter, ?Main\UI\PageNavigation $pageNavigation, array $sorting, array $visibleColumns = []): array
+	private function getVariantFilter(): array
+	{
+		return match($this->variant) {
+			Disk\Type\DocumentGridVariant::FlipchartList => [
+				'TRACKED_OBJECT.TYPE_FILE' => TypeFile::FLIPCHART,
+			],
+			Disk\Type\DocumentGridVariant::DocumentsList => [
+				'TRACKED_OBJECT.TYPE_FILE' => [
+					TypeFile::DOCUMENT,
+					TypeFile::FLIPCHART,
+				],
+			],
+			Disk\Type\DocumentGridVariant::All => [],
+			default => [],
+		};
+	}
+
+	public function getItems(array $filter, ?Main\UI\PageNavigation $pageNavigation, array $sorting, array $visibleColumns = []): array
 	{
 		$aliases = array_flip(array_intersect(['UPDATE_USER' => 'UPDATED_BY', 'CREATE_USER' => 'CREATED_BY'], $visibleColumns));
+		$variantFilter = $this->getVariantFilter();
 
 		$args = ([
 			'select' => [
@@ -212,8 +264,7 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 				'TRACKED_OBJECT.USER_ID' => $this->getUserId(),
 				'DELETED_TYPE' => Disk\Internals\ObjectTable::DELETED_TYPE_NONE,
 				'TYPE' => Disk\Internals\ObjectTable::TYPE_FILE,
-				'TYPE_FILE' => TypeFile::DOCUMENT,
-			] + $filter,
+			] + $filter + $variantFilter,
 			'with' => $aliases,
 			'order' => $sorting
 		]) + ($pageNavigation ? [
@@ -257,7 +308,7 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 		return $columns;
 	}
 
-	private function getGridHeaders(array $sorting = [])
+	public function getGridHeaders(array $sorting = [])
 	{
 		$result = [
 			[
@@ -316,7 +367,7 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 				'default' => true,
 			]
 		];
-		if (Disk\Configuration::isEnabledManualExternalLink())
+		if (Disk\Configuration::isEnabledManualExternalLink() || Disk\Configuration::isEnabledBoardExternalLink())
 		{
 			$result[] = [
 				'id' => 'EXTERNAL_LINK',
@@ -417,7 +468,7 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 	/**
 	 * @return DocumentHandler[]
 	 */
-	private function listCloudHandlersForCreatingFile()
+	public function listCloudHandlersForCreatingFile()
 	{
 		$handlers = array();
 		if (Disk\Configuration::canCreateFileByCloud())
@@ -516,6 +567,14 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 
 		$this->arResult['STORAGE'] = $this->storage;
 
+		$this->arResult['CLASS_COMPONENT'] = $this;
+
+		$this->arResult['BOARDS_GUIDE'] = [
+			'ID' => $this->getBoardsGuideId(),
+			'IS_VIEWED' => $this->isBoardsGuideViewed(),
+			'IS_BOARDS_PAGE' => $this->variant === DocumentGridVariant::FlipchartList,
+		];
+
 		$this->includeComponentTemplate();
 	}
 
@@ -532,6 +591,164 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 	public function configureActions()
 	{
 		return [];
+	}
+
+	public function formatRows($rows)
+	{
+		$arResult = $this->arResult;
+		return array_map(
+			function($row) use ($arResult)
+			{
+				//region Data for name field
+				$urlManager = Driver::getInstance()->getUrlManager();
+				/* @var Disk\File $file */
+				$file = $row['object'];
+
+				$nameSpecialChars = htmlspecialcharsbx($row['NAME']);
+
+				$lockedBy = null;
+				$inlineStyleLockIcon = 'style="display:none;"';
+
+				if (Disk\Configuration::isEnabledObjectLock() && $file->getLock())
+				{
+					$lockedBy = $file->getLock()->getCreatedBy();
+					$inlineStyleLockIcon = '';
+				}
+				$iconClass = Disk\Ui\Icon::getIconClassByObject($file, $row['IS_SHARED']);
+				//endregion
+				$arResult['justCounter'] = $arResult['justCounter'] + 1;
+
+				$fileNameFormatted = <<<HTML
+					<span class="bx-disk-folder-title" style='cursor: pointer;' id="disk_obj_{$row['ID']}" {$row['ATTRIBUTES']}>
+						{$nameSpecialChars}
+					</span>
+HTML;
+
+				return [
+					'id' => $row['ID'],
+					'data' => [
+						'ID' => $row['ID'],
+						'NAME' => $row['NAME'],
+						'FILE_SIZE' => $row['FILE_SIZE'],
+						'CREATED_BY' => $row['CREATED_BY']['ID'],
+						'UPDATED_BY' => $row['UPDATED_BY']['ID'],
+						'FILE_CONTENT_TYPE' => $file->getExtra()->get('FILE_CONTENT_TYPE'),
+					],
+					'columnClasses' =>[
+						'EXTERNAL_LINK' => 'main-grid-cell-external-link',
+					],
+					'columns' => array(
+						'ID' => $row['ID'],
+						'NAME' => <<<HTML
+	<table class="bx-disk-object-name"><tr>
+		<td style="width: 45px;">
+			<div data-object-id="{$row['ID']}" class="bx-file-icon-container-small {$iconClass}">
+				<div id="lock-anchor-created-{$row['ID']}" {$inlineStyleLockIcon} class="js-lock-icon js-disk-locked-document-tooltip disk-locked-document-block-icon-small-list disk-locked-document-block-icon-small-folder" data-lock-created-by="{$lockedBy}"></div>
+			</div>
+		</td>
+		<td>
+			{$fileNameFormatted}
+		</td>
+	</tr></table>
+HTML
+					,
+						'FILE_SIZE' => \CFile::formatSize($row['FILE_SIZE']),
+						'CREATED_BY' => <<<HTML
+<div class="bx-disk-user-link disk-documents-grid-user">
+	{$row['CREATED_BY']['AVATAR_HTML']}
+	<a class="disk-documents-grid-user-link" target='_blank' href="{$row['CREATED_BY']['URL']}">{$row['CREATED_BY']['NAME']}</a>
+</div>
+HTML
+					,
+						'UPDATED_BY' => <<<HTML
+<div class="bx-disk-user-link disk-documents-grid-user">
+	{$row['UPDATED_BY']['AVATAR_HTML']}
+	<a class="disk-documents-grid-user-link" target='_blank' href="{$row['UPDATED_BY']['URL']}">{$row['UPDATED_BY']['NAME']}</a>
+</div>
+HTML
+					,
+						'ACTIVITY_TIME' => $row['ACTIVITY_TIME'],
+						'CREATE_TIME' => $row['CREATE_TIME'],
+						'UPDATE_TIME' => $row['UPDATE_TIME'],
+						'SHARED' => <<<HTML
+<div class="bx-disk-sharing" id="bx-disk-user-shared-{$row['ID']}">
+	<script>BX.ready(function(){
+		BX.Disk.Documents.showShared({$row['ID']}, BX('bx-disk-user-shared-{$row['ID']}'));
+	});</script>
+</div>
+HTML
+					,
+						'EXTERNAL_LINK' => $this->getHtmlForExternalLink($row, $file)
+					,
+					),
+					'actions' => [[
+						'id' => 'loader',
+						'html' => '<svg class="disk-documents-circular" viewBox="25 25 50 50">
+									   <circle class="disk-documents-path" cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"/>
+									   <circle class="disk-documents-inner-path" cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"/>
+									</svg>',
+					]],
+					'attrs' => [],
+				];
+			}, $arResult['ITEMS']);
+	}
+
+	private function getHtmlForExternalLink(array $row, Disk\File $file): string
+	{
+		if ($this->shouldShowCellForExternalLink($file))
+		{
+			return <<<HTML
+<div class="bx-disk-external-link" id="bx-disk-external-link-{$row['ID']}">
+	<div class=" disk-control-external-link disk-control-external-link-skeleton--active">
+		<div class="disk-control-external-link-btn">
+			<span class="ui-switcher ui-switcher-off">
+				<span class="ui-switcher-cursor"></span>
+				<span class="ui-switcher-disabled"></span>
+			</span>
+		</div>
+		<div class="disk-control-external-link-main">
+			<div class="disk-control-external-link-skeleton"></div>
+		</div>
+	</div>
+	<script>BX.ready(function(){
+		BX.Disk.Documents.showExternalLink({$row['ID']}, BX('bx-disk-external-link-{$row['ID']}'));
+	});</script>
+</div>
+HTML;
+		}
+
+		return '';
+	}
+
+	private function shouldShowCellForExternalLink(Disk\File $file): bool
+	{
+		$fileType = (int)$file->getTypeFile();
+
+		return match ($fileType) {
+			TypeFile::FLIPCHART => Disk\Configuration::isEnabledBoardExternalLink(),
+			default => Disk\Configuration::isEnabledManualExternalLink(),
+		};
+	}
+
+	private function getBoardsGuideId(): string
+	{
+		if ($this->variant === DocumentGridVariant::FlipchartList)
+		{
+			return 'boards-guide-on-boards-page';
+		}
+
+		return 'boards-guide-on-documents-page';
+	}
+
+	private function isBoardsGuideViewed(): bool
+	{
+		$user = $this->getUser();
+		if ($user instanceof CUser)
+		{
+			return (new UiTour($this->getBoardsGuideId()))->isViewed($this->getUser()->getId());
+		}
+
+		return false;
 	}
 
 }

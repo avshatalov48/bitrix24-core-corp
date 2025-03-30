@@ -4,8 +4,8 @@ import { Ears } from 'ui.ears';
 
 import { AhaMoment, Model } from 'booking.const';
 import { ahaMoments } from 'booking.lib.aha-moments';
+import { grid } from 'booking.lib.grid';
 import type { BookingModel } from 'booking.model.bookings';
-import { grid } from '../../lib/grid/grid';
 
 import { LeftPanel } from './left-panel/left-panel';
 import { NowLine } from './now-line/now-line';
@@ -13,10 +13,16 @@ import { Bookings } from './bookings/bookings';
 import { Column } from './column/column';
 import { ScalePanel } from './scale-panel/scale-panel';
 import { Sidebar } from './sidebar/sidebar';
+import { DragDelete } from './drag-delete/drag-delete';
 import './grid.css';
 
+type GridData = {
+	scrolledToBooking: boolean,
+};
+
 export const Grid = {
-	data(): Object {
+	data(): GridData
+	{
 		return {
 			scrolledToBooking: false,
 		};
@@ -54,7 +60,10 @@ export const Grid = {
 		{
 			const shownClass = 'ui-ear-show';
 
-			return Dom.hasClass(this.ears.getRightEar(), shownClass) || Dom.hasClass(this.ears.getLeftEar(), shownClass);
+			return (
+				Dom.hasClass(this.ears.getRightEar(), shownClass)
+				|| Dom.hasClass(this.ears.getLeftEar(), shownClass)
+			);
 		},
 		scrollToEditingBooking(): void
 		{
@@ -95,6 +104,7 @@ export const Grid = {
 		Bookings,
 		ScalePanel,
 		Sidebar,
+		DragDelete,
 	},
 	template: `
 		<div class="booking-booking-grid">
@@ -106,12 +116,17 @@ export const Grid = {
 				<LeftPanel/>
 				<NowLine/>
 				<div
+					id="booking-booking-grid-columns"
 					class="booking-booking-grid-columns --horizontal-scroll-bar"
 					ref="columnsContainer"
 					@scroll="$store.dispatch('interface/setScroll', $refs.columnsContainer.scrollLeft)"
 				>
 					<Bookings/>
-					<TransitionGroup name="booking-transition-resource" @after-leave="updateEars" @after-enter="updateEars">
+					<TransitionGroup
+						name="booking-transition-resource"
+						@after-leave="updateEars"
+						@after-enter="updateEars"
+					>
 						<template v-for="resourceId of resourcesIds" :key="resourceId">
 							<Column :resourceId="resourceId"/>
 						</template>
@@ -122,6 +137,7 @@ export const Grid = {
 				:getColumnsContainer="() => $refs.columnsContainer"
 				ref="scalePanel"
 			/>
+			<DragDelete/>
 		</div>
 		<Sidebar/>
 	`,

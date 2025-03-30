@@ -21,3 +21,36 @@
 .booking-booking-booking:not(.--compact-mode) .booking-booking-booking-content-row:not(.--lower) .booking-booking-booking-time {
 	display: none;
 }
+
+.booking-booking-booking.--resizing .booking-booking-booking-time,
+.ui-draggable--draggable .booking-booking-booking-time {
+	margin: auto;
+	padding: 2px;
+	border-radius: 4px;
+	animation: 300ms ease booking-highlight-time forwards;
+}
+
+@keyframes booking-highlight-time {
+	to {
+		box-shadow: inset 0 0 0 999px rgba(var(--ui-color-palette-white-base-rgb), 0.25);
+		font-size: var(--ui-font-size-lg);
+	}
+}
+
+.booking-booking-booking.--drag-source .booking-booking-booking-note,
+.booking-booking-booking.--drag-source .booking-booking-booking-add-client,
+.booking-booking-booking.--drag-source .booking-booking-booking-communication,
+.booking-booking-booking.--drag-source .booking-booking-booking-crm-button,
+.booking-booking-booking.--drag-source .booking-booking-booking-actions,
+.booking-booking-booking.--resizing .booking-booking-booking-note,
+.booking-booking-booking.--resizing .booking-booking-booking-add-client,
+.booking-booking-booking.--resizing .booking-booking-booking-communication,
+.booking-booking-booking.--resizing .booking-booking-booking-crm-button,
+.booking-booking-booking.--resizing .booking-booking-booking-actions,
+.ui-draggable--draggable .booking-booking-booking-note,
+.ui-draggable--draggable .booking-booking-booking-add-client,
+.ui-draggable--draggable .booking-booking-booking-communication,
+.ui-draggable--draggable .booking-booking-booking-crm-button,
+.ui-draggable--draggable .booking-booking-booking-actions {
+	display: none;
+}

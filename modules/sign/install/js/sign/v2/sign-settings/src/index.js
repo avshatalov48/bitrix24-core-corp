@@ -1,24 +1,19 @@
 import { Dom, Loc, Reflection, Tag, Type } from 'main.core';
 import { MemoryCache } from 'main.core.cache';
 import { FeatureStorage } from 'sign.feature-storage';
+import { DocumentMode, type DocumentModeType } from 'sign.type';
 import type { AnalyticsOptions } from 'sign.v2.analytics';
 import { Analytics, Context } from 'sign.v2.analytics';
-import { type DocumentDetails } from 'sign.v2.document-setup';
+import type { DocumentSend } from 'sign.v2.document-send';
+import { type DocumentDetails, DocumentSetup } from 'sign.v2.document-setup';
 import type { Editor } from 'sign.v2.editor';
 import './style.css';
 import { Preview } from 'sign.v2.preview';
 import { type Metadata, Wizard, type WizardOptions } from 'ui.wizard';
-import { decorateResultBeforeCompletion, isTemplateMode } from './functions';
+import { decorateResultBeforeCompletion, getFilledStringOrUndefined, isTemplateMode } from './functions';
 import type { SignOptions, SignOptionsConfig } from './types';
 
 export type { SignOptions, SignOptionsConfig };
-
-export type DocumentModeType = 'document' | 'template';
-export const DocumentMode: Readonly<Record<string, DocumentModeType>> = Object.freeze({
-	document: 'document',
-	template: 'template',
-});
-
 export { decorateResultBeforeCompletion, isTemplateMode };
 
 export class SignSettings
@@ -408,6 +403,7 @@ export class SignSettings
 		}
 
 		await this.documentSetup.setup(uid);
+
 		const { setupData } = this.documentSetup;
 		if (!setupData)
 		{
@@ -439,7 +435,11 @@ export class SignSettings
 	async init(uid: ?string, templateUid?: string): void
 	{
 		this.#isEditMode = Type.isStringFilled(uid) || Type.isStringFilled(templateUid);
-		const metadata = this.getStepsMetadata(this, uid, templateUid);
+		const metadata = this.getStepsMetadata(
+			this,
+			getFilledStringOrUndefined(uid),
+			getFilledStringOrUndefined(templateUid),
+		);
 		const { complete, ...rest } = this.#wizardOptions;
 
 		const title = this.isTemplateMode()
@@ -480,8 +480,11 @@ export class SignSettings
 		Dom.append(this.#getLayout(), container);
 		const step = this.documentSetup.setupData ? 1 : 0;
 
-		const isDraft = Type.isStringFilled(uid);
-		this.wizard.toggleBtnActiveState('next', !isDraft);
+		if (!this.isB2bSignMaster)
+		{
+			const isDraft = Type.isStringFilled(uid);
+			this.wizard.toggleBtnActiveState('next', !isDraft);
+		}
 		this.wizard.moveOnStep(step);
 	}
 
@@ -558,4 +561,7 @@ export class SignSettings
 	{
 		return null;
 	}
+
+	async applyDocumentData(uid: string): Promise<boolean>
+	{}
 }

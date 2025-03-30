@@ -15,7 +15,9 @@ class JobKillerService
 {
 	private const NEXT_EXECUTION_OFFSET = 300;
 	private const LIMIT = 50;
-	private const TTL = '-6 hour';
+	private const TTL = '-2 hour';
+
+	private const MAX_EVENT_COUNT_BEFORE_CANCEL = 2;
 
 	private JobRepository $jobRepository;
 
@@ -55,19 +57,36 @@ class JobKillerService
 	{
 		$jobCollection = $this->jobRepository->listByStatusListAndDate(
 			statusList: array_map(
-				static fn(\BackedEnum $status) => $status->value, JobStatus::getNotFinished()
+				static fn(\BackedEnum $status) => $status->value, JobStatus::getNotFinished(),
 			),
 			date: self::makeTtlDate(),
 			limit: self::LIMIT,
 		);
 
-		$jobIds = $jobCollection->map(
+		$jobsToResend = $jobCollection->filter(
+			static fn(Item\HcmLink\Job $job) => $job->eventCount < self::MAX_EVENT_COUNT_BEFORE_CANCEL,
+		);
+
+		$jobsToCancel = $jobCollection->filter(
+			static fn(Item\HcmLink\Job $job) => $job->eventCount >= self::MAX_EVENT_COUNT_BEFORE_CANCEL,
+		);
+
+		$jobIdsToCancel = $jobsToCancel->map(
 			static fn(Item\HcmLink\Job $job) => $job->id,
 		);
 
 		try
 		{
-			$this->jobRepository->updateStatusByIds($jobIds, JobStatus::CANCELED);
+			$this->jobRepository->updateStatusByIds($jobIdsToCancel, JobStatus::CANCELED);
+		}
+		catch (UpdateFailedException $exception)
+		{
+			return self::continue();
+		}
+
+		try
+		{
+			$this->resendJobCollection($jobsToResend);
 		}
 		catch (UpdateFailedException $exception)
 		{
@@ -87,11 +106,25 @@ class JobKillerService
 		return '';
 	}
 
+	private function resendJobCollection(Item\Collection\HcmLink\JobCollection $jobCollection): void
+	{
+		$jobIds = $jobCollection->map(
+			static fn(Item\HcmLink\Job $job) => $job->id,
+		);
+
+		$this->jobRepository->increaseEventCountByIds($jobIds);
+
+		$jobService = Container::getHcmLinkJobService();
+		foreach ($jobCollection as $job)
+		{
+			$jobService->sendJob($job);
+		}
+	}
+
 	private function existsNotFinished(): bool
 	{
 		$collection = $this->jobRepository->listByStatusListAndDate(
 			statusList: JobStatus::getNotFinished(),
-			date: $this->makeTtlDate(),
 			limit: 1,
 		);
 

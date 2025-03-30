@@ -13,5 +13,5 @@ $MESS["SIGN_ONBOARDING_B2E_STEP_ROUTE_TITLE"] = "Keep track of your documents";
 $MESS["SIGN_ONBOARDING_B2E_STEP_TEMPLATES_TEXT"] = "Create templates for your internal documentation. The employees will use them to create and submit documents.";
 $MESS["SIGN_ONBOARDING_B2E_STEP_TEMPLATES_TITLE"] = "Templates and routes";
 $MESS["SIGN_ONBOARDING_B2E_WELCOME_POPUP_BTN_TEXT"] = "Start";
-$MESS["SIGN_ONBOARDING_B2E_WELCOME_POPUP_TEXT"] = "Sign HR documents inside Bitrix24.";
+$MESS["SIGN_ONBOARDING_B2E_WELCOME_POPUP_TEXT"] = "Streamline your HR workflow by signing HR documents inside Bitrix24.";
 $MESS["SIGN_ONBOARDING_B2E_WELCOME_POPUP_TITLE"] = "Bitrix24 e-Signature for HR";

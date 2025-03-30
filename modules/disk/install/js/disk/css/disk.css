@@ -58,69 +58,125 @@
 
 
 /* File List */
-.bx-disk-folder-icon{
-    display:inline-block;
+.bx-disk-folder-icon {
+    display: inline-block;
     position: relative;
-    float:left;
-    width:36px;
-    height:29px;
-    margin-right:10px;
-    vertical-align:middle;
-    background:url(/bitrix/images/disk/icons-files2.png) no-repeat;
-    background-position:0 0 !important;
+    float: left;
+    width: 36px;
+    height: 29px;
+    margin-right: 10px;
+    vertical-align: middle;
+    background: url(./images/disk-folder.svg) no-repeat;
+    background-position: 0 0 !important;
 }
-.bx-file-icon-container-small.bx-disk-file-icon{
-    display:inline-block;
-    position: relative;
-    width:36px;
-    height:36px;
-    margin-right:10px;
-    vertical-align:middle;
-    background:url(/bitrix/images/disk/icons-files2.png) no-repeat;
-    background-position:left -576px !important;
-}
-.bx-file-icon-container-small.bx-disk-file-icon.shared{
-    background-image: url(/bitrix/images/disk/is.png), url(/bitrix/images/disk/icons-files2.png);
-    background-repeat: no-repeat, no-repeat;
-    background-position:left bottom, left -576px;
-}
-.bx-disk-file-title{
-    cursor:pointer;
-}
-.bx-disk-folder-icon.icon-shared_1{
-    background-position:left  -48px !important;
-}
-.bx-disk-folder-icon.icon-shared_2{
-    background-position:left  -96px !important;
-}
-.bx-disk-folder-icon.icon-shared_3{
-    background-position:left -144px !important;
-}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-pdf{background-position:left -192px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-doc{background-position:left -240px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-ppt{background-position:left -288px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-xls{background-position:left -336px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-php{background-position:left -384px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-txt{background-position:left -432px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-zip{background-position:left -480px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-rar{background-position:left -528px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-emp{background-position:left -576px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-img{background-position:left -624px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-vid{background-position:left -672px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-exe{background-position:left -720px !important;}
 
-.bx-file-icon-container-small.bx-disk-file-icon.icon-pdf.shared{background-position: left bottom, left -192px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-doc.shared{background-position: left bottom, left -240px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-ppt.shared{background-position: left bottom, left -288px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-xls.shared{background-position: left bottom, left -336px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-php.shared{background-position: left bottom, left -384px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-txt.shared{background-position: left bottom, left -432px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-zip.shared{background-position: left bottom, left -480px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-rar.shared{background-position: left bottom, left -528px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-emp.shared{background-position: left bottom, left -576px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-img.shared{background-position: left bottom, left -624px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-vid.shared{background-position: left bottom, left -672px !important;}
-.bx-file-icon-container-small.bx-disk-file-icon.icon-exe.shared{background-position: left bottom, left -720px !important;}
+.bx-file-icon-container-small.bx-disk-file-icon {
+    display: inline-block;
+    position: relative;
+    width: 36px;
+    height: 36px;
+    margin-right: 10px;
+    vertical-align: middle;
+	background: url(./images/disk-blank.svg) -3px 0 no-repeat !important;
+}
+
+.bx-file-icon-container-small.bx-disk-file-icon.shared {
+	background: url(./images/disk-blank.svg) -3px 0 no-repeat;
+}
+
+.bx-disk-file-title {
+    cursor: pointer;
+}
+
+.bx-disk-folder-icon.icon-shared_1 {
+	background:url(./images/disk-folder-shared-1.svg) no-repeat;
+}
+
+.bx-disk-folder-icon.icon-shared_2 {
+	background:url(./images/disk-folder-shared-2.svg) no-repeat;
+}
+
+.bx-disk-folder-icon.icon-shared_3 {
+	background:url(./images/disk-folder-shared-3.svg) no-repeat;
+}
+
+.bx-file-icon-container-small.bx-disk-file-icon.icon-pdf {
+	background: url(./images/disk-pdf.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-doc {
+	background: url(./images/disk-doc.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-ppt {
+	background: url(./images/disk-ppt.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-xls {
+	background: url(./images/disk-xls.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-php {
+	background: url(./images/disk-php.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-txt {
+	background: url(./images/disk-txt.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-zip {
+	background: url(./images/disk-zip.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-rar {
+	background: url(./images/disk-rar.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-emp {
+	background: url(./images/disk-blank.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-img {
+	background: url(./images/disk-img.svg?v=1.2) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-vid {
+	background: url(./images/disk-video.svg?v=1.1) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-exe {
+	background: url(./images/disk-exe.svg?v=1.2) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-flp,
+.bx-file-icon-container-small.bx-disk-file-icon.icon-board {
+	background: url(./images/disk-board-icon.svg) -3px 0 no-repeat !important;
+}
+
+.bx-file-icon-container-small.bx-disk-file-icon.icon-pdf.shared {
+	background: url(./images/disk-pdf.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-doc.shared {
+	background: url(./images/disk-doc.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-ppt.shared {
+	background: url(./images/disk-ppt.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-xls.shared {
+	background: url(./images/disk-xls.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-php.shared {
+	background: url(./images/disk-php.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-txt.shared {
+	background: url(./images/disk-txt.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-zip.shared {
+	background: url(./images/disk-zip.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-rar.shared {
+	background: url(./images/disk-rar.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-emp.shared {
+	background: url(./images/disk-blank.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-img.shared {
+	background: url(./images/disk-img.svg?v=1.2) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-vid.shared {
+	background: url(./images/disk-video.svg?v=1.1) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-exe.shared {
+	background: url(./images/disk-exe.svg?v=1.2) -3px 0 no-repeat !important;
+}
 
 /* tiny file icons */
 .bx-file-icon-container-small.bx-disk-file-icon.bx-file-icon-tiny {

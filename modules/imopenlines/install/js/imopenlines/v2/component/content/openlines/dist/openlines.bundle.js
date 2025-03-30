@@ -621,7 +621,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 
 	class OpenLinesMessageMenu extends im_v2_component_messageList.MessageMenu {
 	  getMenuItems() {
-	    return [this.getReplyItem(), this.getCopyItem(), this.getDelimiter(), this.getDelimiter(), this.getDownloadFileItem(), this.getDelimiter(), this.getEditItem(), this.getDeleteItem(), this.getMarkItem(), this.getDelimiter(), this.getSelectItem()];
+	    return [this.getReplyItem(), this.getCopyItem(), this.getForwardItem(), this.getFavoriteItem(), this.getDelimiter(), this.getDownloadFileItem(), this.getDelimiter(), this.getEditItem(), this.getDelimiter(), this.getDeleteItem(), this.getDelimiter(), this.getMarkItem(), this.getDelimiter(), this.getSelectItem()];
 	  }
 	}
 
@@ -678,7 +678,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	    }
 	  },
 	  template: `
-		<BaseChatContent :dialogId="dialogId" :withSidebar="false">
+		<BaseChatContent :dialogId="dialogId">
 			<template #header>
 				<OpenLinesHeader :dialogId="dialogId" :key="dialogId" :isQueueTypeAll="isQueueTypeAll" />
 			</template>

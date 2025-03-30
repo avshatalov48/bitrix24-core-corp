@@ -7010,7 +7010,9 @@ class CAllCrmActivity
 		if (isset($arFields['IS_MEETING']))
 		{
 			$arCalEventFields['IS_MEETING'] = $arFields['IS_MEETING'];
-			$arCalEventFields['MEETING_HOST'] = $responsibleID;
+
+			$meetingHostUserId = Container::getInstance()->getContext()->getUserId();
+			$arCalEventFields['MEETING_HOST'] = $meetingHostUserId > 0 ? $meetingHostUserId : $responsibleID;
 
 			if ($arCalEventFields['IS_MEETING'] === true)
 			{

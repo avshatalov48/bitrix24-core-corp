@@ -1,3 +1,5 @@
+import './styles/tab.css';
+
 export const ChatTab = {
 	name: 'chatTab',
 

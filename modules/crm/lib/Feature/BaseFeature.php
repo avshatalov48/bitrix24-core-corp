@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Feature;
 
 use Bitrix\Crm\Feature\Category\BaseCategory;
 use Bitrix\Crm\Feature\Category\Common;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Config\Option;
 
 abstract class BaseFeature
@@ -54,6 +55,7 @@ abstract class BaseFeature
 	public function enable(): void
 	{
 		$this->setOption($this->getOptionName(), $this->getEnabledValue());
+		$this->logEnabled();
 	}
 
 	/**
@@ -64,6 +66,7 @@ abstract class BaseFeature
 	public function disable(): void
 	{
 		$this->setOption($this->getOptionName(), $this->getDisabledValue());
+		$this->logDisabled();
 	}
 
 	/**
@@ -131,5 +134,29 @@ abstract class BaseFeature
 		{
 			Option::set('crm', $optionName, $optionValue);
 		}
+	}
+
+	protected function logEnabled(): void
+	{
+		$this->log($this->getId(). ' enabled');
+	}
+
+	protected function logDisabled(): void
+	{
+		$this->log($this->getId(). ' disabled');
+	}
+
+	private function log(string $message, string $level = \Psr\Log\LogLevel::INFO): void
+	{
+		$logger = (new \Bitrix\Crm\Service\Logger\DbLogger(
+			'Features',
+			(int)Option::get('crm', 'features_logger_ttl', 24*90))
+		)->setLevel(Option::get('crm', 'features_logger_level', \Psr\Log\LogLevel::INFO));
+
+		$context = [
+			'userId' => Container::getInstance()->getContext()->getUserId(),
+		];
+
+		$logger->log($level, $message, $context);
 	}
 }

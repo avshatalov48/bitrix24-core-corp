@@ -208,6 +208,13 @@ class Engine
 		return BX.message("call_log_service");
 	};
 
+	onCallCreated(call)
+	{
+		BX.onCustomEvent(window, "CallEvents::callCreated", [{
+			call: call
+		}]);
+	}
+
 	createCall(config: CreateCallOptions): Promise<AbstractCall>
 	{
 		return new Promise((resolve, reject) =>
@@ -225,10 +232,7 @@ class Engine
 						if (call.provider == config.provider && call.associatedEntity.type == config.entityType && call.associatedEntity.id == config.entityId)
 						{
 							this.log(callId, "Found existing call, attaching to it");
-
-							BX.onCustomEvent(window, "CallEvents::callCreated", [{
-								call: call
-							}]);
+							this.onCallCreated(call);
 
 							Hardware.isCameraOn = config.videoEnabled === true;
 
@@ -328,9 +332,7 @@ class Engine
 					this.log(call.id, "Server returned existing call, attaching to it");
 				}
 
-				BX.onCustomEvent(window, "CallEvents::callCreated", [{
-					call: call
-				}]);
+				this.onCallCreated(call);
 
 				resolve({
 					call: call,
@@ -397,9 +399,7 @@ class Engine
 				});
 
 				this.calls[callFields['ID']] = call;
-				BX.onCustomEvent(window, "CallEvents::callCreated", [{
-					call: call
-				}]);
+				this.onCallCreated(call);
 
 				resolve({
 					call: call,
@@ -442,9 +442,7 @@ class Engine
 
 		this.calls[callFields['ID']] = call;
 
-		BX.onCustomEvent(window, "CallEvents::callCreated", [{
-			call: call
-		}]);
+		this.onCallCreated(call);
 
 		return call;
 	};
@@ -577,13 +575,17 @@ class Engine
 			Util.setUserData(params.userData);
 		}
 
-		if (this.calls[callId])
+		call = this.calls[callId];
+
+		if (!!call)
 		{
-			call = this.calls[callId];
+			call.associatedEntity = callFields.ASSOCIATED_ENTITY;
+			call.state = CallState.Idle;
 		}
-		else
-		{
+
+		if (!call) {
 			const callFactory = this.#getCallFactory(callFields.PROVIDER);
+
 			call = callFactory.createCall({
 				id: callId,
 				instanceId: Util.getUuidv4(),
@@ -607,11 +609,9 @@ class Engine
 			});
 
 			this.calls[callId] = call;
-
-			BX.onCustomEvent(window, "CallEvents::callCreated", [{
-				call: call
-			}]);
 		}
+
+		this.onCallCreated(call);
 
 		if (call)
 		{

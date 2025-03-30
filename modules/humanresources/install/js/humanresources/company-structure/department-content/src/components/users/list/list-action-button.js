@@ -2,10 +2,11 @@ import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { mapState } from 'ui.vue3.pinia';
 import { getColorCode } from 'humanresources.company-structure.utils';
 import { RouteActionMenu } from 'humanresources.company-structure.structure-components';
-import { CRM } from 'ui.icon-set.api.core';
-import '../../../style.css';
-import 'ui.icon-set.crm';
+import { CRM, Main } from 'ui.icon-set.api.core';
 import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
+
+import 'ui.icon-set.crm';
+import './styles/list-action-button.css';
 
 const MenuOption = Object.freeze({
 	addToDepartment: 'addToDepartment',
@@ -43,7 +44,7 @@ export const UserListActionButton = {
 	{
 		departmentId()
 		{
-			this.menuItems = this.getMenuItems()
+			this.menuItems = this.getMenuItems();
 		},
 	},
 
@@ -89,7 +90,11 @@ export const UserListActionButton = {
 				},
 				{
 					id: MenuOption.editDepartmentUsers,
-					imageClass: '--hr-department-detail-members-action-menu-edit-list',
+					bIcon: {
+						name: Main.EDIT_MENU,
+						size: 20,
+						color: getColorCode('paletteBlue50'),
+					},
 					permission: {
 						action: PermissionActions.employeeAddToDepartment,
 					},
@@ -136,23 +141,24 @@ export const UserListActionButton = {
 	},
 
 	template: `
-      <button
-		 v-if="menuItems.length"
-          class="hr-department-detail-content__list-header-button"
-          :class="{ '--focused': menuVisible }"
-          :ref="'actionMenuButton' + role"
-          @click.stop="menuVisible = true"
-      >
-        {{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_LIST_ACTION_BUTTON_TITLE') }}
-      </button>
-      <RouteActionMenu
-          v-if="menuVisible"
-          :id="'tree-node-department-menu-' + role + '-' + focusedNode"
-          :items="menuItems"
-          :width="302"
-          :bindElement="$refs['actionMenuButton' + role]"
-          @action="onActionMenuItemClick"
-          @close="menuVisible = false"
-      />
+		<button
+			v-if="menuItems.length"
+			class="hr-department-detail-content__list-header-button"
+			:class="{ '--focused': menuVisible }"
+			:ref="'actionMenuButton' + role"
+			@click.stop="menuVisible = true"
+			:data-ld="'hr-department-detail-content__' + role + '_list-header-button'"
+		>
+			{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_LIST_ACTION_BUTTON_TITLE') }}
+		</button>
+		<RouteActionMenu
+			v-if="menuVisible"
+			:id="'tree-node-department-menu-' + role + '-' + focusedNode"
+			:items="menuItems"
+			:width="302"
+			:bindElement="$refs['actionMenuButton' + role]"
+			@action="onActionMenuItemClick"
+			@close="menuVisible = false"
+		/>
 	`,
 };

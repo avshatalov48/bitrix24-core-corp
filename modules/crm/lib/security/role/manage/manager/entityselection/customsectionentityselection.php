@@ -94,4 +94,9 @@ class CustomSectionEntitySelection extends EntitySelection
 			->getExternalDynamicInaccessibilityContent()
 		;
 	}
+
+	public function getMenuId(): ?string
+	{
+		return null;
+	}
 }

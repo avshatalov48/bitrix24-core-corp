@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Disk = this.BX.Disk || {};
 (function (exports,ui_uploader_vue,ui_uploader_tileWidget,main_core_events,ui_buttons,ui_uploader_core,ui_infoHelper,main_core,main_popup) {
@@ -961,6 +962,10 @@ this.BX.Disk = this.BX.Disk || {};
 	    const settings = main_core.Extension.getSettings('disk.uploader.user-field-widget');
 	    return settings.get('importFeatureId', '');
 	  }
+	  isBoardsEnabled() {
+	    const settings = main_core.Extension.getSettings('disk.uploader.user-field-widget');
+	    return settings.get('isBoardsEnabled', '');
+	  }
 	}
 
 	const loadDiskFileDialog = (dialogName, params = {}) => {
@@ -1677,6 +1682,11 @@ this.BX.Disk = this.BX.Disk || {};
 	      default: {}
 	    }
 	  },
+	  data() {
+	    return {
+	      isBoardsEnabled: this.userFieldControl.isBoardsEnabled()
+	    };
+	  },
 	  created() {
 	    this.menu = null;
 	    this.currentServiceNode = null;
@@ -1710,7 +1720,11 @@ this.BX.Disk = this.BX.Disk || {};
 	      } else if (!BX.Disk.getDocumentService()) {
 	        BX.Disk.saveDocumentService('l');
 	      }
-	      if (BX.Disk.Document.Local.Instance.isSetWorkWithLocalBDisk()) {
+	      let newTab = null;
+	      if (documentType === 'board') {
+	        newTab = window.open('', '_blank');
+	      }
+	      if (BX.Disk.Document.Local.Instance.isSetWorkWithLocalBDisk() || documentType === 'board') {
 	        BX.Disk.Document.Local.Instance.createFile({
 	          type: documentType
 	        }).then(response => {
@@ -1720,6 +1734,9 @@ this.BX.Disk = this.BX.Disk || {};
 	              preload: true
 	            });
 	            this.userFieldControl.showUploaderPanel();
+	            if (newTab !== null && response.openUrl) {
+	              newTab.location.href = response.openUrl;
+	            }
 	          }
 	        });
 	      } else {
@@ -1808,6 +1825,13 @@ this.BX.Disk = this.BX.Disk || {};
 						<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_CREATE_PPTX') }}</div>
 					</div>
 				</div>
+				<div class="disk-user-field-panel-card-box" @click="createDocument('board')" v-if="isBoardsEnabled">
+					<div class="disk-user-field-panel-card disk-user-field-panel-card--board">
+						<div class="disk-user-field-panel-card-icon"></div>
+						<div class="disk-user-field-panel-card-btn"></div>
+						<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_CREATE_BOARD') }}</div>
+					</div>
+				</div>
 			</div>
 			<div class="disk-user-field-create-document-by-service" @click="openMenu" ref="document-services"></div>
 		</div>
@@ -1894,6 +1918,7 @@ this.BX.Disk = this.BX.Disk || {};
 	          } = event.getData();
 	          this.userFieldControl.getMainPostForm().insertIntoText(item);
 	        };
+	        tileWidgetOptions.enableDropzone = false;
 	      }
 	      const settingsMenu = new SettingsMenu(this.userFieldControl);
 	      if (settingsMenu.hasItems()) {

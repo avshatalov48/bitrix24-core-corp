@@ -2,9 +2,43 @@ import { Event } from 'main.core';
 import { Core } from 'booking.core';
 import { Model } from 'booking.const';
 
-export class MousePosition
+class MousePosition
 {
-	bindMouseMove(): void
+	#isMousePressed: boolean = false;
+
+	init(): void
+	{
+		this.#bindMouseMove();
+		this.#bindMousePressed();
+	}
+
+	destroy(): void
+	{
+		Event.unbind(window, 'mousemove', this.onMouseMove);
+		Event.unbind(window, 'mousedown', this.onMouseDown);
+		Event.unbind(window, 'mouseup', this.onMouseUp);
+	}
+
+	isMousePressed(): boolean
+	{
+		return this.#isMousePressed;
+	}
+
+	#bindMousePressed(): void
+	{
+		if (this.onMouseDown)
+		{
+			return;
+		}
+
+		this.onMouseDown = this.#onMouseDown.bind(this);
+		this.onMouseUp = this.#onMouseUp.bind(this);
+
+		Event.bind(window, 'mousedown', this.onMouseDown);
+		Event.bind(window, 'mouseup', this.onMouseUp);
+	}
+
+	#bindMouseMove(): void
 	{
 		if (this.onMouseMove)
 		{
@@ -13,7 +47,7 @@ export class MousePosition
 
 		this.onMouseMove = this.#update.bind(this);
 
-		Event.bind(document, 'mousemove', this.onMouseMove);
+		Event.bind(window, 'mousemove', this.onMouseMove);
 	}
 
 	#update(event: MouseEvent): void
@@ -22,6 +56,16 @@ export class MousePosition
 			top: event.clientY + window.scrollY,
 			left: event.clientX + window.scrollX,
 		});
+	}
+
+	#onMouseDown(): void
+	{
+		this.#isMousePressed = true;
+	}
+
+	#onMouseUp(): void
+	{
+		this.#isMousePressed = false;
 	}
 }
 

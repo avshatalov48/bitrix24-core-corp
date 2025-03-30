@@ -73,4 +73,19 @@ class CustomSectionListSelection implements RoleSelectionManager
 	{
 		return GroupCodeGenerator::getAutomatedSolutionListCode();
 	}
+
+	public function getMenuId(): ?string
+	{
+		return self::CRITERION;
+	}
+
+	public function getControllerData(): array
+	{
+		return [
+			'criterion' => self::CRITERION,
+			'sectionCode' => null,
+			'isAutomation' => true,
+			'menuId' => $this->getMenuId(),
+		];
+	}
 }

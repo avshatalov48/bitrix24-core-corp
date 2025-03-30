@@ -3,8 +3,8 @@
 namespace Bitrix\Disk\Document\OnlyOffice;
 
 use Bitrix\Disk\Document\OnlyOffice\Enum;
-use Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog;
-use Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLogTable;
+use Bitrix\Disk\Document\Models\RestrictionLog;
+use Bitrix\Disk\Document\Models\RestrictionLogTable;
 use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Main\Application;
 use Bitrix\Main\ModuleManager;

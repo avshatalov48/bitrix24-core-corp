@@ -2,7 +2,9 @@
 
 namespace Bitrix\Crm\Tour;
 
+use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Traits;
+use Bitrix\Main\Type\DateTime;
 
 abstract class Base
 {
@@ -19,6 +21,10 @@ abstract class Base
 	 * @return int
 	 */
 	protected int $numberOfViewsLimit = 1;
+
+	protected function __construct()
+	{
+	}
 
 	/**
 	 * Determine whether to show a tour
@@ -83,7 +89,9 @@ abstract class Base
 
 	protected function isBuildComponentDisabled(): bool
 	{
-		return Config::isToursDeactivated($this->getOptionCategory())
+		return $this->isShowDeadlineExpired()
+			|| !$this->isAvailablePortal()
+			|| Config::isToursDeactivated($this->getOptionCategory())
 			|| $this->isNumberOfViewsExceeded()
 			|| !$this->canShow()
 		;
@@ -123,5 +131,39 @@ abstract class Base
 	protected function isMultipleViewsAllowed(): bool
 	{
 		return $this->numberOfViewsLimit > 1;
+	}
+
+	protected function getShowDeadline(): ?DateTime
+	{
+		return null;
+	}
+
+	final protected function isShowDeadlineExpired(): bool
+	{
+		$deadline = $this->getShowDeadline();
+		if ($deadline === null)
+		{
+			return false;
+		}
+
+		$now = new DateTime();
+
+		return $now->getTimestamp() > $deadline->getTimestamp();
+	}
+
+	protected function getPortalMaxCreatedDate(): ?DateTime
+	{
+		return null;
+	}
+
+	final protected function isAvailablePortal(): bool
+	{
+		$date = $this->getPortalMaxCreatedDate();
+		if ($date === null)
+		{
+			return true;
+		}
+
+		return Crm::isPortalCreatedBefore($date->getTimestamp());
 	}
 }

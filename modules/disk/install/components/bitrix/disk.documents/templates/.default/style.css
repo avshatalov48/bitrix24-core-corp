@@ -140,16 +140,33 @@
 	display: block;
 }
 
-.disk-documents-control-panel-card--doc .disk-documents-control-panel-card-icon {
+.disk-documents-control-panel-card--flipchart .disk-documents-control-panel-card-icon {
 	background-image: url("data:image/svg+xml,%3Csvg width='44' height='52' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cpath fill='%23E5E8EB' d='M0 .087h27.728L38.83 11.745v39.347H0z'/%3E%3Cpath fill='%23535C69' opacity='.3' d='M27.604.087l11.226 11.44H27.604z'/%3E%3Cpath fill='%232C77B1' fill-rule='nonzero' d='M15.53 22.96H44v14.918H15.53z'/%3E%3Cpath d='M19.452 33.976h2.031c2.602 0 4.095-1.578 4.095-3.818 0-2.195-1.38-3.715-4.005-3.715h-2.12v7.533zm1.179-1.018V27.46h.841c1.918 0 2.85 1.086 2.85 2.71 0 1.508-.753 2.788-2.828 2.788h-.863zm9.746 1.132c2.11 0 3.68-1.52 3.68-3.852 0-2.264-1.514-3.864-3.68-3.864-2.154 0-3.69 1.577-3.69 3.864 0 2.32 1.547 3.852 3.69 3.852zm0-1.018c-1.458 0-2.434-1.074-2.434-2.834s.976-2.847 2.434-2.847c1.514 0 2.435 1.143 2.435 2.847 0 1.76-.977 2.834-2.435 2.834zM41 32.57a3.456 3.456 0 01-1.795.503c-1.57 0-2.547-1.154-2.547-2.811 0-1.567.943-2.87 2.603-2.87a3.806 3.806 0 011.873.48v-1.12c-.426-.205-1.099-.377-1.895-.377-2.312 0-3.837 1.737-3.837 3.921 0 2.206 1.323 3.795 3.668 3.795a4.49 4.49 0 002.256-.572l-.326-.949z' fill='%23FFF'/%3E%3C/g%3E%3C/svg%3E");
 }
 
+.disk-documents-control-panel-card--doc .disk-documents-control-panel-card-icon {
+	background-image: url(./images/doc.svg);
+	background-size: cover;
+}
+
 .disk-documents-control-panel-card--xls .disk-documents-control-panel-card-icon {
-	background-image: url("data:image/svg+xml,%3Csvg width='44' height='52' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cpath fill='%23E5E8EB' d='M0 0h28.131l10.82 11.53v39.633H0z'/%3E%3Cpath fill='%23535C69' opacity='.3' d='M27.604.087l11.226 11.44H27.604z'/%3E%3Cpath fill='%2354B51E' fill-rule='nonzero' d='M15.53 22.96H44v14.918H15.53z'/%3E%3Cpath d='M21.738 33.976h1.29l2.008-2.904 1.884 2.904h1.336l-2.48-3.818 2.558-3.715h-1.302l-1.929 2.834-1.84-2.834h-1.335l2.424 3.75-2.614 3.783zm7.626 0h3.837v-1.018h-2.659v-6.515h-1.178v7.533zm4.117-.515c.515.378 1.278.63 2.13.63 1.482 0 2.547-.802 2.547-2.116 0-2.367-3.208-2.194-3.208-3.68 0-.675.55-.904 1.11-.904.595.009 1.18.161 1.706.446v-1.086c-.382-.205-1.01-.377-1.739-.377-1.481 0-2.333.926-2.333 2.035 0 2.275 3.22 2.08 3.22 3.669 0 .731-.64.994-1.325.994a2.919 2.919 0 01-1.637-.526l-.471.915z' fill='%23FFF'/%3E%3C/g%3E%3C/svg%3E");
+	background-image: url(./images/xls.svg);
+	background-size: cover;
 }
 
 .disk-documents-control-panel-card--ppt .disk-documents-control-panel-card-icon {
-	background-image: url("data:image/svg+xml,%3Csvg width='44' height='52' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cpath fill='%23E5E8EB' d='M0 .087h27.728L38.83 11.745v39.347H0z'/%3E%3Cpath fill='%23535C69' opacity='.3' d='M27.604.087l11.226 11.44H27.604z'/%3E%3Cpath fill='%23E89E00' fill-rule='nonzero' d='M15.53 22.96H44v14.918H15.53z'/%3E%3Cpath d='M22.265 33.976h1.178v-2.652h.37c.662 0 1.156-.103 1.548-.275.987-.423 1.358-1.291 1.358-2.172 0-.994-.427-1.714-1.156-2.103-.426-.228-.942-.331-1.649-.331h-1.65v7.533zm1.178-3.635v-2.915h.438c.437 0 .751.08.987.217.415.251.617.697.617 1.234 0 .606-.213 1.052-.662 1.27-.224.125-.527.194-.931.194h-.449zm4.721 3.635h1.179v-2.652h.37c.662 0 1.155-.103 1.548-.275.987-.423 1.357-1.291 1.357-2.172 0-.994-.426-1.714-1.155-2.103-.427-.228-.943-.331-1.65-.331h-1.649v7.533zm1.179-3.635v-2.915h.437c.438 0 .752.08.987.217.415.251.617.697.617 1.234 0 .606-.213 1.052-.662 1.27-.224.125-.527.194-.93.194h-.45zm6.347 3.635h1.179V27.46h2.007l.337-1.017h-5.665v1.017h2.142v6.516z' fill='%23FFF'/%3E%3C/g%3E%3C/svg%3E");
+	background-image: url(./images/ppt.svg);
+	background-size: cover;
+}
+
+.disk-documents-control-panel-card--board .disk-documents-control-panel-card-icon {
+	background-image: url(./images/disk-board-card-icon.svg);
+	background-size: cover;
+}
+
+.ui-icon.ui-icon-file-board > i {
+	background-image: url(./images/disk-board-card-icon.svg);
+	background-size: cover;
 }
 
 .disk-documents-control-panel-card--doc .disk-documents-control-panel-card-btn {
@@ -164,11 +181,16 @@
 	background-color: #e89e00;
 }
 
+.disk-documents-control-panel-card--board .disk-documents-control-panel-card-btn {
+	background-color: #20adbf;
+}
+
+.disk-documents-control-panel-card--board .disk-documents-control-panel-card-icon,
 .disk-documents-control-panel-card--doc .disk-documents-control-panel-card-icon,
 .disk-documents-control-panel-card--xls .disk-documents-control-panel-card-icon,
 .disk-documents-control-panel-card--ppt .disk-documents-control-panel-card-icon {
-	width: 44px;
-	height: 52px;
+	width: 50px;
+	height: 50px;
 }
 
 .disk-documents-control-panel-card-name {
@@ -516,3 +538,35 @@
 }
 
 /* endregion */
+
+.disk-documents-flipchart-empty-block {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.disk-documents-flipchart-empty-icon {
+	display: block;
+	margin-bottom: 20px;
+	width: 168px;
+	height: 168px;
+	background: url(./images/empty-state-flipchart.svg);
+}
+
+.disk-documents-flipchart-empty-title {
+	display: block;
+	margin-bottom: 14px;
+	font-size: var(--ui-font-size-2xl);
+	color: var(--ui-color-base-default);
+	line-height: 22px;
+}
+
+.disk-documents-flipchart-emptys-description {
+	display: block;
+	font-size: var(--ui-font-size-lg);
+	color: var(--ui-color-base-90);
+	line-height: 22px;
+}
+
+.popup-window-angly.popup-window-angly-top {}

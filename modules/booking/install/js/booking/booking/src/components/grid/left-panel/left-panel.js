@@ -1,7 +1,9 @@
 import { DateTimeFormat } from 'main.date';
 import { mapGetters } from 'ui.vue3.vuex';
 import { range } from 'booking.lib.range';
+
 import { OffHours } from './off-hours/off-hours';
+import { QuickFilter } from './quick-filter/quick-filter';
 import './left-panel.css';
 
 type Hour = {
@@ -38,6 +40,7 @@ export const LeftPanel = {
 	},
 	components: {
 		OffHours,
+		QuickFilter,
 	},
 	template: `
 		<div class="booking-booking-grid-left-panel-container">
@@ -59,6 +62,7 @@ export const LeftPanel = {
 						<div class="booking-booking-grid-left-panel-time-text">
 							{{ hour.formatted }}
 						</div>
+						<QuickFilter :hour="hour.value"/>
 					</div>
 				</template>
 			</div>

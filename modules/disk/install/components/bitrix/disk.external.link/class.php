@@ -2,10 +2,16 @@
 
 use Bitrix\Disk\BaseObject;
 use Bitrix\Disk\Configuration;
+use Bitrix\Disk\Controller\Integration\Flipchart;
+use Bitrix\Disk\Document\BoardsHandler;
 use Bitrix\Disk\Document\DocumentEditorUser;
 use Bitrix\Disk\Document\DocumentHandler;
 use Bitrix\Disk\Document\FileData;
 use Bitrix\Disk\Document\GoogleViewerHandler;
+use Bitrix\Disk\Document\Models\DocumentService;
+use Bitrix\Disk\Document\Models\DocumentSession;
+use Bitrix\Disk\Document\Models\DocumentSessionContext;
+use Bitrix\Disk\Document\Models\GuestUser;
 use Bitrix\Disk\Document\OnlyOffice;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
@@ -18,6 +24,7 @@ use Bitrix\Disk\Ui\FileAttributes;
 use Bitrix\Disk\Ui\Icon;
 use Bitrix\Disk\Ui;
 use Bitrix\Disk\ZipNginx;
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Disk\Internals\Grid;
 use Bitrix\Main\Context;
@@ -43,6 +50,13 @@ class CDiskExternalLinkComponent extends DiskComponent
 	const PAGE_SIZE = 25;
 	const MAX_SIZE_TO_PREVIEW = 15728640; //1024 * 1024 * 15 bytes
 
+	private const ONLYOFFICE_FILE_VIEWER = 'onlyoffice';
+	private const BOARD_FILE_VIEWER = 'board';
+	private const FILE_VIEWERS = [
+		self::ONLYOFFICE_FILE_VIEWER,
+		self::BOARD_FILE_VIEWER,
+	];
+
 	/** @var \Bitrix\Disk\ExternalLink */
 	protected $externalLink;
 	/** @var string */
@@ -60,12 +74,13 @@ class CDiskExternalLinkComponent extends DiskComponent
 	 */
 	protected function processBeforeAction($actionName)
 	{
-		$this->defaultHandlerForView = Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
 		$this->findLink();
+		$this->defaultHandlerForView = $this->getHandlerForView();
 
 		if(
 			($this->externalLink->isAutomatic() && !Configuration::isEnabledAutoExternalLink()) ||
-			(!$this->externalLink->isAutomatic() && !Configuration::isEnabledManualExternalLink())
+			(!$this->externalLink->isAutomatic() && !Configuration::isEnabledManualExternalLink()) ||
+			(($this->defaultHandlerForView instanceof BoardsHandler) && !Configuration::isEnabledManualExternalLink())
 		)
 		{
 			$this->arResult = array(
@@ -96,7 +111,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 				]);
 
 				$redirect = new \Bitrix\Main\Engine\Response\Redirect($link);
-				\Bitrix\Main\Application::getInstance()->end(0, $redirect);
+				Application::getInstance()->end(0, $redirect);
 			}
 
 			if ($this->externalLink->hasPassword() && !$this->checkPassword())
@@ -128,6 +143,9 @@ class CDiskExternalLinkComponent extends DiskComponent
 				'method' => ['GET', 'POST'],
 			],
 			'showByOnlyOfficeViewer' => [
+				'method' => ['GET', 'POST'],
+			],
+			'showByBoardsViewer' => [
 				'method' => ['GET', 'POST'],
 			],
 			'showViewHtml',
@@ -200,7 +218,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 			if ($documentSession->canTransformUserToEdit(CurrentUser::get()))
 			{
 				$fieldsToCreateUser = [
-					'NAME' => OnlyOffice\Models\GuestUser::create()->getName(),
+					'NAME' => GuestUser::create()->getName(),
 				];
 
 				if (DocumentEditorUser::login($fieldsToCreateUser))
@@ -219,7 +237,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 				$this->arResult['LINK_TO_DOWNLOAD'] = $this->getDownloadUrl();
 			}
 
-			$this->includeComponentTemplate('onlyoffice');
+			$this->showFileViewer(self::ONLYOFFICE_FILE_VIEWER);
 		}
 		else
 		{
@@ -242,7 +260,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 		$isFolder = $this->externalLink->getObject() instanceof Folder;
 		$isFile = !$isFolder;
 
-		$server = \Bitrix\Main\Application::getInstance()->getContext()->getServer();
+		$server = Application::getInstance()->getContext()->getServer();
 		$this->arResult = array(
 			'PROTECTED_BY_PASSWORD' => $this->externalLink->hasPassword(),
 			'VALID_PASSWORD' => $validPassword,
@@ -253,8 +271,26 @@ class CDiskExternalLinkComponent extends DiskComponent
 		if ($isFile)
 		{
 			$passwordPassed = !$this->arResult['PROTECTED_BY_PASSWORD'] || $this->arResult['VALID_PASSWORD'];
-			$isDocument = $this->isViewableDocument($this->externalLink->getFile()->getExtension());
-			if ($this->defaultHandlerForView instanceof OnlyOffice\OnlyOfficeHandler && $passwordPassed && $isDocument)
+			$isDocument = $this->isViewableDocument($this->externalLink->getFile()?->getExtension());
+
+			if (($this->defaultHandlerForView instanceof BoardsHandler) && $passwordPassed && $isDocument)
+			{
+				$documentSession = $this->generateDocumentSession($this->externalLink->getFile());
+
+				if (!$documentSession)
+				{
+					$this->includeComponentTemplate('error');
+					return;
+				}
+
+				$this->setParamsForBoard($documentSession, $this->externalLink->getFile());
+
+				$this->showFileViewer(self::BOARD_FILE_VIEWER);
+
+				return;
+			}
+
+			if (($this->defaultHandlerForView instanceof OnlyOffice\OnlyOfficeHandler) && $passwordPassed && $isDocument)
 			{
 				$this->arResult['DOCUMENT_SESSION'] = $this->generateDocumentSession($this->externalLink->getFile());
 
@@ -266,7 +302,8 @@ class CDiskExternalLinkComponent extends DiskComponent
 				);
 				$this->arResult['LINK_TO_EDIT'] = $linkToEdit;
 				$this->arResult['LINK_TO_DOWNLOAD'] = $this->getDownloadUrl();
-				$this->includeComponentTemplate('onlyoffice');
+
+				$this->showFileViewer(self::ONLYOFFICE_FILE_VIEWER);
 
 				return;
 			}
@@ -307,14 +344,15 @@ class CDiskExternalLinkComponent extends DiskComponent
 		$this->includeComponentTemplate($isFile? 'template' : 'folder');
 	}
 
-	private function generateDocumentSession(File $file): ?OnlyOffice\Models\DocumentSession
+	private function generateDocumentSession(File $file): ?DocumentSession
 	{
-		$documentSessionContext = new OnlyOffice\Models\DocumentSessionContext($file->getId(), null, $this->externalLink->getId());
+		$documentSessionContext = new DocumentSessionContext($file->getId(), null, $this->externalLink->getId());
 		$sessionManager = new OnlyOffice\DocumentSessionManager();
 		$sessionManager
-			->setUserId($this->getUser()->getId() ?: OnlyOffice\Models\GuestUser::GUEST_USER_ID)
-			->setSessionType(OnlyOffice\Models\DocumentSession::TYPE_VIEW)
+			->setUserId($this->getUser()->getId() ?: GuestUser::GUEST_USER_ID)
+			->setSessionType(DocumentSession::TYPE_VIEW)
 			->setSessionContext($documentSessionContext)
+			->setService($this->getSessionServiceByFile($file))
 			->setFile($file)
 		;
 
@@ -494,7 +532,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 				$viewUrl = $urlManager->getUrlExternalLink(
 					[
 						'hash' => $this->externalLink->getHash(),
-						'action' => 'showByOnlyOfficeViewer',
+						'action' => $this->getViewActionNameForJs($object),
 						'token' => $this->downloadToken,
 						'path' => $relativePath?: '/',
 						'fileId' => $object->getId(),
@@ -506,6 +544,20 @@ class CDiskExternalLinkComponent extends DiskComponent
 					->setDocumentViewUrl($viewUrl)
 					->setGroupBy($this->componentId)
 				;
+
+				if ($this->getHandlerForViewByFile($object) instanceof BoardsHandler)
+				{
+					$attr
+						->addAction([
+							'type' => 'edit',
+							'buttonIconClass' => ' ',
+							'action' => 'BX.Disk.Viewer.Actions.openInNewTab',
+							'params' => [
+								'url' => $viewUrl,
+							],
+						])
+					;
+				}
 
 				$nameSpecialChars = htmlspecialcharsbx($name);
 				$columnName = "
@@ -584,6 +636,21 @@ class CDiskExternalLinkComponent extends DiskComponent
 		$grid['ROWS_COUNT'] = $cursor->getCount();
 
 		return $grid;
+	}
+
+	private function getViewActionNameForJs(BaseObject $object): string
+	{
+		if ($object instanceof File)
+		{
+			$documentHandler = $this->getHandlerForViewByFile($object);
+
+			if ($documentHandler instanceof BoardsHandler)
+			{
+				return 'showByBoardsViewer';
+			}
+		}
+
+		return 'showByOnlyOfficeViewer';
 	}
 
 	private function getResultByFolder()
@@ -864,6 +931,33 @@ class CDiskExternalLinkComponent extends DiskComponent
 		$this->end();
 	}
 
+	protected function processActionShowByBoardsViewer(string $path, int $fileId, string $token): void
+	{
+		$file = $this->getTargetFile($path, $fileId);
+		if (!$file)
+		{
+			$this->sendJsonErrorResponse();
+		}
+
+		$passwordPassed = !$this->arResult['PROTECTED_BY_PASSWORD'] || $this->arResult['VALID_PASSWORD'];
+		$isDocument = $this->isViewableDocument($file->getExtension());
+		$documentHandler = $this->getHandlerForViewByFile($file);
+		if (!$passwordPassed || !$isDocument || !($documentHandler instanceof BoardsHandler))
+		{
+			$this->sendJsonErrorResponse();
+		}
+
+		$documentSession = $this->generateDocumentSession($file);
+		if (!$documentSession)
+		{
+			$this->sendJsonErrorResponse();
+		}
+
+		$this->setParamsForBoard($documentSession, $file);
+
+		$this->showFileViewer(self::BOARD_FILE_VIEWER);
+	}
+
 	protected function processActionShowByOnlyOfficeViewer(string $path, int $fileId, string $token): void
 	{
 		$file = $this->getTargetFile($path, $fileId);
@@ -899,7 +993,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 		$this->arResult['LINK_TO_EDIT'] = '';
 		$this->arResult['LINK_TO_DOWNLOAD'] = $downloadUrl;
 
-		$this->includeComponentTemplate('onlyoffice');
+		$this->showFileViewer(self::ONLYOFFICE_FILE_VIEWER);
 	}
 
 	protected function processActionShowByGoogleViewer($path, $fileId)
@@ -1135,5 +1229,89 @@ class CDiskExternalLinkComponent extends DiskComponent
 	public function getMessage($id, $replace = null)
 	{
 		return Loc::getMessage($id, $replace, $this->langId);
+	}
+
+	private function showFileViewer(string $fileViewerType): void
+	{
+		$this->arResult['FILE_VIEWER'] = $fileViewerType;
+		$this->arResult['FILE_VIEWERS'] = self::FILE_VIEWERS;
+
+		$this->includeComponentTemplate('file_viewer_wrapper');
+	}
+
+	private function getHandlerForView(): ?DocumentHandler
+	{
+		return $this->getHandlerForViewByFile($this->externalLink->getFile());
+	}
+
+	private function getHandlerForViewByFile(?File $file): ?DocumentHandler
+	{
+		$typeFile = (int)$file?->getTypeFile();
+
+		$documentHandlersManager = Driver::getInstance()->getDocumentHandlersManager();
+
+		return match ($typeFile) {
+			TypeFile::FLIPCHART => $documentHandlersManager->getHandlerByCode(BoardsHandler::getCode()),
+			default => $documentHandlersManager->getDefaultHandlerForView(),
+		};
+	}
+
+	private function getSessionServiceByFile(File $file): DocumentService
+	{
+		$typeFile = (int)$file->getTypeFile();
+
+		return match ($typeFile) {
+			TypeFile::FLIPCHART => DocumentService::FlipChart,
+			default => DocumentService::OnlyOffice,
+		};
+	}
+
+	private function setParamsForBoard(DocumentSession $documentSession, File $file): void
+	{
+		$this->arResult['DOCUMENT_SESSION'] = $documentSession;
+		$this->arResult['LINK_TO_DOWNLOAD'] = $this->getBoardDocumentUri($documentSession);
+		$this->arResult['STORAGE_ID'] = $file->getStorageId();
+		$this->arResult['USER_ID'] = $this->getUserIdForBoard($documentSession);
+		$this->arResult['USER_NAME'] = (string)$documentSession->getUser()->getName();
+		$this->arResult['USER_AVATAR'] = (string)(new Uri($documentSession->getUser()->getAvatarSrc()))->toAbsolute();
+		$this->arResult['DOWNLOAD_TOKEN'] = $this->downloadToken;
+	}
+
+	private function getUserIdForBoard(DocumentSession $documentSession): string
+	{
+		$user = $documentSession->getUser();
+		$userId = $user->getId();
+
+		if (GuestUser::isGuestUserId($userId))
+		{
+			return $this->getOrCreateAnonymousUserIdForBoard();
+		}
+
+		return (string)$userId;
+	}
+
+	private function getBoardDocumentUri(DocumentSession $documentSession): Uri
+	{
+		return (new Flipchart())->getActionUri(
+			'getDocument',
+			[
+				'sessionId' => $documentSession->getExternalHash(),
+				'userId' => $documentSession->getUserId(),
+			],
+			true
+		);
+	}
+
+	private function getOrCreateAnonymousUserIdForBoard(): string
+	{
+		$session = Application::getInstance()->getSession();
+		$sessionKey = 'ANONYMOUS_USER_ID_FOR_BOARD';
+
+		if ($session->get($sessionKey) === null)
+		{
+			$session->set($sessionKey, Random::getString(12));
+		}
+
+		return $session->get($sessionKey);
 	}
 }

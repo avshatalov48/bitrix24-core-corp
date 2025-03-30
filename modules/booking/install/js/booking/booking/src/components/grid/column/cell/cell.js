@@ -1,10 +1,7 @@
-import { DateTimeFormat } from 'main.date';
 import { mapGetters } from 'ui.vue3.vuex';
-
 import { Model } from 'booking.const';
 import type { BookingModel } from 'booking.model.bookings';
 
-import type { BusySlotDto } from '../../../../lib/busy-slots/busy-slots';
 import type { CellDto, CellData } from './types';
 import './cell.css';
 
@@ -22,27 +19,20 @@ export const Cell = {
 	data(): CellData
 	{
 		return {
-			hovered: false,
 			halfOffset: 0,
 		};
 	},
 	computed: {
 		...mapGetters({
-			zoom: `${Model.Interface}/zoom`,
-			disabledBusySlots: `${Model.Interface}/disabledBusySlots`,
-			selectedCells: `${Model.Interface}/selectedCells`,
-			bookings: `${Model.Bookings}/get`,
 			isFilterMode: `${Model.Interface}/isFilterMode`,
 			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
-			busySlots: `${Model.Interface}/busySlots`,
+			draggedBookingId: `${Model.Interface}/draggedBookingId`,
+			resizedBookingId: `${Model.Interface}/resizedBookingId`,
+			quickFilter: `${Model.Interface}/quickFilter`,
 		}),
-		activeBusySlots(): BusySlotDto[]
-		{
-			return this.busySlots.filter(({ id }) => !(id in this.disabledBusySlots));
-		},
 		isAvailable(): boolean
 		{
-			if (this.isFilterMode || this.isEditingBookingMode)
+			if (this.isFilterMode || this.resizedBookingId || (this.isEditingBookingMode && !this.draggedBookingId))
 			{
 				return false;
 			}
@@ -54,15 +44,6 @@ export const Cell = {
 
 			return (toTs > cellFromTs || toTs > cellHalfTs) && (toTs - fromTs) >= this.duration;
 		},
-		timeFormatted(): string
-		{
-			const timeFormat = DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
-
-			return this.loc('BOOKING_BOOKING_TIME_RANGE', {
-				'#FROM#': DateTimeFormat.format(timeFormat, this.fromTs / 1000),
-				'#TO#': DateTimeFormat.format(timeFormat, this.toTs / 1000),
-			});
-		},
 		fromTs(): number
 		{
 			return Math.min(this.freeSpace.toTs - this.duration, this.cell.fromTs) + this.halfOffset;
@@ -73,7 +54,16 @@ export const Cell = {
 		},
 		duration(): number
 		{
+			if (this.draggedBooking)
+			{
+				return this.draggedBooking.dateToTs - this.draggedBooking.dateFromTs;
+			}
+
 			return this.cell.toTs - this.cell.fromTs;
+		},
+		draggedBooking(): BookingModel
+		{
+			return this.$store.getters[`${Model.Bookings}/getById`](this.draggedBookingId) ?? null;
 		},
 		freeSpace(): {fromTs: number, toTs: number}
 		{
@@ -103,17 +93,15 @@ export const Cell = {
 		},
 		colliding(): {fromTs: number, toTs: number}[]
 		{
-			return [
-				...this.bookings
-					.filter((booking: BookingModel) => booking.resourcesIds.includes(this.cell.resourceId))
-					.map(({ dateFromTs, dateToTs }) => ({ fromTs: dateFromTs, toTs: dateToTs })),
-				...this.activeBusySlots
-					.filter((busySlot: BusySlotDto) => busySlot.resourceId === this.cell.resourceId)
-					.map(({ fromTs, toTs }) => ({ fromTs, toTs })),
-				...Object.values(this.selectedCells)
-					.filter((cell: CellDto) => cell.resourceId === this.cell.resourceId)
-					.map(({ fromTs, toTs }) => ({ fromTs, toTs })),
-			];
+			return this.$store.getters[`${Model.Interface}/getColliding`](this.cell.resourceId, [this.draggedBookingId]);
+		},
+		quickFilterHovered(): boolean
+		{
+			return (this.cell.minutes / 60) in this.quickFilter.hovered;
+		},
+		quickFilterActive(): boolean
+		{
+			return (this.cell.minutes / 60) in this.quickFilter.active;
 		},
 	},
 	methods: {
@@ -141,15 +129,21 @@ export const Cell = {
 				return;
 			}
 
+			this.halfOffset = 0;
 			const clientY = event.clientY - window.scrollY;
 			const rect = this.$el.getBoundingClientRect();
 			const bottomHalf = clientY > (rect.top + rect.top + rect.height) / 2;
-			const canSubtractHalfHour = this.fromTs - this.halfOffset >= this.freeSpace.fromTs;
-			const canAddHalfHour = this.toTs - this.halfOffset + halfHour <= this.freeSpace.toTs;
+			const canSubtractHalfHour = this.fromTs >= this.freeSpace.fromTs;
+			const canAddHalfHour = this.toTs + halfHour <= this.freeSpace.toTs;
 
 			if ((bottomHalf && canAddHalfHour) || (!bottomHalf && !canSubtractHalfHour))
 			{
 				this.halfOffset = halfHour;
+			}
+
+			if (!bottomHalf && !canSubtractHalfHour && this.freeSpace.fromTs - this.cell.fromTs > 0)
+			{
+				this.halfOffset = this.freeSpace.fromTs - this.cell.fromTs;
 			}
 
 			if ((!bottomHalf && canSubtractHalfHour) || (bottomHalf && !canAddHalfHour))
@@ -157,7 +151,7 @@ export const Cell = {
 				this.halfOffset = 0;
 			}
 
-			const offsetNotMatchesHalf = (bottomHalf && this.halfOffset === 0) || (!bottomHalf && this.halfOffset !== 0);
+			const offsetNotMatchesHalf = bottomHalf === (this.halfOffset === 0);
 
 			if (this.duration <= halfHour && offsetNotMatchesHalf)
 			{
@@ -193,9 +187,22 @@ export const Cell = {
 			}
 		},
 	},
+	watch: {
+		draggedBookingId(): void
+		{
+			if (!this.draggedBookingId)
+			{
+				void this.$store.dispatch(`${Model.Interface}/setHoveredCell`, null);
+			}
+		},
+	},
 	template: `
 		<div
 			class="booking-booking-grid-cell"
+			:class="{
+				'--quick-filter-hovered': quickFilterHovered,
+				'--quick-filter-active': quickFilterActive,
+			}"
 			data-element="booking-grid-cell"
 			:data-resource-id="cell.resourceId"
 			:data-from="cell.fromTs"
@@ -203,7 +210,6 @@ export const Cell = {
 			@mouseenter="mouseEnterHandler"
 			@mouseleave="mouseLeaveHandler"
 			@mousemove="mouseMoveHandler"
-		>
-		</div>
+		></div>
 	`,
 };

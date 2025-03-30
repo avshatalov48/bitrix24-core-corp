@@ -6,11 +6,17 @@ namespace Bitrix\Booking\Controller\V1;
 
 use Bitrix\Booking\Controller\V1\Response\ResourceDialogResponse;
 use Bitrix\Booking\Entity\DatePeriod;
+use Bitrix\Booking\Entity\Resource\ResourceCollection;
+use Bitrix\Booking\Internals\Exception\ErrorBuilder;
+use Bitrix\Booking\Internals\Exception\Exception;
 use Bitrix\Booking\Provider;
+use Bitrix\Booking\Provider\Params\Booking\BookingFilter;
+use Bitrix\Booking\Provider\Params\Booking\BookingSelect;
+use Bitrix\Booking\Provider\Params\GridParams;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Booking\Entity;
 use Bitrix\Main\Request;
-use Bitrix\Booking\Integration\Ui\EntitySelector;
+use Bitrix\Booking\Internals\Integration\Ui\EntitySelector;
 use DateTimeImmutable;
 
 class ResourceDialog extends BaseController
@@ -30,22 +36,30 @@ class ResourceDialog extends BaseController
 		$this->resourceProvider = new Provider\ResourceProvider();
 	}
 
-	public function getMainResourcesAction()
+	public function getMainResourcesAction(): ResourceCollection|null
 	{
-		return $this->handleRequest(function()
+		try
 		{
 			return $this->resourceProvider->getList(
+				gridParams: new Provider\Params\GridParams(
+					filter: new Provider\Params\Resource\ResourceFilter([
+						'IS_MAIN' => true,
+					]),
+				),
 				userId: $this->userId,
-				filter: [
-					'IS_MAIN' => true,
-				],
 			);
-		});
+		}
+		catch (Exception $e)
+		{
+			$this->addError(ErrorBuilder::buildFromException($e));
+
+			return null;
+		}
 	}
 
-	public function loadByIdsAction(array $ids, int $dateTs)
+	public function loadByIdsAction(array $ids, int $dateTs): ResourceDialogResponse|null
 	{
-		return $this->handleRequest(function() use ($ids, $dateTs)
+		try
 		{
 			$resources = new Entity\Resource\ResourceCollection();
 			if (!empty($ids))
@@ -57,12 +71,18 @@ class ResourceDialog extends BaseController
 			}
 
 			return $this->prepareResponse($resources, $dateTs);
-		});
+		}
+		catch (Exception $e)
+		{
+			$this->addError(ErrorBuilder::buildFromException($e));
+
+			return null;
+		}
 	}
 
-	public function fillDialogAction(int $dateTs)
+	public function fillDialogAction(int $dateTs): ResourceDialogResponse|null
 	{
-		return $this->handleRequest(function() use ($dateTs)
+		try
 		{
 			$recentResourcesIds = EntitySelector\ResourceProvider::getRecentIds();
 
@@ -76,12 +96,18 @@ class ResourceDialog extends BaseController
 			}
 
 			return $this->prepareResponse($resources, $dateTs);
-		});
+		}
+		catch (Exception $e)
+		{
+			$this->addError(ErrorBuilder::buildFromException($e));
+
+			return null;
+		}
 	}
 
-	public function doSearchAction(string $query, int $dateTs): ResourceDialogResponse
+	public function doSearchAction(string $query, int $dateTs): ResourceDialogResponse|null
 	{
-		return $this->handleRequest(function() use ($query, $dateTs)
+		try
 		{
 			$resources = new Entity\Resource\ResourceCollection();
 			if (!empty($query))
@@ -93,15 +119,23 @@ class ResourceDialog extends BaseController
 			}
 
 			return $this->prepareResponse($resources, $dateTs);
-		});
+		}
+		catch (Exception $e)
+		{
+			$this->addError(ErrorBuilder::buildFromException($e));
+
+			return null;
+		}
 	}
 
 	private function getResources(array $filter): Entity\Resource\ResourceCollection
 	{
 		return $this->resourceProvider->getList(
+			gridParams: new Provider\Params\GridParams(
+				limit: $this->resourcesLimit,
+				filter: new Provider\Params\Resource\ResourceFilter($filter),
+			),
 			userId: $this->userId,
-			limit: $this->resourcesLimit,
-			filter: $filter,
 		);
 	}
 
@@ -136,24 +170,31 @@ class ResourceDialog extends BaseController
 			return new Entity\Booking\BookingCollection();
 		}
 
-		return $this->bookingProvider->getList(
+		$bookings = $this->bookingProvider->getList(
+			new GridParams(
+				filter: new BookingFilter([
+					'RESOURCE_ID' => $resourcesIds,
+					'WITHIN' => [
+						'DATE_FROM' => $datePeriod->getDateFrom()->getTimestamp(),
+						'DATE_TO' => $datePeriod->getDateTo()->getTimestamp(),
+					],
+				]),
+				select: new BookingSelect([
+					'CLIENTS',
+					'RESOURCES',
+					'EXTERNAL_DATA',
+					'NOTE',
+				]),
+			),
 			userId: $userId,
-			filter: [
-				'RESOURCE_ID' => $resourcesIds,
-				'WITHIN' => [
-					'DATE_FROM' => $datePeriod->getDateFrom()->getTimestamp(),
-					'DATE_TO' => $datePeriod->getDateTo()->getTimestamp(),
-				],
-			],
-			select: [
-				'CLIENTS',
-				'RESOURCES',
-				'EXTERNAL_DATA',
-				'NOTE',
-			],
-			withCounters: true,
-			withClientData: true,
-			withExternalData: true,
 		);
+
+		$this->bookingProvider
+			->withCounters($bookings, $userId)
+			->withClientsData($bookings)
+			->withExternalData($bookings)
+		;
+
+		return $bookings;
 	}
 }

@@ -1,0 +1,9 @@
+.hr-department-detail-content__user-list-container {
+	display: flex;
+	flex-direction: column;
+	margin: 0 calc(var(--hr-department-detail-padding-left-right) - 9px);
+}
+
+.hr-department-detail-content__list-count {
+	color: var(--ui-color-palette-gray-35);
+}

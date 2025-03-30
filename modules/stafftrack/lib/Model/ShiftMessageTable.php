@@ -4,7 +4,10 @@ namespace Bitrix\StaffTrack\Model;
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
 use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\SystemException;
 
 /**
@@ -28,12 +31,14 @@ use Bitrix\Main\SystemException;
  * @method static EO_ShiftMessage_Result getList(array $parameters = [])
  * @method static EO_ShiftMessage_Entity getEntity()
  * @method static \Bitrix\StaffTrack\Model\EO_ShiftMessage createObject($setDefaultValues = true)
- * @method static \Bitrix\StaffTrack\Model\EO_ShiftMessage_Collection createCollection()
+ * @method static \Bitrix\StaffTrack\Model\ShiftMessageCollection createCollection()
  * @method static \Bitrix\StaffTrack\Model\EO_ShiftMessage wakeUpObject($row)
- * @method static \Bitrix\StaffTrack\Model\EO_ShiftMessage_Collection wakeUpCollection($rows)
+ * @method static \Bitrix\StaffTrack\Model\ShiftMessageCollection wakeUpCollection($rows)
  */
 class ShiftMessageTable extends DataManager
 {
+	use DeleteByFilterTrait;
+
 	/**
 	 * Returns DB table name for entity.
 	 *
@@ -42,6 +47,15 @@ class ShiftMessageTable extends DataManager
 	public static function getTableName(): string
 	{
 		return 'b_stafftrack_shift_message';
+	}
+
+
+	/**
+	 * @return string
+	 */
+	public static function getCollectionClass(): string
+	{
+		return ShiftMessageCollection::class;
 	}
 
 	/**
@@ -75,6 +89,13 @@ class ShiftMessageTable extends DataManager
 					'title' => Loc::getMessage('SHIFT_MESSAGE_ENTITY_MESSAGE_ID_FIELD'),
 				]
 			),
+			(new Reference(
+				'SHIFT',
+				ShiftTable::class,
+				Join::on('this.SHIFT_ID', 'ref.ID')
+			))
+				->configureJoinType(Join::TYPE_INNER)
+			,
 		];
 	}
 }

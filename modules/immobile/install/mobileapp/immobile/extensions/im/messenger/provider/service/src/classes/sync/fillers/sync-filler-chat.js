@@ -13,6 +13,11 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-chat',
 	 */
 	class SyncFillerChat extends SyncFillerBase
 	{
+		subscribeEvents()
+		{
+			this.emitter.on(EventType.sync.requestResultReceived, this.onSyncRequestResultReceive);
+		}
+
 		/**
 		 * @override
 		 * @param {SyncListResult} result

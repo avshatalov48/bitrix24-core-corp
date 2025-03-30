@@ -18,6 +18,7 @@ $MESS['CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_PLACEHOLDER_TITLE'] = 'Наприм�
 $MESS['CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_CREATE_TYPE'] = 'Создать новый смарт-процесс';
 $MESS['CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_CRM_TYPES'] = 'Перенести смарт-процесс, связанный с CRM';
 $MESS['CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_EXTERNAL_TYPES'] = 'Перенести смарт-процесс, связанный с рабочими местами';
+$MESS['CRM_AUTOMATED_SOLUTION_DETAILS_PERMISSIONS_WILL_BE_RESET_ALERT'] = 'Права доступа на эти смарт-процессы нужно будет настроить заново';
 
 $MESS['CRM_AUTOMATED_SOLUTION_DETAILS_TAG_SELECTOR_ADD_BUTTON_CAPTION'] = 'Выбрать';
 

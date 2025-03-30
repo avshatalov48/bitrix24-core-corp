@@ -36,28 +36,6 @@ export default {
 		'deal-terminal-payment': TerminalStageBlocksList,
 		'start': Start,
 	},
-	mounted()
-	{
-		const tourOptions = this.$root.$app.options.terminalTour;
-		if (tourOptions['step-1-shown'] !== 'Y' && tourOptions['step-2-shown'] !== 'Y' && this.activeMenuItem !== ModeDictionary.terminalPayment && this.initialMode !== ModeDictionary.terminalPayment)
-		{
-			Runtime.loadExtension('spotlight').then((exports) => {
-				const spotlight = new BX.SpotLight(
-					{
-						id: 'terminal-tour-spotlight',
-						targetElement: document.querySelector('.salescenter-menu-terminal-payment'),
-						autoSave: true,
-						targetVertex: 'middle-center',
-						zIndex: 200,
-						left: -40,
-					},
-				);
-				spotlight.show();
-				spotlight.container.style.pointerEvents = "none";
-				UserOptions.save('salescenter.tour', 'crm-terminal-tour', 'step-1-shown', 'Y');
-			});
-		}
-	},
 	methods: {
 		reload(form)
 		{

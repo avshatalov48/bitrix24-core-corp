@@ -139,7 +139,7 @@ class ComplexCollection extends Dictionary
 	 * @param mixed $offset
 	 * @param mixed $value
 	 */
-	public function offsetSet($offset, $value)
+	public function offsetSet($offset, $value): void
 	{
 		$this->setComplex($value, $offset);
 	}

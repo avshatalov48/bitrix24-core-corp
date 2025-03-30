@@ -9,8 +9,8 @@ use Bitrix\Main\Web\Uri;
 use Bitrix\Sign\Item\Api\Mobile\Confirmation\AcceptRequest;
 use Bitrix\Sign\Item\Api\Mobile\Confirmation\PostponeRequest;
 use Bitrix\Sign\Item\Api\Mobile\Signing\ExternalUrlRequest;
-use Bitrix\Sign\Item\Api\Mobile\Signing\ExternalUrlResponse;
 use Bitrix\Sign\Item\Api\Mobile\Signing\RefuseRequest;
+use Bitrix\Sign\Item\Api\Mobile\Signing\ReviewRequest;
 use Bitrix\Sign\Item\Api\Mobile\Signing\SignRequest;
 use Bitrix\Sign\Item\Member;
 use Bitrix\Sign\Item\Mobile\Link;
@@ -32,6 +32,7 @@ class MobileService
 	private readonly Sign\DocumentService $documentService;
 	private readonly Sign\MemberService $memberService;
 	private readonly Sign\Document\ProviderCodeService $providerCodeService;
+	private readonly Api\MobileService $mobileService;
 
 	public function __construct()
 	{
@@ -39,6 +40,7 @@ class MobileService
 		$this->documentService = $container->getDocumentService();
 		$this->memberService = $container->getMemberService();
 		$this->providerCodeService = $container->getProviderCodeService();
+		$this->mobileService = $container->getApiMobileService();
 	}
 
 	public function setDarkMode(bool $isDark): self
@@ -251,6 +253,50 @@ class MobileService
 		return $response->createResult();
 	}
 
+	public function acceptReview(int $memberId): Result
+	{
+		$member = $this->memberService->getById($memberId);
+
+		if (!$member)
+		{
+			return (new Result())->addError(new Error('unknown member id'));
+		}
+
+		if ($member->role !== Role::REVIEWER)
+		{
+			return (new Result())->addError(new Error('wrong member role'));
+		}
+
+		$document = $this->documentService->getById($member->documentId);
+		if (!$document)
+		{
+			return (new Result())->addError(new Error('unknown document id'));
+		}
+
+		if ($document->status !== Type\DocumentStatus::SIGNING || !MemberStatus::isReadyForSigning($member->status))
+		{
+			return (new Result())->addError(new Error('wrong document or member status'));
+		}
+
+		$response = $this->mobileService
+			->acceptReview(
+				new ReviewRequest($document->uid, $member->uid),
+			)
+		;
+
+		if ($response->isSuccess())
+		{
+			$updateResult = (new ChangeMemberStatus($member, $document, MemberStatus::DONE))->launch();
+
+			if (!$updateResult->isSuccess())
+			{
+				return $updateResult;
+			}
+		}
+
+		return $response->createResult();
+	}
+
 	public function rejectSigning(int $memberId): Result
 	{
 		$member = Container::instance()->getMemberService()->getById($memberId);
@@ -261,8 +307,7 @@ class MobileService
 			return $resultWithRejectError;
 		}
 
-		// only signers can reject the singing on mobile
-		if ($member->role !== Role::SIGNER)
+		if ($member->role !== Role::SIGNER && $member->role !== Role::REVIEWER)
 		{
 			return $resultWithRejectError;
 		}
@@ -274,7 +319,7 @@ class MobileService
 			return $resultWithRejectError;
 		}
 
-		if ($document->initiatedByType === Type\Document\InitiatedByType::EMPLOYEE)
+		if ($document->initiatedByType === Type\Document\InitiatedByType::EMPLOYEE || $member->role === Role::REVIEWER)
 		{
 			return (new SigningStop($document->uid, $member->entityId))->launch();
 		}

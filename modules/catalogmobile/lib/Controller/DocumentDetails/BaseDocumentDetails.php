@@ -190,7 +190,7 @@ abstract class BaseDocumentDetails extends Controller
 			/**
 			 * Add new
 			 */
-			$morePhotoProperty = $sku->getPropertyCollection()->findByCode(MorePhotoImage::CODE);
+			$morePhotoProperty = $sku->getPropertyCollection()->findByCodeLazy(MorePhotoImage::CODE);
 			$hasMorePhoto = $morePhotoProperty && $morePhotoProperty->isActive();
 
 			foreach ($newImageIds as $newImage)

@@ -1,4 +1,4 @@
-import { grid } from '../../../../lib/grid/grid';
+import { grid } from 'booking.lib.grid';
 import { BaseCell } from '../../base-cell/base-cell';
 import './cell.css';
 
@@ -37,6 +37,7 @@ export const Cell = {
 	},
 	template: `
 		<div
+			v-if="left >= 0"
 			class="booking-booking-selected-cell"
 			:style="{
 				'--left': left + 'px',

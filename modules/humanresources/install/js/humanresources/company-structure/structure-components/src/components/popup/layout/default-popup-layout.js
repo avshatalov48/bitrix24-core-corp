@@ -11,4 +11,4 @@ export const DefaultPopupLayout = {
 			<slot name="content"></slot>
 		</div>
 	`,
-}
+};

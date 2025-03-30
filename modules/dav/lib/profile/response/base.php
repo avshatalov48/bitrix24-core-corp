@@ -99,7 +99,7 @@ abstract class Base
 			return '#' . $element . '#';
 		}, array_keys($params));
 		$values = array_values($params);
+
 		return str_replace($keys, $values, $baseTemplate);
 	}
-
 }

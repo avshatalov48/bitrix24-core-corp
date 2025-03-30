@@ -176,7 +176,17 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 		if ($arParams['context'] === SalesCenter\Component\ContextDictionary::CHAT)
 		{
-			if (CrmManager::getInstance()->isOwnerEntityInFinalStage($arParams['ownerId'], CCrmOwnerType::Deal))
+			$crmManager = CrmManager::getInstance();
+			if (
+				!$crmManager->isOwnerEntityExists(
+					$arParams['ownerId'],
+					CCrmOwnerType::Deal
+				)
+				|| $crmManager->isOwnerEntityInFinalStage(
+					$arParams['ownerId'],
+					CCrmOwnerType::Deal
+				)
+			)
 			{
 				$arParams['ownerId'] = 0;
 			}

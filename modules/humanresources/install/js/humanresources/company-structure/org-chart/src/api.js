@@ -1,11 +1,17 @@
 import { getData, postData } from 'humanresources.company-structure.api';
+import type { TreeItem } from './types';
 
-const createTreeDataStore = (treeData) => {
+const createTreeDataStore = (treeData: Array<TreeItem>): Map<number, TreeItem> => {
 	const dataMap = new Map();
 	treeData.forEach((item) => {
 		const { id, parentId } = item;
 		const mapItem = dataMap.get(id) ?? {};
 		dataMap.set(id, { ...mapItem, ...item });
+		if (parentId === 0)
+		{
+			return;
+		}
+
 		const mapParentItem = dataMap.get(parentId) ?? {};
 		const children = mapParentItem.children ?? [];
 		dataMap.set(parentId, {
@@ -18,28 +24,22 @@ const createTreeDataStore = (treeData) => {
 };
 
 export const chartAPI = {
-	getDepartment: (id: Number) => {
-		return getData('humanresources.api.Structure.Node.get', { nodeId: id });
-	},
-	removeDepartment: (id: Number) => {
+	removeDepartment: (id: Number): Promise<void> => {
 		return getData('humanresources.api.Structure.Node.delete', { nodeId: id });
 	},
-	getEmployees: (id: Number) => {
-		return getData('humanresources.api.Structure.Node.Member.Employee.get', { nodeId: id });
-	},
-	getChartData: () => {
+	getDepartmentsData: (): Promise<Array<TreeItem>> => {
 		return getData('humanresources.api.Structure.get', {}, { tool: 'structure', category: 'structure', event: 'open_structure' });
 	},
-	getCurrentDepartment: () => {
+	getCurrentDepartments: (): Promise<number[]> => {
 		return getData('humanresources.api.Structure.Node.current');
 	},
-	getDictionary: () => {
+	getDictionary: (): Promise<string> => {
 		return getData('humanresources.api.Structure.dictionary');
 	},
-	getUserId: () => {
+	getUserId: (): Promise<number> => {
 		return getData('humanresources.api.User.getCurrentId');
 	},
-	firstTimeOpened: () => {
+	firstTimeOpened: (): Promise<void> => {
 		return postData('humanresources.api.User.firstTimeOpen');
 	},
 	createTreeDataStore,

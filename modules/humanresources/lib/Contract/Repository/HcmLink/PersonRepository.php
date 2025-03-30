@@ -58,7 +58,7 @@ interface PersonRepository
 
 	public function countUnmappedPersons(int $companyId): int;
 
-	public function getUnmappedPersonsByCompanyId(int $companyId, int $limit): PersonCollection;
+	public function getUnmappedPersonsByCompanyId(int $companyId, int $limit, ?string $searchName = null): PersonCollection;
 
 	public function countNotMappedAndGroupByCompanyId(array $companyIds = []): array;
 

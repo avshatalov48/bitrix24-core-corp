@@ -1,16 +1,17 @@
 <?php
 namespace Bitrix\ImConnector\Connectors;
 
+use Bitrix\ImConnector\DeliveryMark;
 use Bitrix\Main;
 use Bitrix\Main\Web;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\UserTable;
 use Bitrix\Main\Text\Emoji;
-use Bitrix\Main\Application;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
 
+use Bitrix\Im;
 use Bitrix\ImConnector\Chat;
 use Bitrix\ImConnector\Error;
 use Bitrix\ImConnector\Status;
@@ -423,16 +424,14 @@ class Base
 	protected function processingLastMessage(array $message): array
 	{
 		if (
-			!empty($message['extra']['last_message_id']) &&
-			!empty($message['chat']['id'])
+			!empty($message['extra']['last_message_id'])
+			&& !empty($message['chat']['id'])
 		)
 		{
 			Chat::setLastMessage(
-				[
-					'EXTERNAL_CHAT_ID' => $message['chat']['id'],
-					'CONNECTOR' => $this->idConnector,
-					'EXTERNAL_MESSAGE_ID' => $message['extra']['last_message_id']
-				]
+				externalChatId: $message['chat']['id'],
+				externalMessageId: $message['extra']['last_message_id'],
+				connector: $this->idConnector
 			);
 
 			unset($message['extra']['last_message_id']);
@@ -998,6 +997,7 @@ class Base
 	//region Error
 
 	/**
+	 * @see \Bitrix\ImConnector\Provider\Base\Input::receivingError
 	 * @param $paramsError
 	 * @return bool
 	 */
@@ -1005,14 +1005,22 @@ class Base
 	{
 		$result = false;
 
-		switch($paramsError['code'])
+		switch ($paramsError['code'])
 		{
 			case Library::ERROR_CONNECTOR_NOT_SEND_MESSAGE_CHAT:
 				$result = $this->receivedErrorNotSendMessageChat($paramsError);
 				break;
+
 			case Library::ERROR_CONNECTOR_DELETE_MESSAGE:
 				$result = $this->receivedErrorNotDeleteMessageChat($paramsError);
 				break;
+
+			default:
+				if (!empty($paramsError['messageId']) && !empty($paramsError['chatId']))
+				{
+					$this->markMessageUndelivered((int)$paramsError['messageId']);
+					$this->removeMessageDeliveryMark((int)$paramsError['messageId'], (int)$paramsError['chatId']);
+				}
 		}
 
 		return $result;
@@ -1063,7 +1071,7 @@ class Base
 
 		if (
 			!empty($paramsError['chatId'])
-			&& $paramsError['chatId'] > 0
+			&& (int)$paramsError['chatId'] > 0
 			&& Loader::includeModule('imopenlines')
 		)
 		{
@@ -1076,11 +1084,10 @@ class Base
 			if (
 				!empty($paramsError['messageId'])
 				&& $paramsError['messageId'] > 0
-				&& Loader::includeModule('im')
 			)
 			{
-				\CIMMessageParam::Set((int)$paramsError['messageId'], ['SENDING_TS' => (time() - 86400)]);
-				\CIMMessageParam::SendPull((int)$paramsError['messageId'], ['SENDING_TS']);
+				$this->markMessageUndelivered((int)$paramsError['messageId']);
+				$this->removeMessageDeliveryMark((int)$paramsError['messageId'], (int)$paramsError['chatId']);
 			}
 
 			if (empty($message))
@@ -1094,6 +1101,54 @@ class Base
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Updates message with undelivered mark.
+	 * @param int $messageId Message Id.
+	 * @return void
+	 */
+	public function markMessageUndelivered(int $messageId): void
+	{
+		if (!Loader::includeModule('im'))
+		{
+			return;
+		}
+		if ($messageId)
+		{
+			$message = new Im\V2\Message($messageId);
+			if ($message->getMessageId() !== $messageId)
+			{
+				return;
+			}
+
+			$messageParams = $message->getParams();
+
+			$pullParams = [
+				Im\V2\Message\Params::IS_DELIVERED => false,
+				Im\V2\Message\Params::SENDING => false,
+				Im\V2\Message\Params::SENDING_TS => 0
+			];
+			$messageParams->fill($pullParams);
+			$messageParams->save();
+
+			\CIMMessageParam::sendPull($message->getMessageId(), array_keys($pullParams));
+			if (Loader::includeModule('pull'))
+			{
+				\Bitrix\Pull\Event::send();
+			}
+		}
+	}
+
+	/**
+	 * Unsets waiting delidery mark.
+	 * @param int $messageId
+	 * @param int $chatId
+	 * @return void
+	 */
+	public function removeMessageDeliveryMark(int $messageId, int $chatId): void
+	{
+		DeliveryMark::unsetDeliveryMark($messageId, $chatId);
 	}
 
 	//endregion
@@ -1257,24 +1312,14 @@ class Base
 	}
 
 	/**
-	 * @param int $idLine
+	 * @param int $lineId
 	 * @return bool
 	 */
-	protected function isHumanAgent($idLine): bool
+	protected function isHumanAgent($lineId): bool
 	{
-		$result = false;
+		$statusData = Status::getInstance($this->idConnector, (int)$lineId)->getData();
 
-		$statusData = Status::getInstance($this->idConnector, (int)$idLine)->getData();
-
-		if (
-			!empty($statusData)
-			&& $statusData['HUMAN_AGENT'] === true
-		)
-		{
-			$result = true;
-		}
-
-		return $result;
+		return !empty($statusData) && $statusData['HUMAN_AGENT'] === true;
 	}
 
 	/**

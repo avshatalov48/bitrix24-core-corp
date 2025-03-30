@@ -1,7 +1,6 @@
 import { Type } from 'main.core';
-import type { LoadedDocumentData, ProviderCodeType } from 'sign.v2.api';
+import { ProviderCode, type ProviderCodeType } from 'sign.type';
 import { Api } from 'sign.v2.api';
-import { ProviderCode } from 'sign.v2.b2e.company-selector';
 import { type AnalyticsOptions, sendData } from 'ui.analytics';
 import { Context } from './context';
 

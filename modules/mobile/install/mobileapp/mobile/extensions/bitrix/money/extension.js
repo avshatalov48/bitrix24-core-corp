@@ -24,12 +24,10 @@
 
 		constructor({ amount, currency })
 		{
-			amount = amount || 0;
-
-			this.amount = parseFloat(amount);
+			this.amount = amount || 0;
 			this.currency = currency;
 
-			if (!isFinite(this.amount))
+			if (!isFinite(parseFloat(this.amount)))
 			{
 				throw new Error('Invalid money amount');
 			}
@@ -93,6 +91,11 @@
 			return jnComponent.convertHtmlEntities(this.numberFormat());
 		}
 
+		get editableFormattedAmount()
+		{
+			return jnComponent.convertHtmlEntities(this.editableNumberFormat());
+		}
+
 		get formattedCurrency()
 		{
 			const result = this.format.FORMAT_STRING.replace(/(^|[^&])#/, '$1');
@@ -117,6 +120,7 @@
 
 		/**
 		 * @private
+		 * @param hideZero
 		 * @returns {string}
 		 */
 		numberFormat()
@@ -128,7 +132,28 @@
 				decimals = 0;
 			}
 
-			return CommonUtils.number_format(this.amount, decimals, this.format.DEC_POINT, this.format.THOUSANDS_SEP);
+			return CommonUtils.number_format(
+				this.amount,
+				decimals,
+				this.format.DEC_POINT,
+				this.format.THOUSANDS_SEP,
+			);
+		}
+
+		editableNumberFormat()
+		{
+			const amount = this.amount.toString().replace('.', this.format.DEC_POINT);
+
+			let [integerPart, decimalPart] = amount.split(this.format.DEC_POINT);
+			decimalPart = decimalPart || '';
+
+			integerPart = integerPart.replaceAll(/\B(?=(\d{3})+(?!\d))/g, this.format.THOUSANDS_SEP);
+			if (amount.includes(this.format.DEC_POINT))
+			{
+				return `${integerPart}${this.format.DEC_POINT}${decimalPart}`;
+			}
+
+			return String(integerPart);
 		}
 	}
 

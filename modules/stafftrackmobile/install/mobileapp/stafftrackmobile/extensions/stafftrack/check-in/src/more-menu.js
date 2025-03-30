@@ -173,7 +173,10 @@ jn.define('stafftrack/check-in/more-menu', (require, exports, module) => {
 		{
 			const { isAdmin } = this.props;
 
-			new SettingsPage({ isAdmin }).show(this.layoutWidget);
+			SettingsPage.show({
+				isAdmin,
+				parentLayout: this.layoutWidget,
+			});
 		}
 	}
 

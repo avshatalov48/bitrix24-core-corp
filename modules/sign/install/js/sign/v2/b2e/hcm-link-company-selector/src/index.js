@@ -15,6 +15,7 @@ export class HcmLinkCompanySelector
 
 	#dialog: Dialog | null = null;
 	#loader: Loader | null = null;
+	isLayoutExisted: boolean = false;
 
 	#api: Api;
 
@@ -50,7 +51,7 @@ export class HcmLinkCompanySelector
 			return;
 		}
 
-		if (this.#companyId === id)
+		if (this.#companyId === id && this.isLayoutExisted)
 		{
 			return;
 		}
@@ -92,7 +93,7 @@ export class HcmLinkCompanySelector
 				if (this.#lastSavedId)
 				{
 					itemToSelect = this.#integrationList.find(
-						(item) => item.id === this.#lastSavedId
+						(item) => item.id === this.#lastSavedId,
 					) ?? data[0];
 				}
 
@@ -109,21 +110,33 @@ export class HcmLinkCompanySelector
 
 	getSelectedId(): number | null
 	{
+		if (!this.#selectedId)
+		{
+			return null;
+		}
+
 		return this.#selectedId;
 	}
 
 	hide(): void
 	{
-		if (!this.#isAvailable)
+		if (!this.#isAvailable && !this.isLayoutExisted)
 		{
 			return;
 		}
 
 		BX.hide(this.#ui.container);
-		BX.hide(this.#ui.inactive);
-		BX.hide(this.#ui.active);
-		BX.hide(this.#ui.unselect);
 		this.#dialog?.hide();
+	}
+
+	show(): void
+	{
+		if (!this.#isAvailable && !this.isLayoutExisted)
+		{
+			return;
+		}
+
+		Dom.style(this.#ui.container, { display: 'flex' });
 	}
 
 	render(): HTMLElement
@@ -147,7 +160,9 @@ export class HcmLinkCompanySelector
 					<div class="sign-document-b2e-company__hcmlink-select-header">
 						${this.#ui.info.title}
 						<span class="sign-document-b2e-company-info-dropdown-btn"
-							onclick="${() => { this.#showDialog(); }}"></span>
+							onclick="${() => {
+			this.#showDialog();
+		}}"></span>
 						${this.#ui.dropdownButton}
 					</div>
 					${this.#ui.info.subtitle}	
@@ -155,7 +170,7 @@ export class HcmLinkCompanySelector
 			</div>
 		`;
 
-		this.#ui.unselect = Tag.render `
+		this.#ui.unselect = Tag.render`
 			<div class="sign-document-b2e-company__hcmlink-select --inactive">
 				<div class="sign-document-b2e-company__hcmlink-name-container">
 					<span class="sign-document-b2e-company__hcmlink-select-text">
@@ -212,7 +227,7 @@ export class HcmLinkCompanySelector
 		Dom.addClass(this.#ui.icon, '--active');
 	}
 
-	#deselect(item: {id: number} | null): void
+	#deselect(item: { id: number } | null): void
 	{
 		Dom.removeClass(this.#ui.icon, '--active');
 		this.#selectedId = null;

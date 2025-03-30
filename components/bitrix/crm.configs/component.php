@@ -144,7 +144,7 @@ if (!is_string($title) || empty($title))
 	$title = GetMessage('CRM_TITLE');
 $APPLICATION->SetTitle($title);
 
-if (isset($_GET['expert']) || isset($_GET['enableFeature']) || isset($_GET['disableFeature']))
+if (isset($_GET['expert']) || isset($_GET['enableFeature']) || isset($_GET['disableFeature']) || isset($_GET['resetTour']))
 {
 	$this->includeComponentTemplate('expert');
 }

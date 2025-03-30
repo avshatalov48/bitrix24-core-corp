@@ -1,7 +1,8 @@
 import actions from './actions';
 import mutations from './mutations';
 
-type StateShape = {
+export type StateShape = {
+	automatedSolutionOrigTypeIds: number[],
 	automatedSolution: {
 		id?: ?number,
 		title?: ?string,
@@ -17,6 +18,7 @@ type StateShape = {
 
 	errors: Error[],
 	isModified: boolean,
+	isPermissionsLayoutV2Enabled: boolean,
 };
 
 export type Error = {
@@ -30,6 +32,7 @@ export const store = {
 	state(): StateShape
 	{
 		return {
+			automatedSolutionOrigTypeIds: [],
 			automatedSolution: {
 				id: null,
 				title: null,
@@ -46,6 +49,7 @@ export const store = {
 			errors: [],
 
 			isModified: false,
+			isPermissionsLayoutV2Enabled: false,
 		};
 	},
 	getters: {

@@ -6,6 +6,7 @@
 	line-height: var(--ui-font-line-height-lg);
 	color: var(--ui-color-palette-black-base);
 	padding: 8px 0;
+	overflow: hidden;
 }
 
 .hr-structure-route-action-popup-menu-item__content-icon-container {

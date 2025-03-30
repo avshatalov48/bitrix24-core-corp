@@ -16,6 +16,7 @@ class Job implements Item, Arrayable, \JsonSerializable
 		public JobStatus $status = JobStatus::STARTED,
 		public int       $done = 0,
 		public int       $total = 0,
+		public int       $eventCount = 0,
 		public ?DateTime $createdAt = null,
 		public ?DateTime $updatedAt = null,
 		public ?DateTime $finishedAt = null,

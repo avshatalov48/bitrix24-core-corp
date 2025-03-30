@@ -8,7 +8,7 @@ use JsonSerializable;
 class CustomBadge extends EO_CustomBadge implements JsonSerializable
 {
 
-	public function jsonSerialize()
+	public function jsonSerialize(): array
 	{
 		return [
 			'code' => $this->getCode(),

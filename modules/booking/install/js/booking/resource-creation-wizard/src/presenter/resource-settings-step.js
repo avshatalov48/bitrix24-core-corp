@@ -22,7 +22,7 @@ export class ResourceSettingsStep extends Step
 
 	async next(): Promise<void>
 	{
-		const store = this.getStore();
+		const store = this.store;
 
 		if (!store.state[Model.ResourceCreationWizard].resource.name)
 		{

@@ -11,6 +11,7 @@ return [
 		'main.core.cache',
 		'main.core.events',
 		'sign.v2.api',
+		'sign.type',
 		'ui.forms',
 		'sign.v2.b2e.sign-link',
 		'main.core',

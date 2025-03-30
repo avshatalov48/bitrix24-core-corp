@@ -195,8 +195,8 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			},
 		},
 		sync: {
-			requestResultReceived: 'requestResultReceived',
-			requestResultSaved: 'requestResultSaved',
+			requestResultReceived: 'ImMobile.Messenger.Sync:requestResultReceived',
+			requestResultSaved: 'ImMobile.Messenger.Sync:requestResultSaved',
 		},
 		navigation: {
 			tabChanged: 'ImMobile.Navigation:tabChanged',

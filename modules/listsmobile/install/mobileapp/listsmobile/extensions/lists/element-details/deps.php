@@ -6,7 +6,6 @@ return [
 		'loc',
 		'event-emitter',
 		'in-app-url',
-		'feature',
 		'notify-manager',
 		'haptics',
 		'alert',

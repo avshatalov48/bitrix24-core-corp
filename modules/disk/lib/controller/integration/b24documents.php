@@ -58,7 +58,7 @@ final class B24Documents extends Engine\Controller
 			UserConfiguration::resetDocumentServiceForAllUsers();
 
 			Disk\Configuration::setDefaultViewerService(Document\BitrixHandler::getCode());
-			Document\OnlyOffice\Models\DocumentSessionTable::clearTable();
+			Document\Models\DocumentSessionTable::clearTable();
 		}
 		else
 		{

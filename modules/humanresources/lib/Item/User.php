@@ -14,5 +14,7 @@ class User implements Contract\Item
 		public ?int $personalPhotoId = null,
 		public ?string $workPosition = null,
 		public ?string $personalGender = null,
+		public ?bool $active = null,
+		public bool $hasConfirmCode = false,
 	){}
 }

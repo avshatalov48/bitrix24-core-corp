@@ -27,7 +27,7 @@ final class WorkflowStarted extends Base
 		}
 
 		$menuItems['timeline'] = $this->createTimelineMenuItem($workflowId);
-		$menuItems['log'] = $this->createLogMenuItem($workflowId);
+		$menuItems['log'] = $this->createLogMenuItem($workflowId)?->setScopeWeb();
 		$terminateMenuItem = $this->createTerminateMenuItem($workflowId);
 		if (isset($terminateMenuItem))
 		{

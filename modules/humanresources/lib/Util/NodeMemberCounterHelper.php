@@ -3,6 +3,8 @@
 namespace Bitrix\HumanResources\Util;
 
 use Bitrix\HumanResources\Model;
+use Bitrix\HumanResources\Repository\NodeMemberRepository;
+use Bitrix\HumanResources\Service\Container;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 
 class NodeMemberCounterHelper
@@ -17,6 +19,18 @@ class NodeMemberCounterHelper
 	 */
 	public function countByNodeId(int $nodeId, bool $withAllChildNodes = false): ?int
 	{
+		$cacheManager = Container::getCacheManager();
+
+		$cacheId = 'node_member_count_' . $nodeId . '_' . ($withAllChildNodes ? 'Y' : 'N');
+		$cacheDir = NodeMemberRepository::NODE_MEMBER_CACHE_DIR;
+
+		$result = $cacheManager->getData($cacheId, $cacheDir);
+
+		if ($result !== null)
+		{
+			return $result;
+		}
+
 		try
 		{
 			$countQuery =
@@ -46,6 +60,8 @@ class NodeMemberCounterHelper
 		{
 			return 0;
 		}
+
+		$cacheManager->setData($cacheId, $cacheDir, $result['CNT'] ?? 0);
 
 		return $result['CNT'] ?? 0;
 	}

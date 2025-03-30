@@ -18,15 +18,24 @@ const request = async (method: string, endPoint: string, data: Object = {}, anal
 
 	let response = null;
 
-	if (method === 'POST')
+	try
 	{
-		response = await ajax.runAction(endPoint, config);
-	}
-	else
-	{
-		const getConfig = { data };
+		if (method === 'POST')
+		{
+			response = await ajax.runAction(endPoint, config);
+		}
+		else
+		{
+			const getConfig = { data };
 
-		response = await ajax.runAction(endPoint, getConfig);
+			response = await ajax.runAction(endPoint, getConfig);
+		}
+	}
+	catch (ex)
+	{
+		handleResponseError(ex);
+
+		return null;
 	}
 
 	if (analytics?.event?.length > 0)
@@ -37,10 +46,10 @@ const request = async (method: string, endPoint: string, data: Object = {}, anal
 	return response.data;
 };
 
-const handleResponseError = (response) => {
+const handleResponseError = (response: Error) => {
 	if (response.errors?.length > 0)
 	{
-		const error = response.errors[0];
+		const [error] = response.errors;
 		if (error.code !== 'STRUCTURE_ACCESS_DENIED')
 		{
 			throw error;
@@ -53,8 +62,8 @@ const handleResponseError = (response) => {
 	}
 };
 
-const getData = (endPoint: string, data: ?Object, analytics: ?AnalyticsType) => request('GET', endPoint, data ?? {}, analytics ?? {}).catch(handleResponseError);
+const getData = (endPoint: string, data: ?Object, analytics: ?AnalyticsType) => request('GET', endPoint, data ?? {}, analytics ?? {});
 
-const postData = (endPoint: string, data: Object, analytics: ?AnalyticsType) => request('POST', endPoint, data, analytics ?? {}).catch(handleResponseError);
+const postData = (endPoint: string, data: Object, analytics: ?AnalyticsType) => request('POST', endPoint, data, analytics ?? {});
 
 export { getData, postData, memberRoles, AnalyticsSourceType };

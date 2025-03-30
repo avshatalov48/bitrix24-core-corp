@@ -7,6 +7,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Type\DateTime;
 
 class CopilotCallAssessment extends Base
 {
@@ -14,10 +15,7 @@ class CopilotCallAssessment extends Base
 
 	protected function canShow(): bool
 	{
-		if (
-			$this->isUserSeenTour()
-			|| !Crm::isPortalCreatedBefore(strtotime('2024-11-01'))
-		)
+		if ($this->isUserSeenTour())
 		{
 			return false;
 		}
@@ -36,6 +34,11 @@ class CopilotCallAssessment extends Base
 			&& Container::getInstance()->getUserPermissions()->canReadCopilotCallAssessmentSettings()
 			&& $bitrixPaid
 		);
+	}
+
+	protected function getPortalMaxCreatedDate(): ?DateTime
+	{
+		return new DateTime('01.11.2024', 'd.m.Y');
 	}
 
 	protected function getSteps(): array

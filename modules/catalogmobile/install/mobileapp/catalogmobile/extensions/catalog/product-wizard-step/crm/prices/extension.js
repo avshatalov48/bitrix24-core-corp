@@ -25,7 +25,8 @@ jn.define('catalog/product-wizard-step/crm/prices', (require, exports, module) =
 			const taxesConfig = this.entity.getDictionaryValues('taxes');
 			const isTaxMode = BX.prop.getBoolean(taxesConfig, 'isTaxMode', false);
 			const vatRates = BX.prop.getArray(taxesConfig, 'vatRates', []);
-			const defaultVatId = isTaxMode ? '' : BX.prop.getString(vatRates[0], 'value', '');
+			const vatIncluded = BX.prop.getBoolean(taxesConfig, 'vatIncluded', false);
+			const defaultVatId = isTaxMode ? '' : BX.prop.getNumber(taxesConfig, 'defaultVatId', 0);
 
 			const measures = this.entity.getDictionaryValues('measures');
 			const defaultMeasure = measures.find((item) => item.isDefault);
@@ -38,7 +39,7 @@ jn.define('catalog/product-wizard-step/crm/prices', (require, exports, module) =
 				QUANTITY: '',
 				MEASURE_CODE: String(defaultMeasure ? defaultMeasure.value : ''),
 				VAT_ID: defaultVatId,
-				VAT_INCLUDED: false,
+				VAT_INCLUDED: vatIncluded,
 			});
 
 			this.addField(

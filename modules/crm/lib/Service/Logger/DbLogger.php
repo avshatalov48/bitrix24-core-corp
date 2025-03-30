@@ -29,7 +29,7 @@ class DbLogger extends \Bitrix\Main\Diag\Logger
 			'VALID_TO' => $validTo,
 			'MESSAGE' => $message,
 			'CONTEXT' => $context,
-			'URL' => $url,
+			'URL' => (string)$url,
 		]);
 
 		$this->addCleanerAgent($validTo);

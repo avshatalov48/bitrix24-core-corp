@@ -122,6 +122,15 @@ class call extends \CModule
 			'onCallFinished'
 		);
 
+		/** @see \Bitrix\Call\EventHandler::onChatUserLeave */
+		$eventManager->registerEventHandler(
+			'im',
+			'OnChatUserDelete',
+			'call',
+			'\Bitrix\Call\EventHandler',
+			'onChatUserLeave'
+		);
+
 		/** @see \Bitrix\Call\Integration\AI\CallAIService::finishTasks */
 		\CAgent::AddAgent(
 			'Bitrix\Call\Integration\AI\CallAIService::finishTasks();',

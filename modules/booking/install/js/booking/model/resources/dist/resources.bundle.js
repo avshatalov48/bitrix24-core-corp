@@ -51,7 +51,11 @@ this.BX.Booking = this.BX.Booking || {};
 	      /** @function resources/get */
 	      get: state => Object.values(state.collection),
 	      /** @function resources/getById */
-	      getById: state => id => state.collection[id]
+	      getById: state => id => state.collection[id],
+	      /** @function resources/getByIds */
+	      getByIds: state => ids => {
+	        return ids.map(id => state.collection[id]);
+	      }
 	    };
 	  }
 	  getActions() {

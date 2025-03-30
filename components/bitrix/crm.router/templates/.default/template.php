@@ -93,6 +93,7 @@ if (!$arResult['isIframe'])
 				options: {
 					cacheable: false,
 					allowChangeHistory: false,
+					customLeftBoundary: 0
 				}
 			},
 			{
@@ -121,6 +122,7 @@ if (!$arResult['isIframe'])
 				options: {
 					cacheable: false,
 					allowChangeHistory: true,
+					customLeftBoundary: 0
 				}
 			},
 			{
@@ -130,6 +132,7 @@ if (!$arResult['isIframe'])
 				options: {
 					cacheable: false,
 					allowChangeHistory: true,
+					customLeftBoundary: 0
 				}
 			},
 		];
@@ -164,6 +167,7 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_USE_BITRIX24_THEME' => $arResult['isUseBitrix24Theme'] ? 'Y' : 'N',
 		'DEFAULT_THEME_ID' => $arResult['defaultBitrix24Theme'],
 		'USE_BACKGROUND_CONTENT' => $arResult['isUseBackgroundContent'],
+		'HIDE_TOOLBAR' => $arResult['isHideToolbar'],
 	],
 	$this->getComponent()
 );?>

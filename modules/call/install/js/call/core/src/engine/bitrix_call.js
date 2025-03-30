@@ -1482,7 +1482,10 @@ export class BitrixCall extends AbstractCall
 
 	#onPullEventSwitchTrackRecordStatus = (e) =>
 	{
-		this.runCallback(CallEvent.onSwitchTrackRecordStatus, { isTrackRecordOn: e.isTrackRecordOn });
+		this.runCallback(CallEvent.onSwitchTrackRecordStatus, {
+			isTrackRecordOn: e.isTrackRecordOn,
+			errorCode: e.errorCode,
+		});
 	}
 
 	#onLocalMediaRendererAdded = (e) =>

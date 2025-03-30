@@ -72,8 +72,8 @@
 	overflow: visible;
 }
 
-.sign-b2e-document-setup__sender-type-selector {
-	height: 110px !important;
+.sign-b2e-document-setup__sender-type-selector .ui-selector-tab-labels {
+	display: none;
 }
 
 .sign-b2e-document-setup__date-selector {
@@ -273,7 +273,7 @@
 	margin: 16px 0 0;
 }
 
-.sign-b2e-document-setup__add-button.--disabled + .sign-b2e-document-setup__add-notice {
+.sign-b2e-document-setup__add-notice.--warning {
 	background: var(--ui-color-palette-orange-15);
 	color: var(--ui-color-base-60);
 }

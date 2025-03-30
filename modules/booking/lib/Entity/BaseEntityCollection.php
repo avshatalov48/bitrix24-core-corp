@@ -8,7 +8,7 @@ use Bitrix\Main\Type\Contract\Arrayable;
 
 class BaseEntityCollection implements \IteratorAggregate, Arrayable, \Countable
 {
-	/** @var $collectionItems BaseEntity[] */
+	/** @var $collectionItems EntityInterface[] */
 	protected array $collectionItems = [];
 
 	public function getCollectionItems(): array
@@ -16,7 +16,7 @@ class BaseEntityCollection implements \IteratorAggregate, Arrayable, \Countable
 		return $this->collectionItems;
 	}
 
-	public function getFirstCollectionItem(): BaseEntity|null
+	public function getFirstCollectionItem(): EntityInterface|null
 	{
 		return empty($this->collectionItems) ? null : $this->collectionItems[0] ?? null;
 	}
@@ -26,7 +26,7 @@ class BaseEntityCollection implements \IteratorAggregate, Arrayable, \Countable
 		return array_map(static fn ($collectionItem): array => $collectionItem->toArray(), $this->collectionItems);
 	}
 
-	/** @return BaseEntity[] */
+	/** @return EntityInterface[] */
 	public function getIterator(): \ArrayIterator
 	{
 		return new \ArrayIterator($this->collectionItems);
@@ -42,7 +42,7 @@ class BaseEntityCollection implements \IteratorAggregate, Arrayable, \Countable
 		return empty($this->collectionItems);
 	}
 
-	public function add(BaseEntity $entity): void
+	public function add(EntityInterface $entity): void
 	{
 		$this->collectionItems[] = $entity;
 	}
@@ -77,7 +77,7 @@ class BaseEntityCollection implements \IteratorAggregate, Arrayable, \Countable
 		return array_udiff(
 			$this->getCollectionItems(),
 			$collectionToCompare->getCollectionItems(),
-			function (BaseEntity $entity1, BaseEntity $entity2) {
+			function (EntityInterface $entity1, EntityInterface $entity2) {
 
 				return $entity1 <=> $entity2;
 

@@ -88,12 +88,6 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			this.dialogCreator = null;
 			this.visibilityManager = VisibilityManager.getInstance();
 
-			/**
-			 * @abstract
-			 * @type {boolean}
-			 */
-			this.redrawHeaderTruly = true;
-
 			this.init();
 		}
 
@@ -245,7 +239,7 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 		/**
 		 * @abstract
 		 */
-		async refresh(redrawHeaderTruly)
+		async refresh()
 		{
 			Logger.info('MessengerBase.refresh method is not override');
 		}
@@ -265,32 +259,7 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 				this.refresh();
 			}
 
-			// TODO fix me start
-			if (this.redrawHeaderTruly)
-			{
-				this.redrawHeader();
-				this.appStatus = this.core.getAppStatus();
-
-				return;
-			}
-
-			if (this.core.getAppStatus() === AppStatus.running)
-			{
-				this.redrawHeader();
-				this.appStatus = this.core.getAppStatus();
-
-				return;
-			}
-
-			if (!this.redrawTimeout)
-			{
-				this.redrawTimeout = setTimeout(() => {
-					this.redrawHeader();
-
-					this.redrawTimeout = null;
-				}, 3000);
-			}
-			// TODO fix me end
+			this.redrawHeader();
 			this.appStatus = this.core.getAppStatus();
 		}
 

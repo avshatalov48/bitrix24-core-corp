@@ -47,6 +47,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	}
 	serviceLocator.add('core', core);
 
+	const emitter = new JNEventEmitter();
+	serviceLocator.add('emitter', emitter);
+
 	const {
 		AppStatus,
 		EventType,
@@ -361,9 +364,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		/**
 		 * @override
 		 */
-		async refresh(redrawHeaderTruly)
+		async refresh()
 		{
-			this.redrawHeaderTruly = redrawHeaderTruly ?? false;
 			await this.core.setAppStatus(AppStatus.connection, true);
 			this.smileManager = SmileManager.getInstance();
 			await SmileManager.init();

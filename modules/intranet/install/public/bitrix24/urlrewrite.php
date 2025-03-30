@@ -952,4 +952,9 @@ $arUrlRewrite = array(
 		'ID' => 'bitrix:crm.router',
 		'PATH' => '/crm/index.php',
 	],
+	[
+		'CONDITION' => '#^/disk/boards/([0-9]+)/([0-9a-zA-Z]+)#',
+		'RULE' => 'action=disk.integration.flipchart.$2&fileId=$1',
+		'PATH' => '/bitrix/services/main/ajax.php',
+	],
 );

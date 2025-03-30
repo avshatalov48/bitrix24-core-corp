@@ -12,6 +12,8 @@
 		this.startHiddenInput = options.inputStartId ? this.container.querySelector('#' + options.inputStartId) : null;
 		this.endHiddenInput = options.inputEndId ? this.container.querySelector('#' + options.inputEndId) : null;
 		this.clockStartEndDeltaTime = this.selectOneByRole('timeman-work-time-start-end-delta');
+		this.stateStartDate = this.selectOneByRole('state-start-date', document);
+		this.stateEndDate = this.selectOneByRole('state-end-date', document);
 		this.breakLengthInput = this.selectOneByRole('tm-time-picker-break-length');
 		this.startDateInput = options.startDateInputSelector ? this.selectOneByRole(options.startDateInputSelector, document) : null;
 		this.endDateInput = options.endDateInputSelector ? this.selectOneByRole(options.endDateInputSelector, document) : null;
@@ -47,7 +49,12 @@
 			this.setDeltaTimeTo(this.clockStartEndDeltaTime, this.endHiddenInput, this.startHiddenInput);
 			if (this.breakLengthInput)
 			{
-				this.setDeltaTimeTo(this.clockStartEndDeltaTime, this.clockStartEndDeltaTime, this.breakLengthInput);
+				this.setDeltaTimeTo(
+					this.clockStartEndDeltaTime,
+					this.clockStartEndDeltaTime,
+					this.breakLengthInput,
+					true,
+				);
 			}
 		},
 		onDateLinkClick: function (event)
@@ -72,23 +79,41 @@
 					value: defaultDateValue
 				},
 				events: {
-					click: function (event)
+					click: function(internalEvent)
 					{
-						BX.calendar({node: event.currentTarget, field: event.currentTarget, bTime: false});
+						BX.calendar({
+							node: internalEvent.currentTarget,
+							field: internalEvent.currentTarget,
+							bTime: false,
+						});
 					},
-					change: BX.delegate(function (event)
+					change: BX.delegate(function(internalEvent)
+					{
+						if (internalEvent.currentTarget.dataset.type === 'start')
 						{
-							if (event.currentTarget.dataset.type === 'start')
-							{
-								this.startDateInput.value = event.currentTarget.value;
-							}
-							else if (event.currentTarget.dataset.type === 'end')
-							{
-								this.endDateInput.value = event.currentTarget.value;
-							}
-						}, this
-					)
-				}
+							this.startDateInput.value = internalEvent.currentTarget.value;
+
+							this.stateStartDate.value = BX.date.format(
+								'm/d/Y',
+								BX.date.parse(internalEvent.currentTarget.value, false),
+								null,
+								false,
+							);
+						}
+						else if (internalEvent.currentTarget.dataset.type === 'end')
+						{
+							this.endDateInput.value = internalEvent.currentTarget.value;
+
+							this.stateEndDate.value = BX.date.format(
+								'm/d/Y',
+								BX.date.parse(internalEvent.currentTarget.value, false),
+								null,
+								false,
+							);
+						}
+						this.updateDuration();
+					}, this),
+				},
 			});
 			title.dataset.role = event.currentTarget.dataset.role;
 			title.dataset.type = event.currentTarget.dataset.type;
@@ -123,10 +148,12 @@
 		{
 			this.updateDuration(event);
 		},
-		setDeltaTimeTo: function (targetElement, minuend, subtrahend)
+		setDeltaTimeTo: function (targetElement, minuend, subtrahend, isBreak = false)
 		{
-			var delta = this.getDeltaTime(minuend, subtrahend);
+			const delta = this.getDeltaTime(minuend, subtrahend, isBreak);
+
 			targetElement.textContent = this.beautifyTime(delta);
+
 			return targetElement.textContent;
 		},
 		beautifyTime: function (time, bSec)
@@ -140,18 +167,33 @@
 				return parseInt(time / 3600) + BX.message('JS_CORE_H') + ' ' + parseInt((time % 3600) / 60) + BX.message('JS_CORE_M');
 			}
 		},
-		getDeltaTime: function (minuend, subtrahend)
+		getDeltaTime: function (minuend, subtrahend, isBreak = false)
 		{
 			var startSeconds = this.convertFormattedTimeToSecs(subtrahend.tagName === 'INPUT' ? subtrahend.value : subtrahend.textContent);
 			var endSeconds = this.convertFormattedTimeToSecs(minuend.tagName === 'INPUT' ? minuend.value : minuend.textContent);
 			var delta = 0;
-			if (startSeconds < endSeconds)
+
+			const startDate = new Date(this.stateStartDate.value);
+			const endDate = new Date(this.stateEndDate.value);
+			const differenceInSeconds = Math.max(0, (endDate - startDate) / 1000);
+
+			if (startSeconds <= endSeconds)
 			{
 				delta = endSeconds - startSeconds;
+
+				if (!isBreak)
+				{
+					delta += differenceInSeconds;
+				}
 			}
 			else if (startSeconds > endSeconds)
 			{
 				delta = ((24 * 3600) - startSeconds) + endSeconds;
+
+				if (!isBreak)
+				{
+					delta += differenceInSeconds - (24 * 3600);
+				}
 			}
 
 			return delta;

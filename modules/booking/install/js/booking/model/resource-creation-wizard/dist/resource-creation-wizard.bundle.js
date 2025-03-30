@@ -52,7 +52,8 @@ this.BX.Booking = this.BX.Booking || {};
 	      invalidResourceType: false,
 	      isCompanyScheduleAccess: false,
 	      weekStart: 'Mon',
-	      globalSchedule: false
+	      globalSchedule: false,
+	      checkedForAll: {}
 	    };
 	  }
 	  getGetters() {
@@ -87,7 +88,12 @@ this.BX.Booking = this.BX.Booking || {};
 	      /** @function resource-creation-wizard/isCompanyScheduleAccess */
 	      isCompanyScheduleAccess: state => state.isCompanyScheduleAccess,
 	      /** @function resource-creation-wizard/weekStart */
-	      weekStart: state => state.weekStart
+	      weekStart: state => state.weekStart,
+	      /** @function resource-creation-wizard/isCheckedForAll */
+	      isCheckedForAll: state => type => {
+	        var _state$checkedForAll$;
+	        return (_state$checkedForAll$ = state.checkedForAll[type]) != null ? _state$checkedForAll$ : true;
+	      }
 	    };
 	  }
 	  getActions() {
@@ -158,8 +164,17 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      /** @function resource-creation-wizard/updateResource */
 	      updateResource({
-	        commit
+	        commit,
+	        rootGetters
 	      }, patch) {
+	        if (patch.typeId) {
+	          const resourceType = rootGetters[`${booking_const.Model.ResourceTypes}/getById`](patch.typeId);
+	          const notifications = [...Object.values(booking_const.NotificationFieldsMap.NotificationOn), ...Object.values(booking_const.NotificationFieldsMap.TemplateType)].reduce((acc, field) => ({
+	            ...acc,
+	            [field]: resourceType[field]
+	          }), {});
+	          Object.assign(patch, notifications);
+	        }
 	        commit('updateResource', patch);
 	      },
 	      /** @function resource-creation-wizard/setCompanyScheduleSlots */
@@ -208,6 +223,18 @@ this.BX.Booking = this.BX.Booking || {};
 	        commit
 	      }, weekStart) {
 	        commit('setWeekStart', weekStart);
+	      },
+	      /** @function resource-creation-wizard/setCheckedForAll */
+	      setCheckedForAll({
+	        commit
+	      }, {
+	        type,
+	        isChecked
+	      }) {
+	        commit('setCheckedForAll', {
+	          type,
+	          isChecked
+	        });
 	      }
 	    };
 	  }
@@ -260,6 +287,12 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      setWeekStart(state, weekStart) {
 	        state.weekStart = weekStart;
+	      },
+	      setCheckedForAll(state, {
+	        type,
+	        isChecked
+	      }) {
+	        state.checkedForAll[type] = isChecked;
 	      }
 	    };
 	  }

@@ -1,8 +1,11 @@
+import { mapState } from 'ui.vue3.pinia';
+import { Loader } from 'main.loader';
+import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { Loc } from 'main.core';
 import { memberRoles } from 'humanresources.company-structure.api';
 import { HeadUsers } from './head-users';
-import type { DepartmentData } from '../../types';
 import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
+import type { DepartmentData } from '../../types';
 
 export const TreeNode = {
 	name: 'treeNode',
@@ -10,20 +13,45 @@ export const TreeNode = {
 	components: { HeadUsers },
 
 	props: {
-		department: Object,
 		name: String,
 		heads: Array,
 		userCount: Number,
 		nodeId: Number,
 	},
 
+	data(): { isShowLoader: boolean; }
+	{
+		return { isShowLoader: false };
+	},
+
+	watch:
+	{
+		isShowLoader(newValue: boolean): void
+		{
+			if (!newValue)
+			{
+				return;
+			}
+
+			this.$nextTick(() => {
+				const { loaderContainer } = this.$refs;
+				const loader = new Loader({ size: 30 });
+				loader.show(loaderContainer);
+			});
+		},
+	},
 	computed:
 	{
 		departmentData(): DepartmentData | { name: string, ...Partial<DepartmentData> }
 		{
 			if (this.isExistingDepartment)
 			{
-				return this.department;
+				if (!this.isHeadsLoaded)
+				{
+					this.loadHeads([this.nodeId]);
+				}
+
+				return this.departments.get(this.nodeId);
 			}
 
 			return {
@@ -40,15 +68,15 @@ export const TreeNode = {
 		{
 			return (this.userCount || 0) - (this.heads?.length || 0);
 		},
-		headUsers(): Array<DepartmentData['heads']>
+		headUsers(): ?Array<DepartmentData['heads']>
 		{
-			return this.departmentData.heads.filter((head) => {
+			return this.departmentData.heads?.filter((head) => {
 				return head.role === memberRoles.head;
 			});
 		},
-		deputyUsers(): Array<DepartmentData['heads']>
+		deputyUsers(): ?Array<DepartmentData['heads']>
 		{
-			return this.departmentData.heads.filter((head) => {
+			return this.departmentData.heads?.filter((head) => {
 				return head.role === memberRoles.deputyHead;
 			});
 		},
@@ -58,6 +86,13 @@ export const TreeNode = {
 				? PermissionChecker.getInstance().hasPermission(PermissionActions.structureView, this.nodeId)
 				: true;
 		},
+		isHeadsLoaded(departmentId: number): boolean
+		{
+			const { heads } = this.departments.get(this.nodeId);
+
+			return Boolean(heads);
+		},
+		...mapState(useChartStore, ['departments']),
 	},
 
 	methods: {
@@ -68,6 +103,19 @@ export const TreeNode = {
 		locPlural(phraseCode: string, count: number): string
 		{
 			return Loc.getMessagePlural(phraseCode, count, { '#COUNT#': count });
+		},
+		async loadHeads(departmentIds: number[]): Promise<void>
+		{
+			const store = useChartStore();
+			try
+			{
+				this.isShowLoader = true;
+				await store.loadHeads(departmentIds);
+			}
+			finally
+			{
+				this.isShowLoader = false;
+			}
 		},
 	},
 
@@ -81,10 +129,11 @@ export const TreeNode = {
 					{{departmentData.name}}
 				</p>
 				<HeadUsers
-					v-if="showInfo"
+					v-if="showInfo && headUsers"
 					:users="headUsers"
 					:showPlaceholder="!isExistingDepartment"
 				/>
+				<div v-if="isShowLoader" ref="loaderContainer"></div>
 				<div
 					v-if="showInfo && !isExistingDepartment"
 					class="chart-wizard-tree-preview__node_employees"

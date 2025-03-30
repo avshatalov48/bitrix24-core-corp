@@ -9,5 +9,6 @@ export { EventName } from './freeze/event-name';
 export { Limit } from './freeze/limit';
 export { Model } from './freeze/model';
 export { Module } from './freeze/module';
+export { NotificationFieldsMap } from './freeze/notification-fields-map';
 export { Option } from './freeze/option';
 export { NotificationChannel } from './freeze/resource-creation-wizard';

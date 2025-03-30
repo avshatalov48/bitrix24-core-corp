@@ -15,11 +15,9 @@ use Bitrix\Crm\Copilot\CallAssessment\Controller\CopilotCallAssessmentController
 use Bitrix\Crm\Copilot\CallAssessment\Entity\CopilotCallAssessment;
 use Bitrix\Crm\Copilot\CallAssessment\Enum\CallType;
 use Bitrix\Crm\Copilot\CallAssessment\Enum\ClientType;
-use Bitrix\Crm\Feature;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Enum\GlobalSetting;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
-use Bitrix\Crm\Router\ResponseHelper;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\WebForm\Internals\PageNavigation;
@@ -756,5 +754,13 @@ HTML;
 	private function needShowGistColumn(): bool
 	{
 		return !is_null($this->request->get('criteria'));
+	}
+
+	protected function getTopPanelParameters(): array
+	{
+		return array_merge(
+			parent::getTopPanelParameters(),
+			['ACTIVE_ITEM_ID' => 'CALL_ASSESSMENT'],
+		);
 	}
 }

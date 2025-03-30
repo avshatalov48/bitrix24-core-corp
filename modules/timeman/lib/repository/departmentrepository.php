@@ -1,6 +1,9 @@
 <?php
 namespace Bitrix\Timeman\Repository;
 
+use Bitrix\HumanResources\Compatibility\Utils\DepartmentBackwardAccessCode;
+use Bitrix\HumanResources\Service\Container;
+use Bitrix\Main\Loader;
 use Bitrix\Timeman\Helper\ConfigurationHelper;
 use CIBlockSection;
 
@@ -34,6 +37,19 @@ class DepartmentRepository
 
 	public function getDirectParentIdsByUserId($userId)
 	{
+		if (Loader::includeModule('humanresources'))
+		{
+			$departmentNodes = Container::getNodeService()->getNodesByUserId($userId);
+
+			$departmentIds = [];
+			foreach ($departmentNodes->getIterator() as $departmentNode)
+			{
+				$departmentIds[] = DepartmentBackwardAccessCode::extractIdFromCode($departmentNode->accessCode);
+			}
+
+			return $departmentIds;
+		}
+
 		$userDepIds = [];
 		$userId = (int)$userId;
 		$structure = \CIntranetUtils::getStructure();

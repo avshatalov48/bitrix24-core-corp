@@ -242,6 +242,7 @@ class OnlyOfficeHandler extends DocumentHandler implements FileCreatable, IViewe
 
 	public static function renameDocument(string $documentKey, string $newName): Result
 	{
+		/** @noinspection PhpUnhandledExceptionInspection */
 		$commandServiceClient = CommandServiceClientFactory::createCommandServiceClient();
 
 		return $commandServiceClient->rename($documentKey, $newName);
@@ -249,6 +250,7 @@ class OnlyOfficeHandler extends DocumentHandler implements FileCreatable, IViewe
 
 	public static function disconnectUserFromDocument(string $documentKey, array $userIds): Result
 	{
+		/** @noinspection PhpUnhandledExceptionInspection */
 		$commandServiceClient = CommandServiceClientFactory::createCommandServiceClient();
 
 		return $commandServiceClient->drop($documentKey, $userIds);

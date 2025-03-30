@@ -39,6 +39,7 @@ abstract class ComponentBase extends Base
 		{
 			$params['port'] = $this->getPortWithScheme();
 		}
+
 		return ResponseBase::render($templatePath, $params);
 	}
 
@@ -61,9 +62,11 @@ abstract class ComponentBase extends Base
 	{
 		$user = $this->getUser();
 
-		if (ModuleManager::isModuleInstalled('bitrix24')
+		if (
+			$user['EXTERNAL_AUTH_ID'] === static::MAIN_EXTERNAL_USER_ID_SOCSERVICES
+			&& ModuleManager::isModuleInstalled('bitrix24')
 			&& Loader::includeModule('socialservices')
-			&& $user['EXTERNAL_AUTH_ID'] === static::MAIN_EXTERNAL_USER_ID_SOCSERVICES)
+		)
 		{
 			$socservicesUserDb = UserTable::getList([
 				'filter' => [

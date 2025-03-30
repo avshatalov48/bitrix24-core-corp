@@ -5,8 +5,8 @@ this.BX.Booking = this.BX.Booking || {};
 	'use strict';
 
 	const Button = {
-	  emits: ['click'],
 	  name: 'UiButton',
+	  emits: ['click'],
 	  props: {
 	    text: {
 	      type: String,
@@ -89,29 +89,30 @@ this.BX.Booking = this.BX.Booking || {};
 	      }
 	    },
 	    disabled: {
-	      handler(disabled) {
-	        var _this$button7, _this$button8;
-	        (_this$button7 = this.button) == null ? void 0 : _this$button7.setDisabled(disabled === false);
-	        (_this$button8 = this.button) == null ? void 0 : _this$button8.setDisabled(disabled === true);
+	      async handler(disabled) {
+	        await this.$nextTick(() => {
+	          var _this$button7;
+	          (_this$button7 = this.button) == null ? void 0 : _this$button7.setDisabled(Boolean(disabled));
+	        });
 	      },
 	      immediate: true
 	    },
 	    waiting: {
 	      handler(waiting) {
-	        var _this$button9;
-	        if (waiting !== ((_this$button9 = this.button) == null ? void 0 : _this$button9.isWaiting())) {
-	          var _this$button10;
-	          (_this$button10 = this.button) == null ? void 0 : _this$button10.setWaiting(waiting);
+	        var _this$button8;
+	        if (waiting !== ((_this$button8 = this.button) == null ? void 0 : _this$button8.isWaiting())) {
+	          var _this$button9;
+	          (_this$button9 = this.button) == null ? void 0 : _this$button9.setWaiting(waiting);
 	        }
 	      },
 	      immediate: true
 	    },
 	    clocking: {
 	      handler(clocking) {
-	        var _this$button11;
-	        if (clocking !== ((_this$button11 = this.button) == null ? void 0 : _this$button11.isClocking())) {
-	          var _this$button12;
-	          (_this$button12 = this.button) == null ? void 0 : _this$button12.setClocking(clocking);
+	        var _this$button10;
+	        if (clocking !== ((_this$button10 = this.button) == null ? void 0 : _this$button10.isClocking())) {
+	          var _this$button11;
+	          (_this$button11 = this.button) == null ? void 0 : _this$button11.setClocking(clocking);
 	        }
 	      },
 	      immediate: true

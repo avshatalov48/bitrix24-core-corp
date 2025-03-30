@@ -17,8 +17,10 @@ use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Error;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\Search\Content;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 
@@ -361,7 +363,12 @@ class PersonRepository implements Contract\Repository\HcmLink\PersonRepository
 			)
 			->where('COMPANY_ID', $companyId)
 			->where('USER_ID', 0)
-			->whereLike('INDEX.SEARCH_CONTENT', '%' . $search . '%')
+			->whereMatch(
+				'INDEX.SEARCH_CONTENT',
+				\Bitrix\Main\ORM\Query\Filter\Helper::matchAgainstWildcard(
+					Content::prepareStringToken($search), '*', 1,
+				),
+			)
 			->setLimit($limit)
 			->fetchCollection()
 			->getAll()
@@ -500,13 +507,32 @@ class PersonRepository implements Contract\Repository\HcmLink\PersonRepository
 		return (int)$countQuery;
 	}
 
-	public function getUnmappedPersonsByCompanyId(int $companyId, int $limit): PersonCollection
+	public function getUnmappedPersonsByCompanyId(int $companyId, int $limit, ?string $searchName = null): PersonCollection
 	{
-		$models = Model\HcmLink\PersonTable::query()
+		$query = Model\HcmLink\PersonTable::query()
 			->setSelect(['*'])
 			->where('USER_ID', 0)
 			->where('COMPANY_ID', $companyId)
-			->setOrder(['MATCH_COUNTER' => 'ASC', 'ID' => 'ASC'])
+		;
+
+		if (!empty($searchName))
+		{
+			$query->registerRuntimeField(
+				new Reference(
+					'PERSON_INDEX',
+					Model\HcmLink\Index\PersonTable::class,
+					Join::on('this.ID', 'ref.PERSON_ID'),
+					['join_type' => 'INNER'],
+				),
+			)->whereMatch(
+				'PERSON_INDEX.SEARCH_CONTENT',
+				\Bitrix\Main\ORM\Query\Filter\Helper::matchAgainstWildcard(
+					Content::prepareStringToken($searchName)
+				),
+			);
+		}
+
+		$models = $query->setOrder(['MATCH_COUNTER' => 'ASC', 'ID' => 'ASC'])
 			->setLimit($limit)
 			->fetchCollection()
 		;

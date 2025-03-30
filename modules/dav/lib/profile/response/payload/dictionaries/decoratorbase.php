@@ -18,11 +18,11 @@ abstract class DecoratorBase extends Base
 	 * @param Base[] $dictionaries Collection of dictionaries to be rendered.
 	 * @param string $accessToken Access token for request payload.
 	 */
-	public function __construct($dictionaries = array(), $accessToken)
+	public function __construct($dictionaries = [], $accessToken)
 	{
 		$this->dictionaries = $dictionaries;
 		$result = TokensTable::getById($accessToken)->fetch();
-		$user = array();
+		$user = [];
 		if ($result && TokensTable::isTokenValid($result['TOKEN']))
 		{
 			$user = UserTable::getById($result['USER_ID'])->fetch();
@@ -37,6 +37,7 @@ abstract class DecoratorBase extends Base
 	public function isAvailable()
 	{
 		$user = $this->getUser();
+
 		return !empty($user);
 	}
 }

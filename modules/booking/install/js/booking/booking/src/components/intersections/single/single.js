@@ -31,14 +31,19 @@ export const Single = {
 	{
 		this.destroySelector();
 	},
-	computed: mapGetters({
-		isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
-		intersections: `${Model.Interface}/intersections`,
-		isLoaded: `${Model.Interface}/isLoaded`,
-		resourcesIds: `${Model.Interface}/resourcesIds`,
-		isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
-		resources: `${Model.Resources}/get`,
-	}),
+	computed: {
+		...mapGetters({
+			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
+			intersections: `${Model.Interface}/intersections`,
+			isLoaded: `${Model.Interface}/isLoaded`,
+			isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
+			resources: `${Model.Resources}/get`,
+		}),
+		resourcesIds(): number[]
+		{
+			return this.resources.map(({ id }) => id);
+		},
+	},
 	methods: {
 		createSelector(): TagSelector
 		{
@@ -46,6 +51,7 @@ export const Single = {
 				multiple: true,
 				addButtonCaption: this.loc('BOOKING_BOOKING_ADD_INTERSECTION'),
 				showCreateButton: false,
+				maxHeight: 50,
 				dialogOptions: {
 					header: this.loc('BOOKING_BOOKING_ADD_INTERSECTION_DIALOG_HEADER'),
 					context: 'bookingResourceIntersection',
@@ -127,7 +133,7 @@ export const Single = {
 		{
 			if (!this.isFeatureEnabled)
 			{
-				limit.show();
+				void limit.show();
 			}
 		},
 	},
@@ -159,6 +165,11 @@ export const Single = {
 		},
 		resourcesIds(resourcesIds: number[], previousResourcesIds: number[]): void
 		{
+			if (resourcesIds.join(',') === previousResourcesIds.join(','))
+			{
+				return;
+			}
+
 			const deletedIds = previousResourcesIds.filter((id: number) => !resourcesIds.includes(id));
 			const newIds = resourcesIds.filter((id: number) => !previousResourcesIds.includes(id));
 

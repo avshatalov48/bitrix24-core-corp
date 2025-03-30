@@ -298,6 +298,7 @@ class ExtranetUserRepository implements Contract\Repository\ExtranetUserReposito
 			->setSelect(['ID'])
 			->addFilter('=ID', $id)
 			->addFilter('=IS_REAL_USER', 'Y')
+			->addFilter('GROUPS.GROUP_ID', \CExtranet::GetExtranetUserGroupID())
 			->setLimit(1)
 			->exec()
 			->fetch()

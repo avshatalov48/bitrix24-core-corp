@@ -10,22 +10,22 @@ export const ActionMenu = {
 	},
 
 	template: `
-		<BaseActionMenu 
+		<BaseActionMenu
 			:id="id"
-			:items="items" 
+			:items="items"
 			:bindElement="bindElement"
 			:width="260"
 			:delimiter="false"
- 			v-slot="{item}"
+			v-slot="{item}"
 			@close="this.$emit('close')"
 		>
 			<ActionMenuItem
-				:id="item.id" 
+				:id="item.id"
 				:title="item.title"
 				:imageClass="item.imageClass"
 				:color="item.color"
 				@click="this.$emit('action', item.id)"
 			/>
 		</BaseActionMenu>
-	`
-}
+	`,
+};

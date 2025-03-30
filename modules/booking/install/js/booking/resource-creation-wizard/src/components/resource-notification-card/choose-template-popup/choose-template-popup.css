@@ -1,21 +1,12 @@
 .booking-resource-wizard-choose-template-popup-header-title {
-	font-size: var(--ui-font-size-2xl);
-	font-weight: var(--ui-font-weight-medium);
 	display: flex;
 	justify-content: space-between;
-}
-
-.booking-resource-wizard-choose-template-popup-header-title {
-	font-size: var(--ui-font-size-2xl);
+	align-items: center;
+	font-size: var(--ui-font-size-xl);
 	font-weight: var(--ui-font-weight-medium);
 }
 
-.booking-resource-wizard-choose-template-popup-header-title .channel-menu-btn {
-	font-weight: var(--ui-font-weight-normal);
-	text-transform: initial;
-}
-
-.booking-resource-wizard-choose-template-popup-header-title .--close-btn:hover {
+.booking-resource-wizard-choose-template-popup-header-title .ui-icon-set {
 	cursor: pointer;
 }
 

@@ -72,6 +72,14 @@ class CommonActions extends BaseObject
 
 		$securityContext = $storage->getSecurityContext($currentUser->getId());
 
+		if ($path === '/')
+		{
+			return [
+				'targetFolder' => $storage->getRootObject(),
+				'breadcrumbs' => [],
+			];
+		}
+
 		$resolvedData = Driver::getInstance()->getUrlManager()->resolvePathUnderRootObject($storage->getRootObject(), $path);
 		if (empty($resolvedData['RELATIVE_ITEMS']))
 		{

@@ -1,0 +1,39 @@
+.chart-wizard__change-save-mode-control-container {
+	display: flex;
+	flex-wrap: wrap;
+	column-gap: 4px;
+	row-gap: 3px;
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-3xs);
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.chart-wizard__change-save-mode-control-button {
+	position: relative;
+	padding-right: 16px;
+	background: none;
+	cursor: pointer;
+	border: none;
+	color: var(--ui-color-link-primary-base);
+	border-radius: var(--ui-border-radius-lg);
+	white-space: nowrap;
+}
+
+.chart-wizard__change-save-mode-control-button::before {
+	content: '';
+	position: absolute;
+	width: 14px;
+	height: 14px;
+	background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMTUiIHZpZXdCb3g9IjAgMCAxNCAxNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMC4zMDYxIDUuMjUzOTFMNy42NjUyOSA3Ljg5NDY5TDYuOTk5OTkgOC41NDk2OUw2LjM0NzMgNy44OTQ2OUwzLjcwNjUyIDUuMjUzOTFMMi43NzQ2NyA2LjE4NTc2TDcuMDA2MjYgMTAuNDE3NEwxMS4yMzc5IDYuMTg1NzZMMTAuMzA2MSA1LjI1MzkxWiIgZmlsbD0iIzUyNUM2OSIvPgo8L3N2Zz4K+');
+	right: 1px;
+}
+
+.chart-wizard__change-save-mode-control-button.--focused::before  {
+	transform: rotate(180deg);
+}
+
+.chart-wizard__employee_item.--change-save-mode-control {
+	border-top: 1px solid var(--ui-color-palette-gray-05);
+	padding-top: 17px;
+}

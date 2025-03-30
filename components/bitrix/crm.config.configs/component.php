@@ -339,7 +339,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				);
 			}
 
-			if (isset($_POST['INVOICE_OLD_ENABLED']))
+			if (isset($_POST['INVOICE_OLD_ENABLED']) && Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnablingPossible())
 			{
 				\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->setOldInvoicesEnabled(
 					mb_strtoupper($_POST['INVOICE_OLD_ENABLED']) === 'Y'

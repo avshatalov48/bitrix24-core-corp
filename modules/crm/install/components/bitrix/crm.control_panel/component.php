@@ -1481,6 +1481,15 @@ else
 	];
 }
 
+if (Bitrix\Crm\Feature::enabled(\Bitrix\Crm\Feature\ShowLinkToFeaturesInMenu::class))
+{
+	$stdItems['FEATURES_LIST'] = [
+		'ID' => 'FEATURES_LIST',
+		'NAME' => \Bitrix\Crm\Feature\ShowLinkToFeaturesInMenu::getMenuTitle(),
+		'URL' => '/crm/configs/?expert',
+	];
+}
+
 // <-- Prepere standard items
 
 $items = array();

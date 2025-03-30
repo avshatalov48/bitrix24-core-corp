@@ -1,13 +1,16 @@
 import { RouteActionMenu, ConfirmationPopup } from 'humanresources.company-structure.structure-components';
 import { Main } from 'ui.icon-set.api.core';
 import { DepartmentAPI } from '../../../../api';
+import { DepartmentContentActions } from '../../../../actions';
 import { memberRoles } from 'humanresources.company-structure.api';
-import { getColorCode, moveUserStoreToAnotherDepartment, removeUserFromStore } from 'humanresources.company-structure.utils';
+import { getColorCode } from 'humanresources.company-structure.utils';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { mapState } from 'ui.vue3.pinia';
 import { MoveUserActionPopup } from './move-user-action-popup';
 import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
 import { UI } from 'ui.notification';
+
+import './styles/action-button.css';
 
 const MenuOption = Object.freeze({
 	removeUserFromDepartment: 'removeUserFromDepartment',
@@ -19,18 +22,9 @@ export const UserListItemActionButton = {
 	name: 'userList',
 
 	props: {
-		userId: {
-			type: Number,
-			required: true,
-		},
 		user: {
 			type: Object,
 			required: true,
-		},
-		role: {
-			type: String,
-			required: false,
-			default: memberRoles.employee,
 		},
 		departmentId: {
 			type: Number,
@@ -78,15 +72,15 @@ export const UserListItemActionButton = {
 		async removeUser(): Promise<void>
 		{
 			this.showRemoveUserConfirmationActionLoader = true;
-			const userId = this.userId;
+			const userId = this.user.id;
 			const isUserInMultipleDepartments = await DepartmentAPI.isUserInMultipleDepartments(userId);
-			const nodeId = this.focusedNode;
+			const departmentId = this.focusedNode;
 			this.showRemoveUserConfirmationActionLoader = false;
 			this.showRemoveUserConfirmationPopup = false;
 
 			try
 			{
-				await DepartmentAPI.removeUserFromDepartment(nodeId, userId);
+				await DepartmentAPI.removeUserFromDepartment(departmentId, userId);
 			}
 			catch
 			{
@@ -98,9 +92,10 @@ export const UserListItemActionButton = {
 				return;
 			}
 
+			const role = this.user.role;
 			if (isUserInMultipleDepartments)
 			{
-				removeUserFromStore(this.departments, nodeId, userId, this.role);
+				DepartmentContentActions.removeUserFromDepartment(departmentId, userId, role);
 
 				return;
 			}
@@ -111,17 +106,28 @@ export const UserListItemActionButton = {
 				return;
 			}
 
-			moveUserStoreToAnotherDepartment(this.departments, nodeId, userId, rootDepartment.id, this.role);
+			DepartmentContentActions.moveUserToDepartment(
+				departmentId,
+				userId,
+				rootDepartment.id,
+				role,
+			);
 		},
 		cancelRemoveUser(): void
 		{
 			this.showRemoveUserConfirmationPopup = false;
 		},
-		handleMoveUserAction() {
+		handleMoveUserAction(): void
+		{
 			this.showMoveUserPopup = false;
 		},
-		handleMoveUserClose() {
+		handleMoveUserClose(): void
+		{
 			this.showMoveUserPopup = false;
+		},
+		getMemberKeyByValue(value: string): string
+		{
+			return Object.keys(memberRoles).find((key) => memberRoles[key] === value) || '';
 		},
 	},
 
@@ -193,18 +199,19 @@ export const UserListItemActionButton = {
 		<button 
 			v-if="menuItems.length"
 			class="ui-icon-set --more hr-department-detail-content__user-action-btn"
-			:class="{ '--focused': menuVisible[userId] }"
-			@click.stop="toggleMenu(userId)"
+			:class="{ '--focused': menuVisible[user.id] }"
+			@click.stop="toggleMenu(user.id)"
 			ref="actionUserButton"
+			:data-id="'hr-department-detail-content__'+ getMemberKeyByValue(user.role) + '-list_user-' + user.id + '-action-btn'"
 		/>
 		<RouteActionMenu
-			v-if="menuVisible[userId]"
-			:id="'tree-node-department-menu-' + userId"
+			v-if="menuVisible[user.id]"
+			:id="'tree-node-department-menu-' + user.id"
 			:items="menuItems"
 			:width="302"
 			:bindElement="$refs.actionUserButton"
 			@action="onActionMenuItemClick"
-			@close="menuVisible[userId] = false"
+			@close="menuVisible[user.id] = false"
 		/>
 		<ConfirmationPopup
 			ref="removeUserConfirmationPopup"
@@ -220,7 +227,6 @@ export const UserListItemActionButton = {
 			v-if="showMoveUserPopup"
 			:parentId="focusedNode"
 			:user="user"
-			:role="role"
 			@action="handleMoveUserAction"
 			@close="handleMoveUserClose"
 		/>

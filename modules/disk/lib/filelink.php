@@ -395,7 +395,7 @@ final class FileLink extends File
 			return false;
 		}
 
-		Document\OnlyOffice\Models\DocumentSessionTable::deleteBatch([
+		Document\Models\DocumentSessionTable::deleteBatch([
 			'OBJECT_ID' => $this->id,
 		]);
 

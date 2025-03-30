@@ -15,6 +15,14 @@ export const BookingTime = {
 			type: Number,
 			required: true,
 		},
+		dateFromTs: {
+			type: Number,
+			required: true,
+		},
+		dateToTs: {
+			type: Number,
+			required: true,
+		},
 	},
 	data(): Object
 	{
@@ -36,8 +44,8 @@ export const BookingTime = {
 			const timeFormat = DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
 
 			return this.loc('BOOKING_BOOKING_TIME_RANGE', {
-				'#FROM#': DateTimeFormat.format(timeFormat, (this.booking.dateFromTs + this.offset) / 1000),
-				'#TO#': DateTimeFormat.format(timeFormat, (this.booking.dateToTs + this.offset) / 1000),
+				'#FROM#': DateTimeFormat.format(timeFormat, (this.dateFromTs + this.offset) / 1000),
+				'#TO#': DateTimeFormat.format(timeFormat, (this.dateToTs + this.offset) / 1000),
 			});
 		},
 	},
@@ -49,20 +57,11 @@ export const BookingTime = {
 				return;
 			}
 
-			if (!this.isRealId(this.bookingId))
-			{
-				return;
-			}
-
 			this.showPopup = true;
 		},
 		closePopup(): void
 		{
 			this.showPopup = false;
-		},
-		isRealId(id: number): number
-		{
-			return /^[1-9]\d*$/.test(id);
 		},
 	},
 	components: {

@@ -8,52 +8,48 @@ use Bitrix\ImConnector\Model\ChatLastMessageTable;
 class Chat
 {
 	/**
-	 * @param $fields
-	 *
-	 * @return Data\AddResult|Data\UpdateResult
+	 * @param string $externalChatId
+	 * @param string $externalMessageId
+	 * @param string $connector
+	 * @return void
 	 */
-	public static function setLastMessage($fields)
+	public static function setLastMessage($externalChatId, $externalMessageId, $connector): void
 	{
-		$lastMessage = self::getLastMessage($fields['EXTERNAL_CHAT_ID'], $fields['CONNECTOR']);
+		$lastMessage = self::getLastMessage($externalChatId, $connector);
 		if (!empty($lastMessage['ID']))
 		{
-			$result = ChatLastMessageTable::update(
+			ChatLastMessageTable::update(
 				$lastMessage['ID'],
 				[
-					'EXTERNAL_MESSAGE_ID' => $fields['EXTERNAL_MESSAGE_ID']
+					'EXTERNAL_MESSAGE_ID' => $externalMessageId
 				]
 			);
 		}
 		else
 		{
-			$result = ChatLastMessageTable::add(
-				[
-					'EXTERNAL_CHAT_ID' => $fields['EXTERNAL_CHAT_ID'],
-					'CONNECTOR' => $fields['CONNECTOR'],
-					'EXTERNAL_MESSAGE_ID' => $fields['EXTERNAL_MESSAGE_ID']
-				]
-			);
+			ChatLastMessageTable::add([
+				'EXTERNAL_CHAT_ID' => $externalChatId,
+				'CONNECTOR' => $connector,
+				'EXTERNAL_MESSAGE_ID' => $externalMessageId
+			]);
 		}
-		return $result;
 	}
 
 	/**
-	 * @param $externalChatId
-	 * @param $connector
-	 *
-	 * @return mixed
+	 * @param string $externalChatId
+	 * @param string $connector
+	 * @return string|null
 	 */
 	public static function getChatLastMessageId($externalChatId, $connector)
 	{
 		$message = self::getLastMessage($externalChatId, $connector);
 
-		return $message['EXTERNAL_MESSAGE_ID'];
+		return $message['EXTERNAL_MESSAGE_ID'] ?? null;
 	}
 
 	/**
-	 * @param $externalChatId
-	 * @param $connector
-	 *
+	 * @param string $externalChatId
+	 * @param string $connector
 	 * @return array|false
 	 */
 	public static function getLastMessage($externalChatId, $connector)
@@ -73,8 +69,8 @@ class Chat
 	}
 
 	/**
-	 * @param $externalChatId
-	 * @param $connector
+	 * @param string $externalChatId
+	 * @param string $connector
 	 */
 	public static function deleteLastMessage($externalChatId, $connector): void
 	{

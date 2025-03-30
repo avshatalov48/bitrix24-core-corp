@@ -1,0 +1,85 @@
+.hr-hcmlink-sync__search-transition-enter-from.hr-hcmlink-sync__content-search-block__search {
+	opacity: 0;
+}
+
+.hr-hcmlink-sync__search-transition-enter-active.hr-hcmlink-sync__content-search-block__search {
+	transition: opacity 0.3s;
+}
+
+.hr-hcmlink-sync__search-transition-enter-from.hr-hcmlink-sync__content-search-block__search-bar,
+.hr-hcmlink-sync__search-transition-leave-to.hr-hcmlink-sync__content-search-block__search-bar {
+	transform: scaleX(0%);
+}
+
+.hr-hcmlink-sync__search-transition-leave-from.hr-hcmlink-sync__content-search-block__search-bar,
+.hr-hcmlink-sync__search-transition-enter-to.hr-hcmlink-sync__content-search-block__search-bar {
+	transform: scaleX(100%);
+}
+.hr-hcmlink-sync__search-transition-enter-active.hr-hcmlink-sync__content-search-block__search-bar {
+	transition: transform 0.3s ease-out;
+	transform-origin: 100% 0;
+}
+.hr-hcmlink-sync__search-transition-leave-active.hr-hcmlink-sync__content-search-block__search-bar {
+	transition: transform 0.3s ease-out;
+	transform-origin: 100% 0;
+}
+
+.hr-hcmlink-sync__content-search-block__search,
+.hr-hcmlink-sync__content-search-block__filter,
+.hr-hcmlink-sync__content-search-block__search-reset {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+}
+
+.hr-hcmlink-sync__content-search-block__search-reset {
+	margin-left: auto;
+}
+
+.hr-hcmlink-sync__content-search-block__search-input {
+	flex-grow: 1;
+	height: 30px;
+	background-color: inherit;
+	border: none;
+	font: var(--ui-font-size-md) var(--ui-font-family-system);
+	color: var(--ui-color-base-90);
+	outline: none;
+	padding-left: 10px;
+	padding-right: 12px;
+	box-sizing: border-box;
+	min-width: 219px;
+}
+
+.hr-hcmlink-sync__content-search-block__search-bar {
+	display: flex;
+	flex-grow: 1;
+	background: #ebf1f4;
+	border-radius: 98px;
+	min-width: 329px;
+	max-width: 329px;
+	align-items: center;
+	padding: 1px 10px;
+}
+
+.hr-hcmlink-sync__content-search-container {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+}
+
+.hr-hcmlink-sync__content-search-block__search-input::placeholder {
+	font: var(--ui-font-size-md) var(--ui-font-family-system);
+	color: var(--ui-color-base-60);
+}
+
+.hr-hcmlink-sync__search- {
+	background: #959ca4;
+}
+
+.hr-hcmlink-sync__search-:hover {
+	background: #00ace3;
+}
+
+.ui-selector-item-box-open > .ui-selector-item > .ui-selector-item-indicator {
+	transform: rotate(360deg);
+}

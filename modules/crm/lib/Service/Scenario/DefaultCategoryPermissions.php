@@ -35,8 +35,8 @@ class DefaultCategoryPermissions extends Service\Scenario
 		$categoryIdentifier = new CategoryIdentifier($this->entityTypeId, $this->categoryId);
 		$defaultPermissionSet =
 			$this->needSetOpenPermissions
-			? RolePreset::getDefaultPermissionSetForEntity($categoryIdentifier)
-			: RolePreset::getBasePermissionSetForEntity($categoryIdentifier)
+			? RolePreset::getMaxPermissionSetForEntity($categoryIdentifier)
+			: RolePreset::getMinPermissionSetForEntity($categoryIdentifier)
 		;
 
 		if (empty($defaultPermissionSet))
@@ -65,8 +65,8 @@ class DefaultCategoryPermissions extends Service\Scenario
 		$categoryIdentifier = new CategoryIdentifier($this->entityTypeId, $this->categoryId);
 		$defaultPermissionSet =
 			$this->needSetOpenPermissions
-				? RolePreset::getDefaultPermissionSetForEntity($categoryIdentifier)
-				: RolePreset::getBasePermissionSetForEntity($categoryIdentifier)
+				? RolePreset::getMaxPermissionSetForEntity($categoryIdentifier)
+				: RolePreset::getMinPermissionSetForEntity($categoryIdentifier)
 		;
 
 		if (empty($defaultPermissionSet))

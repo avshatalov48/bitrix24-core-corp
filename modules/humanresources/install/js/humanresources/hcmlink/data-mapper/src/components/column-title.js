@@ -9,7 +9,7 @@ export const ColumnTitle = {
 	},
 
 	template: `
-		<template v-if="mode=='direct'">
+		<template v-if="mode === 'direct'">
 			<div class="hr-hcmlink-sync__column-title-container">
 				<div>
 					{{ $Bitrix.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_COLUMN_TITLE_BITRIX') }}

@@ -121,6 +121,7 @@ jn.define('catalog/store/product-list/services/product-selector-adapter', (requi
 				title: Loc.getMessage('CATALOG_PRODUCT_SEARCH_IN_1C'),
 				hintText: Loc.getMessage('CATALOG_PRODUCT_SEARCH_IN_1C_HINT_TEXT'),
 				redirectUrl: '/crm/',
+				analyticsSection: 'inventory',
 			});
 
 			return Promise.resolve();

@@ -8,6 +8,7 @@ use Bitrix\Crm\Security\Role\Manage\Enum\Permission;
 use Bitrix\Crm\Security\Role\Manage\PermissionEntityBuilder;
 use Bitrix\Crm\Security\Role\Manage\RoleSelectionManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Web\Uri;
 
@@ -82,4 +83,25 @@ class WebFormSelection implements RoleSelectionManager
 	{
 		return \Bitrix\Crm\Security\Role\GroupCodeGenerator::getCrmFormGroupCode();
 	}
+
+	public function getMenuId(): ?string
+	{
+		return self::CRITERION;
+	}
+
+	public function getTitle(): string
+	{
+		return Loc::getMessage('CRM_CONFIG_PERMISSION_WEB_FORM');
+	}
+
+	public function getControllerData(): array
+	{
+		return [
+			'criterion' => self::CRITERION,
+			'sectionCode' => null,
+			'isAutomation' => false,
+			'menuId' => $this->getMenuId(),
+		];
+	}
+
 }

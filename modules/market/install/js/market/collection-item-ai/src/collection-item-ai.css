@@ -1,0 +1,88 @@
+.market-item-ai {
+	display: block;
+	overflow: hidden;
+	position: relative;
+	width: 100%;
+	padding: 29px 24px 24px 29px;
+	border-radius: 24px;
+	box-shadow: 0 2px 32px rgba(0, 0, 0, .08);
+	transition: 180ms linear all;
+	background: url(../image/copilot-banner-bg.svg) center no-repeat;
+	background-size: cover;
+	cursor: pointer;
+}
+
+.market-item-ai:hover {
+	background-image: url(../image/copilot-banner-bg-hover.svg);
+}
+
+.market-item-ai:after {
+	content: '';
+	position: absolute;
+	top: 0;
+	right: 0;
+	left: 0;
+	bottom: 0;
+	pointer-events: none;
+	background: url(../image/copilot-banner-bg-2.svg) center bottom 25px no-repeat;
+	background-size: 100%;
+}
+
+.market-item-ai-title {
+	max-width: 440px;
+	font-size: var(--ui-font-size-3xl);
+	line-height: 36px;
+	font-weight: var(--ui-font-weight-medium);
+	color: rgba(var(--ui-color-palette-white-base-rgb), .9);
+	word-break: break-word;
+}
+
+.market-item-ai-title:before {
+	content: '';
+	display: inline-block;
+	width: 155px;
+	height: 34px;
+	margin: 0 13px -1px 0;
+	background: url(../image/copilot-text.svg) center no-repeat;
+	background-size: contain;
+}
+
+@media (max-width: 1440px) {
+	.market-item-ai-title:before {
+		width: 138px;
+		height: 30px;
+	}
+
+	.market-item-ai:after {
+		background-position: center bottom 70px;
+	}
+}
+
+@media (max-width: 1200px) {
+	.market-item-ai-title {
+		font-size: var(--ui-font-size-2xl);
+		line-height: 32px;
+	}
+}
+
+.market-item-ai-button {
+	position: absolute;
+	right: 24px;
+	bottom: 24px;
+	display: inline-flex;
+	align-items: center;
+	height: 45px;
+	padding: 0 27px;
+	border-radius: 24px;
+	background: linear-gradient(0deg, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.20) 100%), linear-gradient(180deg, #9DCF00 -13.68%, #95C400 91.58%);
+	box-shadow: 0 4.705px 9.411px 0 rgba(0, 0, 0, .10);
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-semi-bold);
+	color: #fff;
+	transition: 180ms linear all;
+}
+
+.market-item-ai:hover .market-item-ai-button {
+	background: linear-gradient(0deg, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.20) 100%), linear-gradient(180deg, rgba(157, 207, 0, 0.90) -13.68%, rgba(149, 196, 0, 0.90) 91.58%);
+	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, .10);
+}

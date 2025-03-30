@@ -8,6 +8,9 @@ use Bitrix\HumanResources\Item\HcmLink\MappingEntity;
 use Bitrix\HumanResources\Result\Service\HcmLink\FilterNotMappedUserIdsResult;
 use Bitrix\HumanResources\Contract;
 use Bitrix\HumanResources\Result\Service\HcmLink\GetMappingEntityCollectionResult;
+use Bitrix\HumanResources\Result\Service\HcmLink\GetMatchesForMappingResult;
+use Bitrix\HumanResources\Service\Container;
+use Bitrix\HumanResources\Result\Service\HcmLink\GetMultipleVacancyEmployeesResult;
 use Bitrix\HumanResources\Type\HcmLink\FieldType;
 use Bitrix\Main;
 use Bitrix\Main\Result;
@@ -96,5 +99,72 @@ class MapperService implements Contract\Service\HcmLink\MapperService
 		}
 
 		return new GetMappingEntityCollectionResult($collection);
+	}
+
+	/**
+	 * @param array $people
+	 * @param array $excludeIds
+	 * @return GetMatchesForMappingResult
+	 */
+	public function getSuggestForPeople(array $people, array $excludeIds): GetMatchesForMappingResult
+	{
+		foreach ($people as &$person)
+		{
+			$user = Container::getHcmLinkUserRepository()->getUsersIdBySearch($person->name, $excludeIds, 1)->getFirst();
+			if ($user !== null)
+			{
+				$person->suggestId = (int)$user->id;
+			}
+		}
+
+		return new GetMatchesForMappingResult(array_values($people));
+	}
+
+	/**
+	 * @param int $companyId
+	 * @param array $users
+	 * @return GetMatchesForMappingResult
+	 */
+	public function getSuggestForUsers(int $companyId, array $users): GetMatchesForMappingResult
+	{
+		foreach ($users as &$user)
+		{
+			$index = \Bitrix\Main\Search\Content::prepareStringToken($user->name);
+			$person = Container::getHcmLinkPersonRepository()->searchByIndexAndCompanyId($index, $companyId, 1)->getFirst();
+			if ($person !== null)
+			{
+				$user->suggestId = (int)$person->id;
+			}
+		}
+
+		return new GetMatchesForMappingResult(array_values($users));
+	}
+
+	public function getEmployeesWithMultipleVacancy(
+		int $hcmLinkCompanyId,
+		int ...$userIds
+	): Main\Result|GetMultipleVacancyEmployeesResult
+	{
+		$company = Container::getHcmLinkCompanyRepository()->getById($hcmLinkCompanyId);
+		if ($company === null)
+		{
+			return (new Main\Result())->addError(new Main\Error('Company not found'));
+		}
+
+		$employees = Container::getHcmLinkEmployeeRepository()->listMultipleVacancyEmployeesByUserIdsAndCompany($hcmLinkCompanyId, ...$userIds);
+
+		usort($employees, static fn($a, $b) => strcmp($a['fullName'], $b['fullName']));
+		$employees = array_map(
+			static function($key, $value) {
+				$value['order'] = $key;
+				return $value;
+			},
+			array_keys($employees),
+			array_values($employees),
+		);
+
+		return new GetMultipleVacancyEmployeesResult(
+			employees: $employees,
+		);
 	}
 }

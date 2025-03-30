@@ -1,7 +1,7 @@
 import { Dom, Event, Type } from 'main.core';
 import { createNamespacedHelpers } from 'ui.vue3.vuex';
 import { BusySlot as BusySlotType, Model } from 'booking.const';
-import { grid } from '../../../../lib/grid/grid';
+import { grid } from 'booking.lib.grid';
 
 import { BusyPopup } from './busy-popup/busy-popup';
 import './busy-slot.css';
@@ -39,10 +39,12 @@ export const BusySlot = {
 			disabledBusySlots: 'disabledBusySlots',
 			isFilterMode: 'isFilterMode',
 			isEditingBookingMode: 'isEditingBookingMode',
+			isDragMode: 'isDragMode',
 		}),
 		isDisabled(): boolean
 		{
-			if (this.isFilterMode)
+			const isDragOffHours = this.isDragMode && this.busySlot.type === BusySlotType.OffHours;
+			if (this.isFilterMode || isDragOffHours)
 			{
 				return true;
 			}
@@ -105,7 +107,7 @@ export const BusySlot = {
 			Event.unbind(document, 'mousemove', this.onMouseMove);
 			this.closePopup();
 		},
-		cursorInsideContainer(eventTarget: EventTarget): boolean
+		cursorInsideContainer(eventTarget: EventTarget | null): boolean
 		{
 			return !Type.isNull(eventTarget) && Dom.hasClass(eventTarget, this.BookingBusySlotClassName);
 		},
@@ -113,7 +115,8 @@ export const BusySlot = {
 		{
 			const rect = this.$refs.container?.getBoundingClientRect();
 			if (
-				!rect
+				this.isDragMode
+				|| !rect
 				|| event.clientY > rect.top + rect.height
 				|| event.clientY < rect.top
 				|| event.clientX < rect.left
@@ -143,8 +146,9 @@ export const BusySlot = {
 	},
 	template: `
 		<div
+			v-if="left >= 0"
 			:class="[BookingBusySlotClassName, {
-				'--disabled': isDisabled
+				'--disabled': isDisabled,
 			}]"
 			:style="{
 				'--left': left + 'px',

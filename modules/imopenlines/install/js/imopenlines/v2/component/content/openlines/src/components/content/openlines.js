@@ -50,7 +50,7 @@ export const OpenLinesContent = {
 		},
 	},
 	template: `
-		<BaseChatContent :dialogId="dialogId" :withSidebar="false">
+		<BaseChatContent :dialogId="dialogId">
 			<template #header>
 				<OpenLinesHeader :dialogId="dialogId" :key="dialogId" :isQueueTypeAll="isQueueTypeAll" />
 			</template>

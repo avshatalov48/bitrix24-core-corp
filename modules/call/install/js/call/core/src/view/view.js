@@ -4352,11 +4352,16 @@ export class View
 		this.buttons.copilot.setIsComingSoon(!this.isCopilotFeaturesEnabled);
 	}
 
-	showCopilotNotify()
+	showCopilotNotify(callId = 0, errorCode = '')
 	{
-		this.copilotNotify = this.createCopilotNotify(
-			CopilotNotifyType[this.isCopilotActive ? 'COPILOT_ENABLED' : 'COPILOT_DISABLED']
-		);
+		let notifyType = '';
+
+		if (!errorCode)
+		{
+			notifyType = CopilotNotifyType[this.isCopilotActive ? 'COPILOT_ENABLED' : 'COPILOT_DISABLED'];
+		}
+
+		this.copilotNotify = this.createCopilotNotify(notifyType, callId);
 
 		if (this.copilotNotify)
 		{
@@ -4392,7 +4397,7 @@ export class View
 		}
 	}
 
-	createCopilotNotify(notifyType)
+	createCopilotNotify(notifyType, callId)
 	{
 		if (!this.buttons.copilot)
 		{
@@ -4405,6 +4410,7 @@ export class View
 			onClose: () => {
 				this.copilotNotify = null;
 			},
+			callId,
 		});
 	}
 

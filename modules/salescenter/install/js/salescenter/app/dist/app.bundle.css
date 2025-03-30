@@ -1728,11 +1728,16 @@
 .salescenter-app-payment-by-sms-timeline-content-price-cur {
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-regular, 400);
-	opacity: var(--ui-opacity-80);
+	color: rgba(var(--ui-color-background-primary-rgb), var(--ui-opacity-80));
 }
 
 .salescenter-app-payment-by-sms-timeline-content-price-cur-ruble {
 	font-family: 'rubleBitrix', var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+}
+
+.salescenter-app-payment-by-sms-timeline-content-sum {
+	color: var(--ui-color-background-primary);
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .salescenter-app-payment-by-sms-timeline-content-text-strong {

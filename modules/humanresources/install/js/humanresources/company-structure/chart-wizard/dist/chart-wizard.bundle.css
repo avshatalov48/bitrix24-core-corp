@@ -131,6 +131,10 @@
 	cursor: not-allowed;
 }
 
+.chart-wizard__footer .ui-btn.ui-btn-wait {
+	pointer-events: none;
+}
+
 .chart-wizard__department_item-error {
 	display: flex;
 	align-items: center;
@@ -355,7 +359,6 @@
 }
 
 .chart-wizard__bind-chat__item-options__item-content__title {
-
 	display: flex;
 	flex-direction: row;
 	align-items: center;
@@ -428,46 +431,6 @@
 
 .chart-wizard__form .ui-ctl-warning .ui-tag-selector-outer-container {
 	border-color: var(--ui-field-color-warning);
-}
-
-.chart-wizard__employee_item.--change-save-mode-control {
-	border-top: 1px solid var(--ui-color-palette-gray-05);
-	padding-top: 17px;
-}
-
-.chart-wizard__change-save-mode-control-container {
-	display: flex;
-	flex-wrap: wrap;
-	column-gap: 4px;
-	row-gap: 3px;
-	font-size: var(--ui-font-size-sm);
-	line-height: var(--ui-font-line-height-3xs);
-	font-weight: var(--ui-font-weight-normal);
-	color: var(--ui-color-palette-gray-90);
-}
-
-.chart-wizard__change-save-mode-control-button {
-	position: relative;
-	padding-right: 16px;
-	background: none;
-	cursor: pointer;
-	border: none;
-	color: var(--ui-color-link-primary-base);
-	border-radius: var(--ui-border-radius-lg);
-	white-space: nowrap;
-}
-
-.chart-wizard__change-save-mode-control-button::before {
-	content: '';
-	position: absolute;
-	width: 14px;
-	height: 14px;
-	background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMTUiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMC4zMDYgNS4yNTRsLTIuNjQgMi42NEw3IDguNTVsLS42NTMtLjY1NS0yLjY0LTIuNjQxLS45MzIuOTMyIDQuMjMxIDQuMjMxIDQuMjMyLTQuMjMxLS45MzItLjkzMnoiIGZpbGw9IiM1MjVDNjkiLz48L3N2Zz4=');
-	right: 1px;
-}
-
-.chart-wizard__change-save-mode-control-button.--focused::before  {
-	transform: rotate(180deg);
 }
 
 .chart-wizard-tree-preview {
@@ -603,11 +566,17 @@
 }
 
 .chart-wizard-tree-preview__node_head-rest {
-	background: #eeeff0;
+	background-color: var(--ui-color-palette-gray-10);
 	border-radius: 32px;
 	padding: 2px 8px 3px 8px;
 	color: var(--ui-color-palette-gray-90);
 	font: var(--ui-font-weight-semi-bold) 10px/10px var(--ui-font-family-system);
+	cursor: pointer;
+}
+
+.chart-wizard-tree-preview__node_head-rest:hover,
+.chart-wizard-tree-preview__node_head-rest.--active {
+	background-color: var(--ui-color-palette-gray-20);
 }
 
 .chart-wizard-tree-preview__node_employees {
@@ -635,6 +604,11 @@
 	min-width: 0;
 }
 
+.chart-wizard-tree-preview__node_head-text,
+.chart-wizard-tree-preview__node_deputies {
+	flex-grow: 1;
+}
+
 .chart-wizard-tree-preview__node .chart-wizard-tree-preview__node {
 	padding-left: 25px;
 	margin-top: 15px;
@@ -647,4 +621,44 @@
 	border-radius: 16px;
 	display: block;
 	margin-bottom: 5px;
+}
+
+.chart-wizard__change-save-mode-control-container {
+	display: flex;
+	flex-wrap: wrap;
+	column-gap: 4px;
+	row-gap: 3px;
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-3xs);
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.chart-wizard__change-save-mode-control-button {
+	position: relative;
+	padding-right: 16px;
+	background: none;
+	cursor: pointer;
+	border: none;
+	color: var(--ui-color-link-primary-base);
+	border-radius: var(--ui-border-radius-lg);
+	white-space: nowrap;
+}
+
+.chart-wizard__change-save-mode-control-button::before {
+	content: '';
+	position: absolute;
+	width: 14px;
+	height: 14px;
+	background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMTUiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMC4zMDYgNS4yNTRsLTIuNjQgMi42NEw3IDguNTVsLS42NTMtLjY1NS0yLjY0LTIuNjQxLS45MzIuOTMyIDQuMjMxIDQuMjMxIDQuMjMyLTQuMjMxLS45MzItLjkzMnoiIGZpbGw9IiM1MjVDNjkiLz48L3N2Zz4=');
+	right: 1px;
+}
+
+.chart-wizard__change-save-mode-control-button.--focused::before  {
+	transform: rotate(180deg);
+}
+
+.chart-wizard__employee_item.--change-save-mode-control {
+	border-top: 1px solid var(--ui-color-palette-gray-05);
+	padding-top: 17px;
 }

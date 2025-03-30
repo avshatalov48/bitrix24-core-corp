@@ -30,6 +30,8 @@
 
 		this.startTimeSpan = this.selectOneByRole('start-time');
 		this.endTimeSpan = this.selectOneByRole('end-time');
+		this.startTimeRealSpan = this.selectOneByRole('start-time-real');
+		this.endTimeRealSpan = this.selectOneByRole('end-time-real');
 		this.breakTimeSpan = this.selectOneByRole('break-time');
 		this.errorsBlock = this.selectOneByRole('timeman-record-report-errors-block');
 		this.errorBlockTemplate = this.selectOneByRole('timeman-error-msg');
@@ -304,6 +306,19 @@
 			this.breakTimeSpan.textContent = this.breakLengthClockHiddenInput.value;
 			this.formBreakInput.value = this.breakLengthClockHiddenInput.value;
 			this.durationTimeSpan.textContent = this.selectOneByRole('timeman-work-time-start-end-delta', this.workTimePickerContent).textContent;
+
+			this.stateStartDate = this.selectOneByRole('state-start-date');
+			this.stateEndDate = this.selectOneByRole('state-end-date');
+			if (this.stateStartDate.value === this.stateEndDate.value)
+			{
+				this.hideElement(this.startTimeRealSpan);
+				this.hideElement(this.endTimeRealSpan);
+			}
+			else
+			{
+				this.showElement(this.startTimeRealSpan);
+				this.showElement(this.endTimeRealSpan);
+			}
 		},
 
 		buildWorkTimePopup: function (event)

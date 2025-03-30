@@ -813,6 +813,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.toName = null;
 	    this.toPhoneId = null;
 	    this.openLineItems = null;
+	    this.hasClients = false;
 	    this.isFetchedConfig = false;
 	    this.isSending = false;
 	    Object.defineProperty(this, _chatServiceButtons, {
@@ -1026,7 +1027,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isEntityInEditorMode)[_isEntityInEditorMode]()) {
 	      await babelHelpers.classPrivateFieldLooseBase(this, _showEditorInEditModePopup)[_showEditorInEditModePopup]();
 	    }
-	    if (!this.selectedClient) {
+	    if (!this.selectedClient && !this.hasClients) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _showNotSelectedClientNotify)[_showNotSelectedClientNotify]();
 	      return;
 	    }
@@ -1228,11 +1229,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    communications,
 	    openLineItems,
 	    marketplaceUrl,
-	    services
+	    services,
+	    hasClients
 	  } = data;
 	  this.currentChannelId = currentChannelId;
 	  this.channels = channels;
 	  this.communications = communications;
+	  this.hasClients = hasClients;
 	  this.openLineItems = openLineItems;
 	  this.marketplaceUrl = marketplaceUrl;
 	  babelHelpers.classPrivateFieldLooseBase(this, _services)[_services] = services;
@@ -1241,6 +1244,9 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _setCommunicationsParams2() {
 	  if (this.communications.length === 0) {
+	    this.toPhoneId = null;
+	    this.selectedClient = null;
+	    this.toName = null;
 	    return;
 	  }
 	  const communication = this.communications[0];

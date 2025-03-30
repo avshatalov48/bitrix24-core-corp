@@ -42,6 +42,7 @@ type StepConfig = {
 	article: ?number,
 	articleAnchor?: string,
 	infoHelperCode: ?string,
+	ignoreIfTargetNotFound: ?boolean,
 }
 
 type Step = {
@@ -199,11 +200,6 @@ class ActionViewMode
 
 	#prepareSteps(stepsConfig): void
 	{
-		if (stepsConfig.length > 0)
-		{
-			this.tourPromise = Runtime.loadExtension('ui.tour');
-		}
-
 		this.#steps = stepsConfig.map((stepConfig: StepConfig) => {
 			const step = {
 				id: stepConfig.id,
@@ -229,7 +225,7 @@ class ActionViewMode
 				}
 				else if (Type.isArrayFilled(stepConfig.reserveTargets))
 				{
-					stepConfig.reserveTargets.some((reserveTarget) => {
+					const isFound = stepConfig.reserveTargets.some((reserveTarget) => {
 						if (document.querySelector(reserveTarget))
 						{
 							step.target = reserveTarget;
@@ -239,6 +235,15 @@ class ActionViewMode
 
 						return false;
 					});
+
+					if (!isFound && stepConfig.ignoreIfTargetNotFound)
+					{
+						return null;
+					}
+				}
+				else if (stepConfig.ignoreIfTargetNotFound)
+				{
+					return null;
 				}
 				else
 				{
@@ -248,6 +253,12 @@ class ActionViewMode
 
 			return step;
 		});
+
+		this.#steps = this.#steps.filter((step: ?Object) => step !== null);
+		if (this.#steps.length > 0)
+		{
+			this.tourPromise = Runtime.loadExtension('ui.tour');
+		}
 	}
 
 	#showStepByEvent(event: BaseEvent): void

@@ -3,9 +3,11 @@ import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { mapState } from 'ui.vue3.pinia';
 import { memberRoles, AnalyticsSourceType } from 'humanresources.company-structure.api';
 import { DepartmentContent } from 'humanresources.company-structure.department-content';
-import { AddUserDialog } from 'humanresources.company-structure.add-user-dialog';
-import { MoveUserFromDialog } from 'humanresources.company-structure.move-user-from-dialog';
+import { UserManagementDialog } from 'humanresources.company-structure.user-management-dialog';
+import { Hint } from 'humanresources.company-structure.structure-components';
 import { DetailPanelEditButton } from './detail-panel-edit-button';
+
+import './style.css';
 
 export const DetailPanel = {
 	name: 'detailPanel',
@@ -13,6 +15,8 @@ export const DetailPanel = {
 	emits: ['showWizard', 'removeDepartment', 'update:modelValue'],
 
 	components: { DepartmentContent, DetailPanelCollapsedTitle, DetailPanelEditButton },
+
+	directives: { hint: Hint },
 
 	props: {
 		preventPanelSwitch: Boolean,
@@ -68,7 +72,11 @@ export const DetailPanel = {
 		},
 		addEmployee(): void
 		{
-			AddUserDialog.openDialog();
+			const nodeId = this.focusedNode;
+			UserManagementDialog.openDialog({
+				nodeId,
+				type: 'add',
+			});
 		},
 		userInvite(): void
 		{
@@ -84,7 +92,10 @@ export const DetailPanel = {
 		moveEmployee(): void
 		{
 			const nodeId = this.focusedNode;
-			MoveUserFromDialog.openDialog(nodeId);
+			UserManagementDialog.openDialog({
+				nodeId,
+				type: 'move',
+			});
 		},
 		editEmployee(): void
 		{
@@ -153,6 +164,7 @@ export const DetailPanel = {
 		<div
 			:class="['humanresources-detail-panel', { '--collapsed': isCollapsed }]"
 			v-on="isCollapsed ? { click: toggleCollapse } : {}"
+			data-id="hr-department-detail-panel__container"
 		>
 			<div
 				v-if="!isLoading"
@@ -162,8 +174,8 @@ export const DetailPanel = {
 				<div class="humanresources-detail-panel__head">
 					<span
 						v-if="!isCollapsed"
+						v-hint
 						class="humanresources-detail-panel__title"
-						:title="title"
 					>
 						{{ title }}
 					</span>
@@ -188,6 +200,7 @@ export const DetailPanel = {
 							class="humanresources-detail-panel__collapse_button --icon"
 							@click="toggleCollapse"
 							:class="{ '--collapsed': isCollapsed }"
+							data-id="hr-department-detail-panel__collapse-button"
 						/>
 					</div>
 				</div>

@@ -27,11 +27,13 @@ class OperationsApiInDeal extends BaseFeature
 	public function enable(): void
 	{
 		DealSettings::getCurrent()->setFactoryEnabled(true);
+		$this->logEnabled();
 	}
 
 	public function disable(): void
 	{
 		DealSettings::getCurrent()->setFactoryEnabled(false);
+		$this->logDisabled();
 	}
 
 	public function getSort(): int

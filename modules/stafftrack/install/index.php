@@ -121,7 +121,9 @@ class stafftrack extends CModule
 
 		// module
 		RegisterModule($this->MODULE_ID);
+
 		$this->InstallEvents();
+		$this->InstallAgents();
 
 		return true;
 	}
@@ -212,6 +214,14 @@ class stafftrack extends CModule
 				);
 			}
 		}
+	}
+
+	/**
+	 * @return void
+	 */
+	protected function InstallAgents(): void
+	{
+		CAgent::AddAgent("Bitrix\\StaffTrack\\Agent\\ClearGeoAgent::run();", $this->MODULE_ID);
 	}
 
 	/**

@@ -30,6 +30,54 @@
 	opacity: 0.4;
 	cursor: default;
 }
+
+.hr-user-list-action-menu .hr-structure-components-action-menu-container {
+	background-color: var(--ui-color-palette-white-base);
+}
+
+.hr-user-list-action-menu .popup-window-titlebar-text {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin: 0;
+	padding: 20px 0;
+	position: relative;
+	height: 29px;
+}
+
+.hr-user-list-action-menu .popup-window-titlebar-text::before,
+.hr-user-list-action-menu .popup-window-titlebar-text::after {
+	content: "";
+	flex: 1;
+	height: 1px;
+	background-color: var(--ui-color-palette-black-solid);
+	opacity: 0.2;
+	margin: 0 10px;
+}
+
+.hr-user-list-action-menu .popup-window-titlebar {
+	height: 29px;
+}
+
+.hr-user-list-action-menu .popup-window-content {
+	border-radius: 10px;
+}
+
+.hr-user-list-action-menu .hr-structure-route-action-popup-menu-item__content{
+	max-width: 100%;
+	justify-content: flex-start;
+}
+
+.hr-user-list-action-menu .hr-structure-route-action-popup-menu-item__content-text-container {
+	max-width: 80%;
+}
+
+.hr-user-list-action-menu .humanresources-tree__node_head-name,
+.hr-user-list-action-menu .humanresources-tree__node_head-position {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
 .hr-confirmation-popup__title-bar {
 	position: relative;
 	height: 100%;
@@ -106,6 +154,7 @@
 	line-height: var(--ui-font-line-height-lg);
 	color: var(--ui-color-palette-black-base);
 	padding: 8px 0;
+	overflow: hidden;
 }
 
 .hr-structure-route-action-popup-menu-item__content-icon-container {

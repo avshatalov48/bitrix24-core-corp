@@ -10,6 +10,7 @@ import {
 	normalizeTypeId,
 	normalizeTypesIds,
 } from './validation';
+import type { StateShape } from './index';
 
 export default {
 	/**
@@ -20,7 +21,9 @@ export default {
 
 		state.automatedSolution.title = normalizeTitle(stateToSet.automatedSolution?.title);
 
-		state.automatedSolution.typeIds = normalizeTypesIds(stateToSet.automatedSolution?.typeIds);
+		const typeIds = normalizeTypesIds(stateToSet.automatedSolution?.typeIds);
+		state.automatedSolution.typeIds = [...typeIds];
+		state.automatedSolutionOrigTypeIds = [...typeIds];
 
 		state.permissions.canMoveSmartProcessFromCrm = Text.toBoolean(
 			stateToSet.permissions?.canMoveSmartProcessFromCrm ?? false,
@@ -34,6 +37,9 @@ export default {
 		state.errors = normalizeErrors(stateToSet.errors);
 
 		state.isModified = false;
+		state.isPermissionsLayoutV2Enabled = Text.toBoolean(
+			stateToSet.isPermissionsLayoutV2Enabled ?? false,
+		);
 	},
 
 	setErrors: (state: StateShape, errors: Error[]): void => {

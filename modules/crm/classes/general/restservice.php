@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Bitrix\Catalog;
 use Bitrix\Crm\Binding\ContactCompanyTable;
@@ -31,6 +31,7 @@ use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\StringHelper;
 use Bitrix\Rest\AccessException;
 use Bitrix\Rest\RestException;
 use Bitrix\Rest\UserFieldProxy;
@@ -13779,12 +13780,335 @@ class CCrmAddressRestProxy extends CCrmRestProxyBase
 		}
 		return $this->FIELDS_INFO;
 	}
+
+	protected function prepareListResult(
+		Main\ORM\Query\Result|array $result,
+		int|false $page, int|false $limit
+	) : CDBResult
+	{
+		if (is_array($result))
+		{
+			$dbResult = new CDBResult();
+			$dbResult->InitFromArray($result);
+		}
+		else
+		{
+			$dbResult = new CDBResult($result);
+		}
+
+		if ($page === false)
+		{
+			$limit = $result->getSelectedRowsCount();
+		}
+
+		$dbResult->NavStart($limit, false, $page);
+
+		return $dbResult;
+
+	}
+
+	private function parseEntityTypeIdElement(array $filter, string $entityTypeIdKey, string $resultName): Main\Result
+	{
+		$result = new Main\Result();
+
+		if (isset($filter[$entityTypeIdKey]))
+		{
+			$id = CCrmOwnerType::Undefined;
+			$value = $filter[$entityTypeIdKey];
+			if (is_int($value))
+			{
+				$id = $value;
+			}
+			elseif (is_string($value))
+			{
+				$id = (int)$value;
+			}
+			else // array
+			{
+				$result->addError(new Main\Error('Multiple value', 'MULTIPLE_VALUE'));
+			}
+
+			if ($result->isSuccess())
+			{
+				$validEntityTypeIds = [
+					CCrmOwnerType::Lead,
+					CCrmOwnerType::Contact,
+					CCrmOwnerType::Company,
+					CCrmOwnerType::Requisite,
+				];
+
+				if (in_array($id, $validEntityTypeIds, true))
+				{
+					$result->setData([$resultName => $id]);
+				}
+				else
+				{
+					$result->addError(new Main\Error('Invalid value', 'INVALID_VALUE'));
+				}
+			}
+		}
+		else
+		{
+			$result->addError(new Main\Error('Value is not set', 'VALUE_IS_NOT_SET'));
+		}
+
+		return $result;
+	}
+
+	private function parseEntityIdElement(array $filter, string $entityIdKey, string $resultName): Main\Result
+	{
+		$result = new Main\Result();
+
+		if (isset($filter[$entityIdKey]))
+		{
+			$id = 0;
+			$value = $filter[$entityIdKey];
+			if (is_int($value))
+			{
+				$id = $value;
+			}
+			elseif (is_string($value))
+			{
+				$id = (int)$value;
+			}
+			else // array
+			{
+				$result->addError(new Main\Error('Multiple value', 'MULTIPLE_VALUE'));
+			}
+
+			if ($result->isSuccess())
+			{
+				if ($id > 0)
+				{
+					$result->setData([$resultName => $id]);
+				}
+				else
+				{
+					$result->addError(new Main\Error('Invalid value', 'INVALID_VALUE'));
+				}
+			}
+		}
+		else
+		{
+			$result->addError(new Main\Error('Value is not set', 'VALUE_IS_NOT_SET'));
+		}
+
+		return $result;
+	}
+
+	private function parseIdent(array $filter, callable $identMethod, string $identName): Main\Result
+	{
+		$result = new Main\Result();
+
+		$resultName = lcfirst(StringHelper::snake2camel($identName));
+		$idResult1 = $identMethod($filter, '=' . $identName, $resultName);
+		$isSetId1 = $idResult1->isSuccess();
+		$idResult2 = $identMethod($filter, $identName, $resultName);
+		$isSetId2 = $idResult2->isSuccess();
+		$id = 0;
+
+		if ($isSetId1 && !$isSetId2)
+		{
+			$id = $idResult1->getData()[$resultName];
+		}
+		elseif (!$isSetId1 && $isSetId2)
+		{
+			$id = $idResult2->getData()[$resultName];
+		}
+		elseif ($isSetId1 && $isSetId2)
+		{
+			$id1 = $idResult1->getData()[$resultName];
+			$id2 = $idResult2->getData()[$resultName];
+
+			if ($id1 === $id2)
+			{
+				$id = $id1;
+			}
+			else
+			{
+				$result->addError(new Main\Error('Invalid value', 'INVALID_VALUE'));
+			}
+		}
+		else
+		{
+			$result->addError(new Main\Error('Value is not set', 'VALUE_IS_NOT_SET'));
+		}
+
+		if ($result->isSuccess())
+		{
+			if ($id > 0)
+			{
+				$result->setData([$resultName => $id]);
+			}
+			else
+			{
+				$result->addError(new Main\Error('Invalid value', 'INVALID_VALUE'));
+			}
+		}
+
+		return $result;
+	}
+
+	private function parseEntityTypeId(array $filter): Main\Result
+	{
+		return $this->parseIdent($filter, [$this, 'parseEntityTypeIdElement'], 'ENTITY_TYPE_ID');
+	}
+
+	private function parseEntityId(array $filter): Main\Result
+	{
+		return $this->parseIdent($filter, [$this, 'parseEntityIdElement'], 'ENTITY_ID');
+	}
+
+	private function parseAnchorTypeId(array $filter): Main\Result
+	{
+		return $this->parseIdent($filter, [$this, 'parseEntityTypeIdElement'], 'ANCHOR_TYPE_ID');
+	}
+
+	private function parseAnchorId(array $filter): Main\Result
+	{
+		return $this->parseIdent($filter, [$this, 'parseEntityIdElement'], 'ANCHOR_ID');
+	}
+
+	private function parseIdents(
+		array $filter,
+		callable $parseTypeId,
+		callable $parseId,
+		string $typeIdKey,
+		string $idKey,
+		string $errorMessage,
+		string $errorCode
+	): Main\Result
+	{
+		$result = new Main\Result();
+
+		$typeId = 0;
+		$typeIdResult = $parseTypeId($filter);
+		$isTypeIdParsed = $typeIdResult->isSuccess();
+		if ($isTypeIdParsed)
+		{
+			$typeId = $typeIdResult->getData()[$typeIdKey];
+		}
+
+		$id = 0;
+		$idResult = $parseId($filter);
+		$isIdParsed = $idResult->isSuccess();
+		if ($isIdParsed)
+		{
+			$id = $idResult->getData()[$idKey];
+		}
+
+		if ($isTypeIdParsed && $isIdParsed)
+		{
+			$result->setData(
+				[
+					$typeIdKey => $typeId,
+					$idKey => $id,
+				]
+			);
+		}
+		else
+		{
+			$result->addError(new Main\Error($errorMessage, $errorCode));
+		}
+
+		return $result;
+	}
+
+	private function parseEntityIdents(array $filter): Main\Result
+	{
+		return $this->parseIdents(
+			$filter,
+			[$this, 'parseEntityTypeId'],
+			[$this, 'parseEntityId'],
+			'entityTypeId',
+			'entityId',
+			'Entity idents is not parsed',
+			'ENTITY_IDENTS_IS_NOT_PARSED',
+		);
+	}
+
+	private function parseAnchorIdents(array $filter): Main\Result
+	{
+		return $this->parseIdents(
+			$filter,
+			[$this, 'parseAnchorTypeId'],
+			[$this, 'parseAnchorId'],
+			'anchorTypeId',
+			'anchorId',
+			'Anchor idents is not parsed',
+			'ANCHOR_IDENTS_IS_NOT_PARSED',
+		);
+	}
+
+	private function getIdents(array $filter): Main\Result
+	{
+		$result = new Main\Result();
+
+		$entityIdentsResult = $this->parseEntityIdents($filter);
+		$isEntityIdentsParsed = $entityIdentsResult->isSuccess();
+		$isEntityIdentsAbsent = !(
+			array_key_exists('=ENTITY_TYPE_ID', $filter)
+			|| array_key_exists('ENTITY_TYPE_ID', $filter)
+		);
+		$anchorIdentsResult = $this->parseAnchorIdents($filter);
+		$isAnchorIdentsParsed = $anchorIdentsResult->isSuccess();
+		$isAnchorIdentsAbsent = !(
+			array_key_exists('=ANCHOR_TYPE_ID', $filter)
+			|| array_key_exists('ANCHOR_TYPE_ID', $filter)
+		);
+		if ($isEntityIdentsParsed && $isAnchorIdentsAbsent && !$isAnchorIdentsParsed)
+		{
+			$result->setData(
+				[
+					'entityTypeId' => $entityIdentsResult->getData()['entityTypeId'],
+					'entityId' => $entityIdentsResult->getData()['entityId'],
+				]
+			);
+		}
+		elseif ($isAnchorIdentsParsed && $isEntityIdentsAbsent && !$isEntityIdentsParsed)
+		{
+			$result->setData(
+				[
+					'entityTypeId' => $anchorIdentsResult->getData()['anchorTypeId'],
+					'entityId' => $anchorIdentsResult->getData()['anchorId'],
+				]
+			);
+		}
+		else
+		{
+			$result->addError(new Main\Error('Identifiers is not parsed', 'IDENTS_IN_NOT_PARSED'));
+		}
+
+		return $result;
+	}
+
 	protected function innerGetList($order, $filter, $select, $navigation, &$errors)
 	{
-		if(!EntityAddress::checkReadPermissionOwnerEntity())
+		$oldRightsCheck = true;
+		$identsResult = $this->getIdents($filter);
+		if ($identsResult->isSuccess())
 		{
-			$errors[] = 'Access denied.';
-			return false;
+			$oldRightsCheck = false;
+			$identFields = $identsResult->getData();
+			if (
+				!EntityAddress::checkReadPermissionOwnerEntity(
+					$identFields['entityTypeId'],
+					$identFields['entityId']
+				)
+			)
+			{
+				$errors[] = 'Access denied.';
+				return false;
+			}
+		}
+
+		if ($oldRightsCheck)
+		{
+			if(!EntityAddress::checkReadPermissionOwnerEntity())
+			{
+				$errors[] = 'Access denied.';
+				return false;
+			}
 		}
 
 		$entity = self::getEntity();
@@ -13828,24 +14152,12 @@ class CCrmAddressRestProxy extends CCrmRestProxyBase
 
 		$result = $entity->getList($listParams);
 
-		if (is_object($result))
+		if (!is_object($result))
 		{
-			$dbResult = new CDBResult($result);
-		}
-		else
-		{
-			$dbResult = new CDBResult();
-			$dbResult->InitFromArray(array());
+			$result = [];
 		}
 
-		if ($page === false)
-		{
-			$limit = $result->getSelectedRowsCount();
-		}
-
-		$dbResult->NavStart($limit, false, $page);
-
-		return $dbResult;
+		return $this->prepareListResult($result, $page, $limit);
 	}
 
 	public function processMethodRequest($name, $nameDetails, $arParams, $nav, $server)

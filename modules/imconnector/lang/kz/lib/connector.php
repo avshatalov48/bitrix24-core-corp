@@ -1,0 +1,26 @@
+<?php
+$MESS["IMCONNECTOR_ERROR_MAIN_MODULE_URL_SITE_USE"] = "Басты модуль баптауларындағы домен атауы және ағымдағы домен әртүрлі. #DOMAIN# домен атауы басты модуль баптауларындағы сервердің жауабы үшін алынды. Сайттың URL өрісін баптау арқылы <a href=\"/bitrix/admin/settings.php?lang=ru&mid=main&mid_menu=1\"> домен атауын өзгерте аласыз.</a>";
+$MESS["IMCONNECTOR_ERROR_SERVER_NAME_USE"] = "Басты модуль баптауларындағы сайттың URL өрісі толтырылмаған. #DOMAIN# ағымдағы домен атауы серверге жауап беру үшін пайдаланылады. Сайттың URL өрісін баптау арқылы <a href=\"/bitrix/admin/settings.php?lang=ru&mid=main&mid_menu=1\"> домен атауын өзгерте аласыз.</a>";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_AVITO"] = "Avito";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_COMMENTS_PAGE"] = "Facebook: Пікірлер";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_COMMENTS_PAGE_RESTRICTION_RU"] = "Facebook*: Пікірлер";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_PAGE"] = "Facebook: Хабарламалар";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_PAGE_RESTRICTION_RU"] = "Facebook*: Хабарламалар";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM"] = "Бизнеске арналған Instagram ";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAMDIRECT"] = "Instagram Direct";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAMDIRECT_RESTRICTION_RU"] = "Instagram* Direct";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM_RESTRICTION_RU"] = "Бизнеске арналған Instagram*";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_IMESSAGE_NEW"] = "Apple Messages for Business";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_LIVECHAT"] = "Онлайн-чат";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_NETWORK"] = "Битрикс24.Network";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_NETWORK_MSGVER_1"] = "Битрикс24 Network";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_NOTIFICATIONS_2"] = "Битрикс24 СМС және WhatsApp";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_OK"] = "Одноклассники";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_OLX"] = "OLX";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_TELEGRAM_BOT"] = "Telegram";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_VIBER_BOT"] = "Viber";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_VK_GROUP"] = "ВКонтакте";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_WECHAT"] = "WeChat";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYEDNA"] = "Edna.ru WhatsApp";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYEDNA_IO"] = "Edna.io WhatsApp";
+$MESS["IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYTWILIO"] = "WhatsApp";

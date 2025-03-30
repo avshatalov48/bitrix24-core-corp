@@ -78,7 +78,9 @@ class Task extends BaseController
 				['#USER#' => $this->getUserFormatName($targetUserId)]
 			),
 			'rights' => [
-				'delegate' => ((int)$task['DELEGATION_TYPE'] !== \CBPTaskDelegationType::None) || $this->isCurrentUserAdmin(),
+				'delegate' =>
+					(int)$task['DELEGATION_TYPE'] !== 3 // todo: use \CBPTaskDelegationType::ExactlyNone
+					&& (((int)$task['DELEGATION_TYPE'] !== \CBPTaskDelegationType::None) || $this->isCurrentUserAdmin()),
 			],
 			'commentCounter' => $commentCounter,
 		];
@@ -153,7 +155,7 @@ class Task extends BaseController
 		$taskFields = new Fields($taskId);
 		if (isset($taskRequest['fields']) && is_array($taskRequest['fields']))
 		{
-			$taskRequest['fields'] = $taskFields->extract($taskRequest['fields']);
+			$taskRequest['fields'] = $taskFields->extract($taskRequest['fields'], $currentUserId);
 		}
 
 		if (isset($taskRequest['INLINE_USER_STATUS']) && is_numeric($taskRequest['INLINE_USER_STATUS']))

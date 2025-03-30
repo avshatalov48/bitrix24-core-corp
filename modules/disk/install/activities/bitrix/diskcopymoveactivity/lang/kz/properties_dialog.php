@@ -1,0 +1,20 @@
+<?php
+$MESS["BPDCM_PD_ENTITY"] = "Қайда";
+$MESS["BPDCM_PD_ENTITY_ID_COMMON"] = "Диск";
+$MESS["BPDCM_PD_ENTITY_ID_FOLDER"] = "Бума";
+$MESS["BPDCM_PD_ENTITY_ID_SG"] = "Топ";
+$MESS["BPDCM_PD_ENTITY_ID_USER"] = "Пайдаланушы";
+$MESS["BPDCM_PD_ENTITY_TYPE_COMMON"] = "Ортақ диск";
+$MESS["BPDCM_PD_ENTITY_TYPE_FOLDER_1"] = "Диск бумасы";
+$MESS["BPDCM_PD_ENTITY_TYPE_SG"] = "Әлеуметтік желі тобының дискісі";
+$MESS["BPDCM_PD_ENTITY_TYPE_USER"] = "Қолданушы дискісі";
+$MESS["BPDCM_PD_LABEL_CHOOSE"] = "Таңдаңыз:";
+$MESS["BPDCM_PD_LABEL_DISK_CHOOSE_FILE"] = "Файлды таңдау";
+$MESS["BPDCM_PD_LABEL_DISK_CHOOSE_FOLDER"] = "Буманы таңдау";
+$MESS["BPDCM_PD_LABEL_DISK_EMPTY"] = "Ештеңе таңдалмаған";
+$MESS["BPDCM_PD_OPERATION"] = "Операцияның түрі";
+$MESS["BPDCM_PD_OPERATION_COPY"] = "Көшіру";
+$MESS["BPDCM_PD_OPERATION_MOVE"] = "Орын ауыстыру";
+$MESS["BPDCM_PD_OPERATOR"] = "Кімнің атынан орындау қажет";
+$MESS["BPDCM_PD_SOURCE_ID"] = "Бастапқы объект";
+$MESS["BPDCM_PD_SOURCE_ID_DESCR"] = "Бума немесе Диск файлы";

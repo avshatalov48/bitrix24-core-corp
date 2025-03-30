@@ -7,6 +7,7 @@ $MESS["MENU_CALENDAR"] = "Календарь";
 $MESS["MENU_SITES"] = "Сайты";
 $MESS["MENU_KNOWLEDGE"] = "База знаний";
 $MESS["MENU_DISK_DOCUMENTS"] = "Документы Онлайн";
+$MESS["MENU_DISK_FLIPCHARTS"] = "Доски";
 $MESS["MENU_PHOTO"] = "Фотографии";
 $MESS["MENU_MAIL"] = "Почта";
 $MESS["MENU_GROUP_SECTION"] = "Группы";

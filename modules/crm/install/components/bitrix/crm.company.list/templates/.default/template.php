@@ -516,45 +516,19 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 			\Bitrix\Main\UI\Extension::load(['bp_starter']);
 
 			//$arActions[] = array('SEPARATOR' => true);
-			if (isset($arCompany['PATH_TO_BIZPROC_LIST']) && $arCompany['PATH_TO_BIZPROC_LIST'] !== '')
-				$arActions[] = array(
-					'TITLE' => Loc::getMessage('CRM_COMPANY_BIZPROC_TITLE'),
-					'TEXT' => Loc::getMessage('CRM_COMPANY_BIZPROC'),
-					'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arCompany['PATH_TO_BIZPROC_LIST'])."');"
-				);
-
-			if (class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
-			{
-				$starterConfig = \Bitrix\Main\Web\Json::encode(
-					CCrmBizProcHelper::getBpStarterConfig(CCrmOwnerType::Company, $arCompany['ID'])
-				);
-				$reloadGridAction = 'function(){BX.Main.gridManager.reload(\''.CUtil::JSEscape($arResult['GRID_ID']).'\');}';
-				$arActions[] = [
-					'TITLE' => Loc::getMessage('CRM_COMPANY_BIZPROC_LIST_TITLE'),
-					'TEXT' => Loc::getMessage('CRM_COMPANY_BIZPROC_LIST'),
-					'ONCLICK' => 'BX.Bizproc.Starter.showTemplates(' . $starterConfig . ', { callback:' . $reloadGridAction . '})',
-				];
-			}
-			elseif (!empty($arCompany['BIZPROC_LIST']))
-			{
-				$arBizprocList = [];
-				foreach($arCompany['BIZPROC_LIST'] as $arBizproc)
-				{
-					$arBizprocList[] = array(
-						'TITLE' => $arBizproc['DESCRIPTION'],
-						'TEXT' => $arBizproc['NAME'],
-						'ONCLICK' => isset($arBizproc['ONCLICK'])
-							? $arBizproc['ONCLICK']
-							: "jsUtils.Redirect([], '".CUtil::JSEscape($arBizproc['PATH_TO_BIZPROC_START'])."');"
-					);
-				}
-
-				$arActions[] = array(
-					'TITLE' => Loc::getMessage('CRM_COMPANY_BIZPROC_LIST_TITLE'),
-					'TEXT' => Loc::getMessage('CRM_COMPANY_BIZPROC_LIST'),
-					'MENU' => $arBizprocList
-				);
-			}
+			$arActions[] = [
+				'TITLE' => Loc::getMessage('CRM_COMPANY_BIZPROC_LIST_TITLE'),
+				'TEXT' => Loc::getMessage('CRM_COMPANY_BIZPROC_LIST'),
+				'ONCLICK' => (
+					$toolsManager->checkBizprocAvailability()
+						? CCrmBizProcHelper::getShowTemplatesJsAction(
+							CCrmOwnerType::Company,
+							$arCompany['ID'],
+							'function(){BX.Main.gridManager.reload(\'' . CUtil::JSEscape($arResult['GRID_ID']) . '\');}'
+						)
+						: $availabilityManager->getBizprocAvailabilityLock()
+				),
+			];
 		}
 	}
 

@@ -429,7 +429,52 @@ class Video extends Base
 	 */
 	protected function renderForDesktop($params, $autostart, $sizeType)
 	{
-		?><div class="disk-player-container<?if($sizeType == 'adjust')
+		static $seeds = [];
+
+		$videoPlayerParams = [
+			'autoplay' => $autostart === 'Y',
+			'autostart' => $autostart !== 'Y' && ($params['AUTOSTART_ON_SCROLL'] ?? null) === 'Y',
+			'preload' => false,
+			'controls' => true,
+			'height' => $params['WIDTH'],
+			'width' => $params['HEIGHT'],
+			'fluid' => $sizeType === 'fluid',
+			'skin' => 'vjs-disk_player-skin',
+			'lazyload' => ($params['LAZYLOAD'] ?? null) === 'Y',
+			'sources' => [],
+		];
+
+		if (isset($params['TRACKS']) && is_array($params['TRACKS']))
+		{
+			foreach ($params['TRACKS'] as $track)
+			{
+				if ($track['type'] == 'video/quicktime')
+				{
+					$track['type'] = 'video/mp4';
+				}
+
+				$videoPlayerParams['sources'][] = $track;
+			}
+		}
+
+		$playerId = isset($params['PLAYER_ID']) && is_string($params['PLAYER_ID']) ? $params['PLAYER_ID'] : '';
+		if (strlen($playerId) === 0)
+		{
+			if (!array_key_exists($this->fileId, $seeds))
+			{
+				$seeds[$this->fileId] = 0;
+			}
+
+			$seeds[$this->fileId]++;
+			$seed = $seeds[$this->fileId];
+
+			$randomSequence = new \Bitrix\Main\Type\RandomSequence($seed);
+			$id = mb_substr(md5(serialize($videoPlayerParams)), 10) . $randomSequence->randString(6);
+
+			$playerId = 'bx_videojs_player_' . $id;
+		}
+
+		?><div id="<?=$playerId . '_container'?>" class="disk-player-container<?if($sizeType == 'adjust')
 		{
 			?> player-adjust<?
 		}
@@ -444,22 +489,33 @@ class Video extends Base
 					<circle class="main-ui-loader-svg-circle" cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"/>
 				</svg>
 			</div>
-		<?
-		global $APPLICATION;
-		Extension::load(['disk.video']);
-		$APPLICATION->IncludeComponent(
-		'bitrix:player',
-		'',
-		array_merge($params, array(
-			'SIZE_TYPE' => $sizeType,
-			'PLAYER_TYPE' => 'videojs',
-			'AUTOSTART' => $autostart,
-			'SKIN_PATH' => '/bitrix/js/disk/video/',
-			'SKIN' => 'disk_player.css',
-			'HIDE_ERRORS' => 'Y',
-		)
-		));
-		?></div><?
+			<script>
+			(function() {
+				const params = <?=\Bitrix\Main\Web\Json::encode($videoPlayerParams)?>;
+				const init = () => {
+					const player = new BX.UI.VideoPlayer.Player('<?=$playerId?>', params);
+					const container = document.getElementById('<?=$playerId?>_container');
+					BX.Dom.append(player.createElement(), container);
+
+					if(!player.lazyload)
+					{
+						player.init();
+					}
+				};
+
+				if (BX.Reflection.getClass('BX.Disk.Player') !== null)
+				{
+					init();
+				}
+				else
+				{
+					BX.Runtime.loadExtension('disk.video').then(() => {
+						init();
+					});
+				}
+			})();
+			</script>
+		</div><?
 	}
 
 	/**

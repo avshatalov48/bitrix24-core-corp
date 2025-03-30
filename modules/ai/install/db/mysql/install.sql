@@ -6,7 +6,7 @@ create table if not exists b_ai_queue
 	ENGINE_CODE varchar(100) default null,
 	ENGINE_CUSTOM_SETTINGS text DEFAULT null,
 	PAYLOAD_CLASS varchar(100) not null,
-	PAYLOAD text not null,
+	PAYLOAD mediumtext not null,
 	CONTEXT text default null,
 	PARAMETERS text default null,
 	HISTORY_WRITE char(1) default 'N',

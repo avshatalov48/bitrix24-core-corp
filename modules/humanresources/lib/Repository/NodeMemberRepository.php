@@ -12,12 +12,12 @@ use Bitrix\HumanResources\Item\NodeMember;
 use Bitrix\HumanResources\Item\Structure;
 use Bitrix\HumanResources\Model;
 use Bitrix\HumanResources\Model\NodeMemberTable;
-use Bitrix\HumanResources\Model\NodeTable;
 use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Enum\EventName;
 use Bitrix\HumanResources\Type\MemberEntityType;
 use Bitrix\HumanResources\Type\NodeEntityType;
 use Bitrix\HumanResources\Type\RelationEntityType;
+use Bitrix\HumanResources\Util\CacheManager;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\CurrentUser;
@@ -34,9 +34,12 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 {
 	private EventSenderService $eventSenderService;
 	private RoleRepository $roleRepository;
+	private CacheManager $cacheManager;
 	private static array $queryTotalCount = [];
 
 	private const CACHE_TTL = 86400;
+
+	public const NODE_MEMBER_CACHE_DIR = '/node/member/';
 
 	/**
 	 * @param EventSenderService|null $eventSenderService
@@ -44,11 +47,12 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 	 */
 	public function __construct(
 		?EventSenderService $eventSenderService = null,
-		?RoleRepository $roleRepository = null
+		?RoleRepository $roleRepository = null,
 	)
 	{
 		$this->eventSenderService = $eventSenderService ?? Container::getEventSenderService();
 		$this->roleRepository = $roleRepository ?? Container::getRoleRepository();
+		$this->cacheManager = Container::getCacheManager();
 	}
 
 	private function convertModelToItem(Model\NodeMember $nodeMember): Item\NodeMember
@@ -97,7 +101,7 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 		if (!$this->validate($nodeMember))
 		{
 			throw (new CreationFailedException())->addError(
-				new Main\Error('nodeMember is invalid')
+				new Main\Error('nodeMember is invalid'),
 			);
 		}
 
@@ -111,7 +115,7 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 		$existedMember = $this->findByEntityTypeAndEntityIdAndNodeId(
 			$nodeMember->entityType,
 			$nodeMember->entityId,
-			$nodeMember->nodeId
+			$nodeMember->nodeId,
 		);
 
 		if ($existedMember)
@@ -172,7 +176,7 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 		$this->eventSenderService->send(
 			EventName::MEMBER_ADDED, [
 				'member' => $nodeMember,
-			]
+			],
 		);
 
 		return $nodeMember;
@@ -188,7 +192,7 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function createByCollection(
-		Item\Collection\NodeMemberCollection $nodeMemberCollection
+		Item\Collection\NodeMemberCollection $nodeMemberCollection,
 	): Item\Collection\NodeMemberCollection
 	{
 		$connection = Application::getConnection();
@@ -225,7 +229,7 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 			$this->eventSenderService->send(
 				EventName::MEMBER_DELETED, [
 					'member' => $nodeMember,
-				]
+				],
 			);
 
 			return true;
@@ -244,7 +248,7 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 	 * @throws Main\DB\SqlQueryException
 	 */
 	public function removeByCollection(
-		Item\Collection\NodeMemberCollection $nodeMemberCollection
+		Item\Collection\NodeMemberCollection $nodeMemberCollection,
 	): bool
 	{
 		$connection = Application::getConnection();
@@ -303,12 +307,14 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 		bool $withAllChildNodes = false,
 		int $limit = 100,
 		int $offset = 0,
-		bool $onlyActive = true
+		bool $onlyActive = true,
 	): Query
 	{
+		$baseFieldList = array_merge($this->getBaseFieldList(), ['ROLE']);
+
 		$nodeMemberQuery =
 			Model\NodeMemberTable::query()
-				->setSelect(['*', 'ROLE'])
+				->setSelect($baseFieldList)
 				->setOffset($offset)
 				->setLimit($limit)
 				->setCacheTtl(self::CACHE_TTL)
@@ -355,8 +361,10 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 	{
 		try
 		{
+			$baseFieldList = array_merge($this->getBaseFieldList(), ['ROLE']);
+
 			$nodeMember = Model\NodeMemberTable::query()
-				->setSelect(['*', 'ROLE'])
+				->setSelect($baseFieldList)
 				->setLimit(1)
 				->where('ID', $memberId)
 				->fetchObject()
@@ -382,12 +390,13 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 	public function findByEntityTypeAndEntityIdAndNodeId(
 		MemberEntityType $entityType,
 		int $entityId,
-		int $nodeId
+		int $nodeId,
 	): ?Item\NodeMember
 	{
+		$baseFieldList = array_merge($this->getBaseFieldList(), ['ROLE']);
 
 		$nodeMember = NodeMemberTable::query()
-			->setSelect(['*', 'ROLE'])
+			->setSelect($baseFieldList)
 			->where('ENTITY_TYPE', $entityType->name)
 			->where('NODE_ID', $nodeId)
 			->where('ENTITY_ID', $entityId)
@@ -445,15 +454,45 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function findAllByRoleIdAndNodeId(?int $roleId, ?int $nodeId, ?int $limit = null, ?int $offset = null, bool $ascendingSort = true): Item\Collection\NodeMemberCollection
+	public function findAllByRoleIdAndNodeId(
+		?int $roleId,
+		?int $nodeId,
+		?int $limit = null,
+		?int $offset = null,
+		bool $ascendingSort = true,
+	): Item\Collection\NodeMemberCollection
 	{
+		$cacheDir = self::NODE_MEMBER_CACHE_DIR;
+		$key =
+			"role_{$roleId}_node_{$nodeId}_limit_"
+			. (int)$limit
+			. "_offset_"
+			. (int)$offset
+			. "_sort_"
+			. (int)$ascendingSort;
+
+		$nodeMemberEntities = $this->cacheManager->getData($key, $cacheDir);
+		if (!empty($nodeMemberEntities))
+		{
+			$nodeMemberCollection = new Item\Collection\NodeMemberCollection();
+			foreach ($nodeMemberEntities as $nodeMemberEntity)
+			{
+				$nodeMemberEntity['CREATED_AT'] = $nodeMemberEntity['CREATED_AT']
+					? new Main\Type\DateTime($nodeMemberEntity['CREATED_AT']) : null;
+				$nodeMemberEntity['UPDATED_AT'] = $nodeMemberEntity['UPDATED_AT']
+					? new Main\Type\DateTime($nodeMemberEntity['UPDATED_AT']) : null;
+
+				$nodeMemberCollection->add($this->convertModelArrayToItem($nodeMemberEntity));
+			}
+
+			return $nodeMemberCollection;
+		}
+
 		$nodeMemberQuery = NodeMemberTable::query()
-			->setSelect(['*'])
+			->setSelect($this->getBaseFieldList())
 			->where('ROLE.ID', $roleId)
 			->where('NODE_ID', $nodeId)
 			->where('ACTIVE', 'Y')
-			->setCacheTtl(self::CACHE_TTL)
-			->cacheJoins(true)
 		;
 
 		if ($limit)
@@ -479,6 +518,62 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 			$nodeMemberCollection->add($this->convertModelArrayToItem($nodeMemberEntity));
 		}
 
+		$this->cacheManager->setData($key, $nodeMemberEntities, $cacheDir);
+		return $nodeMemberCollection;
+	}
+
+	/**
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\HumanResources\Exception\WrongStructureItemException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function findAllByRoleIdAndNodeCollection(
+		?int $roleId,
+		Item\Collection\NodeCollection $nodeCollection,
+		int $limit = 0,
+		int $offset = 0,
+		bool $ascendingSort = true,
+	): Item\Collection\NodeMemberCollection
+	{
+		$nodeMemberCollection = new Item\Collection\NodeMemberCollection();
+
+		if ($nodeCollection->empty())
+		{
+			return $nodeMemberCollection;
+		}
+
+		$nodeIds = [];
+		foreach ($nodeCollection as $node)
+		{
+			$nodeIds[] = $node->id;
+		}
+
+		$nodeMemberQuery = NodeMemberTable::query()
+			->setSelect($this->getBaseFieldList())
+			->where('ROLE.ID', $roleId)
+			->whereIn('NODE_ID', $nodeIds)
+			->where('ACTIVE', 'Y')
+		;
+
+		if ($limit > 0)
+		{
+			$nodeMemberQuery->setLimit($limit);
+		}
+
+		if ($offset > 0)
+		{
+			$nodeMemberQuery->setOffset($offset);
+		}
+
+		$nodeMemberQuery->addOrder('ID', $ascendingSort ? 'ASC' : 'DESC');
+
+		$result = $nodeMemberQuery->exec();
+		while ($row = $result->fetch())
+		{
+			$nodeMemberCollection->add($this->convertModelArrayToItem($row));
+		}
+
 		return $nodeMemberCollection;
 	}
 
@@ -499,7 +594,7 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 		if (!$this->validate($member))
 		{
 			throw (new UpdateFailedException())->addError(
-				new Main\Error('nodeMember is invalid')
+				new Main\Error('nodeMember is invalid'),
 			);
 		}
 
@@ -531,7 +626,7 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 				$this->findByEntityTypeAndEntityIdAndNodeId(
 					entityType: $member->entityType,
 					entityId: $member->entityId,
-					nodeId: $member->nodeId
+					nodeId: $member->nodeId,
 				)
 			)
 			{
@@ -556,7 +651,7 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 					'member' => $member,
 					'fields' => $updatedFields,
 					'previousMember' => $previousMember,
-				]
+				],
 			);
 		}
 
@@ -574,7 +669,7 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 	 * @throws UpdateFailedException
 	 */
 	public function updateByCollection(
-		Item\Collection\NodeMemberCollection $nodeMemberCollection
+		Item\Collection\NodeMemberCollection $nodeMemberCollection,
 	): Item\Collection\NodeMemberCollection
 	{
 		$connection = Application::getConnection();
@@ -659,11 +754,11 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 	 */
 	public function findAllByEntityIdAndEntityType(
 		int $entityId,
-		MemberEntityType $entityType
+		MemberEntityType $entityType,
 	): Item\Collection\NodeMemberCollection
 	{
 		$nodeMemberEntities = NodeMemberTable::query()
-			->setSelect(['*'])
+			->setSelect($this->getBaseFieldList())
 			->where('ENTITY_ID', $entityId)
 			->where('ENTITY_TYPE', $entityType->name)
 			->where('ACTIVE', 'Y')
@@ -682,7 +777,7 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 
 	public function findAllByEntityIdsAndEntityType(
 		array $entityIds,
-		MemberEntityType $entityType
+		MemberEntityType $entityType,
 	): Item\Collection\NodeMemberCollection
 	{
 		$nodeMemberCollection = new Item\Collection\NodeMemberCollection();
@@ -693,7 +788,7 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 		}
 
 		$nodeMemberEntities = NodeMemberTable::query()
-			 ->setSelect(['*'])
+			 ->setSelect($this->getBaseFieldList())
 			 ->whereIn('ENTITY_ID', $entityIds)
 			 ->where('ENTITY_TYPE', $entityType->name)
 			 ->where('ACTIVE', 'Y')
@@ -743,7 +838,7 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 
 	private function calculateCount(
 		Query $nodeMemberQuery,
-		Item\Collection\NodeMemberCollection $nodeMemberCollection
+		Item\Collection\NodeMemberCollection $nodeMemberCollection,
 	): void
 	{
 		if (isset(self::$queryTotalCount['usersCount']))
@@ -777,7 +872,7 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 	public function getCommonUsersFromRelation(
 		RelationEntityType $entityType,
 		int $entityId,
-		array $usersToCompare
+		array $usersToCompare,
 	): array
 	{
 		if (empty($usersToCompare))
@@ -823,7 +918,7 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 
 	public function findAllByRoleIdAndStructureId(
 		?int $roleId,
-		int $structureId
+		int $structureId,
 	): Item\Collection\NodeMemberCollection
 	{
 		$nodeMemberQuery = Model\NodeMemberTable::query()
@@ -890,7 +985,7 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 
 		foreach ($nodeMemberCount as $nodeMember)
 		{
-			$result[$nodeMemberCount['NODE_ID']] = $nodeMember['CNT'];
+			$result[$nodeMember['NODE_ID']] = (int)$nodeMember['CNT'];
 		}
 
 		return $result;
@@ -955,11 +1050,13 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 		int $entityId,
 		MemberEntityType $entityType,
 		\Bitrix\HumanResources\Type\NodeEntityType $nodeType,
-		?bool $active = null
+		?bool $active = null,
 	): ?Item\NodeMember
 	{
+		$baseFieldList = array_merge($this->getBaseFieldList(), ['ROLE']);
+
 		$nodeMember = NodeMemberTable::query()
-			->setSelect(['*', 'ROLE'])
+			->setSelect($baseFieldList)
 			->where('ENTITY_ID', $entityId)
 			->where('ENTITY_TYPE', $entityType->name)
 			->where('NODE.TYPE', $nodeType->name)
@@ -984,12 +1081,14 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 		NodeEntityType $nodeType,
 		int $limit = 0,
 		int $offset = 0,
-		NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE
+		NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE,
 	): item\Collection\NodeMemberCollection
 	{
+		$baseFieldList = array_merge($this->getBaseFieldList(), ['ROLE']);
+
 		$query =
 			NodeMemberTable::query()
-				 ->setSelect(['*', 'ROLE'])
+				->setSelect($baseFieldList)
 				 ->where('ENTITY_ID', $entityId)
 				 ->where('ENTITY_TYPE', $entityType->name)
 				 ->where('NODE.TYPE', $nodeType->name)
@@ -1032,7 +1131,7 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 		array $entityIds,
 		MemberEntityType $entityType,
 		NodeEntityType $nodeType,
-		NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE
+		NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE,
 	): Item\Collection\NodeMemberCollection
 	{
 		$nodeMemberCollection = new Item\Collection\NodeMemberCollection();
@@ -1041,10 +1140,11 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 		{
 			return $nodeMemberCollection;
 		}
+		$baseFieldList = array_merge($this->getBaseFieldList(), ['ROLE']);
 
 		$query =
 			NodeMemberTable::query()
-				->setSelect(['*', 'ROLE'])
+				->setSelect($baseFieldList)
 				->whereIn('ENTITY_ID', $entityIds)
 				->where('ENTITY_TYPE', $entityType->name)
 				->where('NODE.TYPE', $nodeType->name)
@@ -1059,5 +1159,19 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 		}
 
 		return $nodeMemberCollection;
+	}
+
+	private function getBaseFieldList(): array
+	{
+		return [
+			'ID',
+			'ENTITY_TYPE',
+			'ENTITY_ID',
+			'NODE_ID',
+			'ACTIVE',
+			'ADDED_BY',
+			'CREATED_AT',
+			'UPDATED_AT',
+		];
 	}
 }

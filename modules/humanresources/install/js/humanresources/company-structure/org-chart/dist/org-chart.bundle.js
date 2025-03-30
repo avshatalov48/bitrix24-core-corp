@@ -1,19 +1,21 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Humanresources = this.BX.Humanresources || {};
-(function (exports,ui_vue3,ui_confetti,humanresources_companyStructure_canvas,ui_entitySelector,ui_dialogs_messagebox,ui_notification,main_core,main_sidepanel,main_core_events,humanresources_companyStructure_api,humanresources_companyStructure_departmentContent,humanresources_companyStructure_addUserDialog,humanresources_companyStructure_moveUserFromDialog,humanresources_companyStructure_structureComponents,ui_iconSet_api_core,humanresources_companyStructure_utils,humanresources_companyStructure_chartStore,ui_vue3_pinia,ui_iconSet_main,ui_iconSet_crm,ui_buttons,ui_forms,ui_iconSet_api_vue,humanresources_companyStructure_chartWizard,ui_analytics,ui_designTokens,humanresources_companyStructure_permissionChecker) {
+(function (exports,ui_vue3,ui_confetti,humanresources_companyStructure_canvas,ui_entitySelector,ui_dialogs_messagebox,ui_notification,main_core,main_sidepanel,main_core_events,humanresources_companyStructure_api,humanresources_companyStructure_departmentContent,humanresources_companyStructure_userManagementDialog,humanresources_companyStructure_structureComponents,ui_iconSet_api_core,ui_vue3_pinia,ui_iconSet_main,ui_iconSet_crm,ui_buttons,ui_forms,ui_iconSet_api_vue,humanresources_companyStructure_chartStore,humanresources_companyStructure_chartWizard,humanresources_companyStructure_utils,ui_analytics,ui_designTokens,humanresources_companyStructure_permissionChecker) {
 	'use strict';
 
 	const events = Object.freeze({
 	  HR_DEPARTMENT_CONNECT: 'hr-department-connect',
 	  HR_DEPARTMENT_DISCONNECT: 'hr-department-disconnect',
 	  HR_DEPARTMENT_ADAPT_SIBLINGS: 'hr-department-adapt-siblings',
+	  HR_DEPARTMENT_ADAPT_CONNECTOR_HEIGHT: 'hr-department-adapt-connector-height',
 	  HR_DEPARTMENT_FOCUS: 'hr-department-focus',
 	  HR_DEPARTMENT_CONTROL: 'hr-department-control',
-	  HR_DEPARTMENT_UPDATE: 'hr-department-update',
 	  HR_DEPARTMENT_MENU_CLOSE: 'hr-department-menu-close',
 	  HR_ORG_CHART_CLOSE_BY_ESC: 'SidePanel.Slider:onCloseByEsc',
-	  HR_ORG_CHART_CLOSE: 'SidePanel.Slider:onClose'
+	  HR_ORG_CHART_CLOSE: 'SidePanel.Slider:onClose',
+	  HR_FIRST_POPUP_SHOW: 'HR.company-structure:first-popup-showed',
+	  HR_DEPARTMENT_SLIDER_ON_MESSAGE: 'SidePanel.Slider:onMessage'
 	});
 
 	const MenuOption = Object.freeze({
@@ -95,6 +97,106 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	`
 	};
 
+	const OrgChartActions = {
+	  applyData: (departments, currentDepartments, userId) => {
+	    const store = humanresources_companyStructure_chartStore.useChartStore();
+	    store.$patch({
+	      departments,
+	      currentDepartments,
+	      userId,
+	      searchedUserId: userId
+	    });
+	  },
+	  focusDepartment: departmentId => {
+	    const store = humanresources_companyStructure_chartStore.useChartStore();
+	    store.focusedNode = departmentId;
+	  },
+	  searchUserInDepartment: userId => {
+	    const store = humanresources_companyStructure_chartStore.useChartStore();
+	    store.searchedUserId = userId;
+	  },
+	  moveSubordinatesToParent: removableDepartmentId => {
+	    const store = humanresources_companyStructure_chartStore.useChartStore();
+	    const {
+	      departments,
+	      currentDepartments
+	    } = store;
+	    const removableDepartment = departments.get(removableDepartmentId);
+	    const {
+	      parentId,
+	      children: removableDeparmentChildren = [],
+	      userCount: removableDepartmentUserCount,
+	      heads: removableDeparmentHeads,
+	      employees: removableDeparmentEmployees = []
+	    } = removableDepartment;
+	    removableDeparmentChildren.forEach(childId => {
+	      const department = departments.get(childId);
+	      department.parentId = parentId;
+	    });
+	    const parentDepartment = departments.get(parentId);
+	    if (removableDepartmentUserCount > 0) {
+	      var _parentDepartment$emp, _parentDepartment$emp2;
+	      const parentDepartmentUsersIds = new Set([...parentDepartment.heads, ...((_parentDepartment$emp = parentDepartment.employees) != null ? _parentDepartment$emp : [])].map(user => user.id));
+	      const removableDeparmentUsers = [...removableDeparmentHeads, ...removableDeparmentEmployees];
+	      const movableUsers = removableDeparmentUsers.filter(user => {
+	        return !parentDepartmentUsersIds.has(user.id);
+	      });
+	      for (const user of movableUsers) {
+	        user.role = humanresources_companyStructure_api.memberRoles.employee;
+	      }
+	      parentDepartment.userCount += movableUsers.length;
+	      parentDepartment.employees = [...((_parentDepartment$emp2 = parentDepartment.employees) != null ? _parentDepartment$emp2 : []), ...movableUsers];
+	    }
+	    parentDepartment.children = [...parentDepartment.children, ...removableDeparmentChildren];
+	    if (currentDepartments.includes(removableDepartmentId)) {
+	      store.changeCurrentDepartment(removableDepartmentId, parentId);
+	    }
+	  },
+	  markDepartmentAsRemoved: removableDepartmentId => {
+	    const {
+	      departments
+	    } = humanresources_companyStructure_chartStore.useChartStore();
+	    const removableDepartment = departments.get(removableDepartmentId);
+	    const {
+	      parentId
+	    } = removableDepartment;
+	    const parentDepartment = departments.get(parentId);
+	    parentDepartment.children = parentDepartment.children.filter(childId => {
+	      return childId !== removableDepartmentId;
+	    });
+	    delete removableDepartment.parentId;
+	    departments.set(removableDepartmentId, {
+	      ...removableDepartment,
+	      prevParentId: parentId
+	    });
+	  },
+	  removeDepartment: departmentId => {
+	    const {
+	      departments
+	    } = humanresources_companyStructure_chartStore.useChartStore();
+	    departments.delete(departmentId);
+	  },
+	  inviteUser: userData => {
+	    const {
+	      nodeId,
+	      ...restData
+	    } = userData;
+	    const {
+	      departments
+	    } = humanresources_companyStructure_chartStore.useChartStore();
+	    const department = departments.get(nodeId);
+	    if (department.employees) {
+	      departments.set(nodeId, {
+	        ...department,
+	        employees: [...department.employees, {
+	          ...restData
+	        }],
+	        userCount: department.userCount + 1
+	      });
+	    }
+	  }
+	};
+
 	const SearchBar = {
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon
@@ -121,7 +223,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    set() {
 	      return ui_iconSet_api_vue.Set;
 	    },
-	    ...ui_vue3_pinia.mapWritableState(humanresources_companyStructure_chartStore.useChartStore, ['searchedUserId', 'departments'])
+	    ...ui_vue3_pinia.mapState(humanresources_companyStructure_chartStore.useChartStore, ['departments'])
 	  },
 	  methods: {
 	    loc(phraseCode, replacements = {}) {
@@ -184,7 +286,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	            const item = event.getData().item;
 	            if (item.entityType === 'employee') {
 	              this.$emit('locate', item.customData.get('nodeId'));
-	              this.searchedUserId = item.id;
+	              OrgChartActions.searchUserInDepartment(item.id);
 	              dialog.recentItemsToSave.push(item);
 	              dialog.saveRecentItems();
 	              return;
@@ -455,6 +557,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 
 	const HeadList = {
 	  name: 'headList',
+	  components: {
+	    UserListActionMenu: humanresources_companyStructure_structureComponents.UserListActionMenu
+	  },
 	  props: {
 	    items: {
 	      type: Array,
@@ -470,17 +575,41 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      type: Boolean,
 	      required: false,
 	      default: false
+	    },
+	    type: {
+	      type: String,
+	      required: false,
+	      default: 'head'
 	    }
 	  },
 	  data() {
 	    return {
 	      isCollapsed: false,
-	      isUpdating: true
+	      isUpdating: true,
+	      headsVisible: false
+	    };
+	  },
+	  created() {
+	    this.userTypes = {
+	      head: 'head',
+	      deputy: 'deputy'
 	    };
 	  },
 	  computed: {
 	    defaultAvatar() {
 	      return '/bitrix/js/humanresources/company-structure/org-chart/src/images/default-user.svg';
+	    },
+	    dropdownItems() {
+	      return this.items.map(item => {
+	        const workPosition = item.workPosition || this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_HEAD_POSITION');
+	        return {
+	          ...item,
+	          workPosition
+	        };
+	      });
+	    },
+	    titleBar() {
+	      return this.type === this.userTypes.deputy ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_DEPUTY_TITLE') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_HEAD_TITLE');
 	    }
 	  },
 	  methods: {
@@ -491,10 +620,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      main_sidepanel.SidePanel.Instance.open(url, {
 	        cacheable: false
 	      });
+	    },
+	    closeHeadList() {
+	      this.headsVisible = false;
+	      main_core_events.EventEmitter.unsubscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.closeHeadList);
+	    },
+	    openHeadList() {
+	      this.headsVisible = true;
+	      main_core_events.EventEmitter.subscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.closeHeadList);
 	    }
 	  },
 	  template: `
-		<div v-if="items.length" class="humanresources-tree__node_employees-container">
+		<div v-if="items.length">
 			<p v-if="title" class="humanresources-tree__node_employees-title">
 				{{ title }}
 			</p>
@@ -524,11 +661,24 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				<span
 					v-if="index === 1 && items.length > 2"
 					class="humanresources-tree__node_head-rest"
+					:class="{ '--active': headsVisible }"
+					:data-test-id="'hr-company-structure_org-chart-tree__node-' + type + '-rest'"
+					ref="showMoreHeadList"
+					@click.stop="openHeadList"
 				>
 					{{ '+' + String(items.length - 2) }}
 				</span>
 			</div>
 		</div>
+		<UserListActionMenu
+			v-if="headsVisible"
+			:id="type === userTypes.head ? 'head-list-popup-head' : 'head-list-popup-deputy'"
+			:items="dropdownItems"
+			:width="228"
+			:bindElement="$refs.showMoreHeadList[0]"
+			@close="closeHeadList"
+			:titleBar="titleBar"
+		/>
 	`
 	};
 
@@ -588,6 +738,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_EMPLOYEE_LIST_TITLE'),
 	      description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_EMPLOYEE_LIST_SUBTITLE'),
 	      imageClass: '-hr-department-org-chart-menu-edit-list',
+	      bIcon: {
+	        name: ui_iconSet_api_core.Main.EDIT_MENU,
+	        size: 20,
+	        color: humanresources_companyStructure_utils.getColorCode('paletteBlue50')
+	      },
 	      permission: {
 	        action: humanresources_companyStructure_permissionChecker.PermissionActions.employeeAddToDepartment
 	      }
@@ -723,8 +878,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  },
 	  template: `
 		<div class="humanresources-tree__node_add-subdivision" v-if="canShow">
-		  <button class="humanresources-tree__add-button" @click="addSubdivision">
-		    <BIcon :name="set.PLUS_20" :size="32" class="humanresources-tree-add-icon"></BIcon>
+		  <button class="humanresources-tree__node_add-button" @click="addSubdivision">
+		    <BIcon :name="set.PLUS_20" :size="32" class="humanresources-tree__node_add-icon"></BIcon>
 		  </button>
 		</div>
 	`
@@ -732,7 +887,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 
 	const TreeNode = {
 	  name: 'treeNode',
-	  inject: ['getTreeBounds', 'getHeightDifference'],
+	  inject: ['getTreeBounds'],
 	  props: {
 	    nodeId: {
 	      type: Number,
@@ -757,9 +912,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    HeadList,
 	    SubdivisionAddButton
 	  },
+	  directives: {
+	    hint: humanresources_companyStructure_structureComponents.Hint
+	  },
 	  data() {
 	    return {
-	      childrenLoaded: false,
 	      childrenOffset: 0,
 	      childrenMounted: false,
 	      showInfo: true
@@ -769,11 +926,23 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    this.width = 278;
 	    this.gap = 20;
 	    this.prevChildrenOffset = 0;
+	    this.prevHeight = 0;
+	  },
+	  watch: {
+	    async head() {
+	      await this.$nextTick();
+	      main_core_events.EventEmitter.emit(events.HR_DEPARTMENT_ADAPT_CONNECTOR_HEIGHT, {
+	        nodeId: this.nodeId,
+	        shift: this.$el.offsetHeight - this.prevHeight
+	      });
+	      this.prevHeight = this.$el.offsetHeight;
+	    }
 	  },
 	  async mounted() {
 	    this.showInfo = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance().hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.structureView, this.nodeId);
 	    this.$emit('calculatePosition', this.nodeId);
 	    await this.$nextTick();
+	    this.prevHeight = this.$el.offsetHeight;
 	    main_core_events.EventEmitter.emit(events.HR_DEPARTMENT_CONNECT, {
 	      id: this.nodeId,
 	      parentId: this.nodeData.parentId,
@@ -781,11 +950,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      parentsPath: this.getParentsPath(this.nodeData.parentId),
 	      ...this.calculateNodePoints()
 	    });
-	  },
-	  watch: {
-	    head() {
-	      this.updateConnectors();
-	    }
 	  },
 	  unmounted() {
 	    main_core.Dom.remove(this.$el);
@@ -809,7 +973,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return {
 	        '--expanded': this.expandedNodes.includes(this.nodeId),
 	        '--current-department': this.isCurrentDepartment,
-	        '--focused': this.focusedNode === this.nodeId
+	        '--focused': this.focusedNode === this.nodeId,
+	        '--with-restricted-access-rights': !this.showInfo
 	      };
 	    },
 	    subdivisionsClass() {
@@ -850,31 +1015,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return this.nodeData.userCount - this.nodeData.heads.length;
 	    },
 	    childNodeStyle() {
-	      const style = {
+	      return {
 	        left: `${this.childrenOffset}px`
 	      };
-	      if (!this.childrenLoaded) {
-	        return style;
-	      }
-	      const {
-	        childrenNode
-	      } = this.$refs;
-	      if (!childrenNode) {
-	        return style;
-	      }
-	      const {
-	        offsetParent: rootNode
-	      } = childrenNode;
-	      const node = this.departments.get(this.nodeId);
-	      if (node.children.length === 0) {
-	        return style;
-	      }
-	      const top = this.top(node.children[0], rootNode);
-	      if (top !== null) {
-	        // eslint-disable-next-line unicorn/consistent-destructuring,@bitrix24/bitrix24-rules/no-style
-	        style.top = `${top}px`;
-	      }
-	      return style;
 	    },
 	    showSubdivisionAddButton() {
 	      return this.expandedNodes.includes(this.nodeId) || this.focusedNode === this.nodeId;
@@ -903,7 +1046,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        const gap = this.gap * (node.children.length - 1);
 	        this.prevChildrenOffset = this.childrenOffset;
 	        this.childrenOffset = (this.width - (this.width * node.children.length + gap)) / 2;
-	        this.childrenLoaded = true;
 	      }
 	      const offset = this.childrenOffset - this.prevChildrenOffset;
 	      if (offset !== 0) {
@@ -914,17 +1056,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        });
 	      }
 	    },
-	    top(id, parentNode) {
-	      const heightDifference = this.getHeightDifference(id, parentNode, this.$refs[`node-${id}`][0].$el);
-	      if (heightDifference === 0) {
-	        return null;
-	      }
-	      try {
-	        return parentNode.firstElementChild.offsetHeight + heightDifference;
-	      } catch {
-	        return null;
-	      }
-	    },
 	    controlDepartment(action, source = humanresources_companyStructure_api.AnalyticsSourceType.CARD) {
 	      main_core_events.EventEmitter.emit(events.HR_DEPARTMENT_CONTROL, {
 	        nodeId: this.nodeId,
@@ -933,9 +1064,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      });
 	    },
 	    addEmployee() {
-	      humanresources_companyStructure_addUserDialog.AddUserDialog.openDialog({
-	        type: 'employee',
-	        nodeId: this.nodeId
+	      humanresources_companyStructure_userManagementDialog.UserManagementDialog.openDialog({
+	        nodeId: this.nodeId,
+	        type: 'add'
 	      });
 	    },
 	    userInvite() {
@@ -947,7 +1078,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      });
 	    },
 	    moveEmployee() {
-	      humanresources_companyStructure_moveUserFromDialog.MoveUserFromDialog.openDialog(this.nodeId);
+	      humanresources_companyStructure_userManagementDialog.UserManagementDialog.openDialog({
+	        nodeId: this.nodeId,
+	        type: 'move'
+	      });
 	    },
 	    locPlural(phraseCode, count) {
 	      return main_core.Loc.getMessagePlural(phraseCode, count, {
@@ -995,21 +1129,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        }
 	      }
 	      return parentsPath;
-	    },
-	    updateConnectors() {
-	      const currentHeight = this.$el.firstElementChild.offsetHeight;
-	      this.$nextTick(() => {
-	        const heightDifference = this.$el.firstElementChild.offsetHeight - currentHeight;
-	        main_core_events.EventEmitter.emit(events.HR_DEPARTMENT_UPDATE, {
-	          id: this.nodeId,
-	          parentId: this.nodeData.parentId,
-	          html: this.$el,
-	          offset: this.offset,
-	          parentsPath: this.getParentsPath(this.nodeData.parentId),
-	          heightDifference,
-	          ...this.calculateNodePoints()
-	        });
-	      });
 	    }
 	  },
 	  template: `
@@ -1023,18 +1142,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				class="humanresources-tree__node_summary"
 				@click.stop="onDepartmentClick('department')"
 			>
-				<div class="humanresources-tree__node_description" :style="{ minHeight: !showInfo ? null : '136px'}">
-					<div class="humanresources-tree__node_department" :style="{ justifyContent: !showInfo ? 'center' : 'space-between'}">
+				<div class="humanresources-tree__node_description">
+					<div class="humanresources-tree__node_department">
 						<span class="humanresources-tree__node_department-title">
 							<span
+								v-hint
 								class="humanresources-tree__node_department-title_text"
-								:title="nodeData.name"
 							>
 								{{nodeData.name}}
 							</span>
 						</span>
 						<DepartmentMenuButton
-							v-if="showInfo"
+							v-if="showInfo && head && deputy"
 							:department-id="nodeId"
 							@addDepartment="controlDepartment"
 							@editDepartment="controlDepartment"
@@ -1045,8 +1164,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 							@moveEmployee="moveEmployee"
 						></DepartmentMenuButton>
 					</div>
-				  	<HeadList v-if="showInfo" :items="head"></HeadList>
-					<div v-if="showInfo" class="humanresources-tree__node_employees">
+				  	<HeadList v-if="head && showInfo" :items="head"></HeadList>
+					<div
+						v-else-if="showInfo"
+						class="humanresources-tree__node_load-skeleton --heads"
+					></div>
+					<div v-if="deputy && showInfo" class="humanresources-tree__node_employees">
 						<div>
 							<p class="humanresources-tree__node_employees-title">
 								{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_EMPLOYEES_TITLE')}}
@@ -1059,8 +1182,16 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 							</span>
 						</div>
 						<div v-if="!deputy.length"></div>
-						<HeadList :items="deputy" :title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_DEPUTY_TITLE')" :collapsed="true"></HeadList>
+						<HeadList :items="deputy"
+								  :title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_DEPUTY_TITLE')" 
+								  :collapsed="true"
+								  :type="'deputy'">
+						</HeadList>
 					</div>
+					<div
+						v-else-if="showInfo"
+						class="humanresources-tree__node_load-skeleton --deputies"
+					></div>
 				</div>
 				<div
 					class="humanresources-tree__node_subdivisions"
@@ -1083,6 +1214,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					@click.stop
 				></SubdivisionAddButton>
 			</div>
+			<div
+				v-if="nodeData.parentId === 0 && !hasChildren"
+				class="humanresources-tree__node_empty-skeleton"
+			></div>
 			<div
 				v-if="hasChildren"
 				ref="childrenNode"
@@ -1121,6 +1256,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      ...mapItem,
 	      ...item
 	    });
+	    if (parentId === 0) {
+	      return;
+	    }
 	    const mapParentItem = (_dataMap$get2 = dataMap.get(parentId)) != null ? _dataMap$get2 : {};
 	    const children = (_mapParentItem$childr = mapParentItem.children) != null ? _mapParentItem$childr : [];
 	    dataMap.set(parentId, {
@@ -1131,29 +1269,19 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  return dataMap;
 	};
 	const chartAPI = {
-	  getDepartment: id => {
-	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.Node.get', {
-	      nodeId: id
-	    });
-	  },
 	  removeDepartment: id => {
 	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.Node.delete', {
 	      nodeId: id
 	    });
 	  },
-	  getEmployees: id => {
-	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.Node.Member.Employee.get', {
-	      nodeId: id
-	    });
-	  },
-	  getChartData: () => {
+	  getDepartmentsData: () => {
 	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.get', {}, {
 	      tool: 'structure',
 	      category: 'structure',
 	      event: 'open_structure'
 	    });
 	  },
-	  getCurrentDepartment: () => {
+	  getCurrentDepartments: () => {
 	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.Node.current');
 	  },
 	  getDictionary: () => {
@@ -1189,29 +1317,28 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  created() {
 	    this.treeNodes = new Map();
 	    this.subscribeOnEvents();
+	    this.loadHeads([this.rootId]);
 	    this.prevWindowWidth = window.innerWidth;
 	    const [currentDepartment] = this.currentDepartments;
-	    if (currentDepartment) {
-	      if (currentDepartment !== this.rootId) {
-	        this.expandDepartmentParents(currentDepartment);
-	        this.focus(currentDepartment, {
-	          expandAfterFocus: true
-	        });
-	        return;
-	      }
-	      this.expandLowerDepartments();
-	      this.focus(currentDepartment);
+	    if (!currentDepartment) {
+	      return;
 	    }
+	    if (currentDepartment !== this.rootId) {
+	      this.expandDepartmentParents(currentDepartment);
+	      this.focus(currentDepartment, {
+	        expandAfterFocus: true
+	      });
+	      return;
+	    }
+	    this.expandLowerDepartments();
+	    this.focus(currentDepartment);
 	  },
 	  beforeUnmount() {
 	    this.unsubscribeOnEvents();
 	  },
 	  provide() {
 	    return {
-	      getTreeBounds: () => this.getTreeBounds(),
-	      getHeightDifference: (nodeId, parentNode, currentNode) => {
-	        return this.getHeightDifference(nodeId, parentNode, currentNode);
-	      }
+	      getTreeBounds: () => this.getTreeBounds()
 	    };
 	  },
 	  computed: {
@@ -1223,8 +1350,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      });
 	      return rootId;
 	    },
-	    ...ui_vue3_pinia.mapState(humanresources_companyStructure_chartStore.useChartStore, ['currentDepartments', 'userId']),
-	    ...ui_vue3_pinia.mapWritableState(humanresources_companyStructure_chartStore.useChartStore, ['departments', 'focusedNode', 'searchedUserId'])
+	    ...ui_vue3_pinia.mapState(humanresources_companyStructure_chartStore.useChartStore, ['currentDepartments', 'userId', 'focusedNode', 'departments'])
 	  },
 	  methods: {
 	    loc(phraseCode, replacements = {}) {
@@ -1232,30 +1358,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    getTreeBounds() {
 	      return this.$el.getBoundingClientRect();
-	    },
-	    getHeightDifference(nodeId, parentNode, currentNode) {
-	      const node = this.departments.get(nodeId);
-	      if (!node || !node.parentId) {
-	        return 0;
-	      }
-	      const parent = this.departments.get(node.parentId);
-	      if (!parent.parentId) {
-	        return 0;
-	      }
-	      let parentHtml = this.treeNodes.get(node.parentId);
-	      if (!parentHtml && parentNode) {
-	        this.treeNodes.set(node.parentId, parentNode);
-	        parentHtml = parentNode;
-	      }
-	      let currentHtml = this.treeNodes.get(node.id);
-	      if (!currentHtml && currentNode) {
-	        this.treeNodes.set(node.id, currentNode);
-	        currentHtml = currentNode;
-	      }
-	      if (parentHtml) {
-	        return parentHtml.offsetHeight - parentHtml.firstElementChild.offsetHeight;
-	      }
-	      return 0;
 	    },
 	    getPath(id) {
 	      const connector = this.connectors[id];
@@ -1266,10 +1368,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      if (!startPoint || !endPoint) {
 	        return '';
 	      }
-	      const calculatedHeightDifference = this.getHeightDifference(connector.id);
-	      const lineLength = 50 + calculatedHeightDifference;
+	      const lineLength = 90;
 	      const shiftY = 1;
-	      const startY = startPoint.y - shiftY - calculatedHeightDifference;
+	      const startY = startPoint.y - shiftY;
 	      const shadowOffset = this.focusedNode === connector.id ? 9 : 0;
 	      const rounded = {
 	        start: '',
@@ -1329,7 +1430,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      const department = this.departments.get(id);
 	      delete department.prevParentId;
 	      if (!department.parentId) {
-	        this.departments.delete(id);
+	        OrgChartActions.removeDepartment(id);
 	      }
 	    },
 	    onAdaptSiblings({
@@ -1430,6 +1531,21 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        }
 	      });
 	    },
+	    onAdaptConnectorHeight({
+	      data
+	    }) {
+	      const {
+	        shift,
+	        nodeId
+	      } = data;
+	      Object.entries(this.connectors).forEach(([id, connector]) => {
+	        if (connector.parentId === nodeId) {
+	          Object.assign(connector.startPoint, {
+	            y: connector.startPoint.y + shift
+	          });
+	        }
+	      });
+	    },
 	    collapse(nodeId) {
 	      this.expandedNodes = this.expandedNodes.filter(expandedId => expandedId !== nodeId);
 	      this.toggleConnectorsVisibility(nodeId, false);
@@ -1457,11 +1573,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        deepCollapse(expandedNode);
 	      }
 	    },
-	    expand(nodeId) {
-	      this.collapseRecursively(nodeId);
-	      this.expandedNodes = [...this.expandedNodes, nodeId];
-	      this.toggleConnectorsVisibility(nodeId, true);
-	      this.toggleConnectorHighlighting(nodeId, true);
+	    expand(departmentId) {
+	      this.collapseRecursively(departmentId);
+	      this.expandedNodes = [...this.expandedNodes, departmentId];
+	      this.toggleConnectorsVisibility(departmentId, true);
+	      this.toggleConnectorHighlighting(departmentId, true);
+	      const department = this.departments.get(departmentId);
+	      const childrenWithoutHeads = department.children.filter(childId => {
+	        return !this.departments.get(childId).heads;
+	      });
+	      if (childrenWithoutHeads.length > 0) {
+	        this.loadHeads(childrenWithoutHeads);
+	      }
 	      ui_analytics.sendData({
 	        tool: 'structure',
 	        category: 'structure',
@@ -1489,7 +1612,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      if (this.focusedNode && !this.expandedNodes.includes(this.focusedNode)) {
 	        this.toggleConnectorHighlighting(this.focusedNode, false);
 	      }
-	      this.focusedNode = nodeId;
+	      OrgChartActions.focusDepartment(nodeId);
 	      this.toggleConnectorHighlighting(this.focusedNode, true);
 	    },
 	    onFocusDepartment({
@@ -1584,102 +1707,26 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      const removableDepartment = this.departments.get(nodeId);
 	      const {
 	        parentId,
-	        children: removableDeparmentChildren = [],
-	        userCount: removableDepartmentUserCount,
-	        heads: removableDeparmentHeads,
-	        employees: removableDeparmentEmployees = []
+	        children: removableDeparmentChildren = []
 	      } = removableDepartment;
-	      const parentDepartment = this.departments.get(parentId);
 	      if (removableDeparmentChildren.length > 0) {
 	        this.collapse(nodeId);
 	      }
-	      removableDeparmentChildren.forEach(childId => {
-	        const department = this.departments.get(childId);
-	        department.parentId = parentId;
-	      });
-	      if (removableDepartmentUserCount > 0) {
-	        var _parentDepartment$emp, _parentDepartment$emp2;
-	        const parentDepartmentUsersIds = new Set([...parentDepartment.heads, ...((_parentDepartment$emp = parentDepartment.employees) != null ? _parentDepartment$emp : [])].map(user => user.id));
-	        const removableDeparmentUsers = [...removableDeparmentHeads, ...removableDeparmentEmployees];
-	        const movableUsers = removableDeparmentUsers.filter(user => {
-	          return !parentDepartmentUsersIds.has(user.id);
-	        });
-	        for (const user of movableUsers) {
-	          user.role = humanresources_companyStructure_api.memberRoles.employee;
-	        }
-	        parentDepartment.userCount += movableUsers.length;
-	        parentDepartment.employees = [...((_parentDepartment$emp2 = parentDepartment.employees) != null ? _parentDepartment$emp2 : []), ...movableUsers];
-	      }
-	      parentDepartment.children = [...parentDepartment.children, ...removableDeparmentChildren];
+	      OrgChartActions.moveSubordinatesToParent(nodeId);
 	      await this.$nextTick();
-	      parentDepartment.children = parentDepartment.children.filter(childId => {
-	        return childId !== nodeId;
-	      });
-	      delete removableDepartment.parentId;
-	      this.departments.set(nodeId, {
-	        ...removableDepartment,
-	        prevParentId: parentId
-	      });
+	      OrgChartActions.markDepartmentAsRemoved(nodeId);
 	      this.focus(parentId, {
 	        expandAfterFocus: true
 	      });
 	      this.moveTo(parentId);
-	    },
-	    onUpdateDepartment({
-	      data
-	    }) {
-	      var _this$connectors2;
-	      const {
-	        id,
-	        parentId,
-	        html,
-	        heightDifference
-	      } = data;
-	      this.treeNodes.set(id, html);
-	      if (!parentId) {
-	        return;
-	      }
-	      const connector = (_this$connectors2 = this.connectors[`${parentId}-${id}`]) != null ? _this$connectors2 : {};
-	      Object.assign(connector, data);
-	      if (connector.highlighted) {
-	        delete this.connectors[`${parentId}-${id}`];
-	      }
-	      this.connectors[`${parentId}-${id}`] = {
-	        show: true,
-	        highlighted: false,
-	        ...connector
-	      };
-	      const {
-	        children
-	      } = this.departments.get(id);
-	      children == null ? void 0 : children.forEach(childId => {
-	        this.updateChildren(id, childId, heightDifference);
-	      });
-	    },
-	    updateChildren(parentId, nodeId, heightDifference) {
-	      const connectorId = `${parentId}-${nodeId}`;
-	      const childConnector = this.connectors[connectorId];
-	      if (!childConnector) {
-	        return;
-	      }
-	      childConnector.startPoint.y += heightDifference;
-	      childConnector.endPoint.y += heightDifference;
-	      const connectorPath = this.$refs[connectorId][0];
-	      connectorPath.setAttribute('d', this.getPath(connectorId));
-	      const {
-	        children
-	      } = this.departments.get(nodeId);
-	      children == null ? void 0 : children.forEach(childId => {
-	        this.updateChildren(nodeId, childId, heightDifference);
-	      });
 	    },
 	    toggleConnectorsVisibility(parentId, show) {
 	      const {
 	        children
 	      } = this.departments.get(parentId);
 	      children.forEach(childId => {
-	        var _this$connectors3;
-	        const connector = (_this$connectors3 = this.connectors[`${parentId}-${childId}`]) != null ? _this$connectors3 : {};
+	        var _this$connectors2;
+	        const connector = (_this$connectors2 = this.connectors[`${parentId}-${childId}`]) != null ? _this$connectors2 : {};
 	        this.connectors = {
 	          ...this.connectors,
 	          [`${parentId}-${childId}`]: {
@@ -1693,7 +1740,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      });
 	    },
 	    toggleConnectorHighlighting(nodeId, expanded) {
-	      var _this$connectors4;
+	      var _this$connectors3;
 	      const {
 	        parentId
 	      } = this.departments.get(nodeId);
@@ -1707,7 +1754,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        };
 	        return;
 	      }
-	      const highlightedConnector = (_this$connectors4 = this.connectors[`${parentId}-${nodeId}`]) != null ? _this$connectors4 : {};
+	      const highlightedConnector = (_this$connectors3 = this.connectors[`${parentId}-${nodeId}`]) != null ? _this$connectors3 : {};
 	      delete this.connectors[`${parentId}-${nodeId}`];
 	      this.connectors = {
 	        ...this.connectors,
@@ -1779,7 +1826,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        expandAfterFocus: true
 	      });
 	      this.moveTo(currentDepartment);
-	      this.searchedUserId = this.userId;
+	      OrgChartActions.searchUserInDepartment(this.userId);
 	    },
 	    async locateToDepartment(nodeId) {
 	      await this.expandDepartmentParents(nodeId);
@@ -1797,8 +1844,13 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      const treeNodeRect = treeNode.getBoundingClientRect();
 	      this.$emit('moveTo', {
 	        x: centerX - treeNodeRect.x - treeNodeRect.width / 2,
-	        y: centerY - treeNodeRect.y - treeNodeRect.height / 2
+	        y: centerY - treeNodeRect.y - treeNodeRect.height / 2,
+	        nodeId
 	      });
+	    },
+	    loadHeads(departmentIds) {
+	      const store = humanresources_companyStructure_chartStore.useChartStore();
+	      store.loadHeads(departmentIds);
 	    },
 	    subscribeOnEvents() {
 	      this.events = {
@@ -1806,8 +1858,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        [events.HR_DEPARTMENT_DISCONNECT]: this.onDisconnectDepartment,
 	        [events.HR_DEPARTMENT_FOCUS]: this.onFocusDepartment,
 	        [events.HR_DEPARTMENT_CONTROL]: this.onControlDepartment,
-	        [events.HR_DEPARTMENT_UPDATE]: this.onUpdateDepartment,
-	        [events.HR_DEPARTMENT_ADAPT_SIBLINGS]: this.onAdaptSiblings
+	        [events.HR_DEPARTMENT_ADAPT_SIBLINGS]: this.onAdaptSiblings,
+	        [events.HR_DEPARTMENT_ADAPT_CONNECTOR_HEIGHT]: this.onAdaptConnectorHeight
 	      };
 	      Object.entries(this.events).forEach(([event, handle]) => {
 	        main_core_events.EventEmitter.subscribe(event, handle);
@@ -2089,7 +2141,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        id: MenuOption$2.editEmployee,
 	        title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_EMPLOYEE_LIST_TITLE'),
 	        description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_EMPLOYEE_LIST_SUBTITLE'),
-	        imageClass: '-hr-department-org-chart-menu-edit-list',
+	        bIcon: {
+	          name: ui_iconSet_api_core.Main.EDIT_MENU,
+	          size: 20,
+	          color: humanresources_companyStructure_utils.getColorCode('paletteBlue50')
+	        },
 	        permission: {
 	          action: humanresources_companyStructure_permissionChecker.PermissionActions.employeeAddToDepartment
 	        }
@@ -2155,6 +2211,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 			class="humanresources-detail-panel__edit-button"
 			:class="{ '--focused': menuVisible }"
 			:ref="'detailPanelEditButton'"
+			data-id="hr-department-detail-panel__edit-menu-button"
 			@click.stop="menuVisible = true"
 		>
 			<BIcon
@@ -2182,6 +2239,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    DepartmentContent: humanresources_companyStructure_departmentContent.DepartmentContent,
 	    DetailPanelCollapsedTitle,
 	    DetailPanelEditButton
+	  },
+	  directives: {
+	    hint: humanresources_companyStructure_structureComponents.Hint
 	  },
 	  props: {
 	    preventPanelSwitch: Boolean,
@@ -2221,7 +2281,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      this.isLoading = false;
 	    },
 	    addEmployee() {
-	      humanresources_companyStructure_addUserDialog.AddUserDialog.openDialog();
+	      const nodeId = this.focusedNode;
+	      humanresources_companyStructure_userManagementDialog.UserManagementDialog.openDialog({
+	        nodeId,
+	        type: 'add'
+	      });
 	    },
 	    userInvite() {
 	      const departmentToInvite = this.departments.get(this.focusedNode).accessCode.slice(1);
@@ -2233,7 +2297,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    moveEmployee() {
 	      const nodeId = this.focusedNode;
-	      humanresources_companyStructure_moveUserFromDialog.MoveUserFromDialog.openDialog(nodeId);
+	      humanresources_companyStructure_userManagementDialog.UserManagementDialog.openDialog({
+	        nodeId,
+	        type: 'move'
+	      });
 	    },
 	    editEmployee() {
 	      this.$emit('showWizard', {
@@ -2291,6 +2358,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 		<div
 			:class="['humanresources-detail-panel', { '--collapsed': isCollapsed }]"
 			v-on="isCollapsed ? { click: toggleCollapse } : {}"
+			data-id="hr-department-detail-panel__container"
 		>
 			<div
 				v-if="!isLoading"
@@ -2300,8 +2368,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				<div class="humanresources-detail-panel__head">
 					<span
 						v-if="!isCollapsed"
+						v-hint
 						class="humanresources-detail-panel__title"
-						:title="title"
 					>
 						{{ title }}
 					</span>
@@ -2326,6 +2394,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 							class="humanresources-detail-panel__collapse_button --icon"
 							@click="toggleCollapse"
 							:class="{ '--collapsed': isCollapsed }"
+							data-id="hr-department-detail-panel__collapse-button"
 						/>
 					</div>
 				</div>
@@ -2370,7 +2439,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    closePopup() {
 	      chartAPI.firstTimeOpened();
 	      this.show = false;
-	      top.BX.Event.EventEmitter.emit('HR.company-structure:first-popup-showed');
+	      top.BX.Event.EventEmitter.emit(events.HR_FIRST_POPUP_SHOW);
 	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -2401,7 +2470,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				</div>
 				<div class="first-popup-right">
 					<video
-						src="/bitrix/js/humanresources/company-structure/org-chart/src/images/preview.webm"
+						src="/bitrix/js/humanresources/company-structure/org-chart/src/components/first-popup/images/preview.webm"
 						autoplay
 						loop
 						muted
@@ -2452,22 +2521,19 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  },
 	  async created() {
 	    const slider = BX.SidePanel.Instance.getTopSlider();
-	    if (slider) {
-	      slider.showLoader();
-	    }
-	    const [departments, currentDepartments, userId] = await Promise.all([chartAPI.getChartData(), chartAPI.getCurrentDepartment(), chartAPI.getUserId()]);
+	    slider == null ? void 0 : slider.showLoader();
+	    const [departments, currentDepartments, userId] = await Promise.all([chartAPI.getDepartmentsData(), chartAPI.getCurrentDepartments(), chartAPI.getUserId()]);
+	    slider == null ? void 0 : slider.closeLoader();
 	    const parsedDepartments = chartAPI.createTreeDataStore(departments);
-	    if (slider) {
-	      slider.closeLoader();
-	    }
-	    this.departments = parsedDepartments;
-	    this.currentDepartments = currentDepartments;
-	    this.userId = userId;
-	    this.searchedUserId = this.userId;
-	    const [currentDepartment] = this.currentDepartments;
-	    this.transformCanvas(currentDepartment);
+	    OrgChartActions.applyData(parsedDepartments, currentDepartments, userId);
+	    this.rootOffset = 100;
+	    this.transformCanvas();
 	    this.canvas.shown = true;
 	    this.showConfetti = false;
+	    main_core_events.EventEmitter.subscribe(events.HR_DEPARTMENT_SLIDER_ON_MESSAGE, this.handleInviteSliderMessage);
+	  },
+	  unmounted() {
+	    main_core_events.EventEmitter.unsubscribe(events.HR_DEPARTMENT_SLIDER_ON_MESSAGE, this.handleInviteSliderMessage);
 	  },
 	  computed: {
 	    rootId() {
@@ -2478,12 +2544,13 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      });
 	      return rootId;
 	    },
-	    ...ui_vue3_pinia.mapWritableState(humanresources_companyStructure_chartStore.useChartStore, ['departments', 'currentDepartments', 'userId', 'searchedUserId'])
+	    ...ui_vue3_pinia.mapState(humanresources_companyStructure_chartStore.useChartStore, ['departments', 'currentDepartments'])
 	  },
 	  methods: {
 	    onMoveTo({
 	      x,
-	      y
+	      y,
+	      nodeId
 	    }) {
 	      const {
 	        x: prevX,
@@ -2492,6 +2559,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      } = this.canvas.modelTransform;
 	      const detailPanelWidth = 364 * zoom;
 	      const newX = x - detailPanelWidth / 2;
+	      const newY = nodeId === this.rootId ? this.rootOffset : y / zoom;
 	      const notSamePoint = Math.round(newX) !== Math.round(prevX) || Math.round(y) !== Math.round(prevY);
 	      const shouldMove = notSamePoint && !this.canvas.moving;
 	      this.detailPanel = {
@@ -2507,7 +2575,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        modelTransform: {
 	          ...this.canvas.modelTransform,
 	          x: newX / zoom,
-	          y: y / zoom,
+	          y: newY,
 	          zoom: 1
 	        }
 	      };
@@ -2629,7 +2697,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        collapsed: false
 	      };
 	    },
-	    transformCanvas(currentDepartment) {
+	    transformCanvas() {
 	      const {
 	        zoom
 	      } = this.canvas.modelTransform;
@@ -2637,7 +2705,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        offsetWidth,
 	        offsetHeight
 	      } = this.$el;
-	      const y = currentDepartment === this.rootId ? 10 : offsetHeight / 2 - offsetHeight * zoom / 2;
+	      const [currentDepartment] = this.currentDepartments;
+	      const y = currentDepartment === this.rootId ? this.rootOffset : offsetHeight / 2 - offsetHeight * zoom / 2;
 	      this.canvas.modelTransform = {
 	        ...this.canvas.modelTransform,
 	        x: offsetWidth / 2 - offsetWidth * zoom / 2,
@@ -2646,6 +2715,20 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    onUpdateTransform() {
 	      main_core_events.EventEmitter.emit(events.HR_DEPARTMENT_MENU_CLOSE);
+	    },
+	    handleInviteSliderMessage(event) {
+	      const [messageEvent] = event.getData();
+	      const eventId = messageEvent.getEventId();
+	      if (eventId !== 'BX.Intranet.Invitation:onAdd') {
+	        return;
+	      }
+	      const {
+	        users
+	      } = messageEvent.getData();
+	      users.forEach(user => {
+	        const invitedUserData = humanresources_companyStructure_utils.getInvitedUserData(user);
+	        OrgChartActions.inviteUser(invitedUserData);
+	      });
 	    }
 	  },
 	  template: `
@@ -2733,5 +2816,5 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 
 	exports.App = App;
 
-}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Vue3,BX.UI,BX.Humanresources.CompanyStructure,BX.UI.EntitySelector,BX.UI.Dialogs,BX,BX,BX,BX.Event,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.UI.IconSet,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.Vue3.Pinia,BX,BX,BX.UI,BX,BX.UI.IconSet,BX.Humanresources.CompanyStructure,BX.UI.Analytics,BX,BX.Humanresources.CompanyStructure));
+}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Vue3,BX.UI,BX.Humanresources.CompanyStructure,BX.UI.EntitySelector,BX.UI.Dialogs,BX,BX,BX,BX.Event,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.UI.IconSet,BX.Vue3.Pinia,BX,BX,BX.UI,BX,BX.UI.IconSet,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.UI.Analytics,BX,BX.Humanresources.CompanyStructure));
 //# sourceMappingURL=org-chart.bundle.js.map

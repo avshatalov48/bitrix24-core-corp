@@ -169,6 +169,7 @@ class CrmControlPanel extends CBitrixComponent
 					],
 					['ID' => 'SALES_CENTER_PAYMENT', 'SLIDER_MODE' => true],
 					['ID' => 'SALES_CENTER_DELIVERY', 'SLIDER_MODE' => true],
+					['ID' => 'FEATURES_LIST', 'SLIDER_MODE' => false],
 				],
 			],
 			['ID' => 'RECYCLE_BIN'],

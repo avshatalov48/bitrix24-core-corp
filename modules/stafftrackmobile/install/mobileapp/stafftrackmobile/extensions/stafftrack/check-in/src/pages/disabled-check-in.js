@@ -16,9 +16,6 @@ jn.define('stafftrack/check-in/pages/disabled-check-in', (require, exports, modu
 	const { disabledCheckInIcon } = require('stafftrack/ui');
 	const { FeatureAjax } = require('stafftrack/ajax');
 
-	/**
-	 * @class DisabledCheckInPage
-	 */
 	class DisabledCheckInPage extends PureComponent
 	{
 		constructor(props)
@@ -34,15 +31,12 @@ jn.define('stafftrack/check-in/pages/disabled-check-in', (require, exports, modu
 			return this.props.userInfo?.id || 0;
 		}
 
-		render()
+		get isAdmin()
 		{
-			return View(
-				{},
-				this.renderContent(),
-			);
+			return this.props.isAdmin;
 		}
 
-		renderContent()
+		render()
 		{
 			return Area(
 				{
@@ -87,7 +81,7 @@ jn.define('stafftrack/check-in/pages/disabled-check-in', (require, exports, modu
 						alignItems: 'center',
 					},
 				},
-				this.isUserAdmin() ? this.renderTurnOnButton() : this.renderDepartmentHeadChatButton(),
+				this.isAdmin ? this.renderTurnOnButton() : this.renderDepartmentHeadChatButton(),
 			);
 		}
 
@@ -128,7 +122,7 @@ jn.define('stafftrack/check-in/pages/disabled-check-in', (require, exports, modu
 
 		getDescription()
 		{
-			if (this.props.isAdmin)
+			if (this.isAdmin)
 			{
 				return Loc.getMessage('M_STAFFTRACK_CHECK_IN_SETTINGS_TURNED_OFF_ADMIN');
 			}
@@ -140,7 +134,7 @@ jn.define('stafftrack/check-in/pages/disabled-check-in', (require, exports, modu
 		{
 			const result = [];
 
-			if (!this.props.isAdmin)
+			if (!this.isAdmin)
 			{
 				result.push(Link3({
 					testId: 'stafftrack-check-in-settings-help-link',
@@ -152,11 +146,6 @@ jn.define('stafftrack/check-in/pages/disabled-check-in', (require, exports, modu
 			}
 
 			return result;
-		}
-
-		isUserAdmin()
-		{
-			return this.props.isAdmin;
 		}
 
 		async onDepartmentHeadChatButtonClick()
@@ -187,7 +176,10 @@ jn.define('stafftrack/check-in/pages/disabled-check-in', (require, exports, modu
 		{
 			const { layoutWidget } = this.props;
 
-			(new SettingsPage({ isAdmin: true }).show(layoutWidget));
+			SettingsPage.show({
+				isAdmin: true,
+				parentLayout: layoutWidget,
+			});
 		}
 	}
 

@@ -1,0 +1,14 @@
+<?php
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_MODULE_NOT_INSTALLED_MSGVER_1"] = "Мессенджер коннекторларының модулі орнатылмаған";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_NO_ACTIVE_CONNECTOR"] = "Бұл коннектор белсенді емес";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_NO_CONNECT"] = "Көрсетілген деректермен тестілеу қосылысы орындалмады";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_NO_DATA_SAVE"] = "Сақтау үшін деректер жоқ";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_NO_SAVE"] = "Сақтау кезінде қате туындады. Енгізілген деректердің дұрыстығын тексеріп, қайталап көріңіз";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_OK_CONNECT"] = "Тестілеу қосылысы сәтті өтті";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_OK_DISABLE"] = "Арна өшірілген";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_OK_SAVE"] = "Деректер сәтті сақталды";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_OK_SAVE_MSGVER_1"] = "Арна қосылған";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_OK_SAVE_NEW"] = "Жаңа Subject ID қосылған";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_SESSION_HAS_EXPIRED"] = "Сіздің сессияңыз аяқталды. Нысанды тағы бір мәрте жіберіңіз";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_SUBJECT_ID_PLACEHOLDER"] = "Subject ID #SUBJECT_ID# #PHONE# желіге қосылу #LINE_NAME#";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_SUBJECT_ID_PLACEHOLDER_NO_OL"] = "Subject ID #SUBJECT_ID# #PHONE# ешбір желіге қосылмаған";

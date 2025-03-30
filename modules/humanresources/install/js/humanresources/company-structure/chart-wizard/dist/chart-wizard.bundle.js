@@ -1,11 +1,14 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Humanresources = this.BX.Humanresources || {};
-(function (exports,humanresources_companyStructure_chartStore,humanresources_companyStructure_permissionChecker,humanresources_companyStructure_structureComponents,ui_iconSet_api_core,main_core,ui_iconSet_crm,ui_entitySelector,humanresources_companyStructure_api,ui_analytics,ui_vue3_pinia,humanresources_companyStructure_utils) {
+(function (exports,ui_vue3_pinia,main_loader,main_core,humanresources_companyStructure_permissionChecker,humanresources_companyStructure_structureComponents,ui_iconSet_api_core,ui_iconSet_crm,humanresources_companyStructure_utils,ui_entitySelector,humanresources_companyStructure_api,humanresources_companyStructure_chartStore,ui_analytics) {
 	'use strict';
 
 	const HeadUsers = {
 	  name: 'headUsers',
+	  components: {
+	    UserListActionMenu: humanresources_companyStructure_structureComponents.UserListActionMenu
+	  },
 	  props: {
 	    users: {
 	      type: Array,
@@ -16,6 +19,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      default: true
 	    },
 	    userType: String
+	  },
+	  data() {
+	    return {
+	      headsVisible: false
+	    };
 	  },
 	  created() {
 	    this.headItemsCount = 2;
@@ -30,6 +38,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    placeholderAvatar() {
 	      return '/bitrix/js/humanresources/company-structure/chart-wizard/src/components/tree-preview/images/placeholder-avatar.svg';
+	    },
+	    dropdownItems() {
+	      return this.users.map(user => {
+	        const workPosition = user.workPosition || this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_HEAD_POSITION');
+	        return {
+	          ...user,
+	          workPosition
+	        };
+	      });
+	    },
+	    titleBar() {
+	      return this.userType === this.userTypes.deputy ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_DEPUTY_TITLE') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_HEAD_TITLE');
 	    }
 	  },
 	  methods: {
@@ -58,7 +78,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 			<span
 				v-if="index === 1 && users.length > 2"
 				class="chart-wizard-tree-preview__node_head-rest"
-				>
+				:class="{ '--active': headsVisible }"
+				ref="showMoreHeadUserWizardList"
+				:data-test-id="'hr-company-structure_chart-wizard-tree__preview-' + type + '-rest'"
+				@click.stop="headsVisible = true"
+			>
 					{{'+' + String(users.length - 2)}}
 			</span>
 		</div>
@@ -81,6 +105,16 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				</span>
 			</div>
 		</div>
+
+		<UserListActionMenu
+			v-if="headsVisible"
+			:id="userType === userTypes.deputy ? 'wizard-head-list-popup-deputy' : 'wizard-head-list-popup-head' "
+			:items="dropdownItems"
+			:width="228"
+			:bindElement="$refs.showMoreHeadUserWizardList[0]"
+			@close="headsVisible = false"
+			:titleBar="titleBar"
+		/>
 	`
 	};
 
@@ -90,16 +124,39 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    HeadUsers
 	  },
 	  props: {
-	    department: Object,
 	    name: String,
 	    heads: Array,
 	    userCount: Number,
 	    nodeId: Number
 	  },
+	  data() {
+	    return {
+	      isShowLoader: false
+	    };
+	  },
+	  watch: {
+	    isShowLoader(newValue) {
+	      if (!newValue) {
+	        return;
+	      }
+	      this.$nextTick(() => {
+	        const {
+	          loaderContainer
+	        } = this.$refs;
+	        const loader = new main_loader.Loader({
+	          size: 30
+	        });
+	        loader.show(loaderContainer);
+	      });
+	    }
+	  },
 	  computed: {
 	    departmentData() {
 	      if (this.isExistingDepartment) {
-	        return this.department;
+	        if (!this.isHeadsLoaded) {
+	          this.loadHeads([this.nodeId]);
+	        }
+	        return this.departments.get(this.nodeId);
 	      }
 	      return {
 	        name: this.name,
@@ -115,18 +172,27 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return (this.userCount || 0) - (((_this$heads = this.heads) == null ? void 0 : _this$heads.length) || 0);
 	    },
 	    headUsers() {
-	      return this.departmentData.heads.filter(head => {
+	      var _this$departmentData$;
+	      return (_this$departmentData$ = this.departmentData.heads) == null ? void 0 : _this$departmentData$.filter(head => {
 	        return head.role === humanresources_companyStructure_api.memberRoles.head;
 	      });
 	    },
 	    deputyUsers() {
-	      return this.departmentData.heads.filter(head => {
+	      var _this$departmentData$2;
+	      return (_this$departmentData$2 = this.departmentData.heads) == null ? void 0 : _this$departmentData$2.filter(head => {
 	        return head.role === humanresources_companyStructure_api.memberRoles.deputyHead;
 	      });
 	    },
 	    showInfo() {
 	      return this.nodeId ? humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance().hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.structureView, this.nodeId) : true;
-	    }
+	    },
+	    isHeadsLoaded(departmentId) {
+	      const {
+	        heads
+	      } = this.departments.get(this.nodeId);
+	      return Boolean(heads);
+	    },
+	    ...ui_vue3_pinia.mapState(humanresources_companyStructure_chartStore.useChartStore, ['departments'])
 	  },
 	  methods: {
 	    loc(phraseCode, replacements = {}) {
@@ -136,6 +202,15 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return main_core.Loc.getMessagePlural(phraseCode, count, {
 	        '#COUNT#': count
 	      });
+	    },
+	    async loadHeads(departmentIds) {
+	      const store = humanresources_companyStructure_chartStore.useChartStore();
+	      try {
+	        this.isShowLoader = true;
+	        await store.loadHeads(departmentIds);
+	      } finally {
+	        this.isShowLoader = false;
+	      }
 	    }
 	  },
 	  template: `
@@ -148,10 +223,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					{{departmentData.name}}
 				</p>
 				<HeadUsers
-					v-if="showInfo"
+					v-if="showInfo && headUsers"
 					:users="headUsers"
 					:showPlaceholder="!isExistingDepartment"
 				/>
+				<div v-if="isShowLoader" ref="loaderContainer"></div>
 				<div
 					v-if="showInfo && !isExistingDepartment"
 					class="chart-wizard-tree-preview__node_employees"
@@ -240,12 +316,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 			<TreeNode
 				v-if="rootId"
 				:nodeId="rootId"
-				:department="departments.get(rootId)"
 			>
-				<TreeNode
-					:nodeId="parentId"
-					:department="departments.get(parentId)"
-				>
+				<TreeNode :nodeId="parentId">
 					<TreeNode
 						:name="name"
 						:heads="heads"
@@ -256,7 +328,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 			<TreeNode
 				v-else-if="parentId"
 				:nodeId="parentId"
-				:department="departments.get(parentId)"
 			>
 				<TreeNode
 					:name="name"
@@ -536,7 +607,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    }
 	  },
 	  template: `
-		<div 
+		<div
 			class="chart-wizard__change-save-mode-control-container"
 		>
 			<span>{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_SAVE_MODE_CONTROL_TEXT') }}</span>
@@ -625,7 +696,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	              tag
 	            } = event.getData();
 	            this.selectedUsers.add(tag.id);
-	            this.processTag(tag, role);
+	            this.onSelectorToggle(tag, role);
 	            this.applyData();
 	          },
 	          onTagRemove: event => {
@@ -633,7 +704,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	              tag
 	            } = event.getData();
 	            this.selectedUsers.delete(tag.id);
-	            this.processTag(tag, role);
+	            this.onSelectorToggle(tag, role);
 	            this.applyData();
 	          }
 	        },
@@ -682,7 +753,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	            id: 'user',
 	            options: {
 	              intranetUsersOnly: true,
-	              showInvitationFooter: false
+	              inviteEmployeeLink: true
 	            }
 	          }],
 	          dropdownMode: true,
@@ -702,73 +773,40 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        item.setHidden(hidden);
 	      });
 	    },
-	    processTag(tag, role) {
-	      const methods = {
-	        MEMBER_HEAD: () => this.onHeadToggle(tag, role),
-	        MEMBER_DEPUTY_HEAD: () => this.onHeadToggle(tag, role),
-	        MEMBER_EMPLOYEE: () => this.onEmployeeToggle(tag)
-	      };
-	      methods[role]();
-	    },
-	    getUserData(tag) {
-	      var _customData$get;
-	      const {
-	        id,
-	        avatar,
-	        title,
-	        selector,
-	        link
-	      } = tag;
-	      const dialogItems = selector.dialog.getItems();
-	      const {
-	        customData
-	      } = dialogItems.find(item => item.id === id);
-	      const workPosition = (_customData$get = customData.get('position')) != null ? _customData$get : '';
-	      return {
-	        id,
-	        avatar,
-	        name: title.text,
-	        url: link,
-	        workPosition
-	      };
-	    },
-	    onHeadToggle(tag, role) {
-	      const userData = this.getUserData(tag);
-	      if (tag.rendered) {
-	        if (!this.removedUsers.includes(userData)) {
-	          this.removedUsers = [...this.removedUsers, {
-	            ...userData,
-	            role: humanresources_companyStructure_api.memberRoles.employee
+	    onSelectorToggle(tag, role) {
+	      const item = tag.selector.dialog.getItem(['user', tag.id]);
+	      const userData = humanresources_companyStructure_utils.getUserDataBySelectorItem(item, role);
+	      const isEmployee = role === humanresources_companyStructure_api.memberRoles.employee;
+	      if (!tag.rendered) {
+	        this.removedUsers = this.removedUsers.filter(user => user.id !== userData.id);
+	        if (isEmployee) {
+	          this.departmentEmployees = [...this.departmentEmployees, {
+	            ...userData
+	          }];
+	        } else {
+	          this.departmentHeads = [...this.departmentHeads, {
+	            ...userData
 	          }];
 	        }
+	        this.userCount += 1;
+	        return;
+	      }
+	      const {
+	        preselectedItems = []
+	      } = tag.selector.dialog;
+	      const parsedPreselected = preselectedItems.flat().filter(item => item !== 'user');
+	      if (parsedPreselected.includes(userData.id)) {
+	        this.removedUsers = [...this.removedUsers, {
+	          ...userData,
+	          role
+	        }];
+	      }
+	      if (isEmployee) {
+	        this.departmentEmployees = this.departmentEmployees.filter(employee => employee.id !== tag.id);
+	      } else {
 	        this.departmentHeads = this.departmentHeads.filter(head => head.id !== tag.id);
-	        this.userCount -= 1;
-	        return;
 	      }
-	      this.departmentHeads = [...this.departmentHeads, {
-	        ...userData,
-	        role
-	      }];
-	      this.userCount += 1;
-	    },
-	    onEmployeeToggle(tag) {
-	      const userData = this.getUserData(tag);
-	      if (tag.rendered) {
-	        if (!this.removedUsers.includes(userData)) {
-	          this.removedUsers = [...this.removedUsers, {
-	            ...userData,
-	            role: humanresources_companyStructure_api.memberRoles.employee
-	          }];
-	        }
-	        this.departmentEmployees = this.departmentEmployees.filter(head => head.id !== tag.id);
-	        this.userCount -= 1;
-	        return;
-	      }
-	      this.departmentEmployees = [...this.departmentEmployees, {
-	        ...userData,
-	        role: humanresources_companyStructure_api.memberRoles.employee
-	      }];
-	      this.userCount += 1;
+	      this.userCount -= 1;
 	    },
 	    applyData() {
 	      this.$emit('applyData', {
@@ -789,7 +827,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					<span class="chart-wizard__employee_item-label">
 						{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_HEAD_TITLE')}}
 					</span>
-					<div class="chart-wizard__employee_selector" ref="head-selector"></div>
+					<div
+						class="chart-wizard__employee_selector"
+						ref="head-selector"
+						data-test-id="hr-company-structure_chart-wizard__employees-head-selector"
+					/>
 					<span class="chart-wizard__employee_item-description">
 						{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_HEAD_DESCR')}}
 					</span>
@@ -798,7 +840,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					<span class="chart-wizard__employee_item-label">
 						{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_DEPUTY_TITLE')}}
 					</span>
-					<div class="chart-wizard__employee_selector" ref="deputy-selector"></div>
+					<div
+						class="chart-wizard__employee_selector"
+						ref="deputy-selector"
+						data-test-id="hr-company-structure_chart-wizard__employees-deputy-selector"
+					/>
 					<span class="chart-wizard__employee_item-description">
 						{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_DEPUTY_DESCR')}}
 					</span>
@@ -807,10 +853,17 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					<span class="chart-wizard__employee_item-label">
 						{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_EMPLOYEES_TITLE')}}
 					</span>
-					<div class="chart-wizard__employee_selector" ref="employees-selector"></div>
+					<div
+						class="chart-wizard__employee_selector"
+						ref="employees-selector"
+						data-test-id="hr-company-structure_chart-wizard__employees-employee-selector"
+					/>
 				</div>
 				<div class="chart-wizard__employee_item --change-save-mode-control">
-					<ChangeSaveModeControl v-if="!isEditMode" @saveModeChanged="handleSaveModeChangedChanged"/>
+					<ChangeSaveModeControl
+						v-if="!isEditMode"
+						@saveModeChanged="handleSaveModeChangedChanged"
+					></ChangeSaveModeControl>
 					<div class="chart-wizard__change-save-mode-control-container" v-else>
 						{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_EDIT_WIZARD_EMPLOYEE_SAVE_MODE_TEXT')}}
 					</div>
@@ -976,6 +1029,80 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  }
 	};
 
+	const chartWizardActions = {
+	  createDepartment: departmentData => {
+	    var _parent$children;
+	    const {
+	      departments
+	    } = humanresources_companyStructure_chartStore.useChartStore();
+	    const {
+	      id: departmentId,
+	      parentId
+	    } = departmentData;
+	    const parent = departments.get(parentId);
+	    parent.children = [...((_parent$children = parent.children) != null ? _parent$children : []), departmentId];
+	    departments.set(departmentId, {
+	      ...departmentData,
+	      id: departmentId
+	    });
+	  },
+	  editDepartment: departmentData => {
+	    const {
+	      id,
+	      parentId
+	    } = departmentData;
+	    const {
+	      departments
+	    } = humanresources_companyStructure_chartStore.useChartStore();
+	    departments.set(id, {
+	      ...departmentData
+	    });
+	    const prevParent = [...departments.values()].find(department => {
+	      var _department$children;
+	      return (_department$children = department.children) == null ? void 0 : _department$children.includes(id);
+	    });
+	    if (parentId !== 0 && prevParent.id !== parentId) {
+	      var _newParent$children;
+	      prevParent.children = prevParent.children.filter(childId => childId !== id);
+	      const newParent = departments.get(parentId);
+	      newParent.children = [...((_newParent$children = newParent.children) != null ? _newParent$children : []), id];
+	      departments.set(id, {
+	        ...departmentData,
+	        prevParentId: prevParent.id
+	      });
+	    }
+	  },
+	  moveUsersToRootDepartment: (removedUsers, userMovedToRootIds) => {
+	    const {
+	      departments
+	    } = humanresources_companyStructure_chartStore.useChartStore();
+	    const rootEmployees = removedUsers.filter(user => userMovedToRootIds.includes(user.id));
+	    const rootNode = [...departments.values()].find(department => department.parentId === 0);
+	    departments.set(rootNode.id, {
+	      ...rootNode,
+	      employees: [...(rootNode.employees || []), ...rootEmployees],
+	      userCount: rootNode.userCount + rootEmployees.length
+	    });
+	  },
+	  refreshDepartments: ids => {
+	    const store = humanresources_companyStructure_chartStore.useChartStore();
+	    store.refreshDepartments(ids);
+	  },
+	  tryToAddCurrentDepartment(departmentData, departmentId) {
+	    const store = humanresources_companyStructure_chartStore.useChartStore();
+	    const {
+	      heads,
+	      employees
+	    } = departmentData;
+	    const isCurrentUserAdd = [...heads, ...employees].some(user => {
+	      return user.id === store.userId;
+	    });
+	    if (isCurrentUserAdd) {
+	      store.changeCurrentDepartment(0, departmentId);
+	    }
+	  }
+	};
+
 	const SaveMode = Object.freeze({
 	  moveUsers: 'moveUsers',
 	  addUsers: 'addUsers'
@@ -1112,7 +1239,15 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    filteredSteps() {
 	      return this.visibleSteps.filter(step => step !== 'entities');
 	    },
-	    ...ui_vue3_pinia.mapWritableState(humanresources_companyStructure_chartStore.useChartStore, ['departments'])
+	    rootId() {
+	      const {
+	        id
+	      } = [...this.departments.values()].find(department => {
+	        return department.parentId === 0;
+	      });
+	      return id;
+	    },
+	    ...ui_vue3_pinia.mapState(humanresources_companyStructure_chartStore.useChartStore, ['departments', 'userId', 'currentDepartments'])
 	  },
 	  methods: {
 	    handleBeforeUnload(event) {
@@ -1153,12 +1288,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        this.departmentData.parentId = this.nodeId;
 	        return;
 	      }
-	      const {
-	        id
-	      } = [...this.departments.values()].find(department => {
-	        return department.parentId === 0;
-	      });
-	      this.departmentData.parentId = id;
+	      this.departmentData.parentId = this.rootId;
 	      ui_analytics.sendData({
 	        tool: 'structure',
 	        category: 'structure',
@@ -1185,34 +1315,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        return;
 	      }
 	      this.stepIndex = buttonId === 'back' ? this.stepIndex - 1 : this.stepIndex + 1;
-
-	      // eslint-disable-next-line default-case
-	      switch (this.currentStep.id) {
-	        case 'department':
-	          ui_analytics.sendData({
-	            tool: 'structure',
-	            category: 'structure',
-	            event: 'create_dept_step1',
-	            c_element: this.source
-	          });
-	          break;
-	        case 'employees':
-	          ui_analytics.sendData({
-	            tool: 'structure',
-	            category: 'structure',
-	            event: 'create_dept_step2',
-	            c_element: this.source
-	          });
-	          break;
-	        case 'bindChat':
-	          ui_analytics.sendData({
-	            tool: 'structure',
-	            category: 'structure',
-	            event: 'create_dept_step3',
-	            c_element: this.source
-	          });
-	          break;
-	      }
+	      this.pickStepsAnalitics();
 	    },
 	    close(sendEvent = false) {
 	      this.$emit('close');
@@ -1228,7 +1331,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    onApplyData(data) {
 	      const {
 	        isValid = true,
-	        removedUsers,
+	        removedUsers = [],
 	        ...departmentData
 	      } = data;
 	      this.isValidStep = isValid;
@@ -1238,9 +1341,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          ...departmentData
 	        };
 	      }
-	      if ((removedUsers == null ? void 0 : removedUsers.length) > 0) {
-	        this.removedUsers = removedUsers;
-	      }
+	      this.removedUsers = removedUsers;
 	      if (isValid) {
 	        this.shouldErrorHighlight = false;
 	      }
@@ -1300,7 +1401,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return WizardAPI.saveUsers(departmentId, ids, parentId);
 	    },
 	    async create() {
-	      var _parent$children;
 	      const {
 	        name,
 	        parentId,
@@ -1315,14 +1415,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        accessCode = newDepartment.accessCode;
 	        const data = await this.getUsersPromise(departmentId);
 	        if (data != null && data.updatedDepartmentIds) {
-	          void humanresources_companyStructure_utils.refreshDepartments(data.updatedDepartmentIds);
+	          chartWizardActions.refreshDepartments(data.updatedDepartmentIds);
+	        } else {
+	          chartWizardActions.tryToAddCurrentDepartment(this.departmentData, departmentId);
 	        }
 	      } finally {
 	        this.waiting = false;
 	      }
-	      const parent = this.departments.get(parentId);
-	      parent.children = [...((_parent$children = parent.children) != null ? _parent$children : []), departmentId];
-	      this.departments.set(departmentId, {
+	      chartWizardActions.createDepartment({
 	        ...this.departmentData,
 	        id: departmentId,
 	        accessCode
@@ -1364,64 +1464,26 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      this.waiting = true;
 	      const usersPromise = this.entity === 'employees' ? this.getUsersPromise(id) : Promise.resolve();
 	      const departmentPromise = this.entity === 'department' ? WizardAPI.updateDepartment(id, targetNodeId, name, description) : Promise.resolve();
-
-	      // eslint-disable-next-line default-case
-	      switch (this.entity) {
-	        case 'department':
-	          ui_analytics.sendData({
-	            tool: 'structure',
-	            category: 'structure',
-	            event: 'edit_dept_name',
-	            c_element: this.source,
-	            p1: (currentNode == null ? void 0 : currentNode.parentId) === parentId ? 'editHead_N' : 'editHeadDept_Y',
-	            p2: (currentNode == null ? void 0 : currentNode.name) === name ? 'editName_N' : 'editName_Y'
-	          });
-	          break;
-	        case 'employees':
-	          // eslint-disable-next-line no-case-declarations
-	          const {
-	            headsIds,
-	            deputiesIds,
-	            employeesIds
-	          } = this.calculateEmployeeIds();
-	          ui_analytics.sendData({
-	            tool: 'structure',
-	            category: 'structure',
-	            event: 'edit_dept_employee',
-	            c_element: this.source,
-	            p2: `headAmount_${headsIds.length}`,
-	            p3: `secondHeadAmount_${deputiesIds.length}`,
-	            p4: `employeeAmount_${employeesIds.length}`
-	          });
-	          break;
-	      }
+	      this.pickEditAnalitics(id, parentId);
 	      try {
-	        var _usersResponse$userMo;
 	        const [usersResponse] = await Promise.all([usersPromise, departmentPromise]);
-	        const userMovedToRootIds = (_usersResponse$userMo = usersResponse == null ? void 0 : usersResponse.userMovedToRootIds) != null ? _usersResponse$userMo : 0;
-	        if ((userMovedToRootIds == null ? void 0 : userMovedToRootIds.length) > 0 && this.removedUsers.length > 0) {
-	          const rootEmployees = this.removedUsers.filter(user => userMovedToRootIds.includes(user.id));
-	          const rootNode = [...this.departments.values()].find(department => department.parentId === 0);
-	          rootNode.employees = [...(rootNode.employees || []), ...rootEmployees];
-	          rootNode.userCount += rootEmployees.length;
+	        let userMovedToRootIds = [];
+	        if (this.removedUsers.length > 0) {
+	          var _usersResponse$userMo;
+	          userMovedToRootIds = (_usersResponse$userMo = usersResponse == null ? void 0 : usersResponse.userMovedToRootIds) != null ? _usersResponse$userMo : [];
+	          if (userMovedToRootIds.length > 0) {
+	            chartWizardActions.moveUsersToRootDepartment(this.removedUsers, userMovedToRootIds);
+	          }
 	        }
-	        this.departments.set(id, {
-	          ...this.departmentData
-	        });
-	        const prevParent = [...this.departments.values()].find(department => {
-	          var _department$children;
-	          return (_department$children = department.children) == null ? void 0 : _department$children.includes(id);
-	        });
-	        if (parentId !== 0 && prevParent.id !== parentId) {
-	          var _newParent$children;
-	          prevParent.children = prevParent.children.filter(childId => childId !== id);
-	          const newParent = this.departments.get(parentId);
-	          newParent.children = [...((_newParent$children = newParent.children) != null ? _newParent$children : []), id];
-	          this.departments.set(id, {
-	            ...this.departmentData,
-	            prevParentId: prevParent.id
-	          });
+	        const store = humanresources_companyStructure_chartStore.useChartStore();
+	        if (userMovedToRootIds.includes(this.userId)) {
+	          store.changeCurrentDepartment(id, this.rootId);
+	        } else if (this.removedUsers.some(user => user.id === this.userId)) {
+	          store.changeCurrentDepartment(id);
+	        } else {
+	          chartWizardActions.tryToAddCurrentDepartment(this.departmentData, id);
 	        }
+	        chartWizardActions.editDepartment(this.departmentData);
 	      } catch (e) {
 	        console.error(e);
 	        return;
@@ -1436,6 +1498,71 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    handleSaveModeChanged(actionId) {
 	      this.saveMode = actionId;
+	    },
+	    pickEditAnalitics(departmentId, parentId) {
+	      const currentNode = this.departments.get(departmentId);
+	      switch (this.entity) {
+	        case 'department':
+	          ui_analytics.sendData({
+	            tool: 'structure',
+	            category: 'structure',
+	            event: 'edit_dept_name',
+	            c_element: this.source,
+	            p1: (currentNode == null ? void 0 : currentNode.parentId) === parentId ? 'editHead_N' : 'editHeadDept_Y',
+	            p2: (currentNode == null ? void 0 : currentNode.name) === name ? 'editName_N' : 'editName_Y'
+	          });
+	          break;
+	        case 'employees':
+	          {
+	            const {
+	              headsIds,
+	              deputiesIds,
+	              employeesIds
+	            } = this.calculateEmployeeIds();
+	            ui_analytics.sendData({
+	              tool: 'structure',
+	              category: 'structure',
+	              event: 'edit_dept_employee',
+	              c_element: this.source,
+	              p2: `headAmount_${headsIds.length}`,
+	              p3: `secondHeadAmount_${deputiesIds.length}`,
+	              p4: `employeeAmount_${employeesIds.length}`
+	            });
+	            break;
+	          }
+	        default:
+	          break;
+	      }
+	    },
+	    pickStepsAnalitics() {
+	      switch (this.currentStep.id) {
+	        case 'department':
+	          ui_analytics.sendData({
+	            tool: 'structure',
+	            category: 'structure',
+	            event: 'create_dept_step1',
+	            c_element: this.source
+	          });
+	          break;
+	        case 'employees':
+	          ui_analytics.sendData({
+	            tool: 'structure',
+	            category: 'structure',
+	            event: 'create_dept_step2',
+	            c_element: this.source
+	          });
+	          break;
+	        case 'bindChat':
+	          ui_analytics.sendData({
+	            tool: 'structure',
+	            category: 'structure',
+	            event: 'create_dept_step3',
+	            c_element: this.source
+	          });
+	          break;
+	        default:
+	          break;
+	      }
 	    }
 	  },
 	  template: `
@@ -1523,5 +1650,5 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 
 	exports.ChartWizard = ChartWizard;
 
-}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.UI.IconSet,BX,BX,BX.UI.EntitySelector,BX.Humanresources.CompanyStructure,BX.UI.Analytics,BX.Vue3.Pinia,BX.Humanresources.CompanyStructure));
+}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Vue3.Pinia,BX,BX,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.UI.IconSet,BX,BX.Humanresources.CompanyStructure,BX.UI.EntitySelector,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.UI.Analytics));
 //# sourceMappingURL=chart-wizard.bundle.js.map

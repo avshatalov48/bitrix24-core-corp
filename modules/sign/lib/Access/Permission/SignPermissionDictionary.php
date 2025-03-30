@@ -37,7 +37,7 @@ class SignPermissionDictionary extends \Bitrix\Main\Access\Permission\Permission
 		return IterationHelper::any(self::getList(), fn($value, $id) => $permission === $id);
 	}
 
-	private static function isVariable($permissionId): bool
+	public static function isVariable($permissionId): bool
 	{
 		return in_array($permissionId, [
 			self::SIGN_MY_SAFE_DOCUMENTS,

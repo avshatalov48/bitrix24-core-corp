@@ -410,6 +410,11 @@ class PromptService
 
 	public function getAccessiblePrompt(int $userId, string $lang, string $promptCode): ?Item
 	{
+		if (empty($promptCode))
+		{
+			return null;
+		}
+
 		$prompts = $this->promptRepository->getAccessiblePromptList(
 			userId: $userId,
 			lang: $lang,

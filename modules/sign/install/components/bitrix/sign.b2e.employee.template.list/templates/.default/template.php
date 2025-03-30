@@ -1,11 +1,11 @@
 <?php
 
-use Bitrix\Main\Application;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Sign\Config\Feature;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Sign\Service\Container;
-use Bitrix\Sign\Service\Sign\UrlGeneratorService;
 use Bitrix\UI\Toolbar\ButtonLocation;
+use Bitrix\Sign\Type\Document\InitiatedByType;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -39,7 +39,6 @@ $APPLICATION->SetTitle((string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_
 	'GRID_ID' => $arParams['GRID_ID'] ?? '',
 	'FILTER_ID' => $arParams['FILTER_ID'] ?? '',
 	'FILTER' => $arParams['FILTER_FIELDS'] ?? [],
-	'FILTER_ROWS' => $arParams['DEFAULT_FILTER_FIELDS'] ?? [],
 	'FILTER_PRESETS' => $arParams['FILTER_PRESETS'] ?? [],
 	'DISABLE_SEARCH' => false,
 	'ENABLE_LIVE_SEARCH' => true,
@@ -77,6 +76,16 @@ if (($arResult['CAN_ADD_TEMPLATE'] ?? false) && ($arResult['CAN_EXPORT_BLANK'] ?
 		ButtonLocation::AFTER_FILTER,
 	);
 }
+
+$getInitiatedByTypeTemplate = static function (?InitiatedByType $InitiatedByType): ?string
+{
+	return match ($InitiatedByType)
+	{
+		InitiatedByType::EMPLOYEE => Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_COLUMN_TYPE_FROM_EMPLOYEE'),
+		InitiatedByType::COMPANY => Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_COLUMN_TYPE_FROM_COMPANY'),
+		default => null,
+	};
+};
 
 $getUserInfoTemplate = static function (
 	?int $userId,
@@ -208,7 +217,7 @@ foreach ($arResult["DOCUMENT_TEMPLATES"] as $templatesData)
 				$isVisibilitySwitcherDisabled,
 				$templatesData['access']['canEdit'] ?? false
 			),
-			'COMPANY' => $templatesData['columns']['COMPANY'],
+			'COMPANY' => htmlspecialcharsbx($templatesData['columns']['COMPANY']),
 		],
 	];
 	if ($templatesData['access']['canEdit'] ?? false)
@@ -221,6 +230,15 @@ foreach ($arResult["DOCUMENT_TEMPLATES"] as $templatesData)
 			,
 		];
 	}
+
+	if ($templatesData['access']['canCreate'] ?? false)
+	{
+		$gridRow['actions'][] = [
+			'text' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_ACTION_COPY'),
+			'onclick' => "templateGrid.copyTemplate({$templateId})",
+		];
+	}
+
 	if ($templatesData['access']['canDelete'] ?? false)
 	{
 		$gridRow['actions'][] = [
@@ -235,6 +253,11 @@ foreach ($arResult["DOCUMENT_TEMPLATES"] as $templatesData)
 			'text' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_ACTION_EXPORT'),
 			'onclick' => "templateGrid.exportBlank({$templateId})",
 		];
+	}
+
+	if (Feature::instance()->isSenderTypeAvailable())
+	{
+		$gridRow['data']['TYPE'] = $getInitiatedByTypeTemplate($templatesData['columns']['TYPE']);
 	}
 
 	$gridRows[] = $gridRow;

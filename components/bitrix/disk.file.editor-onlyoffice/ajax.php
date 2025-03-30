@@ -92,7 +92,7 @@ class DiskFileEditorOnlyOfficeController extends Engine\Controller
 		];
 	}
 
-	public function markAsStillWorkingSessionAction(OnlyOffice\Models\DocumentSession $documentSession): ?array
+	public function markAsStillWorkingSessionAction(Disk\Document\Models\DocumentSession $documentSession): ?array
 	{
 		if ($documentSession->isView())
 		{
@@ -117,7 +117,7 @@ class DiskFileEditorOnlyOfficeController extends Engine\Controller
 		];
 	}
 
-	public function getUserInfoAction(int $userId, string $infoToken, OnlyOffice\Models\DocumentSession $documentSession): ?array
+	public function getUserInfoAction(int $userId, string $infoToken, Disk\Document\Models\DocumentSession $documentSession): ?array
 	{
 		$validToken = UserInfoToken::checkTimeLimitedToken($infoToken, $userId, $documentSession->getObject()->getRealObjectId());
 		if (!$validToken)
@@ -144,7 +144,7 @@ class DiskFileEditorOnlyOfficeController extends Engine\Controller
 		];
 	}
 
-	public function getSliderContentAction(OnlyOffice\Models\DocumentSession $documentSession, int $editorMode = ConfigBuilder::VISUAL_MODE_USUAL): HttpResponse
+	public function getSliderContentAction(Disk\Document\Models\DocumentSession $documentSession, int $editorMode = ConfigBuilder::VISUAL_MODE_USUAL): HttpResponse
 	{
 		$content = $GLOBALS['APPLICATION']->includeComponent(
 			'bitrix:ui.sidepanel.wrapper',

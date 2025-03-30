@@ -59,26 +59,26 @@ class TokensTable extends Entity\DataManager
 	 */
 	public static function getMap()
 	{
-		return array(
-			new Entity\StringField('TOKEN',array(
+		return [
+			new Entity\StringField('TOKEN', [
 				'primary' => true,
 				'default_value' => Random::getString(static::DEFAULT_TOKEN_LENGTH),
 				'title' => Loc::getMessage('TOKEN_FIELD'),
-			)),
-			new Entity\IntegerField('USER_ID',array(
+			]),
+			new Entity\IntegerField('USER_ID', [
 				'required' => true,
 				'title' => Loc::getMessage('TOKEN_OWNER_FIELD'),
-			)),
-			new Entity\DatetimeField('EXPIRED_AT',array(
+			]),
+			new Entity\DatetimeField('EXPIRED_AT', [
 				'default_value' => self::getTokenNewValidTimeInterval(),
 				'title' => Loc::getMessage('TOKEN_EXPIRED_AT_FIELD'),
-			)),
+			]),
 			new Entity\ReferenceField(
 				'USER',
 				'Bitrix\Main\UserTable',
-				array('=this.USER_ID' => 'ref.ID')
+				['=this.USER_ID' => 'ref.ID']
 			)
-		);
+		];
 	}
 
 
@@ -88,9 +88,9 @@ class TokensTable extends Entity\DataManager
 	 */
 	public static function getToken($userId)
 	{
-		$result = static::getList(array(
+		$result = static::getList([
 			'filter' => array('USER_ID' => $userId),
-		))->fetchRaw();
+		])->fetchRaw();
 
 		return !empty($result['TOKEN']) ? $result['TOKEN']: null;
 	}
@@ -105,9 +105,14 @@ class TokensTable extends Entity\DataManager
 	{
 		$params['USER_ID'] = $userId;
 		if ($token)
+		{
 			$params['TOKEN'] = $token;
+		}
 		if ($expiredAt)
+		{
 			$params['EXPIRED_AT'] = $expiredAt;
+		}
+
 		return static::add($params)->getData();
 	}
 
@@ -123,6 +128,7 @@ class TokensTable extends Entity\DataManager
 		$token = $newToken ?: Random::getString(static::DEFAULT_TOKEN_LENGTH);
 		$expiredAt = $expiredAt ?: self::getTokenNewValidTimeInterval();
 		static::delete($oldToken);
+
 		return static::createToken($userId, $token, $expiredAt);
 	}
 
@@ -133,13 +139,12 @@ class TokensTable extends Entity\DataManager
 	public static function isTokenValid($token)
 	{
 		if (!$token)
-			return false;
-		$result = static::getById($token)->fetch();
-		if ($result && $result['EXPIRED_AT'] >= self::getTokenLastValidTime())
 		{
-			return true;
+			return false;
 		}
-		return false;
+		$result = static::getById($token)->fetch();
+
+		return $result && $result['EXPIRED_AT'] >= self::getTokenLastValidTime();
 	}
 
 	/**
@@ -148,10 +153,10 @@ class TokensTable extends Entity\DataManager
 	 */
 	public static function clearDeprecatedTokens()
 	{
-		$deprecatedTokens = static::getList(array(
-			'select' => array('TOKEN'),
-			'filter' => array('<EXPIRED_AT' => self::getTokenLastValidTime())
-		));
+		$deprecatedTokens = static::getList([
+			'select' => ['TOKEN'],
+			'filter' => ['<EXPIRED_AT' => self::getTokenLastValidTime()]
+		]);
 		while ($result = $deprecatedTokens->fetch())
 		{
 			static::delete($result['TOKEN']);
@@ -163,8 +168,7 @@ class TokensTable extends Entity\DataManager
 	 */
 	private static function getTokenLastValidTime()
 	{
-		$currentTime = new DateTime();
-		return $currentTime;
+		return new DateTime();
 	}
 
 	/**
@@ -172,7 +176,6 @@ class TokensTable extends Entity\DataManager
 	 */
 	private static function getTokenNewValidTimeInterval()
 	{
-		$currentTime = new DateTime();
-		return $currentTime->add(static::TOKEN_AVAILABLE_INTERVAL);
+		return (new DateTime())->add(static::TOKEN_AVAILABLE_INTERVAL);
 	}
 }

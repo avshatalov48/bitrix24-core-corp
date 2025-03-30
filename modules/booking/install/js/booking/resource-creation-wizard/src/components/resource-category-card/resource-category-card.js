@@ -1,13 +1,19 @@
-import { mapMutations } from 'ui.vue3.vuex';
-
 import { HelpDesk, Model } from 'booking.const';
 import type { ResourceCreationType } from 'booking.model.resource-creation-wizard';
-import { helpDesk } from 'booking.lib.help-desk';
+import { HelpDeskLoc } from 'booking.component.help-desk-loc';
+
 import { ResourceType } from './resource-type/resource-type';
 import './resource-category-card.css';
 
 export const ResourceCategoryCard = {
 	name: 'ResourceCategoryCard',
+	setup(): { code: string, anchorCode: string }
+	{
+		return {
+			code: HelpDesk.ResourceType.code,
+			anchorCode: HelpDesk.ResourceType.anchorCode,
+		};
+	},
 	computed: {
 		resourceTypes(): ResourceCreationType[]
 		{
@@ -15,38 +21,17 @@ export const ResourceCategoryCard = {
 		},
 	},
 	methods: {
-		...mapMutations(
-			Model.ResourceCreationWizard,
-			['updateResource', 'updateFetching'],
-		),
-		loadResourceTypes()
-		{
-			this.updateFetching(true);
-
-			setTimeout(() => {
-				this.updateFetching(false);
-			}, 1);
-		},
 		async selectResourceType({ relatedResourceTypeId }: ResourceCreationType): Promise<void>
 		{
-			this.updateResource({
+			await this.$store.dispatch(`${Model.ResourceCreationWizard}/updateResource`, {
 				typeId: relatedResourceTypeId,
 			});
-			await this.$store.dispatch(`${Model.ResourceCreationWizard}/nextStep`);
+
+			void this.$store.dispatch(`${Model.ResourceCreationWizard}/nextStep`);
 		},
-		showHelpDesk(): void
-		{
-			helpDesk.show(
-				HelpDesk.ResourceType.code,
-				HelpDesk.ResourceType.anchorCode,
-			);
-		},
-	},
-	beforeMount()
-	{
-		this.loadResourceTypes();
 	},
 	components: {
+		HelpDeskLoc,
 		ResourceType,
 	},
 	template: `
@@ -55,15 +40,11 @@ export const ResourceCategoryCard = {
 				<div class="resource-category-card__header__title">
 					{{ loc('BRCW_CHOOSE_CATEGORY') }}
 				</div>
-				<div class="booking--resource-category-card__header__sub-title">
-					{{ loc('BRCW_CHOOSE_CATEGORY_DESCRIPTION') }}
-					<span
-						class="booking--rcw--more"
-						@click="showHelpDesk"
-					>
-						{{ loc('BRCW_CHOOSE_CATEGORY_DESCRIPTION_MORE') }}
-					</span>
-				</div>
+				<HelpDeskLoc
+					:message="loc('BRCW_CHOOSE_CATEGORY_DESCRIPTION_MSGVER_1')"
+					:code="code"
+					:anchor="anchorCode"
+				/>
 			</div>
 			<div class="resource-category-card__content resource-creation-wizard__form">
 				<ResourceType

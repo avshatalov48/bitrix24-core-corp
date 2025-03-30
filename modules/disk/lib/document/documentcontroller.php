@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Document;
 
+use Bitrix\Disk\Analytics\DiskAnalytics;
 use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Desktop;
 use Bitrix\Disk\Driver;
@@ -16,6 +17,7 @@ use Bitrix\Disk\ShowSession;
 use Bitrix\Disk\TypeFile;
 use Bitrix\Disk\Ui;
 use Bitrix\Disk\Version;
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 
@@ -495,6 +497,10 @@ class DocumentController extends Internals\Controller
 			$this->errorCollection->add($folder->getErrors());
 			$this->sendJsonErrorResponse();
 		}
+
+		Application::getInstance()->addBackgroundJob(function () use ($newFile) {
+			DiskAnalytics::sendCreationFileThroughExternalServicesEvent($newFile, $this->documentHandler);
+		});
 
 		$defaultHandlerForView = Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
 		if($this->documentHandler instanceof GoogleHandler && $defaultHandlerForView instanceof GoogleViewerHandler)

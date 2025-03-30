@@ -18,6 +18,11 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-databa
 	 */
 	class SyncFillerDatabase extends SyncFillerBase
 	{
+		subscribeEvents()
+		{
+			this.emitter.on(EventType.sync.requestResultReceived, this.onSyncRequestResultReceive);
+		}
+
 		/**
 		 * @param {object} data
 		 * @param {string} data.uuid

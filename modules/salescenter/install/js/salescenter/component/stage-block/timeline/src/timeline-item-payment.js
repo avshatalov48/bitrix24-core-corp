@@ -1,5 +1,17 @@
+import { CurrencyCore } from 'currency.currency-core';
+import { Tag } from 'main.core';
+
 const TimeLineItemPaymentBlock = {
 	props: ['item'],
+	computed:
+		{
+			formattedSum()
+			{
+				const element = Tag.render`<span class="salescenter-app-payment-by-sms-timeline-content-sum">${this.item.sum}</span>`;
+
+				return CurrencyCore.getPriceControl(element, this.item.currencyCode);
+			},
+		},
 	template: `
 		<div class="salescenter-app-payment-by-sms-timeline-item salescenter-app-payment-by-sms-timeline-item-payment"
 			:class="{
@@ -14,12 +26,7 @@ const TimeLineItemPaymentBlock = {
 	
 			<div class="salescenter-app-payment-by-sms-timeline-content">
 				<span class="salescenter-app-payment-by-sms-timeline-content-price">
-					<span v-html="item.sum"></span>
-					<span
-						class="salescenter-app-payment-by-sms-timeline-content-price-cur"
-						:class="{ 'salescenter-app-payment-by-sms-timeline-content-price-cur-ruble': item.currencyCode === 'RUB' }"
-						v-html="item.currency">
-					</span>
+					<span class="salescenter-app-payment-by-sms-timeline-content-price-cur" v-html="formattedSum"></span>
 				</span>
 				<span class="salescenter-app-payment-by-sms-timeline-content-text-strong">
 					{{item.title}}

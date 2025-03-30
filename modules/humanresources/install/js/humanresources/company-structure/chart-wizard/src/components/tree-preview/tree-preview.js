@@ -70,12 +70,8 @@ export const TreePreview = {
 			<TreeNode
 				v-if="rootId"
 				:nodeId="rootId"
-				:department="departments.get(rootId)"
 			>
-				<TreeNode
-					:nodeId="parentId"
-					:department="departments.get(parentId)"
-				>
+				<TreeNode :nodeId="parentId">
 					<TreeNode
 						:name="name"
 						:heads="heads"
@@ -86,7 +82,6 @@ export const TreePreview = {
 			<TreeNode
 				v-else-if="parentId"
 				:nodeId="parentId"
-				:department="departments.get(parentId)"
 			>
 				<TreeNode
 					:name="name"

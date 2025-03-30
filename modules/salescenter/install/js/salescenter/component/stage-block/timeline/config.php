@@ -8,8 +8,9 @@ return [
 	'css' => 'dist/timeline.bundle.css',
 	'js' => 'dist/timeline.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
 		'ui.vue',
+		'currency.currency-core',
+		'main.core',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

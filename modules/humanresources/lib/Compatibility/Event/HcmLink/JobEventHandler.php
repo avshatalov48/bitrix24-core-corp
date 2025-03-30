@@ -18,6 +18,7 @@ class JobEventHandler
 			'params' => [
 				'jobId' => $job->id,
 				'status' => $job->status->value,
+				'finishedAt' => $job->finishedAt
 			],
 		]);
 	}

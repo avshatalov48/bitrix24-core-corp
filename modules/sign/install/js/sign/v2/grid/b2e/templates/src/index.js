@@ -110,7 +110,7 @@ export class Templates
 		switcherNode.setAttribute('title', title);
 	}
 
-	#sendActionStateAnalytics(checked, templateId): void
+	#sendActionStateAnalytics(checked: boolean, templateId: number): void
 	{
 		this.#analytics.send({
 			category: 'templates',
@@ -186,5 +186,24 @@ export class Templates
 		a.click();
 		window.URL.revokeObjectURL(url);
 		Dom.remove(a);
+	}
+
+	async copyTemplate(templateId: number): Promise<void>
+	{
+		try
+		{
+			await this.#api.copyTemplate(templateId);
+			await this.reload();
+			window.top.BX.UI.Notification.Center.notify({
+				content: Loc.getMessage('SIGN_TEMPLATE_GRID_COPY_HINT_SUCCESS'),
+			});
+		}
+		catch (error)
+		{
+			console.error('Error copying template:', error);
+			window.top.BX.UI.Notification.Center.notify({
+				content: Loc.getMessage('SIGN_TEMPLATE_GRID_COPY_HINT_FAIL'),
+			});
+		}
 	}
 }

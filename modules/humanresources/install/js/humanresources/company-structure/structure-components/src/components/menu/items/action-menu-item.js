@@ -1,6 +1,6 @@
-import "./styles/action-menu-item.css";
+import './styles/action-menu-item.css';
 
-const SupportedColors = ['red'];
+const SupportedColors = new Set(['red']);
 
 export const ActionMenuItem = {
 	name: 'ActionMenuItem',
@@ -28,7 +28,7 @@ export const ActionMenuItem = {
 	computed: {
 		colorClass(): string
 		{
-			if (SupportedColors.includes(this.color))
+			if (SupportedColors.has(this.color))
 			{
 				return `--${this.color}`;
 			}
@@ -49,4 +49,4 @@ export const ActionMenuItem = {
 			</div>
 		</div>
 	`,
-}
+};

@@ -2,8 +2,13 @@
 
 namespace Bitrix\Disk\Document\OnlyOffice;
 
+use Bitrix\Disk\Analytics\DiskAnalytics;
+use Bitrix\Disk\Analytics\Enum\DocumentHandlerType;
+use Bitrix\Disk\Document\Flipchart\BoardService;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Folder;
+use Bitrix\Disk\User;
+use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 
@@ -34,7 +39,6 @@ final class CreateBlankDocumentScenario
 	public function createBlank(string $typeFile, Folder $targetFolder): Result
 	{
 		$result = new Result();
-		$fileData = new BlankFileData($typeFile, $this->language);
 
 		$storage = $targetFolder->getStorage();
 		if (!$targetFolder->canAdd($storage->getSecurityContext($this->userId)))
@@ -43,6 +47,13 @@ final class CreateBlankDocumentScenario
 
 			return $result;
 		}
+
+		if ($typeFile === 'board')
+		{
+			return BoardService::createNewDocument(User::loadById($this->userId), $targetFolder);
+		}
+
+		$fileData = new BlankFileData($typeFile, $this->language);
 
 		$newFile = $targetFolder->uploadFile(
 			\CFile::makeFileArray($fileData->getSrc()),
@@ -60,6 +71,10 @@ true
 
 			return $result;
 		}
+
+		Application::getInstance()->addBackgroundJob(function () use ($newFile) {
+			DiskAnalytics::sendCreationFileEvent($newFile, DocumentHandlerType::Bitrix24);
+		});
 
 		$result->setData([
 			'file' => $newFile,

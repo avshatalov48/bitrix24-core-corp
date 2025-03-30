@@ -793,7 +793,7 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 }
 
 .diskuf-files-entity .feed-con-file-icon {
-	background: url("images/files-sprite-2.png?5") no-repeat 0 -454px;
+	background: url(./images/disk-blank.svg) 0 0 no-repeat !important;
 	display: block;
 	height: 16px;
 	left: 0;
@@ -905,23 +905,23 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 }
 
 .diskuf-files-entity .feed-file-icon-bmp {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -128px !important;
+	background: url(./images/disk-file.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-css {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -32px !important;
+	background: url(./images/disk-file.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-csv {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -224px !important;
+	background: url(./images/disk-csv.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-dib {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -32px !important;
+	background: url(./images/disk-file.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-doc {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -288px !important;
+	background: url(./images/disk-doc.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-docp {
@@ -929,67 +929,67 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 }
 
 .diskuf-files-entity .feed-file-icon-docx {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -288px !important;
+	background: url(./images/disk-docx.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-gif {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -128px !important;
+	background: url(./images/disk-img.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-htm {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -32px !important;
+	background: url(./images/disk-file.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-html {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -32px !important;
+	background: url(./images/disk-file.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-jfif {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -128px !important;
+	background: url(./images/disk-img.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-jpe {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -128px !important;
+	background: url(./images/disk-img.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-jpeg {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -128px !important;
+	background: url(./images/disk-img.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-jpg {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -128px !important;
+	background: url(./images/disk-img.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-js {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -32px !important;
+	background: url(./images/disk-file.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-pdf {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -415px !important;
+	background: url(./images/disk-pdf.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-php {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -32px !important;
+	background: url(./images/disk-php.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-png {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -128px !important;
+	background: url(./images/disk-img.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-ppt {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -256px !important;
+	background: url(./images/disk-ppt.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-pptp {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -256px !important;
+	background: url(./images/disk-ppt.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-pptx {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -256px !important;
+	background: url(./images/disk-pptx.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-rar {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -96px !important;
+	background: url(./images/disk-rar.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-rtf {
@@ -997,39 +997,44 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 }
 
 .diskuf-files-entity .feed-file-icon-swf {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -32px !important;
+	background: url(./images/disk-file.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-tif {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -128px !important;
+	background: url(./images/disk-img.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-tiff {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -128px !important;
+	background: url(./images/disk-img.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-txt {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -192px !important;
+	background: url(./images/disk-txt.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-xls {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -224px !important;
+	background: url(./images/disk-xls.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-xlsp {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -224px !important;
+	background: url(./images/disk-xls.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-xlsx {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -224px !important;
+	background: url(./images/disk-xls.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-xml {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -32px !important;
+	background: url(./images/disk-file.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-entity .feed-file-icon-zip {
-	background: url(images/files-sprite-2.png?5) no-repeat 0 -96px !important;
+	background: url(./images/disk-zip.svg) 0 0 no-repeat !important;
+}
+
+.diskuf-files-entity .feed-file-icon-flp,
+.diskuf-files-entity .feed-file-icon-board {
+	background: url(./images/disk-board-icon.svg) 0 0 no-repeat !important;
 }
 
 .diskuf-files-toggle-container {

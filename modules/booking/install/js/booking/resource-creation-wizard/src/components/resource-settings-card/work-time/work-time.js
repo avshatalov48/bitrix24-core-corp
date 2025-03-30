@@ -74,7 +74,7 @@ export const WorkTime = {
 			/>
 			<TextLayout
 				type="WorkTime"
-				:text="loc('BRCW_SETTINGS_CARD_WORK_TIME_TEXT')"
+				:text="loc('BRCW_SETTINGS_CARD_WORK_TIME_TEXT_MSGVER_1')"
 			/>
 			<WorkTimeSelector
 				:initialSlotRanges="initialSlotRanges"

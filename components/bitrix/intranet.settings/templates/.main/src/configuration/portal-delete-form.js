@@ -11,9 +11,11 @@ export class PortalDeleteForm extends EventEmitter
 	#container: ?HTMLElement;
 	confirmButton;
 	bodyClass: string;
+	#verificationOptions: Object;
 
-	constructor() {
+	constructor(verificationOptions: Object) {
 		super();
+		this.#verificationOptions = verificationOptions;
 		this.setEventNamespace('BX.Intranet.Settings:PortalDeleteForm');
 	}
 
@@ -26,7 +28,7 @@ export class PortalDeleteForm extends EventEmitter
 		`;
 
 		return Tag.render`
-			${Loc.getMessage('INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL', {
+			${Loc.getMessage('INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_MSGVER_1', {
 				'#MORE_DETAILS#': moreDetails,
 			})}
 		`;
@@ -34,7 +36,7 @@ export class PortalDeleteForm extends EventEmitter
 
 	getBodyClass(): string
 	{
-		return PortalDeleteFormTypes.DANGER;
+		return PortalDeleteFormTypes.WARNING;
 	}
 
 	getConfirmButtonText(): ?string
@@ -71,15 +73,14 @@ export class PortalDeleteForm extends EventEmitter
 
 	onConfirmEventHandler(): void
 	{
-		this.sendChangeFormEvent('checkword')
-	}
-
-	sendChangeFormEvent(type: ?string): void
-	{
-		this.emit(
-			'updateForm',
-			new BaseEvent({data: { type: type ?? null } })
-		);
+		this.getConfirmButton().setWaiting(true);
+		top.BX.Runtime.loadExtension('bitrix24.portal-delete')
+			.then((exports) => {
+				const { PortalDelete } = exports;
+				const portalDelete = new PortalDelete(this.#verificationOptions);
+				portalDelete.showCheckwordPopup();
+				this.getConfirmButton().setWaiting(false);
+			});
 	}
 
 	getButtonContainer(): ?HTMLElement
@@ -87,7 +88,6 @@ export class PortalDeleteForm extends EventEmitter
 		return Tag.render`
 			<span class="intranet-settings__portal-delete-form_buttons-wrapper">
 				${this.getConfirmButton().getContainer()}
-				${this.getCancelButton().getContainer()}
 			</span>
 		`;
 	}
@@ -115,21 +115,11 @@ export class PortalDeleteForm extends EventEmitter
 		return this.confirmButton;
 	}
 
-	getCancelButton(): BX.UI.Button
+	sendChangeFormEvent(type: ?string): void
 	{
-		return new BX.UI.Button({
-			text: Loc.getMessage('INTRANET_SETTINGS_CANCEL_ACTION_DELETE_PORTAL'),
-			noCaps: true,
-			round: true,
-			className: '--cancel',
-			events: {
-				click: () => {
-					this.emit('closeForm');
-				}
-			},
-			props: {
-				'data-bx-role': 'delete-portal-cancel',
-			},
-		});
+		this.emit(
+			'updateForm',
+			new BaseEvent({data: { type: type ?? null } })
+		);
 	}
 }

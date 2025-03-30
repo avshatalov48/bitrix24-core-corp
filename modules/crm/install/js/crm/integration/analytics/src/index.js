@@ -13,6 +13,7 @@ import { CloseEvent as BlockCloseEvent } from './builders/block/close-event';
 import { EnableEvent as BlockEnableEvent } from './builders/block/enable-event';
 import { LinkEvent as BlockLinkEvent } from './builders/block/link-event';
 import { Dictionary } from './dictionary';
+import { getCrmMode } from './helpers';
 import type {
 	AICallParsingEvent,
 	EntityAddEvent,
@@ -54,6 +55,7 @@ const Builder = Object.freeze({
 export {
 	Builder,
 	Dictionary,
+	getCrmMode
 };
 
 export type {

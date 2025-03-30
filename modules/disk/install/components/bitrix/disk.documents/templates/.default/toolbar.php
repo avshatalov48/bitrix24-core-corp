@@ -68,17 +68,47 @@ $items = array_map(function ($item) use ($defaultHandler) {
 		]
 	];
 }, $arResult['DOCUMENT_HANDLERS']);
+
+if (\Bitrix\Main\Config\Option::get('disk', 'boards_enabled', 'N') === 'Y')
+{
+	array_unshift(
+		$items,
+		[
+			'text' => Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_BOARD'),
+			'onclick' => new UI\Buttons\JsCode(
+				'BX.Disk.Documents.Toolbar.createBoard();'
+			)
+		],
+	);
+}
+
 $createButton = UI\Buttons\CreateButton::create([
 	'dataset' => [
 		'toolbar-collapsed-icon' => UI\Buttons\Icon::ADD
 	]
 ]);
-$createButton
-	->setText(Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_DOC_TEXT'))
-	->setColor(UI\Buttons\Color::SUCCESS)
-	->setMenu([
-		'items' => $items
-	]);
+
+if ($arResult['VARIANT'] == Disk\Type\DocumentGridVariant::FlipchartList)
+{
+	$createButton
+		->setText(Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_BOARD_TEXT'))
+		->setColor(UI\Buttons\Color::SUCCESS)
+		->addClass('toolbar-button-create-new-board')
+		->bindEvent(
+			'click',
+			new UI\Buttons\JsCode('BX.Disk.Documents.Toolbar.createBoard();')
+		);
+}
+else
+{
+	$createButton
+		->setText(Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_DOC_TEXT'))
+		->setColor(UI\Buttons\Color::SUCCESS)
+		->setMenu([
+			'items' => $items
+		]);
+}
+
 Toolbar::addButton($createButton, UI\Toolbar\ButtonLocation::AFTER_TITLE);
 
 Toolbar::addButton([

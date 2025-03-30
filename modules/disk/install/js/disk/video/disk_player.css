@@ -24,53 +24,6 @@
 .disk-player-container.player-loaded .main-ui-loader{
 	display: none !important;
 }
-.disk-player-container .vjs-disk_player-skin .vjs-big-play-button {
-	border: 0;
-	/*border: 1px solid #ffffff;*/
-	border-radius: 50%;
-	background: none;
-	cursor: pointer;
-	/*height: 129px;*/
-	height: 100px;
-	padding: 0;
-	position: absolute;
-	/*width: 129px;*/
-	width: 100px;
-}
-
-.disk-player-container .vjs-disk_player-skin .vjs-big-play-button:before {
-	background-color: rgba(255,255,255,.9);
-	border-radius: 50%;
-	content: '';
-	height: 100px;
-	/*left: 14px;*/
-	left: 0;
-	position: absolute;
-	/*top: 14px;*/
-	top: 0;
-	width: 100px;
-	transition: background 0.2s linear;
-}
-
-.disk-player-container .vjs-disk_player-skin .vjs-big-play-button:hover:before {
-	background-color: #fff;
-}
-
-.disk-player-container .vjs-disk_player-skin .vjs-big-play-button:after {
-	content: '';
-	position: absolute;
-	left: 40px;
-	top: 25px;
-	/*height: 43px;*/
-	/*left: 56px;*/
-	/*top: 42px;*/
-	/*width: 25px;*/
-	width: 0;
-	height: 0;
-	border-style: solid;
-	border-width: 25px 0 25px 36px;
-	border-color: transparent transparent transparent #2fc8f6;
-}
 
 .disk-player-error-container {
 	display: flex;

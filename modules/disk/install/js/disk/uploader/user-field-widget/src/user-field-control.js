@@ -366,4 +366,11 @@ export default class UserFieldControl extends EventEmitter
 
 		return settings.get('importFeatureId', '');
 	}
+
+	isBoardsEnabled(): boolean
+	{
+		const settings = Extension.getSettings('disk.uploader.user-field-widget');
+
+		return settings.get('isBoardsEnabled', '');
+	}
 }

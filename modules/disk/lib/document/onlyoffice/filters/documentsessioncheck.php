@@ -2,8 +2,8 @@
 
 namespace Bitrix\Disk\Document\OnlyOffice\Filters;
 
-use Bitrix\Disk\Document\OnlyOffice\Models\DocumentSession;
-use Bitrix\Disk\Document\OnlyOffice\Models\GuestUser;
+use Bitrix\Disk\Document\Models\DocumentSession;
+use Bitrix\Disk\Document\Models\GuestUser;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Event;

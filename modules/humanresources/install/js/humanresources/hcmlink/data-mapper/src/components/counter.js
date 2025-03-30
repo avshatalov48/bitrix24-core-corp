@@ -1,4 +1,9 @@
-import { $Bitrix } from 'ui.vue3';
+import { Loc, Text } from 'main.core';
+import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
+import { EventEmitter } from 'main.core.events';
+import { EventList } from '../types';
+
+import '../styles/counter.css';
 
 export const Counter = {
 	name: 'Counter',
@@ -16,23 +21,59 @@ export const Counter = {
 			required: true,
 			type: Number,
 		},
-		config: {
+		mode: {
 			required: true,
-			type: Object,
+			type: String,
+		},
+		lastJobFinishedAt: {
+			required: false,
+			type: Date,
+			default: null,
 		},
 	},
 
-	template:`
-        <div class="hr-hcmlink-sync__page_counter_container">
-			<template v-if="config.mode === 'direct'">
-				<span class="hr-hcmlink-sync__page_count-title">{{ $Bitrix.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SLIDER_PAGE_MAPPED_TITLE') }}: </span>
-				<span class="hr-hcmlink-sync__page_mapped-persons-count">{{ countMappedPersons }} </span>
-				<span class="hr-hcmlink-sync__page_all-persons-count"> / {{ countAllPersonsForMap }} </span>
-			</template>
-			<template v-else>
-				<span class="hr-hcmlink-sync__page_count-title">{{ $Bitrix.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SLIDER_PAGE_UNMAPPED_TITLE') }}: </span>
-				<span class="hr-hcmlink-sync__page_mapped-persons-count">{{ countUnmappedPersons }} </span>
-			</template>
-        </div>
+	computed: {
+		leftCounterPhrase(): string
+		{
+			return Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SLIDER_PAGE_UNMAPPED_TITLE_MSGVER_1', {
+				'[SPAN]': '<span class="hr-hcmlink-sync__counter_count-accent">',
+				'[/SPAN]': '</span>',
+				'#COUNT#': Text.encode(this.countUnmappedPersons),
+			});
+		},
+		formatDate(): string
+		{
+			if (this.lastJobFinishedAt)
+			{
+				return Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SLIDER_COUNTER_RIGHT', {
+					'#FORMATTED_DATE#': DateFormatter.formatByTemplate(this.lastJobFinishedAt, DateTemplate.messageReadStatus),
+				});
+			}
+
+			return Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SLIDER_COUNTER_RIGHT', {
+				'#FORMATTED_DATE#': Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SLIDER_COUNTER_RIGHT_DATE_NEVER'),
+			});
+		},
+	},
+
+	methods: {
+		forceSync(): void
+		{
+			EventEmitter.emit(EventList.HR_DATA_MAPPER_FORCE_SYNC);
+		},
+	},
+
+	template: `
+		<div v-html="leftCounterPhrase" class="hr-hcmlink-sync__toolbar-bubble hr-hcmlink-sync__counter_container-left"/>
+		<div class="hr-hcmlink-sync__toolbar-bubble hr-hcmlink-sync__counter_container-right">
+			<div class="hr-hcmlink-sync__toolbar-format-date">{{formatDate}}</div>
+			<div class="hr-hcmlink-sync__toolbar-separator"></div>
+			<div 
+				class="hr-hcmlink-sync__toolbar-update-button"
+				@click="forceSync"
+			>
+				{{ $Bitrix.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SLIDER_COUNTER_RIGHT_UPDATE_BUTTON') }}
+			</div>
+		</div>
 	`,
 };

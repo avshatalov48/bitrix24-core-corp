@@ -2,8 +2,9 @@ import 'ui.buttons';
 import 'ui.forms';
 import './style.css';
 import { chartAPI } from '../../api';
-
+import { events } from '../../events';
 import { BIcon, Set } from 'ui.icon-set.api.vue';
+import type { FirstPopupData } from '../../types';
 
 export const FirstPopup = {
 	name: 'FirstPopup',
@@ -11,7 +12,7 @@ export const FirstPopup = {
 		BIcon,
 	},
 
-	data(): Object
+	data(): FirstPopupData
 	{
 		return {
 			show: false,
@@ -21,7 +22,8 @@ export const FirstPopup = {
 			features: [],
 		};
 	},
-	async mounted() {
+	async mounted(): Promise<void>
+	{
 		this.title = this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_FIRST_OPEN_TITLE');
 		this.description = this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_FIRST_OPEN_DESCRIPTION');
 		this.subDescription = this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_FIRST_OPEN_SUB_DESCRIPTION');
@@ -40,10 +42,11 @@ export const FirstPopup = {
 	},
 
 	methods: {
-		closePopup() {
+		closePopup(): void
+		{
 			chartAPI.firstTimeOpened();
 			this.show = false;
-			top.BX.Event.EventEmitter.emit('HR.company-structure:first-popup-showed');
+			top.BX.Event.EventEmitter.emit(events.HR_FIRST_POPUP_SHOW);
 		},
 		loc(phraseCode: string, replacements: { [p: string]: string } = {}): string
 		{
@@ -76,7 +79,7 @@ export const FirstPopup = {
 				</div>
 				<div class="first-popup-right">
 					<video
-						src="/bitrix/js/humanresources/company-structure/org-chart/src/images/preview.webm"
+						src="/bitrix/js/humanresources/company-structure/org-chart/src/components/first-popup/images/preview.webm"
 						autoplay
 						loop
 						muted

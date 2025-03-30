@@ -104,7 +104,7 @@ class ProductRow extends EO_ProductRow implements \JsonSerializable
 		return $result;
 	}
 
-	public function jsonSerialize()
+	public function jsonSerialize(): array
 	{
 		return Container::getInstance()->getProductRowConverter()->toJson($this);
 	}

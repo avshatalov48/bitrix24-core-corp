@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Entity\Resource;
 
-use Bitrix\Booking\Entity\BaseEntity;
+use Bitrix\Booking\Entity\EntityInterface;
 use Bitrix\Booking\Entity\ResourceType\ResourceType;
 use Bitrix\Booking\Entity\Slot\RangeCollection;
-use Bitrix\Booking\Internals\NotificationTemplateType;
-use Bitrix\Booking\Internals\NotificationType;
+use Bitrix\Booking\Internals\Service\Notifications\NotificationTemplateType;
 
-class Resource extends BaseEntity
+class Resource implements EntityInterface
 {
 	private int|null $id = null;
 	private int|null $externalId = null;
@@ -117,32 +116,6 @@ class Resource extends BaseEntity
 		$this->slotRanges = $slotRanges;
 
 		return $this;
-	}
-
-	public function isNotificationOfTypeOn(NotificationType $notificationType): bool
-	{
-		if ($notificationType === NotificationType::Info)
-		{
-			return $this->isInfoNotificationOn();
-		}
-		elseif ($notificationType === NotificationType::Confirmation)
-		{
-			return $this->isConfirmationNotificationOn();
-		}
-		elseif ($notificationType === NotificationType::Reminder)
-		{
-			return $this->isReminderNotificationOn();
-		}
-		elseif ($notificationType === NotificationType::Delayed)
-		{
-			return $this->isDelayedNotificationOn();
-		}
-		elseif ($notificationType === NotificationType::Feedback)
-		{
-			return $this->isFeedbackNotificationOn();
-		}
-
-		return false;
 	}
 
 	public function isInfoNotificationOn(): bool

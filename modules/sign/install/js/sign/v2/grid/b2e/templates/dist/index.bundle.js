@@ -135,6 +135,20 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	      });
 	    }
 	  }
+	  async copyTemplate(templateId) {
+	    try {
+	      await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].copyTemplate(templateId);
+	      await this.reload();
+	      window.top.BX.UI.Notification.Center.notify({
+	        content: main_core.Loc.getMessage('SIGN_TEMPLATE_GRID_COPY_HINT_SUCCESS')
+	      });
+	    } catch (error) {
+	      console.error('Error copying template:', error);
+	      window.top.BX.UI.Notification.Center.notify({
+	        content: main_core.Loc.getMessage('SIGN_TEMPLATE_GRID_COPY_HINT_FAIL')
+	      });
+	    }
+	  }
 	}
 	function _changeVisibility2(templateId, visibility) {
 	  const api = babelHelpers.classPrivateFieldLooseBase(this, _api)[_api];

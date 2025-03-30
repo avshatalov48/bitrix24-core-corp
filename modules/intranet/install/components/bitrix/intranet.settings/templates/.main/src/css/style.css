@@ -287,10 +287,6 @@
 	margin-left: auto;
 }
 
-.ui-section__link:hover {
-	border-bottom: 1px solid var(--ui-color-background-transparent);
-}
-
 .intranet-settings__page-header_wrap.--with-header-widget {
 	display: grid;
 	grid-template-columns: 1fr minmax(200px, 260px);
@@ -1100,6 +1096,7 @@
 	border-radius: var(--ui-border-radius-md);
 	padding: 12px;
 	margin-bottom: 16px;
+	align-items: center;
 }
 
 .intranet-settings__portal-delete-form_wrapper.--danger .intranet-settings__portal-delete-form_body {
@@ -1126,8 +1123,12 @@
 }
 
 .intranet-settings__portal-delete-form_wrapper .ui-section__link {
-	border-bottom: none;
+	border-color: rgba(var(--ui-color-palette-orange-95-rgb), var(--ui-opacity-40));
 	font-weight: var(--ui-font-weight-medium);
+}
+
+.ui-section__link:hover {
+	border-bottom: 1px solid var(--ui-color-background-transparent);
 }
 
 .intranet-settings__portal-delete-form_body .intranet-settings__portal-delete-icon-wrapper {
@@ -1171,19 +1172,10 @@
 	justify-content: center;
 }
 
-.ui-btn.--cancel {
+.intranet-settings__portal-delete-form_wrapper.--warning .ui-btn.--cancel {
 	--ui-btn-background: var(--ui-color-background-transparent);
 	--ui-btn-background-hover: var(--ui-color-background-transparent);
 	--ui-btn-background-active: var(--ui-color-background-transparent);
-	--ui-btn-border-color: rgba(255,255,255, 0.4);
-	--ui-btn-border-color-hover: rgba(255,255,255, 0.8);
-	--ui-btn-border-color-active: rgba(255,255,255, 0.8);
-	--ui-btn-color: var(--ui-color-on-primary);
-	--ui-btn-color-hover: var(--ui-color-on-primary);
-	--ui-btn-color-active: var(--ui-color-on-primary);
-}
-
-.intranet-settings__portal-delete-form_wrapper.--warning .ui-btn.--cancel {
 	--ui-btn-border-color: var(--ui-color-base-30);
 	--ui-btn-border-color-hover: var(--ui-color-base-70);
 	--ui-btn-border-color-active: var(--ui-color-base-70);
@@ -1192,28 +1184,13 @@
 	--ui-btn-color-active: var(--ui-color-base-90);
 }
 
-.ui-btn.--confirm {
-	--ui-btn-background: var(--ui-color-background-primary);
-	--ui-btn-background-hover: var(--ui-color-background-alert);
-	--ui-btn-background-active: var(--ui-color-background-alert);
-	--ui-btn-border-color: var(--ui-color-background-transparent);
-	--ui-btn-border-color-hover: var(--ui-color-background-transparent);
-	--ui-btn-border-color-active: var(--ui-color-background-transparent);
-	--ui-btn-color: var(--ui-color-base-90);
-	--ui-btn-color-hover: var(--ui-color-palette-red-60);
-	--ui-btn-color-active: var(--ui-color-palette-red-60);
-}
-
-.ui-btn-disabled.--confirm {
-	--ui-btn-color-hover: var(--ui-color-base-90);
-	--ui-btn-color-active: var(--ui-color-base-90);
-}
-
-.ui-btn-wait.--confirm {
+.intranet-settings__portal-delete-form_wrapper.--warning .ui-btn-wait.--confirm {
 	--ui-btn-wait-loader: var(--ui-btn-wait-black);
 }
 
 .intranet-settings__portal-delete-form_wrapper.--warning .ui-btn.--confirm {
+	--ui-btn-background: var(--ui-color-background-primary);
+	--ui-btn-color: var(--ui-color-base-90);
 	--ui-btn-border-color: var(--ui-color-text-warning);
 	--ui-btn-border-color-hover: var(--ui-color-text-warning);
 	--ui-btn-border-color-active: var(--ui-color-text-warning);
@@ -1221,15 +1198,6 @@
 	--ui-btn-background-active: var(--ui-color-text-warning);
 	--ui-btn-color-hover: var(--ui-color-on-primary);
 	--ui-btn-color-active: var(--ui-color-on-primary);
-}
-
-.ui-ctl.--delete {
-	margin-top: 12px;
-}
-
-.ui-ctl.--delete .ui-ctl-element {
-	border: transparent;
-	border-radius: 4px;
 }
 
 .ui-section__row.ai-field__additional-row {

@@ -19,6 +19,7 @@ use Bitrix\Sign\File;
 use Bitrix\Sign\Internal;
 use Bitrix\Sign\Item;
 use Bitrix\Sign\Item\Blank;
+use Bitrix\Sign\Model\ItemBinder\BlankBinder;
 use Bitrix\Sign\Type\BlankScenario;
 use CCrmPerms;
 
@@ -57,9 +58,10 @@ class BlankRepository
 		if ($result->isSuccess())
 		{
 			$item->id = $result->getId();
+			$item->initOriginal();
 		}
 
-		return $result;
+		return $result->setData(['blank' => $item]);
 	}
 
 	/**
@@ -85,35 +87,20 @@ class BlankRepository
 			return (new UpdateResult())->addError(new Error('Blank not found'));
 		}
 
-		if ($item->fileCollection)
-		{
-			$files = $item->fileCollection->toArray();
-			$fileIds = [];
-			foreach ($files as $file)
-			{
-				if ($file->id)
-				{
-					$fileIds[] = $file->id;
-				}
-			}
+		$binder = new BlankBinder($item, $blank);
+		$binder->setChangedItemPropertiesToModel();
 
-			$blank->setFileId($fileIds);
-		}
-
-		if (isset($item->title))
-		{
-			$blank->setTitle($item->title);
-		}
-
-		if (isset($item->status))
-		{
-			$blank->setStatus($item->status);
-		}
-
-		return $blank
+		$result = $blank
 			->setModifiedById(CurrentUser::get()->getId() ?? 0)
 			->setDateModify(new DateTime())
 			->save();
+
+		if ($result->isSuccess())
+		{
+			$item->initOriginal();
+		}
+
+		return $result;
 	}
 
 	/**
@@ -156,23 +143,13 @@ class BlankRepository
 
 	private function extractItemFromModel(Internal\Blank $model): Item\Blank
 	{
-		$item = new Item\Blank(
-			title: $model->getTitle(),
-			fileCollection: new Item\Fs\FileCollection(),
-			status: $model->getStatus(),
-			id: $model->getId(),
-			dateCreate: $model->getDateCreate(),
-			scenario: BlankScenario::getScenarioById($model->getScenario()),
-			createdById: $model->getCreatedById(),
-			forTemplate:  $model->getForTemplate() ?? false,
-		);
-
+		$files = new Item\Fs\FileCollection();
 		foreach ($model->getFileId() ?? [] as $fileId)
 		{
 			$file = new File($fileId);
 			if ($file->isExist())
 			{
-				$item->fileCollection->addItem(new Item\Fs\File(
+				$files->addItem(new Item\Fs\File(
 					$file->getName(),
 					$file->getPath(),
 					$file->getType(),
@@ -182,7 +159,17 @@ class BlankRepository
 				));
 			}
 		}
-		return $item;
+
+		return new Item\Blank(
+			title: $model->getTitle(),
+			fileCollection: $files,
+			status: $model->getStatus(),
+			id: $model->getId(),
+			dateCreate: $model->getDateCreate(),
+			scenario: BlankScenario::getScenarioById($model->getScenario()),
+			createdById: $model->getCreatedById(),
+			forTemplate:  $model->getForTemplate() ?? false,
+		);
 	}
 
 	public function getPublicList(int $limit = 10, int $offset = 0, string $scenario = BlankScenario::B2B): Item\BlankCollection

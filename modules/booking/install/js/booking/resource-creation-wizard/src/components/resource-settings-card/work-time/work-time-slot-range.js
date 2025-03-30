@@ -100,8 +100,11 @@ export const WorkTimeSlotRange = {
 				return;
 			}
 
+			const menuId = `booking-work-time-popup-${this.id}-${id}`;
+			MenuManager.destroy(menuId);
+
 			const timeList: Menu = MenuManager.create({
-				id: `booking-work-time-popup-${Date.now()}`,
+				id: menuId,
 				className: 'resource-creation-wizard__form-work-time-menu',
 				bindElement,
 				targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper'),
@@ -142,6 +145,10 @@ export const WorkTimeSlotRange = {
 				timeList.addMenuItem({
 					text: value,
 					className: this.slotRange[id] === minutes ? `${defaultClass} --selected` : defaultClass,
+					dataset: {
+						id,
+						minutes,
+					},
 					onclick: () => {
 						this.slotRange[id] = parseInt(minutes, 10);
 						timeList.close();

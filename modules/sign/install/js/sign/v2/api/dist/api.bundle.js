@@ -128,22 +128,6 @@ this.BX.Sign = this.BX.Sign || {};
 	  }
 	}
 
-	const MemberRole = Object.freeze({
-	  assignee: 'assignee',
-	  signer: 'signer',
-	  editor: 'editor',
-	  reviewer: 'reviewer'
-	});
-	const MemberStatus = Object.freeze({
-	  done: 'done',
-	  wait: 'wait',
-	  ready: 'ready',
-	  refused: 'refused',
-	  stopped: 'stopped',
-	  stoppableReady: 'stoppable_ready',
-	  processing: 'processing'
-	});
-
 	var _post = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("post");
 	class Api {
 	  constructor() {
@@ -497,6 +481,11 @@ this.BX.Sign = this.BX.Sign || {};
 	      templateId
 	    });
 	  }
+	  copyTemplate(templateId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.b2e.document.template.copy', {
+	      templateId
+	    });
+	  }
 	  checkCompanyHrIntegration(id) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.integration.humanresources.hcmLink.checkCompany', {
 	      id
@@ -507,14 +496,20 @@ this.BX.Sign = this.BX.Sign || {};
 	      documentUid
 	    });
 	  }
+	  getMultipleVacancyMemberHrIntegration(documentUid) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.integration.humanresources.hcmLink.loadMultipleVacancyEmployee', {
+	      documentUid
+	    });
+	  }
+	  saveEmployeesForSignProcess(data) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.integration.humanresources.hcmLink.saveSelectedEmployees', data);
+	  }
 	}
 	function _post2(endpoint, data = null, notifyError = true) {
 	  return post(endpoint, data, notifyError);
 	}
 
 	exports.Api = Api;
-	exports.MemberRole = MemberRole;
-	exports.MemberStatus = MemberStatus;
 
 }((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX,BX,BX.UI.Sidepanel.Content));
 //# sourceMappingURL=api.bundle.js.map

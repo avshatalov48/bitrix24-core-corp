@@ -1,0 +1,121 @@
+.crm-config-perms-guid-for-permission a {
+	cursor: pointer;
+	color: var(--ui-color-base-50);
+}
+
+.crm-config-perms-guid-for-permission a:hover {
+	color: var(--ui-color-base-50);
+}
+
+.crm-config-perms-left-menu {
+	width: 219px;
+}
+
+#crm-config-perms-v2-search-container {
+	flex: 1;
+	margin-right: 48px;
+}
+
+.crm-config-perms-v2-header {
+	height: 73px;
+	flex-grow: 1;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	position: sticky;
+	top: 0;
+	background-color: var(--ui-color-base-05);
+	z-index: 100;
+}
+
+.crm-config-perms-v2-left-menu-title {
+	max-width: 100%;
+	color: var(--ui-color-base-80);
+
+	font-size: 26px;
+	font-weight: 300;
+	line-height: 31.03px;
+	text-align: left;
+	text-underline-position: from-font;
+	text-decoration-skip-ink: none;
+
+}
+
+.crm-config-perms-v2-header-title {
+	margin-right: 42px;
+	max-width: 100%;
+	color: var(--ui-color-base-80);
+
+	font-size: 26px;
+	font-weight: 300;
+	line-height: 31.03px;
+	text-align: left;
+	text-underline-position: from-font;
+	text-decoration-skip-ink: none;
+
+}
+
+::-webkit-scrollbar {
+	width: 6px;
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+:hover::-webkit-scrollbar-thumb {
+	background: #d1d6da;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: #c8cdd2;
+}
+
+.ui-access-rights-v2--head-section {
+	top: 73px;
+}
+
+.crm-config-perms-v2-sidebar{
+	display: inline;
+	height: 100%;
+	padding-right: 0;
+	position: sticky;
+	top: 0;
+}
+
+.crm-config-perms-v2-sidebar #left-panel {
+	padding-right: 0;
+}
+
+.crm-config-perms-v2-sidebar .ui-sidepanel-sidebar {
+	margin: 0;
+}
+
+.crm-config-perms-v2-sidebar #sidepanelMenu {
+	height: 100%;
+	max-height: calc(100vh - 93px);
+	overflow: auto;
+}
+
+.crm-config-perms-v2-sidebar .ui-sidepanel-head {
+	display: flex;
+	height: 73px;
+	align-items: center;
+}
+
+.crm-config-perms-v2-sidebar .ui-sidepanel-title {
+	max-width: 100%;
+	color: var(--ui-color-base-80);
+
+	font-size: 26px;
+	font-weight: 300;
+	line-height: 31.03px;
+	text-align: left;
+	text-underline-position: from-font;
+	text-decoration-skip-ink: none;
+}
+
+.crm-config-perms-v2-slider-content {
+	width: calc(100% - 240px);
+}

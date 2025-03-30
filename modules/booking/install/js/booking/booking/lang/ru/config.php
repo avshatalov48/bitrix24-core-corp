@@ -41,6 +41,7 @@ $MESS['BOOKING_BOOKING_AFTER_TITLE_PROFIT_POPUP_TITLE'] = 'Выручка';
 $MESS['BOOKING_BOOKING_AFTER_TITLE_PROFIT_POPUP_TOTAL_TODAY'] = 'Сегодня:';
 $MESS['BOOKING_BOOKING_AFTER_TITLE_PROFIT_POPUP_MONTH'] = '#MONTH#:';
 
+$MESS['BOOKING_BOOKING_DRAG_DELETE'] = 'Удалить запись';
 $MESS['BOOKING_BOOKING_SHOW_ALL'] = 'Показать всё';
 $MESS['BOOKING_BOOKING_TIME_RANGE'] = '#FROM# – #TO#';
 $MESS['BOOKING_BOOKING_TIME_IS_NOT_AVAILABLE'] = 'Это время уже занято, попробуйте выбрать другое';
@@ -143,3 +144,5 @@ $MESS['BOOKING_AHA_EXPAND_GRID_TITLE'] = 'Выберите, как отобра�
 $MESS['BOOKING_AHA_EXPAND_GRID_TEXT'] = 'Если у вас в расписании много ресурсов, разверните рабочую область на полный экран для более удобной работы';
 $MESS['BOOKING_AHA_SELECT_RESOURCES_TITLE'] = 'Настройте расписание для себя';
 $MESS['BOOKING_AHA_SELECT_RESOURCES_TEXT'] = 'Здесь можно вывести на сетку ресурсы, с которыми вы работаете постоянно. Вы всегда сможете изменить выбор';
+
+$MESS['BOOKING_QUICK_FILTER_HELP'] = '[bold]Фильтр слотов[/bold] оставит те ресурсы, у которых доступен выбранный временной слот.';

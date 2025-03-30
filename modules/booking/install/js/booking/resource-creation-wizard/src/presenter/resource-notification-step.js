@@ -1,12 +1,13 @@
 import { Event, Loc, Text, Type } from 'main.core';
 import { Notifier, NotificationOptions } from 'ui.notification-manager';
-import { EventName, Model, Module } from 'booking.const';
+import { ConditionChecker, Types as SenderTypes } from 'crm.messagesender';
+
+import { EventName, Model, NotificationFieldsMap, Module } from 'booking.const';
 import { resourceService } from 'booking.provider.service.resources-service';
 import { resourceTypeService } from 'booking.provider.service.resources-type-service';
-import type { SlotRange } from 'booking.model.resources';
-import type { ResourceModel } from 'booking.model.resource-creation-wizard';
+import type { SlotRange, ResourceModel } from 'booking.model.resources';
+import type { ResourceTypeModel } from 'booking.model.resource-types';
 import { Step } from './step';
-import { ConditionChecker, Types as SenderTypes } from 'crm.messagesender';
 
 export class ResourceNotificationStep extends Step
 {
@@ -17,36 +18,23 @@ export class ResourceNotificationStep extends Step
 		this.step = 3;
 	}
 
-	get labelNext(): string
+	get #resource(): ResourceModel
 	{
-		const resourceId = this.store.getters[`${Model.ResourceCreationWizard}/getResource`]?.id || null;
-
-		return Type.isNull(resourceId)
-			? Loc.getMessage('BRCW_BUTTON_CREATE_RESOURCE')
-			: Loc.getMessage('BRCW_BUTTON_UPDATE_RESOURCE');
+		return this.store.getters[`${Model.ResourceCreationWizard}/getResource`];
 	}
 
-	async #upsertResource(resource: ResourceModel): Promise<boolean>
+	get labelNext(): string
 	{
-		const isUpdate = Boolean(resource.id);
-		const result = await (isUpdate ? resourceService.update(resource) : resourceService.add(resource));
-
-		let text = Loc.getMessage(isUpdate ? 'BRCW_UPDATE_SUCCESS_MESSAGE' : 'BRCW_CREATE_SUCCESS_MESSAGE');
-		if (Type.isArrayFilled(result.errors))
-		{
-			text = result.errors[0].message;
-		}
-
-		Notifier.notify(this.#prepareNotificationOptions(text));
-
-		return !Type.isArrayFilled(result.errors);
+		return Type.isNull(this.#resource.id ?? null)
+			? Loc.getMessage('BRCW_BUTTON_CREATE_RESOURCE')
+			: Loc.getMessage('BRCW_BUTTON_UPDATE_RESOURCE');
 	}
 
 	async next(): Promise<void>
 	{
 		this.store.commit(`${Model.ResourceCreationWizard}/setSaving`, true);
 
-		const isApproved = await this.isBitrix24Approved();
+		const isApproved = await this.#isBitrix24Approved();
 		if (!isApproved)
 		{
 			this.store.commit(`${Model.ResourceCreationWizard}/setSaving`, false);
@@ -56,22 +44,12 @@ export class ResourceNotificationStep extends Step
 
 		if (this.store.getters[`${Model.ResourceCreationWizard}/isGlobalSchedule`])
 		{
-			const slotSize = this.store.state[Model.ResourceCreationWizard].resource.slotRanges[0]?.slotSize ?? 60;
-			const scheduleSlots = this.store.getters[`${Model.ResourceCreationWizard}/getCompanyScheduleSlots`];
-			const timezone = this.store.getters[`${Model.Interface}/timezone`];
-			const slotRanges = scheduleSlots.map((slotRange: SlotRange) => ({
-				...slotRange,
-				slotSize,
-				timezone,
-			}));
-
-			await this.store.dispatch(`${Model.ResourceCreationWizard}/updateResource`, { slotRanges });
+			await this.store.dispatch(`${Model.ResourceCreationWizard}/updateResource`, {
+				slotRanges: this.#prepareCompanySlotRanges(this.#resource),
+			});
 		}
 
-		const resource = this.store.state[Model.ResourceCreationWizard].resource;
-		const resourceType = this.store.getters[`${Model.ResourceTypes}/getById`](resource.typeId);
-
-		const isSuccess = await this.#upsertResource(resource);
+		const isSuccess = await this.#upsertResource(this.#resource);
 		if (!isSuccess)
 		{
 			this.store.commit(`${Model.ResourceCreationWizard}/setSaving`, false);
@@ -79,12 +57,15 @@ export class ResourceNotificationStep extends Step
 			return;
 		}
 
-		await resourceTypeService.update(resourceType);
-		this.store.commit(`${Model.ResourceCreationWizard}/init`, { step: 1, resourceId: null, resource: null });
+		await resourceTypeService.update({
+			id: this.#resource.typeId,
+			...this.#prepareResourceTypeNotifications(this.#resource),
+		});
+
 		Event.EventEmitter.emit(EventName.CloseWizard);
 	}
 
-	async isBitrix24Approved(): Promise<boolean>
+	#isBitrix24Approved(): Promise<boolean>
 	{
 		if (!this.#isBitrix24SenderAvailable())
 		{
@@ -110,9 +91,54 @@ export class ResourceNotificationStep extends Step
 		return bitrix24Sender.canUse;
 	}
 
-	back(): Promise<void>
+	#prepareCompanySlotRanges(resource: ResourceModel): SlotRange[]
 	{
-		return super.back();
+		const slotSize = resource.slotRanges[0]?.slotSize ?? 60;
+		const scheduleSlots = this.store.getters[`${Model.ResourceCreationWizard}/getCompanyScheduleSlots`];
+		const timezone = this.store.getters[`${Model.Interface}/timezone`];
+
+		return scheduleSlots.map((slotRange: SlotRange) => ({
+			...slotRange,
+			slotSize,
+			timezone,
+		}));
+	}
+
+	#prepareResourceTypeNotifications(resource: ResourceModel): Partial<ResourceTypeModel>
+	{
+		const resourceType = this.store.getters[`${Model.ResourceTypes}/getById`](resource.typeId);
+
+		return Object.values(this.store.getters[`${Model.Dictionary}/getNotifications`])
+			.map(({ value }) => value)
+			.reduce((acc: Object, type: string) => {
+				const notificationOnField = NotificationFieldsMap.NotificationOn[type];
+				const templateTypeField = NotificationFieldsMap.TemplateType[type];
+
+				const isCheckedForAll = this.store.getters[`${Model.ResourceCreationWizard}/isCheckedForAll`](type);
+
+				return {
+					...acc,
+					[notificationOnField]: isCheckedForAll ? resource[notificationOnField] : resourceType[notificationOnField],
+					[templateTypeField]: isCheckedForAll ? resource[templateTypeField] : resourceType[templateTypeField],
+				};
+			}, {})
+		;
+	}
+
+	async #upsertResource(resource: ResourceModel): Promise<boolean>
+	{
+		const isUpdate = Boolean(resource.id);
+		const result = await (isUpdate ? resourceService.update(resource) : resourceService.add(resource));
+
+		let text = Loc.getMessage(isUpdate ? 'BRCW_UPDATE_SUCCESS_MESSAGE' : 'BRCW_CREATE_SUCCESS_MESSAGE');
+		if (Type.isArrayFilled(result.errors))
+		{
+			text = result.errors[0].message;
+		}
+
+		Notifier.notify(this.#prepareNotificationOptions(text));
+
+		return !Type.isArrayFilled(result.errors);
 	}
 
 	#prepareNotificationOptions(text: string): NotificationOptions

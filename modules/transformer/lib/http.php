@@ -143,8 +143,8 @@ class Http
 		{
 			return $this->logErrorAndReturnResponse(
 				'Error sending command: controller url is empty',
-				$logContext,
 				Command::ERROR_EMPTY_CONTROLLER_URL,
+				$logContext,
 				$controllerUrl,
 			);
 		}
@@ -153,8 +153,8 @@ class Http
 		{
 			return $this->logErrorAndReturnResponse(
 				'Error sending command: too many unsuccessful attempts, send aborted',
-				$logContext,
 				Command::ERROR_CONNECTION_COUNT,
+				$logContext,
 				$controllerUrl
 			);
 		}
@@ -211,8 +211,8 @@ class Http
 		{
 			return $this->logErrorAndReturnResponse(
 				'Error connecting to server',
-				$logContext,
 				Command::ERROR_CONNECTION,
+				$logContext,
 				$controllerUrl,
 			);
 		}
@@ -231,11 +231,10 @@ class Http
 		if (!is_array($json))
 		{
 			return $this->logErrorAndReturnResponse(
-				'Error decoding response from server',
-				$logContext,
+				'Error decoding response from server: {decodeError}',
 				Command::ERROR_CONNECTION_RESPONSE,
+				$logContext + ['decodeError' => $decodeErrorMessage],
 				$controllerUrl,
-				$decodeErrorMessage,
 			);
 		}
 
@@ -245,24 +244,20 @@ class Http
 	}
 
 	private function logErrorAndReturnResponse(
-		string $logMessage,
-		array $logContext,
+		string $errorMessage,
 		int $errorCode,
+		array $logContext,
 		?string $controllerUrl,
-		?string $errorMessage = null
 	): array
 	{
 		$logContext += ['errorCode' => $errorCode];
-		if ($errorMessage !== null)
-		{
-			$logContext['error'] = $errorMessage;
-		}
 
-		Log::logger()->error($logMessage, $logContext);
+		Log::logger()->error($errorMessage, $logContext);
 
 		return [
 			'success' => false,
 			'result' => [
+				'msg' => $errorMessage,
 				'code' => $errorCode,
 			],
 			'controllerUrl' => $controllerUrl,

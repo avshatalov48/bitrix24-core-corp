@@ -5,6 +5,7 @@ jn.define('stafftrack/check-in/skeleton', (require, exports, module) => {
 	const { Indent, Corner } = require('tokens');
 	const { Line, Circle } = require('utils/skeleton');
 	const { Area } = require('ui-system/layout/area');
+	const { Box } = require('ui-system/layout/box');
 
 	const PercentLine = (width, height, borderRadius = 27) => View(
 		{
@@ -13,10 +14,18 @@ jn.define('stafftrack/check-in/skeleton', (require, exports, module) => {
 		Line(null, height, 0, 0, borderRadius),
 	);
 
-	const Skeleton = () => View(
-		{},
+	const Skeleton = () => Box(
+		{
+			safeArea: {
+				bottom: true,
+			},
+			style: {
+				flex: 1,
+			},
+		},
 		Header(),
 		Content(),
+		Buttons(),
 	);
 
 	const Header = () => Area(
@@ -55,10 +64,12 @@ jn.define('stafftrack/check-in/skeleton', (require, exports, module) => {
 	const Content = () => Area(
 		{
 			isFirst: true,
+			style: {
+				flex: 1,
+			},
 		},
 		Message(),
 		Map(),
-		Buttons(),
 	);
 
 	const Message = () => View(
@@ -150,11 +161,9 @@ jn.define('stafftrack/check-in/skeleton', (require, exports, module) => {
 		PercentLine('90%', 9),
 	);
 
-	const Buttons = () => View(
+	const Buttons = () => Area(
 		{
-			style: {
-				flexDirection: 'column',
-			},
+			isFirst: true,
 		},
 		View(
 			{
@@ -162,7 +171,7 @@ jn.define('stafftrack/check-in/skeleton', (require, exports, module) => {
 					flexDirection: 'row',
 				},
 			},
-			PercentLine('100%', 42, Corner.S.toNumber()),
+			PercentLine('100%', 50, Corner.S.toNumber()),
 		),
 		View(
 			{

@@ -69,7 +69,10 @@ abstract class Dto implements \JsonSerializable, \Bitrix\Main\Type\Contract\Arra
 		return $fields;
 	}
 
-	public function jsonSerialize()
+	/**
+	 * @return mixed - mixed because of \Bitrix\Crm\Activity\Entity\ConfigurableRestApp\Dto\TextWithTranslationDto::jsonSerialize
+	 */
+	public function jsonSerialize(): mixed
 	{
 		return $this->toArray();
 	}

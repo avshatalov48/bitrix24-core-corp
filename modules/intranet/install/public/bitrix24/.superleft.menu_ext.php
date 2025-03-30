@@ -152,6 +152,18 @@ if ($diskEnabled === "Y" && \Bitrix\Main\Config\Option::get('disk', 'documents_e
 		""
 	);
 }
+if ($diskEnabled === "Y" && \Bitrix\Main\Config\Option::get('disk', 'boards_enabled', 'N') === 'Y')
+{
+	$arMenu[] = array(
+		GetMessage("MENU_DISK_FLIPCHARTS"),
+		"/company/personal/user/".$userId."/disk/boards/",
+		[],
+		array(
+			"menu_item_id" => "menu_boards",
+		),
+		""
+	);
+}
 
 if (CModule::IncludeModule("crm") && CCrmPerms::IsAccessEnabled())
 {
@@ -191,9 +203,9 @@ else
 	];
 }
 
-if (Loader::includeModule('booking') && \Bitrix\Booking\BookingFeature::isOn())
+if (Loader::includeModule('booking') && \Bitrix\Booking\Service\BookingFeature::isOn())
 {
-	$counterId = (\Bitrix\Booking\BookingFeature::isFeatureEnabled() ? 'booking_total' : '');
+	$counterId = (\Bitrix\Booking\Service\BookingFeature::isFeatureEnabled() ? 'booking_total' : '');
 
 	$arMenu[] = [
 		GetMessage("MENU_BOOKING"),

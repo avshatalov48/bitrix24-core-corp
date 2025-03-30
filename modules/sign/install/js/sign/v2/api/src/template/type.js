@@ -1,4 +1,4 @@
-import type { ProviderCodeType } from 'sign.v2.b2e.company-selector';
+import type { ProviderCodeType } from 'sign.type';
 
 export type GeneralField = {
 	type: 'date' | 'number' | 'string';

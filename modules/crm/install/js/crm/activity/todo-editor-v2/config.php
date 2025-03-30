@@ -32,6 +32,7 @@ return [
 	'rel' => [
 		'ui.vue3',
 		'crm.timeline.tools',
+		'ui.text-editor',
 		'ui.analytics',
 		'location.core',
 		'location.widget',
@@ -52,7 +53,6 @@ return [
 		'main.core.events',
 		'ui.entity-selector',
 		'ui.vue3.directives.hint',
-		'ui.text-editor',
 	],
 	'skip_core' => false,
 	'settings' => $settings,

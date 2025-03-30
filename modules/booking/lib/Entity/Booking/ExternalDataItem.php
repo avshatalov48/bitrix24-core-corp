@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Entity\Booking;
 
-use Bitrix\Booking\Entity\BaseEntity;
+use Bitrix\Booking\Entity\EntityInterface;
 
-class ExternalDataItem extends BaseEntity
+class ExternalDataItem implements EntityInterface
 {
 	private int|null $id = null;
 	private string|null $moduleId = null;

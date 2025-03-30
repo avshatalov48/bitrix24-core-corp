@@ -7,6 +7,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Sign\Internal\DocumentTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -76,6 +77,11 @@ class TemplateTable extends Entity\DataManager
 			(new IntegerField('VISIBILITY'))
 				->configureRequired()
 			,
+			(new Entity\ReferenceField(
+				'DOCUMENT',
+				DocumentTable::class,
+				['=this.ID' => 'ref.TEMPLATE_ID']
+			)),
 		];
 	}
 }

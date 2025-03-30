@@ -1,5 +1,6 @@
 <?php
 use Bitrix\Disk\Configuration;
+use Bitrix\Disk\Controller\Integration\Flipchart;
 use Bitrix\Disk\Document\GoogleHandler;
 use Bitrix\Disk\Document\LocalDocumentController;
 use Bitrix\Disk\Driver;
@@ -9,6 +10,7 @@ use Bitrix\Disk\Document\DocumentHandler;
 use Bitrix\Disk\TypeFile;
 use Bitrix\Disk\Uf\FileUserType;
 use Bitrix\Disk\Ui\FileAttributes;
+use Bitrix\Disk\UrlManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Localization\Loc;
 
@@ -176,7 +178,7 @@ class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\
 			$this->arResult['CAN_CREATE_FILE_BY_CLOUD'] = Configuration::canCreateFileByCloud();
 		}
 
-		list($documentHandlerName, $documentHandlerCode, $isLocal) = $this->getConfigurationOfCloudDocument();
+		[$documentHandlerName, $documentHandlerCode, $isLocal] = $this->getConfigurationOfCloudDocument();
 		if($documentHandlerCode)
 		{
 			$this->arResult['CLOUD_DOCUMENT'] = array(
@@ -303,7 +305,7 @@ class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\
 		foreach($values as $id)
 		{
 			$attachedModel = null;
-			list($type, $realValue) = FileUserType::detectType($id);
+			[$type, $realValue] = FileUserType::detectType($id);
 			if (empty($realValue) || $realValue <= 0)
 			{
 				continue;
@@ -488,7 +490,29 @@ class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\
 					;
 				}
 
-				if ($data['CAN_UPDATE'] && !$this->arParams['DISABLE_LOCAL_EDIT'])
+				if ($attachedModel->getObject()->getTypeFile() == TypeFile::FLIPCHART && $attachedModel->canRead($userId))
+				{
+					$openUrl = $this->getUrlManager()->getUrlForViewBoard($attachedModel->getObjectId());
+					$attr->addAction([
+						'type' => 'open',
+						'buttonIconClass' => ' ',
+						'action' => 'BX.Disk.Viewer.Actions.openInNewTab',
+						'params' => [
+							'attachedObjectId' => $attachedModel->getId(),
+							'url' => $openUrl,
+						],
+					]);
+					$attr->addAction([
+						'type' => 'edit',
+						'buttonIconClass' => ' ',
+						'action' => 'BX.Disk.Viewer.Actions.openInNewTab',
+						'params' => [
+							'attachedObjectId' => $attachedModel->getId(),
+							'url' => $openUrl,
+						],
+					]);
+				}
+				elseif ($data['CAN_UPDATE'] && !$this->arParams['DISABLE_LOCAL_EDIT'])
 				{
 					$documentName = \CUtil::JSEscape($attachedModel->getName());
 					$forcedService = null;

@@ -1,0 +1,22 @@
+<?php
+$MESS["IIMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_ERROR_ACTION"] = "Қате орын алды. Әрекет іске аспады.";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_LINE_ACTIVATION_BUTTON_ACTIVE"] = "Белсендіру";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_LINE_ACTIVATION_BUTTON_NO"] = "Жоқ";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_LINE_ACTIVATION_DESCRIPTION"] = "Бұл желі белсенді емес. Оны белсендіргіңіз келе ме?";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_LINE_ACTIVATION_TITLE"] = "Желіні белсендіру";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_QUEUE_DESCRIPTION"] = "Осы Ашық желідегі кіріс өтініштерге жауап беретін жауапты қызметкерлерді (операторларды) көрсетіңіз.";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CLOSE"] = "Жабу";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CONFIGURE"] = "баптау";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CONFIGURE_CHANNEL"] = "Арнаны баптау";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CONFIGURE_CHANNEL_MSGVER_1"] = "Ашық желі және кіру құқығының баптаулары";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CONNECT"] = "Арнаны баптау";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CREATE_OPEN_LINE"] = "Ашық желі құру";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_LM_ADD"] = "Қосу";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_NO_OPEN_LINE"] = "Сіздің коммуникация арналарын баптай алатындай, бірде-бір ашық желіңіз жоқ. Өтініш, жаңа ашық желі құрыңыз.";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_NO_OPEN_LINE_AND_NOT_ADD_OPEN_LINE"] = "Сіздің коммуникация арналарын баптай алатындай, бірде-бір ашық желі жоқ және сізде жаңа ашық желіні құруға құқығыңыз жоқ.<br>Портал әкімшісіне хабарласыңыз.";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_OPEN_LINE"] = "Ашық желі";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_OPEN_LINE_TIP"] = "Ашық желілер барлық арналардан хабарламалар жинайды және оларды қызметкерлер арасында кезекпен таратады";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_PERMISSIONS"] = "Қолжетімділік құқығы";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_PERMISSIONS_TIP"] = "Таңдалған баптаулар Барлық арналардағы барлық ашық желілер үшін жарамды болады";
+$MESS["IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_QUEUE"] = "Жауапты қызметкерлердің кезегі";
+$MESS["IMCONNECTOR_COMPONENT_HEAD_DEPARTMENT_EXCLUDED_QUEUE"] = "Бөлімдерде басшысыз, тек қызметкерлер ғана таңдалады";

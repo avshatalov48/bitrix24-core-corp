@@ -1,6 +1,8 @@
 <?php
+
+use Bitrix\Disk\Analytics\DiskAnalytics;
 use Bitrix\Disk\Configuration;
-use Bitrix\Disk\Document\OnlyOffice\Service\SessionTerminationService;
+use Bitrix\Disk\Document\SessionTerminationServiceFactory;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\ExternalLink;
 use Bitrix\Disk\File;
@@ -1408,7 +1410,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				$userIds[] = $userId;
 			}
 		}
-		$sessionTerminationService = new SessionTerminationService($objectId, $userIds);
+		$sessionTerminationService = (new SessionTerminationServiceFactory($objectId, $userIds))->create();
 		$sessionTerminationService->terminateAllSessions();
 	}
 
@@ -2312,6 +2314,11 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			$this->errorCollection->add($folder->getErrors());
 			$this->sendJsonErrorResponse();
 		}
+
+		Application::getInstance()->addBackgroundJob(function () use ($subFolderModel) {
+			DiskAnalytics::sendAddFolderEvent($subFolderModel);
+		});
+
 		$this->sendJsonSuccessResponse(
 			array(
 				'folder' => array(

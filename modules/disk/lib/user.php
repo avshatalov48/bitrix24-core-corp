@@ -3,7 +3,7 @@
 namespace Bitrix\Disk;
 
 use Bitrix\Bxtest\Codeception\Randomizer\PhoneFactory;
-use Bitrix\Disk\Document\OnlyOffice\Models\GuestUser;
+use Bitrix\Disk\Document\Models\GuestUser;
 use Bitrix\Disk\Integration\Collab\CollabService;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Entity\Result;

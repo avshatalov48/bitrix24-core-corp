@@ -1041,7 +1041,8 @@ export class CallController extends EventEmitter
 			zIndex: this.messengerFacade.getDefaultZIndex() + 200,
 			onClose: this._onCallNotificationClose.bind(this),
 			onDestroy: this._onCallNotificationDestroy.bind(this),
-			onButtonClick: this._onCallNotificationButtonClick.bind(this)
+			onButtonClick: this._onCallNotificationButtonClick.bind(this),
+			isMessengerOpen: this.messengerFacade.isMessengerOpen(),
 		});
 
 		this.callNotification.show();
@@ -3305,9 +3306,16 @@ export class CallController extends EventEmitter
 		}
 	}
 
-	_onSwitchTrackRecordStatus({ isTrackRecordOn })
+	_onSwitchTrackRecordStatus({ isTrackRecordOn, errorCode })
 	{
 		this._onUpdateCallCopilotState(isTrackRecordOn);
+
+		if (errorCode)
+		{
+			this.showCopilotNotify(true, errorCode);
+
+			return;
+		}
 
 		if (isTrackRecordOn)
 		{
@@ -3320,7 +3328,7 @@ export class CallController extends EventEmitter
 		}
 	}
 
-	showCopilotNotify(force = false)
+	showCopilotNotify(force = false, errorCode = '')
 	{
 		if (
 			(this.currentCall.isCopilotActive || force)
@@ -3328,12 +3336,7 @@ export class CallController extends EventEmitter
 			&& this.callView
 		)
 		{
-			Analytics.getInstance().copilot.onCopilotNotifyShow({
-				isCopilotActive: this.currentCall.isCopilotActive,
-				callId: this.currentCall.id,
-			});
-
-			this.callView.showCopilotNotify()
+			this.callView.showCopilotNotify(this.currentCall.id, errorCode)
 		}
 	}
 

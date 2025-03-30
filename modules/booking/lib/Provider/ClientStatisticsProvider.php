@@ -6,6 +6,8 @@ namespace Bitrix\Booking\Provider;
 
 use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Repository\BookingClientRepositoryInterface;
+use Bitrix\Booking\Provider\Params\Booking\BookingFilter;
+use Bitrix\Booking\Provider\Params\GridParams;
 use Bitrix\Main\Type\DateTime;
 use DateTimeImmutable;
 
@@ -38,18 +40,20 @@ class ClientStatisticsProvider
 		$todayEnd = (new DateTimeImmutable('tomorrow'))->setTime(0, 0);
 
 		return $this->bookingProvider->getList(
+			new GridParams(
+				filter: new BookingFilter([
+					'INCLUDE_DELETED' => true,
+					'CREATED_WITHIN' => [
+						'FROM' => DateTime::createFromTimestamp(
+							$todayStart->getTimestamp() - \CTimeZone::GetOffset()
+						),
+						'TO' => DateTime::createFromTimestamp(
+							$todayEnd->getTimestamp() - \CTimeZone::GetOffset()
+						),
+					],
+				]),
+			),
 			userId: $userId,
-			filter: [
-				'INCLUDE_DELETED' => true,
-				'CREATED_WITHIN' => [
-					'FROM' => DateTime::createFromTimestamp(
-						$todayStart->getTimestamp() - \CTimeZone::GetOffset()
-					),
-					'TO' => DateTime::createFromTimestamp(
-						$todayEnd->getTimestamp() - \CTimeZone::GetOffset()
-					),
-				],
-			],
 		)->getEntityIds();
 	}
 }

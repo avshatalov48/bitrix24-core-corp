@@ -5,7 +5,7 @@ jn.define('stafftrack/user-statistics/calendar-header', (require, exports, modul
 	const { Loc } = require('loc');
 	const { Color, Component, Indent } = require('tokens');
 	const { Text3 } = require('ui-system/typography/text');
-	const { Avatar } = require('layout/ui/user/avatar');
+	const { Avatar } = require('ui-system/blocks/avatar');
 	const { ShimmerView } = require('layout/polyfill');
 
 	const { PureComponent } = require('layout/pure-component');
@@ -84,14 +84,13 @@ jn.define('stafftrack/user-statistics/calendar-header', (require, exports, modul
 						},
 					}),
 					Avatar({
+						testId: 'stafftrack-user-statistics-avatar',
 						id: this.user.id,
 						name: this.user.name,
-						image: this.user.avatar,
+						uri: this.user.avatar,
 						size: 32,
-						additionalStyles: {
-							wrapper: {
-								position: 'absolute',
-							},
+						style: {
+							position: 'absolute',
 						},
 					}),
 				),

@@ -9,6 +9,7 @@ use Bitrix\Sign\Item;
 use Bitrix\Sign\Operation;
 use Bitrix\Sign\Repository\DocumentRepository;
 use Bitrix\Sign\Repository\MemberRepository;
+use Bitrix\Sign\Service\Analytic\AnalyticService;
 use Bitrix\Sign\Service\B2e\MyDocumentsGrid\EventService;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Service\HrBotMessageService;
@@ -34,24 +35,27 @@ final class ChangeDocumentStatus implements Contract\Operation
 	private readonly EventService $myDocumentGridEventService;
 	private readonly ImService $imService;
 	private readonly UserService $userService;
+	private readonly AnalyticService $analyticService;
 
 	public function __construct(
 		private Item\Document $document,
-		private string $status,
-		private ?DateTime $signDate = null,
-		private ?Item\Member $initiatorMember = null,
+		private readonly string $status,
+		private readonly ?DateTime $signDate = null,
+		private readonly ?Item\Member $initiatorMember = null,
 	)
 	{
-		$this->documentRepository = Container::instance()->getDocumentRepository();
-		$this->eventHandlerService = Container::instance()->getEventHandlerService();
-		$this->pullService = Container::instance()->getPullService();
-		$this->hrBotMessageService = Container::instance()->getHrBotMessageService();
-		$this->memberRepository = Container::instance()->getMemberRepository();
-		$this->legalLogService = Container::instance()->getLegalLogService();
-		$this->memberService = Container::instance()->getMemberService();
-		$this->myDocumentGridEventService = Container::instance()->getMyDocumentGridEventService();
-		$this->imService = Container::instance()->getImService();
-		$this->userService = Container::instance()->getUserService();
+		$container = Container::instance();
+		$this->documentRepository = $container->getDocumentRepository();
+		$this->eventHandlerService = $container->getEventHandlerService();
+		$this->pullService = $container->getPullService();
+		$this->hrBotMessageService = $container->getHrBotMessageService();
+		$this->memberRepository = $container->getMemberRepository();
+		$this->legalLogService = $container->getLegalLogService();
+		$this->memberService = $container->getMemberService();
+		$this->myDocumentGridEventService = $container->getMyDocumentGridEventService();
+		$this->imService = $container->getImService();
+		$this->userService = $container->getUserService();
+		$this->analyticService = $container->getAnalyticService();
 	}
 
 	public function launch(): Main\Result
@@ -157,6 +161,14 @@ final class ChangeDocumentStatus implements Contract\Operation
 					return $result;
 				}
 			}
+			elseif ($this->status === Type\DocumentStatus::DONE && $this->document->isInitiatedByEmployee())
+			{
+				$signer = $members->findFirstByRole(Type\Member\Role::SIGNER);
+				if ($signer)
+				{
+					$result = $this->myDocumentGridEventService->onMemberStatusChanged($this->document, $signer);
+				}
+			}
 		}
 		elseif (
 			Type\DocumentScenario::isB2BScenario($this->document->scenario ?? '')
@@ -170,6 +182,7 @@ final class ChangeDocumentStatus implements Contract\Operation
 				return $sendMessageResult;
 			}
 		}
+		$this->collectAnalytics();
 
 		return $result;
 	}
@@ -261,5 +274,27 @@ final class ChangeDocumentStatus implements Contract\Operation
 		}
 
 		return $result;
+	}
+
+	private function collectAnalytics(): void
+	{
+		if (Type\DocumentScenario::isB2bScenarioByDocument($this->document) && $this->status === Type\DocumentStatus::DONE)
+		{
+			$member = $this->memberRepository->getByPartyAndDocumentId($this->document->id, $this->document->parties);
+
+			$analyticsEvent = (new Main\Analytics\AnalyticsEvent(
+				'document_signed',
+				'sign',
+				'documents',
+			))
+				->setType('b2b')
+				->setStatus('success')
+				->setP5("docId_{$this->document->id}")
+			;
+			$this->analyticService->sendEventWithSigningContext(
+				$analyticsEvent,
+				$member,
+			);
+		}
 	}
 }

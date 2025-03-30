@@ -30,5 +30,6 @@ $APPLICATION->IncludeComponent(
 		'USE_UI_TOOLBAR' => 'N',
 		'USE_PADDING' => false,
 		'PLAIN_VIEW' => false,
+		'HIDE_TOOLBAR' => true,
 	],
 );

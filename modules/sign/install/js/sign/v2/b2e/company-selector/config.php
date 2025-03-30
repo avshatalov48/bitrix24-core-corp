@@ -19,7 +19,7 @@ return [
 		'sign.v2.b2e.hcm-link-company-selector',
 		'sign.v2.b2e.scheme-selector',
 		'sign.v2.company-editor',
-		'sign.v2.document-setup',
+		'sign.type',
 		'sign.v2.helper',
 		'ui.alerts',
 		'ui.entity-selector',

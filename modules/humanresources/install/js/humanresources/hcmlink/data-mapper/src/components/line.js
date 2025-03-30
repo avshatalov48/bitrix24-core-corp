@@ -17,12 +17,16 @@ export const Line = {
 			required: true,
 		},
 		config: {
-			type: Object,
 			required: true,
+			type: {
+				companyId: Number,
+				mode: String,
+				isHideInfoAlert: Boolean,
+			},
 		},
 	},
 
-	data()
+	data(): Object
 	{
 		return {
 			hasLink: false,
@@ -43,7 +47,7 @@ export const Line = {
 	},
 
 	methods: {
-		onAddEntity(options)
+		onAddEntity(options): void
 		{
 			if (this.config.mode === 'direct')
 			{
@@ -56,7 +60,7 @@ export const Line = {
 				this.hasLink = true;
 			}
 		},
-		onRemoveEntity(options)
+		onRemoveEntity(options): void
 		{
 			const userId = this.config.mode === 'direct' ? this.item.id : options.id;
 
@@ -69,16 +73,18 @@ export const Line = {
 		<div class="hr-hcmlink-sync__line-container">
 			<div class="hr-hcmlink-sync__line-left-container">
 				<UserItem
-					:item = item
+					:item=item
 				    :mode="config.mode"
 				></UserItem>
 				<Separator
-					:hasLink = hasLink
+					:hasLink=hasLink
+					:mode="config.mode"
 				></Separator>
 			</div>
-			<div class="hr-hcmlink-sync__line-right-container">
+			<div class="hr-hcmlink-sync__line-right-container" :class="this.config.mode === 'direct' ? '--person' : '--user'">
 				<PersonItem
-					:config = config
+					:config=config
+					:suggestId="item.suggestId"
 					:mappedUserIds=mappedUserIds
 					@addEntity="onAddEntity"
 					@removeEntity="onRemoveEntity"

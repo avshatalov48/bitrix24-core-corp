@@ -27,11 +27,13 @@ class OperationsApiInLead extends BaseFeature
 	public function enable(): void
 	{
 		LeadSettings::getCurrent()->setFactoryEnabled(true);
+		$this->logEnabled();
 	}
 
 	public function disable(): void
 	{
 		LeadSettings::getCurrent()->setFactoryEnabled(false);
+		$this->logDisabled();
 	}
 
 	public function getSort(): int

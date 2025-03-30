@@ -2,7 +2,9 @@
 
 namespace Bitrix\Sign\Type\Member\Notification;
 
-enum ReminderType: string
+use Bitrix\Sign\Contract\Item\IntModelValue;
+
+enum ReminderType: string implements IntModelValue
 {
 	case NONE = 'none';
 	case ONCE_PER_DAY = 'oncePerDay';

@@ -22,6 +22,7 @@ class CrmStore extends Crm
 				'menu_im_collab',
 				'menu_calendar',
 				'menu_documents',
+				'menu_boards',
 				'menu_files',
 				'menu_external_mail',
 				'menu_all_groups',

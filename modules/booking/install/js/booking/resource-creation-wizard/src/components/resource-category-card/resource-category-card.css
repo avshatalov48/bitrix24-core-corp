@@ -18,10 +18,6 @@
 	font-size: var(--ui-font-size-2xl);
 }
 
-.booking--resource-category-card__header__sub-title {
-	letter-spacing: -0.2px;
-}
-
 .resource-category-card__content {
 	padding: 14px 10px;
 }

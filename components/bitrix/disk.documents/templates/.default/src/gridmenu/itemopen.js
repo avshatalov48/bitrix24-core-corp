@@ -33,7 +33,10 @@ export default class ItemOpen extends Item
 	{
 		if (Type.isStringFilled(this.data['href']))
 		{
-			BX.SidePanel.Instance.open(this.data['href']);
+			if (!this.data['target'])
+			{
+				BX.SidePanel.Instance.open(this.data['href']);
+			}
 			this.emit('close');
 		}
 		else

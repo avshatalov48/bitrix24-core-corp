@@ -123,6 +123,8 @@ class Schedule extends Controller
 			$result = (new ScheduleHandler\Create\Handler())->handle($scheduleForm);
 			if (BaseServiceResult::isSuccessResult($result))
 			{
+				$this->cleanSettingsCache();
+
 				return $this->makeResult($result);
 			}
 			$this->addErrors($result->getErrors());
@@ -141,6 +143,8 @@ class Schedule extends Controller
 
 			if (BaseServiceResult::isSuccessResult($result))
 			{
+				$this->cleanSettingsCache();
+
 				return $this->makeResult($result);
 			}
 			$this->addErrors($result->getErrors());
@@ -216,6 +220,10 @@ class Schedule extends Controller
 		{
 			$this->addErrors($result->getErrors());
 		}
+		else
+		{
+			$this->cleanSettingsCache();
+		}
 	}
 
 
@@ -272,5 +280,18 @@ class Schedule extends Controller
 				'links' => $links,
 			],
 		];
+	}
+
+	private function cleanSettingsCache(): void
+	{
+		if (defined('BX_COMP_MANAGED_CACHE'))
+		{
+			global $CACHE_MANAGER;
+
+			$CACHE_MANAGER->CleanDir(
+				'timeman_structure_'
+				. \COption::GetOptionInt('intranet', 'iblock_structure')
+			);
+		}
 	}
 }

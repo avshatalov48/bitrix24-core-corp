@@ -2,21 +2,21 @@ import { Loc, Dom } from 'main.core';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { mapState } from 'ui.vue3.pinia';
 import { memberRoles, AnalyticsSourceType } from 'humanresources.company-structure.api';
-import { AddUserDialog } from 'humanresources.company-structure.add-user-dialog';
-import { MoveUserFromDialog } from 'humanresources.company-structure.move-user-from-dialog';
+import { UserManagementDialog } from 'humanresources.company-structure.user-management-dialog';
+import { Hint } from 'humanresources.company-structure.structure-components';
 import { EventEmitter } from 'main.core.events';
 import { events } from '../../../events';
-import { HeadList } from './head-list/head-list';
-
-import { DepartmentMenuButton } from './department-menu-button/department-menu-button';
+import { HeadList } from './head-list';
+import { DepartmentMenuButton } from './department-menu-button';
 import type { TreeItem, ConnectorData, TreeNodeData } from '../../../types';
-import { SubdivisionAddButton } from './subdivision-add-button/subdivision-add-button';
+import { SubdivisionAddButton } from './subdivision-add-button';
 import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
+import './style.css';
 
 export const TreeNode = {
 	name: 'treeNode',
 
-	inject: ['getTreeBounds', 'getHeightDifference'],
+	inject: ['getTreeBounds'],
 
 	props: {
 		nodeId: {
@@ -45,10 +45,11 @@ export const TreeNode = {
 		SubdivisionAddButton,
 	},
 
+	directives: { hint: Hint },
+
 	data(): TreeNodeData
 	{
 		return {
-			childrenLoaded: false,
 			childrenOffset: 0,
 			childrenMounted: false,
 			showInfo: true,
@@ -60,13 +61,26 @@ export const TreeNode = {
 		this.width = 278;
 		this.gap = 20;
 		this.prevChildrenOffset = 0;
+		this.prevHeight = 0;
 	},
 
+	watch: {
+		async head(): Promise<void>
+		{
+			await this.$nextTick();
+			EventEmitter.emit(events.HR_DEPARTMENT_ADAPT_CONNECTOR_HEIGHT, {
+				nodeId: this.nodeId,
+				shift: this.$el.offsetHeight - this.prevHeight,
+			});
+			this.prevHeight = this.$el.offsetHeight;
+		},
+	},
 	async mounted(): Promise<void>
 	{
 		this.showInfo = PermissionChecker.getInstance().hasPermission(PermissionActions.structureView, this.nodeId);
 		this.$emit('calculatePosition', this.nodeId);
 		await this.$nextTick();
+		this.prevHeight = this.$el.offsetHeight;
 		EventEmitter.emit(events.HR_DEPARTMENT_CONNECT, {
 			id: this.nodeId,
 			parentId: this.nodeData.parentId,
@@ -75,13 +89,7 @@ export const TreeNode = {
 			...this.calculateNodePoints(),
 		});
 	},
-	watch: {
-		head()
-		{
-			this.updateConnectors();
-		},
-	},
-	unmounted(): Promise<void>
+	unmounted(): void
 	{
 		Dom.remove(this.$el);
 		const { prevParentId } = this.nodeData;
@@ -109,6 +117,7 @@ export const TreeNode = {
 				'--expanded': this.expandedNodes.includes(this.nodeId),
 				'--current-department': this.isCurrentDepartment,
 				'--focused': this.focusedNode === this.nodeId,
+				'--with-restricted-access-rights': !this.showInfo,
 			};
 		},
 		subdivisionsClass(): { [key: string]: boolean; }
@@ -138,7 +147,7 @@ export const TreeNode = {
 		{
 			return this.currentDepartment === this.nodeId;
 		},
-		head(): TreeItem['heads']
+		head(): ?TreeItem['heads']
 		{
 			return this.nodeData.heads?.filter((head) => {
 				return head.role === memberRoles.head;
@@ -154,39 +163,9 @@ export const TreeNode = {
 		{
 			return this.nodeData.userCount - this.nodeData.heads.length;
 		},
-		childNodeStyle(): Object
+		childNodeStyle(): { left: String; }
 		{
-			const style = { left: `${this.childrenOffset}px` };
-
-			if (!this.childrenLoaded)
-			{
-				return style;
-			}
-
-			const { childrenNode } = this.$refs;
-
-			if (!childrenNode)
-			{
-				return style;
-			}
-
-			const { offsetParent: rootNode } = childrenNode;
-
-			const node = this.departments.get(this.nodeId);
-
-			if (node.children.length === 0)
-			{
-				return style;
-			}
-
-			const top = this.top(node.children[0], rootNode);
-			if (top !== null)
-			{
-				// eslint-disable-next-line unicorn/consistent-destructuring,@bitrix24/bitrix24-rules/no-style
-				style.top = `${top}px`;
-			}
-
-			return style;
+			return { left: `${this.childrenOffset}px` };
 		},
 		showSubdivisionAddButton(): boolean
 		{
@@ -226,7 +205,6 @@ export const TreeNode = {
 				const gap = this.gap * (node.children.length - 1);
 				this.prevChildrenOffset = this.childrenOffset;
 				this.childrenOffset = (this.width - (this.width * node.children.length + gap)) / 2;
-				this.childrenLoaded = true;
 			}
 
 			const offset = this.childrenOffset - this.prevChildrenOffset;
@@ -239,24 +217,6 @@ export const TreeNode = {
 				});
 			}
 		},
-		top(id: number, parentNode): ?number
-		{
-			const heightDifference = this.getHeightDifference(id, parentNode, this.$refs[`node-${id}`][0].$el);
-
-			if (heightDifference === 0)
-			{
-				return null;
-			}
-
-			try
-			{
-				return parentNode.firstElementChild.offsetHeight + heightDifference;
-			}
-			catch
-			{
-				return null;
-			}
-		},
 		controlDepartment(action: string, source: string = AnalyticsSourceType.CARD): void
 		{
 			EventEmitter.emit(events.HR_DEPARTMENT_CONTROL, {
@@ -267,7 +227,10 @@ export const TreeNode = {
 		},
 		addEmployee(): void
 		{
-			AddUserDialog.openDialog({ type: 'employee', nodeId: this.nodeId });
+			UserManagementDialog.openDialog({
+				nodeId: this.nodeId,
+				type: 'add',
+			});
 		},
 		userInvite(): void
 		{
@@ -282,7 +245,10 @@ export const TreeNode = {
 		},
 		moveEmployee(): void
 		{
-			MoveUserFromDialog.openDialog(this.nodeId);
+			UserManagementDialog.openDialog({
+				nodeId: this.nodeId,
+				type: 'move',
+			});
 		},
 		locPlural(phraseCode: string, count: number): string
 		{
@@ -327,24 +293,6 @@ export const TreeNode = {
 
 			return parentsPath;
 		},
-		updateConnectors(): void
-		{
-			const currentHeight = this.$el.firstElementChild.offsetHeight;
-
-			this.$nextTick(() => {
-				const heightDifference = this.$el.firstElementChild.offsetHeight - currentHeight;
-
-				EventEmitter.emit(events.HR_DEPARTMENT_UPDATE, {
-					id: this.nodeId,
-					parentId: this.nodeData.parentId,
-					html: this.$el,
-					offset: this.offset,
-					parentsPath: this.getParentsPath(this.nodeData.parentId),
-					heightDifference,
-					...this.calculateNodePoints(),
-				});
-			});
-		},
 	},
 
 	template: `
@@ -358,18 +306,18 @@ export const TreeNode = {
 				class="humanresources-tree__node_summary"
 				@click.stop="onDepartmentClick('department')"
 			>
-				<div class="humanresources-tree__node_description" :style="{ minHeight: !showInfo ? null : '136px'}">
-					<div class="humanresources-tree__node_department" :style="{ justifyContent: !showInfo ? 'center' : 'space-between'}">
+				<div class="humanresources-tree__node_description">
+					<div class="humanresources-tree__node_department">
 						<span class="humanresources-tree__node_department-title">
 							<span
+								v-hint
 								class="humanresources-tree__node_department-title_text"
-								:title="nodeData.name"
 							>
 								{{nodeData.name}}
 							</span>
 						</span>
 						<DepartmentMenuButton
-							v-if="showInfo"
+							v-if="showInfo && head && deputy"
 							:department-id="nodeId"
 							@addDepartment="controlDepartment"
 							@editDepartment="controlDepartment"
@@ -380,8 +328,12 @@ export const TreeNode = {
 							@moveEmployee="moveEmployee"
 						></DepartmentMenuButton>
 					</div>
-				  	<HeadList v-if="showInfo" :items="head"></HeadList>
-					<div v-if="showInfo" class="humanresources-tree__node_employees">
+				  	<HeadList v-if="head && showInfo" :items="head"></HeadList>
+					<div
+						v-else-if="showInfo"
+						class="humanresources-tree__node_load-skeleton --heads"
+					></div>
+					<div v-if="deputy && showInfo" class="humanresources-tree__node_employees">
 						<div>
 							<p class="humanresources-tree__node_employees-title">
 								{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_EMPLOYEES_TITLE')}}
@@ -394,8 +346,16 @@ export const TreeNode = {
 							</span>
 						</div>
 						<div v-if="!deputy.length"></div>
-						<HeadList :items="deputy" :title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_DEPUTY_TITLE')" :collapsed="true"></HeadList>
+						<HeadList :items="deputy"
+								  :title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_DEPUTY_TITLE')" 
+								  :collapsed="true"
+								  :type="'deputy'">
+						</HeadList>
 					</div>
+					<div
+						v-else-if="showInfo"
+						class="humanresources-tree__node_load-skeleton --deputies"
+					></div>
 				</div>
 				<div
 					class="humanresources-tree__node_subdivisions"
@@ -418,6 +378,10 @@ export const TreeNode = {
 					@click.stop
 				></SubdivisionAddButton>
 			</div>
+			<div
+				v-if="nodeData.parentId === 0 && !hasChildren"
+				class="humanresources-tree__node_empty-skeleton"
+			></div>
 			<div
 				v-if="hasChildren"
 				ref="childrenNode"

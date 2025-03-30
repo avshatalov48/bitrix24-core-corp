@@ -68,4 +68,46 @@ class Settings
 		*/
 		return 'N';
 	}
+
+	/**
+	 * User control feature is enabled.
+	 * @return bool
+	 */
+	public static function isUserControlFeatureEnabled(): bool
+	{
+		if (Option::get('call', 'call_user_control_enabled', false))
+		{
+			return true;
+		}
+
+		return (bool)\CUserOptions::GetOption('call', 'call_user_control_enabled', false);
+	}
+
+	/**
+	 * Picture in picture feature is enabled.
+	 * @return bool
+	 */
+	public static function isPictureInPictureFeatureEnabled(): bool
+	{
+		if (Option::get('call', 'call_picture_in_picture_enabled', false))
+		{
+			return true;
+		}
+
+		return (bool)\CUserOptions::GetOption('call', 'call_picture_in_picture_enabled', false);
+	}
+
+	/**
+	 * New QOS is enabled.
+	 * @return bool
+	 */
+	public static function isNewQOSEnabled(): bool
+	{
+		if (Option::get('call', 'call_new_qos_enabled', false))
+		{
+			return true;
+		}
+
+		return (bool)\CUserOptions::GetOption('call', 'call_new_qos_enabled', false);
+	}
 }

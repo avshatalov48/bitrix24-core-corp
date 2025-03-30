@@ -624,6 +624,11 @@
 		{
 			requestData['numbers'] = Object.keys(this.selectedNumbers);
 		}
+
+		if (this.rentPacketSize <= 1 && this.rentPacketSize !== this.selectedCount)
+		{
+			requestData['count'] = this.selectedCount;
+		}
 		else
 		{
 			requestData['count'] = this.rentPacketSize;
@@ -720,7 +725,8 @@
 			var requestData = {
 				country: this._countryId,
 				category: this._categoryId,
-				region: this._regionId
+				region: this._regionId,
+				countryState: this._stateId,
 			};
 
 			if(getMore && fetchedNumbersCount > 0)

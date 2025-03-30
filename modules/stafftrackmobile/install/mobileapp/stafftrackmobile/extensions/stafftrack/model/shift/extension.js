@@ -92,6 +92,11 @@ jn.define('stafftrack/model/shift', (require, exports, module) => {
 			return this.dateCancel;
 		}
 
+		isEmptyStatus()
+		{
+			return this.status === 0;
+		}
+
 		isWorkingStatus()
 		{
 			return this.status === StatusEnum.WORKING.toNumber();

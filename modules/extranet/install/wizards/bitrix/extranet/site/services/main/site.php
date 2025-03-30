@@ -146,6 +146,15 @@ if (!defined("WIZARD_IS_RERUN") || WIZARD_IS_RERUN !== true || WIZARD_B24_TO_CP)
 			"PATH" => WIZARD_SITE_DIR."marketplace/app/index.php"
 		)
 	);
+	\Bitrix\Main\UrlRewriter::add(
+		WIZARD_SITE_ID,
+		[
+			'CONDITION' => '#^'.WIZARD_SITE_DIR.'call/detail/([0-9]+)#',
+			'RULE' => "callId=\$1",
+			'ID' => 'bitrix:call',
+			'PATH' => WIZARD_SITE_DIR.'call/index.php',
+		]
+	);
 }
 else
 {

@@ -145,9 +145,7 @@ class CompleteOldActivities extends AgentBase
 		$counterLimit = \Bitrix\Crm\Settings\CounterSettings::getInstance()->getCounterLimitValue();
 		if ($counterLimit > 0)
 		{
-			$existedItemsCount = \Bitrix\Crm\Settings\CounterSettings::getInstance()->getCounterCurrentValue();
-
-			return ($existedItemsCount >= $counterLimit * self::COUNTER_LIMIT_THRESHOLD);
+			return \Bitrix\Crm\Settings\CounterSettings::getInstance()->isCounterCurrentValueExceeded($counterLimit * self::COUNTER_LIMIT_THRESHOLD);
 		}
 
 		return false;

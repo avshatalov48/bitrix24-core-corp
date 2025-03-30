@@ -2,8 +2,9 @@ import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { Event } from 'main.core';
 import { Dialog } from 'ui.entity-selector';
 import { BIcon, Set } from 'ui.icon-set.api.vue';
-import { mapWritableState } from 'ui.vue3.pinia';
+import { mapState } from 'ui.vue3.pinia';
 import { sendData as analyticsSendData } from 'ui.analytics';
+import { OrgChartActions } from '../../../actions';
 
 import './style.css';
 
@@ -19,7 +20,7 @@ export const SearchBar = {
 			},
 		},
 	},
-	data()
+	data(): { canEditPermissions: boolean; showSearchBar: boolean; }
 	{
 		return {
 			canEditPermissions: false,
@@ -42,7 +43,7 @@ export const SearchBar = {
 		{
 			return Set;
 		},
-		...mapWritableState(useChartStore, ['searchedUserId', 'departments']),
+		...mapState(useChartStore, ['departments']),
 	},
 	methods: {
 		loc(phraseCode: string, replacements: { [p: string]: string } = {}): string
@@ -109,7 +110,7 @@ export const SearchBar = {
 						if (item.entityType === 'employee')
 						{
 							this.$emit('locate', item.customData.get('nodeId'));
-							this.searchedUserId = item.id;
+							OrgChartActions.searchUserInDepartment(item.id);
 							dialog.recentItemsToSave.push(item);
 							dialog.saveRecentItems();
 

@@ -1,3 +1,4 @@
+import { Loc } from 'main.core';
 import {Sharing} from './fields/sharing';
 import {ExternalLink} from './fields/externallink';
 import Toolbar from './toolbar';
@@ -7,6 +8,8 @@ import {Options as GridOptions, Options} from './options';
 import {Ears} from 'ui.ears';
 import {EventEmitter} from 'main.core.events';
 import Backend from './backend';
+import BoardsGuide from './boards-guide';
+import 'ui.tour';
 
 function showShared(objectId, node) {
 	new Sharing(objectId, node);
@@ -23,8 +26,9 @@ export {
 	Toolbar,
 	Options,
 	TileGridEmptyBlockGenerator,
-	Backend
-}
+	Backend,
+	BoardsGuide,
+};
 
 //Template things
 BX.ready(() => {

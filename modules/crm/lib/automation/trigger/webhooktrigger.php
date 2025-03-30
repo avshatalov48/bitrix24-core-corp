@@ -12,7 +12,7 @@ class WebHookTrigger extends BaseTrigger
 	{
 		return (
 			Main\Loader::includeModule('rest')
-			&& Rest\Engine\Access::isAvailable()
+			&& Rest\Engine\Access::isFeatureEnabled()
 		);
 	}
 
@@ -52,15 +52,13 @@ class WebHookTrigger extends BaseTrigger
 		);
 	}
 
-	private static function getPassword($userId = null)
+	private static function getPassword($userId = null): ?string
 	{
 		if ($userId === null)
 		{
 			$user = Main\Engine\CurrentUser::get();
 			$userId = $user->getId();
 		}
-
-		$result = null;
 
 		$userId = (int)$userId;
 		$passwordId = (int)\CUserOptions::GetOption(
@@ -70,20 +68,10 @@ class WebHookTrigger extends BaseTrigger
 			$userId
 		);
 
-		if ($passwordId > 0)
-		{
-			$res = Rest\APAuth\PasswordTable::getList([
-				'filter' => [
-					'=ID' => $passwordId,
-					'=USER_ID' => $userId,
-				],
-				'select' => ['ID', 'PASSWORD'],
-			]);
+		$passwordService = Rest\Service\ServiceContainer::getInstance()->getAPAuthPasswordService();
+		$password = $passwordId > 0 ? $passwordService->getPasswordById($passwordId) : null;
 
-			$result = $res->fetch();
-		}
-
-		return $result ? $result['PASSWORD'] : null;
+		return $password && $password->getUserId() === $userId ? $password->getPasswordString() : null;
 	}
 
 	public static function touchPassword($userId): ?string
@@ -94,32 +82,27 @@ class WebHookTrigger extends BaseTrigger
 			return $password;
 		}
 
-		$password = Rest\APAuth\PasswordTable::generatePassword();
+		$passwordService = Rest\Service\ServiceContainer::getInstance()->getAPAuthPasswordService();
+		$createPasswordDto = new Rest\Dto\APAuth\CreatePasswordDto(
+			userId: $userId,
+			type: Rest\Enum\APAuth\PasswordType::System,
+			title: Loc::getMessage('CRM_AUTOMATION_TRIGGER_PASSWORD_TITLE'),
+			comment: Loc::getMessage('CRM_AUTOMATION_TRIGGER_PASSWORD_COMMENT'),
+			permissions: ['crm'],
+		);
+		$password = $passwordService->create($createPasswordDto);
 
-		$res = Rest\APAuth\PasswordTable::add([
-			'USER_ID' => $userId,
-			'PASSWORD' => $password,
-			'DATE_CREATE' => new Main\Type\DateTime(),
-			'TITLE' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_PASSWORD_TITLE'),
-			'COMMENT' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_PASSWORD_COMMENT'),
-		]);
-
-		if ($res->isSuccess())
+		if ($password?->getId() > 0)
 		{
-			Rest\APAuth\PermissionTable::add([
-				'PASSWORD_ID' => $res->getId(),
-				'PERM' => 'crm',
-			]);
-
 			\CUserOptions::SetOption(
 				'crm',
 				'webhook_trigger_password_id',
-				$res->getId(),
+				$password->getId(),
 				false,
 				$userId
 			);
 
-			return $password;
+			return $password->getPasswordString();
 		}
 
 		return null;

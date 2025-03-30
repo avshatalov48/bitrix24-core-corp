@@ -20,13 +20,15 @@ export class SignDropdown extends EventEmitter
 		className?: string,
 		entities: Array<{ id: string, searchFields: Array<{ id: string, system: boolean}> }>,
 		isEnableSearch?: boolean,
+		width?: number,
+		height?: number,
 		withCaption?: boolean,
 		tabs: Array<{ id: string, title: string }>})
 	{
 		super();
 		this.setEventNamespace('BX.V2.B2e.SignDropdown');
 
-		const { className, withCaption, isEnableSearch } = dialogOptions;
+		const { className, withCaption, isEnableSearch, width, height } = dialogOptions;
 		const titleNode = withCaption
 			? Tag.render`
 				<div class="sign-b2e-dropdown__text">
@@ -48,8 +50,8 @@ export class SignDropdown extends EventEmitter
 		`;
 		this.#selector = new Dialog({
 			targetNode: this.#dom,
-			width: 500,
-			height: 350,
+			width: width ?? 500,
+			height: height ?? 350,
 			showAvatars: false,
 			dropdownMode: true,
 			multiple: false,

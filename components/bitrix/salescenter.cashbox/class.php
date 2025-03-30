@@ -33,13 +33,13 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	public function onPrepareComponentParams($arParams)
 	{
 		$this->arResult = [
-			'handler' => $arParams['handler'],
-			'kkm-id' => $arParams['kkm-id'],
-			'id' => $arParams['id'],
-			'page' => $arParams['page'],
-			'isFrame' => $arParams['isFrame'],
-			'preview' => $arParams['preview'],
-			'restHandler' => $arParams['restHandler'],
+			'handler' => $arParams['handler'] ?? null,
+			'kkm-id' => $arParams['kkm-id'] ?? null,
+			'id' => $arParams['id'] ?? null,
+			'page' => $arParams['page'] ?? null,
+			'isFrame' => $arParams['isFrame'] ?? null,
+			'preview' => $arParams['preview'] ?? null,
+			'restHandler' => $arParams['restHandler'] ?? null,
 		];
 
 		return parent::onPrepareComponentParams($arParams);
@@ -395,17 +395,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 			return false;
 		}
 
-		if (is_a($this->arParams['handler'], Cashbox\CashboxYooKassa::class, true))
-		{
-			return true;
-		}
-
-		if (Cashbox\Manager::isPaySystemCashbox($this->arParams['handler']))
-		{
-			return false;
-		}
-
-		return true;
+		return $this->arParams['handler']::isOfdSettingsNeeded();
 	}
 
 	protected function isCurrentZoneRu(): bool
@@ -457,7 +447,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	protected function getOfdSettings()
 	{
 		$ofdHandler = $this->arResult['data']['OFD'] ?? '';
-		if (class_exists($ofdHandler))
+		if (is_string($ofdHandler) && Cashbox\Ofd::doesHandlerExist($ofdHandler))
 		{
 			/** @var Cashbox\Ofd $ofdHandler */
 			return $ofdHandler::getSettings();
@@ -608,19 +598,19 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	{
 		$result = new Main\Result();
 
-		if ($cashbox['ACTIVE'] != 'Y')
+		if (isset($cashbox['ACTIVE']) && $cashbox['ACTIVE']  !== 'Y')
 		{
 			$cashbox['ACTIVE'] = 'N';
 		}
-		if ($cashbox['USE_OFFLINE'] != 'Y')
+		if (isset($cashbox['USE_OFFLINE']) && $cashbox['USE_OFFLINE'] !== 'Y')
 		{
 			$cashbox['USE_OFFLINE'] = 'N';
 		}
-		if (!$cashbox['SORT'])
+		if (empty($cashbox['SORT']))
 		{
 			$cashbox['SORT'] = 100;
 		}
-		if (!$cashbox['OFD_SETTINGS'])
+		if (empty($cashbox['OFD_SETTINGS']))
 		{
 			$cashbox['OFD_SETTINGS'] = [];
 		}
@@ -633,6 +623,20 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 		if (!isset($handlerList[$cashbox['HANDLER']]))
 		{
 			$result->addError(new Main\Error(Loc::getMessage("SC_SALESCENTER_ERROR_NO_HANDLER_EXIST")));
+		}
+
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
+
+		if (
+			isset($cashbox['OFD'])
+			&& is_string($cashbox['OFD'])
+			&& !empty($cashbox['OFD'])
+			&& !Cashbox\Ofd::doesHandlerExist($cashbox['OFD']))
+		{
+			$result->addError(new Main\Error(Loc::getMessage("SC_SALESCENTER_ERROR_NO_OFD_EXIST")));
 		}
 
 		if (!$result->isSuccess())

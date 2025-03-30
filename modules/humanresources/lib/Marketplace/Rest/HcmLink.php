@@ -106,6 +106,13 @@ class HcmLink extends IRestService
 					],
 					'options' => [],
 				],
+				self::SCOPE . '.job.status.get' => [
+					'callback' => [
+						self::class,
+						'getJobStatus',
+					],
+					'options' => [],
+				],
 
 				CRestUtil::EVENTS => self::getEvents(),
 				CRestUtil::PLACEMENTS => self::getPlacements(),
@@ -812,6 +819,31 @@ class HcmLink extends IRestService
 		}
 
 		return true;
+	}
+
+
+	public static function getJobStatus(array $query, int $start, CRestServer $restServer)
+	{
+		self::checkAuth($restServer);
+
+		$jobId = (int)($query['id'] ?? 0);
+
+		try
+		{
+			$job = Container::getHcmLinkJobRepository()->getById($jobId);
+			if ($job === null)
+			{
+				throw new ArgumentException("Job not found");
+			}
+		}
+		catch (Exception $e)
+		{
+			return self::formatException($e);
+		}
+
+		return [
+			'alive' => !$job->status->isFinished(),
+		];
 	}
 
 	public static function onEvent(array $query): array

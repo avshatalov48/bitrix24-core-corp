@@ -514,47 +514,19 @@ js,
 				\Bitrix\Main\UI\Extension::load(['bp_starter']);
 
 				$arActions[] = ['SEPARATOR' => true];
-				if (isset($arLead['PATH_TO_BIZPROC_LIST']) && $arLead['PATH_TO_BIZPROC_LIST'] !== '')
-				{
-					$arActions[] = [
-						'TITLE' => Loc::getMessage('CRM_LEAD_BIZPROC_TITLE'),
-						'TEXT' => Loc::getMessage('CRM_LEAD_BIZPROC'),
-						'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arLead['PATH_TO_BIZPROC_LIST'])."');"
-					];
-				}
-
-				if (class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
-				{
-					$starterConfig = \Bitrix\Main\Web\Json::encode(
-						CCrmBizProcHelper::getBpStarterConfig(CCrmOwnerType::Lead, $arLead['ID'])
-					);
-					$reloadGridAction = 'function(){BX.Main.gridManager.reload(\''.CUtil::JSEscape($arResult['GRID_ID']).'\');}';
-					$arActions[] = [
-						'TITLE' => Loc::getMessage('CRM_LEAD_BIZPROC_LIST_TITLE'),
-						'TEXT' => Loc::getMessage('CRM_LEAD_BIZPROC_LIST'),
-						'ONCLICK' => 'BX.Bizproc.Starter.showTemplates(' . $starterConfig . ', { callback:' . $reloadGridAction . '})',
-					];
-				}
-				elseif (!empty($arLead['BIZPROC_LIST']))
-				{
-					$arBizprocList = [];
-					foreach($arLead['BIZPROC_LIST'] as $arBizproc)
-					{
-						$arBizprocList[] = [
-							'TITLE' => $arBizproc['DESCRIPTION'],
-							'TEXT' => $arBizproc['NAME'],
-							'ONCLICK' => isset($arBizproc['ONCLICK'])
-								? $arBizproc['ONCLICK']
-								: "jsUtils.Redirect([], '".CUtil::JSEscape($arBizproc['PATH_TO_BIZPROC_START'])."');"
-						];
-					}
-
-					$arActions[] = [
-						'TITLE' => Loc::getMessage('CRM_LEAD_BIZPROC_LIST_TITLE'),
-						'TEXT' => Loc::getMessage('CRM_LEAD_BIZPROC_LIST'),
-						'MENU' => $arBizprocList
-					];
-				}
+				$arActions[] = [
+					'TITLE' => Loc::getMessage('CRM_LEAD_BIZPROC_LIST_TITLE'),
+					'TEXT' => Loc::getMessage('CRM_LEAD_BIZPROC_LIST'),
+					'ONCLICK' => (
+						$toolsManager->checkBizprocAvailability()
+							? CCrmBizProcHelper::getShowTemplatesJsAction(
+								CCrmOwnerType::Lead,
+								$arLead['ID'],
+								'function(){BX.Main.gridManager.reload(\'' . CUtil::JSEscape($arResult['GRID_ID']) . '\');}'
+							)
+							: $availabilityManager->getBizprocAvailabilityLock()
+					),
+				];
 			}
 		}
 	}

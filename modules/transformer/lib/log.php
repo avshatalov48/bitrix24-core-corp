@@ -17,6 +17,7 @@ use Psr\Log\NullLogger;
 class Log
 {
 	const LOG = '/bitrix/modules/transformer.log';
+	private const LOGGER_ID = 'transformer.Default';
 
 	private static function getMode(): bool
 	{
@@ -30,11 +31,15 @@ class Log
 	final public static function logger(): LoggerInterface
 	{
 		// maybe there is a custom logger in .settings.php
-		$logger = Logger::create('transformer.Default');
+		$logger = Logger::create(self::LOGGER_ID);
 		if ($logger)
 		{
 			return $logger;
 		}
+
+		$globalContext = [
+			'loggerId' => self::LOGGER_ID,
+		];
 
 		// default logger
 		if (ModuleManager::isModuleInstalled('bitrix24'))
@@ -42,7 +47,9 @@ class Log
 			$logger = new AddMessage2LogLogger();
 
 			$logger->setLevel(Option::get('transformer', 'log_level', LogLevel::ERROR));
-			$logger->setFormatter(new JsonLogFormatter());
+			$logger->setFormatter(
+				new JsonLogFormatter(globalContext: $globalContext),
+			);
 		}
 		else
 		{
@@ -58,7 +65,12 @@ class Log
 			);
 
 			$logger->setLevel(Option::get('transformer', 'log_level', LogLevel::DEBUG));
-			$logger->setFormatter(new JsonLogFormatter(lineBreakAfterEachMessage: true));
+			$logger->setFormatter(
+				new JsonLogFormatter(
+					lineBreakAfterEachMessage: true,
+					globalContext: $globalContext,
+				),
+			);
 		}
 
 		return $logger;

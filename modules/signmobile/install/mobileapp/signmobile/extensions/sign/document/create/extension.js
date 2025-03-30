@@ -273,7 +273,6 @@ jn.define('sign/document/create', (require, exports, module) => {
 						useLargeTitleMode: true,
 					});
 					this.widget.showComponent(new SignDocument({
-						hideButtons: false,
 						role,
 						url,
 						widget: this.widget,

@@ -67,7 +67,7 @@ final class DocumentService extends Engine\Controller
 		];
 	}
 
-	public function restoreDocumentInteractionAction(Document\OnlyOffice\Models\DocumentSession $documentSession)
+	public function restoreDocumentInteractionAction(Document\Models\DocumentSession $documentSession)
 	{
 		$currentUser = $this->getCurrentUser();
 		if (!$currentUser)
@@ -126,7 +126,7 @@ final class DocumentService extends Engine\Controller
 		return $response;
 	}
 
-	public function viewDocumentAction(Document\OnlyOffice\Models\DocumentSession $documentSession): HttpResponse
+	public function viewDocumentAction(Document\Models\DocumentSession $documentSession): HttpResponse
 	{
 		$currentUser = $this->getCurrentUser();
 		if ($documentSession->isOutdatedByFileContent())
@@ -181,7 +181,7 @@ final class DocumentService extends Engine\Controller
 		return $response;
 	}
 
-	public function downloadDocumentAction(Document\OnlyOffice\Models\DocumentSession $documentSession): HttpResponse
+	public function downloadDocumentAction(Document\Models\DocumentSession $documentSession): HttpResponse
 	{
 		$file = $documentSession->getFile();
 		$response = Response\BFile::createByFileId($file->getFileId(), $file->getName());

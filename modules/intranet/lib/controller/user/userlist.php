@@ -192,6 +192,14 @@ class UserList extends Controller
 			{
 				$skippedActiveUsers[$user['ID']] = $this->getUserFullName($user);
 			}
+			elseif (empty($user['CONFIRM_CODE']) && !$isConfirm)
+			{
+				Util::deactivateUser([
+					'userId' => $user['ID'],
+					'currentUserId' => CurrentUser::get()->getId(),
+					'isCurrentUserAdmin' => CurrentUser::get()->isAdmin(),
+				]);
+			}
 			else
 			{
 				$result = \Bitrix\Intranet\Invitation::confirmUserRequest($user['ID'], $isConfirm);

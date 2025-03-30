@@ -65,7 +65,7 @@ $MESS['CRM_AUTORUN_BATCH_RESTART_AUTOMATION_SUMMARY_CAPTION'] = 'Повторн�
 $MESS['CRM_AUTORUN_BATCH_RESTART_AUTOMATION_SUMMARY_SUCCEEDED'] = 'Запущено: #number#';
 $MESS['CRM_AUTORUN_BATCH_RESTART_AUTOMATION_SUMMARY_FAILED'] = 'Не удалось запустить: #number#';
 
-$MESS['CRM_AUTORUN_BATCH_OBSERVERS_TITLE'] = 'Изменение наблюдателей';
-$MESS['CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_CAPTION'] = 'Изменение наблюдателей завершено.';
-$MESS['CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_SUCCEEDED'] = 'Изменено: #number#';
-$MESS['CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_FAILED'] = 'Не удалось изменить: #number#';
+$MESS['CRM_AUTORUN_BATCH_OBSERVERS_TITLE'] = 'Добавление наблюдателей';
+$MESS['CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_CAPTION'] = 'Добавление наблюдателей завершено.';
+$MESS['CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_SUCCEEDED'] = 'Добавлено: #number#';
+$MESS['CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_FAILED'] = 'Не удалось добавить: #number#';

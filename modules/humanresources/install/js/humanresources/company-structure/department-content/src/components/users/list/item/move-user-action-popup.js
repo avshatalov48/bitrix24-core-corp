@@ -1,13 +1,15 @@
+import { memberRoles } from 'humanresources.company-structure.api';
+import { useChartStore } from 'humanresources.company-structure.chart-store';
+import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
 import { ConfirmationPopup } from 'humanresources.company-structure.structure-components';
 import { Text } from 'main.core';
 import { TagSelector } from 'ui.entity-selector';
-import { useChartStore } from 'humanresources.company-structure.chart-store';
-import { mapState } from 'ui.vue3.pinia';
-import { moveUserStoreToAnotherDepartment } from 'humanresources.company-structure.utils';
-import { memberRoles } from 'humanresources.company-structure.api';
-import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
-import { DepartmentAPI } from '../../../../api';
 import { UI } from 'ui.notification';
+import { mapState } from 'ui.vue3.pinia';
+import { DepartmentContentActions } from '../../../../actions';
+import { DepartmentAPI } from '../../../../api';
+
+import './styles/move-user-action-popup.css';
 
 export const MoveUserActionPopup = {
 	name: 'MoveUserActionPopup',
@@ -22,11 +24,6 @@ export const MoveUserActionPopup = {
 		user: {
 			type: Object,
 			required: true,
-		},
-		role: {
-			type: String,
-			required: false,
-			default: memberRoles.employee,
 		},
 	},
 
@@ -68,29 +65,35 @@ export const MoveUserActionPopup = {
 			const userName = Text.encode(this.user.name ?? '');
 
 			return this.loc(
-				'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_USER_ACTION_MENU_MOVE_TO_ANOTHER_DEPARTMENT_POPUP_ACTION_REMOVE_USER_DESCRIPTION',
+				'HUMANRESOURCES_DEPARTMENT_CONTENT_TAB_USER_ACTION_MENU_MOVE_TO_ANOTHER_DEPARTMENT_REMOVE_USER_DESCRIPTION',
 				{
-					'#LINK_START#': `<a class="hr-department-detail-content__move-user-department-user-link" href="${this.user.url}">`,
-					'#LINK_END#': '</a>',
-					'#USER_NAME': userName,
-					'#DEPARTMENT_NAME': departmentName,
+					'#USER_NAME#': userName,
+					'#DEPARTMENT_NAME#': departmentName,
 				},
-			);
+			)
+				.replace(
+					'[link]',
+					`<a class="hr-department-detail-content__move-user-department-user-link" href="${this.user.url}">`,
+				)
+				.replace('[/link]', '</a>')
+			;
 		},
 		getUserAlreadyBelongsToDepartmentPopupPhrase(): string
 		{
 			const departmentName = Text.encode(this.departments.get(this.selectedParentDepartment ?? 0).name ?? '');
 			const userName = Text.encode(this.user.name ?? '');
 
-			return this.loc(
-				'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_USER_ACTION_MENU_MOVE_TO_ANOTHER_DEPARTMENT_ALREADY_BELONGS_TO_DEPARTMENT_DESCRIPTION',
+			let phrase = this.loc(
+				'HUMANRESOURCES_DEPARTMENT_CONTENT_TAB_USER_ACTION_MENU_MOVE_TO_ANOTHER_DEPARTMENT_ALREADY_BELONGS_TO_DEPARTMENT_DESCRIPTION',
 				{
-					'#LINK_START#': `<a class="hr-department-detail-content__move-user-department-user-link" href="${this.user.url}">`,
-					'#LINK_END#': '</a>',
-					'#USER_NAME': userName,
-					'#DEPARTMENT_NAME': departmentName,
+					'#USER_NAME#': userName,
+					'#DEPARTMENT_NAME#': departmentName,
 				},
 			);
+			phrase = phrase.replace('[link]', `<a class="hr-department-detail-content__move-user-department-user-link" href="${this.user.url}">`);
+			phrase = phrase.replace('[/link]', '</a>');
+
+			return phrase;
 		},
 		memberRoles(): typeof memberRoles
 		{
@@ -150,14 +153,14 @@ export const MoveUserActionPopup = {
 		async confirmMoveUser(): Promise<void>
 		{
 			this.showMoveUserActionLoader = true;
-			const nodeId = this.focusedNode;
+			const departmentId = this.focusedNode;
 			const userId = this.user.id;
 			const targetNodeId = this.selectedParentDepartment;
 
 			try
 			{
 				await DepartmentAPI.moveUserToDepartment(
-					nodeId,
+					departmentId,
 					userId,
 					targetNodeId,
 				);
@@ -184,18 +187,24 @@ export const MoveUserActionPopup = {
 				return;
 			}
 
-			const departmentName = Text.encode(this.departments.get(targetNodeId).name ?? '');
+			const departmentName = Text.encode(this.departments.get(targetNodeId)?.name ?? '');
 			UI.Notification.Center.notify({
 				content: this.loc(
-					'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_USER_ACTION_MENU_MOVE_TO_ANOTHER_DEPARTMENT_SUCCESS_MESSAGE',
+					'HUMANRESOURCES_DEPARTMENT_CONTENT_TAB_USER_ACTION_MENU_MOVE_TO_ANOTHER_DEPARTMENT_SUCCESS_MESSAGE',
 					{
-						'#DEPARTMENT_NAME': departmentName,
+						'#DEPARTMENT_NAME#': departmentName,
 					},
 				),
 				autoHideDelay: 2000,
 			});
 
-			moveUserStoreToAnotherDepartment(this.departments, nodeId, userId, targetNodeId, this.role);
+			DepartmentContentActions.moveUserToDepartment(
+				departmentId,
+				userId,
+				targetNodeId,
+				this.user.role ?? memberRoles.employee,
+			);
+
 			this.$emit('action');
 			this.showMoveUserActionLoader = false;
 		},

@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,ui_vue3_pinia,ui_vue3,market_toolbar,market_main,market_listApps,main_core_events) {
 	'use strict';
@@ -58,6 +59,9 @@ this.BX = this.BX || {};
 	        }
 	      },
 	      created() {
+	        this.marketLogoTitle = this.result.MARKET_LOGO_TITLE;
+	        this.marketToolbarTitle = this.result.MARKET_TOOLBAR_TITLE;
+	        this.marketNameMessageCode = this.result.MARKET_NAME_MESSAGE_CODE;
 	        this.categories = this.result.CATEGORIES;
 	        this.searchFilters = this.result.SEARCH_FILTERS;
 	        this.favNumbers = this.result.FAV_NUMBERS;

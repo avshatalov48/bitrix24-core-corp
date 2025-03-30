@@ -73,5 +73,9 @@ $b24Languages = array(
 		"NAME" => "عربي",
 		"IS_BETA" => true
 	],
+	"kz" => [
+		"NAME" => "Қазақша",
+		"IS_BETA" => true
+	],
 );
 ?>

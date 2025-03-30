@@ -1,0 +1,2 @@
+<?php
+$MESS["DISK_FOLDER_LIST_LABEL_GRID_TOTAL"] = "Барлығы";

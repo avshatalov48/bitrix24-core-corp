@@ -1,15 +1,6 @@
 .crm__ai-recognition-promo {
 	--outline-color: var(--ui-color-copilot-secondary);
-	padding: 10px;
-	display: flex;
-	align-items: stretch;
-	backdrop-filter: blur(20px);
-	background-color: rgba(var(--ui-color-background-primary-rgb), 0.8);
-	border-radius: var(--ui-border-radius-2xl);
-}
-
-.crm__ai-recognition-promo_inner {
-	padding: 20px 28px 32px 28px;
+	padding: 22px 15px 19px 24px;
 	background-color: var(--ui-color-background-primary);
 	border-radius: var(--ui-border-radius-lg);
 }
@@ -19,7 +10,6 @@
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
-	padding-bottom: 15px;
 }
 
 .crm__ai-recognition-promo_header-left {
@@ -42,6 +32,10 @@
 	font-size: var(--ui-font-size-3xl);
 	font-weight: var(--ui-font-weight-medium);
 	line-height: var(--ui-font-line-height-2xs);
+}
+
+.crm__ai-recognition-promo_header-close-button {
+	height: 40px;
 }
 
 .crm__ai-recognition-promo_close-popup-button {
@@ -69,15 +63,15 @@
 }
 
 .crm__ai-recognition-promo_content {
-	padding-top: 19px;
-	padding-bottom: 29px;
-	border-top: var(--ui-border-width-thin) solid rgba(var(--ui-color-copilot-primary-rgb), 0.2);
+	width: 480px;
+	padding-top: 21px;
+	padding-bottom: 26px;
 }
 
 .crm__ai-recognition-promo_video-container {
 	position: relative;
-	width: 480px;
 	height: 295px;
+	padding-bottom: 1px;
 	border-radius: var(--ui-border-radius-sm);
 	background-color: #D0CBD74D;
 	overflow: hidden;
@@ -102,14 +96,14 @@
 }
 
 .crm__ai-recognition-promo_content-description {
-	color: var(--ui-color-base-60);
+	color: var(--ui-color-palette-gray-90);
 	font-feature-settings: 'liga' off, 'clig' off;
-	font-size: var(--ui-font-size-xl);
+	font-size: var(--ui-font-size-md);
 	line-height: var(--ui-font-line-height-2xs);
 }
 
 .crm__ai-recognition-promo_content-description p {
-	margin-top: 20px;
+	margin-top: 19px;
 	margin-bottom: 0;
 }
 .crm__ai-recognition-promo_content-description a,
@@ -122,6 +116,7 @@
 	text-decoration-thickness: 1px;
 }
 .crm__ai-recognition-promo_content-description a {
+	cursor: pointer;
 	text-decoration-color: rgba(var(--ui-color-copilot-secondary-rgb), 1);
 }
 
@@ -134,4 +129,21 @@
 .crm__ai-recognition-promo_content-description a:active {
 	color: rgba(var(--ui-color-copilot-secondary-rgb), 0.9);
 	text-decoration-color: rgba(var(--ui-color-copilot-secondary-rgb), 0.9);
+}
+
+.crm__ai-recognition-promo_checkbox_dont_show_again {
+	display: flex;
+	align-items: center;
+
+	height: 39px;
+	gap: 4px;
+	margin-top: 11px;
+
+	font-feature-settings: 'liga' off, 'clig' off;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-palette-gray-70);
+}
+
+.crm__ai-recognition-promo_checkbox_dont_show_again input{
+	margin-right: 5px;
 }

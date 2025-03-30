@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Humanresources = this.BX.Humanresources || {};
-(function (exports,ui_alerts,ui_entitySelector,main_core_events,ui_avatar,ui_iconSet_api_core,main_popup,ui_iconSet_actions,ui_vue3,ui_buttons,humanresources_hcmlink_api,main_core,ui_sidepanel_layout) {
+(function (exports,ui_vue3,ui_alerts,ui_entitySelector,ui_avatar,ui_iconSet_api_core,main_popup,ui_iconSet_actions,im_v2_lib_dateFormatter,ui_buttons,ui_iconSet_api_vue,humanresources_hcmlink_api,main_core,main_core_events,ui_sidepanel_layout) {
 	'use strict';
 
 	const Separator = {
@@ -10,6 +10,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    hasLink: {
 	      required: true,
 	      type: Boolean
+	    },
+	    mode: {
+	      type: String,
+	      required: true
 	    }
 	  },
 	  computed: {
@@ -17,16 +21,22 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return {
 	        '--ui-icon-set__icon-color': this.hasLink ? '#FFC34D' : '#D5D7DB'
 	      };
+	    },
+	    iconClasses() {
+	      return {
+	        '--arrow-right': this.hasLink,
+	        '--delete-hyperlink': !this.hasLink,
+	        '--color-orange': this.hasLink && this.mode === 'direct',
+	        '--color-blue': this.hasLink && this.mode === 'reverse'
+	      };
 	    }
 	  },
 	  template: `
 		<div class="hr-hcmlink-separator__container" ref="container">
-            <div 
-	            style="--ui-icon-set__icon-size: 24px;"
-	            :style="styleObject"
-                class="ui-icon-set"
-	            :class="[ hasLink ? '--arrow-right' : '--delete-hyperlink']"
-            ></div>
+			<div
+				class="ui-icon-set hr-hcmlink-separator__container-icon"
+				:class="iconClasses"
+			></div>
 		</div>
 	`
 	};
@@ -36,11 +46,19 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  props: {
 	    config: {
 	      required: true,
-	      type: Object
+	      type: {
+	        companyId: Number,
+	        mode: String,
+	        isHideInfoAlert: Boolean
+	      }
 	    },
 	    mappedUserIds: {
 	      required: true,
 	      type: Array
+	    },
+	    suggestId: {
+	      required: false,
+	      type: [Number, null]
 	    }
 	  },
 	  data() {
@@ -55,6 +73,13 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  },
 	  methods: {
 	    getUserTagSelector() {
+	      let preselectedItem = [];
+	      if (main_core.Type.isNumber(this.suggestId)) {
+	        preselectedItem = ['user', this.suggestId];
+	        this.$emit('addEntity', {
+	          id: this.suggestId
+	        });
+	      }
 	      const selector = new ui_entitySelector.TagSelector({
 	        multiple: false,
 	        events: {
@@ -87,6 +112,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	              intranetUsersOnly: true
 	            }
 	          }],
+	          preselectedItems: [preselectedItem],
 	          tabs: [{
 	            id: 'user',
 	            title: main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_DIALOG_TAB_TITLE_USER')
@@ -96,10 +122,17 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          }
 	        }
 	      });
-	      selector.getOuterContainer().style.width = '100%';
+	      main_core.Dom.addClass(selector.getOuterContainer(), 'hr-hcmlink-item-employee__user-container');
 	      return selector;
 	    },
 	    getPersonTagSelector() {
+	      let preselectedItem = [];
+	      if (main_core.Type.isNumber(this.suggestId)) {
+	        preselectedItem = ['hcmlink-person-data', this.suggestId];
+	        this.$emit('addEntity', {
+	          id: this.suggestId
+	        });
+	      }
 	      const selector = new ui_entitySelector.TagSelector({
 	        multiple: false,
 	        events: {
@@ -138,6 +171,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	            dynamicSearch: true,
 	            enableSearch: true
 	          }],
+	          preselectedItems: [preselectedItem],
 	          tabs: [{
 	            id: 'persons',
 	            title: main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_DIALOG_TAB_TITLE_PERSON')
@@ -147,8 +181,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          }
 	        }
 	      });
-	      selector.getOuterContainer().style.border = 'none';
-	      selector.getOuterContainer().style.width = '100%';
+	      main_core.Dom.addClass(selector.getOuterContainer(), 'hr-hcmlink-item-employee__person-container');
 	      return selector;
 	    },
 	    handleItemRemove(tag) {
@@ -165,7 +198,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  template: `
 		<div 
 			class="hr-hcmlink-item-employee__container"
-			:class="{'hr-hcmlink-selector-entity__border': isBorderedEmployee}"
 			ref="container"
 		></div>
 	`
@@ -184,7 +216,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    }
 	  },
 	  mounted() {
-	    this.getUserAvatarEntity().renderTo(this.$refs.avatarContainer);
+	    if (this.mode === 'direct') {
+	      this.getUserAvatarEntity().renderTo(this.$refs.avatarContainer);
+	    }
 	  },
 	  methods: {
 	    getUserAvatarEntity() {
@@ -202,7 +236,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 			:class="{'hr-hcmlink-item-user__container_person': mode === 'reverse'}"
 			ref="container"
 		>
-			<div class="hr-hcmlink-item-user__avatar" ref="avatarContainer"></div>
+			<div v-if="this.mode === 'direct'" class="hr-hcmlink-item-user__avatar" ref="avatarContainer"></div>
 			<div class="hr-hcmlink-item-user_info">
 				<div class="hr-hcmlink-item-user__info-name">{{ item.name }}</div>
 				<div class="hr-hcmlink-item-user__info-position">{{ item.position }}</div>
@@ -263,8 +297,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      required: true
 	    },
 	    config: {
-	      type: Object,
-	      required: true
+	      required: true,
+	      type: {
+	        companyId: Number,
+	        mode: String,
+	        isHideInfoAlert: Boolean
+	      }
 	    }
 	  },
 	  data() {
@@ -307,16 +345,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 		<div class="hr-hcmlink-sync__line-container">
 			<div class="hr-hcmlink-sync__line-left-container">
 				<UserItem
-					:item = item
+					:item=item
 				    :mode="config.mode"
 				></UserItem>
 				<Separator
-					:hasLink = hasLink
+					:hasLink=hasLink
+					:mode="config.mode"
 				></Separator>
 			</div>
-			<div class="hr-hcmlink-sync__line-right-container">
+			<div class="hr-hcmlink-sync__line-right-container" :class="this.config.mode === 'direct' ? '--person' : '--user'">
 				<PersonItem
-					:config = config
+					:config=config
+					:suggestId="item.suggestId"
 					:mappedUserIds=mappedUserIds
 					@addEntity="onAddEntity"
 					@removeEntity="onRemoveEntity"
@@ -335,7 +375,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    }
 	  },
 	  template: `
-		<template v-if="mode=='direct'">
+		<template v-if="mode === 'direct'">
 			<div class="hr-hcmlink-sync__column-title-container">
 				<div>
 					{{ $Bitrix.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_COLUMN_TITLE_BITRIX') }}
@@ -358,6 +398,20 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	`
 	};
 
+	const EventList = Object.freeze({
+	  HR_DATA_MAPPER_FOOTER_DISPLAY: 'hr-data-mapper-footer-display',
+	  HR_DATA_MAPPER_FORCE_SYNC: 'hr-data-mapper-force-sync',
+	  HR_DATA_MAPPER_DATA_WAS_SAVED: 'hr-data-mapper-data-was-saved',
+	  HR_DATA_MAPPER_CLEAR_SEARCH_INPUT: 'hr-data-mapper-clear-search-input'
+	});
+	const Status = Object.freeze({
+	  done: 'done',
+	  pending: 'pending',
+	  loading: 'loading',
+	  salaryDone: 'salaryDone',
+	  searchNotFound: 'searchNotFound'
+	});
+
 	const Counter = {
 	  name: 'Counter',
 	  props: {
@@ -373,23 +427,308 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      required: true,
 	      type: Number
 	    },
-	    config: {
+	    mode: {
 	      required: true,
-	      type: Object
+	      type: String
+	    },
+	    lastJobFinishedAt: {
+	      required: false,
+	      type: Date,
+	      default: null
+	    }
+	  },
+	  computed: {
+	    leftCounterPhrase() {
+	      return main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SLIDER_PAGE_UNMAPPED_TITLE_MSGVER_1', {
+	        '[SPAN]': '<span class="hr-hcmlink-sync__counter_count-accent">',
+	        '[/SPAN]': '</span>',
+	        '#COUNT#': main_core.Text.encode(this.countUnmappedPersons)
+	      });
+	    },
+	    formatDate() {
+	      if (this.lastJobFinishedAt) {
+	        return main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SLIDER_COUNTER_RIGHT', {
+	          '#FORMATTED_DATE#': im_v2_lib_dateFormatter.DateFormatter.formatByTemplate(this.lastJobFinishedAt, im_v2_lib_dateFormatter.DateTemplate.messageReadStatus)
+	        });
+	      }
+	      return main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SLIDER_COUNTER_RIGHT', {
+	        '#FORMATTED_DATE#': main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SLIDER_COUNTER_RIGHT_DATE_NEVER')
+	      });
+	    }
+	  },
+	  methods: {
+	    forceSync() {
+	      main_core_events.EventEmitter.emit(EventList.HR_DATA_MAPPER_FORCE_SYNC);
 	    }
 	  },
 	  template: `
-        <div class="hr-hcmlink-sync__page_counter_container">
-			<template v-if="config.mode === 'direct'">
-				<span class="hr-hcmlink-sync__page_count-title">{{ $Bitrix.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SLIDER_PAGE_MAPPED_TITLE') }}: </span>
-				<span class="hr-hcmlink-sync__page_mapped-persons-count">{{ countMappedPersons }} </span>
-				<span class="hr-hcmlink-sync__page_all-persons-count"> / {{ countAllPersonsForMap }} </span>
-			</template>
-			<template v-else>
-				<span class="hr-hcmlink-sync__page_count-title">{{ $Bitrix.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SLIDER_PAGE_UNMAPPED_TITLE') }}: </span>
-				<span class="hr-hcmlink-sync__page_mapped-persons-count">{{ countUnmappedPersons }} </span>
-			</template>
-        </div>
+		<div v-html="leftCounterPhrase" class="hr-hcmlink-sync__toolbar-bubble hr-hcmlink-sync__counter_container-left"/>
+		<div class="hr-hcmlink-sync__toolbar-bubble hr-hcmlink-sync__counter_container-right">
+			<div class="hr-hcmlink-sync__toolbar-format-date">{{formatDate}}</div>
+			<div class="hr-hcmlink-sync__toolbar-separator"></div>
+			<div 
+				class="hr-hcmlink-sync__toolbar-update-button"
+				@click="forceSync"
+			>
+				{{ $Bitrix.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SLIDER_COUNTER_RIGHT_UPDATE_BUTTON') }}
+			</div>
+		</div>
+	`
+	};
+
+	const StateScreen = {
+	  name: 'StateScreen',
+	  props: {
+	    status: {
+	      required: true,
+	      type: String
+	    },
+	    isBlock: {
+	      type: Boolean,
+	      default: false
+	    },
+	    mode: {
+	      required: true,
+	      type: String
+	    }
+	  },
+	  emits: ['completeMapping', 'abortSync'],
+	  mounted() {
+	    this.getCloseButton().renderTo(this.$refs.buttonContainer);
+	    this.getAbortSyncButton().renderTo(this.$refs.abortSyncButtonContainer);
+	  },
+	  methods: {
+	    getCloseButton() {
+	      const text = this.status === Status.done ? main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_BUTTON_CLOSE') : main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_BUTTON_SALARY_CLOSE');
+	      return new ui_buttons.Button({
+	        color: ui_buttons.Button.Color.LIGHT_BORDER,
+	        round: true,
+	        size: ui_buttons.Button.Size.LARGE,
+	        text,
+	        onclick: () => {
+	          this.$emit('completeMapping');
+	          BX.SidePanel.Instance.getTopSlider().close();
+	        }
+	      });
+	    },
+	    getAbortSyncButton() {
+	      return new ui_buttons.Button({
+	        color: ui_buttons.Button.Color.LIGHT_BORDER,
+	        round: true,
+	        size: ui_buttons.Button.Size.LARGE,
+	        text: main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_ABORT_LOAD_BUTTON'),
+	        onclick: () => {
+	          this.$emit('abortSync');
+	        }
+	      });
+	    }
+	  },
+	  computed: {
+	    title() {
+	      switch (this.status) {
+	        case Status.loading:
+	          return main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_TITLE_STATUS_LOADING');
+	        case Status.pending:
+	          return main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_TITLE_STATUS_PENDING');
+	        case Status.done:
+	          return main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_TITLE_STATUS_DONE');
+	        case Status.salaryDone:
+	          return main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_TITLE_STATUS_SALARY_DONE');
+	        case Status.searchNotFound:
+	          return this.mode === 'direct' ? main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_TITLE_STATUS_SEARCH_NOT_FOUND_DIRECT') : main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_TITLE_STATUS_SEARCH_NOT_FOUND_REVERSE');
+	        default:
+	          return '';
+	      }
+	    },
+	    description() {
+	      switch (this.status) {
+	        case Status.loading:
+	          return main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_DESCRIPTION_STATUS_LOADING');
+	        case Status.pending:
+	          return main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_DESCRIPTION_STATUS_PENDING_MSGVER_1');
+	        case Status.done:
+	          return main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_DESCRIPTION_STATUS_DONE');
+	        case Status.salaryDone:
+	          return main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_DESCRIPTION_STATUS_SALARY_DONE');
+	        case Status.searchNotFound:
+	          return main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_DESCRIPTION_STATUS_SEARCH_NOT_FOUND');
+	        default:
+	          return '';
+	      }
+	    },
+	    stateClassList() {
+	      return {
+	        '--done': this.isDoneState,
+	        '--pending': this.isPendingState,
+	        '--search-not-found': this.status === Status.searchNotFound,
+	        '--block': this.isBlock,
+	        '--flex': !this.isBlock
+	      };
+	    },
+	    isDoneState() {
+	      return [Status.done, Status.salaryDone].includes(this.status);
+	    },
+	    isPendingState() {
+	      return [Status.pending, Status.loading].includes(this.status);
+	    }
+	  },
+	  template: `
+		<div class="hr-hcmlink-mapping-person__state-screen" :class="stateClassList">
+			<div class="hr-hcmlink-mapping-person__state-screen_icon"></div>
+			<div 
+				class="hr-hcmlink-mapping-person__state-screen_title"
+				v-html="title"
+			>
+			</div>
+			<div 
+				class="hr-hcmlink-mapping-person__state-screen_desc"
+				v-html="description"
+			>
+			</div>
+			<div 
+				v-if="isDoneState"
+				class="hr-hcmlink-mapping-person__state-screen_close-button" ref="closeButtonContainer"
+			></div>
+			<div 
+				v-if="status === 'pending'"
+				class="hr-hcmlink-mapping-person__state-screen_abort-sync-button" ref="abortSyncButtonContainer"
+			></div>
+		</div>
+	`
+	};
+
+	const SearchBar = {
+	  name: 'SearchBar',
+	  props: {
+	    placeholder: {
+	      required: false,
+	      type: String
+	    },
+	    // how many milliseconds passes before emitting 'onSearch' event after input
+	    debounceWait: {
+	      required: false,
+	      default: 0
+	    }
+	  },
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  directives: {
+	    focus: {
+	      mounted(el) {
+	        el.focus();
+	      }
+	    }
+	  },
+	  data() {
+	    return {
+	      showSearchBar: false,
+	      searchQuery: '',
+	      debounceTimer: null
+	    };
+	  },
+	  mounted() {
+	    this.$Bitrix.eventEmitter.subscribe(EventList.HR_DATA_MAPPER_DATA_WAS_SAVED, this.clearInput);
+	    this.$Bitrix.eventEmitter.subscribe(EventList.HR_DATA_MAPPER_CLEAR_SEARCH_INPUT, this.clearInput);
+	  },
+	  unmounted() {
+	    this.$Bitrix.eventEmitter.unsubscribe(EventList.HR_DATA_MAPPER_DATA_WAS_SAVED, this.clearInput);
+	    this.$Bitrix.eventEmitter.unsubscribe(EventList.HR_DATA_MAPPER_CLEAR_SEARCH_INPUT, this.clearInput);
+	  },
+	  emits: ['search'],
+	  computed: {
+	    IconSet() {
+	      return ui_iconSet_api_vue.Set;
+	    }
+	  },
+	  methods: {
+	    onBlur() {
+	      if (this.searchQuery.length === 0) {
+	        this.searchQuery = '';
+	        this.hideSearchbar();
+	      }
+	    },
+	    clearInput() {
+	      this.searchQuery = '';
+	    },
+	    toggleSearchbar() {
+	      if (this.showSearchBar) {
+	        this.showSearchBar = false;
+	        this.searchQuery = '';
+	        return;
+	      }
+	      this.showSearchBar = true;
+	    },
+	    onAfterEnter() {
+	      if (this.$refs.searchNameInput) {
+	        this.$refs.searchNameInput.focus();
+	      }
+	    },
+	    hideSearchbar() {
+	      this.showSearchBar = false;
+	    },
+	    clearSearch() {
+	      if (this.$refs.searchNameInput) {
+	        this.searchQuery = '';
+	        this.$refs.searchNameInput.focus();
+	      }
+	    }
+	  },
+	  watch: {
+	    searchQuery(query) {
+	      if (this.debounceTimer) {
+	        clearTimeout(this.debounceTimer);
+	      }
+	      this.debounceTimer = setTimeout(() => {
+	        this.$emit('search', query);
+	      }, this.debounceWait);
+	    }
+	  },
+	  template: `
+		<div
+			class="hr-hcmlink-sync__content-search-container"
+		>
+			<transition
+				name="hr-hcmlink-sync__search-transition"
+				@after-enter="onAfterEnter"
+				mode="out-in"
+			>
+				<div
+					class="hr-hcmlink-sync__content-search-block__search"
+					@click="toggleSearchbar"
+					key="searchIcon"
+					v-if="!showSearchBar"
+				>
+					<BIcon :name="IconSet.SEARCH_2" :size="24" class="hr-hcmlink-sync__search-icon"></BIcon>
+				</div>
+				<div
+					class="hr-hcmlink-sync__content-search-block__search-bar"
+					key="searchBar"
+					v-else
+				>
+					<input
+						ref="searchNameInput"
+						v-model="searchQuery"
+						v-focus
+						type="text"
+						:placeholder="!searchQuery ? placeholder : ''"
+						class="hr-hcmlink-sync__content-search-block__search-input"
+						@blur="onBlur"
+					>
+					<div
+						@click="clearSearch"
+						class="hr-hcmlink-sync__content-search-block__search-reset"
+					>
+						<div class="hr-hcmlink-sync__content-search-block__search-cursor"></div>
+						<BIcon
+							:name="IconSet.CROSS_30"
+							:size="24"
+							color="#959ca4"
+						></BIcon>
+					</div>
+				</div>
+			</transition>
+		</div>
 	`
 	};
 
@@ -410,24 +749,43 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    config: {
 	      required: true,
 	      type: {
-	        mode: String,
-	        isHideInfoAlert: Boolean
+	        companyId: Number,
+	        isHideInfoAlert: Boolean,
+	        mode: 'direct' | 'reverse'
 	      }
+	    },
+	    searchActive: {
+	      required: true,
+	      type: Boolean
+	    },
+	    dataLoading: {
+	      required: true,
+	      type: Boolean
 	    }
 	  },
 	  components: {
 	    Line,
 	    ColumnTitle,
-	    Counter
+	    Counter,
+	    StateScreen,
+	    SearchBar
 	  },
-	  emits: ['createLink', 'removeLink', 'closeAlert'],
+	  emits: ['createLink', 'removeLink', 'closeAlert', 'search'],
 	  mounted() {
 	    if (!this.config.isHideInfoAlert) {
-	      this.showAlert();
+	      this.createAlert();
+	    }
+	  },
+	  computed: {
+	    isSearchResultEmpty() {
+	      return this.collection.length === 0 && this.searchActive;
+	    },
+	    searchPlaceholder() {
+	      return this.config.mode === 'direct' ? main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_USERS_SEARCH_PLACEHOLDER_DIRECT') : main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_USERS_SEARCH_PLACEHOLDER_REVERSE');
 	    }
 	  },
 	  methods: {
-	    showAlert() {
+	    createAlert() {
 	      const moreButton = main_core.Tag.render(_t || (_t = _`<span class="hr-hcmlink-mapping-alert-container__more-button">${0}</span>`), main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SHOW_MORE_BUTTON'));
 	      const alert = new ui_alerts.Alert({
 	        text: main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_ALERT_INFO'),
@@ -456,32 +814,61 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    onRemoveLink(options) {
 	      this.$emit('removeLink', options);
+	    },
+	    onSearchPersonName(query) {
+	      this.$emit('search', query);
 	    }
 	  },
 	  template: `
-		<div>
-			<div ref="alertContainer" v-if="!config.isHideInfoAlert"></div>
-			<div class="hr-hcmlink-mapping-page-container" ref="container">
-				<div style="z-index: 100">
-					<ColumnTitle
-						:mode = config.mode
-					></ColumnTitle>
-					<div
-						v-for="item in collection"
-						:key="item.id"
-					>
-						<Line
-							:item = item
-							:config = config
-							:mappedUserIds=mappedUserIds
-							@createLink="onCreateLink"
-							@removeLink="onRemoveLink"
-						></Line>
-					</div>
-				</div>
-				<div class="hr-hcmlink-mapping-page-person-wrapper hr-hcmlink-mapping-page-person-wrapper_right" ref="person_wrapper" v-if="config.mode == 'direct'"></div>
-				<div class="hr-hcmlink-mapping-page-person-wrapper hr-hcmlink-mapping-page-person-wrapper_left" ref="person_wrapper" v-if="config.mode == 'reverse'"></div>
+		<div 
+			class="hr-hcmlink-sync__page-subtitle-box"
+			:class="{'--alert-hidden': config.isHideInfoAlert}"
+		>
+			<div class="hr-hcmlink-sync__page-subtitle">
+				{{ $Bitrix.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_DIALOG_PAGE_TITLE') }}
 			</div>
+			<div class="hr-hcmlink-sync__search-container">
+				<SearchBar
+					:placeholder="searchPlaceholder"
+					:debounceWait="500"
+					@search="onSearchPersonName"
+				/>
+			</div>
+		</div>
+		<div
+			ref="alertContainer"
+			class="hr-hcmlink-mapping-alert"
+			:class="{'--hide': config.isHideInfoAlert}"
+		></div>
+		<div  v-if="isSearchResultEmpty" class="hr-hcmlink-mapping-page-state-container">
+			<StateScreen
+				status="searchNotFound"
+				:isBlock="true"
+				:mode=config.mode
+			></StateScreen>
+		</div>
+		<div v-if="!isSearchResultEmpty && !dataLoading" class="hr-hcmlink-mapping-page-container" ref="container">
+			<div class="hr-hcmlink-mapping-page-container__wrapper">
+				<ColumnTitle
+					:mode=config.mode
+				></ColumnTitle>
+				<div
+					v-for="item in collection"
+					:key="item.id"
+				>
+					<Line
+						:item=item
+						:config=config
+						:mappedUserIds=mappedUserIds
+						@createLink="onCreateLink"
+						@removeLink="onRemoveLink"
+					></Line>
+				</div>
+			</div>
+			<div class="hr-hcmlink-mapping-page-person-wrapper hr-hcmlink-mapping-page-person-wrapper_right"
+				 ref="person_wrapper" :class="[this.config.mode === 'direct' ? '--person' : '--user']"></div>
+			<div class="hr-hcmlink-mapping-page-person-wrapper hr-hcmlink-mapping-page-person-wrapper_left"
+				 ref="person_wrapper" :class="[this.config.mode === 'direct' ? '--user' : '--person']"></div>
 		</div>
 	`
 	};
@@ -532,97 +919,384 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  template: '<span ref="container"></span>'
 	};
 
-	const StateScreen = {
-	  name: 'StateScreen',
+	const Toolbar = {
+	  name: 'Toolbar',
+	  components: {
+	    Counter
+	  },
+	  emits: ['search'],
 	  props: {
-	    status: {
+	    isMappingReady: {
+	      required: true,
+	      type: Boolean
+	    },
+	    mode: {
 	      required: true,
 	      type: String
-	    }
-	  },
-	  data() {
-	    return {
-	      state: this.isDoneState() ? 'done' : 'pending'
-	    };
-	  },
-	  emits: ['completeMapping'],
-	  methods: {
-	    isDoneState() {
-	      return ['done', 'salaryDone'].includes(this.status);
 	    },
-	    getButton() {
-	      const text = this.status === 'done' ? main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_BUTTON_CLOSE') : main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_BUTTON_SALARY_CLOSE');
-	      return new ui_buttons.Button({
-	        color: ui_buttons.Button.Color.LIGHT_BORDER,
-	        round: true,
-	        size: ui_buttons.Button.Size.LARGE,
-	        text,
-	        onclick: () => {
-	          this.$emit('completeMapping');
-	          BX.SidePanel.Instance.getTopSlider().close();
-	        }
-	      });
+	    countAllPersonsForMap: {
+	      required: true,
+	      type: Number
+	    },
+	    countMappedPersons: {
+	      required: true,
+	      type: Number
+	    },
+	    countUnmappedPersons: {
+	      required: true,
+	      type: Number
+	    },
+	    lastJobFinishedAt: {
+	      required: false,
+	      type: Date,
+	      default: null
 	    }
-	  },
-	  mounted() {
-	    this.getButton().renderTo(this.$refs.buttonContainer);
 	  },
 	  computed: {
-	    title() {
-	      switch (this.status) {
-	        case 'pending':
-	          return main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_TITLE_STATUS_PENDING');
-	        case 'done':
-	          return main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_TITLE_STATUS_DONE');
-	        case 'salaryDone':
-	          return main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_TITLE_STATUS_SALARY_DONE');
-	        default:
-	          return '';
-	      }
+	    searchPlaceholder() {
+	      return this.mode === 'direct' ? main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_USERS_SEARCH_PLACEHOLDER_DIRECT') : main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_USERS_SEARCH_PLACEHOLDER_REVERSE');
 	    },
-	    description() {
-	      switch (this.status) {
-	        case 'pending':
-	          return main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_DESCRIPTION_STATUS_PENDING');
-	        case 'done':
-	          return main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_DESCRIPTION_STATUS_DONE');
-	        case 'salaryDone':
-	          return main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_STATE_DESCRIPTION_STATUS_SALARY_DONE');
-	        default:
-	          return '';
-	      }
+	    mappedPercent() {
+	      return Math.round(this.countMappedPersons / (this.countMappedPersons + this.countUnmappedPersons) * 100);
 	    },
-	    stateClassList() {
-	      return {
-	        '--done': this.isDoneState(),
-	        '--pending': this.status === 'pending'
-	      };
+	    isDone() {
+	      return this.mappedPercent === 100;
+	    }
+	  },
+	  methods: {
+	    onSearchPersonName(query) {
+	      this.$emit('search', query);
 	    }
 	  },
 	  template: `
-		<div 
-			class="hr-hcmlink-mapping-person__state-screen"
-            :class="stateClassList"
-		>
-			<div class="hr-hcmlink-mapping-person__state-screen_icon"></div>
-			<div class="hr-hcmlink-mapping-person__state-screen_title">{{ title }}</div>
-			<div 
-				class="hr-hcmlink-mapping-person__state-screen_desc"
-				v-html="description"
-			>
+		<div class="hr-hcmlink-sync__toolbar-row">
+			<div class="hr-hcmlink-sync__title-wrapper">
+				<div class="hr-hcmlink-sync__title-box">
+					<span class="hr-hcmlink-sync__title-item">${main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SLIDER_TITLE')}</span>
+				</div>
 			</div>
-			<div 
-				v-if="state === 'done'"
-				class="hr-hcmlink-mapping-person__state-screen_close-button" ref="buttonContainer"
-			></div>
+			<div class="hr-hcmlink-sync__search-container">
+				<div v-if="isMappingReady"
+					class="hr-hcmlink-sync__toolbar-bubble hr-hcmlink-sync__toolbar-bubble-right"
+					:class="[isDone ? '--done' : '--not-done']"
+				>
+					{{
+						$Bitrix.Loc.getMessage(
+							'HUMANRESOURCES_HCMLINK_MAPPER_SLIDER_PAGE_MAPPED_TITLE',
+							{ '#PERCENT#': mappedPercent }
+						)
+					}}
+				</div>
+			</div>
+		</div>
+		<div v-if="isMappingReady" class="hr-hcmlink-sync__toolbar-row hr-hcmlink-sync__toolbar-row-counter">
+			<Counter
+				:countAllPersonsForMap=countAllPersonsForMap
+				:countMappedPersons=countMappedPersons
+				:countUnmappedPersons=countUnmappedPersons
+				:lastJobFinishedAt=lastJobFinishedAt
+				:mode=mode
+			></Counter>
 		</div>
 	`
 	};
 
-	let _$1 = t => t,
-	  _t$1;
+	const HumanresourcesHcmlinkMapper = {
+	  name: 'HumanresourcesHcmlinkMapper',
+	  props: {
+	    companyId: {
+	      required: true,
+	      type: Number
+	    },
+	    mode: {
+	      required: true,
+	      type: String
+	    },
+	    userIdCollection: {
+	      required: true,
+	      type: Array
+	    },
+	    toolbarContainer: {
+	      required: true,
+	      type: String
+	    },
+	    api: {
+	      required: true,
+	      type: humanresources_hcmlink_api.Api
+	    }
+	  },
+	  components: {
+	    Page,
+	    Loader,
+	    StateScreen,
+	    Toolbar
+	  },
+	  data() {
+	    return {
+	      loading: false,
+	      isHideInfoAlert: true,
+	      pageCount: 0,
+	      mappingEntityCollection: [],
+	      userMappingSet: {},
+	      isJobResolved: false,
+	      isDone: false,
+	      countAllPersonsForMap: 0,
+	      countMappedPersons: 0,
+	      countUnmappedPersons: 0,
+	      isReadyToolbar: false,
+	      mappedUserIds: [],
+	      searchName: null,
+	      searchActive: false,
+	      lastJobFinishedAt: null
+	    };
+	  },
+	  created() {
+	    this.jobId = null;
+	    this.updateJobStatusInterval = null;
+	    this.forceSyncPointer = this.forceSync.bind(this); // for correct sub/unsub
+	    this.pullUnsubscrubeCallback = null; // BX.PULL unsubscribe function
+
+	    this.createUpdateEmployeeListJob();
+	    main_core_events.EventEmitter.subscribe(EventList.HR_DATA_MAPPER_FORCE_SYNC, this.forceSyncPointer);
+	  },
+	  computed: {
+	    isJobPending() {
+	      return !this.isJobResolved && !this.isDone;
+	    },
+	    isMappingReady() {
+	      return this.isJobResolved && !this.isDone;
+	    },
+	    isMappingDone() {
+	      return this.isJobResolved && this.isDone;
+	    },
+	    isSearchEmpty() {
+	      return this.mappingEntityCollection.length === 0 && Boolean(this.searchName);
+	    },
+	    completedStatus() {
+	      return this.mode === 'direct' ? Status.done : Status.salaryDone;
+	    }
+	  },
+	  watch: {
+	    pageCount() {
+	      this.loadConfig();
+	    },
+	    isMappingReady(value) {
+	      if (value) {
+	        this.footerDisplay(true);
+	      }
+	    },
+	    isMappingDone(value) {
+	      if (value) {
+	        this.footerDisplay(false);
+	      }
+	    },
+	    isSearchEmpty(value) {
+	      this.footerDisplay(!value);
+	    }
+	  },
+	  mounted() {
+	    this.countAllPersonsForMap = this.userIdCollection.length;
+	    this.$nextTick(() => {
+	      this.isReadyToolbar = true;
+	    });
+	  },
+	  unmounted() {
+	    this.clearJobListeners();
+	    main_core_events.EventEmitter.unsubscribe(EventList.HR_DATA_MAPPER_FORCE_SYNC, this.forceSyncPointer);
+	  },
+	  methods: {
+	    // <editor-fold desc="External functions. Called by Mapper">
+	    prepareNextUsers() {
+	      this.$Bitrix.eventEmitter.emit(EventList.HR_DATA_MAPPER_DATA_WAS_SAVED);
+	      this.searchName = null;
+	      this.userMappingSet = {};
+	      this.pageCount++;
+	    },
+	    getUserMappingSet() {
+	      return this.userMappingSet;
+	    },
+	    // </editor-fold>
+	    onCreateLink(options) {
+	      this.userMappingSet[options.userId] = options;
+	    },
+	    onRemoveLink(options) {
+	      if (this.userMappingSet[options.userId] !== undefined) {
+	        delete this.userMappingSet[options.userId];
+	      }
+	    },
+	    onCloseAlert() {
+	      this.api.closeInfoAlert();
+	    },
+	    onCompleteMapping() {
+	      this.api.createCompleteMappingEmployeeListJob({
+	        companyId: this.companyId
+	      });
+	    },
+	    onSearchPersonName(query) {
+	      if (!this.isDone && query !== this.searchName) {
+	        this.searchName = query || null;
+	        this.userMappingSet = {};
+	        this.searchActive = Boolean(query);
+	        this.loadConfig();
+	      }
+	    },
+	    /**
+	     * On abort sync from state screen
+	     *
+	     * @returns {Promise<void>}
+	     */
+	    async onAbortSync() {
+	      this.loading = true;
+	      const jobData = await this.api.getLastJob({
+	        companyId: this.companyId
+	      });
+	      await this.syncJobDone(jobData);
+	    },
+	    async loadConfig() {
+	      this.loading = true;
+	      const {
+	        items,
+	        countMappedPersons,
+	        countUnmappedPersons,
+	        isHideInfoAlert,
+	        mappedUserIds
+	      } = await this.api.loadMapperConfig({
+	        companyId: this.companyId,
+	        userIds: this.userIdCollection,
+	        mode: this.mode,
+	        searchName: this.searchName
+	      });
+	      this.isHideInfoAlert = isHideInfoAlert;
+	      this.countUnmappedPersons = countUnmappedPersons;
+	      this.countMappedPersons = countMappedPersons;
+	      this.mappingEntityCollection = main_core.Type.isArray(items) ? items : [];
+	      this.mappedUserIds = mappedUserIds;
+	      this.isDone = this.mappingEntityCollection.length === 0 && !this.searchName;
+	      this.loading = false;
+	    },
+	    async forceSync() {
+	      this.$Bitrix.eventEmitter.emit(EventList.HR_DATA_MAPPER_CLEAR_SEARCH_INPUT);
+	      this.searchName = null;
+	      this.footerDisplay(false);
+	      this.isJobResolved = false;
+	      await this.api.cancelJob({
+	        jobId: this.jobId,
+	        companyId: this.companyId
+	      });
+	      this.createUpdateEmployeeListJob(true);
+	    },
+	    async syncJobDone(jobData) {
+	      this.clearJobListeners();
+	      this.lastJobFinishedAt = jobData.finishedAt ? new Date(jobData.finishedAt) : null;
+	      await this.loadConfig();
+	      this.isJobResolved = true;
+	    },
+	    async createUpdateEmployeeListJob(isForced = false) {
+	      this.footerDisplay(false);
+	      this.isJobResolved = false;
+	      const data = await this.api.createUpdateEmployeeListJob({
+	        companyId: this.companyId,
+	        isForced
+	      });
+	      this.jobId = data.jobId;
+	      if (data.status === 3) {
+	        // if we got a job with status 'DONE', load data immediately
+	        await this.syncJobDone(data);
+	        return;
+	      }
+	      this.clearJobListeners();
+	      this.updateJobStatusInterval = setInterval(this.updateJobStatus.bind(this), 30000);
+	      if (BX.PULL) {
+	        this.pullUnsubscrubeCallback = BX.PULL.subscribe({
+	          type: BX.PullClient.SubscriptionType.Server,
+	          moduleId: 'humanresources',
+	          command: 'external_employee_list_updated',
+	          callback: async function (params) {
+	            if (params.jobId === this.jobId) {
+	              await this.processJobStatus(params);
+	            }
+	          }.bind(this)
+	        });
+	        BX.PULL.extendWatch('humanresources_person_mapping');
+	      }
+	    },
+	    async updateJobStatus() {
+	      const {
+	        params
+	      } = await this.api.getJobStatus({
+	        jobId: this.jobId
+	      });
+	      await this.processJobStatus(params);
+	    },
+	    footerDisplay(show) {
+	      main_core_events.EventEmitter.emit(EventList.HR_DATA_MAPPER_FOOTER_DISPLAY, show);
+	    },
+	    async processJobStatus(params) {
+	      if (params.status === 3) {
+	        // load data if job is complete
+	        await this.syncJobDone(params);
+	      } else if (params.status === 5 || params.status === 4) {
+	        // make a new job if last job was canceled or expired
+	        this.clearJobListeners();
+	        this.jobId = null;
+	        this.createUpdateEmployeeListJob();
+	      }
+	    },
+	    clearJobListeners() {
+	      clearInterval(this.updateJobStatusInterval);
+	      if (this.pullUnsubscrubeCallback) {
+	        this.pullUnsubscrubeCallback();
+	      }
+	      this.pullUnsubscrubeCallback = null;
+	    }
+	  },
+	  template: `
+		<Teleport v-if="isReadyToolbar" :to="toolbarContainer">
+			<Toolbar
+				:isMappingReady="isMappingReady"
+				:countAllPersonsForMap=countAllPersonsForMap
+				:countMappedPersons=countMappedPersons
+				:countUnmappedPersons=countUnmappedPersons
+				:lastJobFinishedAt=lastJobFinishedAt
+				:mode=mode
+			/>
+		</Teleport>
+		<template v-if="isJobPending">
+			<StateScreen
+				:status="loading ? 'loading' : 'pending'"
+				:mode=mode
+				@abortSync="onAbortSync"
+			></StateScreen>
+		</template>
+		<template v-if="isMappingReady">
+			<Loader v-if="loading"></Loader>
+			<Page
+				:dataLoading=loading
+				:collection=mappingEntityCollection
+				:mappedUserIds=mappedUserIds
+				:searchActive=searchActive
+				:config="{ mode, isHideInfoAlert, companyId }"
+				@createLink="onCreateLink"
+				@removeLink="onRemoveLink"
+				@closeAlert="onCloseAlert"
+				@search="onSearchPersonName"
+			></Page>
+		</template>
+		<template v-if="isMappingDone">
+			<StateScreen
+				:status=completedStatus
+				:mode=mode
+				@completeMapping='onCompleteMapping'
+			></StateScreen>
+		</template>
+	`
+	};
+
 	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	var _application = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("application");
+	/**
+	 * An entry point of data-mapper
+	 */
 	class Mapper {
 	  constructor(options) {
 	    Object.defineProperty(this, _container, {
@@ -635,23 +1309,36 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    });
 	    this.api = new humanresources_hcmlink_api.Api();
 	    this.options = options;
+	    this.footerDisplayPointer = this.footerDisplay.bind(this); // for correct sub/unsub
+
 	    if (main_core.Type.isNil(this.options.userIds)) {
 	      this.options.userIds = new Set();
 	    }
 	  }
 	  static openSlider(options, sliderOptions) {
-	    var _sliderOptions$onClos;
+	    let closure = null;
 	    BX.SidePanel.Instance.open('humanresources:mapper', {
 	      width: 800,
 	      loader: 'default-loader',
 	      cacheable: false,
 	      contentCallback: () => {
 	        return top.BX.Runtime.loadExtension('humanresources.hcmlink.data-mapper').then(exports => {
-	          return new exports.Mapper(options).getLayout();
+	          closure = new exports.Mapper(options);
+	          return closure.getLayout();
 	        });
 	      },
 	      events: {
-	        onClose: (_sliderOptions$onClos = sliderOptions == null ? void 0 : sliderOptions.onCloseHandler) != null ? _sliderOptions$onClos : () => {}
+	        onClose: () => {
+	          sliderOptions == null ? void 0 : sliderOptions.onCloseHandler();
+	          closure.unmount();
+	        },
+	        onLoad: () => {
+	          // Here we need to get rid of title to replace the entire toolbar with our own markup
+	          // Why we just don't pass the title at all? If we don't pass it, then toolbar will not render too
+	          main_core.Dom.remove(closure.layout.getContainer().querySelector('.ui-sidepanel-layout-title'));
+	          // Add a class to differentiate this layout from other layouts
+	          main_core.Dom.addClass(closure.layout.getContainer().querySelector('.ui-sidepanel-layout-header'), 'hr-hcmlink-sync__toolbar');
+	        }
 	      }
 	    });
 	  }
@@ -661,10 +1348,22 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  render() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = document.createElement('div');
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _application)[_application] === null) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _application)[_application] = ui_vue3.BitrixVue.createApp(this.makeRootVueComponent());
+	      babelHelpers.classPrivateFieldLooseBase(this, _application)[_application] = ui_vue3.BitrixVue.createApp(HumanresourcesHcmlinkMapper, {
+	        companyId: this.options.companyId,
+	        mode: this.options.mode,
+	        userIdCollection: [...this.options.userIds],
+	        toolbarContainer: '.hr-hcmlink-sync__toolbar .ui-sidepanel-layout-toolbar',
+	        api: this.api
+	      });
+	      main_core_events.EventEmitter.subscribe(EventList.HR_DATA_MAPPER_FOOTER_DISPLAY, this.footerDisplayPointer);
+	      main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], 'height', '100%');
 	      this.component = babelHelpers.classPrivateFieldLooseBase(this, _application)[_application].mount(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
 	    }
 	    return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container];
+	  }
+	  unmount() {
+	    main_core_events.EventEmitter.unsubscribe(EventList.HR_DATA_MAPPER_FOOTER_DISPLAY, this.footerDisplayPointer);
+	    babelHelpers.classPrivateFieldLooseBase(this, _application)[_application].unmount();
 	  }
 	  async getLayout() {
 	    const getContentLayout = function () {
@@ -684,7 +1383,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      extensions: ['humanresources.hcmlink.data-mapper', 'ui.entity-selector', 'ui.icon-set.actions', 'ui.select', 'popup'],
 	      title: main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SLIDER_TITLE'),
 	      toolbar() {
-	        return [main_core.Tag.render(_t$1 || (_t$1 = _$1`<div id="hr-hcmlink-toolbar-container"></div>`))];
+	        // We need to pass at least empty array for ui-sidepanel-layout-toolbar to appear
+	        return [];
 	      },
 	      content() {
 	        return getContentLayout();
@@ -707,205 +1407,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    });
 	    return this.layout.render();
 	  }
-	  makeRootVueComponent() {
-	    const context = this;
-	    return {
-	      name: 'HumanresourcesHcmlinkMapper',
-	      components: {
-	        Page,
-	        Loader,
-	        Counter,
-	        StateScreen
-	      },
-	      data() {
-	        var _context$options$mode;
-	        return {
-	          loading: false,
-	          config: {
-	            companyId: context.options.companyId,
-	            mode: (_context$options$mode = context.options.mode) != null ? _context$options$mode : 'direct',
-	            isHideInfoAlert: true
-	          },
-	          pageCount: 0,
-	          mappingEntityCollection: [],
-	          userMappingSet: {},
-	          userIdCollection: [...context.options.userIds],
-	          isJobResolved: false,
-	          jobId: null,
-	          isDone: false,
-	          countAllPersonsForMap: 0,
-	          countMappedPersons: 0,
-	          countUnmappedPersons: 0,
-	          counterContainer: '#hr-hcmlink-toolbar-container',
-	          isReadyToolbar: false,
-	          completedStatus: context.options.mode === 'direct' ? 'done' : 'salaryDone',
-	          jobResolverInterval: null,
-	          mappedUserIds: []
-	        };
-	      },
-	      created() {
-	        this.footerDisplay(false);
-	        this.createUpdateEmployeeListJob();
-	      },
-	      computed: {
-	        isJobPending() {
-	          return !this.isJobResolved && !this.isDone;
-	        },
-	        isMappingReady() {
-	          return this.isJobResolved && !this.isDone;
-	        },
-	        isMappingDone() {
-	          return this.isJobResolved && this.isDone;
-	        }
-	      },
-	      watch: {
-	        pageCount() {
-	          this.loadConfig();
-	        },
-	        isMappingReady(value) {
-	          if (value) {
-	            this.footerDisplay(true);
-	          }
-	        },
-	        isMappingDone(value) {
-	          if (value) {
-	            this.footerDisplay(false);
-	          }
-	        }
-	      },
-	      mounted() {
-	        this.countAllPersonsForMap = this.userIdCollection.length;
-	        this.$nextTick(() => {
-	          this.isReadyToolbar = true;
-	        });
-	      },
-	      unmounted() {
-	        clearInterval(this.jobResolverInterval);
-	      },
-	      methods: {
-	        prepareNextUsers() {
-	          this.userMappingSet = {};
-	          this.pageCount++;
-	        },
-	        getUserMappingSet() {
-	          return this.userMappingSet;
-	        },
-	        onCreateLink(options) {
-	          this.userMappingSet[options.userId] = options;
-	        },
-	        onRemoveLink(options) {
-	          if (this.userMappingSet[options.userId] !== undefined) {
-	            delete this.userMappingSet[options.userId];
-	          }
-	        },
-	        onCloseAlert() {
-	          context.api.closeInfoAlert();
-	        },
-	        onCompleteMapping() {
-	          context.api.createCompleteMappingEmployeeListJob({
-	            companyId: this.config.companyId
-	          });
-	        },
-	        async loadConfig() {
-	          this.loading = true;
-	          const {
-	            items,
-	            countMappedPersons,
-	            countUnmappedPersons,
-	            isHideInfoAlert,
-	            mappedUserIds
-	          } = await context.api.loadMapperConfig({
-	            companyId: this.config.companyId,
-	            userIds: this.userIdCollection,
-	            mode: this.config.mode
-	          });
-	          this.config.isHideInfoAlert = isHideInfoAlert;
-	          this.countUnmappedPersons = countUnmappedPersons;
-	          this.countMappedPersons = countMappedPersons;
-	          this.mappingEntityCollection = main_core.Type.isArray(items) ? items : [];
-	          this.mappedUserIds = mappedUserIds;
-	          this.isDone = this.mappingEntityCollection.length === 0;
-	          this.loading = false;
-	        },
-	        async createUpdateEmployeeListJob() {
-	          const data = await context.api.createUpdateEmployeeListJob({
-	            companyId: this.config.companyId
-	          });
-	          this.jobId = data.jobId;
-	          this.jobResolverInterval = setInterval(this.jobResolver.bind(this), 30000);
-	          BX.PULL.subscribe({
-	            type: BX.PullClient.SubscriptionType.Server,
-	            moduleId: 'humanresources',
-	            command: 'external_employee_list_updated',
-	            callback: async function (params) {
-	              if (params.jobId === this.jobId && params.status === 3) {
-	                clearInterval(this.jobResolverInterval);
-	                await this.loadConfig(params);
-	                this.isJobResolved = true;
-	              }
-	            }.bind(this)
-	          });
-	          BX.PULL.extendWatch('humanresources_person_mapping');
-	        },
-	        async jobResolver() {
-	          const {
-	            params
-	          } = await context.api.getJobStatus({
-	            jobId: this.jobId
-	          });
-	          if (params.status === 3) {
-	            clearInterval(this.jobResolverInterval);
-	            await this.loadConfig(params);
-	            this.isJobResolved = true;
-	          }
-	        },
-	        footerDisplay(show) {
-	          var _context$layout$getCo;
-	          if (!context.layout) {
-	            return;
-	          }
-	          if (context.layout.getFooterContainer()) {
-	            main_core.Dom.style(context.layout.getFooterContainer(), 'display', show ? 'block' : 'none');
-	          }
-	          const footerAnchor = (_context$layout$getCo = context.layout.getContainer()) == null ? void 0 : _context$layout$getCo.getElementsByClassName('ui-sidepanel-layout-footer-anchor')[0];
-	          if (footerAnchor) {
-	            main_core.Dom.style(footerAnchor, 'display', show ? 'block' : 'none');
-	          }
-	        }
-	      },
-	      template: `
-                <template v-if="isJobPending">
-                    <StateScreen
-                        status='pending'
-                    ></StateScreen>
-                </template>
-                <template v-if="isMappingReady">
-                    <Loader v-if="loading"></Loader>
-                    <Page
-                        :collection=mappingEntityCollection
-						:mappedUserIds=mappedUserIds
-                        :config=config
-                        @createLink="onCreateLink"
-                        @removeLink="onRemoveLink"
-						@closeAlert="onCloseAlert"
-                    ></Page>
-                </template>
-                <template v-if="isMappingDone">
-                    <StateScreen
-	                    :status=completedStatus
-						@completeMapping='onCompleteMapping'
-                    ></StateScreen>
-                </template>
-				<Teleport v-if="isReadyToolbar && isMappingReady" :to="counterContainer">
-					<Counter
-						:countAllPersonsForMap=countAllPersonsForMap
-						:countMappedPersons=countMappedPersons
-						:countUnmappedPersons=countUnmappedPersons
-						:config=config
-					></Counter>
-				</Teleport>
-			`
-	    };
+	  footerDisplay(showEvent) {
+	    var _this$layout$getConta;
+	    if (!this.layout) {
+	      return;
+	    }
+	    if (this.layout.getFooterContainer()) {
+	      main_core.Dom.style(this.layout.getFooterContainer(), 'display', showEvent.data ? 'block' : 'none');
+	    }
+	    const footerAnchor = (_this$layout$getConta = this.layout.getContainer()) == null ? void 0 : _this$layout$getConta.getElementsByClassName('ui-sidepanel-layout-footer-anchor')[0];
+	    if (footerAnchor) {
+	      main_core.Dom.style(footerAnchor, 'display', showEvent.data ? 'block' : 'none');
+	    }
 	  }
 	}
 	Mapper.MODE_DIRECT = 'direct';
@@ -913,5 +1426,5 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 
 	exports.Mapper = Mapper;
 
-}((this.BX.Humanresources.Hcmlink = this.BX.Humanresources.Hcmlink || {}),BX.UI,BX.UI.EntitySelector,BX.Event,BX.UI,BX.UI.IconSet,BX.Main,BX,BX.Vue3,BX.UI,BX.Humanresources.Hcmlink,BX,BX.UI.SidePanel));
+}((this.BX.Humanresources.Hcmlink = this.BX.Humanresources.Hcmlink || {}),BX.Vue3,BX.UI,BX.UI.EntitySelector,BX.UI,BX.UI.IconSet,BX.Main,BX,BX.Messenger.v2.Lib,BX.UI,BX.UI.IconSet,BX.Humanresources.Hcmlink,BX,BX.Event,BX.UI.SidePanel));
 //# sourceMappingURL=index.bundle.js.map

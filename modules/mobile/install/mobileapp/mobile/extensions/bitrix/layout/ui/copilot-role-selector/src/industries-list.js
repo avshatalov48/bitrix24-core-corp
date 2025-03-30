@@ -2,7 +2,6 @@
  * @module layout/ui/copilot-role-selector/src/industries-list
  */
 jn.define('layout/ui/copilot-role-selector/src/industries-list', (require, exports, module) => {
-	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { CopilotRoleSelectorBaseList } = require('layout/ui/copilot-role-selector/src/base-list');
 	const {
 		IndustriesListItem,
@@ -11,8 +10,7 @@ jn.define('layout/ui/copilot-role-selector/src/industries-list', (require, expor
 	} = require('layout/ui/copilot-role-selector/src/views');
 	const { ListItemType } = require('layout/ui/copilot-role-selector/src/types');
 	const { checkValueMatchQuery } = require('utils/search');
-	const cacheId = 'layout/ui/copilot-role-selector/src/industries-list';
-	const cacheTtl = 604_800; // 60 * 60 * 24 * 7;
+	const { loadIndustries } = require('layout/ui/copilot-role-selector/src/api');
 
 	class CopilotRoleSelectorIndustriesList extends CopilotRoleSelectorBaseList
 	{
@@ -117,35 +115,20 @@ jn.define('layout/ui/copilot-role-selector/src/industries-list', (require, expor
 			}
 		}
 
-		loadItems()
+		async loadItems()
 		{
-			return new Promise((resolve) => {
-				const handler = (response) => {
-					if (response
-						&& response.status === 'success'
-						&& response.errors.length === 0)
-					{
-						this.universalRoleItemData = {
-							...response.data.universalrole,
-							type: ListItemType.UNIVERSAL_ROLE,
-						};
-						resolve(response.data.industries);
-					}
-					else
-					{
-						console.error(response.errors);
-						resolve([]);
-					}
+			const response = await loadIndustries(true);
+			if (response?.status === 'success')
+			{
+				this.universalRoleItemData = {
+					...response.data.universalrole,
+					type: ListItemType.UNIVERSAL_ROLE,
 				};
 
-				(new RunActionExecutor('mobile.ai.CopilotRoleManager.getIndustriesWithRoles'))
-					.setHandler(handler)
-					.setCacheHandler(handler)
-					.setCacheId(cacheId)
-					.setCacheTtl(cacheTtl)
-					.call(true)
-				;
-			});
+				return response.data.industries;
+			}
+
+			return [];
 		}
 
 		prepareItems(items)

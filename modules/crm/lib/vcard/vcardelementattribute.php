@@ -1,7 +1,7 @@
 <?php
 namespace Bitrix\Crm\VCard;
-use Bitrix\Main;
 use Bitrix\Main\Text\Encoding;
+
 class VCardElementAttribute
 {
 	protected $name = '';
@@ -21,7 +21,7 @@ class VCardElementAttribute
 	/**
 	* @return string
 	*/
-	public function __toString()
+	public function __toString(): string
 	{
 		$params = $this->getParams();
 		if(empty($params))

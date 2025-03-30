@@ -249,11 +249,9 @@ $MESS["INTRANET_SETTINGS_WARNING_TOOL_INSTANT_MESSENGER"] = "Пункт исче
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_DEFAULT_EMAIL"] = "E-Mail отправителя по умолчанию";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_DEFAULT_EMAIL"] = "Адрес будет автоматически подставляться во все письма с сайта, если в настройках почты не указаны другие отправители";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_DELETE_PORTAL"] = "Удалить мой Битрикс24";
-$MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL"] = "Мы удалим все данные, включая файлы на диске и профили сотрудников.<br><br>Восстановить данные будет невозможно. Убедитесь, что вы готовы к удалению. #MORE_DETAILS#";
-$MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_CHECKWORD"] = "Сейчас мы навсегда удалим ваш Битрикс24 со всеми данными. Введите слово #CHECKWORD#, чтобы подтвердить вашу готовность";
+$MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_MSGVER_1"] = "Удалить Битрикс24 может только администратор. Перед удалением все сотрудники должны быть уволены. Все данные, включая файлы на диске и профили сотрудников, будут удалены.<br><br>После удаления вы можете создать Битрикс24 с таким же адресом. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_CONFIRM_ACTION_DELETE_PORTAL"] = "Удалить мой Битрикс24";
 $MESS["INTRANET_SETTINGS_CANCEL_ACTION_DELETE_PORTAL"] = "Отмена";
-$MESS["INTRANET_SETTINGS_FIELD_DELETE_PORTAL_CHECKWORD_PLACEHOLDER"] = "Введите #CHECKWORD#, если готовы удалить Битрикс24";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_EMPLOYEE"] = "Перед удалением в вашем Битрикс24 должен остаться только администратор. Остальных сотрудников нужно уволить. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_MAIL"] = "Чтобы удалить Битрикс24, напишите нам на <a class=\"ui-section__link --mail\" href=\"#MAIL_LINK#\">#MAIL#</a>.<br><br> Все данные удаляются навсегда без возможности восстановления. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_CONFIRM_ACTION_DELETE_PORTAL_FIRE_EMPLOYEE"] = "Уволить сотрудников";

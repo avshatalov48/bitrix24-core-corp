@@ -4,13 +4,17 @@ namespace Bitrix\Crm\Security\Role;
 
 use Bitrix\Crm\CategoryIdentifier;
 use Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository;
+use Bitrix\Crm\Security\Role\Manage\AttrPreset\UserRoleAndHierarchy;
+use Bitrix\Crm\Security\Role\Manage\Permissions\HideSum;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Import;
+use Bitrix\Crm\Security\Role\Manage\Permissions\MyCardView;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Permission;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Transition;
 use Bitrix\Crm\Security\Role\Manage\RoleManagementModelBuilder;
 use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Main\Localization\Loc;
 use CCrmOwnerType;
+use function Symfony\Component\String\s;
 
 final class RolePreset {
 
@@ -199,8 +203,33 @@ final class RolePreset {
 	{
 		return self::getPermissionSetForEntityByCondition(
 			$categoryIdentifier->getPermissionEntityCode(),
-			static fn(Permission $permission) => $permission->getDefaultAttribute(),
-			static fn(Permission $permission) => $permission->getDefaultSettings()
+			static function(Permission $permission) use ($categoryIdentifier)
+			{
+				$attr = $permission->getDefaultAttribute();
+
+				return self::changeAttributeForSpecificEntities($categoryIdentifier, $permission, $attr);
+			},
+			self::getSpecialSettingsValue($categoryIdentifier),
+		);
+	}
+
+	public static function getSelfPermissionSetForEntity(CategoryIdentifier $categoryIdentifier): array
+	{
+		return self::getPermissionSetForEntityByCondition(
+			$categoryIdentifier->getPermissionEntityCode(),
+			static function(Permission $permission) use ($categoryIdentifier)
+			{
+				$attr = (
+					$permission->variants()?->has(UserPermissions::PERMISSION_SELF) // permission supports 'A' value?
+					|| $permission->variants()?->has(UserRoleAndHierarchy::SELF) // permission supports 'SELF' value?
+				)
+					? UserPermissions::PERMISSION_SELF
+					: $permission->getDefaultAttribute()
+				;
+
+				return self::changeAttributeForSpecificEntities($categoryIdentifier, $permission, $attr);
+			},
+			self::getSpecialSettingsValue($categoryIdentifier),
 		);
 	}
 
@@ -391,5 +420,62 @@ final class RolePreset {
 		}
 
 		return $permissionSet;
+	}
+
+	/**
+	 * Sets the Transition permission settings to ANY for smart process and deal
+	 */
+	public static function getSpecialSettingsValue(CategoryIdentifier $categoryIdentifier): \Closure
+	{
+		return static function (Permission $permission) use ($categoryIdentifier) {
+			$settings = $permission->getDefaultSettings();
+			$entityTypeId = $categoryIdentifier->getEntityTypeId();
+			$permittedEntities = [
+				CCrmOwnerType::Deal,
+			];
+			if (
+				(
+					in_array($entityTypeId, $permittedEntities, true)
+					|| CcrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
+				)
+				&& $permission->code() === (new Transition())->code()
+			)
+			{
+				$settings = [Transition::TRANSITION_ANY];
+			}
+
+			return $settings;
+		};
+	}
+
+	/**
+	 * Sets the permissions MyCardView and HideSum to ALL for smart process and deal
+	 */
+	private static function changeAttributeForSpecificEntities(
+		CategoryIdentifier $categoryIdentifier,
+		Permission $permission,
+		?string $attr
+	): ?string
+	{
+		$entityTypeId = $categoryIdentifier->getEntityTypeId();
+		$permittedEntities = [
+			CCrmOwnerType::Deal,
+		];
+		$specificPermissions = [
+			(new HideSum())->code(),
+			(new MyCardView())->code(),
+		];
+		if (
+			(
+				in_array($entityTypeId, $permittedEntities, true)
+				|| CcrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
+			)
+			&& in_array($permission->code(), $specificPermissions, true)
+		)
+		{
+			$attr = UserPermissions::PERMISSION_ALL;
+		}
+
+		return $attr;
 	}
 }

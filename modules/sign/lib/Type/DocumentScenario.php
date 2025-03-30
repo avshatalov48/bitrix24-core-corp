@@ -78,6 +78,11 @@ final class DocumentScenario
 		return self::isB2eScenario($document?->scenario);
 	}
 
+	public static function isB2bScenarioByDocument(?Item\Document $document): bool
+	{
+		return self::isB2BScenario($document?->scenario);
+	}
+
 	/**
 	 * @param ?string $scenario
 	 * @return bool

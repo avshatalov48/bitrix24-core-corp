@@ -332,6 +332,24 @@ class CrmManager extends Base
 		return $clientInfo;
 	}
 
+	public function isOwnerEntityExists(int $ownerId, int $ownerTypeId): bool
+	{
+		$factory = Crm\Service\Container::getInstance()->getFactory($ownerTypeId);
+		if (!$factory)
+		{
+			return false;
+		}
+
+		$item = $factory->getItem($ownerId, ['ID']);
+		if (!$item)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+
 	/**
 	 * @param int $ownerId
 	 * @param int $ownerTypeId

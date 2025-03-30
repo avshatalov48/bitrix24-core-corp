@@ -21,12 +21,14 @@ class BookingService
 
 		try
 		{
+			await Core.getStore().dispatch(`${Model.Interface}/addQuickFilterIgnoredBookingId`, id);
 			await Core.getStore().dispatch(`${Model.Bookings}/add`, booking);
 
 			const bookingDto = mapModelToDto(booking);
 			const data = await (new ApiClient()).post('Booking.add', { booking: bookingDto });
 			const createdBooking = mapDtoToModel(data);
 
+			await Core.getStore().dispatch(`${Model.Interface}/addQuickFilterIgnoredBookingId`, createdBooking.id);
 			void Core.getStore().dispatch(`${Model.Bookings}/update`, {
 				id,
 				booking: createdBooking,

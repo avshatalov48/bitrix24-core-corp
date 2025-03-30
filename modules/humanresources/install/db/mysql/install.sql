@@ -146,9 +146,9 @@ CREATE TABLE IF NOT EXISTS b_hr_log (
 CREATE TABLE IF NOT EXISTS `b_hr_hcmlink_company` (
 	`ID` int unsigned NOT NULL AUTO_INCREMENT,
 	`MY_COMPANY_ID` int unsigned NOT NULL,
-	`CODE` varchar(255) COLLATE utf8mb3_unicode_ci NOT NULL,
-	`TITLE` varchar(255) COLLATE utf8mb3_unicode_ci NOT NULL,
-	`DATA` text COLLATE utf8mb3_unicode_ci NOT NULL,
+	`CODE` varchar(255) NOT NULL,
+	`TITLE` varchar(255) NOT NULL,
+	`DATA` text NOT NULL,
 	`CREATED_AT` datetime DEFAULT NULL,
 	PRIMARY KEY (`ID`),
 	UNIQUE INDEX `IX_B_HR_INTEGRATION_COMPANY` (`CODE`)
@@ -157,8 +157,8 @@ CREATE TABLE IF NOT EXISTS `b_hr_hcmlink_company` (
 CREATE TABLE IF NOT EXISTS `b_hr_hcmlink_employee` (
 	`ID` int unsigned NOT NULL AUTO_INCREMENT,
 	`PERSON_ID` int unsigned NOT NULL,
-	`CODE` varchar(255) COLLATE utf8mb3_unicode_ci NOT NULL,
-	`DATA` text COLLATE utf8mb3_unicode_ci NOT NULL,
+	`CODE` varchar(255) NOT NULL,
+	`DATA` text NOT NULL,
 	`CREATED_AT` datetime DEFAULT NULL,
 	PRIMARY KEY (`ID`),
 	INDEX `IX_B_HR_INTEGRATION_PERSON` (`PERSON_ID`),
@@ -168,11 +168,11 @@ CREATE TABLE IF NOT EXISTS `b_hr_hcmlink_employee` (
 CREATE TABLE IF NOT EXISTS `b_hr_hcmlink_field` (
 	`ID` int unsigned NOT NULL AUTO_INCREMENT,
 	`COMPANY_ID` int unsigned NOT NULL,
-	`CODE` varchar(255) COLLATE utf8mb3_unicode_ci NOT NULL,
+	`CODE` varchar(255) NOT NULL,
 	`TYPE` smallint NOT NULL DEFAULT '0',
 	`ENTITY_TYPE` smallint NOT NULL DEFAULT '0',
 	`TTL` int NOT NULL DEFAULT '86400',
-	`TITLE` varchar(255) COLLATE utf8mb3_unicode_ci NOT NULL,
+	`TITLE` varchar(255) NOT NULL,
 	PRIMARY KEY (`ID`),
 	UNIQUE INDEX `IX_B_HR_INTEGRATION_COMPANY_FIELD` (`COMPANY_ID`,`CODE`)
 );
@@ -181,7 +181,7 @@ CREATE TABLE IF NOT EXISTS `b_hr_hcmlink_field_value` (
 	`ID` int unsigned NOT NULL AUTO_INCREMENT,
 	`EMPLOYEE_ID` int unsigned NOT NULL,
 	`FIELD_ID` int unsigned NOT NULL,
-	`VALUE` varchar(255) COLLATE utf8mb3_unicode_ci NOT NULL,
+	`VALUE` varchar(255) NOT NULL,
 	`EXPIRED_AT` datetime DEFAULT NULL,
 	`CREATED_AT` datetime DEFAULT NULL,
 	PRIMARY KEY (`ID`),
@@ -196,8 +196,9 @@ CREATE TABLE IF NOT EXISTS `b_hr_hcmlink_job` (
 	`STATUS` smallint NOT NULL DEFAULT '0',
 	`PROGRESS_RECEIVED` int unsigned NOT NULL DEFAULT '0',
 	`PROGRESS_TOTAL` int unsigned NOT NULL DEFAULT '0',
-	`INPUT_DATA` text COLLATE utf8mb3_unicode_ci NOT NULL,
-	`OUTPUT_DATA` text COLLATE utf8mb3_unicode_ci NOT NULL,
+	`INPUT_DATA` text NOT NULL,
+	`OUTPUT_DATA` text NOT NULL,
+	`EVENT_COUNT` int DEFAULT 0 NOT NULL,
 	`CREATED_AT` datetime DEFAULT NULL,
 	`UPDATED_AT` datetime DEFAULT NULL,
 	`FINISHED_AT` datetime DEFAULT NULL,
@@ -212,8 +213,8 @@ CREATE TABLE IF NOT EXISTS `b_hr_hcmlink_person` (
 	`ID` int unsigned NOT NULL AUTO_INCREMENT,
 	`COMPANY_ID` int unsigned NOT NULL,
 	`USER_ID` int unsigned DEFAULT NULL,
-	`CODE` varchar(255) COLLATE utf8mb3_unicode_ci NOT NULL,
-	`TITLE` varchar(255) COLLATE utf8mb3_unicode_ci NOT NULL,
+	`CODE` varchar(255) NOT NULL,
+	`TITLE` varchar(255) NOT NULL,
 	`CREATED_AT` datetime DEFAULT NULL,
 	`UPDATED_AT` datetime DEFAULT NULL,
 	`MATCH_COUNTER` int DEFAULT 0 NOT NULL,
@@ -224,8 +225,7 @@ CREATE TABLE IF NOT EXISTS `b_hr_hcmlink_person` (
 );
 
 CREATE TABLE IF NOT EXISTS `b_hr_hcmlink_person_index` (
-	`PERSON_ID` int not null,
-	`SEARCH_CONTENT` text null,
-	primary key (`PERSON_ID`),
-	fulltext index IXF_B_HR_HCMLINK_PERSON_INDEX_SEARCH_CONTENT (`SEARCH_CONTENT`)
-)
+	`PERSON_ID` int NOT NULL,
+	`SEARCH_CONTENT` TEXT NULL,
+	PRIMARY KEY (`PERSON_ID`)
+);

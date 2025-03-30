@@ -8,9 +8,10 @@ use Bitrix\Booking\Entity\Booking\Client;
 use Bitrix\Booking\Entity\Booking\ClientCollection;
 use Bitrix\Booking\Entity\Booking\ClientType;
 use Bitrix\Booking\Entity\Booking\ClientTypeCollection;
-use Bitrix\Booking\Integration\Booking\ClientProviderInterface;
+use Bitrix\Booking\Interfaces\ClientProviderInterface;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
+use Bitrix\Main\Config\Option;
 use CCrmOwnerType;
 use DateTimeImmutable;
 
@@ -87,43 +88,6 @@ class ClientProvider implements ClientProviderInterface
 		}
 
 		return $clientCollection->getFirstCollectionItem();
-	}
-
-	public function isClientNew(Client $client): bool
-	{
-		$factory = $this->getFactoryByClient($client);
-		if (!$factory)
-		{
-			return false;
-		}
-
-		$item = $factory->getItem($client->getId(), ['ID']);
-		if (!$item)
-		{
-			return false;
-		}
-
-		$createdTime = $item->getCreatedTime();
-		if (!$createdTime)
-		{
-			return false;
-		}
-
-		$createdAgo = (new DateTimeImmutable())->getTimestamp() - $item->getCreatedTime()->getTimestamp();
-
-		//@todo confirm if this time is okay with product manager
-		return $createdAgo <= 86400;
-	}
-
-	public function doesClientExist(Client $client): bool
-	{
-		$factory = $this->getFactoryByClient($client);
-		if (!$factory)
-		{
-			return false;
-		}
-
-		return (bool)$factory->getItem($client->getId(), ['ID']);
 	}
 
 	public function loadClientDataForCollection(...$clientCollections): void
@@ -213,6 +177,18 @@ class ClientProvider implements ClientProviderInterface
 			CCrmOwnerType::ContactName => $this->getContacts($contactIds),
 			CCrmOwnerType::CompanyName => $this->getCompanies($companyIds),
 		];
+	}
+
+	public function getClientUrl(Client $client): string
+	{
+		if ($client->getType()?->getCode() === CCrmOwnerType::ContactName)
+		{
+			$contactUrl = Option::get('crm', 'path_to_contact_details', '/crm/contact/details/#contact_id#/');
+			return \CComponentEngine::MakePathFromTemplate($contactUrl, ['contact_id' => $client->getId()]);
+		}
+
+		$companyUrl = Option::get('crm', 'path_to_company_details', '/crm/company/details/#company_id#/');
+		return \CComponentEngine::MakePathFromTemplate($companyUrl, ['company_id' => $client->getId()]);
 	}
 
 	private function getContacts(array $contactIds): array

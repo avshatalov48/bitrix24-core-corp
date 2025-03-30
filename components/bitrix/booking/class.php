@@ -5,10 +5,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Booking\BookingFeature;
+use Bitrix\Booking\Service\BookingFeature;
 use Bitrix\Booking\Component;
-use Bitrix\Booking\Integration\Pull\PushService;
-use Bitrix\Booking\Internals\Journal\EventProcessor\PushPull\PushPullCommandType;
+use Bitrix\Booking\Internals\Integration\Pull\PushService;
+use Bitrix\Booking\Internals\Service\Journal\EventProcessor\PushPull\PushPullCommandType;
 use Bitrix\Booking\Provider\AhaMomentProvider;
 use Bitrix\Booking\Provider\ClientStatisticsProvider;
 use Bitrix\Booking\Provider\MoneyStatisticsProvider;

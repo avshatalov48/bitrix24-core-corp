@@ -1,5 +1,5 @@
 import { BitrixVue } from 'ui.vue3';
-import { AudioPlayer as UIAudioPlayer } from 'ui.vue3.components.audioplayer';
+import { AudioPlayer as UIAudioPlayer, AudioPlayerState } from 'ui.vue3.components.audioplayer';
 import { Dom, bind, unbind, Type } from 'main.core';
 
 import './audioplayer.css';
@@ -80,6 +80,11 @@ export const AudioPlayer = BitrixVue.cloneComponent(UIAudioPlayer, {
 			}
 			this.source().currentTime = seconds;
 			this.audioEventRouter('timeupdate');
+
+			if (this.state !== AudioPlayerState.play)
+			{
+				this.clickToButton();
+			}
 		},
 		startSeeking(event): void
 		{

@@ -1,0 +1,7 @@
+<?php
+$MESS["IMCONNECTOR_NOTIFICATIONS_WIDGET_CLOSE"] = "Жабу";
+$MESS["IMCONNECTOR_NOTIFICATIONS_WIDGET_GOTO"] = "Өту";
+$MESS["IMCONNECTOR_NOTIFICATIONS_WIDGET_OPEN_HERE"] = "Менің компьютерімде қосымша бар";
+$MESS["IMCONNECTOR_NOTIFICATIONS_WIDGET_OPEN_MOBILE"] = "Телефондағы WhatsApp қосымшасына өтіңіз";
+$MESS["IMCONNECTOR_NOTIFICATIONS_WIDGET_SCAN_QR_CODE"] = "Смартфон камерасымен QR- кодты сканерлеңіз";
+$MESS["IMCONNECTOR_NOTIFICATIONS_WIDGET_SELECT_COMMUNICATION_WAY"] = "WhatsApp арқылы ыңғайлы байланысу тәсілін таңдаңыз";

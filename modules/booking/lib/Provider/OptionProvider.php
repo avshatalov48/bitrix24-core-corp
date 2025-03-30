@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Provider;
 
 use Bitrix\Booking\Internals\Container;
-use Bitrix\Booking\Internals\OptionDictionary;
+use Bitrix\Booking\Internals\Service\OptionDictionary;
 use Bitrix\Booking\Internals\Repository\OptionRepositoryInterface;
 
 class OptionProvider

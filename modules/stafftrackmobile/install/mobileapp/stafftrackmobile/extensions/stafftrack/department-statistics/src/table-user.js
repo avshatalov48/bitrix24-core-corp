@@ -4,7 +4,7 @@
 jn.define('stafftrack/department-statistics/table-user', (require, exports, module) => {
 	const { Color, Indent } = require('tokens');
 	const { Text2 } = require('ui-system/typography/text');
-	const { Avatar } = require('layout/ui/user/avatar');
+	const { Avatar } = require('ui-system/blocks/avatar');
 
 	const TableUser = (user) => View(
 		{
@@ -20,9 +20,10 @@ jn.define('stafftrack/department-statistics/table-user', (require, exports, modu
 				},
 			},
 			Avatar({
+				testId: `stafftrack-department-statistics-user-avatar-${user.id}`,
 				id: user.id,
 				name: user.name,
-				image: user.avatar,
+				uri: user.avatar,
 				size: 24,
 			}),
 		),

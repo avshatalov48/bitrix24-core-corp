@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Controller\V1;
 
 use Bitrix\Booking\Entity\Booking\BookingVisitStatus;
-use Bitrix\Booking\Internals\CounterDictionary;
-use Bitrix\Booking\Internals\Journal\EventProcessor\PushPull\PushPullCommandType;
-use Bitrix\Booking\Internals\NotificationType;
-use Bitrix\Booking\Internals\NotificationTemplateType;
+use Bitrix\Booking\Internals\Service\CounterDictionary;
+use Bitrix\Booking\Internals\Service\Journal\EventProcessor\PushPull\PushPullCommandType;
+use Bitrix\Booking\Internals\Service\Notifications\NotificationType;
+use Bitrix\Booking\Internals\Service\Notifications\NotificationTemplateType;
 
 class Dictionary extends BaseController
 {

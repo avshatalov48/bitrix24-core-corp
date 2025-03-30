@@ -5,6 +5,7 @@ namespace Bitrix\Sign\Controllers\V1\B2e\Document;
 use Bitrix\Main;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Sign\Access\ActionDictionary;
+use Bitrix\Sign\Attribute\Access\LogicAnd;
 use Bitrix\Sign\Attribute\ActionAccess;
 use Bitrix\Sign\Config\Storage;
 use Bitrix\Sign\Operation\Document\ExportBlank;
@@ -216,6 +217,38 @@ class Template extends Controller
 		}
 
 		$result = (new Operation\Document\Template\Delete($template))->launch();
+		$this->addErrorsFromResult($result);
+
+		return [];
+	}
+
+	#[LogicAnd(
+		new ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_TEMPLATE_READ,
+			itemType: AccessibleItemType::TEMPLATE,
+			itemIdOrUidRequestKey: 'templateId',
+		),
+		new ActionAccess(ActionDictionary::ACTION_B2E_TEMPLATE_ADD),
+	)]
+	public function copyAction(int $templateId): array
+	{
+		if ($templateId < 1)
+		{
+			$this->addErrorByMessage('Incorrect template id');
+
+			return [];
+		}
+
+		$template = Container::instance()->getDocumentTemplateRepository()->getById($templateId);
+		if ($template === null)
+		{
+			$this->addErrorByMessage('Template not found');
+
+			return [];
+		}
+
+		$createdByUserId = (int)CurrentUser::get()->getId();
+		$result = (new Operation\Document\Template\Copy($template, $createdByUserId))->launch();
 		$this->addErrorsFromResult($result);
 
 		return [];

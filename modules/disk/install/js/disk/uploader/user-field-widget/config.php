@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Disk\Document\Flipchart\Configuration;
 use Bitrix\Disk\Document\LocalDocumentController;
 use Bitrix\Disk\Integration\Bitrix24Manager;
 
@@ -41,6 +42,7 @@ if ($canCreateDocuments)
 
 $importFeatureId = 'disk_import_cloud_files';
 $isFeatureImportEnabled = Bitrix24Manager::isFeatureEnabled($importFeatureId);
+$isBoardsEnabled = Configuration::isBoardsEnabled();
 
 return [
 	'js' => 'dist/disk.uploader.uf-file.bundle.js',
@@ -64,5 +66,6 @@ return [
 		'importHandlers' => $importHandlers,
 		'canUseImport' => $isFeatureImportEnabled,
 		'importFeatureId' => 'disk_import_cloud_files',
+		'isBoardsEnabled' => $isBoardsEnabled,
 	],
 ];

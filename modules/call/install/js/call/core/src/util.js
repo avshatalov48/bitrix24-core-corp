@@ -1,4 +1,4 @@
-import {Type} from 'main.core'
+import { Type, Extension } from 'main.core'
 import {CallEngine, Provider} from './engine/engine';
 import { MediaStreamsKinds } from './call_api';
 import { View } from './view/view';
@@ -624,9 +624,9 @@ function calcLocalPacketsLost(currentReport, prevReport, remoteReport)
 	const percentPacketLostTotal = (packetsLost / currentReport.packetsSent) * 100 || 0;
 	return {
 		currentPacketsLost: deltaPacketsLost,
-		currentPercentPacketLost:  Math.trunc(percentPacketLost),
+		currentPercentPacketLost: percentPacketLost >= 0 ? Math.trunc(percentPacketLost) : 0,
 		totalPacketsLost: packetsLost,
-		totalPercentPacketLost:  Math.trunc(percentPacketLostTotal),
+		totalPercentPacketLost: Math.trunc(percentPacketLostTotal),
 	};
 }
 
@@ -640,7 +640,7 @@ function calcRemotePacketsLost(currentReport, prevReport)
 	const percentPacketLostTotal = (packetsLost / (currentReport.packetsReceived + packetsLost)) * 100 || 0;
 	return {
 		currentPacketsLost: deltaPacketsLost,
-		currentPercentPacketLost:  Math.trunc(percentPacketLost),
+		currentPercentPacketLost:  percentPacketLost >= 0 ? Math.trunc(percentPacketLost) : 0,
 		totalPacketsLost: packetsLost,
 		totalPercentPacketLost:  Math.trunc(percentPacketLostTotal),
 	};
@@ -808,6 +808,20 @@ function openArticle(articleCode)
 	infoHelper.show(articleCode);
 }
 
+const isUserControlFeatureEnabled = () =>
+{
+	return Extension.getSettings('call.core')?.isUserControlFeatureEnabled;
+}
+
+const isPictureInPictureFeatureEnabled = () =>
+{
+	return Extension.getSettings('call.core')?.isPictureInPictureFeatureEnabled;
+}
+
+const isNewQOSEnabled = () =>
+{
+	return Extension.getSettings('call.core')?.isNewQOSEnabled;
+}
 
 export default {
 	updateUserData,
@@ -866,4 +880,7 @@ export default {
 	startSelfTest,
 	useTcpSdp,
 	openArticle,
+	isUserControlFeatureEnabled,
+	isPictureInPictureFeatureEnabled,
+	isNewQOSEnabled,
 }

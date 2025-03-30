@@ -33,7 +33,7 @@ final class To implements \JsonSerializable
 		return $this->address;
 	}
 
-	public function jsonSerialize()
+	public function jsonSerialize(): array
 	{
 		return [
 			'rootSource' => $this->getRootSource(),

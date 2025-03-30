@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Location = this.BX.Location || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_vue3,crm_timeline_tools,ui_analytics,location_core,location_widget,ui_designTokens,calendar_planner,main_date,ui_infoHelper,calendar_controls,calendar_sectionmanager,ui_sidepanel,crm_clientSelector,ui_notification,ui_uploader_tileWidget,main_popup,crm_field_colorSelector,crm_field_pingSelector,main_core,main_core_events,ui_entitySelector,ui_vue3_directives_hint,ui_textEditor) {
+(function (exports,ui_vue3,crm_timeline_tools,ui_textEditor,ui_analytics,location_core,location_widget,ui_designTokens,calendar_planner,main_date,ui_infoHelper,calendar_controls,calendar_sectionmanager,ui_sidepanel,crm_clientSelector,ui_notification,ui_uploader_tileWidget,main_popup,crm_field_colorSelector,crm_field_pingSelector,main_core,main_core_events,ui_entitySelector,ui_vue3_directives_hint) {
 	'use strict';
 
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
@@ -10,8 +10,10 @@ this.BX.Crm = this.BX.Crm || {};
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	const EventIds = Object.freeze({
-	  activityTouch: 'activity_touch',
-	  activityAdd: 'activity_add',
+	  activityView: 'activity_view',
+	  activityCreate: 'activity_create',
+	  activityEdit: 'activity_edit',
+	  activityCancel: 'activity_cancel',
 	  activityComplete: 'activity_complete'
 	});
 	const Section = Object.freeze({
@@ -50,6 +52,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  pingSettings: 'ping_settings',
 	  addBlock: 'add_block',
 	  createButton: 'create_button',
+	  editButton: 'edit_button',
 	  cancelButton: 'cancel_button',
 	  skipPeriodButton: 'skip_period_button',
 	  autoFromActivityViewMode: 'auto_from_activity_view_mode',
@@ -69,6 +72,8 @@ this.BX.Crm = this.BX.Crm || {};
 	var _colorId = /*#__PURE__*/new WeakMap();
 	var _blockTypes = /*#__PURE__*/new WeakMap();
 	var _notificationSkipPeriod = /*#__PURE__*/new WeakMap();
+	var _isTitleChanged = /*#__PURE__*/new WeakMap();
+	var _isDescriptionChanged = /*#__PURE__*/new WeakMap();
 	var _extensionSettings = /*#__PURE__*/new WeakMap();
 	var _getCrmMode = /*#__PURE__*/new WeakSet();
 	var _validate = /*#__PURE__*/new WeakSet();
@@ -135,6 +140,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    _classPrivateFieldInitSpec(this, _isTitleChanged, {
+	      writable: true,
+	      value: false
+	    });
+	    _classPrivateFieldInitSpec(this, _isDescriptionChanged, {
+	      writable: true,
+	      value: false
+	    });
 	    _classPrivateFieldInitSpec(this, _extensionSettings, {
 	      writable: true,
 	      value: null
@@ -187,6 +200,18 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this;
 	    }
 	  }, {
+	    key: "setIsTitleChanged",
+	    value: function setIsTitleChanged(value = true) {
+	      babelHelpers.classPrivateFieldSet(this, _isTitleChanged, value);
+	      return this;
+	    }
+	  }, {
+	    key: "setIsDescriptionChanged",
+	    value: function setIsDescriptionChanged(value = true) {
+	      babelHelpers.classPrivateFieldSet(this, _isDescriptionChanged, value);
+	      return this;
+	    }
+	  }, {
 	    key: "send",
 	    value: function send() {
 	      const data = this.getData();
@@ -207,25 +232,35 @@ this.BX.Crm = this.BX.Crm || {};
 	        c_element: babelHelpers.classPrivateFieldGet(this, _element),
 	        p1: babelHelpers.classPrivateFieldGet(this, _crmMode)
 	      };
-	      if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _pingSettings))) {
+	      if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _notificationSkipPeriod))) {
+	        if (babelHelpers.classPrivateFieldGet(this, _notificationSkipPeriod) === 'forever') {
+	          data.p2 = 'skipPeriod_custom';
+	        } else {
+	          data.p2 = 'skipPeriod_forever';
+	        }
+	      } else if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _pingSettings))) {
 	        data.p2 = 'ping_custom';
 	      }
 	      if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _colorId))) {
 	        data.p3 = 'color_custom';
 	      }
 	      if (main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldGet(this, _blockTypes))) {
+	        const p4Items = [];
 	        if (babelHelpers.classPrivateFieldGet(this, _blockTypes).includes('section_calendar')) {
-	          data.p4 = 'addBlock_calendar';
-	        } else {
-	          data.p4 = 'addBlock';
+	          p4Items.push('calendarCustom');
 	        }
+	        p4Items.push(`addBlock_${babelHelpers.classPrivateFieldGet(this, _blockTypes).length}`);
+	        data.p4 = p4Items.join(',');
 	      }
-	      if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _notificationSkipPeriod))) {
-	        if (babelHelpers.classPrivateFieldGet(this, _notificationSkipPeriod) === 'forever') {
-	          data.p5 = 'skipPeriod_custom';
-	        } else {
-	          data.p5 = 'skipPeriod_forever';
-	        }
+	      const p5Items = [];
+	      if (babelHelpers.classPrivateFieldGet(this, _isTitleChanged)) {
+	        p5Items.push('title');
+	      }
+	      if (babelHelpers.classPrivateFieldGet(this, _isDescriptionChanged)) {
+	        p5Items.push('description');
+	      }
+	      if (main_core.Type.isArrayFilled(p5Items)) {
+	        data.p5 = p5Items.join(',');
 	      }
 	      return data;
 	    }
@@ -948,8 +983,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  emits: ['close', 'updateFilledValues'],
 	  data() {
 	    var _this$settings$durati, _this$settings$showLo, _this$settings$sectio;
-	    const ownerId = this.settings.ownerId || this.context.ownerId;
-	    const selectedUserIds = new Set();
+	    const ownerId = this.settings.ownerId || this.context.userId;
+	    const selectedUserIds = new Set([this.settings.userId]);
 	    selectedUserIds.add(ownerId);
 	    const timestamp = (this.settings.from || main_date.Timezone.UserTime.getTimestamp()) * 1000;
 	    const millisecondsInFiveMinutes = 5 * 60 * 1000;
@@ -1205,38 +1240,40 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    showUserSelectorDialog() {
 	      setTimeout(() => {
-	        this.getUserSelectorDialog().show();
+	        const dialog = ui_entitySelector.Dialog.getById('todo-editor-calendar-user-selector-dialog');
+	        if (dialog !== null && dialog !== void 0 && dialog.isOpen()) {
+	          dialog.hide();
+	        } else {
+	          this.getUserSelectorDialog().show();
+	        }
 	      }, 5);
 	    },
 	    getUserSelectorDialog() {
-	      if (main_core.Type.isNil(this.userSelectorDialog)) {
-	        const preselectedItems = [];
-	        this.selectedUsersIdsArray.forEach(id => {
-	          preselectedItems.push(['user', id]);
-	        });
-	        const undeselectedItems = [['user', this.context.userId]];
-	        this.userSelectorDialog = new ui_entitySelector.Dialog({
-	          id: 'todo-editor-calendar-user-selector-dialog',
-	          targetNode: this.$refs.userSelector,
-	          context: 'CRM_ACTIVITY_TODO_CALENDAR_RESPONSIBLE_USER',
-	          multiple: true,
-	          dropdownMode: true,
-	          showAvatars: true,
-	          enableSearch: true,
-	          width: 450,
-	          zIndex: 2500,
-	          entities: [{
-	            id: 'user'
-	          }],
-	          preselectedItems,
-	          undeselectedItems,
-	          events: {
-	            'Item:onSelect': this.onSelectUser,
-	            'Item:onDeselect': this.onDeselectUser
-	          }
-	        });
-	      }
-	      return this.userSelectorDialog;
+	      const preselectedItems = [];
+	      this.selectedUsersIdsArray.forEach(id => {
+	        preselectedItems.push(['user', id]);
+	      });
+	      const undeselectedItems = [['user', this.context.userId], ['user', this.settings.userId]];
+	      return new ui_entitySelector.Dialog({
+	        id: 'todo-editor-calendar-user-selector-dialog',
+	        targetNode: this.$refs.userSelector,
+	        context: 'CRM_ACTIVITY_TODO_CALENDAR_RESPONSIBLE_USER',
+	        multiple: true,
+	        dropdownMode: true,
+	        showAvatars: true,
+	        enableSearch: true,
+	        width: 450,
+	        zIndex: 2500,
+	        entities: [{
+	          id: 'user'
+	        }],
+	        preselectedItems,
+	        undeselectedItems,
+	        events: {
+	          'Item:onSelect': this.onSelectUser,
+	          'Item:onDeselect': this.onDeselectUser
+	        }
+	      });
 	    },
 	    onSelectUser({
 	      data: {
@@ -1319,6 +1356,9 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      // eslint-disable-next-line no-param-reassign
 	      data.settings.ownerId = params.responsibleUserId;
+
+	      // eslint-disable-next-line no-param-reassign
+	      data.settings.userId = params.userId;
 	    },
 	    fetchConfig() {
 	      var _this$context$itemIde, _this$context$itemIde2;
@@ -2701,6 +2741,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.userSelectorDialog;
 	    }
 	  },
+	  watch: {
+	    imageUrl(imageUrl) {
+	      this.userAvatarUrl = imageUrl;
+	    }
+	  },
 	  template: `
 		<div 
 			class="crm-activity__todo-editor-v2_responsible-user-selector"
@@ -2840,7 +2885,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    }) {
 	      this.prepareBlockData(blocksData, {
 	        currentDeadline,
-	        responsibleUserId: this.responsibleUserId || this.currentUser.userId
+	        responsibleUserId: this.responsibleUserId || this.currentUser.userId,
+	        userId: this.currentUser.userId
 	      });
 	    },
 	    prepareBlockData(blockData, params) {
@@ -2933,7 +2979,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        this.setResponsibleUserId(data.responsibleUserId);
 	        if (!this.responsibleUserSelectorChangeSended) {
 	          this.responsibleUserSelectorChangeSended = true;
-	          this.sendAnalytics(EventIds.activityTouch, ElementIds.responsibleUserId);
+	          this.sendAnalytics(EventIds.activityView, ElementIds.responsibleUserId);
 	        }
 	      }
 	    },
@@ -2962,8 +3008,19 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.setPingOffsets(this.pingSettings.selectedValues);
 	      (_this$$refs$pingSelec2 = this.$refs.pingSelector) === null || _this$$refs$pingSelec2 === void 0 ? void 0 : _this$$refs$pingSelec2.setValue(this.pingSettings.selectedValues);
 	    },
-	    resetResponsibleUserToDefault() {
-	      this.setResponsibleUserId(this.currentUser.userId);
+	    resetResponsibleUserToDefault(user) {
+	      if (user) {
+	        this.currentUserData = {
+	          ...this.currentUserData,
+	          ...user
+	        };
+	      } else {
+	        this.currentUserData = {
+	          ...this.currentUserData,
+	          ...this.currentUser
+	        };
+	      }
+	      this.setResponsibleUserId(this.currentUserData.userId);
 	      const userSelector = this.$refs.userSelector;
 	      if (userSelector) {
 	        userSelector.resetToDefault();
@@ -2990,24 +3047,24 @@ this.BX.Crm = this.BX.Crm || {};
 	    onColorSelectorValueChange() {
 	      if (!this.colorSelectorChangeSended) {
 	        this.colorSelectorChangeSended = true;
-	        this.sendAnalytics(EventIds.activityTouch, ElementIds.colorSettings);
+	        this.sendAnalytics(EventIds.activityView, ElementIds.colorSettings);
 	      }
 	    },
 	    onPingSettingsSelectorValueChange() {
 	      if (!this.pingSettingsSelectorChangeSended) {
 	        this.pingSettingsSelectorChangeSended = true;
-	        this.sendAnalytics(EventIds.activityTouch, ElementIds.pingSettings);
+	        this.sendAnalytics(EventIds.activityView, ElementIds.pingSettings);
 	      }
 	    },
 	    sendAnalyticsDeadlineChange() {
 	      if (!this.isDeadlineChanged) {
-	        this.sendAnalytics(EventIds.activityTouch, ElementIds.deadline);
+	        this.sendAnalytics(EventIds.activityView, ElementIds.deadline);
 	        this.isDeadlineChanged = true;
 	      }
 	    },
 	    sendAnalyticsCalendarSectionChange() {
 	      if (!this.isCalendarSectionChanged) {
-	        this.sendAnalytics(EventIds.activityTouch, ElementIds.calendarSection);
+	        this.sendAnalytics(EventIds.activityView, ElementIds.calendarSection);
 	        this.isCalendarSectionChanged = true;
 	      }
 	    },
@@ -3031,7 +3088,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        value
 	      } = event.target;
 	      if (value !== this.defaultTitle && value !== this.titleBeforeFocus) {
-	        this.sendAnalytics(EventIds.activityTouch, ElementIds.title);
+	        this.sendAnalytics(EventIds.activityView, ElementIds.title);
 	      }
 	    },
 	    handleTextEditorFocus(event) {
@@ -3040,7 +3097,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    handleTextEditorBlur(event) {
 	      const description = this.textEditor.getText();
 	      if (main_core.Type.isStringFilled(description) && description !== this.descriptionBeforeFocus) {
-	        this.sendAnalytics(EventIds.activityTouch, ElementIds.description);
+	        this.sendAnalytics(EventIds.activityView, ElementIds.description);
 	      }
 	    },
 	    onActionsPopupItemClick({
@@ -3076,7 +3133,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.textEditor.focus();
 	      if (!this.addBlockSended) {
 	        this.addBlockSended = true;
-	        this.sendAnalytics(EventIds.activityTouch, ElementIds.addBlock);
+	        this.sendAnalytics(EventIds.activityView, ElementIds.addBlock);
 	      }
 	    },
 	    getNextBlockSortValue() {
@@ -3415,6 +3472,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _mode = /*#__PURE__*/new WeakMap();
 	var _ownerTypeId = /*#__PURE__*/new WeakMap();
 	var _ownerId = /*#__PURE__*/new WeakMap();
+	var _user = /*#__PURE__*/new WeakMap();
 	var _currentUser = /*#__PURE__*/new WeakMap();
 	var _pingSettings$1 = /*#__PURE__*/new WeakMap();
 	var _copilotSettings = /*#__PURE__*/new WeakMap();
@@ -3542,6 +3600,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      value: null
 	    });
 	    _classPrivateFieldInitSpec$4(this, _ownerId, {
+	      writable: true,
+	      value: null
+	    });
+	    _classPrivateFieldInitSpec$4(this, _user, {
 	      writable: true,
 	      value: null
 	    });
@@ -3748,7 +3810,10 @@ this.BX.Crm = this.BX.Crm || {};
 	          main_core.ajax.runAction(_classPrivateMethodGet$4(this, _getSaveActionPath, _getSaveActionPath2).call(this), {
 	            data,
 	            analytics
-	          }).then(resolve).catch(reject);
+	          }).then(response => {
+	            babelHelpers.classPrivateFieldSet(this, _currentUser, babelHelpers.classPrivateFieldGet(this, _user));
+	            resolve(response);
+	          }).catch(reject);
 	        }).catch(reject);
 	      }).catch(response => {
 	        ui_notification.UI.Notification.Center.notify({
@@ -3847,7 +3912,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        this.getTextEditor().collapse(animateCollapse);
 	        return _classPrivateMethodGet$4(this, _clearValue, _clearValue2).call(this);
 	      }
-	      analytics.setEvent(EventIds.activityAdd).setElement(ElementIds.cancelButton);
+	      analytics.setEvent(EventIds.activityCancel).setElement(ElementIds.cancelButton);
 	      const subSection = params === null || params === void 0 ? void 0 : (_params$analytics = params.analytics) === null || _params$analytics === void 0 ? void 0 : _params$analytics.subSection;
 	      if (main_core.Type.isStringFilled(subSection)) {
 	        analytics.setSubSection(subSection);
@@ -3904,6 +3969,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.classPrivateFieldSet(this, _ownerTypeId, params.ownerTypeId);
 	  babelHelpers.classPrivateFieldSet(this, _ownerId, params.ownerId);
 	  babelHelpers.classPrivateFieldSet(this, _currentUser, params.currentUser);
+	  babelHelpers.classPrivateFieldSet(this, _user, main_core.Runtime.clone(params.currentUser));
 	  babelHelpers.classPrivateFieldSet(this, _pingSettings$1, params.pingSettings || {});
 	  babelHelpers.classPrivateFieldSet(this, _copilotSettings, params.copilotSettings || null);
 	  babelHelpers.classPrivateFieldSet(this, _colorSettings, params.colorSettings);
@@ -4151,7 +4217,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  if (analyticsLabel === null) {
 	    return null;
 	  }
-	  analyticsLabel.setEvent(EventIds.activityAdd).setElement(ElementIds.createButton);
+	  const isNew = main_core.Type.isNil(data.id);
+	  analyticsLabel.setEvent(isNew ? EventIds.activityCreate : EventIds.activityEdit).setElement(isNew ? ElementIds.createButton : ElementIds.editButton);
 
 	  // eslint-disable-next-line no-param-reassign
 	  data = main_core.Runtime.clone(data);
@@ -4175,6 +4242,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	  if (main_core.Type.isArrayFilled(blockTypes)) {
 	    analyticsLabel.setBlockTypes(blockTypes);
+	  }
+	  if (babelHelpers.classPrivateFieldGet(this, _defaultTitle) !== data.title) {
+	    analyticsLabel.setIsTitleChanged();
+	  }
+	  if (babelHelpers.classPrivateFieldGet(this, _defaultDescription) !== data.description && main_core.Type.isStringFilled(data.description)) {
+	    analyticsLabel.setIsDescriptionChanged();
 	  }
 	  return analyticsLabel.getData();
 	}
@@ -4263,11 +4336,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  return menuBar && menuBar.getFirstItemIdWithLayout() === 'todo';
 	}
 	function _clearData2() {
+	  babelHelpers.classPrivateFieldSet(this, _currentUser, babelHelpers.classPrivateFieldGet(this, _user));
 	  this.setDefaultDeadLine();
 	  this.setMode(TodoEditorMode.ADD);
 	  babelHelpers.classPrivateFieldGet(this, _layoutComponent).resetTitleAndDescription();
 	  babelHelpers.classPrivateFieldGet(this, _layoutComponent).resetPingOffsetsToDefault();
-	  babelHelpers.classPrivateFieldGet(this, _layoutComponent).resetResponsibleUserToDefault();
+	  babelHelpers.classPrivateFieldGet(this, _layoutComponent).resetResponsibleUserToDefault(babelHelpers.classPrivateFieldGet(this, _currentUser));
 	  babelHelpers.classPrivateFieldGet(this, _layoutComponent).resetColorSelectorToDefault();
 	  babelHelpers.classPrivateFieldGet(this, _layoutComponent).resetCurrentActivityId();
 	  main_core.Dom.removeClass(babelHelpers.classPrivateFieldGet(this, _container), '--is-edit');
@@ -4311,5 +4385,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.TodoEditorMode = TodoEditorMode;
 	exports.TodoEditorV2 = TodoEditorV2;
 
-}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Vue3,BX.Crm.Timeline,BX.UI.Analytics,BX.Location.Core,BX.Location.Widget,BX,BX.Calendar,BX.Main,BX.UI,BX.Calendar.Controls,BX.Calendar,BX,BX.Crm,BX,BX.UI.Uploader,BX.Main,BX.Crm.Field,BX.Crm.Field,BX,BX.Event,BX.UI.EntitySelector,BX.Vue3.Directives,BX.UI.TextEditor));
+}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Vue3,BX.Crm.Timeline,BX.UI.TextEditor,BX.UI.Analytics,BX.Location.Core,BX.Location.Widget,BX,BX.Calendar,BX.Main,BX.UI,BX.Calendar.Controls,BX.Calendar,BX,BX.Crm,BX,BX.UI.Uploader,BX.Main,BX.Crm.Field,BX.Crm.Field,BX,BX.Event,BX.UI.EntitySelector,BX.Vue3.Directives));
 //# sourceMappingURL=todo-editor-v2.bundle.js.map

@@ -1,21 +1,20 @@
-import { mapGetters } from 'ui.vue3.vuex';
-import { Event, Runtime, Uri } from 'main.core';
+import { Event, Runtime } from 'main.core';
 import { DateTimeFormat } from 'main.date';
-import { SidePanel } from 'main.sidepanel';
 import { Menu, MenuManager } from 'main.popup';
 import type { MenuItemOptions } from 'main.popup';
 
+import { mapGetters } from 'ui.vue3.vuex';
 import { Dialog } from 'ui.entity-selector';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.main';
+
+import { CrmEntity, EntitySelectorEntity, HelpDesk, Model } from 'booking.const';
 import { limit } from 'booking.lib.limit';
-import { CrmEntity, EntitySelectorEntity, HelpDesk, Model, Module } from 'booking.const';
 import { helpDesk } from 'booking.lib.help-desk';
+import { DealHelper } from 'booking.lib.deal-helper';
 import { Button, ButtonSize, ButtonColor, ButtonIcon } from 'booking.component.button';
 import { Loader } from 'booking.component.loader';
-import { bookingService } from 'booking.provider.service.booking-service';
 import type { BookingModel, DealData } from 'booking.model.bookings';
-import type { ClientData } from 'booking.model.clients';
 
 import './deal.css';
 
@@ -43,6 +42,10 @@ export const Deal = {
 			isLoading: false,
 			saveDealDebounce: Runtime.debounce(this.saveDeal, 10, this),
 		};
+	},
+	created(): void
+	{
+		this.dealHelper = new DealHelper(this.bookingId);
 	},
 	mounted(): void
 	{
@@ -122,57 +125,18 @@ export const Deal = {
 		{
 			if (!this.isFeatureEnabled)
 			{
-				limit.show();
+				void limit.show();
 
 				return;
 			}
 
-			const bookingIdParamName = 'bookingId';
-
-			const createDealUrl = new Uri('/crm/deal/details/0/');
-			createDealUrl.setQueryParam(bookingIdParamName, this.bookingId);
-
-			(this.booking.clients ?? []).forEach((client: ClientData) => {
-				const paramName = {
-					[CrmEntity.Contact]: 'contact_id',
-					[CrmEntity.Company]: 'company_id',
-				}[client.type.code];
-
-				createDealUrl.setQueryParam(paramName, client.id);
-			});
-
-			SidePanel.Instance.open(createDealUrl.toString(), {
-				events: {
-					onLoad: ({ slider }) => {
-						slider.getWindow().BX.Event.EventEmitter.subscribe('onCrmEntityCreate', (event) => {
-							const [data] = event.getData();
-
-							const isDeal = data.entityTypeName === CrmEntity.Deal;
-							const bookingId = Number(new Uri(data.sliderUrl).getQueryParam(bookingIdParamName));
-							if (!isDeal || bookingId !== this.bookingId)
-							{
-								return;
-							}
-
-							const dealData = this.mapEntityInfoToDeal(data.entityInfo);
-
-							this.saveDealDebounce(dealData);
-						});
-					},
-					onClose: () => {
-						if (this.deal?.value)
-						{
-							this.saveDealDebounce(this.deal);
-						}
-					},
-				},
-			});
+			this.dealHelper.createDeal();
 		},
 		showMenu(): void
 		{
 			if (!this.isFeatureEnabled)
 			{
-				limit.show();
+				void limit.show();
 
 				return;
 			}
@@ -216,7 +180,7 @@ export const Deal = {
 		{
 			if (!this.isFeatureEnabled)
 			{
-				limit.show();
+				void limit.show();
 
 				return;
 			}
@@ -236,16 +200,7 @@ export const Deal = {
 		},
 		openDeal(): void
 		{
-			SidePanel.Instance.open(`/crm/deal/details/${this.deal.value}/`, {
-				events: {
-					onClose: () => {
-						if (this.deal?.value)
-						{
-							void bookingService.getById(this.bookingId);
-						}
-					},
-				},
-			});
+			this.dealHelper.openDeal();
 		},
 		itemChange(): void
 		{
@@ -263,25 +218,11 @@ export const Deal = {
 				return null;
 			}
 
-			return this.mapEntityInfoToDeal(item.getCustomData().get('entityInfo'));
-		},
-		mapEntityInfoToDeal(info: Object): DealData
-		{
-			return {
-				moduleId: Module.Crm,
-				entityTypeId: info.typeName,
-				value: info.id,
-				data: [],
-			};
+			return this.dealHelper.mapEntityInfoToDeal(item.getCustomData().get('entityInfo'));
 		},
 		saveDeal(dealData: DealData | null): void
 		{
-			const externalData = dealData ? [dealData] : [];
-
-			void bookingService.update({
-				id: this.booking.id,
-				externalData,
-			});
+			this.dealHelper.saveDeal(dealData);
 		},
 		getDialogButton(): HTMLElement
 		{

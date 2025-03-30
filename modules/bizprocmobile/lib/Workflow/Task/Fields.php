@@ -21,16 +21,16 @@ class Fields
 		$this->taskId = $taskId;
 	}
 
-	public function extract(array $fields): array
+	public function extract(array $fields, int $userId = 0): array
 	{
 		$task = \CBPTaskService::getList(
 			arFilter: ['ID' => $this->taskId],
-			arSelectFields: ['ACTIVITY', 'PARAMETERS', 'STATUS']
+			arSelectFields: ['ID', 'ACTIVITY', 'PARAMETERS', 'STATUS']
 		)->fetch();
 
 		if ($task && (int)$task['STATUS'] === \CBPTaskStatus::Running)
 		{
-			$taskFields = \CBPDocument::getTaskControls($task)['FIELDS'] ?? [];
+			$taskFields = \CBPDocument::getTaskControls($task, $userId)['FIELDS'] ?? [];
 			$documentId =
 				is_array($task['PARAMETERS']['DOCUMENT_ID'] ?? null)
 					? $task['PARAMETERS']['DOCUMENT_ID']

@@ -20,5 +20,4 @@ class CalDav extends ComponentBase
 	{
 		return ModuleManager::isModuleInstalled('calendar');
 	}
-
 }

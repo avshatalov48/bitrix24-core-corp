@@ -6,6 +6,7 @@ use Bitrix\DocumentGenerator\Document;
 use Bitrix\DocumentGenerator\Driver;
 use Bitrix\DocumentGenerator\Model\DocumentTable;
 use Bitrix\DocumentGenerator\Model\FileTable;
+use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
@@ -63,42 +64,27 @@ final class TransformerManager implements InterfaceCallback
 			return 'document '.$params['documentId'].' not found';
 		}
 
-		$updateData = [];
-		foreach(static::getFormats() as $extension => $format)
+		try
 		{
-			if(isset($result['files'][$extension]))
-			{
-				$fileArray = \CFile::MakeFileArray($result['files'][$extension], $format['TYPE']);
-				$fileArray['MODULE_ID'] = Driver::MODULE_ID;
-				$fileArray['name'] = $fileArray['fileName'] = $document->getFileName($extension);
-				$saveResult = FileTable::saveFile($fileArray);
-				if($saveResult->isSuccess())
-				{
-					$updateData[$format['KEY']] = $saveResult->getId();
-					$document->{$format['METHOD']}($saveResult->getId());
-				}
-			}
+			$updatedData = self::updateDocument($document, $result);
 		}
-
-		if(!empty($updateData))
+		catch (\Throwable $throwable)
 		{
-			$updateResult = DocumentTable::update($params['documentId'], $updateData);
-			if(!$updateResult->isSuccess())
-			{
-				foreach($updateData as $fileId)
-				{
-					FileTable::delete($fileId);
-				}
-			}
+			// this exception should never happen normally, it's truly an unexpected error. but sometimes it happens.
+			// however, we still should correctly notify observers that the transformation has completed
+
+			Application::getInstance()->getExceptionHandler()->writeToLog($throwable);
+
+			$updatedData = [];
 		}
 
 		$data = $document->getFile(false)->getData();
 
 		static::addToStack($data);
 		$pdfId = null;
-		if(isset($updateData['PDF_ID']) && $updateData['PDF_ID'] > 0)
+		if(isset($updatedData['PDF_ID']) && $updatedData['PDF_ID'] > 0)
 		{
-			$pdfId = $updateData['PDF_ID'];
+			$pdfId = $updatedData['PDF_ID'];
 		}
 		$data['pdfId'] = $pdfId;
 		static::fireEvent($params['documentId'], $data);
@@ -113,6 +99,40 @@ final class TransformerManager implements InterfaceCallback
 	protected static function fireEvent($documentId, array $data = [])
 	{
 		EventManager::getInstance()->send(new Event(Driver::MODULE_ID, 'onDocumentTransformationComplete', ['documentId' => $documentId, 'data' => $data]));
+	}
+
+	private static function updateDocument(Document $document, array $result): array
+	{
+		$updateData = [];
+		foreach (static::getFormats() as $extension => $format)
+		{
+			if (isset($result['files'][$extension]))
+			{
+				$fileArray = \CFile::MakeFileArray($result['files'][$extension], $format['TYPE']);
+				$fileArray['MODULE_ID'] = Driver::MODULE_ID;
+				$fileArray['name'] = $fileArray['fileName'] = $document->getFileName($extension);
+				$saveResult = FileTable::saveFile($fileArray);
+				if($saveResult->isSuccess())
+				{
+					$updateData[$format['KEY']] = $saveResult->getId();
+					$document->{$format['METHOD']}($saveResult->getId());
+				}
+			}
+		}
+
+		if (!empty($updateData))
+		{
+			$updateResult = DocumentTable::update($document->ID, $updateData);
+			if (!$updateResult->isSuccess())
+			{
+				foreach($updateData as $fileId)
+				{
+					FileTable::delete($fileId);
+				}
+			}
+		}
+
+		return $updateData;
 	}
 
 	/**

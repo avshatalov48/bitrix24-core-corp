@@ -1,16 +1,18 @@
-import { mapGetters } from 'ui.vue3.vuex';
 import { Dom } from 'main.core';
-import { MenuManager, MenuItem } from 'main.popup';
-import { Set as IconSet } from 'ui.icon-set.api.core';
-import { BIcon as Icon } from 'ui.icon-set.api.vue';
+import { MenuManager, MenuItem, MenuItemOptions } from 'main.popup';
+
+import { mapGetters } from 'ui.vue3.vuex';
+import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
+import 'ui.icon-set.main';
+
 import { HelpDesk, Model, Option } from 'booking.const';
 import { optionService } from 'booking.provider.service.option-service';
 import { limit } from 'booking.lib.limit';
 import { helpDesk } from 'booking.lib.help-desk';
-import { busySlots } from '../../lib/busy-slots/busy-slots';
+import { busySlots } from 'booking.lib.busy-slots';
+
 import { Multiple } from './multiple/multiple';
 import { Single } from './single/single';
-
 import './intersections.css';
 
 export const Intersections = {
@@ -53,57 +55,55 @@ export const Intersections = {
 			}
 			else
 			{
-				limit.show();
+				void limit.show();
 			}
 		},
-		getMenuItems(): Array
+		getMenuItems(): MenuItemOptions[]
 		{
 			return [
-				{
-					id: this.intersectionModeMenuItemId,
-					dataset: {
-						id: this.intersectionModeMenuItemId,
-					},
-					text: this.loc('BOOKING_BOOKING_INTERSECTION_MENU_ALL'),
-					className: (
-						this.isIntersectionForAll
-							? 'menu-popup-item menu-popup-item-accept'
-							: 'menu-popup-item menu-popup-no-icon'
-					),
-					onclick: async (event: PointerEvent, item: MenuItem) => {
-						this.menu.close();
-
-						const value = !this.isIntersectionForAll;
-
-						await this.$store.dispatch(`${Model.Interface}/setIntersectionMode`, value);
-						await optionService.setBool(Option.IntersectionForAll, value);
-					},
-				},
+				this.getIntersectionForAllItem(),
 				{
 					delimiter: true,
 				},
-				// {
-				// 	id: 'booking-intersection-menu-settings',
-				// 	dataset: {
-				// 		id: 'booking-intersection-menu-settings',
-				// 	},
-				// 	text: this.loc('BOOKING_BOOKING_INTERSECTION_MENU_SETTINGS'),
-				// 	onclick: () => {},
-				// },
-				{
-					id: 'booking-intersection-menu-info',
-					dataset: {
-						id: 'booking-intersection-menu-info',
-					},
-					text: this.loc('BOOKING_BOOKING_INTERSECTION_MENU_HOW'),
-					onclick: () => {
-						helpDesk.show(
-							HelpDesk.Intersection.code,
-							HelpDesk.Intersection.anchorCode,
-						);
-					},
-				},
+				this.getHelpDeskItem(),
 			];
+		},
+		getIntersectionForAllItem(): MenuItemOptions
+		{
+			return {
+				id: this.intersectionModeMenuItemId,
+				dataset: {
+					id: this.intersectionModeMenuItemId,
+				},
+				text: this.loc('BOOKING_BOOKING_INTERSECTION_MENU_ALL'),
+				className: this.isIntersectionForAll
+					? 'menu-popup-item menu-popup-item-accept'
+					: 'menu-popup-item menu-popup-no-icon',
+				onclick: () => {
+					this.menu.close();
+
+					const value = !this.isIntersectionForAll;
+
+					void this.$store.dispatch(`${Model.Interface}/setIntersectionMode`, value);
+					void optionService.setBool(Option.IntersectionForAll, value);
+				},
+			};
+		},
+		getHelpDeskItem(): MenuItemOptions
+		{
+			return {
+				id: 'booking-intersection-menu-info',
+				dataset: {
+					id: 'booking-intersection-menu-info',
+				},
+				text: this.loc('BOOKING_BOOKING_INTERSECTION_MENU_HOW'),
+				onclick: () => {
+					helpDesk.show(
+						HelpDesk.Intersection.code,
+						HelpDesk.Intersection.anchorCode,
+					);
+				},
+			};
 		},
 		async showIntersections(selectedResourceIds: number[], resourceId: number = 0): void
 		{
@@ -116,10 +116,17 @@ export const Intersections = {
 
 			await busySlots.loadBusySlots();
 		},
-		toggleMenuItemActivityState(item: MenuItem)
+		toggleMenuItemActivityState(item: MenuItem): void
 		{
 			Dom.toggleClass(item.getContainer(), 'menu-popup-item-accept');
 			Dom.toggleClass(item.getContainer(), 'menu-popup-no-icon');
+		},
+		updateScroll(): void
+		{
+			if (this.$refs.inner)
+			{
+				this.$refs.inner.scrollLeft = this.scroll;
+			}
 		},
 	},
 	watch: {
@@ -127,24 +134,22 @@ export const Intersections = {
 		{
 			await this.$store.dispatch(`${Model.Interface}/setIntersections`, {});
 
+			this.updateScroll();
+
 			await busySlots.loadBusySlots();
 
 			this.toggleMenuItemActivityState(
 				this.menu.getMenuItem(this.intersectionModeMenuItemId),
 			);
 		},
-		scroll(value): void
+		scroll(): void
 		{
-			if (this.$refs.inner)
-			{
-				this.$refs.inner.scrollLeft = value;
-			}
+			this.updateScroll();
 		},
 	},
 	computed: {
 		...mapGetters({
 			resourcesIds: `${Model.Interface}/resourcesIds`,
-			bookings: `${Model.Bookings}/get`,
 			isFilterMode: `${Model.Interface}/isFilterMode`,
 			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
 			intersections: `${Model.Interface}/intersections`,
@@ -173,12 +178,10 @@ export const Intersections = {
 			>
 				<div class="ui-icon-set --double-rhombus"></div>
 				<div v-if="!isFeatureEnabled" class="booking-lock-icon-container">
-					<Icon :name="IconSet.LOCK" />
+					<Icon :name="IconSet.LOCK"/>
 				</div>
 			</div>
-			<template v-if="isIntersectionForAll">
-				<Single @change="showIntersections"/>
-			</template>
+			<Single v-if="isIntersectionForAll" @change="showIntersections"/>
 			<template v-else>
 				<div
 					ref="inner"
@@ -187,10 +190,7 @@ export const Intersections = {
 				>
 					<div class="booking-booking-intersections-row">
 						<div class="booking-booking-intersections-row-inner">
-							<template
-								v-for="resourceId of resourcesIds"
-								:key="resourceId"
-							>
+							<template v-for="resourceId of resourcesIds" :key="resourceId">
 								<Multiple :resourceId="resourceId" @change="showIntersections"/>
 							</template>
 						</div>

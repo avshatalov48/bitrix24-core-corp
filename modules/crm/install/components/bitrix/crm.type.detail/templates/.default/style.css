@@ -654,3 +654,7 @@ body.crm-type-settings-presets #workarea-content {
 .crm-type-error-container{
 	padding: 0 20px;
 }
+
+.crm-type-permissions-reset-alert{
+	margin: 10px 0 0;
+}

@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Catalog;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Crm;
@@ -26,7 +27,6 @@ use Bitrix\Crm\Tracking;
 use Bitrix\Currency;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Catalog;
 use Bitrix\SalesCenter\Integration\LandingManager;
 
 if (!Main\Loader::includeModule('crm'))
@@ -1041,15 +1041,22 @@ class CCrmDealDetailsComponent
 		//endregion
 
 		//region LEGEND
-		if($this->arResult['ENTITY_ID'] > 0)
+		$categoryID = (int)($this->entityData['CATEGORY_ID'] ?? 0);
+		$this->arResult['LEGEND'] = \Bitrix\Crm\Category\DealCategory::getName($categoryID);
+
+		if ($this->arResult['ENTITY_ID'] > 0)
 		{
-			$categoryID = isset($this->entityData['CATEGORY_ID']) ? (int)$this->entityData['CATEGORY_ID'] : 0;
-			$this->arResult['LEGEND'] = \Bitrix\Crm\Category\DealCategory::getName($categoryID);
-			if(isset($this->entityData['IS_RETURN_CUSTOMER']) && $this->entityData['IS_RETURN_CUSTOMER'] === 'Y')
+			if (
+				isset($this->entityData['IS_RETURN_CUSTOMER'])
+				&& $this->entityData['IS_RETURN_CUSTOMER'] === 'Y'
+			)
 			{
 				$this->arResult['LEGEND'] .= ' ('.Loc::getMessage('CRM_DEAL_RETURNING').')';
 			}
-			elseif(isset($this->entityData['IS_REPEATED_APPROACH']) && $this->entityData['IS_REPEATED_APPROACH'] === 'Y')
+			elseif(
+				isset($this->entityData['IS_REPEATED_APPROACH'])
+				&& $this->entityData['IS_REPEATED_APPROACH'] === 'Y'
+			)
 			{
 				$this->arResult['LEGEND'] .= ' ('.Loc::getMessage('CRM_DEAL_REPEATED_APPROACH').')';
 			}
@@ -2023,6 +2030,10 @@ class CCrmDealDetailsComponent
 			if(is_object($dbResult))
 			{
 				$this->entityData = $dbResult->Fetch();
+				if (is_null($this->entityData['OPPORTUNITY']))
+				{
+					$this->entityData['OPPORTUNITY'] = 0.0;
+				}
 			}
 
 			if(!is_array($this->entityData))

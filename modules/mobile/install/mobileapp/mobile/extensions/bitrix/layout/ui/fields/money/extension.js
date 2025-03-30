@@ -9,7 +9,11 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 	const { SelectField } = require('layout/ui/fields/select');
 	const { StringField } = require('layout/ui/fields/string');
 	const { stringify } = require('utils/string');
+	const { parseAmount } = require('utils/number');
 	const { Type } = require('type');
+
+	const isIOS = Application.getPlatform() === 'ios';
+	const API_VERSION = Application.getApiVersion();
 
 	/**
 	 * @class MoneyField
@@ -85,16 +89,18 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 		getFormatConfig()
 		{
 			const config = this.getConfig();
-			const formats = Money.create(this.getValue()).format;
+			const value = this.getValue();
+			const formats = Money.create(value).format;
 			const thousandsSeparator = jnComponent.convertHtmlEntities(formats.THOUSANDS_SEP);
+			const useGroupSeparator = !isIOS && BX.prop.getBoolean(config, 'useGroupSeparator', true);
 
 			return {
-				useGroupSeparator: BX.prop.getBoolean(config, 'useGroupSeparator', true),
+				useGroupSeparator: thousandsSeparator === '' ? false : useGroupSeparator,
 				groupSize: BX.prop.getNumber(config, 'groupSize', 3),
 				groupSeparator: thousandsSeparator || ' ',
 				precision: formats.DECIMALS,
 				decimalSeparator: formats.DEC_POINT,
-				hideZero: formats.HIDE_ZERO === 'Y',
+				hideZero: formats.HIDE_ZERO === 'Y' && !isIOS,
 			};
 		}
 
@@ -239,19 +245,41 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 			}
 
 			let { amount } = value;
+			const { currency } = value;
 
-			if (Type.isString(amount))
+			if (API_VERSION > 57)
 			{
-				amount = amount === '' ? undefined : Number(amount);
+				if (Type.isString(amount) || !Type.isNil(amount))
+				{
+					if (Type.isNumber(Number(amount)))
+					{
+						amount = amount === 0 ? 0 : (
+							this.isReadOnly() || isIOS
+								? String(amount)
+								: new Money({ amount, currency }).editableFormattedAmount
+						);
+					}
+					else
+					{
+						amount = null;
+					}
+				}
 			}
-			else if (!Type.isNil(amount))
+			else
 			{
-				amount = Number(amount);
-			}
+				if (Type.isString(amount))
+				{
+					amount = amount === '' ? undefined : Number(amount);
+				}
+				else if (!Type.isNil(amount))
+				{
+					amount = Number(amount);
+				}
 
-			if (!Type.isNumber(amount))
-			{
-				amount = null;
+				if (!Type.isNumber(amount))
+				{
+					amount = null;
+				}
 			}
 
 			return {
@@ -263,7 +291,7 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 
 		isEmptyValue(value)
 		{
-			return !value.hasOwnProperty('amount') || !Type.isNumber(value.amount);
+			return !value.hasOwnProperty('amount') || !Type.isNumber(Number(value.amount));
 		}
 
 		setCustomAmountClickHandler(handler)
@@ -276,7 +304,34 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 		handleOnChange(value)
 		{
 			let amount = value.amount;
-			if (value.amount !== '' && value.amount !== null)
+			const currency = value.currency;
+
+			if (API_VERSION > 57)
+			{
+				const { currency: prevCurrency, amount: prevAmount } = this.getValue();
+
+				const decimalSeparator = isIOS ? '.' : Money.formats[prevCurrency].DEC_POINT;
+				const thousandsSeparator = Money.formats[prevCurrency].THOUSANDS_SEP;
+
+				if (currency !== prevCurrency)
+				{
+					amount = typeof amount === 'number' ? amount : parseAmount(amount, decimalSeparator, thousandsSeparator);
+				}
+				else if (amount === prevAmount)
+				{
+					return;
+				}
+				else if (!isIOS)
+				{
+					amount = parseAmount(amount, decimalSeparator, thousandsSeparator);
+				}
+
+				if (value.amount !== '')
+				{
+					amount = BX.type.isNumber(Number(amount)) ? String(amount) : '';
+				}
+			}
+			else if (value.amount !== '' && value.amount !== null)
 			{
 				amount = BX.type.isNumber(Number(value.amount)) ? String(value.amount) : '';
 			}

@@ -119,6 +119,7 @@ export class TodoEditorV2
 	#mode: String = TodoEditorMode.ADD;
 	#ownerTypeId: Number = null;
 	#ownerId: Number = null;
+	#user: Object = null;
 	#currentUser: Object = null;
 	#pingSettings: Object = null;
 	#copilotSettings: ?Object = null;
@@ -198,6 +199,7 @@ export class TodoEditorV2
 		this.#ownerTypeId = params.ownerTypeId;
 		this.#ownerId = params.ownerId;
 		this.#currentUser = params.currentUser;
+		this.#user = Runtime.clone(params.currentUser);
 		this.#pingSettings = params.pingSettings || {};
 		this.#copilotSettings = params.copilotSettings || null;
 		this.#colorSettings = params.colorSettings;
@@ -611,7 +613,10 @@ export class TodoEditorV2
 						data,
 						analytics,
 					})
-					.then(resolve)
+					.then((response) => {
+						this.#currentUser = this.#user;
+						resolve(response);
+					})
 					.catch(reject)
 				;
 			}).catch(reject);
@@ -683,9 +688,10 @@ export class TodoEditorV2
 			return null;
 		}
 
+		const isNew = Type.isNil(data.id);
 		analyticsLabel
-			.setEvent(EventIds.activityAdd)
-			.setElement(ElementIds.createButton)
+			.setEvent(isNew ? EventIds.activityCreate : EventIds.activityEdit)
+			.setElement(isNew ? ElementIds.createButton : ElementIds.editButton)
 		;
 
 		// eslint-disable-next-line no-param-reassign
@@ -719,6 +725,16 @@ export class TodoEditorV2
 		if (Type.isArrayFilled(blockTypes))
 		{
 			analyticsLabel.setBlockTypes(blockTypes);
+		}
+
+		if (this.#defaultTitle !== data.title)
+		{
+			analyticsLabel.setIsTitleChanged();
+		}
+
+		if (this.#defaultDescription !== data.description && Type.isStringFilled(data.description))
+		{
+			analyticsLabel.setIsDescriptionChanged();
 		}
 
 		return analyticsLabel.getData();
@@ -917,7 +933,7 @@ export class TodoEditorV2
 		}
 
 		analytics
-			.setEvent(EventIds.activityAdd)
+			.setEvent(EventIds.activityCancel)
 			.setElement(ElementIds.cancelButton)
 		;
 
@@ -982,12 +998,14 @@ export class TodoEditorV2
 
 	#clearData(): Promise
 	{
+		this.#currentUser = this.#user;
+
 		this.setDefaultDeadLine();
 		this.setMode(TodoEditorMode.ADD);
 
 		this.#layoutComponent.resetTitleAndDescription();
 		this.#layoutComponent.resetPingOffsetsToDefault();
-		this.#layoutComponent.resetResponsibleUserToDefault();
+		this.#layoutComponent.resetResponsibleUserToDefault(this.#currentUser);
 		this.#layoutComponent.resetColorSelectorToDefault();
 		this.#layoutComponent.resetCurrentActivityId();
 

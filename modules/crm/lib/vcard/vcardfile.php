@@ -1,6 +1,5 @@
 <?php
 namespace Bitrix\Crm\VCard;
-use Bitrix\Main;
 class VCardFile
 {
 	protected $value = '';
@@ -11,7 +10,7 @@ class VCardFile
 	/**
 	* @return string
 	*/
-	public function __toString()
+	public function __toString(): string
 	{
 		return '{ value: '.$this->value.', valueType: '.$this->valueType.', type: '.$this->type.', encoding: '.$this->encoding.' }';
 	}

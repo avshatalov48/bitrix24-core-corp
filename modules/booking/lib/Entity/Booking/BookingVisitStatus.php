@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Entity\Booking;
 
-use Bitrix\Booking\Internals\DictionaryTrait;
+use Bitrix\Booking\Internals\Service\DictionaryTrait;
 
 enum BookingVisitStatus: string
 {

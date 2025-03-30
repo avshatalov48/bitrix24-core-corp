@@ -981,9 +981,10 @@ class CCrmEntityEditorComponent extends UIFormComponent
 		$userScopes = null;
 		if (isset($scopeConfigId))
 		{
+			$moduleId = ($this->arParams['MODULE_ID'] ?? null);
 			$userScopes = method_exists(\Bitrix\Ui\EntityForm\Scope::class, 'getAllUserScopes')
-				? Scope::getInstance()->getAllUserScopes($scopeConfigId, ($this->arParams['MODULE_ID'] ?? null))
-				: Scope::getInstance()->getUserScopes($scopeConfigId, ($this->arParams['MODULE_ID'] ?? null))
+				? Scope::getInstance()->getAllUserScopes($scopeConfigId, $moduleId, false)
+				: Scope::getInstance()->getUserScopes($scopeConfigId, $moduleId, false)
 			;
 		}
 

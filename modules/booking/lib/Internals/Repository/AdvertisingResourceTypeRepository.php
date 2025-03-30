@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Internals\Repository;
 
 use Bitrix\Booking\Entity\ResourceType\ResourceType;
-use Bitrix\Booking\Internals\NotificationTemplateType;
+use Bitrix\Booking\Internals\Service\Notifications\NotificationTemplateType;
 use Bitrix\Main\Localization\Loc;
 
 class AdvertisingResourceTypeRepository

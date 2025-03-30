@@ -78,6 +78,10 @@ class JobTable extends ORM\Data\DataManager
 				->configureSerializationJson()
 				->configureTitle('Event data for external call')
 			,
+			(new ORM\Fields\IntegerField('EVENT_COUNT'))
+				->configureTitle('Event count')
+				->configureDefaultValue(0)
+			,
 			(new ORM\Fields\DatetimeField('CREATED_AT'))
 				->configureDefaultValue(new DateTime())
 				->configureTitle('Job created at')

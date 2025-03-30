@@ -191,7 +191,6 @@ $MESS["SALESCENTER_TERMINAL_QR_POPUP_LIST_ITEM_2"] = "Install the Bitrix24 app."
 $MESS["SALESCENTER_TERMINAL_QR_POPUP_LIST_ITEM_3"] = "Select Terminal in the menu.";
 $MESS["SALESCENTER_TERMINAL_QR_POPUP_LIST_ITEM_4"] = "Receive payments. ";
 $MESS["SALESCENTER_TERMINAL_QR_POPUP_TITLE"] = "Access Terminal anywhere";
-$MESS["SALESCENTER_TERMINAL_TOUR_STEP_2_TEXT"] = "Courier or seller will receive a payment using the Bitrix24 mobile app.";
 $MESS["SALESCENTER_TIMELINE_ITEM_CONTENT_VIEW"] = "View";
 $MESS["SALESCENTER_VIEW"] = "View";
 $MESS["UI_SIDEPANEL_MENU_BUTTON_CLOSE"] = "Collapse";

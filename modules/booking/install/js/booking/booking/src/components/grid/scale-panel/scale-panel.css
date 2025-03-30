@@ -3,7 +3,7 @@
 	z-index: 4;
 	display: flex;
 	align-items: center;
-	left: calc(50px + 14px);
+	left: calc(var(--left-panel-width) + 14px);
 	bottom: 18px;
 	padding: 2px;
 	border-radius: 12px;

@@ -6,6 +6,7 @@ use Bitrix\Crm\Agent\AgentBase;
 use Bitrix\Crm\Agent\Security\Service\PermissionExtender\ConfigExtender;
 use Bitrix\Crm\Agent\Security\Service\RoleCollectionSeparator;
 use Bitrix\Crm\Agent\Security\Service\RoleSeparator;
+use Bitrix\Crm\Feature\PermissionsLayoutV2;
 use Bitrix\Crm\Security\Role\GroupCodeGenerator;
 use Bitrix\Crm\Security\Role\Manage\Entity\AutomatedSolutionConfig;
 use Bitrix\Crm\Security\Role\Manage\Entity\AutomatedSolutionList;
@@ -26,6 +27,13 @@ use Bitrix\Main\ORM\Objectify\Values;
 
 final class SeparateRolesAgent extends AgentBase
 {
+	public static function activateNewPermissionsInterface(): bool
+	{
+		(new PermissionsLayoutV2())->enableWithoutAgent();
+
+		return self::doRun();
+	}
+
 	public static function doRun(): bool
 	{
 		$roleCollection = self::findAllRoles();

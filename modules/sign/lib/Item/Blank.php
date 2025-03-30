@@ -6,8 +6,10 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Sign\Contract;
 use Bitrix\Sign\Item\Fs\FileCollection;
 
-class Blank implements Contract\Item, Contract\Item\ItemWithOwner
+class Blank implements Contract\Item, Contract\Item\ItemWithOwner, Contract\Item\TrackableItem
 {
+	use TrackableItemTrait;
+
 	public function __construct(
 		public ?string $title = null,
 		public ?FileCollection $fileCollection = null,
@@ -19,7 +21,10 @@ class Blank implements Contract\Item, Contract\Item\ItemWithOwner
 		public ?string $scenario = null,
 		public ?int $createdById = null,
 		public bool $forTemplate = false,
-	) {}
+	)
+	{
+		$this->initOriginal();
+	}
 
 	public function getId(): int
 	{
@@ -29,5 +34,18 @@ class Blank implements Contract\Item, Contract\Item\ItemWithOwner
 	public function getOwnerId(): int
 	{
 		return $this->createdById ?? 0;
+	}
+
+	protected function getExcludedFromCopyProperties(): array
+	{
+		return [
+			'id',
+			'converted',
+			'dateCreate',
+			'blockCollection',
+			'scenario',
+			'createdById',
+			'forTemplate',
+		];
 	}
 }

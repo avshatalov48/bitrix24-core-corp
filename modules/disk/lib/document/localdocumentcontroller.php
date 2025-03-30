@@ -3,12 +3,18 @@
 
 namespace Bitrix\Disk\Document;
 
+use Bitrix\Disk\Analytics\DiskAnalytics;
+use Bitrix\Disk\Analytics\Enum\DocumentHandlerType;
+use Bitrix\Disk\Controller\Integration\Flipchart;
+use Bitrix\Disk\Document\Flipchart\BoardService;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
 use Bitrix\Disk\Internals;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Uf\FileUserType;
+use Bitrix\Disk\UrlManager;
+use Bitrix\Disk\User;
 use Bitrix\Disk\Version;
 use Bitrix\Main\Application;
 use Bitrix\Main\Engine\Response;
@@ -223,7 +229,11 @@ class LocalDocumentController extends Internals\Controller
 
 	protected function processActionPublishBlank($type)
 	{
-		$fileData = new BlankFileData($type);
+		$fileData = null;
+		if($type !== 'board')
+		{
+			$fileData = new BlankFileData($type);
+		}
 
 		if($this->request->getPost('targetFolderId'))
 		{
@@ -258,7 +268,29 @@ class LocalDocumentController extends Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 
-		if ($type === 'xlsx')
+		if ($type === 'board')
+		{
+			$createBoardResult = BoardService::createNewDocument(User::loadById($this->getUser()->getId()), $folder);
+			$newFile = null;
+			if ($createBoardResult->isSuccess())
+			{
+				$newFile = $createBoardResult->getData()['file'];
+			}
+			else
+			{
+				$this->errorCollection->add(
+					[
+						new Error(
+							Loc::getMessage('DISK_LOCAL_DOC_CONTROLLER_ERROR_COULD_NOT_CREATE_FILE'),
+							self::ERROR_COULD_NOT_CREATE_FILE
+						)
+					]
+				);
+				$this->errorCollection->add($createBoardResult->getErrors());
+				$this->sendJsonErrorResponse();
+			}
+		}
+		elseif ($type === 'xlsx')
 		{
 			$newFile = $folder->uploadFile(\CFile::makeFileArray($fileData->getSrc()), [
 				'NAME' => $fileData->getName(),
@@ -282,6 +314,16 @@ class LocalDocumentController extends Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 
+		Application::getInstance()->addBackgroundJob(function () use ($newFile, $type) {
+			DiskAnalytics::sendCreationFileEvent($newFile, $type === 'board' ? DocumentHandlerType::Board : DocumentHandlerType::Desktop);
+		});
+
+		$openUrl = null;
+		if ($type === 'board')
+		{
+			$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($newFile->getId());
+		}
+
 		$this->sendJsonSuccessResponse(array(
 			'ufValue' => FileUserType::NEW_FILE_PREFIX . $newFile->getId(),
 			'id' => $newFile->getId(),
@@ -295,6 +337,7 @@ class LocalDocumentController extends Internals\Controller
 			),
 			'folderName' => $storage->getProxyType()->getTitleForCurrentUser() . ' / ' . $folder->getName(),
 			'link' => Driver::getInstance()->getUrlManager()->getUrlForStartEditFile($newFile->getId(), self::CODE),
+			'openUrl' => $openUrl,
 		));
 	}
 }

@@ -5,9 +5,11 @@ $MESS['STAFFTRACK_LOCATION_REMOTELY'] = 'Удалённо';
 $MESS['STAFFTRACK_LOCATION_OUTSIDE'] = 'На выезде';
 $MESS['STAFFTRACK_LOCATION_HOME'] = 'Из дома';
 $MESS['STAFFTRACK_LOCATION_CUSTOM'] = 'Свой вариант';
+$MESS['STAFFTRACK_LOCATION_DELETED'] = 'Геопозиция больше недоступна';
 
 $MESS['STAFFTRACK_LOCATION_OFFICE_FULL'] = 'Работаю в офисе';
 $MESS['STAFFTRACK_LOCATION_REMOTELY_FULL'] = 'Работаю удалённо';
 $MESS['STAFFTRACK_LOCATION_OUTSIDE_FULL'] = 'Работаю на выезде';
 $MESS['STAFFTRACK_LOCATION_HOME_FULL'] = 'Работаю из дома';
 $MESS['STAFFTRACK_LOCATION_CUSTOM_FULL'] = 'Свой вариант';
+$MESS['STAFFTRACK_LOCATION_DELETED_FULL'] = 'Геопозиция больше недоступна';

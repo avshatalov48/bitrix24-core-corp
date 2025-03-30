@@ -2,13 +2,12 @@
 namespace Bitrix\Crm\Category;
 
 use Bitrix\Crm\Security\Role\RolePreset;
-use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Security\Role\RolePermission;
+use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Main\Result;
 use Bitrix\Crm\CategoryIdentifier;
 use Bitrix\Crm\Traits\Singleton;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Crm\Security\Role\Manage\AttrPreset\UserRoleAndHierarchy;
 
 class CategoryPermissionsManager
 {
@@ -18,12 +17,12 @@ class CategoryPermissionsManager
 	{
 		$permissions = match($permissionLevel)
 		{
-			\Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL => RolePreset::getDefaultPermissionSetForEntity($categoryIdentifier),
-			\Bitrix\Crm\Service\UserPermissions::PERMISSION_NONE => RolePreset::getMinPermissionSetForEntity($categoryIdentifier),
-			\Bitrix\Crm\Service\UserPermissions::PERMISSION_SELF => $this->getSelfPermissionSetForEntity($categoryIdentifier),
+			UserPermissions::PERMISSION_ALL => RolePreset::getMaxPermissionSetForEntity($categoryIdentifier),
+			UserPermissions::PERMISSION_NONE => RolePreset::getMinPermissionSetForEntity($categoryIdentifier),
+			UserPermissions::PERMISSION_SELF => RolePreset::getSelfPermissionSetForEntity($categoryIdentifier),
 			default => [],
 		};
-		$needStrictByRoleGroupCode = ($permissionLevel != \Bitrix\Crm\Service\UserPermissions::PERMISSION_NONE);
+		$needStrictByRoleGroupCode = ($permissionLevel !== \Bitrix\Crm\Service\UserPermissions::PERMISSION_NONE);
 
 		return RolePermission::setByEntityIdForAllNotAdminRoles($categoryIdentifier, $permissions, $needStrictByRoleGroupCode);
 	}
@@ -48,48 +47,5 @@ class CategoryPermissionsManager
 		$permissionSet = RolePermission::getByEntityId($fromCategory->getPermissionEntityCode());
 
 		return RolePermission::setByEntityId($toCategory->getPermissionEntityCode(), $permissionSet, true);
-	}
-
-	private function getSelfPermissionSetForEntity(CategoryIdentifier $categoryIdentifier): array
-	{
-		$permissions = [];
-		$userPermissions = Container::getInstance()->getUserPermissions();
-
-		$permissionEntityCode = $categoryIdentifier->getPermissionEntityCode();
-
-		$permissionEntities = \Bitrix\Crm\Security\Role\Manage\RoleManagementModelBuilder::getInstance()->buildModels();
-		foreach ($permissionEntities as $permissionEntity)
-		{
-			if ($permissionEntityCode === $permissionEntity->code())
-			{
-				foreach ($permissionEntity->permissions() as $permission)
-				{
-					$defaultAttr = (
-						$permission->variants()?->has($userPermissions::PERMISSION_SELF) // permission supports 'A' value?
-						|| $permission->variants()?->has(UserRoleAndHierarchy::SELF) // permission supports 'SELF' value?
-					)
-						? $userPermissions::PERMISSION_SELF
-						: $permission->getDefaultAttribute()
-					;
-					$defaultSettings = $permission->getDefaultSettings();
-
-					$permissionCode = $permission->code();
-					if (!is_null($defaultAttr) || !empty($defaultSettings))
-					{
-						if (!isset($permissionSet[$permissionCode]))
-						{
-							$permissionSet[$permissionCode] = [
-								'-' => []
-							];
-						}
-						$permissions[$permissionCode]['-']['ATTR'] = $defaultAttr;
-						$permissions[$permissionCode]['-']['SETTINGS'] = empty($defaultSettings) ? null : $defaultSettings;
-					}
-				}
-				break;
-			}
-		}
-
-		return $permissions;
 	}
 }

@@ -48,7 +48,7 @@ class ScheduledItem
 
 		return new class($context, $model) extends Item
 		{
-			public function jsonSerialize()
+			public function jsonSerialize(): ?array
 			{
 				return null;
 			}

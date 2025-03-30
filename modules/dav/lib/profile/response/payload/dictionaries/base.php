@@ -36,13 +36,13 @@ abstract class Base
 		return $this->user;
 	}
 
-
 	/**
 	 * @return string
 	 */
 	public function getProfileIdentifier()
 	{
 		$requester = $this->getUser();
+
 		return sha1(SITE_ID . $requester['ID']);
 	}
 }

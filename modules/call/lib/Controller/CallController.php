@@ -244,7 +244,7 @@ class CallController extends BaseReceiver
 			->save();
 
 		$call->getSignaling()
-			->sendSwitchTrackRecordStatus(0, false);
+			->sendSwitchTrackRecordStatus(0, false, $trackError->errorCode);
 
 		return ['result' => true];
 	}

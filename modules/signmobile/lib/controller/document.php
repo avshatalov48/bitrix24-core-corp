@@ -362,6 +362,46 @@ class Document extends Controller
 		$this->addErrors($result->getErrors());
 	}
 
+	public function reviewAcceptAction(int $memberId): void
+	{
+		if (!$this->includeRequiredModules())
+		{
+			return;
+		}
+
+		$currentUserId = (int)CurrentUser::get()->getId();
+		if ($currentUserId <= 0)
+		{
+			$this->addError(new Error(
+				Loc::getMessage('SIGN_MOBILE_CONTROLLER_DOCUMENT_USER_WAS_NOT_FOUND'),
+				'USER_WAS_NOT_FOUND'
+			));
+
+			return;
+		}
+
+		$mobileService = Sign\Service\Container::instance()
+			->getMobileService()
+		;
+
+		$checkAccessResult = $mobileService
+			->checkAccessToSigning($memberId, $currentUserId)
+		;
+
+		if (!$checkAccessResult->isSuccess())
+		{
+			$this->addErrors($checkAccessResult->getErrors());
+
+			return;
+		}
+
+		$result = $mobileService
+			->acceptReview($memberId)
+		;
+
+		$this->addErrors($result->getErrors());
+	}
+
 	public function listAction(): ?array
 	{
 		if (!$this->includeRequiredModules())

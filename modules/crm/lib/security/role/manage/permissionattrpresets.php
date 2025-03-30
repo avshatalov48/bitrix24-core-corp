@@ -18,6 +18,7 @@ use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\DependentVari
 use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\Toggler;
 use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\Variables;
 use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\Variants;
+use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Main\Localization\Loc;
 
 class PermissionAttrPresets
@@ -51,7 +52,9 @@ class PermissionAttrPresets
 			new Delete($variants, $withoutUserRoleDependentVariables),
 			new Export($variants, $withoutUserRoleDependentVariables),
 			new Import($variants, $withoutUserRoleDependentVariables),
-			new MyCardView(self::allowedYesNo(), (new Toggler())->setDefaultValue(true)),
+			new MyCardView(self::allowedYesNo(), (new Toggler())->setDefaultValue(
+				(new MyCardView())->getDefaultAttribute() === UserPermissions::PERMISSION_ALL
+			)),
 		];
 	}
 
@@ -97,7 +100,7 @@ class PermissionAttrPresets
 					$stageIds,
 					[Transition::TRANSITION_INHERIT, Transition::TRANSITION_BLOCKED],
 				),
-				'defaultInSection' => true,
+				'defaultInSection' => (new Transition())->getDefaultSettings() === [Transition::TRANSITION_ANY],
 			]
 		);
 		$variants->add(
@@ -107,6 +110,7 @@ class PermissionAttrPresets
 				'conflictsWith' => array_merge($stageIds, [Transition::TRANSITION_ANY, Transition::TRANSITION_INHERIT]),
 				'useAsEmptyInSection' => true,
 				'useAsNothingSelectedInSubsection' => true,
+				'defaultInSection' => (new Transition())->getDefaultSettings() === [Transition::TRANSITION_BLOCKED],
 			]
 		);
 		foreach ($stages as $stageId => $stageName)
@@ -203,13 +207,14 @@ class PermissionAttrPresets
 			[
 				'useAsEmptyInSection' => true,
 				'useAsNothingSelectedInSubsection' => true,
+				'defaultInSection' => (new HideSum())->getDefaultAttribute() === UserPermissions::PERMISSION_NONE,
 			],
 		);
 
 		$variants->add(
 			BX_CRM_PERM_ALL,
 			(string)GetMessage('CRM_SECURITY_ROLE_PERMS_SHOW_SUM'),
-			['defaultInSection' => true],
+			['defaultInSection' => (new HideSum())->getDefaultAttribute() === UserPermissions::PERMISSION_ALL],
 		);
 
 		$variants->add(

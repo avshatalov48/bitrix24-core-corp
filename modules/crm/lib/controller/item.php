@@ -152,8 +152,14 @@ class Item extends Base
 		$allowedFields = $factory->getFieldsCollection()->getFieldNameList();
 
 		$dataClassFields = $factory->getDataClass()::getEntity()->getFields();
+		$hasContactIdsField = false;
 		foreach ($dataClassFields as $field)
 		{
+			if ($field->getName() === \Bitrix\Crm\Item::FIELD_NAME_CONTACT_BINDINGS)
+			{
+				$hasContactIdsField = true;
+			}
+
 			if (!($field instanceof Relation) && !in_array($field->getName(), $allowedFields))
 			{
 				$allowedFields[] = $field->getName();
@@ -169,6 +175,11 @@ class Item extends Base
 		{
 			$parameters['filter']['OBSERVERS.USER_ID'] = is_null($parameters['filter']['OBSERVERS']) ? null : (array)$parameters['filter']['OBSERVERS'];
 			unset($parameters['filter']['OBSERVERS']);
+		}
+		if ($hasContactIdsField && !empty($parameters['filter']['CONTACT_IDS']))
+		{
+			$parameters['filter']['CONTACT_BINDINGS.CONTACT_ID'] = (array)$parameters['filter']['CONTACT_IDS'];
+			unset($parameters['filter']['CONTACT_IDS']);
 		}
 
 		if(is_array($order))

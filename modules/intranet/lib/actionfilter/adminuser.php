@@ -11,9 +11,9 @@ use Bitrix\Main\EventResult;
 
 class AdminUser extends Engine\ActionFilter\Base
 {
-	public function onBeforeAction(Event $event)
+	final public function onBeforeAction(Event $event)
 	{
-		if (!CurrentUser::get()->isAdmin())
+		if (!$this->isCurrentUserAdmin())
 		{
 			$this->addError(new Error(
 				Main\Localization\Loc::getMessage('INTRANET_ACTIONFILTER_ALLOWED_ONLY_ADMIN_USER') ?? ''
@@ -23,5 +23,10 @@ class AdminUser extends Engine\ActionFilter\Base
 		}
 
 		return null;
+	}
+
+	protected function isCurrentUserAdmin(): bool
+	{
+		return CurrentUser::get()->isAdmin();
 	}
 }

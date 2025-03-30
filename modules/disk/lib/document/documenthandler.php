@@ -131,6 +131,8 @@ abstract class DocumentHandler implements IErrorable
 			'ppt',
 			'pptx',
 			'xodt',
+			'flp',
+			'board',
 		];
 	}
 

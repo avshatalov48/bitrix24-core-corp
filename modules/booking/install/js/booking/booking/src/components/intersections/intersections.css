@@ -1,6 +1,7 @@
 .booking-booking-intersections {
 	display: flex;
 	border-bottom: 1px solid var(--ui-color-base-10);
+	background: var(--ui-color-background-primary);
 }
 
 .booking-booking-intersections-inner {
@@ -33,7 +34,6 @@
 	box-sizing: border-box;
 	min-height: 48px;
 	align-items: center;
-	background: var(--ui-color-background-primary);
 }
 
 .booking-booking-intersections-row-inner {

@@ -125,21 +125,6 @@ class ActionDictionary
 		return self::getActionPermissionMap()[$action] ?? null;
 	}
 
-	public static function getRepeatActionB2b2B2e(): array
-	{
-		return [
-			self::ACTION_MY_SAFE_DOCUMENTS => self::ACTION_B2E_MY_SAFE_DOCUMENTS,
-			self::ACTION_MY_SAFE => self::ACTION_B2E_MY_SAFE,
-
-			self::ACTION_DOCUMENT_ADD => self::ACTION_B2E_DOCUMENT_ADD,
-			self::ACTION_DOCUMENT_EDIT => self::ACTION_B2E_DOCUMENT_EDIT,
-			self::ACTION_DOCUMENT_READ => self::ACTION_B2E_DOCUMENT_READ,
-			self::ACTION_DOCUMENT_DELETE => self::ACTION_B2E_DOCUMENT_DELETE,
-
-			self::ACTION_USE_TEMPLATE => self::ACTION_B2E_USE_TEMPLATE,
-		];
-	}
-
 	public static function getB2eSectionAccessActions(): array
 	{
 		return [

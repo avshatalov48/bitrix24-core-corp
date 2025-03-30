@@ -63,6 +63,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	}
 	serviceLocator.add('core', core);
 
+	const emitter = new JNEventEmitter();
+	serviceLocator.add('emitter', emitter);
+
 	const chatInitService = new MessengerInitService({
 		actionName: RestMethod.immobileTabChatLoad,
 	});
@@ -513,10 +516,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		/**
 		 * @override
 		 */
-		async refresh({ redrawHeaderTruly, shortMode } = {})
+		async refresh({ shortMode } = {})
 		{
 			this.syncService.clearBackgroundSyncInterval();
-			this.redrawHeaderTruly = redrawHeaderTruly ?? false;
 			await this.core.setAppStatus(AppStatus.connection, true);
 			this.smileManager = SmileManager.getInstance();
 			SmileManager.init();

@@ -12,14 +12,14 @@ export const RouteActionMenu = {
 	template: `
 		<BaseActionMenu
 			:id="id"
-			:items="items" 
+			:items="items"
 			:bindElement="bindElement"
 			:width="260"
 			v-slot="{item}"
 			@close="this.$emit('close')"
 		>
 			<RouteActionMenuItem
-				:id="item.id" 
+				:id="item.id"
 				:title="item.title"
 				:description="item.description"
 				:imageClass="item.imageClass"
@@ -27,4 +27,4 @@ export const RouteActionMenu = {
 			/>
 		</BaseActionMenu>
 	`,
-}
+};

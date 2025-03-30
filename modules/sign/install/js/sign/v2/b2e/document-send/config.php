@@ -12,6 +12,7 @@ return [
 		'sign.v2.sign-settings',
 		'sign.v2.b2e.user-party',
 		'sign.v2.b2e.reminder-selector',
+		'sign.type',
 		'main.core',
 		'main.loader',
 		'ui.entity-selector',
@@ -20,7 +21,7 @@ return [
 		'sign.v2.lang-selector',
 		'sign.v2.helper',
 		'ui.progressbar',
-		'sign.v2.b2e.hcm-link-mapping',
+		'sign.v2.b2e.hcm-link-party-checker',
 	],
 	'skip_core' => false,
 ];

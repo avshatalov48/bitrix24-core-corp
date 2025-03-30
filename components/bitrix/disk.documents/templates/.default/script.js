@@ -1,6 +1,7 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Disk = this.BX.Disk || {};
-(function (exports,disk_users,main_polyfill_intersectionobserver,main_loader,main_popup,clipboard,disk_externalLink,disk_sharingLegacyPopup,ui_dialogs_messagebox,main_core,ui_ears,main_core_events) {
+(function (exports,disk_users,main_polyfill_intersectionobserver,main_loader,main_popup,clipboard,disk_externalLink,disk_sharingLegacyPopup,ui_dialogs_messagebox,ui_ears,main_core_events,main_core,ui_tour) {
 	'use strict';
 
 	var intersectionObserver;
@@ -569,6 +570,24 @@ this.BX.Disk = this.BX.Disk || {};
 	      return null;
 	    }
 	  }, {
+	    key: "createBoard",
+	    value: function createBoard() {
+	      var newTab = window.open('', '_blank');
+	      BX.ajax.runAction('disk.integration.flipchart.createDocument').then(function (response) {
+	        if (response.status === 'success' && response.data.file) {
+	          var _manager$getById;
+	          var manager = BX.Main.gridManager || BX.Main.tileGridManager;
+	          var grid = (_manager$getById = manager.getById('diskDocumentsGrid')) === null || _manager$getById === void 0 ? void 0 : _manager$getById.instance;
+	          if (grid) {
+	            grid.reload();
+	          }
+	          if (response.data.viewUrl) {
+	            newTab.location.href = response.data.viewUrl;
+	          }
+	        }
+	      });
+	    }
+	  }, {
 	    key: "createDocx",
 	    value: function createDocx(service) {
 	      var code = this.resolveServiceCode(service);
@@ -734,7 +753,9 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "open",
 	    value: function open() {
 	      if (main_core.Type.isStringFilled(this.data['href'])) {
-	        BX.SidePanel.Instance.open(this.data['href']);
+	        if (!this.data['target']) {
+	          BX.SidePanel.Instance.open(this.data['href']);
+	        }
 	        this.emit('close');
 	      } else {
 	        this.showError([{
@@ -1198,6 +1219,106 @@ this.BX.Disk = this.BX.Disk || {};
 	  return Tile;
 	}();
 
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _checkParams = /*#__PURE__*/new WeakSet();
+	var _createGuide = /*#__PURE__*/new WeakSet();
+	var _createSpotlight = /*#__PURE__*/new WeakSet();
+	var _getTitle = /*#__PURE__*/new WeakSet();
+	var _getText = /*#__PURE__*/new WeakSet();
+	var BoardsGuide = /*#__PURE__*/function () {
+	  function BoardsGuide(options) {
+	    babelHelpers.classCallCheck(this, BoardsGuide);
+	    _classPrivateMethodInitSpec(this, _getText);
+	    _classPrivateMethodInitSpec(this, _getTitle);
+	    _classPrivateMethodInitSpec(this, _createSpotlight);
+	    _classPrivateMethodInitSpec(this, _createGuide);
+	    _classPrivateMethodInitSpec(this, _checkParams);
+	    babelHelpers.defineProperty(this, "target", null);
+	    babelHelpers.defineProperty(this, "targetSpotlight", null);
+	    babelHelpers.defineProperty(this, "guide", null);
+	    this.target = document.querySelector(options.targetSelector);
+	    this.targetSpotlight = document.querySelector(options.spotlightSelector);
+	    this.isBoardsPage = options.isBoardsPage;
+	    if (_classPrivateMethodGet(this, _checkParams, _checkParams2).call(this)) {
+	      this.guide = _classPrivateMethodGet(this, _createGuide, _createGuide2).call(this, options.id);
+	    } else {
+	      console.error('Unable to create guide');
+	    }
+	  }
+	  babelHelpers.createClass(BoardsGuide, [{
+	    key: "start",
+	    value: function start() {
+	      var _this = this;
+	      if (this.guide === null) {
+	        console.error('Unable to start guide');
+	        return;
+	      }
+	      setTimeout(function () {
+	        _this.guide.scrollToTarget(_this.target);
+	        _this.guide.start();
+	      }, 1000);
+	    }
+	  }]);
+	  return BoardsGuide;
+	}();
+	function _checkParams2() {
+	  return this.target !== null && this.targetSpotlight !== null;
+	}
+	function _createGuide2(id) {
+	  var spotlight = _classPrivateMethodGet(this, _createSpotlight, _createSpotlight2).call(this);
+	  var guide = new ui_tour.Guide({
+	    id: id,
+	    simpleMode: true,
+	    overlay: false,
+	    onEvents: true,
+	    autoSave: true,
+	    steps: [{
+	      target: this.target,
+	      title: _classPrivateMethodGet(this, _getTitle, _getTitle2).call(this),
+	      text: _classPrivateMethodGet(this, _getText, _getText2).call(this),
+	      position: 'bottom',
+	      condition: {
+	        color: 'primary',
+	        bottom: false,
+	        top: true
+	      }
+	    }],
+	    events: {
+	      onStart: function onStart() {
+	        spotlight.show();
+	      },
+	      onFinish: function onFinish() {
+	        spotlight.close();
+	      }
+	    }
+	  });
+	  var guidePopup = guide.getPopup();
+	  guidePopup.setWidth(380);
+	  guidePopup.setAngle({
+	    offset: this.target.offsetWidth / 2 - guidePopup.contentContainer.offsetWidth / 2
+	  });
+	  return guide;
+	}
+	function _createSpotlight2() {
+	  var spotLight = new BX.SpotLight({
+	    targetElement: this.targetSpotlight,
+	    targetVertex: 'middle-center',
+	    lightMode: true
+	  });
+	  spotLight.getTargetContainer().style.pointerEvents = 'none';
+	  return spotLight;
+	}
+	function _getTitle2() {
+	  // noinspection JSAnnotator
+	  return this.isBoardsPage ? main_core.Loc.getMessage('DISK_BOARD_TOUR_TITLE') : main_core.Loc.getMessage('DISK_DOCUMENTS_TOUR_TITLE');
+	}
+	function _getText2() {
+	  // noinspection JSAnnotator
+	  return this.isBoardsPage ? main_core.Loc.getMessage('DISK_BOARD_TOUR_DESCRIPTION') : main_core.Loc.getMessage('DISK_DOCUMENTS_TOUR_DESCRIPTION');
+	}
+
 	function showShared(objectId, node) {
 	  new Sharing(objectId, node);
 	}
@@ -1265,6 +1386,7 @@ this.BX.Disk = this.BX.Disk || {};
 	exports.Options = Options;
 	exports.TileGridEmptyBlockGenerator = TileGridEmptyBlockGenerator;
 	exports.Backend = Backend;
+	exports.BoardsGuide = BoardsGuide;
 
-}((this.BX.Disk.Documents = this.BX.Disk.Documents || {}),BX.Disk,BX,BX,BX.Main,BX,BX.Disk,BX.Disk.Sharing,BX.UI.Dialogs,BX,BX.UI,BX.Event));
+}((this.BX.Disk.Documents = this.BX.Disk.Documents || {}),BX.Disk,BX,BX,BX.Main,BX,BX.Disk,BX.Disk.Sharing,BX.UI.Dialogs,BX.UI,BX.Event,BX,BX.UI.Tour));
 //# sourceMappingURL=script.js.map

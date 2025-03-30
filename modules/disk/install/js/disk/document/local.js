@@ -142,11 +142,13 @@
 
 				promise.fulfill(response);
 
-				this.editFile({
-					objectId: response.object.id,
-					url: response.link,
-					name: response.object.name
-				});
+				if(params.type !== 'board'){
+					this.editFile({
+						objectId: response.object.id,
+						url: response.link,
+						name: response.object.name
+					});
+				}
 
 			}.bind(this));
 

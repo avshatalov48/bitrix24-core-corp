@@ -313,19 +313,22 @@ class TmpFile extends Model
 				return null;
 			}
 			$errorCollection->addOne(new Error('upload_error ' . $fileData['error'], static::ERROR_UPLOAD_FILE));
+
 			return null;
 		}
 
 		if(!is_uploaded_file($fileData['tmp_name']))
 		{
 			$errorCollection->addOne(new Error('Current file is unsafe (is_uploaded_file check)', static::ERROR_IS_NOT_UPLOADED_FILE));
+
 			return null;
 		}
 
 		list($relativePath, $absolutePath) = static::generatePath();
-		if(!move_uploaded_file($fileData['tmp_name'], $absolutePath))
+		if (!move_uploaded_file($fileData['tmp_name'], $absolutePath))
 		{
 			$errorCollection->addOne(new Error('Could not move uploaded file (move_uploaded_file)', static::ERROR_MOVE_UPLOADED_FILE));
+
 			return null;
 		}
 

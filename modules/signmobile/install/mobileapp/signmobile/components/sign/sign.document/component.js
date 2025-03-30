@@ -3,6 +3,7 @@
 	const { SignDocument } = require('sign/document');
 	const { SignDialog } = require('sign/dialog');
 	const { getSigningLinkPromise } = require('sign/connector');
+	const { MemberRole } = require('sign/type/member-role');
 
 	const ROLE_REVIEWER = 'reviewer';
 	const ROLE_SIGNER = 'signer';
@@ -26,7 +27,7 @@
 
 	function setTitleByRole(role = preinstalledRole)
 	{
-		if (role === ROLE_REVIEWER)
+		if (MemberRole.isReviewerRole(role))
 		{
 			layout.setTitle({
 				text: BX.message('SIGN_MOBILE_SIGN_DOCUMENT_UNAVAILABLE_DIALOG_SUBTITLE_REVIEWER'),
@@ -45,7 +46,6 @@
 	if (preinstalledUrl !== false)
 	{
 		layout.showComponent(new SignDocument({
-			hideButtons: (preinstalledRole === ROLE_REVIEWER),
 			url: preinstalledUrl,
 			widget: layout,
 			memberId,
@@ -53,6 +53,7 @@
 			isGoskey: preinstalledIsGoskey,
 			isExternal: preinstalledIsExternal,
 			initiatedByType: initiatedByType,
+			role: preinstalledRole,
 		}));
 		addHeader();
 	}
@@ -73,7 +74,6 @@
 			if (isReadyForSigning)
 			{
 				layout.showComponent(new SignDocument({
-					hideButtons: (role === ROLE_REVIEWER),
 					role,
 					url,
 					widget: layout,

@@ -43,7 +43,7 @@ final class Diag
 	{
 		$this->sqlBehavior = self::SQL_SKIP;
 		$this->memoryBehavior = self::MEMORY_SKIP;
-		$this->levelReporting = E_ALL | E_STRICT;
+		$this->levelReporting = E_ALL;
 		$this->connection = Application::getInstance()->getConnection();
 		$this->registerShutdownFunction();
 	}

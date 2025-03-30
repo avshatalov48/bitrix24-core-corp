@@ -98,6 +98,7 @@ class DocumentService
 		InitiatedByType $initiatedByType = InitiatedByType::COMPANY,
 		int $createdById = 0,
 		int $chatId = 0,
+		?int $templateId = null
 	): Main\Result
 	{
 		$result = new Main\Result();
@@ -124,7 +125,7 @@ class DocumentService
 			return (new Main\Result())->addError(new Main\Error('Wrong blank scenario for current document'));
 		}
 
-		$documentItem = new Item\Document(entityType: $entityType, entityId: $entityId);
+		$documentItem = new Item\Document(entityType: $entityType, entityId: $entityId, templateId: $templateId);
 		$documentItem->initiatedByType = $initiatedByType;
 
 		if ($blank->scenario === Type\BlankScenario::B2B && $chatId)

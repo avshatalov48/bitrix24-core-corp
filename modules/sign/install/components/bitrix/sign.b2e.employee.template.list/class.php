@@ -2,16 +2,16 @@
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
-	die();
+	die;
 }
 
+use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\UI\PageNavigation;
-use Bitrix\Sign\Access\AccessController;
 use Bitrix\Sign\Access\ActionDictionary;
 use Bitrix\Sign\Access\Model\UserModel;
 use Bitrix\Sign\Access\Permission\SignPermissionDictionary;
@@ -27,9 +27,11 @@ use Bitrix\Sign\Repository\MemberRepository;
 use Bitrix\Sign\Repository\UserRepository;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Service\Sign\Document\TemplateService;
+use Bitrix\Sign\Type\Document\InitiatedByType;
 use Bitrix\Sign\Type\Member\EntityType;
 use Bitrix\Sign\Type\Member\Role;
 use Bitrix\Sign\Item\UserCollection;
+use Bitrix\Sign\Type\Template\Visibility;
 
 Loc::loadMessages(__FILE__);
 
@@ -95,7 +97,7 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		$this->setParam('ADD_NEW_TEMPLATE_LINK', self::ADD_NEW_TEMPLATE_LINK);
 		$this->setParam('COLUMNS', $this->getGridColumnList());
 		$this->setParam('FILTER_FIELDS', $this->getFilterFieldList());
-		$this->setParam('DEFAULT_FILTER_FIELDS', $this->getFilterFieldList());
+		$this->setParam('FILTER_PRESETS', $this->getFilterPresets());
 		$this->setParam('GRID_ID', self::DEFAULT_GRID_ID);
 		$this->setParam('FILTER_ID', self::DEFAULT_FILTER_ID);
 		$this->setResult('TOTAL_COUNT', $this->pageNavigation->getRecordCount());
@@ -105,6 +107,7 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		$this->setResult('SHOW_TARIFF_SLIDER', B2eTariff::instance()->isB2eRestrictedInCurrentTariff());
 		$this->setResult('CAN_ADD_TEMPLATE', $this->canAddTemplate());
 		$this->setResult('CAN_EXPORT_BLANK', $this->canExportBlank());
+		$this->collectAnalytics();
 	}
 
 	private function prepareNavigation(): PageNavigation
@@ -176,7 +179,7 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 				$responsibleUsers,
 				$companiesByTemplateIds,
 			),
-			$templates->toArray()
+			$templates->toArray(),
 		);
 	}
 
@@ -202,8 +205,9 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		$responsibleLastName = $responsibleData?->lastName ?? '';
 		$responsibleFullName = htmlspecialcharsbx("$responsibleName $responsibleLastName");
 		$company = $companiesByTemplateIds[$template->id] ?? null;
+		$document = $this->documentRepository->getByTemplateId($template->id);
 
-		return [
+		$data = [
 			'id' => $template->id,
 			'columns' => [
 				'ID' => $template->id,
@@ -221,13 +225,21 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 			'access' => [
 				'canEdit' => $this->canCurrentUserEditTemplate($template),
 				'canDelete' => $this->canCurrentUserDeleteTemplate($template),
+				'canCreate' => $this->canCurrentUserCreateTemplate($template),
 			],
 		];
+
+		if (Feature::instance()->isSenderTypeAvailable())
+		{
+			$data['columns']['TYPE'] = $document?->initiatedByType;
+		}
+
+		return $data;
 	}
 
 	private function getGridColumnList(): array
 	{
-		return [
+		$data = [
 			[
 				'id' => 'ID',
 				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_COLUMN_ID'),
@@ -238,6 +250,18 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_COLUMN_NAME'),
 				'default' => true,
 			],
+		];
+
+		if (Feature::instance()->isSenderTypeAvailable())
+		{
+			$data[] = [
+				'id' => 'TYPE',
+				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_COLUMN_TYPE'),
+				'default' => true,
+			];
+		}
+
+		return array_merge($data, [
 			[
 				'id' => 'COMPANY',
 				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_COLUMN_COMPANY'),
@@ -258,24 +282,74 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_COLUMN_VISIBILITY'),
 				'default' => true,
 			],
-		];
+		]);
 	}
 
 	private function getFilterFieldList(): array
 	{
-		return [
+		$filterFieldList = [
 			[
 				'id' => 'TITLE',
-				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_COLUMN_NAME'),
+				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_FILTER_FIELD_NAME'),
 				'default' => true,
 			],
 			[
 				'id' => 'DATE_MODIFY',
-				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_COLUMN_DATE_MODIFY'),
+				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_FILTER_FIELD_DATE_MODIFY'),
 				'type' => 'date',
 				'default' => true,
 			],
+			[
+				'id' => 'EDITOR',
+				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_FILTER_FIELD_EDITOR'),
+				'type' => 'entity_selector',
+				'partial' => true,
+				'params' => $this->getEntitySelectorParamsByType(EntityType::USER),
+				'default' => true,
+			],
+			[
+				'id' => 'VISIBILITY',
+				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_FILTER_FIELD_VISIBILITY'),
+				'type' => 'list',
+				'partial' => true,
+				'default' => true,
+				'items' => [
+					Visibility::VISIBLE->toInt() => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_FILTER_FIELD_VISIBILITY_Y'),
+					Visibility::INVISIBLE->toInt() => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_FILTER_FIELD_VISIBILITY_N'),
+				],
+				'params' => [
+					'multiple' => 'Y',
+				],
+			],
+			[
+				'id' => 'COMPANY',
+				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_FILTER_FIELD_COMPANY'),
+				'type' => 'entity_selector',
+				'partial' => true,
+				'params' => $this->getEntitySelectorParamsByType(EntityType::COMPANY),
+				'default' => true,
+			],
 		];
+
+		if (Feature::instance()->isSenderTypeAvailable())
+		{
+			$filterFieldList[] = [
+				'id' => 'TYPE',
+				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_FILTER_FIELD_TYPE'),
+				'type' => 'list',
+				'partial' => true,
+				'default' => true,
+				'items' => [
+					InitiatedByType::COMPANY->toInt() => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_FILTER_FIELD_TYPE_COMPANY'),
+					InitiatedByType::EMPLOYEE->toInt() => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_FILTER_FIELD_TYPE_EMPLOYEE'),
+				],
+				'params' => [
+					'multiple' => 'Y',
+				],
+			];
+		}
+
+		return $filterFieldList;
 	}
 
 	private function getPageNavigation(): PageNavigation
@@ -315,26 +389,57 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		$filter = Bitrix\Main\ORM\Query\Query::filter();
 
 		$dateModifyFrom = $filterData['DATE_MODIFY_from'] ?? null;
-		$dateModifyTo = $filterData['DATE_MODIFY_to'] ?? null;
-		$find = $filterData['FIND'] ?? null;
-		$title = $find ?: $filterData['TITLE'] ?? null;
-
 		if ($dateModifyFrom && \Bitrix\Main\Type\DateTime::isCorrect($dateModifyFrom))
 		{
 			$filter->where('DATE_MODIFY', '>=', new \Bitrix\Main\Type\DateTime($dateModifyFrom));
 		}
 
+		$dateModifyTo = $filterData['DATE_MODIFY_to'] ?? null;
 		if ($dateModifyTo && \Bitrix\Main\Type\DateTime::isCorrect($dateModifyTo))
 		{
 			$filter->where('DATE_MODIFY', '<=', new \Bitrix\Main\Type\DateTime($dateModifyTo));
 		}
 
+		$editorIds = $this->ensureArray($filterData['EDITOR'] ?? []);
+		if ($editorIds)
+		{
+			$filter->whereIn('MODIFIED_BY_ID', $editorIds);
+		}
+
+		$companyIds = $this->ensureArray($filterData['COMPANY'] ?? []);
+		if ($companyIds)
+		{
+			$filter
+				->whereIn('DOCUMENT.MEMBER.ENTITY_ID', $companyIds)
+				->where('DOCUMENT.MEMBER.ENTITY_TYPE', EntityType::COMPANY)
+			;
+		}
+
+		$visibilityValues = $this->ensureArray($filterData['VISIBILITY'] ?? []);
+		if ($visibilityValues)
+		{
+			$filter->whereIn('VISIBILITY', $visibilityValues);
+		}
+
+		$initiatedByTypeValues = $this->ensureArray($filterData['TYPE'] ?? []);
+		if ($initiatedByTypeValues)
+		{
+			$filter->whereIn('DOCUMENT.INITIATED_BY_TYPE', $initiatedByTypeValues);
+		}
+
+		$find = $filterData['FIND'] ?? null;
+		$title = $find ?: $filterData['TITLE'] ?? null;
 		if ($title)
 		{
 			$filter->whereLike('TITLE', '%' . $title . '%');
 		}
 
 		return $filter;
+	}
+
+	private function ensureArray($value): array
+	{
+		return is_array($value) ? $value : [$value];
 	}
 
 	private function canAddTemplate(): bool
@@ -385,7 +490,7 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 
 		return $this->hasCurrentUserAccessToPermissionByItemWithOwnerId(
 			$template->getOwnerId(),
-			SignPermissionDictionary::SIGN_B2E_TEMPLATE_WRITE
+			SignPermissionDictionary::SIGN_B2E_TEMPLATE_WRITE,
 		);
 	}
 
@@ -393,7 +498,15 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 	{
 		return $this->hasCurrentUserAccessToPermissionByItemWithOwnerId(
 			$template->getOwnerId(),
-			SignPermissionDictionary::SIGN_B2E_TEMPLATE_DELETE
+			SignPermissionDictionary::SIGN_B2E_TEMPLATE_DELETE,
+		);
+	}
+
+	private function canCurrentUserCreateTemplate(Document\Template $template): bool
+	{
+		return $this->hasCurrentUserAccessToPermissionByItemWithOwnerId(
+			$template->getOwnerId(),
+			SignPermissionDictionary::SIGN_B2E_TEMPLATE_CREATE,
 		);
 	}
 
@@ -555,5 +668,105 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		}
 
 		Logger::getInstance()->alert($message);
+	}
+
+	private function getEntitySelectorParamsByType(string $entityType): array
+	{
+		$entities = match ($entityType)
+		{
+			EntityType::USER => [
+				[
+					'id' => $entityType,
+					'dynamicLoad' => true,
+					'dynamicSearch' => true,
+					'options' => [
+						'inviteEmployeeLink' => false,
+					],
+				],
+			],
+			EntityType::COMPANY => [
+				[
+					'id' => 'sign-mycompany',
+					'dynamicLoad' => true,
+					'dynamicSearch' => true,
+					'options' => [
+						'enableMyCompanyOnly' => false,
+					],
+				],
+			],
+			default => [],
+		};
+
+		return [
+			'multiple' => 'Y',
+			'dialogOptions' => [
+				'height' => 240,
+				'entities' => $entities,
+			],
+		];
+	}
+
+	private function getFilterPresets(): array
+	{
+		$presets = [];
+		if (Feature::instance()->isSenderTypeAvailable())
+		{
+			$presets['fromCompany'] = [
+				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_FILTER_PRESET_TYPE_COMPANY'),
+				'fields' => [
+					'TYPE' => InitiatedByType::COMPANY->toInt(),
+				],
+			];
+			$presets['fromEmployee'] = [
+				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_FILTER_PRESET_TYPE_EMPLOYEE'),
+				'fields' => [
+					'TYPE' => InitiatedByType::EMPLOYEE->toInt(),
+				],
+			];
+		}
+
+		$presets['visibleTemplates'] = [
+			'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_FILTER_PRESET_VISIBILITY_Y'),
+			'fields' => [
+				'VISIBILITY' => Visibility::VISIBLE->toInt(),
+			],
+		];
+		$presets['invisibleTemplates'] = [
+			'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_FILTER_PRESET_VISIBILITY_N'),
+			'fields' => [
+				'VISIBILITY' => Visibility::INVISIBLE->toInt(),
+			],
+		];
+
+		$currentUserId = (int)CurrentUser::get()->getId();
+		if ($currentUserId > 0)
+		{
+			$presets['editor'] = [
+				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_FILTER_PRESET_EDITOR_ME'),
+				'fields' => [
+					'EDITOR' => $currentUserId,
+				],
+			];
+		}
+
+		return $presets;
+	}
+
+	private function collectAnalytics(): void
+	{
+		if ($this->getRequest('grid_id') === self::DEFAULT_GRID_ID)
+		{
+			return;
+		}
+		$analyticService = Container::instance()->getAnalyticService();
+
+		$event = (new AnalyticsEvent(
+			'open_templates',
+			'sign',
+			'templates',
+		))
+			->setSection('left_menu')
+		;
+		$analyticService->sendEventWithSigningContext($event);
 	}
 }

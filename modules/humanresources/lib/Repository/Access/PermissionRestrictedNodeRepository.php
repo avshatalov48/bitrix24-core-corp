@@ -225,7 +225,7 @@ final class PermissionRestrictedNodeRepository extends NodeRepository
 		}
 		elseif (is_int($depthLevel))
 		{
-			$nodeQuery->where('CHILD_NODES.DEPTH', $depthLevel);
+			$nodeQuery->where('CHILD_NODES.DEPTH', '<=' ,$depthLevel);
 		}
 
 		$nodeQuery = $this->setNodeActiveFilter($nodeQuery, $activeFilter);
@@ -249,10 +249,12 @@ final class PermissionRestrictedNodeRepository extends NodeRepository
 		Item\Collection\NodeCollection $nodeCollection,
 	): Item\Collection\NodeCollection
 	{
-		return $nodeCollection->filter(
-			function(Item\Node $node) {
-				$cacheCollection = $this->cacheManager->getData(self::NODE_ENTITY_RESTRICTION_CACHE) ?? [];
+		$cacheCollection = $this->cacheManager->getData(self::NODE_ENTITY_RESTRICTION_CACHE) ?? [];
 
+		$changed = false;
+
+		$result = $nodeCollection->filter(
+			function(Item\Node $node) use (&$cacheCollection, &$changed) {
 				$value = $cacheCollection[CurrentUser::get()->getId()][$node->id] ?? null;
 				if ($value !== null)
 				{
@@ -267,14 +269,21 @@ final class PermissionRestrictedNodeRepository extends NodeRepository
 				try
 				{
 					$cacheCollection[CurrentUser::get()->getId()][$node->id] = $value;
-					$this->cacheManager->setData(self::NODE_ENTITY_RESTRICTION_CACHE, $cacheCollection);
 				}
 				catch (ArgumentException $e)
 				{
 				}
+				$changed = true;
 
 				return $value;
 			},
 		);
+
+		if ($changed)
+		{
+			$this->cacheManager->setData(self::NODE_ENTITY_RESTRICTION_CACHE, $cacheCollection);
+		}
+
+		return $result;
 	}
 }

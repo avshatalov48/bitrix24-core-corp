@@ -97,6 +97,7 @@ class Prompt extends Text implements IPayload
 			'markers' => $this->markers,
 			'role' => $this->role?->getCode(),
 			'promptCategory' => $this->promptCategory,
+			static::PROPERTY_CUSTOM_COST => $this->customCost
 		]);
 	}
 
@@ -112,7 +113,15 @@ class Prompt extends Text implements IPayload
 		$role = $unpackedData['role'] ?? null;
 		$promptCategory = $unpackedData['promptCategory'] ?? '';
 
-		return (new static($data))->setMarkers($markers)->setRole(Role::get($role))->setPromptCategory($promptCategory);
+		$payload = (new static($data))
+			->setMarkers($markers)
+			->setRole(Role::get($role))
+			->setPromptCategory($promptCategory)
+		;
+
+		static::setCustomCost($payload, $unpackedData);
+
+		return $payload;
 	}
 
 	/**
@@ -120,6 +129,11 @@ class Prompt extends Text implements IPayload
 	 */
 	public function getCost(): int
 	{
+		if (!is_null($this->customCost))
+		{
+			return $this->customCost;
+		}
+
 		$promptCode = $this->promptItem?->getCode();
 
 		if (!empty(self::SPEC_CODES[$promptCode]) && Bitrix24::isDemoLicense())

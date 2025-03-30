@@ -10,7 +10,6 @@
 	const { AnalyticsLabel } = require('analytics-label');
 	const { DocumentType } = require('catalog/store/document-type');
 	const { confirmDestructiveAction } = require('alert');
-	const { Feature } = require('feature');
 	const { ContextMenu } = require('layout/ui/context-menu');
 
 	const COMPONENT_ID = 'CATALOG_STORE_LIST';
@@ -251,10 +250,8 @@
 				TabView({
 					testId: `${COMPONENT_ID}_TAB`,
 					style: {
-						height: Feature.isAirStyleSupported() ? 50 : 44,
-						backgroundColor: Feature.isAirStyleSupported()
-							? AppTheme.realColors.bgNavigation
-							: AppTheme.colors.bgNavigation,
+						height: 50,
+						backgroundColor: AppTheme.realColors.bgNavigation,
 					},
 					params: {
 						styles: {
@@ -278,6 +275,7 @@
 							qrauth.open({
 								title: tab.title || BX.message('M_CSDL_TO_LOGIN_ON_DESKTOP_MSGVER_1'),
 								redirectUrl: this.getDesktopPageLink(tab.id),
+								analyticsSection: 'inventory',
 							});
 						}
 						else

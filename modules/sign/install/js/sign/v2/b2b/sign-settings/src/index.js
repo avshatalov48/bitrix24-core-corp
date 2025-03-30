@@ -1,9 +1,9 @@
 import { Loc } from 'main.core';
-import type { Metadata } from 'ui.wizard';
-import { type SignOptions, SignSettings } from 'sign.v2.sign-settings';
-import { DocumentSetup } from 'sign.v2.document-setup';
 import { DocumentSend } from 'sign.v2.b2b.document-send';
 import { Requisites } from 'sign.v2.b2b.requisites';
+import { DocumentSetup } from 'sign.v2.document-setup';
+import { decorateResultBeforeCompletion, type SignOptions, SignSettings } from 'sign.v2.sign-settings';
+import type { Metadata } from 'ui.wizard';
 
 export class B2BSignSettings extends SignSettings
 {
@@ -33,15 +33,17 @@ export class B2BSignSettings extends SignSettings
 		const { setupData } = this.documentSetup;
 		this.#requisites.documentData = setupData;
 		this.editor.documentData = setupData;
+		this.#sendAnalyticsOnDocumentApply(setupData.id);
 
 		this.documentsGroup.set(setupData.uid, setupData);
 
 		return true;
 	}
 
-	getStepsMetadata(signSettings: B2BSignSettings): Metadata
+	getStepsMetadata(signSettings: B2BSignSettings, documentUid: ?string): Metadata
 	{
-		return {
+		this.#sendAnalyticsOnStart(documentUid);
+		const steps = {
 			setup: {
 				get content(): HTMLElement {
 					return signSettings.documentSetup.layout;
@@ -67,7 +69,7 @@ export class B2BSignSettings extends SignSettings
 				},
 				title: Loc.getMessage('SIGN_SETTINGS_B2B_PREPARING_DOCUMENT'),
 				beforeCompletion: async () => {
-					const { uid, isTemplate, title, initiator } = this.documentSetup.setupData;
+					const { uid, isTemplate, title, initiator, initiatedByType } = this.documentSetup.setupData;
 					const valid = this.#requisites.checkInitiator(initiator);
 					if (!valid)
 					{
@@ -83,6 +85,7 @@ export class B2BSignSettings extends SignSettings
 					const blocks = await this.documentSetup.loadBlocks(uid);
 					this.editor.documentData = { isTemplate, uid, blocks };
 					this.editor.entityData = entityData;
+					this.editor.setSenderType(initiatedByType);
 					this.documentSend.documentData = { uid, title, blocks, initiator };
 					this.documentSend.entityData = entityData;
 					await this.editor.waitForPagesUrls();
@@ -103,6 +106,10 @@ export class B2BSignSettings extends SignSettings
 				},
 			},
 		};
+
+		this.#decorateStepsBeforeCompletionWithAnalytics(steps);
+
+		return steps;
 	}
 
 	subscribeOnEvents()
@@ -114,5 +121,50 @@ export class B2BSignSettings extends SignSettings
 				initiator: data.initiator,
 			};
 		});
+	}
+
+	#decorateStepsBeforeCompletionWithAnalytics(steps: Metadata): Metadata
+	{
+		const analytics = this.getAnalytics();
+		steps.send.beforeCompletion = decorateResultBeforeCompletion(
+			steps.send.beforeCompletion,
+			() => {
+				analytics.sendWithDocId(
+					{
+						event: 'sent_document_to_sign',
+						status: 'success',
+					},
+					this.documentSend.documentData.uid,
+				);
+			},
+			() => {
+				analytics.send({
+					event: 'sent_document_to_sign',
+					status: 'error',
+				});
+			},
+		);
+	}
+
+	#sendAnalyticsOnStart(): void
+	{
+		const analytics = this.getAnalytics();
+
+		if (!this.isEditMode())
+		{
+			analytics.send({
+				event: 'click_create_document',
+			});
+		}
+	}
+
+	#sendAnalyticsOnDocumentApply(documentId: number): void
+	{
+		this.getAnalytics().sendWithDocId(
+			{
+				event: 'click_create_document',
+			},
+			documentId,
+		);
 	}
 }

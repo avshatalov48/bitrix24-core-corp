@@ -6,7 +6,6 @@ jn.define('lists/element-details', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { EventEmitter } = require('event-emitter');
 	const { inAppUrl } = require('in-app-url');
-	const { Feature } = require('feature');
 	const { NotifyManager } = require('notify-manager');
 	const { Haptics } = require('haptics');
 	const { Alert } = require('alert');
@@ -112,7 +111,7 @@ jn.define('lists/element-details', (require, exports, module) => {
 				;
 			}
 
-			if (this.interceptExit && Feature.isPreventBottomSheetDismissSupported())
+			if (this.interceptExit)
 			{
 				this.layout.preventBottomSheetDismiss(true);
 				this.layout.on('preventDismiss', this.handleExit);
@@ -135,7 +134,7 @@ jn.define('lists/element-details', (require, exports, module) => {
 				;
 			}
 
-			if (this.interceptExit && Feature.isPreventBottomSheetDismissSupported())
+			if (this.interceptExit)
 			{
 				this.layout.preventBottomSheetDismiss(false);
 				this.layout.off('preventDismiss', this.handleExit);

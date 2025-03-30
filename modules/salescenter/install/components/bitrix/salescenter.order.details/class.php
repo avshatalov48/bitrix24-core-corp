@@ -296,7 +296,7 @@ class SalesCenterOrderDetails extends CBitrixComponent implements Main\Engine\Co
 				}
 				else
 				{
-					$basketValues["PICTURE"] = $frontImageData['FILE_STRUCTURE'];
+					$basketValues["PICTURE"] = $frontImageData['FILE_STRUCTURE'] ?? null;
 				}
 			}
 

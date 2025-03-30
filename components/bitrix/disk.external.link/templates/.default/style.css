@@ -5,17 +5,6 @@ body{
     padding:0;
 }
 
-@font-face {
-	font-family: 'geometria';
-	src: url('font/brownfox_-_geometria_medium-webfont.eot');
-	src: url('font/brownfox_-_geometria_medium-webfont.eot?#iefix') format('embedded-opentype'),
-	url('font/brownfox_-_geometria_medium-webfont.woff2') format('woff2'),
-	url('font/brownfox_-_geometria_medium-webfont.woff') format('woff'),
-	url('font/brownfox_-_geometria_medium-webfont.ttf') format('truetype');
-	font-weight: normal;
-	font-style: normal;
-}
-
 table{
     border-collapse:collapse;
 }
@@ -566,7 +555,7 @@ html[lang='de'] .banner-b24-link-container-cyrcle-title.l4 span {
     text-align:center;
 }
 .banner-b24-link-container-cyrcle-button span{
-	font-family: 'Geometria', Arial, "Helvetica Neue", Helvetica, sans-serif;
+	font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
     font-size:14px;
     font-weight:var(--ui-font-weight-bold);
     line-height:40px;

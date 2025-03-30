@@ -76,7 +76,7 @@ export const TimeSelector = {
 						this.onAfterMenuShown();
 					}
 				}
-			}, 100);
+			}, 200);
 		},
 		onMouseDown(): void
 		{

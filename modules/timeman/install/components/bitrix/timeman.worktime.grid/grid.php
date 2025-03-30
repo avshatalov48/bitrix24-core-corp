@@ -203,7 +203,7 @@ class Grid
 					{
 						// draw record for this shift
 						$skipShift = true;
-						$plan = $shiftPlansByUserShiftDate[$cellRecord->getUserId()][$shift->getId()][$periodDateFormatted];
+						$plan = $shiftPlansByUserShiftDate[$cellRecord->getUserId()][$shift->getId()][$periodDateFormatted] ?? null;
 						$templateParams = $this->buildTemplateParams($user, $cellRecord, $schedule, $shift, $plan, $drawingDate);
 
 						$this->addViolationsToTemplateParams($templateParams, $user, $absenceData);

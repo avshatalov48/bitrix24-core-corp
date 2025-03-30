@@ -29,6 +29,11 @@ class Audio extends Payload implements IPayload
 	 */
 	public function getCost(): int
 	{
+		if (!is_null($this->customCost))
+		{
+			return $this->customCost;
+		}
+
 		if (Bitrix24::isDemoLicense())
 		{
 			return self::DEFAULT_USAGE_COST_DEMO_PLAN;
@@ -46,6 +51,7 @@ class Audio extends Payload implements IPayload
 			'data' => $this->payload,
 			'markers' => $this->markers,
 			'role' => $this->role?->getCode(),
+			static::PROPERTY_CUSTOM_COST => $this->customCost
 		]);
 	}
 
@@ -60,6 +66,9 @@ class Audio extends Payload implements IPayload
 		$markers = $unpackedData['markers'] ?? [];
 		$role = $unpackedData['role'] ?? null;
 
-		return (new self($data))->setMarkers($markers)->setRole(Role::get($role));
+		$payload = (new self($data))->setMarkers($markers)->setRole(Role::get($role));
+		static::setCustomCost($payload, $unpackedData);
+
+		return $payload;
 	}
 }

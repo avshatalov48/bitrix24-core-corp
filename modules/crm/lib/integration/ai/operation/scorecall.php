@@ -27,6 +27,7 @@ use Bitrix\Crm\Integration\AI\Result;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\AIBaseEvent;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\CallScoring;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\MultiValueStoreService;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Monitor;
 use Bitrix\Crm\Timeline\AI\Call\Controller;
@@ -53,7 +54,11 @@ final class ScoreCall extends AbstractOperation
 		?int $assessmentSettingsId = null
 	)
 	{
-		$this->assessmentSettings = self::getAssessmentSettings($target->getEntityId(), $assessmentSettingsId);
+		$this->assessmentSettings = self::getAssessmentSettings(
+			$target->getEntityId(),
+			$assessmentSettingsId,
+			$parentJobId,
+		);
 
 		parent::__construct($target, $userId, $parentJobId);
 	}
@@ -409,15 +414,27 @@ final class ScoreCall extends AbstractOperation
 				true
 			);
 		}
+
+		MultiValueStoreService::getInstance()->deleteAll(self::generateJobCallAssessmentBindKey($result->getParentJobId(), $activityId));
 	}
 
-	private static function getAssessmentSettings(int $activityId, ?int $assessmentSettingsId = null): ?CallAssessmentItem
+	private static function getAssessmentSettings(int $activityId, ?int $assessmentSettingsId = null, ?int $parentJobId = null): ?CallAssessmentItem
 	{
 		static $result;
 
 		if (!is_null($result))
 		{
 			return $result;
+		}
+
+		if ($assessmentSettingsId === null && $parentJobId !== null)
+		{
+			$key = self::generateJobCallAssessmentBindKey($parentJobId, $activityId);
+			$assessmentSettingsIdValue = MultiValueStoreService::getInstance()->getFirstValue($key);
+			if (is_numeric($assessmentSettingsIdValue))
+			{
+				$assessmentSettingsId = (int)$assessmentSettingsIdValue;
+			}
 		}
 
 		if (isset($assessmentSettingsId))
@@ -500,5 +517,10 @@ final class ScoreCall extends AbstractOperation
 
 		$badge->bind($itemIdentifier, $sourceIdentifier);
 		Monitor::getInstance()->onBadgesSync($itemIdentifier);
+	}
+
+	public static function generateJobCallAssessmentBindKey(int $jobId, int $activityId): string
+	{
+		return "job_{$jobId}_activity_{$activityId}_bind_call_assessment";
 	}
 }

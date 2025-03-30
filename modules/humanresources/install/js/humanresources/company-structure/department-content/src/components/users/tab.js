@@ -1,5 +1,3 @@
-import { AddUserDialog } from 'humanresources.company-structure.add-user-dialog';
-import { MoveUserFromDialog } from 'humanresources.company-structure.move-user-from-dialog';
 import { DepartmentAPI } from '../../api';
 import { UserList } from './list/list';
 import { UserListActionButton } from './list/list-action-button';
@@ -8,12 +6,24 @@ import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { mapState, mapWritableState } from 'ui.vue3.pinia';
 import { memberRoles } from 'humanresources.company-structure.api';
 import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
+import { UserManagementDialog } from 'humanresources.company-structure.user-management-dialog';
 import { emptyStateTypes } from './empty-state-types';
-import 'ui.buttons';
-import './../../style.css';
+import { DepartmentContentActions } from '../../actions';
 
-export const EmployeeTab = {
-	name: 'employeeTab',
+import 'ui.buttons';
+import './styles/tab.css';
+
+type addToDepartmentOptions = {
+	type: ?string,
+};
+
+type DepartmentUsersStatus = {
+	departmentId: number;
+	loaded: boolean;
+};
+
+export const UsersTab = {
+	name: 'usersTab',
 
 	emits: ['editDepartmentUsers', 'showDetailLoader', 'hideDetailLoader'],
 
@@ -23,8 +33,8 @@ export const EmployeeTab = {
 	{
 		return {
 			searchQuery: '',
-			shouldUpdateList: true,
 			selectedUserId: null,
+			needToScroll: false,
 			hasFocus: false,
 		};
 	},
@@ -39,134 +49,147 @@ export const EmployeeTab = {
 		this.tabContainer = this.$refs['tab-container'];
 	},
 
-	computed:
+	computed: {
+		heads(): Array
 		{
-			heads(): Array
-			{
-				return this.departments.get(this.focusedNode).heads ?? [];
-			},
-			headCount(): number
-			{
-				return this.heads.length ?? 0;
-			},
-			formattedHeads(): Array
-			{
-				return this.heads.map((head) => ({
-					...head,
-					subtitle: head.workPosition,
-					badgeText: this.getBadgeText(head.role),
-				})).sort((a, b) => {
-					const roleOrder = {
-						[memberRoles.head]: 1,
-						[memberRoles.deputyHead]: 2,
-					};
-
-					const roleA = roleOrder[a.role] || 3;
-					const roleB = roleOrder[b.role] || 3;
-
-					return roleA - roleB;
-				});
-			},
-			filteredHeads(): Array
-			{
-				return this.formattedHeads.filter(
-					(head) => head.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-						|| head.workPosition.toLowerCase().includes(this.searchQuery.toLowerCase()),
-				);
-			},
-			employeeCount(): number
-			{
-				const memberCount = this.departments.get(this.focusedNode).userCount ?? 0;
-
-				return memberCount - (this.headCount ?? 0);
-			},
-			formattedEmployees(): Array
-			{
-				return this.employees.map((employee) => ({
-					...employee,
-					subtitle: employee.workPosition,
-				})).reverse();
-			},
-			filteredEmployees(): Array
-			{
-				return this.formattedEmployees.filter(
-					(employee) => employee.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-						|| employee.workPosition.toLowerCase().includes(this.searchQuery.toLowerCase()),
-				);
-			},
-			memberCount(): number
-			{
-				return this.departments.get(this.focusedNode).userCount ?? 0;
-			},
-			...mapState(useChartStore, ['focusedNode', 'departments', 'searchedUserId']),
-			...mapWritableState(useChartStore, ['searchedUserId']),
-			employees(): Array
-			{
-				return this.departments.get(this.focusedNode)?.employees ?? [];
-			},
-			showEmptyState(): boolean
-			{
-				if (!this.memberCount)
-				{
-					return true;
-				}
-
-				return this.filteredHeads.length === 0 && this.filteredEmployees.length === 0;
-			},
-			emptyStateType(): ?string
-			{
-				if (!this.memberCount && this.canAddUsers)
-				{
-					return emptyStateTypes.NO_MEMBERS_WITH_ADD_PERMISSION;
-				}
-
-				if (!this.memberCount)
-				{
-					return emptyStateTypes.NO_MEMBERS_WITHOUT_ADD_PERMISSION;
-				}
-
-				if (this.filteredHeads.length === 0 && this.filteredEmployees.length === 0)
-				{
-					return emptyStateTypes.NO_SEARCHED_USERS_RESULTS;
-				}
-
-				return null;
-			},
-			showSearchBar(): boolean
-			{
-				return this.memberCount > 0;
-			},
-			canAddUsers(): boolean
-			{
-				const permissionChecker = PermissionChecker.getInstance();
-				if (!permissionChecker)
-				{
-					return false;
-				}
-
-				const nodeId = this.focusedNode;
-
-				return permissionChecker.hasPermission(PermissionActions.employeeAddToDepartment, nodeId);
-			},
-			headListEmptyStateTitle(): string
-			{
-				if (this.canAddUsers)
-				{
-					return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_EMPTY_LIST_ITEM_TITLE');
-				}
-
-				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_EMPTY_LIST_ITEM_TITLE_WITHOUT_ADD_PERMISSION');
-			},
-			employeesListEmptyStateTitle(): string
-			{
-				if (this.canAddUsers)
-				{
-					return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_EMPLOYEE_EMPTY_LIST_ITEM_TITLE');
-				}
-
-				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_EMPLOYEE_EMPTY_LIST_ITEM_TITLE_WITHOUT_ADD_PERMISSION');
-			},
+			return this.departments.get(this.focusedNode).heads ?? [];
 		},
+		headCount(): number
+		{
+			return this.heads.length ?? 0;
+		},
+		formattedHeads(): Array
+		{
+			return this.heads.map((head) => ({
+				...head,
+				subtitle: head.workPosition,
+				badgeText: this.getBadgeText(head.role),
+			})).sort((a, b) => {
+				const roleOrder = {
+					[memberRoles.head]: 1,
+					[memberRoles.deputyHead]: 2,
+				};
+
+				const roleA = roleOrder[a.role] || 3;
+				const roleB = roleOrder[b.role] || 3;
+
+				return roleA - roleB;
+			});
+		},
+		filteredHeads(): Array
+		{
+			return this.formattedHeads.filter(
+				(head) => head.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+					|| head.workPosition.toLowerCase().includes(this.searchQuery.toLowerCase()),
+			);
+		},
+		employeeCount(): number
+		{
+			const memberCount = this.departments.get(this.focusedNode).userCount ?? 0;
+
+			return memberCount - (this.headCount ?? 0);
+		},
+		formattedEmployees(): Array
+		{
+			return this.employees.map((employee) => ({
+				...employee,
+				subtitle: employee.workPosition,
+			})).reverse();
+		},
+		filteredEmployees(): Array
+		{
+			return this.formattedEmployees.filter(
+				(employee) => employee.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+					|| employee.workPosition?.toLowerCase().includes(this.searchQuery.toLowerCase()),
+			);
+		},
+		memberCount(): number
+		{
+			return this.departments.get(this.focusedNode).userCount ?? 0;
+		},
+		...mapState(useChartStore, ['focusedNode', 'departments', 'searchedUserId']),
+		...mapWritableState(useChartStore, ['searchedUserId']),
+		employees(): Array
+		{
+			return this.departments.get(this.focusedNode)?.employees ?? [];
+		},
+		showEmptyState(): boolean
+		{
+			if (!this.memberCount)
+			{
+				return true;
+			}
+
+			return this.filteredHeads.length === 0 && this.filteredEmployees.length === 0;
+		},
+		emptyStateType(): ?string
+		{
+			if (!this.memberCount && this.canAddUsers)
+			{
+				return emptyStateTypes.NO_MEMBERS_WITH_ADD_PERMISSION;
+			}
+
+			if (!this.memberCount)
+			{
+				return emptyStateTypes.NO_MEMBERS_WITHOUT_ADD_PERMISSION;
+			}
+
+			if (this.filteredHeads.length === 0 && this.filteredEmployees.length === 0)
+			{
+				return emptyStateTypes.NO_SEARCHED_USERS_RESULTS;
+			}
+
+			return null;
+		},
+		showSearchBar(): boolean
+		{
+			return this.memberCount > 0;
+		},
+		canAddUsers(): boolean
+		{
+			const permissionChecker = PermissionChecker.getInstance();
+			if (!permissionChecker)
+			{
+				return false;
+			}
+
+			const nodeId = this.focusedNode;
+
+			return permissionChecker.hasPermission(PermissionActions.employeeAddToDepartment, nodeId);
+		},
+		headListEmptyStateTitle(): string
+		{
+			if (this.canAddUsers)
+			{
+				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_EMPTY_LIST_ITEM_TITLE');
+			}
+
+			return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_EMPTY_LIST_ITEM_TITLE_WITHOUT_ADD_PERMISSION');
+		},
+		employeesListEmptyStateTitle(): string
+		{
+			if (this.canAddUsers)
+			{
+				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_EMPLOYEE_EMPTY_LIST_ITEM_TITLE');
+			}
+
+			return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_EMPLOYEE_EMPTY_LIST_ITEM_TITLE_WITHOUT_ADD_PERMISSION');
+		},
+		shouldUpdateList(): boolean
+		{
+			return this.departments.get(this.focusedNode).employeeListOptions?.shouldUpdateList ?? true;
+		},
+		departmentUsersStatus(): DepartmentUsersStatus
+		{
+			const department = this.departments.get(this.focusedNode);
+			if (department?.heads && department.employees)
+			{
+				return { departmentId: this.focusedNode, loaded: true };
+			}
+
+			return { departmentId: this.focusedNode, loaded: false };
+		},
+	},
 
 	methods: {
 		onDragStart(targetElement)
@@ -251,17 +274,20 @@ export const EmployeeTab = {
 			const employeesList = event.target;
 			const scrollPosition = employeesList.scrollTop + employeesList.clientHeight;
 
-			if (
-				employeesList.scrollHeight - scrollPosition < 40
-				&& !this.isLoading
-			)
+			if (employeesList.scrollHeight - scrollPosition < 40)
 			{
 				this.loadEmployeesAction();
 			}
 		},
-		addToDepartment(options): void
+		addToDepartment(options: addToDepartmentOptions = {}): void
 		{
-			AddUserDialog.openDialog(options);
+			const nodeId = this.focusedNode;
+			const role = options.type === 'head' ? memberRoles.head : memberRoles.employee;
+			UserManagementDialog.openDialog({
+				nodeId,
+				type: 'add',
+				role,
+			});
 		},
 		userInvite(): void
 		{
@@ -277,7 +303,10 @@ export const EmployeeTab = {
 		moveUser(): void
 		{
 			const nodeId = this.focusedNode;
-			MoveUserFromDialog.openDialog(nodeId);
+			UserManagementDialog.openDialog({
+				nodeId,
+				type: 'move',
+			});
 		},
 		editDepartmentUsers(): void
 		{
@@ -286,64 +315,81 @@ export const EmployeeTab = {
 		async loadEmployeesAction(): void
 		{
 			const nodeId = this.focusedNode;
-			const department = this.departments.get(nodeId);
 
-			if (!department)
+			if (!this.departments.get(nodeId))
 			{
 				return;
 			}
 
-			department.page = department.page ?? 0;
-			department.shouldUpdateList = department.shouldUpdateList ?? true;
+			const employeeListOptions = this.departments.get(nodeId).employeeListOptions ?? {};
 
-			if (!this.isListUpdated && department.page === 0 && department.shouldUpdateList === true)
+			employeeListOptions.page = employeeListOptions.page ?? 0;
+			employeeListOptions.shouldUpdateList = employeeListOptions.shouldUpdateList ?? true;
+			employeeListOptions.isListUpdated = employeeListOptions.isListUpdated ?? false;
+			DepartmentContentActions.updateEmployeeListOptions(nodeId, employeeListOptions);
+
+			if (
+				employeeListOptions.isListUpdated
+				|| !employeeListOptions.shouldUpdateList
+			)
+			{
+				return;
+			}
+
+			if (
+				!employeeListOptions.isListUpdated
+				&& employeeListOptions.page === 0
+				&& employeeListOptions.shouldUpdateList === true
+			)
 			{
 				this.$emit('showDetailLoader');
 			}
 
-			if (this.isListUpdated || !department.shouldUpdateList)
-			{
-				return;
-			}
+			employeeListOptions.isListUpdated = true;
+			employeeListOptions.page += 1;
+			DepartmentContentActions.updateEmployeeListOptions(nodeId, employeeListOptions);
 
-			this.isListUpdated = true;
-			const page = department.page + 1;
-
-			const loadedEmployees = await DepartmentAPI.getPagedEmployees(nodeId, page, 25);
+			let loadedEmployees = await DepartmentAPI.getPagedEmployees(nodeId, employeeListOptions.page, 25);
 
 			if (!loadedEmployees)
 			{
-				department.shouldUpdateList = false;
-				this.isListUpdated = false;
+				employeeListOptions.shouldUpdateList = false;
+				employeeListOptions.isListUpdated = false;
+				DepartmentContentActions.updateEmployeeListOptions(nodeId, employeeListOptions);
 
 				return;
 			}
 
-			department.employees = department.employees || [];
-			const employeeIds = new Set(department.employees.map((employee) => employee.id));
+			loadedEmployees = loadedEmployees.map((user) => {
+				return { ...user, role: memberRoles.employee };
+			});
+
+			const employees = this.departments.get(nodeId)?.employees ?? [];
+			const employeeIds = new Set(employees.map((employee) => employee.id));
 
 			const newEmployees = loadedEmployees.reverse().filter((employee) => !employeeIds.has(employee.id));
-			department.employees.unshift(...newEmployees);
+			employees.unshift(...newEmployees);
+			employeeListOptions.shouldUpdateList = newEmployees.length === 25;
+			employeeListOptions.isListUpdated = false;
 
-			if (newEmployees.length > 0)
+			DepartmentContentActions.updateEmployeeListOptions(nodeId, employeeListOptions);
+			DepartmentContentActions.updateEmployees(nodeId, employees);
+			if (this.departmentUsersStatus.loaded)
 			{
-				department.page = page;
-				department.shouldUpdateList = true;
-			}
-			else
-			{
-				department.shouldUpdateList = false;
+				this.$emit('hideDetailLoader');
 			}
 
-			this.departments.set(nodeId, department);
-			this.isListUpdated = false;
-			this.$emit('hideDetailLoader');
+			if (this.needToScroll)
+			{
+				this.scrollToUser();
+			}
 		},
 		async scrollToUser(): void
 		{
 			const userId = this.needToFocusUserId;
 			this.needToFocusUserId = null;
-			const selectors = `.hr-department-detail-content__user-container[data-id="${userId}"]`;
+			this.needToScroll = false;
+			const selectors = `.hr-department-detail-content__user-container[data-id="hr-department-detail-content__user-${userId}-item"]`;
 			let element = this.tabContainer.querySelector(selectors);
 
 			if (!element)
@@ -367,7 +413,7 @@ export const EmployeeTab = {
 					department.heads = department.heads ?? [];
 					if (!department.heads.some((head) => head.id === user.id))
 					{
-						department.heads.push(user);
+						return;
 					}
 				}
 				else
@@ -461,13 +507,26 @@ export const EmployeeTab = {
 		focusedNode(newId): void
 		{
 			const department = this.departments.get(newId) || {};
-			if (!department.page)
+			if (!department.employeeListOptions || Object.keys(department.employeeListOptions).length === 0)
 			{
-				department.page = department.page ?? 0;
-				department.shouldUpdateList = department.shouldUpdateList ?? true;
+				const employeeListOptions = {
+					page: 0,
+					shouldUpdateList: true,
+					isListUpdated: false,
+				};
+				DepartmentContentActions.updateEmployeeListOptions(newId, employeeListOptions);
 				this.departments.set(newId, department);
+			}
+
+			if (
+				department.employeeListOptions.page === 0
+				&& department.employeeListOptions.isListUpdated === false
+				&& department.employeeListOptions.shouldUpdateList === true
+			)
+			{
 				this.loadEmployeesAction();
 			}
+
 			this.isDescriptionExpanded = false;
 			this.searchQuery = '';
 		},
@@ -480,7 +539,11 @@ export const EmployeeTab = {
 				}
 
 				this.needToFocusUserId = userId;
-				if (!this.isListUpdated)
+				if (this.isListUpdated)
+				{
+					this.needToScroll = true;
+				}
+				else
 				{
 					this.$nextTick(() => {
 						this.scrollToUser();
@@ -492,6 +555,26 @@ export const EmployeeTab = {
 		async searchQuery(newQuery) {
 			await this.searchMembers(newQuery);
 		},
+		departmentUsersStatus(usersStatus: DepartmentUsersStatus, prevUsersStatus: DepartmentUsersStatus): void
+		{
+			const { departmentId, loaded } = usersStatus;
+			const { departmentId: prevDepartmentId, loaded: prevLoaded } = prevUsersStatus;
+			if (departmentId === prevDepartmentId && loaded === prevLoaded)
+			{
+				return;
+			}
+
+			if (loaded)
+			{
+				this.$emit('hideDetailLoader');
+			}
+			else
+			{
+				this.$emit('showDetailLoader');
+				this.loadEmployeesAction();
+			}
+		},
+
 	},
 
 	template: `
@@ -512,7 +595,7 @@ export const EmployeeTab = {
 					@focus="hasFocus = true"
 					@blur="onBlur"
 				>
-				<div 
+				<div
 					class="hr-department-detail-content__content-search-close-button ui-icon-set --cross-circle-50"
 					:class="{'--hide': !hasFocus}"
 					style="--ui-icon-set__icon-size: 24px; --ui-icon-set__icon-color: #2FC6F6;"
@@ -536,7 +619,12 @@ export const EmployeeTab = {
 					<div class="hr-department-detail-content__list-header-container">
 						<div class="hr-department-detail-content__list-title">
 							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_LIST_TITLE') }}
-							<span class="hr-department-detail-content__list-count">{{ headCount }}</span>
+							<span
+								class="hr-department-detail-content__list-count"
+								data-id="hr-department-detail-content__head_list-count"
+							>
+								{{ headCount }}
+							</span>
 						</div>
 						<UserListActionButton
 							role="head"
@@ -546,7 +634,7 @@ export const EmployeeTab = {
 						/>
 					</div>
 					<div v-if="!headCount" :class="['hr-department-detail-content__empty-list-item', { '--with-add': canAddUsers }]">
-						<div class="hr-department-detail-content__empty-list-item-image"/>
+						<div class="hr-department-detail-content__empty-user-list-item-image"/>
 						<div class="hr-department-detail-content__empty-list-item-content">
 							<div class="hr-department-detail-content__empty-list-item-title">
 								{{ headListEmptyStateTitle }}
@@ -564,7 +652,12 @@ export const EmployeeTab = {
 					<div class="hr-department-detail-content__list-header-container">
 						<div class="hr-department-detail-content__list-title">
 							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_EMPLOYEE_LIST_TITLE') }}
-							<span class="hr-department-detail-content__list-count">{{ employeeCount }}</span>
+							<span
+								class="hr-department-detail-content__list-count"
+								data-id="hr-department-detail-content__employee_list-count"
+							>
+								{{ employeeCount }}
+							</span>
 						</div>
 						<UserListActionButton
 							role="employee"
@@ -574,7 +667,7 @@ export const EmployeeTab = {
 						/>
 					</div>
 					<div v-if="!employeeCount" :class="['hr-department-detail-content__empty-list-item', { '--with-add': canAddUsers }]">
-						<div class="hr-department-detail-content__empty-list-item-image"/>
+						<div class="hr-department-detail-content__empty-user-list-item-image"/>
 						<div class="hr-department-detail-content__empty-list-item-content">
 							<div class="hr-department-detail-content__empty-list-item-title">
 								{{ employeesListEmptyStateTitle }}

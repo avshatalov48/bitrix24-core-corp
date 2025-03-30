@@ -6,6 +6,7 @@ use Bitrix\HumanResources\Item\Collection\HcmLink\JobCollection;
 use Bitrix\HumanResources\Item\HcmLink\Job;
 use Bitrix\HumanResources\Item;
 use Bitrix\HumanResources\Type\HcmLink\JobStatus;
+use Bitrix\HumanResources\Type\HcmLink\JobType;
 use Bitrix\Main\Type\DateTime;
 
 interface JobRepository
@@ -27,9 +28,20 @@ interface JobRepository
 	 */
 	public function listByStatusListAndDate(
 		array $statusList,
-		DateTime $date,
+		?DateTime $date = null,
 		int $limit = 100,
 	): Item\Collection\HcmLink\JobCollection;
+
+	/**
+	 * @param JobType $type
+	 * @param DateTime $date
+	 * @param int $companyId
+	 * @param array $statuses
+	 * @param int $limit
+	 *
+	 * @return JobCollection
+	 */
+	public function getLastByTypeAndDate(JobType $type, DateTime $date, int $companyId, array $statuses, int $limit = 1): Item\Collection\HcmLink\JobCollection;
 
 	/**
 	 * @param list<int> $ids
@@ -38,6 +50,13 @@ interface JobRepository
 	 * @return void
 	 */
 	public function updateStatusByIds(array $ids, JobStatus $status): void;
+
+	/**
+	 * @param list<int> $ids
+	 *
+	 * @return void
+	 */
+	public function increaseEventCountByIds(array $ids): void;
 
 	/**
 	 * @param DateTime $olderThanDate

@@ -1,5 +1,5 @@
 import { HelpDesk } from 'booking.const';
-import { helpDesk } from 'booking.lib.help-desk';
+import { HelpDeskLoc } from 'booking.component.help-desk-loc';
 import './text-layout.css';
 
 export const TextLayout = {
@@ -14,21 +14,24 @@ export const TextLayout = {
 			required: true,
 		},
 	},
-	methods: {
-		showHelpDesk(): void
-		{
-			helpDesk.show(
-				HelpDesk[`Resource${this.type}`].code,
-				HelpDesk[`Resource${this.type}`].anchorCode,
-			);
-		},
+	setup(props): { code: string, anchorCode: string }
+	{
+		return {
+			code: HelpDesk[`Resource${props.type}`].code,
+			anchorCode: HelpDesk[`Resource${props.type}`].anchorCode,
+		};
+	},
+	components: {
+		HelpDeskLoc,
 	},
 	template: `
 		<div class="resource-creation-wizard__form-settings-text-row">
-			<div class="resource-creation-wizard__form-settings-text">
-				{{ text }}
-				<span @click="showHelpDesk">{{ loc('BRCW_SETTINGS_CARD_MORE') }}</span>
-			</div>
+			<HelpDeskLoc
+				:message="text"
+				:code="code"
+				:anchor="anchorCode"
+				class="resource-creation-wizard__form-settings-text"
+			/>
 		</div>
 	`,
 };

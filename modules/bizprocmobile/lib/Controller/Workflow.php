@@ -303,10 +303,6 @@ class Workflow extends BaseController
 
 	private function getWorkflowResult(string $workflowId): ?BbCodeView
 	{
-		if (!(bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024'))
-		{
-			return null;
-		}
 		$currentUserId = (int)$this->getCurrentUser()->getId();
 		$result = ResultTable::getList([
 			'filter' => [

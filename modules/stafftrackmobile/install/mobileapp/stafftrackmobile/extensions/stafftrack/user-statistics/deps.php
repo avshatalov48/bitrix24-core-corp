@@ -20,7 +20,7 @@ return [
 		'ui-system/typography/text',
 		'ui-system/typography/heading',
 		'ui-system/blocks/chips/chip-button',
-		'layout/ui/user/avatar',
+		'ui-system/blocks/avatar',
 		'layout/polyfill',
 		'layout/pure-component',
 

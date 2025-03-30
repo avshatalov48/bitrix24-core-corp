@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Humanresources = this.BX.Humanresources || {};
-(function (exports,main_popup,ui_iconSet_api_vue,main_core) {
+(function (exports,main_popup,ui_iconSet_api_vue,main_sidepanel,main_core) {
 	'use strict';
 
 	const POPUP_CONTAINER_PREFIX = '#popup-window-content-';
@@ -47,6 +47,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        (_PopupManager$getPopu = main_popup.PopupManager.getPopupById(this.id)) == null ? void 0 : _PopupManager$getPopu.destroy();
 	        const config = this.getPopupConfig();
 	        this.instance = new main_popup.Popup(config);
+	        if (this.config.angleOffset) {
+	          this.instance.setAngle({
+	            offset: this.config.angleOffset
+	          });
+	        }
 	      }
 	      return this.instance;
 	    },
@@ -139,6 +144,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      type: Array,
 	      required: true,
 	      default: []
+	    },
+	    titleBar: {
+	      type: String,
+	      required: false
 	    }
 	  }
 	};
@@ -155,6 +164,19 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      type: Boolean,
 	      required: false,
 	      default: true
+	    },
+	    angleOffset: {
+	      type: Number,
+	      required: false,
+	      default: 0
+	    },
+	    titleBar: {
+	      type: String,
+	      required: false
+	    },
+	    className: {
+	      type: String,
+	      required: false
 	    }
 	  },
 	  emits: ['action', 'close'],
@@ -163,7 +185,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  },
 	  computed: {
 	    popupConfig() {
-	      return {
+	      const options = {
 	        width: this.width,
 	        bindElement: this.bindElement,
 	        borderRadius: 12,
@@ -172,6 +194,16 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        padding: 0,
 	        offsetTop: 4
 	      };
+	      if (this.angleOffset >= 0) {
+	        options.angleOffset = this.angleOffset;
+	      }
+	      if (this.titleBar) {
+	        options.titleBar = this.titleBar;
+	      }
+	      if (this.className) {
+	        options.className = this.className;
+	      }
+	      return options;
 	    }
 	  },
 	  methods: {
@@ -191,13 +223,13 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  template: `
 		<BasePopup
 			:config="popupConfig"
-            v-slot="{closePopup}"
+			v-slot="{closePopup}"
 			:id="id"
 			@close="close"
 		>
-		  <div class="hr-structure-components-action-menu-container">
+			<div class="hr-structure-components-action-menu-container">
 			<template v-for="(item, index) in items">
-				<div 
+				<div
 					class="hr-structure-components-action-menu-item-wrapper"
 					:class="{ '--disabled': item.disabled ?? false }"
 					@click="onItemClick($event, item, closePopup)"
@@ -208,7 +240,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					class="hr-structure-action-popup-menu-item-delimiter"
 				></span>
 			</template>
-		  </div>
+			</div>
 		</BasePopup>
 	`
 	};
@@ -262,7 +294,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					class="hr-structure-route-action-popup-menu-item__content-icon-container"
 
 				>
-					<div 
+					<div
 						class="hr-structure-route-action-popup-menu-item__content-icon"
 						:class="imageClass"
 					/>
@@ -290,14 +322,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  template: `
 		<BaseActionMenu
 			:id="id"
-			:items="items" 
+			:items="items"
 			:bindElement="bindElement"
 			:width="260"
 			v-slot="{item}"
 			@close="this.$emit('close')"
 		>
 			<RouteActionMenuItem
-				:id="item.id" 
+				:id="item.id"
 				:title="item.title"
 				:description="item.description"
 				:imageClass="item.imageClass"
@@ -307,7 +339,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	`
 	};
 
-	const SupportedColors = ['red'];
+	const SupportedColors = new Set(['red']);
 	const ActionMenuItem = {
 	  name: 'ActionMenuItem',
 	  props: {
@@ -332,7 +364,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  },
 	  computed: {
 	    colorClass() {
-	      if (SupportedColors.includes(this.color)) {
+	      if (SupportedColors.has(this.color)) {
 	        return `--${this.color}`;
 	      }
 	      return '';
@@ -360,21 +392,115 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    ActionMenuItem
 	  },
 	  template: `
-		<BaseActionMenu 
+		<BaseActionMenu
 			:id="id"
-			:items="items" 
+			:items="items"
 			:bindElement="bindElement"
 			:width="260"
 			:delimiter="false"
- 			v-slot="{item}"
+			v-slot="{item}"
 			@close="this.$emit('close')"
 		>
 			<ActionMenuItem
-				:id="item.id" 
+				:id="item.id"
 				:title="item.title"
 				:imageClass="item.imageClass"
 				:color="item.color"
 				@click="this.$emit('action', item.id)"
+			/>
+		</BaseActionMenu>
+	`
+	};
+
+	const UserActionMenuItem = {
+	  name: 'UserActionMenuItem',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  props: {
+	    id: {
+	      type: Number,
+	      required: true
+	    },
+	    name: {
+	      type: String,
+	      required: true
+	    },
+	    avatar: {
+	      type: String,
+	      required: false,
+	      default: null
+	    },
+	    workPosition: {
+	      type: String,
+	      required: false,
+	      default: null
+	    }
+	  },
+	  methods: {
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    }
+	  },
+	  template: `
+		<div class="hr-structure-route-action-popup-menu-item">
+			<div class="hr-structure-route-action-popup-menu-item__content">
+				<img
+					:src="!this.avatar ? '/bitrix/js/humanresources/company-structure/org-chart/src/images/default-user.svg' : encodeURI(this.avatar)"
+					class="humanresources-tree__node_avatar --head"
+				 	alt=""
+				/>
+				<div class="hr-structure-route-action-popup-menu-item__content-text-container">
+					<span
+						class="humanresources-tree__node_head-name"
+						:title="this.name"
+					>
+						{{ this.name }}
+					</span>
+					<span class="humanresources-tree__node_head-position">{{ this.workPosition }}</span>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
+	const UserListActionMenu = {
+	  name: 'UserListActionMenu',
+	  mixins: [BaseActionMenuPropsMixin],
+	  components: {
+	    BaseActionMenu,
+	    UserActionMenuItem
+	  },
+	  methods: {
+	    openUserUrl(url) {
+	      if (!url) {
+	        return;
+	      }
+	      main_sidepanel.SidePanel.Instance.open(url, {
+	        cacheable: false
+	      });
+	    }
+	  },
+	  template: `
+		<BaseActionMenu 
+			:id="id"
+			className="hr-user-list-action-menu"
+			:items="items" 
+			:bindElement="bindElement"
+			:width="260"
+			:delimiter="false"
+			:titleBar="titleBar"
+			:angleOffset="35"
+			v-slot="{item}"
+			@close="this.$emit('close')"
+		>
+			<UserActionMenuItem
+				:id="item.id" 
+				:name="item.name"
+				:avatar="item.avatar"
+				:workPosition="item.workPosition"
+				:color="item.color"
+				@click="this.openUserUrl(item.url)"
 			/>
 		</BaseActionMenu>
 	`
@@ -463,7 +589,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      this.$emit('close');
 	    },
 	    performAction() {
-	      if (this.lockActionButton) {
+	      if (this.lockActionButton || this.showActionButtonLoader) {
 	        return;
 	      }
 	      this.$emit('action');
@@ -554,11 +680,38 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	`
 	};
 
+	const Hint = {
+	  mounted(el) {
+	    let hint = null;
+	    main_core.Event.bind(el, 'mouseenter', () => {
+	      if (el.scrollWidth === el.offsetWidth) {
+	        return;
+	      }
+	      hint = main_core.Reflection.getClass('BX.UI.Hint').createInstance({
+	        popupParameters: {
+	          cacheable: false,
+	          angle: {
+	            offset: 0
+	          },
+	          offsetLeft: el.getBoundingClientRect().width / 2
+	        }
+	      });
+	      hint.show(el, main_core.Text.encode(el.textContent));
+	    });
+	    main_core.Event.bind(el, 'mouseleave', () => {
+	      var _hint;
+	      (_hint = hint) == null ? void 0 : _hint.hide();
+	    });
+	  }
+	};
+
 	exports.BasePopup = BasePopup;
 	exports.BaseActionMenu = BaseActionMenu;
 	exports.RouteActionMenu = RouteActionMenu;
 	exports.ActionMenu = ActionMenu;
+	exports.UserListActionMenu = UserListActionMenu;
 	exports.ConfirmationPopup = ConfirmationPopup;
+	exports.Hint = Hint;
 
-}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Main,BX.UI.IconSet,BX));
+}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Main,BX.UI.IconSet,BX,BX));
 //# sourceMappingURL=structure-components.bundle.js.map

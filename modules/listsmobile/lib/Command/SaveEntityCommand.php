@@ -179,6 +179,8 @@ final class SaveEntityCommand extends Command
 		{
 			if (!array_key_exists($propId, $originalData))
 			{
+				$data[$propId] = [];
+
 				continue;
 			}
 

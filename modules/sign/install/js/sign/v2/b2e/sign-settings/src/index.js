@@ -1,14 +1,14 @@
-import { Dom, Loc, Tag, Type, Text } from 'main.core';
+import { Dom, Loc, Tag, Text, Type } from 'main.core';
 import { MemoryCache } from 'main.core.cache';
 import { type BaseEvent } from 'main.core.events';
 import { FeatureStorage } from 'sign.feature-storage';
-import { Api, MemberRole, type SetupMember } from 'sign.v2.api';
-import { ProviderCode } from 'sign.v2.b2e.company-selector';
+import { DocumentInitiated, type DocumentInitiatedType, MemberRole, ProviderCode } from 'sign.type';
+import { Api, type SetupMember } from 'sign.v2.api';
 import { DocumentSend } from 'sign.v2.b2e.document-send';
 import { DocumentSetup } from 'sign.v2.b2e.document-setup';
 import { Parties as CompanyParty } from 'sign.v2.b2e.parties';
 import { type CardItem, UserParty } from 'sign.v2.b2e.user-party';
-import { type DocumentDetails, DocumentInitiated, DocumentInitiatedType } from 'sign.v2.document-setup';
+import { type DocumentDetails } from 'sign.v2.document-setup';
 import { SectionType } from 'sign.v2.editor';
 import { SignSettingsItemCounter } from 'sign.v2.helper';
 import {
@@ -79,8 +79,6 @@ export class B2ESignSettings extends SignSettings
 			documentSendConfig,
 			userPartyConfig,
 		} = this.#prepareConfig(signOptions);
-
-		blankSelectorConfig.hideValidationParty = isTemplateMode(this.documentMode);
 
 		this.documentSetup = new DocumentSetup(blankSelectorConfig);
 		this.documentSend = new DocumentSend(documentSendConfig);
@@ -173,7 +171,7 @@ export class B2ESignSettings extends SignSettings
 
 		if (!this.documentSetup.editMode)
 		{
-			this.#checkDocumentLimit();
+			this.#disableDocumentSectionIfLimitReached();
 			this.#resetDocument();
 
 			return;
@@ -392,6 +390,13 @@ export class B2ESignSettings extends SignSettings
 		});
 	}
 
+	#isTemplateModeForCompany(): boolean
+	{
+		const isInitiatedByCompany = this.documentSetup.setupData.initiatedByType === DocumentInitiated.company;
+
+		return isTemplateMode(this.documentMode) && isInitiatedByCompany;
+	}
+
 	async #syncMembersWithDepartments(uid: string, signerParty: number): Promise<void>
 	{
 		let syncFinished = false;
@@ -511,9 +516,9 @@ export class B2ESignSettings extends SignSettings
 				this.documentSetup.renderDocumentBlock(updatedItem);
 				this.documentSetup.blankSelector.disableSelectedBlank(updatedItem.blankId);
 			}
-			this.#resetDocument();
 			this.groupId = setupData.groupId;
 			this.documentSetup.documentCounters.update(this.documentsGroup.size);
+			this.#resetDocument();
 		}
 		else
 		{
@@ -525,7 +530,7 @@ export class B2ESignSettings extends SignSettings
 		const { entityId, representativeId, companyUid, hcmLinkCompanyId } = firstDocument;
 		this.documentSend.documentData = this.documentsGroup;
 
-		this.#checkDocumentLimit();
+		this.#disableDocumentSectionIfLimitReached();
 
 		if (this.isSingleDocument())
 		{
@@ -570,6 +575,7 @@ export class B2ESignSettings extends SignSettings
 
 		this.documentSetup.setupData.templateUid = templateUid;
 		this.documentSend.setExistingTemplate();
+		this.#companyParty.setIntegrationSelectorAvailability(this.#isTemplateModeForCompany());
 
 		return true;
 	}
@@ -615,7 +621,7 @@ export class B2ESignSettings extends SignSettings
 
 				this.#resetDocument();
 				this.#processSetupData();
-				this.#checkDocumentLimit();
+				this.#disableDocumentSectionIfLimitReached();
 
 				if (!Type.isNull(this.getAfterPreviewLayout()))
 				{
@@ -638,23 +644,31 @@ export class B2ESignSettings extends SignSettings
 			get content(): HTMLElement
 			{
 				const layout = signSettings.#companyParty.getLayout();
+				const isTemplateModeForCompany = signSettings.#isTemplateModeForCompany();
+
+				if (signSettings.isTemplateMode())
+				{
+					signSettings.#companyParty.setEditorAvailability(isTemplateModeForCompany);
+				}
 				SignSettingsItemCounter.numerate(layout);
 
 				return layout;
 			},
 			title: Loc.getMessage(titleLocCode),
 			beforeCompletion: async () => {
-				const { uid } = this.documentSetup.setupData;
+				const { uid, initiatedByType } = this.documentSetup.setupData;
 				try
 				{
 					for (const [uid] of this.documentsGroup)
 					{
 						await this.#companyParty.save(uid);
 					}
+					this.editor.setSenderType(initiatedByType);
 					this.documentSetup.setupData.integrationId = this.#companyParty.getSelectedIntegrationId();
 					this.documentSend.hcmLinkEnabled = this.documentSetup.setupData.integrationId > 0;
 
 					this.#setSecondPartySectionVisibility();
+					this.#setHcmLinkIntegrationSectionVisibility();
 
 					if (this.isTemplateMode())
 					{
@@ -744,6 +758,10 @@ export class B2ESignSettings extends SignSettings
 		entityId: number
 	}): Promise<void>
 	{
+		if (this.isTemplateCreateMode())
+		{
+			this.editor.setAnalytics(this.getAnalytics());
+		}
 		this.wizard.toggleBtnLoadingState('next', false);
 
 		if (this.isSingleDocument())
@@ -798,12 +816,9 @@ export class B2ESignSettings extends SignSettings
 	async init(uid: ?string, templateUid: string)
 	{
 		await super.init(uid, templateUid);
-		if (this.isEditMode())
+		if (this.isEditMode() && !Type.isNull(this.getAfterPreviewLayout()))
 		{
-			if (!Type.isNull(this.getAfterPreviewLayout()))
-			{
-				BX.hide(this.getAfterPreviewLayout());
-			}
+			BX.hide(this.getAfterPreviewLayout());
 		}
 	}
 
@@ -824,26 +839,40 @@ export class B2ESignSettings extends SignSettings
 	#setSecondPartySectionVisibility(): void
 	{
 		const selectedProvider = this.#companyParty.getSelectedProvider();
-
 		const isNotSesRuProvider = selectedProvider.code !== ProviderCode.sesRu;
-		const isInitiatedByEmployee = this.documentSetup.setupData.initiatedByType === DocumentInitiated.employee;
-		const isInitiatedByCompany = this.documentSetup.setupData.initiatedByType === DocumentInitiated.company;
 
 		const isSecondPartySectionVisible = isNotSesRuProvider
-			|| (isTemplateMode(this.documentMode) && isInitiatedByEmployee)
+			|| (isTemplateMode(this.documentMode) && this.#isInitiatedByEmployee())
 		;
-
-		const isHcmLinkIntegrationSectionVisible = this.documentSetup.setupData.integrationId > 0;
-
-		this.editor.setSectionVisibilityByType(
-			SectionType.HcmLinkIntegration,
-			isHcmLinkIntegrationSectionVisible,
-		);
 
 		this.editor.setSectionVisibilityByType(
 			SectionType.SecondParty,
 			isSecondPartySectionVisible,
 		);
+	}
+
+	async #setHcmLinkIntegrationSectionVisibility(): Promise<void>
+	{
+		const isInitiatedByCompany = this.documentSetup.setupData.initiatedByType === DocumentInitiated.company;
+
+		if (this.#isInitiatedByEmployee() && this.documentSetup.isRuRegion())
+		{
+			await this.#api.changeIntegrationId(this.documentSetup.setupData.uid, null);
+		}
+
+		const isHcmLinkIntegrationSectionVisible = this.documentSetup.setupData.integrationId > 0
+			&& isInitiatedByCompany
+		;
+
+		this.editor.setSectionVisibilityByType(
+			SectionType.HcmLinkIntegration,
+			isHcmLinkIntegrationSectionVisible,
+		);
+	}
+
+	#isInitiatedByEmployee(): boolean
+	{
+		return this.documentSetup.setupData.initiatedByType === DocumentInitiated.employee;
 	}
 
 	#decorateStepsBeforeCompletionWithAnalytics(steps: Metadata, documentUid?: string): void
@@ -975,6 +1004,11 @@ export class B2ESignSettings extends SignSettings
 		const firstDocumentData = this.getFirstDocumentDataFromGroup();
 		this.#companyParty.setInitiatedByType(firstDocumentData.initiatedByType);
 		this.#companyParty.setEntityId(firstDocumentData.entityId);
+		if (this.isTemplateMode())
+		{
+			await this.#companyParty.reloadCompanyProviders();
+			this.#companyParty.setIntegrationSelectorAvailability(this.#isTemplateModeForCompany());
+		}
 		this.editedDocument = null;
 
 		if (this.hasPreviewUrls)
@@ -1045,9 +1079,9 @@ export class B2ESignSettings extends SignSettings
 		this.editedDocument = null;
 	}
 
-	#checkDocumentLimit(): void
+	#disableDocumentSectionIfLimitReached(): void
 	{
-		if (this.documentsGroup.size === this.#maxDocumentCount)
+		if (this.documentsGroup.size >= this.#maxDocumentCount)
 		{
 			this.documentSetup.setAvailabilityDocumentSection(false);
 		}
@@ -1339,7 +1373,6 @@ export class B2ESignSettings extends SignSettings
 			alert(Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_MAX_TOTAL_FILE_SIZE_EXCEEDED'));
 			event.preventDefault();
 
-			return;
 		}
 	}
 }

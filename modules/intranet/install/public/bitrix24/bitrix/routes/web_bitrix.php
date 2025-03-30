@@ -27,6 +27,12 @@ return function (RoutingConfigurator $routes) {
 
 
 	// disk
+	$routes->prefix('disk/boards')
+		->where('fileId', '[0-9]+')
+		->group(function (RoutingConfigurator $routes) {
+			$routes->any('{fileId}/openDocument', [\Bitrix\Disk\Controller\Integration\Flipchart::class, 'openDocument']);
+		});
+
 	$routes->any('/disk/{action}/{fileId}/{any}', new PublicPageController('/bitrix/services/disk/index.php'))
 		->where('any', '.*')
 		->where('action', '[0-9a-zA-Z]+')

@@ -1,7 +1,8 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
-	die();
+	die;
 }
 
 use Bitrix\Main\Context;
@@ -21,19 +22,20 @@ use Bitrix\Sign\Type\Document\InitiatedByType;
 
 class SignMasterComponent extends SignBaseComponent
 {
-	private const TEMPLATE_ID_URL_PARAMETER_NAME = 'templateId';
-
 	/**
 	 * Restricted size for images.
 	 */
 	private const IMAGE_SIZES = [
 		'width' => 1275,
-		'height' => 1650
+		'height' => 1650,
 	];
 
-	const SES_COM_AGREEMENT_DATE_YEAR = 2024;
-	const SES_COM_AGREEMENT_DATE_DAY = 1;
-	const SES_COM_AGREEMENT_DATE_MONTH = 3;
+	private const TEMPLATE_ID_URL_PARAMETER_NAME = 'templateId';
+
+	private const SES_COM_AGREEMENT_DATE_YEAR = 2024;
+	private const SES_COM_AGREEMENT_DATE_DAY = 1;
+	private const SES_COM_AGREEMENT_DATE_MONTH = 3;
+
 	private const MODE_TEMPLATE = 'template';
 	private const MODE_DOCUMENT = 'document';
 
@@ -46,10 +48,11 @@ class SignMasterComponent extends SignBaseComponent
 		'PAGE_URL_EDIT', 'CATEGORY_ID',
 		'VAR_STEP_ID', 'VAR_DOC_ID',
 		'CRM_ENTITY_TYPE_ID',
-		'OPEN_URL_AFTER_CLOSE'
+		'OPEN_URL_AFTER_CLOSE',
 	];
 
 	private int $userId;
+	private ?\Bitrix\Sign\Item\Document $documentItem = null;
 
 	/**
 	 * Returns true if SMS is allowed by tariff.
@@ -65,9 +68,7 @@ class SignMasterComponent extends SignBaseComponent
 	 */
 	private function isHcmlinkAvailable(): bool
 	{
-		return $this->getInitiatedByType() !== InitiatedByType::EMPLOYEE
-			&& \Bitrix\Sign\Service\Container::instance()->getHcmLinkService()->isAvailable()
-		;
+		return \Bitrix\Sign\Service\Container::instance()->getHcmLinkService()->isAvailable();
 	}
 
 	/**
@@ -130,8 +131,10 @@ class SignMasterComponent extends SignBaseComponent
 		)
 		{
 			showError('access denied');
+
 			return;
 		}
+		$documentRepository = Container::instance()->getDocumentRepository();
 
 		/** @var Document $document */
 		$document = $this->getResult('DOCUMENT');
@@ -140,7 +143,7 @@ class SignMasterComponent extends SignBaseComponent
 		{
 			$this->setResult(
 				'OPEN_URL_AFTER_CLOSE',
-				str_replace('#id#', $document->getEntityId(), $this->getStringParam('OPEN_URL_AFTER_CLOSE'))
+				str_replace('#id#', $document->getEntityId(), $this->getStringParam('OPEN_URL_AFTER_CLOSE')),
 			);
 		}
 
@@ -149,17 +152,21 @@ class SignMasterComponent extends SignBaseComponent
 		{
 			$currentDomain = Application::getServer()->getHttpHost();
 			Container::instance()->getApiClientDomainService()->change(
-				(new DomainRequest($currentDomain))
+				new DomainRequest($currentDomain),
 			);
 			Storage::instance()->setCurrentDomain($currentDomain);
 		}
+
+		$documentItem = ($document && $document->getUid())
+			? $documentRepository->getByUid($document->getUid())
+			: null;
 		$this->setResult('SCENARIO', $this->getScenario());
 		$this->setResult('WIZARD_CONFIG', $this->getWizardConfig());
 		$this->setResult('STAGE_ID', $document?->getStageId());
 		$this->setResult('DOCUMENT_MODE', $this->getDocumentMode());
-		$this->setResult('INITIATED_BY_TYPE', $this->getInitiatedByType()->value);
+		$this->setResult('INITIATED_BY_TYPE', $this->getInitiatedByType($documentItem)->value);
 		$this->setResult('BLANKS', $this->getBlanks());
-		$this->setResult('IS_MASTER_PERMISSIONS_FOR_USER_DENIED', $this->isMasterPermissionsForUserDenied($document));
+		$this->setResult('IS_MASTER_PERMISSIONS_FOR_USER_DENIED', $this->isMasterPermissionsForUserDenied($documentItem));
 		$isSesComAgreementAccepted = $this->isSesComAgreementAccepted();
 		$this->setResult('IS_SES_COM_AGREEMENT_ACCEPTED', $isSesComAgreementAccepted);
 		$this->setResult('ANALYTIC_CONTEXT', $this->getAnalyticContext());
@@ -193,7 +200,7 @@ class SignMasterComponent extends SignBaseComponent
 		$blankSelectorConfig = (new \Bitrix\Sign\Config\Ui\BlankSelector())->create(
 			$this->getScenario(),
 			$regionCode,
-			$this->getB2eRegionDocumentTypes()
+			$this->getB2eRegionDocumentTypes(),
 		);
 
 		$b2eTariffInstance = \Bitrix\Sign\Integration\Bitrix24\B2eTariff::instance();
@@ -211,7 +218,7 @@ class SignMasterComponent extends SignBaseComponent
 			'userPartyConfig' => [
 				'region' => $regionCode,
 				'b2eSignersLimitCount' => $b2eTariffInstance->getB2eSignersCountLimitWithUnlimitCheck(),
-			]
+			],
 		];
 	}
 
@@ -226,7 +233,7 @@ class SignMasterComponent extends SignBaseComponent
 
 		$lastUserDocuments = $this->getLastUserDocuments(
 			User::getInstance()->getId(),
-			5
+			5,
 		);
 
 		foreach ($lastUserDocuments as $userDocument)
@@ -259,8 +266,7 @@ class SignMasterComponent extends SignBaseComponent
 	 */
 	private function getLastUserDocuments(int $userId, int $amount): array
 	{
-		$rows = DocumentTable
-			::query()
+		$rows = DocumentTable::query()
 			->addSelect('*')
 			->where('CREATED_BY_ID', $userId)
 			->addOrder('DATE_CREATE', 'DESC')
@@ -270,7 +276,7 @@ class SignMasterComponent extends SignBaseComponent
 
 		return array_map(
 			static fn (array $row) => Document::tryCreateByRow($row),
-			$rows
+			$rows,
 		);
 	}
 
@@ -298,17 +304,14 @@ class SignMasterComponent extends SignBaseComponent
 		return $scenario;
 	}
 
-	private function isMasterPermissionsForUserDenied(?Document $document): bool
+	private function isMasterPermissionsForUserDenied(?\Bitrix\Sign\Item\Document $documentItem): bool
 	{
 		$userId = \Bitrix\Main\Engine\CurrentUser::get()->getId();
 		$accessController = new \Bitrix\Sign\Access\AccessController($userId);
-		$item = ($document && $document->getUid())
-			? Container::instance()->getDocumentRepository()->getByUid($document->getUid())
-			: null;
 
 		foreach ($this->getRequiredPermissions($this->getScenario(), $this->getDocumentMode()) as $permission)
 		{
-			$passed = $item ? $accessController->checkByItem($permission, $item) : $accessController->check($permission);
+			$passed = $documentItem ? $accessController->checkByItem($permission, $documentItem) : $accessController->check($permission);
 			if (!$passed)
 			{
 				return true;
@@ -323,7 +326,8 @@ class SignMasterComponent extends SignBaseComponent
 		return Container::instance()
 			->getBlankRepository()
 			->getPublicList(scenario: $this->getScenario())
-			->toArray();
+			->toArray()
+		;
 	}
 
 	/**
@@ -384,8 +388,7 @@ class SignMasterComponent extends SignBaseComponent
 
 		return is_array($agreementOptions)
 			&& isset($agreementOptions['decision'])
-			&& $agreementOptions['decision'] === 'Y'
-		;
+			&& $agreementOptions['decision'] === 'Y';
 	}
 
 	private function getDocumentMode(): string
@@ -407,12 +410,16 @@ class SignMasterComponent extends SignBaseComponent
 		return $mode;
 	}
 
-	private function getInitiatedByType(): InitiatedByType
+	private function getInitiatedByType(?\Bitrix\Sign\Item\Document $document): InitiatedByType
 	{
+		if ($document?->initiatedByType !== null)
+		{
+			return $document->initiatedByType;
+		}
+
 		return $this->getDocumentMode() === self::MODE_TEMPLATE
 			? InitiatedByType::EMPLOYEE
-			: InitiatedByType::COMPANY
-		;
+			: InitiatedByType::COMPANY;
 	}
 
 	private function getTemplateUid(): ?string
@@ -457,13 +464,67 @@ class SignMasterComponent extends SignBaseComponent
 		return (int)$this->getRequest('chat_id');
 	}
 
-	private function getAnalyticContext(): array
+	private function getAnalyticContext(): ?array
 	{
-		if ( $this->getDocumentMode() === self::MODE_TEMPLATE)
+		$scenario = $this->getScenario();
+
+		if (
+			$scenario === \Bitrix\Sign\Type\BlankScenario::B2B
+			&& Feature::instance()->isCollabIntegrationEnabled()
+		)
 		{
-			return ['c_section' => 'sign', 'category' => 'templates', 'c_sub_section' => 'templates'];
+			if ($this->getChatId() >= 1 || $this->getDocumentItem()?->chatId > 0)
+			{
+				return [
+					'category' => 'documents',
+					'type' => 'b2b',
+					'c_section' => 'collab',
+					'c_element' => 'chat_textarea',
+				];
+			}
+
+			return [
+				'category' => 'documents',
+				'type' => 'b2b',
+				'c_section' => 'sign',
+				'c_element' => 'create_button',
+			];
+		}
+
+		if ($scenario !== \Bitrix\Sign\Type\BlankScenario::B2E)
+		{
+			return null;
+		}
+
+		if ($this->getDocumentMode() === self::MODE_TEMPLATE)
+		{
+			return [
+				'c_section' => 'sign',
+				'category' => 'templates',
+				'c_sub_section' => 'templates',
+				'c_element' => 'create_button',
+			];
 		}
 
 		return ['c_section' => 'sign', 'type' => 'from_company', 'category' => 'documents'];
+	}
+
+	private function getDocumentItem(): ?\Bitrix\Sign\Item\Document
+	{
+		if ($this->documentItem !== null)
+		{
+			return $this->documentItem;
+		}
+
+		$document = $this->getResult('DOCUMENT');
+		if ($document === null)
+		{
+			return null;
+		}
+
+		$documentRepository = Container::instance()->getDocumentRepository();
+		$this->documentItem = $documentRepository->getByUid($document->getUid());
+
+		return $this->documentItem;
 	}
 }

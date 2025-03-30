@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Internals\Repository;
 
-use Bitrix\Booking\Internals\CounterDictionary;
+use Bitrix\Booking\Internals\Service\CounterDictionary;
 
 interface CounterRepositoryInterface
 {

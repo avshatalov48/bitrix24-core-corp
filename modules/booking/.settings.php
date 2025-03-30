@@ -1,6 +1,6 @@
 <?php
 
-use Bitrix\Booking\Integration\Ui\EntitySelector;
+use Bitrix\Booking\Internals\Integration\Ui\EntitySelector;
 
 return [
 	'controllers' => [
@@ -111,7 +111,7 @@ return [
 				'className' => \Bitrix\Booking\Internals\Repository\ORM\JournalRepository::class,
 			],
 			'booking.journal.service' => [
-				'className' => \Bitrix\Booking\Internals\Journal\JournalService::class,
+				'className' => \Bitrix\Booking\Internals\Service\Journal\JournalService::class,
 			],
 			'booking.resource.slot.repository' => [
 				'className' => \Bitrix\Booking\Internals\Repository\ORM\ResourceSlotRepository::class,
@@ -142,18 +142,16 @@ return [
 				},
 			],
 			'booking.counter.repository' => [
-				'className' => \Bitrix\Booking\Internals\Repository\Cache\Static\CounterRepository::class,
-				'constructorParams' => static function() {
-					return [
-						'implementation' => new \Bitrix\Booking\Internals\Repository\ORM\CounterRepository()
-					];
-				},
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\CounterRepository::class,
 			],
 			'booking.provider.manager' => [
-				'className' => \Bitrix\Booking\Integration\Booking\ProviderManager::class,
+				'className' => \Bitrix\Booking\Internals\Service\ProviderManager::class,
 			],
 			'booking.option.repository' => [
 				'className' => \Bitrix\Booking\Internals\Repository\ORM\OptionRepository::class,
+			],
+			'booking.message.sender' => [
+				'className' => \Bitrix\Booking\Internals\Service\Notifications\MessageSender::class,
 			],
 		],
 	],

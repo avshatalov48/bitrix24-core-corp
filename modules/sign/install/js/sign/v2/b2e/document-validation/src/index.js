@@ -1,8 +1,9 @@
 import { Tag, Loc, Extension } from 'main.core';
 import { RepresentativeSelector } from 'sign.v2.b2e.representative-selector';
-import { type Role, MemberRole } from 'sign.v2.api';
-import './style.css';
+import { type MemberRoleType, MemberRole } from 'sign.type';
 import { Helpdesk } from 'sign.v2.helper';
+
+import './style.css';
 
 const HelpdeskCodes = Object.freeze({
 	EditorRoleDetails: '19740766',
@@ -14,7 +15,7 @@ const currentUserId = Extension.getSettings('sign.v2.b2e.document-validation').g
 export class DocumentValidation
 {
 	#reviewerRepresentativeSelector: RepresentativeSelector;
-	#editorRepresentativeSelector: RepresentativeSelector;
+	editorRepresentativeSelector: RepresentativeSelector;
 
 	constructor()
 	{
@@ -26,7 +27,7 @@ export class DocumentValidation
 				</span>
 			`,
 		});
-		this.#editorRepresentativeSelector = new RepresentativeSelector({
+		this.editorRepresentativeSelector = new RepresentativeSelector({
 			context: `sign_b2e_representative_selector_editor_${currentUserId}`,
 			description: `
 				<span>
@@ -36,11 +37,11 @@ export class DocumentValidation
 		});
 	}
 
-	#getRepresentativeLayout(role: Role): HTMLElement
+	#getRepresentativeLayout(role: MemberRoleType): HTMLElement
 	{
 		const representativeSelector = role === MemberRole.reviewer
 			? this.#reviewerRepresentativeSelector
-			: this.#editorRepresentativeSelector;
+			: this.editorRepresentativeSelector;
 		const representativeLayout = representativeSelector.getLayout();
 		representativeSelector.formatSelectButton('ui-btn-xs ui-btn-round ui-btn-light-border');
 
@@ -61,11 +62,11 @@ export class DocumentValidation
 		return this.#getRepresentativeLayout(MemberRole.editor);
 	}
 
-	getValidationData(): { [key: Role]: number; }
+	getValidationData(): { [key: MemberRoleType]: number; }
 	{
 		const validationData = {};
 		const reviewerId = this.#reviewerRepresentativeSelector.getRepresentativeId();
-		const editorId = this.#editorRepresentativeSelector.getRepresentativeId();
+		const editorId = this.editorRepresentativeSelector.getRepresentativeId();
 		if (reviewerId)
 		{
 			validationData.reviewer = reviewerId;
@@ -79,11 +80,11 @@ export class DocumentValidation
 		return validationData;
 	}
 
-	load(memberId: number, role: Role): void
+	load(memberId: number, role: MemberRoleType): void
 	{
 		const representativeSelector = role === MemberRole.reviewer
 			? this.#reviewerRepresentativeSelector
-			: this.#editorRepresentativeSelector;
+			: this.editorRepresentativeSelector;
 		representativeSelector.load(memberId);
 	}
 }

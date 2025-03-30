@@ -5,36 +5,33 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Provider;
 
 use Bitrix\Booking\Entity\ResourceType\ResourceTypeCollection;
-use Bitrix\Booking\Internals\Query;
-use Bitrix\Booking\Internals\Query\ResourceType\ResourceTypeFilter;
-use Bitrix\Booking\Internals\Query\ResourceType\ResourceTypeSort;
+use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Entity;
+use Bitrix\Booking\Internals\Repository\ResourceTypeRepositoryInterface;
+use Bitrix\Booking\Provider\Params\GridParams;
 
 class ResourceTypeProvider
 {
-	public function getList(
-		int $userId,
-		int|null $limit = null,
-		int|null $offset = null,
-		array|null $filter = null,
-		array|null $sort = null,
-	): ResourceTypeCollection
-	{
-		$request = new Query\ResourceType\GetListRequest(
-			userId: $userId,
-			limit: $limit,
-			offset: $offset,
-			filter: new ResourceTypeFilter($filter ?? []),
-			sort: new ResourceTypeSort($sort ?? []),
-		);
+	private ResourceTypeRepositoryInterface $repository;
 
-		return (new Query\ResourceType\GetListHandler())($request);
+	public function __construct()
+	{
+		$this->repository = Container::getResourceTypeRepository();
+	}
+
+	public function getList(GridParams $gridParams, int $userId): ResourceTypeCollection
+	{
+		return $this->repository->getList(
+			limit: $gridParams->limit,
+			offset: $gridParams->offset,
+			filter: $gridParams->getFilter(),
+			sort: $gridParams->getSort(),
+			userId: $userId,
+		);
 	}
 
 	public function getById(int $userId, int $id): Entity\ResourceType\ResourceType|null
 	{
-		$response = (new Query\ResourceType\GetByIdHandler())($id, $userId);
-
-		return $response->resourceType;
+		return $this->repository->getById(id: $id, userId: $userId);
 	}
 }

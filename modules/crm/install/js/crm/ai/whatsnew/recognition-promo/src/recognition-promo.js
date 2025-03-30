@@ -15,6 +15,7 @@ export type RecognitionPromoOptions = {
 type RecognitionPromoEvents = {
 	onClickOnConnectButton?: Function;
 	onClickOnRemindLaterButton?: Function;
+	onClickOnClosePopup?: Function;
 	onShow?: Function;
 	onHide?: Function;
 };
@@ -45,12 +46,28 @@ export class RecognitionPromo
 		this.#popup?.close();
 	}
 
+	subscribe(eventName, callback):void
+	{
+		if (this.#popup === null)
+		{
+			this.#popup = this.#initPopup();
+		}
+
+		this.#popup.subscribe(eventName, callback);
+	}
+
+	shouldShowAgain(): boolean
+	{
+		const checkbox = document.getElementById('crm__ai-recognition-promo_checkbox_dont_show_again');
+		return checkbox ? !checkbox.checked : true;
+	}
+
 	#initPopup(): Popup
 	{
 		return new Popup({
 			content: this.#renderPopupContent(),
 			padding: 0,
-			width: 556,
+			width: 528,
 			noAllPaddings: true,
 			overlay: {
 				backgroundColor: '#000',
@@ -84,26 +101,30 @@ export class RecognitionPromo
 	{
 		return Tag.render`
 			<div class="crm__ai-recognition-promo">
-				<div class="crm__ai-recognition-promo_inner">
-					<header class="crm__ai-recognition-promo_header">
-						<div class="crm__ai-recognition-promo_header-left">
-							<div class="crm__ai-recognition-promo_header-icon">
-								${this.#renderHeaderCopilotIcon()}
-							</div>
-							<h4 class="crm__ai-recognition-promo_header-title">
-								${Loc.getMessage('RECOGNITION_PROMO_TITLE')}
-							</h4>
+				<header class="crm__ai-recognition-promo_header">
+					<div class="crm__ai-recognition-promo_header-left">
+						<div class="crm__ai-recognition-promo_header-icon">
+							${this.#renderHeaderCopilotIcon()}
 						</div>
+						<h4 class="crm__ai-recognition-promo_header-title">
+							${Loc.getMessage('RECOGNITION_PROMO_TITLE')}
+						</h4>
+					</div>
+					<div class="crm__ai-recognition-promo_header-close-button">
 						${this.#renderHidePopupButton()}
-					</header>
-					<main class="crm__ai-recognition-promo_content">
-						${this.#renderLottieAnimation()}
-						${this.#renderContentText()}
-					</main>
-					<footer class="crm__ai-recognition-promo_footer">
-						${this.#renderConnectTelephonyButton()}
-						${this.#renderRemindLaterButton()}
-					</footer>
+					</div>
+				</header>
+				<main class="crm__ai-recognition-promo_content">
+					${this.#renderLottieAnimation()}
+					${this.#renderContentText()}
+				</main>
+				<footer class="crm__ai-recognition-promo_footer">
+					${this.#renderConnectTelephonyButton()}
+					${this.#renderRemindLaterButton()}
+				</footer>
+				<div class="crm__ai-recognition-promo_checkbox_dont_show_again">
+					<input type="checkbox" id="crm__ai-recognition-promo_checkbox_dont_show_again">
+					<label>${Loc.getMessage('RECOGNITION_PROMO_DONT_SHOW_AGAIN')}</label>
 				</div>
 			</div>
 		`;
@@ -134,7 +155,13 @@ export class RecognitionPromo
 		`;
 
 		bind(button, 'click', () => {
-			this.hide();
+			if (this.#events?.onClickOnClosePopup)
+			{
+				this.#events.onClickOnClosePopup();
+			}
+			{
+				this.hide();
+			}
 		});
 
 		return button;
@@ -185,7 +212,7 @@ export class RecognitionPromo
 		});
 
 		bind(mainAnimation, 'enterFrame', (e) => {
-			if (confettiWereShown === false && e.currentTime > 200)
+			if (confettiWereShown === false && e.currentTime > 350)
 			{
 				confettiAnimation.play();
 				Dom.style(container.confetti, 'opacity', 1);
@@ -194,7 +221,7 @@ export class RecognitionPromo
 		});
 
 		bind(mainAnimation, 'enterFrame', (e) => {
-			if (e.currentTime > 250 && confettiWereShown === false)
+			if (e.currentTime > 350 && confettiWereShown === false)
 			{
 				confettiAnimation.play();
 				Dom.style(container.confetti, 'opacity', 1);
@@ -210,9 +237,9 @@ export class RecognitionPromo
 		const content = Loc.getMessage('RECOGNITION_PROMO_CONTENT', {
 			'[P]': '<p>',
 			'[/P]': '</p>',
-			'[LINK1]': '<a ref="link1" href="#">',
+			'[LINK1]': '<a ref="link1">',
 			'[/LINK1]': '</a>',
-			'[LINK2]': '<a ref="link2" href="#">',
+			'[LINK2]': '<a ref="link2">',
 			'[/LINK2]': '</a>',
 		});
 
@@ -231,7 +258,7 @@ export class RecognitionPromo
 		});
 
 		bind(container.link2, 'click', () => {
-			const articleCode = '19092894'; // todo replace with the real article code
+			const articleCode = '6450911'; // todo replace with the real article code
 
 			Helper?.show(`redirect=detail&code=${articleCode}`);
 		});

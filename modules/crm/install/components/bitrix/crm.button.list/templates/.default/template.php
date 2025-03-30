@@ -67,6 +67,8 @@ $APPLICATION->IncludeComponent(
 	]
 );
 
+echo \Bitrix\Crm\Tour\Permissions\Widget::getInstance()->build();
+
 ?>
 
 <div class="intranet-button-list-wrapper">

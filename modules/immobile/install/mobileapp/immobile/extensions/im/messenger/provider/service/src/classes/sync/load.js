@@ -14,6 +14,7 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 		AppStatus,
 		WaitingEntity,
 	} = require('im/messenger/const');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { runAction } = require('im/messenger/lib/rest');
@@ -42,6 +43,11 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 		{
 			/** @type {AppStatus['sync'] | AppStatus['backgroundSync']} */
 			this.syncMode = AppStatus.sync;
+		}
+
+		get emitter()
+		{
+			return serviceLocator.get('emitter');
 		}
 
 		/**
@@ -178,18 +184,18 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 
 			if (fillerOptions.shouldFillDatabase)
 			{
-				MessengerEmitter.emit(EventType.sync.requestResultReceived, {
+				this.emitter.emit(EventType.sync.requestResultReceived, [{
 					uuid: databaseRequestResultSavedUuid,
 					result,
-				}, ComponentCode.imMessenger);
+				}]);
 			}
 
 			if (fillerOptions.shouldFillChat)
 			{
-				MessengerEmitter.emit(EventType.sync.requestResultReceived, {
+				this.emitter.emit(EventType.sync.requestResultReceived, [{
 					uuid: messengerRequestResultSavedUuid,
 					result,
-				}, ComponentCode.imMessenger);
+				}]);
 			}
 
 			if (fillerOptions.shouldFillCopilot)

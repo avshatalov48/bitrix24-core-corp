@@ -7,6 +7,7 @@ use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Sign\Contract;
 use Bitrix\Sign\Item;
 use Bitrix\Sign\Item\Document;
+use Bitrix\Sign\Helper\CloneHelper;
 use Bitrix\Sign\Repository\DocumentRepository;
 use Bitrix\Sign\Repository\MemberRepository;
 use Bitrix\Sign\Result\CreateDocumentResult;
@@ -25,6 +26,7 @@ final class Copy implements Contract\Operation
 	public function __construct(
 		private readonly Item\Document $document,
 		private readonly int $createdByUserId,
+		private readonly ?int $templateId = null,
 		?DocumentService $documentService = null,
 		?DocumentRepository $documentRepository = null,
 		?MemberRepository $memberRepository = null,
@@ -54,7 +56,7 @@ final class Copy implements Contract\Operation
 
 		$this->updateDocumentProperties($this->document, $newDocument);
 		$result = $this->documentRepository->update($newDocument);
-		if (!$result->isSuccess())
+		if (!$result->isSuccess() || $newDocument->representativeId === null)
 		{
 			return $result;
 		}
@@ -75,20 +77,7 @@ final class Copy implements Contract\Operation
 		$newDocument->templateId = null;
 		$newDocument->createdById = $this->createdByUserId;
 		$newDocument->stoppedById = null;
-
-		// todo: make it with attributes and reflection
-		$newDocument->initiatedByType = $oldDocument->initiatedByType;
-		$newDocument->representativeId = $oldDocument->representativeId;
-		$newDocument->companyUid = $oldDocument->companyUid;
-		$newDocument->scenario = $oldDocument->scenario;
-		$newDocument->langId = $oldDocument->langId;
-		$newDocument->externalId = $oldDocument->externalId;
-		$newDocument->regionDocumentType = $oldDocument->regionDocumentType;
-		$newDocument->scheme = $oldDocument->scheme;
-		$newDocument->parties = $oldDocument->parties;
-		$newDocument->version = $oldDocument->version;
-		$newDocument->providerCode = $oldDocument->providerCode;
-		$newDocument->hcmLinkCompanyId = $oldDocument->hcmLinkCompanyId;
+		CloneHelper::copyPropertiesIfPossible($oldDocument, $newDocument);
 	}
 
 	private function registerAndUploadDocument(): CreateDocumentResult|Main\Result
@@ -101,6 +90,7 @@ final class Copy implements Contract\Operation
 			asTemplate: false,
 			initiatedByType: $this->document->initiatedByType,
 			createdById: $createdById,
+			templateId: $this->templateId,
 		);
 		if (!$result->isSuccess())
 		{

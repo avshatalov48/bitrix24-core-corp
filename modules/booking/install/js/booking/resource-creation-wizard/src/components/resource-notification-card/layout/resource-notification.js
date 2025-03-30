@@ -1,57 +1,75 @@
 import { Text } from 'main.core';
+import { mapGetters } from 'ui.vue3.vuex';
 import { hint } from 'ui.vue3.directives.hint';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.crm';
 import 'ui.hint';
 
+import { Button, ButtonSize, ButtonColor } from 'booking.component.button';
 import { Switcher } from 'booking.component.switcher';
-import { NotificationChannel } from 'booking.const';
-import { ChannelMenu } from '../channel-menu/channel-menu';
+import { Model, NotificationChannel, NotificationFieldsMap } from 'booking.const';
+import type { NotificationsModel, NotificationsTemplateModel } from 'booking.model.notifications';
 
-type Messenger = $Values<NotificationChannel>;
+import { ChannelMenu } from '../channel-menu/channel-menu';
+import { ChooseTemplatePopup } from '../choose-template-popup/choose-template-popup';
+import { TemplateEmpty } from '../template-empty/template-empty';
+import { CheckedForAll } from './components/checked-for-all';
+import { Description } from './components/description';
 
 export const ResourceNotification = {
 	name: 'ResourceNotification',
 	emits: ['update:checked'],
 	directives: { hint },
 	props: {
+		type: {
+			type: String,
+			required: true,
+		},
 		title: {
 			type: String,
 			required: true,
 		},
-		view: {
+		description: {
 			type: String,
+			required: true,
+		},
+		helpDesk: {
+			type: Object,
 			required: true,
 		},
 		checked: {
 			type: Boolean,
 			default: false,
 		},
-		hideSwitcher: {
-			type: Boolean,
-			default: false,
-		},
-		disableSwitcher: {
+		disabled: {
 			type: Boolean,
 			default: false,
 		},
 	},
-	data(): { messenger: Messenger }
+	data(): Object
 	{
 		return {
 			IconSet,
+			ButtonSize,
+			ButtonColor,
 			messenger: NotificationChannel.WhatsApp,
+			showTemplatePopup: false,
 		};
 	},
 	components: {
-		UiSwitcher: Switcher,
-		ChannelMenu,
+		Switcher,
 		Icon,
+		Button,
+		Description,
+		ChannelMenu,
+		ChooseTemplatePopup,
+		TemplateEmpty,
+		CheckedForAll,
 	},
 	created(): void
 	{
 		this.hintManager = BX.UI.Hint.createInstance({
-			id: this.containerId,
+			id: `brwc-notification-hint-${Text.getRandom(5)}`,
 			popupParameters: {
 				targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper'),
 			},
@@ -66,13 +84,38 @@ export const ResourceNotification = {
 		this.hintManager.init(this.$el);
 	},
 	computed: {
-		containerId(): string
+		...mapGetters({
+			resource: `${Model.ResourceCreationWizard}/getResource`,
+			isCurrentSenderAvailable: `${Model.Notifications}/isCurrentSenderAvailable`,
+		}),
+		model(): NotificationsModel
 		{
-			return `brwc-resource-notification-container-${Text.getRandom(5)}`;
+			return this.$store.getters[`${Model.Notifications}/getByType`](this.type);
 		},
-		templateHeader(): string
+		template(): NotificationsTemplateModel
 		{
-			return this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_TEXT');
+			const templateName = this.resource[this.templateTypeField];
+
+			return this.model.templates.find((template) => template.type === templateName);
+		},
+		messageTemplate(): string
+		{
+			return {
+				[NotificationChannel.WhatsApp]: this.template?.text ?? '',
+				[NotificationChannel.Sms]: this.template?.textSms ?? '',
+			}[this.messenger] ?? '';
+		},
+		hasTemplate(): boolean
+		{
+			return this.isCurrentSenderAvailable && this.messageTemplate;
+		},
+		disableSwitcher(): boolean
+		{
+			return this.disabled || !this.isCurrentSenderAvailable || !this.template;
+		},
+		templateTypeField(): string
+		{
+			return NotificationFieldsMap.TemplateType[this.type];
 		},
 		soonHint(): Object
 		{
@@ -100,41 +143,63 @@ export const ResourceNotification = {
 		},
 	},
 	template: `
-		<div class="ui-form resource-creation-wizard__form-notification">
+		<div class="ui-form resource-creation-wizard__form-notification" :class="{'--disabled': !checked}">
 			<div class="resource-creation-wizard__form-notification-info">
 				<div class="resource-creation-wizard__form-notification-info-title-row">
-					<Icon :name="IconSet.CHAT_LINE" :class="{'--disabled': !checked}"/>
-					<div
-						class="resource-creation-wizard__form-notification-info-title"
-						:class="{'--disabled': !checked}"
-					>
+					<Icon :name="IconSet.CHAT_LINE"/>
+					<div class="resource-creation-wizard__form-notification-info-title">
 						{{ title }}
 					</div>
-					<div
-						v-if="!hideSwitcher"
+					<Switcher
+						v-hint="disableSwitcher && soonHint"
 						class="resource-creation-wizard__form-notification-info-switcher"
-					>
-						<UiSwitcher
-							:data-id="'brcw-resource-notification-info-switcher-' + view"
-							:model-value="checked"
-							:disabled="disableSwitcher"
-							@update:model-value="$emit('update:checked', $event)"
-							v-hint="disableSwitcher && soonHint"
-						/>
-					</div>
+						:data-id="'brcw-resource-notification-info-switcher-' + type"
+						:model-value="checked"
+						:disabled="disableSwitcher"
+						@update:model-value="$emit('update:checked', $event)"
+					/>
 				</div>
 				<div class="resource-creation-wizard__form-notification-info-text-row">
 					<div class="resource-creation-wizard__form-notification__info-text-row-message-text">
-						{{ templateHeader }}
+						{{ loc('BRCW_NOTIFICATION_CARD_MESSAGE_TEXT') }}
 						<ChannelMenu
 							:current-channel="messenger"
-							@update:value="handleChannelChange"
+							@updateChannel="handleChannelChange"
 						/>
 					</div>
 				</div>
-				<slot name="notification-template" :messenger="messenger"/>
+				<template v-if="hasTemplate">
+					<div
+						v-html="messageTemplate"
+						class="resource-creation-wizard__form-notification-info-template"
+					></div>
+					<div class="resource-creation-wizard__form-notification-info-template-choose-buttons">
+						<div class="booking-resource-creation-wizard-choose-template-button" ref="chooseTemplateBtn">
+							<Button
+								:disabled="!checked"
+								:text="loc('BRCW_NOTIFICATION_CARD_CHOOSE_TEMPLATE_TYPE')"
+								:size="ButtonSize.EXTRA_SMALL"
+								:color="ButtonColor.LIGHT_BORDER"
+								:round="true"
+								@click="showTemplatePopup = true"
+							/>
+						</div>
+					</div>
+				</template>
+				<TemplateEmpty v-else/>
+				<ChooseTemplatePopup
+					v-if="showTemplatePopup"
+					:bindElement="$refs.chooseTemplateBtn"
+					:model="model"
+					:current-channel="messenger"
+					:currentTemplateType="resource[templateTypeField]"
+					@templateTypeSelected="handleTemplateTypeSelected"
+					@close="showTemplatePopup = false"
+				/>
 			</div>
+			<Description :description="description" :helpDesk="helpDesk"/>
 			<slot/>
+			<CheckedForAll :type="type" :disabled="!checked"/>
 		</div>
 	`,
 };

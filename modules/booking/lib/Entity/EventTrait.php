@@ -2,10 +2,10 @@
 
 namespace Bitrix\Booking\Entity;
 
-use Bitrix\Booking\Internals\EventIntersection\DatePeriodWithDatePeriod;
-use Bitrix\Booking\Internals\EventIntersection\RruleWithDatePeriod;
-use Bitrix\Booking\Internals\EventIntersection\RruleWithRrule;
-use Bitrix\Booking\Internals\Rrule;
+use Bitrix\Booking\Internals\Service\EventIntersection\DatePeriodWithDatePeriod;
+use Bitrix\Booking\Internals\Service\EventIntersection\RruleWithDatePeriod;
+use Bitrix\Booking\Internals\Service\EventIntersection\RruleWithRrule;
+use Bitrix\Booking\Internals\Service\Rrule;
 
 trait EventTrait
 {

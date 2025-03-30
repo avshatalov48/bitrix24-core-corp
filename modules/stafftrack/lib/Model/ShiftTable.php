@@ -7,6 +7,7 @@ use Bitrix\Main\ORM\Fields\DateField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\CascadePolicy;
+use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Fields\TextField;
 use Bitrix\Main\ORM\Query\Join;
@@ -153,6 +154,21 @@ class ShiftTable extends DataManager
 				->configureJoinType(Join::TYPE_LEFT)
 				->configureCascadeDeletePolicy(CascadePolicy::NO_ACTION)
 			,
+			(new Reference(
+				'GEO_INNER',
+				ShiftGeoTable::class,
+				Join::on('this.ID', 'ref.SHIFT_ID')
+			))
+				->configureJoinType(Join::TYPE_INNER)
+				->configureCascadeDeletePolicy(CascadePolicy::NO_ACTION)
+			,
+			(new OneToMany(
+				'MESSAGES',
+				ShiftMessageTable::class,
+				'SHIFT',
+			))
+				->configureJoinType(Join::TYPE_LEFT)
+				->configureCascadeDeletePolicy(CascadePolicy::NO_ACTION)
 		];
 	}
 }

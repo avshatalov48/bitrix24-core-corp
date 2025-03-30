@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports,main_core_cache,main_core_events,sign_v2_api,ui_forms,sign_v2_b2e_signLink,main_core,ui_datePicker,ui_formElements_view) {
+(function (exports,main_core_cache,main_core_events,sign_v2_api,sign_type,ui_forms,sign_v2_b2e_signLink,main_core,ui_datePicker,ui_formElements_view) {
 	'use strict';
 
 	let _ = t => t,
@@ -283,7 +283,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	        babelHelpers.classPrivateFieldLooseBase(this, _hideProgress)[_hideProgress]();
 	        return false;
 	      }
-	      if (status === sign_v2_api.MemberStatus.ready || status === sign_v2_api.MemberStatus.stoppableReady) {
+	      if (status === sign_type.MemberStatus.ready || status === sign_type.MemberStatus.stoppableReady) {
 	        pending = false;
 	      }
 	    } while (pending);
@@ -484,5 +484,5 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 
 	exports.SubmitDocumentInfo = SubmitDocumentInfo;
 
-}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX.Cache,BX.Event,BX.Sign.V2,BX,BX.Sign.V2.B2e,BX,BX.UI.DatePicker,BX.UI.FormElements));
+}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX.Cache,BX.Event,BX.Sign.V2,BX.Sign,BX,BX.Sign.V2.B2e,BX,BX.UI.DatePicker,BX.UI.FormElements));
 //# sourceMappingURL=submit-document-info.bundle.js.map

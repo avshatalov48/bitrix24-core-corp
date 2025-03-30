@@ -165,7 +165,7 @@ class RestMarketDetail extends CBitrixComponent
 
 		$appBySubscription = isset($this->arResult['APP']['BY_SUBSCRIPTION']) && $this->arResult['APP']['BY_SUBSCRIPTION'] === 'Y';
 
-		if (!$this->arResult['REST_ACCESS'] || ($appBySubscription && !Client::isSubscriptionAvailable())) {
+		if (!$this->arResult['REST_ACCESS'] && !Access::isAllowFreeApp($this->arResult['APP']) || ($appBySubscription && !Client::isSubscriptionAvailable())) {
 			$this->arResult['ACCESS_HELPER_CODE'] = Access::getHelperCode(Access::ACTION_INSTALL, Access::ENTITY_TYPE_APP, $this->arResult['APP']);
 		}
 

@@ -3531,44 +3531,19 @@ this.BX = this.BX || {};
 	      required: true
 	    }
 	  },
-	  mounted: function mounted() {
-	    var _this$$root$$app$opti;
-	    var tourOptions = this.$root.$app.options.terminalTour;
-	    if (tourOptions['step-2-shown'] !== 'Y' && ((_this$$root$$app$opti = this.$root.$app.options.payment) === null || _this$$root$$app$opti === void 0 ? void 0 : _this$$root$$app$opti.PAID) !== 'Y') {
-	      main_core.Runtime.loadExtension('ui.tour').then(function (exports) {
-	        var Guide = exports.Guide;
-	        var guide = new Guide({
-	          steps: [{
-	            target: document.querySelector('#salescenterResponsibleSelector'),
-	            text: main_core.Loc.getMessage('SALESCENTER_TERMINAL_TOUR_STEP_2_TEXT'),
-	            position: 'bottom',
-	            article: '18537646'
-	          }],
-	          onEvents: true,
-	          events: {
-	            onFinish: function onFinish() {
-	              main_core.userOptions.save('salescenter.tour', 'crm-terminal-tour', 'step-2-shown', 'Y');
-	            }
-	          }
-	        });
-	        guide.getPopup().setAutoHide(true);
-	        guide.showNextStep();
-	      });
-	    }
-	  },
 	  data: function data() {
-	    var _this$$root$$app$opti2, _this$$root$$app$opti3, _this$$root$$app$opti4;
+	    var _this$$root$$app$opti, _this$$root$$app$opti2, _this$$root$$app$opti3;
 	    var stages = {
 	      responsible: {
 	        status: salescenter_component_stageBlock.StatusTypes.complete,
-	        selectedUser: parseInt((_this$$root$$app$opti2 = this.$root.$app.options.paymentResponsible) !== null && _this$$root$$app$opti2 !== void 0 ? _this$$root$$app$opti2 : 0),
+	        selectedUser: parseInt((_this$$root$$app$opti = this.$root.$app.options.paymentResponsible) !== null && _this$$root$$app$opti !== void 0 ? _this$$root$$app$opti : 0),
 	        responsible: this.$root.$app.options.entityResponsible,
 	        isMobileInstalledForResponsible: this.$root.$app.options.isMobileInstalledForResponsible,
 	        contact: {
 	          name: this.$root.$app.options.contactName,
 	          phone: this.$root.$app.options.contactPhone
 	        },
-	        editable: this.$root.$app.options.templateMode === 'create' || ((_this$$root$$app$opti3 = this.$root.$app.options.payment) === null || _this$$root$$app$opti3 === void 0 ? void 0 : _this$$root$$app$opti3.PAID) === 'N',
+	        editable: this.$root.$app.options.templateMode === 'create' || ((_this$$root$$app$opti2 = this.$root.$app.options.payment) === null || _this$$root$$app$opti2 === void 0 ? void 0 : _this$$root$$app$opti2.PAID) === 'N',
 	        hintTitle: this.$root.$app.options.templateMode === 'view' ? '' : main_core.Loc.getMessage('SALESCENTER_HOW_TERMINAL_WORKS')
 	      },
 	      product: {
@@ -3611,7 +3586,7 @@ this.BX = this.BX || {};
 	    if (this.$root.$app.options.paySystemList.groups) {
 	      stages.paysystem.groups = this.getTileGroupsCollection(this.$root.$app.options.paySystemList.groups, stages.paysystem.tiles);
 	    }
-	    if (this.$root.$app.options.templateMode === 'view' && ((_this$$root$$app$opti4 = this.$root.$app.options.payment) === null || _this$$root$$app$opti4 === void 0 ? void 0 : _this$$root$$app$opti4.PAID) === 'Y') {
+	    if (this.$root.$app.options.templateMode === 'view' && ((_this$$root$$app$opti3 = this.$root.$app.options.payment) === null || _this$$root$$app$opti3 === void 0 ? void 0 : _this$$root$$app$opti3.PAID) === 'Y') {
 	      stages.responsible.title = main_core.Loc.getMessage('SALESCENTER_PAYMENT_RESPONSIBLE_SELECTOR_BLOCK_TITLE_PAID_VIEW');
 	    } else {
 	      stages.responsible.title = main_core.Loc.getMessage('SALESCENTER_PAYMENT_RESPONSIBLE_SELECTOR_BLOCK_TITLE');
@@ -3758,24 +3733,6 @@ this.BX = this.BX || {};
 	    'deal-creating-shipment': StageBlocksListShipment,
 	    'deal-terminal-payment': TerminalStageBlocksList,
 	    'start': Start
-	  },
-	  mounted: function mounted() {
-	    var tourOptions = this.$root.$app.options.terminalTour;
-	    if (tourOptions['step-1-shown'] !== 'Y' && tourOptions['step-2-shown'] !== 'Y' && this.activeMenuItem !== ModeDictionary.terminalPayment && this.initialMode !== ModeDictionary.terminalPayment) {
-	      main_core.Runtime.loadExtension('spotlight').then(function (exports) {
-	        var spotlight = new BX.SpotLight({
-	          id: 'terminal-tour-spotlight',
-	          targetElement: document.querySelector('.salescenter-menu-terminal-payment'),
-	          autoSave: true,
-	          targetVertex: 'middle-center',
-	          zIndex: 200,
-	          left: -40
-	        });
-	        spotlight.show();
-	        spotlight.container.style.pointerEvents = "none";
-	        main_core.userOptions.save('salescenter.tour', 'crm-terminal-tour', 'step-1-shown', 'Y');
-	      });
-	    }
 	  },
 	  methods: {
 	    reload: function reload(form) {

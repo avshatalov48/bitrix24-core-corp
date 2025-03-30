@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Entity\Slot;
 
 use Bitrix\Booking\Entity\BaseEntityCollection;
-use Bitrix\Booking\Internals\Time;
+use Bitrix\Booking\Internals\Service\Time;
 use DateTimeImmutable;
 
 /**

@@ -1,17 +1,55 @@
 import { memberRoles } from 'humanresources.company-structure.api';
+import type { Item } from 'ui.entity-selector';
 
-type UserData = {
+export type UserData = {
 	id: number,
 	avatar: ?string,
 	name: string,
 	workPosition: ?string,
 	role: string,
+	url: string,
+	isInvited: boolean,
+	nodeId?: number,
 };
 
-export const getUserStoreItemByDialogItem = (item, role): UserData => {
+type InvitedUserItem = {
+	customData: {
+		email: string;
+		invited: boolean;
+		lastName?: string;
+		name?: string;
+		login: string;
+		nodeId: number;
+	},
+	entityId: string,
+	entityType: string,
+	id: number,
+	title: String,
+	tabs: string[],
+};
+
+export const getInvitedUserData = (item: InvitedUserItem): UserData => {
+	const { id, title, customData } = item;
+	const { nodeId } = customData;
+
+	return {
+		id,
+		avatar: '',
+		name: title,
+		workPosition: '',
+		role: memberRoles.employee,
+		url: `/company/personal/user/${id}/`,
+		isInvited: true,
+		nodeId,
+	};
+};
+
+export const getUserDataBySelectorItem = (item: Item, role: string): UserData => {
 	const { id, avatar, title, customData } = item;
-	const link = item.getLink();
+	item.setLink(null);
+	const link = item.getLink() ?? '';
 	const workPosition = customData.get('position') ?? '';
+	const isInvited = customData.get('invited') ?? false;
 
 	return {
 		id,
@@ -20,63 +58,6 @@ export const getUserStoreItemByDialogItem = (item, role): UserData => {
 		workPosition,
 		role,
 		url: link,
+		isInvited,
 	};
-};
-
-export const moveUserStoreToAnotherDepartment = (departments, nodeId, userId, targetNodeId, role) => {
-	const department = departments.get(nodeId);
-	if (!department)
-	{
-		return;
-	}
-
-	let user = null;
-	department.userCount -= 1;
-	if (role === memberRoles.employee)
-	{
-		user = department.employees.find((employee) => employee.id === userId);
-		department.employees = department.employees.filter((employee) => employee.id !== userId);
-	}
-	else
-	{
-		user = department.heads.find((head) => head.id === userId);
-		department.heads = department.heads.filter((head) => head.id !== userId);
-	}
-
-	if (!user)
-	{
-		return;
-	}
-
-	const targetDepartment = departments.get(targetNodeId);
-	if (!targetDepartment)
-	{
-		return;
-	}
-
-	targetDepartment.userCount += 1;
-	user.role = memberRoles.employee;
-	if (!targetDepartment.employees)
-	{
-		return;
-	}
-	targetDepartment.employees.push(user);
-};
-
-export const removeUserFromStore = (departments, nodeId, userId, role) => {
-	const department = departments.get(nodeId);
-	if (!department)
-	{
-		return;
-	}
-
-	department.userCount -= 1;
-	if (role === memberRoles.employee)
-	{
-		department.employees = department.employees.filter((employee) => employee.id !== userId);
-
-		return;
-	}
-
-	department.heads = department.heads.filter((head) => head.id !== userId);
 };

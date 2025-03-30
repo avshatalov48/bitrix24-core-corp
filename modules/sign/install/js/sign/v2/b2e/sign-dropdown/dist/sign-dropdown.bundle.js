@@ -43,7 +43,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    const {
 	      className,
 	      withCaption,
-	      isEnableSearch
+	      isEnableSearch,
+	      width,
+	      height
 	    } = dialogOptions;
 	    const _titleNode = withCaption ? main_core.Tag.render(_t || (_t = _`
 				<div class="sign-b2e-dropdown__text">
@@ -64,8 +66,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    }, _titleNode);
 	    babelHelpers.classPrivateFieldLooseBase(this, _selector)[_selector] = new ui_entitySelector.Dialog({
 	      targetNode: babelHelpers.classPrivateFieldLooseBase(this, _dom)[_dom],
-	      width: 500,
-	      height: 350,
+	      width: width != null ? width : 500,
+	      height: height != null ? height : 350,
 	      showAvatars: false,
 	      dropdownMode: true,
 	      multiple: false,

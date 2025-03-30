@@ -38,25 +38,23 @@ this.BX.Booking = this.BX.Booking || {};
 	    loading: Boolean,
 	    hiddenText: Boolean
 	  },
-	  data() {
-	    return {
-	      switcher: new ui_switcher.Switcher({
-	        id: this.id,
-	        inputName: this.inputName,
-	        checked: this.modelValue,
-	        size: this.size,
-	        color: this.color,
-	        disabled: this.disabled,
-	        loading: this.loading,
-	        handlers: {
-	          toggled: this.toggle,
-	          checked: this.checked,
-	          unchecked: this.unchecked,
-	          lock: this.lock,
-	          unlock: this.unlock
-	        }
-	      })
-	    };
+	  beforeCreate() {
+	    this.switcher = new ui_switcher.Switcher({
+	      id: this.id,
+	      inputName: this.inputName,
+	      checked: this.modelValue,
+	      size: this.size,
+	      color: this.color,
+	      disabled: this.disabled,
+	      loading: this.loading,
+	      handlers: {
+	        toggled: this.toggle,
+	        checked: this.checked,
+	        unchecked: this.unchecked,
+	        lock: this.lock,
+	        unlock: this.unlock
+	      }
+	    });
 	  },
 	  mounted() {
 	    this.switcher.renderTo(this.$refs.switcherWrapper);
@@ -85,9 +83,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      const elOff = node.querySelector('.ui-switcher-disabled');
 	      if (hidden) {
 	        main_core.Dom.addClass(elOn, 'switcher-transparent-text');
-	        main_core.Dom.addClass(elOn, 'switcher-transparent-text');
+	        main_core.Dom.addClass(elOff, 'switcher-transparent-text');
 	      } else {
-	        main_core.Dom.removeClass(elOff, 'switcher-transparent-text');
+	        main_core.Dom.removeClass(elOn, 'switcher-transparent-text');
 	        main_core.Dom.removeClass(elOff, 'switcher-transparent-text');
 	      }
 	    }

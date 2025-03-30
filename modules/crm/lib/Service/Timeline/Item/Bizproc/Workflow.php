@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Service\Timeline\Item\Bizproc;
 
 use Bitrix\Bizproc\Workflow\Entity\WorkflowDurationStatTable;
+use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Redirect;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Main\Localization\Loc;

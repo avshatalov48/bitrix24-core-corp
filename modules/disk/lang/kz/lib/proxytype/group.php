@@ -1,0 +1,3 @@
+<?php
+$MESS["DISK_PROXY_TYPE_COLLAB_GROUP_TITLE"] = "Файлдар";
+$MESS["DISK_PROXY_TYPE_GROUP_TITLE"] = "Диск";

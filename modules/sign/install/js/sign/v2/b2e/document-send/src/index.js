@@ -1,21 +1,23 @@
 import { Tag, Loc, Type, Dom } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
-import type { DocumentModeType } from 'sign.v2.sign-settings';
 import { type DocumentDetails } from 'sign.v2.document-setup';
 import { isTemplateMode } from 'sign.v2.sign-settings';
 import { UserParty } from 'sign.v2.b2e.user-party';
-import { ReminderSelector, type Options as ReminderOptions, ReminderType } from 'sign.v2.b2e.reminder-selector';
+import { ReminderSelector, type Options as ReminderOptions } from 'sign.v2.b2e.reminder-selector';
+import type { MemberRoleType, DocumentModeType } from 'sign.type';
+import { MemberRole, Reminder } from 'sign.type';
 import { Item, EntityTypes } from './item';
-import { Api, type Role, MemberRole } from 'sign.v2.api';
+import { Api } from 'sign.v2.api';
 import { DocumentSummary } from 'sign.v2.document-summary';
 import { LangSelector } from 'sign.v2.lang-selector';
 import type { PartiesData, DocumentData } from './type';
 import type { DocumentSendConfig } from 'sign.v2.b2b.document-send';
 import { Hint } from 'sign.v2.helper';
 import { ProgressBar } from 'ui.progressbar';
-import './style.css';
-import { HcmLinkMapping } from 'sign.v2.b2e.hcm-link-mapping';
+import { HcmLinkPartyChecker } from 'sign.v2.b2e.hcm-link-party-checker';
 import type { Analytics } from 'sign.v2.analytics';
+
+import './style.css';
 
 export type CommunicationType = 'idle' | 'phone' | 'email';
 
@@ -29,12 +31,12 @@ type Member = {
 	presetId: number,
 	part: number,
 	uid: string,
-	role: Role,
+	role: MemberRoleType,
 };
 
-const ReminderSelectorOptionsByRole: Record<Role, ReminderOptions> = {
-	[MemberRole.assignee]: { preSelectedType: ReminderType.oncePerDay },
-	[MemberRole.signer]: { preSelectedType: ReminderType.twicePerDay },
+const ReminderSelectorOptionsByRole: Record<MemberRoleType, ReminderOptions> = {
+	[MemberRole.assignee]: { preSelectedType: Reminder.oncePerDay },
+	[MemberRole.signer]: { preSelectedType: Reminder.twicePerDay },
 };
 
 const idleCommunication: CommunicationType = 'idle';
@@ -82,14 +84,13 @@ export class DocumentSend extends EventEmitter
 	#progressOverlay: ?HTMLElement;
 	#progressContainer: ?HTMLElement;
 	#itemsToHide: Array<HTMLElement> = [];
-	#reminderSelectorByRole: Record<Role, ReminderSelector> = {};
+	#reminderSelectorByRole: Record<MemberRoleType, ReminderSelector> = {};
 	#documentMode: DocumentModeType;
 	#isExistingTemplate: boolean = false;
 
-	#hcmLinkMapping: HcmLinkMapping;
 	#analytics: ?Analytics;
 
-	#hcmLinkEnabled: boolean = false;
+	#hcmLinkPartyChecker: HcmLinkPartyChecker | null = null;
 
 	constructor(documentSendConfig: DocumentSendConfig)
 	{
@@ -128,15 +129,18 @@ export class DocumentSend extends EventEmitter
 			colorTrack: '#dfe3e6',
 		});
 
-		[MemberRole.assignee, MemberRole.signer].forEach((role: Role) => {
+		[MemberRole.assignee, MemberRole.signer].forEach((role: MemberRoleType) => {
 			this.#getOrCreateReminderSelectorForRole(role);
 		});
 
-		this.#hcmLinkMapping = new HcmLinkMapping({
-			api: new Api(),
-		});
-
-		this.#hcmLinkMapping.subscribe('validUpdate', (event) => this.#onHcmLinkMappingValidUpdate(event))
+		if (!this.#isTemplateMode())
+		{
+			this.#hcmLinkPartyChecker = new HcmLinkPartyChecker({
+			    api: new Api(),
+		    });
+			
+			this.#hcmLinkPartyChecker.subscribe('updateValidation', (event) => this.#onHcmLinkCheckerUpdateValidation(event));
+		}
 	}
 
 	get documentData(): DocumentData
@@ -146,7 +150,7 @@ export class DocumentSend extends EventEmitter
 
 	set hcmLinkEnabled(value: boolean): void
 	{
-		this.#hcmLinkEnabled = value;
+		this.#hcmLinkPartyChecker?.setEnabled(value);
 	}
 
 	set documentData(documentData: Map<string, DocumentDetails>)
@@ -159,11 +163,13 @@ export class DocumentSend extends EventEmitter
 		this.#documentData = documentData;
 
 		const lastUid = [...documentData.values()].pop().uid;
+		const documentGroupUids = Array.from(documentData.keys());
 
 		this.#langSelector.setDocumentUid(lastUid);
 		this.#items.employees.setDocumentUid(lastUid);
-		this.#hcmLinkMapping.setEnabled(this.#hcmLinkEnabled);
-		this.#hcmLinkMapping.setDocumentUid(lastUid);
+
+		this.#hcmLinkPartyChecker?.setDocumentGroupUids(documentGroupUids);
+		void this.#hcmLinkPartyChecker?.check();
 	}
 
 	#getCompanyCommunication(): CommunicationType | null
@@ -249,7 +255,7 @@ export class DocumentSend extends EventEmitter
 						${this.#getCommunicationsLayout('employee')}
 						${this.#getReminderSelectorLayout(MemberRole.signer)}
 					</div>
-					${this.#hcmLinkMapping.render()}
+					${this.#hcmLinkPartyChecker.render()}
 				</div>
 			`;
 			this.#itemsToHide.push(usersLayout);
@@ -582,7 +588,7 @@ export class DocumentSend extends EventEmitter
 		this.emit('showPreview');
 	}
 
-	#getReminderSelectorLayout(role: Role): HTMLElement
+	#getReminderSelectorLayout(role: MemberRoleType): HTMLElement
 	{
 		return Tag.render`
 			<div class="sign-b2e-send__reminder-selector">
@@ -594,7 +600,7 @@ export class DocumentSend extends EventEmitter
 		`;
 	}
 
-	#getOrCreateReminderSelectorForRole(role: Role): ReminderSelector
+	#getOrCreateReminderSelectorForRole(role: MemberRoleType): ReminderSelector
 	{
 		this.#reminderSelectorByRole[role] ??= new ReminderSelector(ReminderSelectorOptionsByRole[role] ?? {});
 
@@ -631,14 +637,14 @@ export class DocumentSend extends EventEmitter
 		return this.documentData.values().next().value.groupId;
 	}
 
-	#onHcmLinkMappingValidUpdate(event: BaseEvent): void
+	#onHcmLinkCheckerUpdateValidation(event: BaseEvent): void
 	{
-		const enableComplete = event?.data.value ?? false;
+		const enableComplete = event?.data ?? false;
 
 		this.emit(
 			enableComplete
 				? 'enableComplete'
-				: 'disableComplete'
+				: 'disableComplete',
 		);
 	}
 }

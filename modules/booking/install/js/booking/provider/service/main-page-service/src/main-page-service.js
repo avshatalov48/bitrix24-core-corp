@@ -52,7 +52,7 @@ class MainPageService
 		const data = await new ApiClient().get('MainPage.get', { dateTs });
 		const extractor = new MainPageDataExtractor(data);
 
-		resourcesDateCache.upsertIds(dateTs, extractor.getResources().map((it) => it.id));
+		resourcesDateCache.upsertIds(dateTs, extractor.getFavoriteIds());
 
 		await Promise.all([
 			Core.getStore().dispatch(`${Model.Favorites}/set`, extractor.getFavoriteIds()),

@@ -31,36 +31,6 @@ export default {
 			required: true,
 		},
 	},
-	mounted()
-	{
-		const tourOptions = this.$root.$app.options.terminalTour;
-		if (tourOptions['step-2-shown'] !== 'Y' && this.$root.$app.options.payment?.PAID !== 'Y')
-		{
-			Runtime.loadExtension('ui.tour').then((exports) => {
-				const { Guide } = exports;
-				const guide = new Guide({
-					steps: [
-						{
-							target: document.querySelector('#salescenterResponsibleSelector'),
-							text: Loc.getMessage('SALESCENTER_TERMINAL_TOUR_STEP_2_TEXT'),
-							position: 'bottom',
-							article: '18537646',
-						},
-					],
-					onEvents: true,
-					events: {
-						onFinish: () => {
-							UserOptions.save('salescenter.tour', 'crm-terminal-tour', 'step-2-shown', 'Y');
-						},
-					},
-				});
-
-				guide.getPopup().setAutoHide(true);
-
-				guide.showNextStep();
-			});
-		}
-	},
 	data()
 	{
 		const stages = {

@@ -4,7 +4,12 @@
 jn.define('layout/ui/fields/number', (require, exports, module) => {
 	const { StringFieldClass } = require('layout/ui/fields/string');
 	const { PropTypes } = require('utils/validation');
+	const { parseAmount } = require('utils/number');
 	const { stringify } = require('utils/string');
+	const { isEqual } = require('utils/object');
+
+	const isIOS = Application.getPlatform() === 'ios';
+	const API_VERSION = Application.getApiVersion();
 
 	/** @var NumberPrecision */
 	const Types = {
@@ -26,6 +31,58 @@ jn.define('layout/ui/fields/number', (require, exports, module) => {
 	 */
 	class NumberField extends StringFieldClass
 	{
+		shouldComponentUpdate(nextProps, nextState)
+		{
+			if (API_VERSION < 58)
+			{
+				return super.shouldComponentUpdate(nextProps, nextState);
+			}
+
+			nextState = Array.isArray(nextState) ? nextState[0] : nextState;
+
+			let prevPropsToCompare = this.props;
+			let nextPropsToCompare = nextProps;
+
+			if (this.fieldValue !== null)
+			{
+				const fieldValue = parseAmount(
+					this.fieldValue,
+					'.',
+					this.getGroupSeparatorSeparator(),
+				);
+				const nextAmount = parseAmount(
+					nextProps.value,
+					isIOS ? '.' : nextProps.config.decimalSeparator || '.',
+					nextProps.config.groupSeparator || ' ',
+				);
+
+				this.fieldValue = null;
+
+				if (!isEqual(fieldValue, nextAmount) && !isNaN(nextAmount) && !isNaN(fieldValue))
+				{
+					this.logComponentDifference({ value: fieldValue }, { value: nextAmount }, null, null);
+
+					return true;
+				}
+
+				const { value: prevValue, ...prevPropsWithoutValue } = this.props;
+				const { value: nextValue, ...nextPropsWithoutValue } = nextProps;
+
+				prevPropsToCompare = prevPropsWithoutValue;
+				nextPropsToCompare = nextPropsWithoutValue;
+			}
+
+			const hasChanged = !isEqual(prevPropsToCompare, nextPropsToCompare) || !isEqual(this.state, nextState);
+			if (hasChanged)
+			{
+				this.logComponentDifference(prevPropsToCompare, nextPropsToCompare, this.state, nextState);
+
+				return true;
+			}
+
+			return false;
+		}
+
 		renderReadOnlyContent()
 		{
 			return View(
@@ -80,6 +137,16 @@ jn.define('layout/ui/fields/number', (require, exports, module) => {
 			};
 		}
 
+		getDecimalSeparator()
+		{
+			return BX.prop.getString(this.getConfig(), 'decimalSeparator', '.');
+		}
+
+		getGroupSeparatorSeparator()
+		{
+			return BX.prop.getString(this.getConfig(), 'groupSeparator', ' ');
+		}
+
 		shouldShowToolbar()
 		{
 			return BX.prop.getBoolean(this.props, 'shouldShowToolbar', true);
@@ -88,18 +155,20 @@ jn.define('layout/ui/fields/number', (require, exports, module) => {
 		getFormatConfig()
 		{
 			const config = this.getConfig();
+			const groupSeparator = this.getGroupSeparatorSeparator();
+			const useGroupSeparator = BX.prop.getBoolean(config, 'useGroupSeparator', false);
 
 			const formatConfig = {
 				decimalDigits: BX.prop.getInteger(config, 'precision', 0),
-				decimalSeparator: BX.prop.getString(config, 'decimalSeparator', '.'),
+				decimalSeparator: this.getDecimalSeparator(),
 				hideZero: BX.prop.getBoolean(config, 'hideZero', true),
-				useGroupSeparator: BX.prop.getBoolean(config, 'useGroupSeparator', false),
+				useGroupSeparator: groupSeparator === '' ? false : useGroupSeparator,
 			};
 
 			if (formatConfig.useGroupSeparator)
 			{
 				formatConfig.groupSize = BX.prop.getInteger(config, 'groupSize', 0);
-				formatConfig.groupSeparator = BX.prop.getString(config, 'groupSeparator', ' ');
+				formatConfig.groupSeparator = this.getGroupSeparatorSeparator();
 			}
 
 			return formatConfig;
@@ -119,7 +188,15 @@ jn.define('layout/ui/fields/number', (require, exports, module) => {
 
 		isNumber(text)
 		{
-			return !isNaN(Number(text));
+			let preparedValue = text;
+			if (typeof preparedValue === 'string' && preparedValue !== '' && API_VERSION > 57)
+			{
+				preparedValue = isIOS
+					? Number(preparedValue)
+					: parseAmount(text, this.getDecimalSeparator(), this.getGroupSeparatorSeparator());
+			}
+
+			return !isNaN(Number(preparedValue));
 		}
 
 		isInteger(value)

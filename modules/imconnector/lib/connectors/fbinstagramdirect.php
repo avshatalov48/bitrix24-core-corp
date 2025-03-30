@@ -2,19 +2,14 @@
 namespace Bitrix\ImConnector\Connectors;
 
 use Bitrix\Main\Loader;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
-
 use Bitrix\ImConnector\Chat;
 use Bitrix\ImConnector\Result;
 use Bitrix\ImConnector\Library;
-
 use Bitrix\ImOpenLines\Session;
-
-use Bitrix\UI;
-
 use Bitrix\Im\Model\MessageTable;
 
-Loc::loadMessages(__FILE__);
 
 /**
  * Class FbInstagramDirect
@@ -22,7 +17,8 @@ Loc::loadMessages(__FILE__);
  */
 class FbInstagramDirect extends InstagramBase
 {
-	//User
+	//region User
+
 	/**
 	 * @param array $params
 	 * @param Result $result
@@ -38,7 +34,10 @@ class FbInstagramDirect extends InstagramBase
 		return $result;
 	}
 
-	//Input
+	//endregion
+
+	//region Input
+
 	/**
 	 * @param $message
 	 * @param $line
@@ -46,7 +45,7 @@ class FbInstagramDirect extends InstagramBase
 	 */
 	public function processingInputNewMessage($message, $line): Result
 	{
-		if(!empty($message['message']['unsupported_message']))
+		if (!empty($message['message']['unsupported_message']))
 		{
 			unset($message['message']['unsupported_message']);
 
@@ -54,13 +53,13 @@ class FbInstagramDirect extends InstagramBase
 		}
 		else
 		{
-			if($message['extra']['comment'] === true)
+			if ($message['extra']['comment'] === true)
 			{
 				$message['extra']['last_message_id'] = $message['message']['id'];
 
 				$message = $this->processingLastMessage($message);
 
-				if(!empty($message['message']['url']))
+				if (!empty($message['message']['url']))
 				{
 					$message['message']['description'] =
 						Loc::getMessage('IMCONNECTOR_MESSAGE_LINK_COMMENT_MEDIA_INSTAGRAM', [
@@ -80,50 +79,34 @@ class FbInstagramDirect extends InstagramBase
 
 		return parent::processingInputNewMessage($message, $line);
 	}
-	//END Input
 
-	//Output
+	//endregion
+
+	//region Output
+
 	/**
 	 * @param array $message
-	 * @param $line
+	 * @param int $lineId
 	 * @return array
 	 */
-	public function sendMessageProcessing(array $message, $line): array
+	public function sendMessageProcessing(array $message, $lineId): array
 	{
-		$message = parent::sendMessageProcessing($message, $line);
+		$message = parent::sendMessageProcessing($message, $lineId);
 
-		if(!Library::isEmpty($message['message']['text']))
+		if (!Library::isEmpty($message['message']['text']))
 		{
-			$lastMessageId = Chat::getChatLastMessageId($message['chat']['id'], $this->idConnector);
-
-			if (!empty($lastMessageId))
+			$lastMessageId = $this->clearLastExtMessage($message['chat']['id']);
+			if ($lastMessageId)
 			{
 				$message['extra']['comment_id'] = $lastMessageId;
-
-				Chat::deleteLastMessage($message['chat']['id'], $this->idConnector);
 			}
 		}
 
-		if (
-			!empty($message['im']['message_id'])
-			&& $message['im']['message_id'] > 0
-			&& $this->isHumanAgent($line) === true
-			&& Loader::includeModule('im')
-		)
+		$messageId = (int)($message['im']['message_id'] ?? 0);
+		if ($messageId && $this->isHumanAgent($lineId))
 		{
-			$raw = MessageTable::getList([
-				'select' => [
-					'AUTHOR_ID'
-				],
-				'filter' => [
-					'=ID' => (int)$message['im']['message_id'],
-				]
-			]);
-
-			if (
-				($row = $raw->fetch())
-				&& !empty($row['AUTHOR_ID'])
-			)
+			$chatMessage = $this->getMessageById($messageId);
+			if (!empty($chatMessage['AUTHOR_ID']))
 			{
 				$message['message']['long'] = true;
 			}
@@ -158,7 +141,10 @@ class FbInstagramDirect extends InstagramBase
 
 		return $result;
 	}
-	//END Output
+
+	//endregion
+
+	//region Error
 
 	/**
 	 * @param $paramsError
@@ -167,66 +153,196 @@ class FbInstagramDirect extends InstagramBase
 	 */
 	protected function receivedErrorNotSendMessageChat($paramsError, string $message = ''): bool
 	{
-		if (
-			!empty($paramsError['params'])
-			&& Loader::includeModule('ui')
-		)
+		if (!empty($paramsError['params']))
 		{
-			if ($paramsError['params']['additionalCode'] === 'ERROR_INSTAGRAM_NOT_SEND_MESSAGE_FOR_COMMENT')
+			$errCode = $paramsError['params']['additionalCode'] ?? '';
+			$errSubCode = (int)($paramsError['params']['errorSubCode'] ?? -1);
+			$chatId = (int)($paramsError['chatId'] ?? 0);
+
+			if ($errCode == 'ERROR_INSTAGRAM_NOT_SEND_MESSAGE_FOR_COMMENT')
 			{
+				if ($chatId)
+				{
+					$this->clearLastExtMessage($chatId);
+				}
+
 				$paramsError['messageConnector'] = '';
-				$message = Loc::getMessage('IMCONNECTOR_FBINSTAGRAMDIRECT_NOT_SEND_MESSAGE_FOR_COMMENT');
+				if ($errSubCode == 2534023)
+				{
+					Loader::includeModule('ui');
+					$helpUrl = \Bitrix\UI\Util::getArticleUrlByCode(Library::CODE_ID_ARTICLE_TIME_LIMIT);
+
+					$message = Loc::getMessage('IMCONNECTOR_FBINSTAGRAMDIRECT_NOT_SEND_MESSAGE_COMMENT_HAS_ANSWER', ['#URL#' => $helpUrl]);
+				}
+				else
+				{
+					$message = Loc::getMessage('IMCONNECTOR_FBINSTAGRAMDIRECT_NOT_SEND_MESSAGE_FOR_COMMENT_MSGVER_1');
+				}
 			}
+
 			elseif (
-				(int)$paramsError['params']['errorCode'] === 10
-				&& (int)$paramsError['params']['errorSubCode'] === 2534022
+				$errCode == 'ERROR_INSTAGRAM_NOT_SEND_MESSAGE_CHAT_LIMIT'
+				|| $errSubCode == 2534022
 			)
 			{
-				$paramsError['messageConnector'] = '';
-				$message = Loc::getMessage('IMCONNECTOR_FBINSTAGRAMDIRECT_NOT_SEND_MESSAGE_CHAT_LIMIT', [
-					'#A_START#' => '[URL=' . UI\Util::getArticleUrlByCode(Library::CODE_ID_ARTICLE_TIME_LIMIT) . ']',
-					'#A_END#' => '[/URL]',
-				]);
+				Loader::includeModule('ui');
+				$helpUrl = \Bitrix\UI\Util::getArticleUrlByCode(Library::CODE_ID_ARTICLE_TIME_LIMIT);
 
-				if (
-					!empty($paramsError['messageId'])
-					&& $paramsError['messageId'] > 0
-					&& Loader::includeModule('im')
-				)
+				if ($this->hasChatMessageOutsideAllowedWindow($chatId, $paramsError['line']))
 				{
-					$raw = MessageTable::getList([
-						'select' => [
-							'AUTHOR_ID'
-						],
-						'filter' => [
-							'=ID' => (int)$paramsError['messageId'],
-						]
+					$paramsError['messageConnector'] = '';
+
+					$message = Loc::getMessage('IMCONNECTOR_FBINSTAGRAMDIRECT_NOT_SEND_MESSAGE_CHAT_LIMIT', [
+						'#A_START#' => '[URL='. $helpUrl. ']',
+						'#A_END#' => '[/URL]',
 					]);
 
-					if (
-						($row = $raw->fetch())
-						&& !empty($row['AUTHOR_ID'])
-					)
+					$messageId = (int)($paramsError['messageId'] ?? 0);
+					if ($messageId)
 					{
-						if ($this->isHumanAgent($paramsError['line']) === true)
+						$chatMessage = $this->getMessageById($messageId);
+						if (!empty($chatMessage['AUTHOR_ID']))
 						{
-							$message = Loc::getMessage('IMCONNECTOR_FBINSTAGRAMDIRECT_NOT_SEND_MESSAGE_CHAT_7_DAY_LIMIT', [
-								'#A_START#' => '[URL=' . UI\Util::getArticleUrlByCode(Library::CODE_ID_ARTICLE_TIME_LIMIT) . ']',
-								'#A_END#' => '[/URL]',
-							]);
-						}
-						else
-						{
-							$message = Loc::getMessage('IMCONNECTOR_FBINSTAGRAMDIRECT_NOT_SEND_MESSAGE_CHAT_24_HOURS_LIMIT', [
-								'#A_START#' => '[URL=' . UI\Util::getArticleUrlByCode(Library::CODE_ID_ARTICLE_TIME_LIMIT) . ']',
-								'#A_END#' => '[/URL]',
-							]);
+							if ($this->isHumanAgent($paramsError['line']))
+							{
+								$message = Loc::getMessage('IMCONNECTOR_FBINSTAGRAMDIRECT_NOT_SEND_MESSAGE_CHAT_7_DAY_LIMIT', [
+									'#A_START#' => '[URL='. $helpUrl. ']',
+									'#A_END#' => '[/URL]',
+								]);
+							}
+							else
+							{
+								$message = Loc::getMessage('IMCONNECTOR_FBINSTAGRAMDIRECT_NOT_SEND_MESSAGE_CHAT_24_HOURS_LIMIT', [
+									'#A_START#' => '[URL='. $helpUrl. ']',
+									'#A_END#' => '[/URL]',
+								]);
+							}
 						}
 					}
 				}
+				elseif ($this->hasChatMoreThenOneAnswer($chatId, $paramsError['line']))
+				{
+					$paramsError['messageConnector'] = '';
+
+					$message = Loc::getMessage('IMCONNECTOR_FBINSTAGRAMDIRECT_NOT_SEND_MESSAGE_ONLY_ONE_RESPONSE', ['#URL#' => $helpUrl]);
+				}
+
 			}
 		}
 
 		return parent::receivedErrorNotSendMessageChat($paramsError, $message);
 	}
+
+	/**
+	 * Checks if the operator response was sent within the allowed 24 hours window.
+	 * @param int $chatId
+	 * @param int $lineId
+	 * @return bool
+	 */
+	private function hasChatMessageOutsideAllowedWindow(int $chatId, int $lineId): bool
+	{
+		Loader::includeModule('im');
+		Loader::includeModule('imopenlines');
+
+		$chat = \Bitrix\Im\V2\Chat::getInstance($chatId);
+		$connectorUserId = (int)\Bitrix\ImOpenLines\Chat::parseLinesChatEntityId($chat->getEntityId())['connectorUserId'];
+		if ($connectorUserId)
+		{
+			// last connector user's message
+			$messageList = MessageTable::getList([
+				'select' => [
+					'DATE_CREATE',
+				],
+				'filter' => [
+					'=CHAT_ID' => $chatId,
+					'=AUTHOR_ID' => $connectorUserId,
+				],
+				'order' => [
+					'ID' => 'DESC'
+				],
+				'limit' => 1,
+			]);
+			if ($message = $messageList->fetchObject())
+			{
+				$diff = (new DateTime())->getDiff($message->getDateCreate());
+				if ($this->isHumanAgent($lineId))
+				{
+					// older than 7 days
+					return $diff->days > 7;
+				}
+
+				// older than 24 hours
+				return $diff->days > 1;
+			}
+		}
+
+		return false;
+	}
+
+	private function hasChatMoreThenOneAnswer(int $chatId, int $lineId): bool
+	{
+		Loader::includeModule('im');
+		Loader::includeModule('imopenlines');
+
+		$answerCount = 0;
+
+		$chat = \Bitrix\Im\V2\Chat::getInstance($chatId);
+		$connectorUserId = (int)\Bitrix\ImOpenLines\Chat::parseLinesChatEntityId($chat->getEntityId())['connectorUserId'];
+		if ($connectorUserId)
+		{
+			// last messages
+			$messageList = MessageTable::getList([
+				'select' => [
+					'AUTHOR_ID',
+				],
+				'filter' => [
+					'=CHAT_ID' => $chatId,
+					'>AUTHOR_ID' => 0,
+				],
+				'order' => [
+					'ID' => 'DESC'
+				],
+				'limit' => 3,
+			]);
+			while ($message = $messageList->fetchObject())
+			{
+				if ($message->getAuthorId() == $connectorUserId)
+				{
+					break;
+				}
+				$answerCount ++;
+			}
+		}
+
+		return $answerCount >= 1;
+	}
+
+
+	private function getMessageById(int $messageId): ?array
+	{
+		$message = null;
+		if (Loader::includeModule('im'))
+		{
+			$message = MessageTable::getByPrimary($messageId, [
+				'select' => [
+					'DATE_CREATE',
+					'AUTHOR_ID'
+				]
+			])?->fetch();
+		}
+
+		return $message;
+	}
+
+	private function clearLastExtMessage(int $chatId): ?string
+	{
+		$lastMessageId = Chat::getChatLastMessageId($chatId, $this->idConnector);
+		if (!empty($lastMessageId))
+		{
+			Chat::deleteLastMessage($chatId, $this->idConnector);
+		}
+		return $lastMessageId;
+	}
+
+	//endregion
 }

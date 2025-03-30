@@ -92,4 +92,9 @@ class PermissionDictionary extends \Bitrix\Main\Access\Permission\PermissionDict
 			default => null,
 		};
 	}
+
+	public static function isVariable(int|string $permission): bool
+	{
+		return self::getType($permission) === static::TYPE_VARIABLES;
+	}
 }

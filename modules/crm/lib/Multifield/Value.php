@@ -130,7 +130,7 @@ final class Value implements Arrayable, \JsonSerializable
 		return Assembler::arrayByValue($this);
 	}
 
-	public function jsonSerialize()
+	public function jsonSerialize(): array
 	{
 		return [
 			'id' => $this->getId(),

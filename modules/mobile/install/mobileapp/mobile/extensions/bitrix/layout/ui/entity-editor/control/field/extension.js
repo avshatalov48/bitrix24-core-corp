@@ -389,6 +389,13 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 				return {};
 			}
 
+			if (this.type === MoneyType)
+			{
+				return {
+					[this.getName()]: this.prepareBeforeSaving(this.getValue()),
+				};
+			}
+
 			const promise = (
 				this.fieldRef
 					.getValueWhileReady()

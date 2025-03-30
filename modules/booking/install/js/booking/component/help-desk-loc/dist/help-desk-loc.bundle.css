@@ -1,0 +1,5 @@
+.booking--help-desk-link {
+	color: var(--ui-color-link-primary-base);
+	cursor: pointer;
+	white-space: nowrap;
+}

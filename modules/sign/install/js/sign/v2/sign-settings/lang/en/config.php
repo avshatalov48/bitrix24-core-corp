@@ -7,6 +7,7 @@ $MESS["SIGN_SETTINGS_B2E_EMPLOYEES"] = "Employees";
 $MESS["SIGN_SETTINGS_B2E_ROUTES"] = "Routes";
 $MESS["SIGN_SETTINGS_B2E_TITLE_SUB"] = "Only a few steps to submit document for signing";
 $MESS["SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT"] = "Document sent for signing.";
+$MESS["SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT_GROUP"] = "Documents have been sent for signing.";
 $MESS["SIGN_SETTINGS_CREATE_TEMPLATE"] = "Save";
 $MESS["SIGN_SETTINGS_SEND_DOCUMENT"] = "Send";
 $MESS["SIGN_SETTINGS_SEND_DOCUMENT_CREATE"] = "Create";

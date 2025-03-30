@@ -1,22 +1,24 @@
-import { EmployeeTab } from './users/tab';
+import { UsersTab } from './users/tab';
 import { ChatTab } from './chat/tab';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { mapState } from 'ui.vue3.pinia';
 
+import '../style.css';
+
 export const DepartmentContent = {
 	name: 'departmentContent',
 
-	components: { EmployeeTab, ChatTab },
+	components: { UsersTab, ChatTab },
 
 	emits: ['showDetailLoader', 'hideDetailLoader', 'editEmployee'],
 
 	data(): Object
 	{
 		return {
-			activeTab: 'employeeTab',
+			activeTab: 'usersTab',
 			tabs: [
-				{ name: 'employeeTab', component: 'EmployeeTab' },
-				{ name: 'chatTab', component: 'ChatTab', soon: true },
+				{ name: 'usersTab', component: 'usersTab', id: 'users-tab' },
+				{ name: 'chatTab', component: 'ChatTab', id: 'chats-tab', soon: true },
 			],
 			isDescriptionOverflowed: false,
 			isDescriptionExpanded: false,
@@ -40,7 +42,7 @@ export const DepartmentContent = {
 		},
 		getTabLabel(name: string): string
 		{
-			if (name === 'employeeTab')
+			if (name === 'usersTab')
 			{
 				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_TITLE');
 			}
@@ -77,7 +79,7 @@ export const DepartmentContent = {
 
 	computed: {
 		...mapState(useChartStore, ['focusedNode', 'departments']),
-		activeTabComponent()
+		activeTabComponent(): EmployeeTab | ChatTab | null
 		{
 			const activeTab = this.tabs.find((tab) => tab.name === this.activeTab);
 
@@ -90,7 +92,7 @@ export const DepartmentContent = {
 		tabArray(): Array
 		{
 			return this.tabs.map((tab) => {
-				if (tab.name === 'employeeTab')
+				if (tab.name === 'usersTab')
 				{
 					return {
 						...tab,
@@ -123,7 +125,7 @@ export const DepartmentContent = {
 		focusedNode(): void
 		{
 			this.isDescriptionExpanded = false;
-			this.selectTab('employeeTab');
+			this.selectTab('usersTab');
 		},
 	},
 
@@ -149,9 +151,15 @@ export const DepartmentContent = {
 					:class="[{'--active-tab' : activeTab === tab.name}, {'--soon' : tab.soon}]"
 					:data-title="tab.soon ? loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_BADGE_SOON') : null"
 					@click="selectTab(tab.name)"
+					:data-id="tab.id ? 'hr-department-detail-content__' + tab.id + '_button' : null"
 				>
 					{{ this.getTabLabel(tab.name) }}
-					<span v-if="!tab.soon" class="hr-department-detail-content__tab-count">{{ tab.count }}</span>
+					<span
+						v-if="!tab.soon"
+						class="hr-department-detail-content__tab-count"
+						:data-id="tab.id ? 'hr-department-detail-content__' + tab.id + '_counter' : null"
+					>{{ tab.count }}
+					</span>
 				</button>
 			</div>
 			<component

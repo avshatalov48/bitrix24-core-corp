@@ -87,7 +87,7 @@ class extranet extends CModule
 		RegisterModuleDependences('main', 'OnUserDelete', 'extranet', 'CExtranet', 'ClearPublicUserCacheOnDelete');
 		RegisterModuleDependences('main', 'OnUserLogout', 'extranet', 'CExtranet', 'OnUserLogout');
 		RegisterModuleDependences('socialnetwork', 'OnGetProfileView', 'extranet', 'CExtranet', 'OnGetProfileView');
-		RegisterModuleDependences('main', 'OnAfterUserAdd', 'extranet', \Bitrix\Extranet\EventHandler\User::class, 'onAfterUserAdd');
+		RegisterModuleDependences('main', 'OnAfterUserAdd', 'extranet', \Bitrix\Extranet\EventHandler\User::class, 'onAfterUserAdd', 1000);
 		RegisterModuleDependences('main', 'OnAfterUserUpdate', 'extranet', \Bitrix\Extranet\EventHandler\User::class, 'onAfterUserUpdate');
 		RegisterModuleDependences('main', 'OnAfterUserDelete', 'extranet', \Bitrix\Extranet\EventHandler\User::class, 'onAfterUserDelete');
 		RegisterModuleDependences('intranet', 'OnAfterTransferEMailUser', 'extranet', \Bitrix\Extranet\EventHandler\User::class, 'OnAfterTransferEmailUser');
@@ -234,7 +234,7 @@ class extranet extends CModule
 		UnRegisterModuleDependences('main', 'OnUserDelete', 'extranet', 'CExtranet', 'ClearPublicUserCacheOnDelete');
 		UnRegisterModuleDependences('main', 'OnUserLogout', 'extranet', 'CExtranet', 'OnUserLogout');
 		UnRegisterModuleDependences('socialnetwork', 'OnGetProfileView', 'extranet', 'CExtranet', 'OnGetProfileView');
-		UnRegisterModuleDependences('main', 'OnAfterUserAdd', 'extranet', \Bitrix\Extranet\EventHandler\User::class, 'onAfterUserAdd');
+		UnRegisterModuleDependences('main', 'OnAfterUserAdd', 'extranet', \Bitrix\Extranet\EventHandler\User::class, 'onAfterUserAdd', 1000);
 		UnRegisterModuleDependences('main', 'OnAfterUserUpdate', 'extranet', \Bitrix\Extranet\EventHandler\User::class, 'onAfterUserUpdate');
 		UnRegisterModuleDependences('main', 'OnAfterUserDelete', 'extranet', \Bitrix\Extranet\EventHandler\User::class, 'onAfterUserDelete');
 		UnRegisterModuleDependences('intranet', 'OnAfterTransferEMailUser', 'extranet', \Bitrix\Extranet\EventHandler\User::class, 'OnAfterTransferEmailUser');

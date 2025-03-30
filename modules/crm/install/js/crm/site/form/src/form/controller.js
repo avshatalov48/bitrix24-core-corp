@@ -192,6 +192,8 @@ class Controller extends Event
 				this.#dependence.trigger(field, 'change')
 			}
 		});
+
+		this.pager.first();
 	}
 
 	show()

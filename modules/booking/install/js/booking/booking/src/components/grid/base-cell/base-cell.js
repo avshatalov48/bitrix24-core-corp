@@ -1,10 +1,13 @@
+import { Event } from 'main.core';
+import { DateTimeFormat } from 'main.date';
+
 import { mapGetters } from 'ui.vue3.vuex';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
-import { DateTimeFormat } from 'main.date';
+
 import { Model } from 'booking.const';
 import { bookingService } from 'booking.provider.service.booking-service';
 import { limit } from 'booking.lib.limit';
-import { grid } from '../../../lib/grid/grid';
+import { grid } from 'booking.lib.grid';
 import './base-cell.css';
 
 /**
@@ -40,6 +43,7 @@ export const BaseCell = {
 			timezone: `${Model.Interface}/timezone`,
 			offset: `${Model.Interface}/offset`,
 			isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
+			draggedBookingId: `${Model.Interface}/draggedBookingId`,
 		}),
 		selected(): boolean
 		{
@@ -82,19 +86,22 @@ export const BaseCell = {
 				this.$store.dispatch(`${Model.Interface}/removeSelectedCell`, this.cell);
 			}
 		},
-		addBooking(): void
+		onMouseDown(): void
 		{
 			if (!this.isFeatureEnabled)
 			{
-				limit.show();
+				void limit.show();
 
 				return;
 			}
 
 			void this.$store.dispatch(`${Model.Interface}/setHoveredCell`, null);
 
-			void bookingService.add({
-				id: `tmp-id-${Date.now()}-${Math.random()}`,
+			this.creatingBookingId = `tmp-id-${Date.now()}-${Math.random()}`;
+
+			void this.$store.dispatch(`${Model.Interface}/addQuickFilterIgnoredBookingId`, this.creatingBookingId);
+			void this.$store.dispatch(`${Model.Bookings}/add`, {
+				id: this.creatingBookingId,
 				dateFromTs: this.cell.fromTs,
 				dateToTs: this.cell.toTs,
 				name: this.loc('BOOKING_BOOKING_DEFAULT_BOOKING_NAME'),
@@ -105,6 +112,25 @@ export const BaseCell = {
 				])],
 				timezoneFrom: this.timezone,
 				timezoneTo: this.timezone,
+			});
+
+			Event.bind(window, 'mouseup', this.addBooking);
+		},
+		addBooking(): void
+		{
+			Event.unbind(window, 'mouseup', this.addBooking);
+
+			if (!this.isFeatureEnabled)
+			{
+				void limit.show();
+
+				return;
+			}
+
+			setTimeout(() => {
+				const creatingBooking = this.$store.getters[`${Model.Bookings}/getById`](this.creatingBookingId);
+
+				void bookingService.add(creatingBooking);
 			});
 		},
 	},
@@ -135,6 +161,7 @@ export const BaseCell = {
 					>
 						<span class="booking-booking-grid-cell-time-inner">
 							<input
+								v-if="!draggedBookingId"
 								class="booking-booking-grid-cell-checkbox"
 								type="checkbox"
 								:checked="selected"
@@ -146,7 +173,7 @@ export const BaseCell = {
 						</span>
 					</label>
 					<div
-						v-if="!hasSelectedCells"
+						v-if="!hasSelectedCells && !draggedBookingId"
 						class="booking-booking-grid-cell-select-button-container"
 						ref="button"
 					>
@@ -154,7 +181,7 @@ export const BaseCell = {
 							class="booking-booking-grid-cell-select-button"
 							:class="{'--lock': !isFeatureEnabled}"
 							data-element="booking-grid-cell-add-button"
-							@click="addBooking"
+							@mousedown="onMouseDown"
 						>
 							<div class="booking-booking-grid-cell-select-button-text">
 								{{ loc('BOOKING_BOOKING_SELECT') }}

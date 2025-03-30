@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Entity\Booking;
 
-use Bitrix\Booking\Entity\BaseEntity;
+use Bitrix\Booking\Entity\EntityInterface;
 
-class Client extends BaseEntity
+class Client implements EntityInterface
 {
 	private int|null $id = null;
 	private bool|null $isReturning = null;

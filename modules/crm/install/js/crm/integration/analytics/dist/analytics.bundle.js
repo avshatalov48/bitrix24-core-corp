@@ -16,6 +16,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  CATEGORY_AI_OPERATIONS: 'ai_operations',
 	  CATEGORY_AUTOMATION_OPERATIONS: 'automation_operations',
 	  CATEGORY_KANBAN_OPERATIONS: 'kanban_operations',
+	  CATEGORY_POPUP_OPERATIONS: 'popup_operations',
 	  // region Event const
 	  EVENT_ENTITY_ADD_OPEN: 'entity_add_open',
 	  EVENT_ENTITY_ADD: 'entity_add',
@@ -46,6 +47,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  TYPE_DYNAMIC: 'dynamic',
 	  TYPE_CONTACT_CENTER: 'contact_center',
 	  TYPE_ITEM_INDUSTRY: 'item_industry',
+	  TYPE_POPUP_AI_TRANSCRIPT: 'popup_ai_transcript',
 	  // endregion
 
 	  // region Section const
@@ -1158,6 +1160,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 
 	exports.Builder = Builder;
 	exports.Dictionary = Dictionary;
+	exports.getCrmMode = getCrmMode;
 
 }((this.BX.Crm.Integration.Analytics = this.BX.Crm.Integration.Analytics || {}),BX));
 //# sourceMappingURL=analytics.bundle.js.map

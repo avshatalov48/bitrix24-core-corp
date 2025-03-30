@@ -47,8 +47,7 @@ export class ConferenceNotifications
 		{
 			DesktopApi.subscribe(Events.onButtonClick, this._onContentButtonClickHandler);
 		}
-	}
-	;
+	};
 
 	show()
 	{
@@ -86,9 +85,20 @@ export class ConferenceNotifications
 			});
 			this.createPopup(this.content.render());
 			this.popup.show();
+			window.addEventListener('resize', () =>
+			{
+				this.onResize();
+			});
+		}
+	};
+
+	onResize()
+	{
+		if (this.popup)
+		{
+			this.popup.setMaxHeight(document.body.clientHeight);
 		}
 	}
-	;
 
 	createPopup(content)
 	{
@@ -104,10 +114,16 @@ export class ConferenceNotifications
 			closeByEsc: false,
 			draggable: {restrict: false},
 			borderRadius: '25px',
+			disableScroll: true,
+			maxHeight: document.body.clientHeight,
 			overlay: {backgroundColor: 'black', opacity: 30},
 			events: {
 				onPopupClose: function ()
 				{
+					window.removeEventListener('resize', () =>
+					{
+						this.onResize();
+					});
 					this.callbacks.onClose();
 				}.bind(this),
 				onPopupDestroy: function ()
@@ -116,8 +132,7 @@ export class ConferenceNotifications
 				}.bind(this)
 			}
 		});
-	}
-	;
+	};
 
 	close()
 	{
@@ -130,8 +145,7 @@ export class ConferenceNotifications
 			this.window.BXDesktopWindow.ExecuteCommand("hide");
 		}
 		this.callbacks.onClose();
-	}
-	;
+	};
 
 	destroy()
 	{

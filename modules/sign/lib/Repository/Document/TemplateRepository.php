@@ -6,12 +6,14 @@ use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Result;
 use Bitrix\Main\Security\Random;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Sign\Internal\Document\Template as TemplateModel;
 use Bitrix\Sign\Internal\Document\TemplateCollection as TemplateCollectionModel;
 use Bitrix\Sign\Internal\Document\TemplateTable;
 use Bitrix\Sign\Item;
+use Bitrix\Sign\Model\ItemBinder\BaseItemToModelBinder;
+use Bitrix\Sign\Result\Operation\Document\Template\CreateTemplateResult;
 use Bitrix\Sign\Type;
+use Bitrix\Sign\Type\Document\InitiatedByType;
 use Bitrix\Sign\Type\Template\Status;
 use Bitrix\Sign\Type\Template\Visibility;
 
@@ -22,7 +24,6 @@ class TemplateRepository
 		$item->uid = $this->generateUniqueUid();
 		$filledMemberEntity = $this
 			->extractModelFromItem($item)
-			->setUid($item->uid)
 		;
 
 		$saveResult = $filledMemberEntity->save();
@@ -33,8 +34,9 @@ class TemplateRepository
 		}
 
 		$item->id = $saveResult->getId();
+		$item->initOriginal();
 
-		return (new Result());
+		return (new CreateTemplateResult($item));
 	}
 
 	public function getByUid(string $uid): ?Item\Document\Template
@@ -56,18 +58,20 @@ class TemplateRepository
 
 	public function update(Item\Document\Template $item): Result
 	{
-		$now = new DateTime();
+		$item->dateModify = new Type\DateTime();
 		$model = TemplateTable::getByPrimary($item->id)->fetchObject();
-		$filledMemberEntity = $this->getFilledModelFromItem($item, $model)
-			->setDateModify($now)
-		;
 
-		$saveResult = $filledMemberEntity->save();
+		$binder = new BaseItemToModelBinder($item, $model);
+		$binder->setChangedItemPropertiesToModel();
+
+		$saveResult = $model->save();
 
 		if (!$saveResult->isSuccess())
 		{
 			return (new Result())->addErrors($saveResult->getErrors());
 		}
+
+		$item->initOriginal();
 
 		return (new Result());
 	}
@@ -94,27 +98,30 @@ class TemplateRepository
 	 */
 	public function listWithStatusesAndVisibility(
 		array $statuses,
-		array $visibilities
+		array $visibilities,
 	): Item\Document\TemplateCollection
 	{
 		$query = TemplateTable::query()
 			->setSelect(['*'])
 			->whereIn('STATUS', array_map(static fn($status) => $status->toInt(), $statuses))
 			->whereIn('VISIBILITY', array_map(static fn($visibility) => $visibility->toInt(), $visibilities))
-		;
+			->where('DOCUMENT.INITIATED_BY_TYPE', InitiatedByType::EMPLOYEE->toInt());
 
 		$models = $query->fetchCollection();
 
 		return $this->extractItemCollectionFromModelCollection($models);
 	}
 
-	public function getB2eEmployeeTemplateList(ConditionTree $filter, int $limit = 10, int $offset = 0): Item\Document\TemplateCollection
+	public function getB2eEmployeeTemplateList(
+		ConditionTree $filter,
+		int $limit = 10,
+		int $offset = 0,
+	): Item\Document\TemplateCollection
 	{
 		$limit = max(0, $limit);
 		$offset = max(0, $offset);
 
 		$query = $this->prepareB2eEmployeeTemplateListQuery($filter, $limit, $offset);
-
 		$models = $query->fetchCollection();
 
 		return $this->extractItemCollectionFromModelCollection($models);

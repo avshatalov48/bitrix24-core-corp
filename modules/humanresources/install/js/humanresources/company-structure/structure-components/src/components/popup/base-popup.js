@@ -53,6 +53,11 @@ export const BasePopup = {
 				PopupManager.getPopupById(this.id)?.destroy();
 				const config = this.getPopupConfig();
 				this.instance = new Popup(config);
+
+				if (this.config.angleOffset)
+				{
+					this.instance.setAngle({ offset: this.config.angleOffset });
+				}
 			}
 
 			return this.instance;

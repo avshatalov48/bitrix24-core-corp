@@ -17,6 +17,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      ...mapItem,
 	      ...item
 	    });
+	    if (parentId === 0) {
+	      return;
+	    }
 	    const mapParentItem = (_dataMap$get2 = dataMap.get(parentId)) != null ? _dataMap$get2 : {};
 	    const children = (_mapParentItem$childr = mapParentItem.children) != null ? _mapParentItem$childr : [];
 	    dataMap.set(parentId, {
@@ -27,29 +30,19 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  return dataMap;
 	};
 	const chartAPI = {
-	  getDepartment: id => {
-	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.Node.get', {
-	      nodeId: id
-	    });
-	  },
 	  removeDepartment: id => {
 	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.Node.delete', {
 	      nodeId: id
 	    });
 	  },
-	  getEmployees: id => {
-	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.Node.Member.Employee.get', {
-	      nodeId: id
-	    });
-	  },
-	  getChartData: () => {
+	  getDepartmentsData: () => {
 	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.get', {}, {
 	      tool: 'structure',
 	      category: 'structure',
 	      event: 'open_structure'
 	    });
 	  },
-	  getCurrentDepartment: () => {
+	  getCurrentDepartments: () => {
 	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.Node.current');
 	  },
 	  getDictionary: () => {
@@ -64,6 +57,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  createTreeDataStore
 	};
 
+	/* eslint-disable no-constructor-return */
 	const PermissionActions = Object.freeze({
 	  structureView: 'ACTION_STRUCTURE_VIEW',
 	  chanelBindToStructure: 'ACTION_CHANEL_BIND_TO_STRUCTURE',
@@ -76,7 +70,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  employeeAddToDepartment: 'ACTION_EMPLOYEE_ADD_TO_DEPARTMENT',
 	  employeeRemoveFromDepartment: 'ACTION_EMPLOYEE_REMOVE_FROM_DEPARTMENT',
 	  accessEdit: 'ACTION_USERS_ACCESS_EDIT',
-	  inviteToDepartment: 'ACTION_CAN_INVITE_USERS'
+	  inviteToDepartment: 'ACTION_USER_INVITE'
 	});
 	class PermissionCheckerClass {
 	  constructor() {

@@ -269,13 +269,25 @@ class Crm
 			}
 		}
 
-		return UserTable::query()
+		$ttl = 60 * 60 * 24 * 365;
+		$cacheId = 'crm_settings_portal_created_timestamp';
+
+		$cacheManager = Application::getInstance()->getManagedCache();
+		if ($cacheManager->read($ttl, $cacheId))
+		{
+			return (int)$cacheManager->get($cacheId);
+		}
+
+		$createdTimestamp = UserTable::query()
 			->setSelect(['ID', 'DATE_REGISTER'])
 			->where('ID', 1)
 			->setLimit(1)
 			->fetchObject()
 			->getDateRegister()
-			->getTimestamp()
-		;
+			->getTimestamp();
+
+		$cacheManager->set($cacheId, $createdTimestamp);
+
+		return $createdTimestamp;
 	}
 }

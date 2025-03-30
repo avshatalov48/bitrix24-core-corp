@@ -1,9 +1,11 @@
-.booking-actions-popup__item-remove-btn-icon {
+.booking-actions-popup__item-remove-button {
 	display: flex;
 	align-items: center;
+	margin-left: 12px;
 	cursor: pointer;
 }
 
-.booking-actions-popup__item-remove-btn-icon.--end {
-	margin-left: 12px;
+.booking-actions-popup__item-remove-button .ui-icon-set {
+	--ui-icon-set__icon-size: 22px;
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-20);
 }

@@ -1,0 +1,11 @@
+.hr-department-detail-content__empty-user-list-item-image {
+	width: 33px;
+	height: 34px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-image: url('../images/empty-user-item.svg');
+}
+
+.--with-add .hr-department-detail-content__empty-user-list-item-image {
+	background-image: url('../images/empty-user-item-with-add.svg') ;
+}

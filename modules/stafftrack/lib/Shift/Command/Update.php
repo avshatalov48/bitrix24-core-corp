@@ -15,8 +15,13 @@ class Update extends AbstractCommand
 {
 	/**
 	 * @param ShiftDto $shiftDto
+	 *
 	 * @return Result
 	 * @throws InvalidDtoException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 * @throws \Exception
 	 */
 	public function execute(ShiftDto $shiftDto): Result
 	{
@@ -53,9 +58,22 @@ class Update extends AbstractCommand
 		]);
 	}
 
+	/**
+	 * @param ShiftDto $shiftDto
+	 *
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	protected function getChanges(ShiftDto $shiftDto): array
 	{
 		$shiftEntityBeforeUpdate = ShiftProvider::getInstance($shiftDto->userId)->get($shiftDto->id);
+
+		if (!$shiftEntityBeforeUpdate)
+		{
+			return [];
+		}
 
 		$oldValues = $shiftEntityBeforeUpdate->toArray();
 		$newValues = array_intersect_key($shiftDto->toArray(), $oldValues);
@@ -70,7 +88,9 @@ class Update extends AbstractCommand
 	{
 		parent::init();
 
-		$this->addObserver(new Observer\Message\Update());
-		$this->addObserver(new Observer\Cancellation\Update());
+		$this
+			->addObserver(new Observer\Message\Update())
+			->addObserver(new Observer\Cancellation\Update())
+		;
 	}
 }

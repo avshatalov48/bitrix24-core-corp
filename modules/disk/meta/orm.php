@@ -1,68 +1,68 @@
 <?php
 
-/* ORMENTITYANNOTATION:Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLogTable:disk/lib/document/onlyoffice/models/restrictionlogtable.php */
-namespace Bitrix\Disk\Document\OnlyOffice\Models {
+/* ORMENTITYANNOTATION:Bitrix\Disk\Document\Models\RestrictionLogTable:disk/lib/document/onlyoffice/models/restrictionlogtable.php */
+namespace Bitrix\Disk\Document\Models {
 	/**
 	 * RestrictionLog
-	 * @see \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLogTable
+	 * @see \Bitrix\Disk\Document\Models\RestrictionLogTable
 	 *
 	 * Custom methods:
 	 * ---------------
 	 *
 	 * @method \int getId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog setId(\int|\Bitrix\Main\DB\SqlExpression $id)
 	 * @method bool hasId()
 	 * @method bool isIdFilled()
 	 * @method bool isIdChanged()
 	 * @method \int getUserId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
 	 * @method bool hasUserId()
 	 * @method bool isUserIdFilled()
 	 * @method bool isUserIdChanged()
 	 * @method \int remindActualUserId()
 	 * @method \int requireUserId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog resetUserId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog unsetUserId()
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog resetUserId()
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog unsetUserId()
 	 * @method \int fillUserId()
 	 * @method \string getExternalHash()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog setExternalHash(\string|\Bitrix\Main\DB\SqlExpression $externalHash)
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog setExternalHash(\string|\Bitrix\Main\DB\SqlExpression $externalHash)
 	 * @method bool hasExternalHash()
 	 * @method bool isExternalHashFilled()
 	 * @method bool isExternalHashChanged()
 	 * @method \string remindActualExternalHash()
 	 * @method \string requireExternalHash()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog resetExternalHash()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog unsetExternalHash()
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog resetExternalHash()
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog unsetExternalHash()
 	 * @method \string fillExternalHash()
 	 * @method \int getStatus()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog setStatus(\int|\Bitrix\Main\DB\SqlExpression $status)
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog setStatus(\int|\Bitrix\Main\DB\SqlExpression $status)
 	 * @method bool hasStatus()
 	 * @method bool isStatusFilled()
 	 * @method bool isStatusChanged()
 	 * @method \int remindActualStatus()
 	 * @method \int requireStatus()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog resetStatus()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog unsetStatus()
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog resetStatus()
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog unsetStatus()
 	 * @method \int fillStatus()
 	 * @method \Bitrix\Main\Type\DateTime getCreateTime()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog setCreateTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createTime)
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog setCreateTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createTime)
 	 * @method bool hasCreateTime()
 	 * @method bool isCreateTimeFilled()
 	 * @method bool isCreateTimeChanged()
 	 * @method \Bitrix\Main\Type\DateTime remindActualCreateTime()
 	 * @method \Bitrix\Main\Type\DateTime requireCreateTime()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog resetCreateTime()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog unsetCreateTime()
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog resetCreateTime()
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog unsetCreateTime()
 	 * @method \Bitrix\Main\Type\DateTime fillCreateTime()
 	 * @method \Bitrix\Main\Type\DateTime getUpdateTime()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog setUpdateTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $updateTime)
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog setUpdateTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $updateTime)
 	 * @method bool hasUpdateTime()
 	 * @method bool isUpdateTimeFilled()
 	 * @method bool isUpdateTimeChanged()
 	 * @method \Bitrix\Main\Type\DateTime remindActualUpdateTime()
 	 * @method \Bitrix\Main\Type\DateTime requireUpdateTime()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog resetUpdateTime()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog unsetUpdateTime()
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog resetUpdateTime()
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog unsetUpdateTime()
 	 * @method \Bitrix\Main\Type\DateTime fillUpdateTime()
 	 *
 	 * Common methods:
@@ -79,9 +79,9 @@ namespace Bitrix\Disk\Document\OnlyOffice\Models {
 	 * @method bool has($fieldName)
 	 * @method bool isFilled($fieldName)
 	 * @method bool isChanged($fieldName)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog set($fieldName, $value)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog reset($fieldName)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog unset($fieldName)
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog set($fieldName, $value)
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog reset($fieldName)
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog unset($fieldName)
 	 * @method void addTo($fieldName, $value)
 	 * @method void removeFrom($fieldName, $value)
 	 * @method void removeAll($fieldName)
@@ -89,18 +89,18 @@ namespace Bitrix\Disk\Document\OnlyOffice\Models {
 	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
 	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
-	 * @method static \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog wakeUp($data)
+	 * @method static \Bitrix\Disk\Document\Models\RestrictionLog wakeUp($data)
 	 */
 	class EO_RestrictionLog {
-		/* @var \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLogTable */
-		static public $dataClass = '\Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLogTable';
+		/* @var \Bitrix\Disk\Document\Models\RestrictionLogTable */
+		static public $dataClass = '\Bitrix\Disk\Document\Models\RestrictionLogTable';
 		/**
 		 * @param bool|array $setDefaultValues
 		 */
 		public function __construct($setDefaultValues = true) {}
 	}
 }
-namespace Bitrix\Disk\Document\OnlyOffice\Models {
+namespace Bitrix\Disk\Document\Models {
 	/**
 	 * EO_RestrictionLog_Collection
 	 *
@@ -123,40 +123,40 @@ namespace Bitrix\Disk\Document\OnlyOffice\Models {
 	 * ---------------
 	 *
 	 * @property-read \Bitrix\Main\ORM\Entity $entity
-	 * @method void add(\Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog $object)
-	 * @method bool has(\Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog $object)
+	 * @method void add(\Bitrix\Disk\Document\Models\RestrictionLog $object)
+	 * @method bool has(\Bitrix\Disk\Document\Models\RestrictionLog $object)
 	 * @method bool hasByPrimary($primary)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog getByPrimary($primary)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog[] getAll()
-	 * @method bool remove(\Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog $object)
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog getByPrimary($primary)
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog[] getAll()
+	 * @method bool remove(\Bitrix\Disk\Document\Models\RestrictionLog $object)
 	 * @method void removeByPrimary($primary)
 	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_RestrictionLog_Collection wakeUp($data)
+	 * @method static \Bitrix\Disk\Document\Models\EO_RestrictionLog_Collection wakeUp($data)
 	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
 	 * @method void offsetSet() ArrayAccess
 	 * @method void offsetExists() ArrayAccess
 	 * @method void offsetUnset() ArrayAccess
 	 * @method void offsetGet() ArrayAccess
 	 * @method void rewind() Iterator
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog current() Iterator
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog current() Iterator
 	 * @method mixed key() Iterator
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
 	 */
 	class EO_RestrictionLog_Collection implements \ArrayAccess, \Iterator, \Countable {
-		/* @var \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLogTable */
-		static public $dataClass = '\Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLogTable';
+		/* @var \Bitrix\Disk\Document\Models\RestrictionLogTable */
+		static public $dataClass = '\Bitrix\Disk\Document\Models\RestrictionLogTable';
 	}
 }
-namespace Bitrix\Disk\Document\OnlyOffice\Models {
+namespace Bitrix\Disk\Document\Models {
 	/**
 	 * Common methods:
 	 * ---------------
 	 *
 	 * @method EO_RestrictionLog_Result exec()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog fetchObject()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_RestrictionLog_Collection fetchCollection()
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog fetchObject()
+	 * @method \Bitrix\Disk\Document\Models\EO_RestrictionLog_Collection fetchCollection()
 	 *
 	 * Custom methods:
 	 * ---------------
@@ -164,101 +164,101 @@ namespace Bitrix\Disk\Document\OnlyOffice\Models {
 	 */
 	class EO_RestrictionLog_Query extends \Bitrix\Main\ORM\Query\Query {}
 	/**
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog fetchObject()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_RestrictionLog_Collection fetchCollection()
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog fetchObject()
+	 * @method \Bitrix\Disk\Document\Models\EO_RestrictionLog_Collection fetchCollection()
 	 */
 	class EO_RestrictionLog_Result extends \Bitrix\Main\ORM\Query\Result {}
 	/**
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog createObject($setDefaultValues = true)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_RestrictionLog_Collection createCollection()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\RestrictionLog wakeUpObject($row)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_RestrictionLog_Collection wakeUpCollection($rows)
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog createObject($setDefaultValues = true)
+	 * @method \Bitrix\Disk\Document\Models\EO_RestrictionLog_Collection createCollection()
+	 * @method \Bitrix\Disk\Document\Models\RestrictionLog wakeUpObject($row)
+	 * @method \Bitrix\Disk\Document\Models\EO_RestrictionLog_Collection wakeUpCollection($rows)
 	 */
 	class EO_RestrictionLog_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Disk\Document\OnlyOffice\Models\DocumentInfoTable:disk/lib/document/onlyoffice/models/documentinfotable.php */
-namespace Bitrix\Disk\Document\OnlyOffice\Models {
+/* ORMENTITYANNOTATION:Bitrix\Disk\Document\Models\DocumentInfoTable:disk/lib/document/onlyoffice/models/documentinfotable.php */
+namespace Bitrix\Disk\Document\Models {
 	/**
 	 * EO_DocumentInfo
-	 * @see \Bitrix\Disk\Document\OnlyOffice\Models\DocumentInfoTable
+	 * @see \Bitrix\Disk\Document\Models\DocumentInfoTable
 	 *
 	 * Custom methods:
 	 * ---------------
 	 *
 	 * @method \string getExternalHash()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo setExternalHash(\string|\Bitrix\Main\DB\SqlExpression $externalHash)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo setExternalHash(\string|\Bitrix\Main\DB\SqlExpression $externalHash)
 	 * @method bool hasExternalHash()
 	 * @method bool isExternalHashFilled()
 	 * @method bool isExternalHashChanged()
 	 * @method \int getObjectId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo setObjectId(\int|\Bitrix\Main\DB\SqlExpression $objectId)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo setObjectId(\int|\Bitrix\Main\DB\SqlExpression $objectId)
 	 * @method bool hasObjectId()
 	 * @method bool isObjectIdFilled()
 	 * @method bool isObjectIdChanged()
 	 * @method \int remindActualObjectId()
 	 * @method \int requireObjectId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo resetObjectId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo unsetObjectId()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo resetObjectId()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo unsetObjectId()
 	 * @method \int fillObjectId()
 	 * @method \int getVersionId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo setVersionId(\int|\Bitrix\Main\DB\SqlExpression $versionId)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo setVersionId(\int|\Bitrix\Main\DB\SqlExpression $versionId)
 	 * @method bool hasVersionId()
 	 * @method bool isVersionIdFilled()
 	 * @method bool isVersionIdChanged()
 	 * @method \int remindActualVersionId()
 	 * @method \int requireVersionId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo resetVersionId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo unsetVersionId()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo resetVersionId()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo unsetVersionId()
 	 * @method \int fillVersionId()
 	 * @method \int getOwnerId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo setOwnerId(\int|\Bitrix\Main\DB\SqlExpression $ownerId)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo setOwnerId(\int|\Bitrix\Main\DB\SqlExpression $ownerId)
 	 * @method bool hasOwnerId()
 	 * @method bool isOwnerIdFilled()
 	 * @method bool isOwnerIdChanged()
 	 * @method \int remindActualOwnerId()
 	 * @method \int requireOwnerId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo resetOwnerId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo unsetOwnerId()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo resetOwnerId()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo unsetOwnerId()
 	 * @method \int fillOwnerId()
 	 * @method \Bitrix\Main\Type\DateTime getCreateTime()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo setCreateTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createTime)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo setCreateTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createTime)
 	 * @method bool hasCreateTime()
 	 * @method bool isCreateTimeFilled()
 	 * @method bool isCreateTimeChanged()
 	 * @method \Bitrix\Main\Type\DateTime remindActualCreateTime()
 	 * @method \Bitrix\Main\Type\DateTime requireCreateTime()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo resetCreateTime()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo unsetCreateTime()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo resetCreateTime()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo unsetCreateTime()
 	 * @method \Bitrix\Main\Type\DateTime fillCreateTime()
 	 * @method \Bitrix\Main\Type\DateTime getUpdateTime()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo setUpdateTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $updateTime)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo setUpdateTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $updateTime)
 	 * @method bool hasUpdateTime()
 	 * @method bool isUpdateTimeFilled()
 	 * @method bool isUpdateTimeChanged()
 	 * @method \Bitrix\Main\Type\DateTime remindActualUpdateTime()
 	 * @method \Bitrix\Main\Type\DateTime requireUpdateTime()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo resetUpdateTime()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo unsetUpdateTime()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo resetUpdateTime()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo unsetUpdateTime()
 	 * @method \Bitrix\Main\Type\DateTime fillUpdateTime()
 	 * @method \int getUsers()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo setUsers(\int|\Bitrix\Main\DB\SqlExpression $users)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo setUsers(\int|\Bitrix\Main\DB\SqlExpression $users)
 	 * @method bool hasUsers()
 	 * @method bool isUsersFilled()
 	 * @method bool isUsersChanged()
 	 * @method \int remindActualUsers()
 	 * @method \int requireUsers()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo resetUsers()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo unsetUsers()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo resetUsers()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo unsetUsers()
 	 * @method \int fillUsers()
 	 * @method \int getContentStatus()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo setContentStatus(\int|\Bitrix\Main\DB\SqlExpression $contentStatus)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo setContentStatus(\int|\Bitrix\Main\DB\SqlExpression $contentStatus)
 	 * @method bool hasContentStatus()
 	 * @method bool isContentStatusFilled()
 	 * @method bool isContentStatusChanged()
 	 * @method \int remindActualContentStatus()
 	 * @method \int requireContentStatus()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo resetContentStatus()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo unsetContentStatus()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo resetContentStatus()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo unsetContentStatus()
 	 * @method \int fillContentStatus()
 	 *
 	 * Common methods:
@@ -275,9 +275,9 @@ namespace Bitrix\Disk\Document\OnlyOffice\Models {
 	 * @method bool has($fieldName)
 	 * @method bool isFilled($fieldName)
 	 * @method bool isChanged($fieldName)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo set($fieldName, $value)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo reset($fieldName)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo unset($fieldName)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo set($fieldName, $value)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo reset($fieldName)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo unset($fieldName)
 	 * @method void addTo($fieldName, $value)
 	 * @method void removeFrom($fieldName, $value)
 	 * @method void removeAll($fieldName)
@@ -285,18 +285,18 @@ namespace Bitrix\Disk\Document\OnlyOffice\Models {
 	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
 	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
-	 * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo wakeUp($data)
+	 * @method static \Bitrix\Disk\Document\Models\EO_DocumentInfo wakeUp($data)
 	 */
 	class EO_DocumentInfo {
-		/* @var \Bitrix\Disk\Document\OnlyOffice\Models\DocumentInfoTable */
-		static public $dataClass = '\Bitrix\Disk\Document\OnlyOffice\Models\DocumentInfoTable';
+		/* @var \Bitrix\Disk\Document\Models\DocumentInfoTable */
+		static public $dataClass = '\Bitrix\Disk\Document\Models\DocumentInfoTable';
 		/**
 		 * @param bool|array $setDefaultValues
 		 */
 		public function __construct($setDefaultValues = true) {}
 	}
 }
-namespace Bitrix\Disk\Document\OnlyOffice\Models {
+namespace Bitrix\Disk\Document\Models {
 	/**
 	 * EO_DocumentInfo_Collection
 	 *
@@ -323,40 +323,40 @@ namespace Bitrix\Disk\Document\OnlyOffice\Models {
 	 * ---------------
 	 *
 	 * @property-read \Bitrix\Main\ORM\Entity $entity
-	 * @method void add(\Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo $object)
-	 * @method bool has(\Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo $object)
+	 * @method void add(\Bitrix\Disk\Document\Models\EO_DocumentInfo $object)
+	 * @method bool has(\Bitrix\Disk\Document\Models\EO_DocumentInfo $object)
 	 * @method bool hasByPrimary($primary)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo getByPrimary($primary)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo[] getAll()
-	 * @method bool remove(\Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo $object)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo getByPrimary($primary)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo[] getAll()
+	 * @method bool remove(\Bitrix\Disk\Document\Models\EO_DocumentInfo $object)
 	 * @method void removeByPrimary($primary)
 	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo_Collection wakeUp($data)
+	 * @method static \Bitrix\Disk\Document\Models\EO_DocumentInfo_Collection wakeUp($data)
 	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
 	 * @method void offsetSet() ArrayAccess
 	 * @method void offsetExists() ArrayAccess
 	 * @method void offsetUnset() ArrayAccess
 	 * @method void offsetGet() ArrayAccess
 	 * @method void rewind() Iterator
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo current() Iterator
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo current() Iterator
 	 * @method mixed key() Iterator
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
 	 */
 	class EO_DocumentInfo_Collection implements \ArrayAccess, \Iterator, \Countable {
-		/* @var \Bitrix\Disk\Document\OnlyOffice\Models\DocumentInfoTable */
-		static public $dataClass = '\Bitrix\Disk\Document\OnlyOffice\Models\DocumentInfoTable';
+		/* @var \Bitrix\Disk\Document\Models\DocumentInfoTable */
+		static public $dataClass = '\Bitrix\Disk\Document\Models\DocumentInfoTable';
 	}
 }
-namespace Bitrix\Disk\Document\OnlyOffice\Models {
+namespace Bitrix\Disk\Document\Models {
 	/**
 	 * Common methods:
 	 * ---------------
 	 *
 	 * @method EO_DocumentInfo_Result exec()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo fetchObject()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo_Collection fetchCollection()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo fetchObject()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo_Collection fetchCollection()
 	 *
 	 * Custom methods:
 	 * ---------------
@@ -364,131 +364,131 @@ namespace Bitrix\Disk\Document\OnlyOffice\Models {
 	 */
 	class EO_DocumentInfo_Query extends \Bitrix\Main\ORM\Query\Query {}
 	/**
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo fetchObject()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo_Collection fetchCollection()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo fetchObject()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo_Collection fetchCollection()
 	 */
 	class EO_DocumentInfo_Result extends \Bitrix\Main\ORM\Query\Result {}
 	/**
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo createObject($setDefaultValues = true)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo_Collection createCollection()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo wakeUpObject($row)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentInfo_Collection wakeUpCollection($rows)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo createObject($setDefaultValues = true)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo_Collection createCollection()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo wakeUpObject($row)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentInfo_Collection wakeUpCollection($rows)
 	 */
 	class EO_DocumentInfo_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Disk\Document\OnlyOffice\Models\DocumentSessionTable:disk/lib/document/onlyoffice/models/documentsessiontable.php */
-namespace Bitrix\Disk\Document\OnlyOffice\Models {
+/* ORMENTITYANNOTATION:Bitrix\Disk\Document\Models\DocumentSessionTable:disk/lib/document/onlyoffice/models/documentsessiontable.php */
+namespace Bitrix\Disk\Document\Models {
 	/**
 	 * EO_DocumentSession
-	 * @see \Bitrix\Disk\Document\OnlyOffice\Models\DocumentSessionTable
+	 * @see \Bitrix\Disk\Document\Models\DocumentSessionTable
 	 *
 	 * Custom methods:
 	 * ---------------
 	 *
 	 * @method \int getId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession setId(\int|\Bitrix\Main\DB\SqlExpression $id)
 	 * @method bool hasId()
 	 * @method bool isIdFilled()
 	 * @method bool isIdChanged()
 	 * @method \int getObjectId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setObjectId(\int|\Bitrix\Main\DB\SqlExpression $objectId)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession setObjectId(\int|\Bitrix\Main\DB\SqlExpression $objectId)
 	 * @method bool hasObjectId()
 	 * @method bool isObjectIdFilled()
 	 * @method bool isObjectIdChanged()
 	 * @method \int remindActualObjectId()
 	 * @method \int requireObjectId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetObjectId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetObjectId()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession resetObjectId()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession unsetObjectId()
 	 * @method \int fillObjectId()
 	 * @method \int getVersionId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setVersionId(\int|\Bitrix\Main\DB\SqlExpression $versionId)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession setVersionId(\int|\Bitrix\Main\DB\SqlExpression $versionId)
 	 * @method bool hasVersionId()
 	 * @method bool isVersionIdFilled()
 	 * @method bool isVersionIdChanged()
 	 * @method \int remindActualVersionId()
 	 * @method \int requireVersionId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetVersionId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetVersionId()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession resetVersionId()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession unsetVersionId()
 	 * @method \int fillVersionId()
 	 * @method \int getUserId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
 	 * @method bool hasUserId()
 	 * @method bool isUserIdFilled()
 	 * @method bool isUserIdChanged()
 	 * @method \int remindActualUserId()
 	 * @method \int requireUserId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetUserId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetUserId()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession resetUserId()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession unsetUserId()
 	 * @method \int fillUserId()
 	 * @method \int getOwnerId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setOwnerId(\int|\Bitrix\Main\DB\SqlExpression $ownerId)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession setOwnerId(\int|\Bitrix\Main\DB\SqlExpression $ownerId)
 	 * @method bool hasOwnerId()
 	 * @method bool isOwnerIdFilled()
 	 * @method bool isOwnerIdChanged()
 	 * @method \int remindActualOwnerId()
 	 * @method \int requireOwnerId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetOwnerId()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetOwnerId()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession resetOwnerId()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession unsetOwnerId()
 	 * @method \int fillOwnerId()
 	 * @method \boolean getIsExclusive()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setIsExclusive(\boolean|\Bitrix\Main\DB\SqlExpression $isExclusive)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession setIsExclusive(\boolean|\Bitrix\Main\DB\SqlExpression $isExclusive)
 	 * @method bool hasIsExclusive()
 	 * @method bool isIsExclusiveFilled()
 	 * @method bool isIsExclusiveChanged()
 	 * @method \boolean remindActualIsExclusive()
 	 * @method \boolean requireIsExclusive()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetIsExclusive()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetIsExclusive()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession resetIsExclusive()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession unsetIsExclusive()
 	 * @method \boolean fillIsExclusive()
 	 * @method \string getExternalHash()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setExternalHash(\string|\Bitrix\Main\DB\SqlExpression $externalHash)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession setExternalHash(\string|\Bitrix\Main\DB\SqlExpression $externalHash)
 	 * @method bool hasExternalHash()
 	 * @method bool isExternalHashFilled()
 	 * @method bool isExternalHashChanged()
 	 * @method \string remindActualExternalHash()
 	 * @method \string requireExternalHash()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetExternalHash()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetExternalHash()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession resetExternalHash()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession unsetExternalHash()
 	 * @method \string fillExternalHash()
 	 * @method \Bitrix\Main\Type\DateTime getCreateTime()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setCreateTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createTime)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession setCreateTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createTime)
 	 * @method bool hasCreateTime()
 	 * @method bool isCreateTimeFilled()
 	 * @method bool isCreateTimeChanged()
 	 * @method \Bitrix\Main\Type\DateTime remindActualCreateTime()
 	 * @method \Bitrix\Main\Type\DateTime requireCreateTime()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetCreateTime()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetCreateTime()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession resetCreateTime()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession unsetCreateTime()
 	 * @method \Bitrix\Main\Type\DateTime fillCreateTime()
 	 * @method \int getType()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setType(\int|\Bitrix\Main\DB\SqlExpression $type)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession setType(\int|\Bitrix\Main\DB\SqlExpression $type)
 	 * @method bool hasType()
 	 * @method bool isTypeFilled()
 	 * @method bool isTypeChanged()
 	 * @method \int remindActualType()
 	 * @method \int requireType()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetType()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetType()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession resetType()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession unsetType()
 	 * @method \int fillType()
 	 * @method \int getStatus()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setStatus(\int|\Bitrix\Main\DB\SqlExpression $status)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession setStatus(\int|\Bitrix\Main\DB\SqlExpression $status)
 	 * @method bool hasStatus()
 	 * @method bool isStatusFilled()
 	 * @method bool isStatusChanged()
 	 * @method \int remindActualStatus()
 	 * @method \int requireStatus()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetStatus()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetStatus()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession resetStatus()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession unsetStatus()
 	 * @method \int fillStatus()
 	 * @method \string getContext()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession setContext(\string|\Bitrix\Main\DB\SqlExpression $context)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession setContext(\string|\Bitrix\Main\DB\SqlExpression $context)
 	 * @method bool hasContext()
 	 * @method bool isContextFilled()
 	 * @method bool isContextChanged()
 	 * @method \string remindActualContext()
 	 * @method \string requireContext()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession resetContext()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unsetContext()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession resetContext()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession unsetContext()
 	 * @method \string fillContext()
 	 *
 	 * Common methods:
@@ -505,9 +505,9 @@ namespace Bitrix\Disk\Document\OnlyOffice\Models {
 	 * @method bool has($fieldName)
 	 * @method bool isFilled($fieldName)
 	 * @method bool isChanged($fieldName)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession set($fieldName, $value)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession reset($fieldName)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession unset($fieldName)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession set($fieldName, $value)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession reset($fieldName)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession unset($fieldName)
 	 * @method void addTo($fieldName, $value)
 	 * @method void removeFrom($fieldName, $value)
 	 * @method void removeAll($fieldName)
@@ -515,18 +515,18 @@ namespace Bitrix\Disk\Document\OnlyOffice\Models {
 	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
 	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
-	 * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession wakeUp($data)
+	 * @method static \Bitrix\Disk\Document\Models\EO_DocumentSession wakeUp($data)
 	 */
 	class EO_DocumentSession {
-		/* @var \Bitrix\Disk\Document\OnlyOffice\Models\DocumentSessionTable */
-		static public $dataClass = '\Bitrix\Disk\Document\OnlyOffice\Models\DocumentSessionTable';
+		/* @var \Bitrix\Disk\Document\Models\DocumentSessionTable */
+		static public $dataClass = '\Bitrix\Disk\Document\Models\DocumentSessionTable';
 		/**
 		 * @param bool|array $setDefaultValues
 		 */
 		public function __construct($setDefaultValues = true) {}
 	}
 }
-namespace Bitrix\Disk\Document\OnlyOffice\Models {
+namespace Bitrix\Disk\Document\Models {
 	/**
 	 * EO_DocumentSession_Collection
 	 *
@@ -559,40 +559,40 @@ namespace Bitrix\Disk\Document\OnlyOffice\Models {
 	 * ---------------
 	 *
 	 * @property-read \Bitrix\Main\ORM\Entity $entity
-	 * @method void add(\Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession $object)
-	 * @method bool has(\Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession $object)
+	 * @method void add(\Bitrix\Disk\Document\Models\EO_DocumentSession $object)
+	 * @method bool has(\Bitrix\Disk\Document\Models\EO_DocumentSession $object)
 	 * @method bool hasByPrimary($primary)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession getByPrimary($primary)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession[] getAll()
-	 * @method bool remove(\Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession $object)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession getByPrimary($primary)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession[] getAll()
+	 * @method bool remove(\Bitrix\Disk\Document\Models\EO_DocumentSession $object)
 	 * @method void removeByPrimary($primary)
 	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession_Collection wakeUp($data)
+	 * @method static \Bitrix\Disk\Document\Models\EO_DocumentSession_Collection wakeUp($data)
 	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
 	 * @method void offsetSet() ArrayAccess
 	 * @method void offsetExists() ArrayAccess
 	 * @method void offsetUnset() ArrayAccess
 	 * @method void offsetGet() ArrayAccess
 	 * @method void rewind() Iterator
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession current() Iterator
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession current() Iterator
 	 * @method mixed key() Iterator
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
 	 */
 	class EO_DocumentSession_Collection implements \ArrayAccess, \Iterator, \Countable {
-		/* @var \Bitrix\Disk\Document\OnlyOffice\Models\DocumentSessionTable */
-		static public $dataClass = '\Bitrix\Disk\Document\OnlyOffice\Models\DocumentSessionTable';
+		/* @var \Bitrix\Disk\Document\Models\DocumentSessionTable */
+		static public $dataClass = '\Bitrix\Disk\Document\Models\DocumentSessionTable';
 	}
 }
-namespace Bitrix\Disk\Document\OnlyOffice\Models {
+namespace Bitrix\Disk\Document\Models {
 	/**
 	 * Common methods:
 	 * ---------------
 	 *
 	 * @method EO_DocumentSession_Result exec()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession fetchObject()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession_Collection fetchCollection()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession fetchObject()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession_Collection fetchCollection()
 	 *
 	 * Custom methods:
 	 * ---------------
@@ -600,15 +600,15 @@ namespace Bitrix\Disk\Document\OnlyOffice\Models {
 	 */
 	class EO_DocumentSession_Query extends \Bitrix\Main\ORM\Query\Query {}
 	/**
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession fetchObject()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession_Collection fetchCollection()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession fetchObject()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession_Collection fetchCollection()
 	 */
 	class EO_DocumentSession_Result extends \Bitrix\Main\ORM\Query\Result {}
 	/**
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession createObject($setDefaultValues = true)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession_Collection createCollection()
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession wakeUpObject($row)
-	 * @method \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession_Collection wakeUpCollection($rows)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession createObject($setDefaultValues = true)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession_Collection createCollection()
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession wakeUpObject($row)
+	 * @method \Bitrix\Disk\Document\Models\EO_DocumentSession_Collection wakeUpCollection($rows)
 	 */
 	class EO_DocumentSession_Entity extends \Bitrix\Main\ORM\Entity {}
 }

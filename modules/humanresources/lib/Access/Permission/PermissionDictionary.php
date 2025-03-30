@@ -9,6 +9,8 @@ class PermissionDictionary extends Main\Access\Permission\PermissionDictionary
 {
 	public const HUMAN_RESOURCES_USERS_ACCESS_EDIT = 101;
 
+	public const HUMAN_RESOURCES_USER_INVITE = 102;
+
 	public const HUMAN_RESOURCES_STRUCTURE_VIEW = 201;
 	public const HUMAN_RESOURCES_DEPARTMENT_CREATE = 202;
 	public const HUMAN_RESOURCES_DEPARTMENT_DELETE = 203;

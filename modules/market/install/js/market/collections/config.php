@@ -9,7 +9,7 @@ return [
 	'js' => 'dist/collections.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'market.collection-item-ads',
+		'market.collection-item-ai',
 		'market.collection-item',
 		'market.collection-top',
 		'market.collection-top2',

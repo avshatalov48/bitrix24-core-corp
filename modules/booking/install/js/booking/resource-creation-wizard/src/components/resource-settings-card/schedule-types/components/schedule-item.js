@@ -1,5 +1,5 @@
 import { HelpDesk } from 'booking.const';
-import { helpDesk } from 'booking.lib.help-desk';
+import { HelpDeskLoc } from 'booking.component.help-desk-loc';
 
 export const ScheduleItem = {
 	name: 'ScheduleItem',
@@ -26,32 +26,31 @@ export const ScheduleItem = {
 			required: true,
 		},
 	},
-	methods: {
-		selectOption()
-		{
-			this.$emit('update:model-value', this.value);
-		},
-		showHelpDesk(): void
-		{
-			helpDesk.show(
-				HelpDesk.ResourceSchedule.code,
-				HelpDesk.ResourceSchedule.anchorCode,
-			);
-		},
+	setup(): { code: string, anchorCode: string }
+	{
+		return {
+			code: HelpDesk.ResourceSchedule.code,
+			anchorCode: HelpDesk.ResourceSchedule.anchorCode,
+		};
 	},
 	computed: {
 		isSelected(): boolean
 		{
 			return this.modelValue.toString() === this.value.toString();
 		},
-		moreLabel(): string
+	},
+	methods: {
+		selectOption()
 		{
-			return this.loc('BRCW_SETTINGS_CARD_MORE');
+			this.$emit('update:model-value', this.value);
 		},
 	},
+	components: {
+		HelpDeskLoc,
+	},
 	template: `
-		<div 
-			:class="['booking--rcw--schedule-item', { '--selected': isSelected }]" 
+		<div
+			:class="['booking--rcw--schedule-item', { '--selected': isSelected }]"
 			@click="selectOption"
 		>
 			<div class="booking--rcw--schedule-item-radio ui-ctl-radio">
@@ -70,13 +69,13 @@ export const ScheduleItem = {
 					class="booking--rcw--schedule-item-text-title">
 					{{ title }}
 				</label>
-				<div class="booking--rcw--schedule-item-text-description">{{ description }}</div>
-				<span 
-					class="booking--rcw--more booking--rcw--schedule-item-text-description-more"
-					@click="showHelpDesk"
-				>
-					{{ moreLabel }}
-				</span>
+				<HelpDeskLoc
+					:message="description"
+					:code="code"
+					:anchor="anchorCode"
+					class="booking--rcw--schedule-item-text-description"
+					link-class="booking--rcw--more booking--rcw--schedule-item-text-description-more"
+				/>
 			</div>
 			<div class="booking--rcw--schedule-item-view" :class="itemClass"></div>
 		</div>

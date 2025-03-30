@@ -2,9 +2,10 @@
 
 namespace Bitrix\Sign\Type\Template;
 
+use Bitrix\Sign\Contract\Item\IntModelValue;
 use Bitrix\Sign\Type\ValuesTrait;
 
-enum Visibility: string
+enum Visibility: string implements IntModelValue
 {
 	case VISIBLE = 'visible';
 	case INVISIBLE = 'invisible';

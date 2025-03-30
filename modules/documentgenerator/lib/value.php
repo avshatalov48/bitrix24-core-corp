@@ -25,7 +25,7 @@ abstract class Value
 	 */
 	abstract public function toString($modifier = '');
 
-	public function __toString()
+	public function __toString(): string
 	{
 		return $this->toString();
 	}

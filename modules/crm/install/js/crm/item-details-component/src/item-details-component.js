@@ -238,7 +238,24 @@ export class ItemDetailsComponent
 		this.bindEvents();
 		this.initDocumentButton();
 		this.initReceiversRepository();
-		if (this.id > 0)
+
+		if (this.isNew())
+		{
+			const pageTitleElement = document.getElementById('pagetitle');
+			Dom.style(pageTitleElement, 'padding-right', '15px');
+
+			this.initCategoriesSelector(pageTitleElement);
+
+			// beautify element
+			const categorySelectorElement = document.getElementById('pagetitle_sub');
+			Dom.style(categorySelectorElement, {
+				position: 'relative',
+				padding: '10px',
+				'z-index': 1000,
+				'background-size': 'contain',
+			});
+		}
+		else
 		{
 			this.initPageTitleButtons();
 			this.initPull();
@@ -284,25 +301,32 @@ export class ItemDetailsComponent
 		const pageTitle = document.getElementById('pagetitle');
 		Dom.insertAfter(pageTitleButtons, pageTitle);
 
-		if(Type.isArray(this.categories) && this.categories.length > 0)
+		this.initCategoriesSelector(pageTitleButtons);
+	}
+
+	initCategoriesSelector(target: HTMLElement): void
+	{
+		if (Type.isArray(this.categories) && this.categories.length > 0)
 		{
 			const currentCategory = this.getCurrentCategory();
-			if(currentCategory)
+			if (currentCategory)
 			{
 				const categoriesSelector = Tag.render`
 					<div id="pagetitle_sub" class="pagetitle-sub">
-						<a href="#" onclick="${this.onCategorySelectorClick.bind(this)}">${currentCategory.text}</a>
+						<a href="#" onclick="${this.onCategorySelectorClick.bind(this)}">
+							${currentCategory.text}
+						</a>
 					</div>
 				`;
 
-				Dom.insertAfter(categoriesSelector, pageTitleButtons);
+				Dom.insertAfter(categoriesSelector, target);
 			}
 		}
 	}
 
-	onCategorySelectorClick(event)
+	onCategorySelectorClick(event: BaseEvent)
 	{
-		if(!this.categoryId || !this.categories)
+		if (!this.categoryId || !this.categories)
 		{
 			return;
 		}
@@ -310,42 +334,79 @@ export class ItemDetailsComponent
 		const notCurrentCategories = this.categories.filter((category) => {
 			return category.categoryId !== this.categoryId;
 		});
-		notCurrentCategories.forEach((category) => {
+
+		notCurrentCategories.forEach((category: Category) => {
 			delete category.href;
+
 			category.onclick = () => {
 				this.onCategorySelect(category.categoryId);
-			}
+			};
 		});
 
 		PopupMenu.show({
-			id: 'item-detail-' + this.entityTypeId + '-' + this.id,
+			id: `item-detail-${this.entityTypeId}-${this.id}`,
 			bindElement: event.target,
-			items: notCurrentCategories
+			items: notCurrentCategories,
 		});
 	}
 
 	onCategorySelect(categoryId)
 	{
-		if(this.isProgress)
+		if (this.isProgress)
 		{
 			return;
 		}
+
+		if (this.isNew())
+		{
+			if (this.getEditor()?.isChanged())
+			{
+				MessageBox.show({
+					modal: true,
+					title: Loc.getMessage('CRM_ITEM_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_TITLE'),
+					message: Loc.getMessage('CRM_ITEM_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_MESSAGE'),
+					minHeight: 100,
+					buttons: MessageBoxButtons.OK_CANCEL,
+					okCaption: Loc.getMessage('CRM_ITEM_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_OK_BTN'),
+					onOk: (messageBox) => {
+						messageBox.close();
+						this.reloadPageWhenCategoryChanged(categoryId);
+					},
+					onCancel: (messageBox) => messageBox.close(),
+				});
+			}
+			else
+			{
+				this.reloadPageWhenCategoryChanged(categoryId);
+			}
+
+			return;
+		}
+
 		this.startProgress();
+
 		Ajax.runAction('crm.controller.item.update', {
 			analyticsLabel: 'crmItemDetailsChangeCategory',
 			data: {
 				entityTypeId: this.entityTypeId,
 				id: this.id,
 				fields: {
-					categoryId
-				}
-			}
-		}).then( () => {
+					categoryId,
+				},
+			},
+		}).then(() => {
 			setTimeout(() => {
-				//todo what if editor is changed ?
+				// @todo: what if editor is changed ?
 				window.location.reload();
 			}, 500);
-		}).catch(this.showErrorsFromResponse.bind(this))
+		}).catch(this.showErrorsFromResponse.bind(this));
+	}
+
+	reloadPageWhenCategoryChanged(categoryId: number): void
+	{
+		const url = new Uri(window.location.href);
+		url.setQueryParam('categoryId', categoryId);
+		window.location.href = url.toString();
 	}
 
 	initStageFlow()

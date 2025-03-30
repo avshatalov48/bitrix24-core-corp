@@ -32,10 +32,12 @@ export const App = {
 			loader: new Loader(),
 		};
 	},
+	beforeMount(): void
+	{
+		mousePosition.init();
+	},
 	async mounted(): Promise<void>
 	{
-		mousePosition.bindMouseMove();
-
 		this.showLoader();
 		expandOffHours.setExpanded(true);
 		this.addAfterTitle();
@@ -46,6 +48,10 @@ export const App = {
 		]);
 
 		void this.$store.dispatch(`${Model.Interface}/setIsLoaded`, true);
+	},
+	beforeUnmount(): void
+	{
+		mousePosition.destroy();
 	},
 	computed: {
 		...mapGetters({

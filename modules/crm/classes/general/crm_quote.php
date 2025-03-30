@@ -3398,7 +3398,17 @@ class CAllCrmQuote
 
 	public static function isPrintingViaPaymentMethodSupported()
 	{
-		return self::isActiveQuotePaymentMethodExists();
+		return self::isActiveQuotePaymentMethodExists() && self::allowLegacyPrintDocuments();
+	}
+
+	public static function allowLegacyPrintDocuments(): bool
+	{
+		if (\Bitrix\Main\Config\Option::get('crm', 'allowLegacyPrintDocuments', 'N') === 'Y')
+		{
+			return true;
+		}
+
+		return \Bitrix\Crm\Settings\Crm::getPortalCreatedTimestamp() < ((new \Bitrix\Main\Type\DateTime('01.01.2025', 'd.m.Y'))->getTimestamp());
 	}
 
 	public static function HandleStorageElementDeletion($storageTypeID, $elementID)

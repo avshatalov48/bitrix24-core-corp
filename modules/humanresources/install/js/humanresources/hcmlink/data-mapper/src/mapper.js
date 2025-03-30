@@ -1,13 +1,10 @@
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { BitrixVue, VueCreateAppResult } from 'ui.vue3';
-import { Page } from './components/page';
-import { Loader } from './components/loader';
-import { Counter } from './components/counter';
-import { StateScreen } from './components/state-screen';
 import { Api } from 'humanresources.hcmlink.api';
-import { Dom, Loc, Tag, Type } from 'main.core';
+import { Dom, Loc, Type } from 'main.core';
+import { HumanresourcesHcmlinkMapper } from './app';
+import { EventList } from './types';
 import { Layout } from 'ui.sidepanel.layout';
-
-import './styles/mapper.css';
 
 type MapperOptions = {
 	companyId: number,
@@ -15,6 +12,9 @@ type MapperOptions = {
 	mode: 'direct' | 'reverse',
 };
 
+/**
+ * An entry point of data-mapper
+ */
 export class Mapper
 {
 	#container: HTMLElement;
@@ -22,6 +22,7 @@ export class Mapper
 	#application: VueCreateAppResult | null = null;
 	api: Api;
 	options: MapperOptions;
+	footerDisplayPointer: function;
 
 	static MODE_DIRECT = 'direct';
 	static MODE_REVERSE = 'reverse';
@@ -30,6 +31,7 @@ export class Mapper
 	{
 		this.api = new Api();
 		this.options = options;
+		this.footerDisplayPointer = this.footerDisplay.bind(this); // for correct sub/unsub
 
 		if (Type.isNil(this.options.userIds))
 		{
@@ -42,17 +44,30 @@ export class Mapper
 		sliderOptions: { onCloseHandler: () => void },
 	): void
 	{
+		let closure = null;
 		BX.SidePanel.Instance.open('humanresources:mapper', {
 			width: 800,
 			loader: 'default-loader',
 			cacheable: false,
 			contentCallback: () => {
 				return top.BX.Runtime.loadExtension('humanresources.hcmlink.data-mapper').then((exports) => {
-					return (new exports.Mapper(options)).getLayout();
+					closure = new exports.Mapper(options);
+
+					return closure.getLayout();
 				});
 			},
 			events: {
-				onClose: sliderOptions?.onCloseHandler ?? (() => {}),
+				onClose: () => {
+					sliderOptions?.onCloseHandler();
+					closure.unmount();
+				},
+				onLoad: () => {
+					// Here we need to get rid of title to replace the entire toolbar with our own markup
+					// Why we just don't pass the title at all? If we don't pass it, then toolbar will not render too
+					Dom.remove(closure.layout.getContainer().querySelector('.ui-sidepanel-layout-title'));
+					// Add a class to differentiate this layout from other layouts
+					Dom.addClass(closure.layout.getContainer().querySelector('.ui-sidepanel-layout-header'), 'hr-hcmlink-sync__toolbar');
+				},
 			},
 		});
 	}
@@ -67,20 +82,34 @@ export class Mapper
 		this.#container = document.createElement('div');
 		if (this.#application === null)
 		{
-			this.#application = BitrixVue.createApp(this.makeRootVueComponent());
+			this.#application = BitrixVue.createApp(HumanresourcesHcmlinkMapper, {
+				companyId: this.options.companyId,
+				mode: this.options.mode,
+				userIdCollection: [...this.options.userIds],
+				toolbarContainer: '.hr-hcmlink-sync__toolbar .ui-sidepanel-layout-toolbar',
+				api: this.api,
+			});
+			EventEmitter.subscribe(EventList.HR_DATA_MAPPER_FOOTER_DISPLAY, this.footerDisplayPointer);
+			Dom.style(this.#container, 'height', '100%');
 			this.component = this.#application.mount(this.#container);
 		}
 
 		return this.#container;
 	}
 
-	async getLayout()
+	unmount(): void
+	{
+		EventEmitter.unsubscribe(EventList.HR_DATA_MAPPER_FOOTER_DISPLAY, this.footerDisplayPointer);
+		this.#application.unmount();
+	}
+
+	async getLayout(): Promise<any>
 	{
 		const getContentLayout = function(): HTMLElement {
 			return this.render();
 		}.bind(this);
 
-		const saveAction = async function() {
+		const saveAction = async function(): Promise<any> {
 			const collection = Object.values(this.component.getUserMappingSet());
 
 			return this.api.saveMapping({
@@ -89,7 +118,7 @@ export class Mapper
 			});
 		}.bind(this);
 
-		const prepareNextUsers = async function() {
+		const prepareNextUsers = async function(): Promise<any> {
 			this.component.prepareNextUsers();
 		}.bind(this);
 
@@ -104,9 +133,8 @@ export class Mapper
 			title: Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SLIDER_TITLE'),
 			toolbar()
 			{
-				return [
-					Tag.render`<div id="hr-hcmlink-toolbar-container"></div>`,
-				];
+				// We need to pass at least empty array for ui-sidepanel-layout-toolbar to appear
+				return [];
 			},
 			content(): HTMLElement
 			{
@@ -134,245 +162,22 @@ export class Mapper
 		return this.layout.render();
 	}
 
-	makeRootVueComponent(): Object
+	footerDisplay(showEvent: BaseEvent): void
 	{
-		const context = this;
+		if (!this.layout)
+		{
+			return;
+		}
 
-		return {
-			name: 'HumanresourcesHcmlinkMapper',
+		if (this.layout.getFooterContainer())
+		{
+			Dom.style(this.layout.getFooterContainer(), 'display', showEvent.data ? 'block' : 'none');
+		}
 
-			components: {
-				Page,
-				Loader,
-				Counter,
-				StateScreen,
-			},
-
-			data() {
-				return {
-					loading: false,
-					config: {
-						companyId: context.options.companyId,
-						mode: context.options.mode ?? 'direct',
-						isHideInfoAlert: true,
-					},
-					pageCount: 0,
-					mappingEntityCollection: [],
-					userMappingSet: {},
-					userIdCollection: [...context.options.userIds],
-					isJobResolved: false,
-					jobId: null,
-					isDone: false,
-					countAllPersonsForMap: 0,
-					countMappedPersons: 0,
-					countUnmappedPersons: 0,
-					counterContainer: '#hr-hcmlink-toolbar-container',
-					isReadyToolbar: false,
-					completedStatus: context.options.mode === 'direct' ? 'done' : 'salaryDone',
-					jobResolverInterval: null,
-					mappedUserIds: [],
-				};
-			},
-
-			created(): void
-			{
-				this.footerDisplay(false);
-				this.createUpdateEmployeeListJob();
-			},
-
-			computed: {
-				isJobPending() {
-					return !this.isJobResolved && !this.isDone;
-				},
-				isMappingReady() {
-					return this.isJobResolved && !this.isDone;
-				},
-				isMappingDone() {
-					return this.isJobResolved && this.isDone;
-				},
-			},
-
-			watch: {
-				pageCount()
-				{
-					this.loadConfig();
-				},
-				isMappingReady(value)
-				{
-					if (value)
-					{
-						this.footerDisplay(true);
-					}
-				},
-				isMappingDone(value)
-				{
-					if (value)
-					{
-						this.footerDisplay(false);
-					}
-				},
-			},
-
-			mounted()
-			{
-				this.countAllPersonsForMap = this.userIdCollection.length;
-				this.$nextTick(() => {
-					this.isReadyToolbar = true;
-				});
-			},
-
-			unmounted()
-			{
-				clearInterval(this.jobResolverInterval);
-			},
-
-			methods: {
-				prepareNextUsers()
-				{
-					this.userMappingSet = {};
-					this.pageCount++;
-				},
-				getUserMappingSet()
-				{
-					return this.userMappingSet;
-				},
-				onCreateLink(options)
-				{
-					this.userMappingSet[options.userId] = options;
-				},
-				onRemoveLink(options)
-				{
-					if (this.userMappingSet[options.userId] !== undefined)
-					{
-						delete this.userMappingSet[options.userId];
-					}
-				},
-				onCloseAlert()
-				{
-					context.api.closeInfoAlert();
-				},
-				onCompleteMapping()
-				{
-					context.api.createCompleteMappingEmployeeListJob({
-						companyId: this.config.companyId,
-					});
-				},
-				async loadConfig()
-				{
-					this.loading = true;
-
-					const {
-						items,
-						countMappedPersons,
-						countUnmappedPersons,
-						isHideInfoAlert,
-						mappedUserIds,
-					} = await context.api.loadMapperConfig({
-						companyId: this.config.companyId,
-						userIds: this.userIdCollection,
-						mode: this.config.mode,
-					});
-
-					this.config.isHideInfoAlert = isHideInfoAlert;
-					this.countUnmappedPersons = countUnmappedPersons;
-					this.countMappedPersons = countMappedPersons;
-					this.mappingEntityCollection = Type.isArray(items) ? items : [];
-					this.mappedUserIds = mappedUserIds;
-
-					this.isDone = this.mappingEntityCollection.length === 0;
-
-					this.loading = false;
-				},
-				async createUpdateEmployeeListJob()
-				{
-					const data = await context.api.createUpdateEmployeeListJob({
-						companyId: this.config.companyId,
-					});
-					this.jobId = data.jobId;
-
-					this.jobResolverInterval = setInterval(this.jobResolver.bind(this), 30000);
-
-					BX.PULL.subscribe({
-						type: BX.PullClient.SubscriptionType.Server,
-						moduleId: 'humanresources',
-						command: 'external_employee_list_updated',
-						callback: async function(params: {jobId: number, status: string}): Promise<void> {
-							if (
-								(params.jobId === this.jobId)
-								&& (params.status === 3)
-							)
-							{
-								clearInterval(this.jobResolverInterval);
-								await this.loadConfig(params);
-								this.isJobResolved = true;
-							}
-						}.bind(this),
-					});
-					BX.PULL.extendWatch('humanresources_person_mapping');
-				},
-				async jobResolver()
-				{
-					const { params } = await context.api.getJobStatus({ jobId: this.jobId });
-
-					if (params.status === 3)
-					{
-						clearInterval(this.jobResolverInterval);
-						await this.loadConfig(params);
-						this.isJobResolved = true;
-					}
-				},
-				footerDisplay(show: boolean): void
-				{
-					if (!context.layout)
-					{
-						return;
-					}
-
-					if (context.layout.getFooterContainer())
-					{
-						Dom.style(context.layout.getFooterContainer(), 'display', show ? 'block' : 'none');
-					}
-
-					const footerAnchor = context.layout.getContainer()?.getElementsByClassName('ui-sidepanel-layout-footer-anchor')[0];
-					if (footerAnchor)
-					{
-						Dom.style(footerAnchor, 'display', show ? 'block' : 'none');
-					}
-				},
-			},
-
-			template: `
-                <template v-if="isJobPending">
-                    <StateScreen
-                        status='pending'
-                    ></StateScreen>
-                </template>
-                <template v-if="isMappingReady">
-                    <Loader v-if="loading"></Loader>
-                    <Page
-                        :collection=mappingEntityCollection
-						:mappedUserIds=mappedUserIds
-                        :config=config
-                        @createLink="onCreateLink"
-                        @removeLink="onRemoveLink"
-						@closeAlert="onCloseAlert"
-                    ></Page>
-                </template>
-                <template v-if="isMappingDone">
-                    <StateScreen
-	                    :status=completedStatus
-						@completeMapping='onCompleteMapping'
-                    ></StateScreen>
-                </template>
-				<Teleport v-if="isReadyToolbar && isMappingReady" :to="counterContainer">
-					<Counter
-						:countAllPersonsForMap=countAllPersonsForMap
-						:countMappedPersons=countMappedPersons
-						:countUnmappedPersons=countUnmappedPersons
-						:config=config
-					></Counter>
-				</Teleport>
-			`,
-		};
+		const footerAnchor = this.layout.getContainer()?.getElementsByClassName('ui-sidepanel-layout-footer-anchor')[0];
+		if (footerAnchor)
+		{
+			Dom.style(footerAnchor, 'display', showEvent.data ? 'block' : 'none');
+		}
 	}
 }

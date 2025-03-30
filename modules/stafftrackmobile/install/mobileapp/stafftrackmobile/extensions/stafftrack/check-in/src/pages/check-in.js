@@ -8,7 +8,6 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 	const { outline: { check, cross } } = require('assets/icons');
 	const { Haptics } = require('haptics');
 	const { confirmDefaultAction } = require('alert');
-	const { animate } = require('animation');
 
 	const { Button, Icon } = require('ui-system/form/buttons/button');
 	const { Card, CardDesign } = require('ui-system/layout/card');
@@ -16,7 +15,9 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 	const { Link3, LinkDesign, LinkMode } = require('ui-system/blocks/link');
 	const { Text3, Text2 } = require('ui-system/typography/text');
 	const { BadgeCounter, BadgeCounterDesign } = require('ui-system/blocks/badges/counter');
+	const { DialogFooter } = require('ui-system/layout/dialog-footer');
 
+	const { CancelReasonPage } = require('stafftrack/check-in/pages/cancel-reason');
 	const { Message } = require('stafftrack/check-in/message');
 	const { CancelReasonView } = require('stafftrack/check-in/cancel-reason-view');
 	const { CancelReasonMenu } = require('stafftrack/check-in/cancel-reason-menu');
@@ -27,15 +28,12 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 	const { MuteEnum } = require('stafftrack/model/counter');
 	const { Analytics, CheckinSentEnum } = require('stafftrack/analytics');
 	const { AvaMenu } = require('ava-menu');
-	const { CancelReasonPage } = require('stafftrack/check-in/pages/cancel-reason');
 	const { OptionManager, OptionEnum } = require('stafftrack/data-managers/option-manager');
+	const { SettingsManager } = require('stafftrack/data-managers/settings-manager');
 	const { Entry } = require('stafftrack/entry');
 
 	const { PureComponent } = require('layout/pure-component');
 
-	/**
-	 * @class CheckInPage
-	 */
 	class CheckInPage extends PureComponent
 	{
 		constructor(props)
@@ -54,21 +52,14 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 				buttonContainer: null,
 			};
 
-			this.isButtonContainerVisible = true;
 			this.previousToast = null;
 			this.confirmStartWorkDayResult = null;
 			this.confirmExpiredWorkDayResult = null;
 
-			this.onKeyboardWillShowHandler = this.onKeyboardWillShowHandler.bind(this);
-			this.onKeyboardWillHideHandler = this.onKeyboardWillHideHandler.bind(this);
-
-			this.showCancelReasonMenu = this.showCancelReasonMenu.bind(this);
 			this.startWorkingDay = this.startWorkingDay.bind(this);
 			this.startNotWorkingDay = this.startNotWorkingDay.bind(this);
 			this.cancelWorkingDay = this.cancelWorkingDay.bind(this);
 			this.closeLayout = this.closeLayout.bind(this);
-
-			this.update = this.update.bind(this);
 		}
 
 		/**
@@ -147,32 +138,15 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 
 		bindEvents()
 		{
-			Keyboard.on(Keyboard.Event.WillShow, this.onKeyboardWillShowHandler);
-			Keyboard.on(Keyboard.Event.WillHide, this.onKeyboardWillHideHandler);
-
-			ShiftManager.on('updated', this.update);
+			ShiftManager.on('updated', this.updateState);
 		}
 
 		unbindEvents()
 		{
-			Keyboard.off(Keyboard.Event.WillShow, this.onKeyboardWillShowHandler);
-			Keyboard.off(Keyboard.Event.WillHide, this.onKeyboardWillHideHandler);
-
-			ShiftManager.off('updated', this.update);
+			ShiftManager.off('updated', this.updateState);
 		}
 
-		onKeyboardWillShowHandler()
-		{
-			this.hideButtonContainer();
-		}
-
-		onKeyboardWillHideHandler()
-		{
-			this.showButtonContainer();
-		}
-
-		async update()
-		{
+		updateState = async () => {
 			const { currentShift } = await ShiftManager.getMain(DateHelper.getCurrentDayCode());
 
 			const shift = new ShiftModel(currentShift);
@@ -180,9 +154,26 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 			this.heightManager.setStatus(shift.getStatus());
 
 			this.setState({ shift }, () => this.heightManager.updateSheetHeight());
-		}
+		};
 
 		render()
+		{
+			return View(
+				{
+					style: {
+						flex: 1,
+					},
+					safeArea: {
+						bottom: true,
+					},
+				},
+				this.renderContent(),
+				this.shift.isEmptyStatus() && this.renderDialogFooter(),
+				this.shift.isWorkingStatus() && this.renderCancelButton(),
+			);
+		}
+
+		renderContent()
 		{
 			return ScrollView(
 				{
@@ -202,7 +193,6 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 					this.shift.isCancelOrNotWorkingStatus() && this.renderCancelReason(),
 					!this.shift.isCancelOrNotWorkingStatus() && this.renderMessage(),
 					!this.shift.isCancelOrNotWorkingStatus() && this.renderLocation(),
-					!this.shift.isCancelOrNotWorkingStatus() && this.renderButtons(),
 				),
 			);
 		}
@@ -297,8 +287,6 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 				dialogId: this.dialogInfo.dialogId,
 				dialogName: this.dialogInfo.dialogName,
 				diskFolderId: this.diskFolderId,
-				onFocusText: this.heightManager.onFocusText,
-				onBlurText: this.heightManager.onBlurText,
 				ref: (ref) => {
 					this.refs.message = ref;
 				},
@@ -311,7 +299,7 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 				{},
 				new MapView({
 					layoutWidget: this.refs.layoutWidget,
-					sendGeo: OptionManager.getOption(OptionEnum.SEND_GEO),
+					sendGeo: SettingsManager.isGeoEnabled() ? OptionManager.getOption(OptionEnum.SEND_GEO) : false,
 					isFirstHelpViewed: OptionManager.getOption(OptionEnum.IS_FIRST_HELP_VIEWED),
 					readOnly: this.shift.isWorkingStatus() || this.shift.isCancelOrNotWorkingStatus(),
 					location: this.shift.getLocation() || OptionManager.getOption(OptionEnum.DEFAULT_LOCATION),
@@ -319,8 +307,6 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 					geoImageUrl: this.shift.getGeoImageUrl(),
 					address: this.shift.getAddress(),
 					userInfo: this.user,
-					onFocusText: this.heightManager.onFocusText,
-					onBlurText: this.heightManager.onBlurText,
 					ref: (ref) => {
 						this.refs.location = ref;
 					},
@@ -328,24 +314,18 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 			);
 		}
 
-		renderButtons()
+		renderDialogFooter()
 		{
-			const dayStarted = this.shift.isWorkingStatus();
-			const cancelledDay = this.shift.isCancelOrNotWorkingStatus();
-
-			return Area(
+			return DialogFooter(
 				{
-					isFirst: true,
-					style: {
-						opacity: 1,
-					},
-					ref: (ref) => {
-						this.refs.buttonContainer = ref;
+					keyboardButton: {
+						text: Loc.getMessage('M_STAFFTRACK_CHECK_IN_CONTINUE'),
+						testId: 'stafftrack-checkin-continue-button',
+						onClick: () => Keyboard.dismiss(),
 					},
 				},
-				!dayStarted && !cancelledDay && this.renderStartDayButton(),
-				!dayStarted && !cancelledDay && this.renderNotWorkingButton(),
-				dayStarted && !cancelledDay && this.renderCancelButton(),
+				this.renderStartDayButton(),
+				this.renderNotWorkingButton(),
 			);
 		}
 
@@ -378,10 +358,12 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 						alignItems: 'center',
 						justifyContent: 'center',
 						height: 50,
+						marginTop: Indent.M.toNumber(),
 					},
 					ref: (ref) => {
 						this.refs.cancelDay = ref;
 					},
+					onClick: this.showStartNotWorkingDayMenu,
 				},
 				Link3({
 					text: Loc.getMessage('M_STAFFTRACK_CHECK_IN_NOT_WORKING'),
@@ -390,7 +372,7 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 					size: 3,
 					useInAppLink: false,
 					testId: 'stafftrack-not-working-button',
-					onClick: () => this.showCancelReasonMenu(this.startNotWorkingDay),
+					onClick: this.showStartNotWorkingDayMenu,
 				}),
 			);
 		}
@@ -403,10 +385,12 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 						alignItems: 'center',
 						justifyContent: 'center',
 						height: 50,
+						marginBottom: Indent.XL2.toNumber(),
 					},
 					ref: (ref) => {
 						this.refs.cancelDay = ref;
 					},
+					onClick: this.showCancelWorkingDayMenu,
 				},
 				Link3({
 					text: Loc.getMessage('M_STAFFTRACK_CHECK_IN_CANCEL'),
@@ -414,7 +398,7 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 					mode: LinkMode.DASH,
 					useInAppLink: false,
 					testId: 'stafftrack-cancel-day-button',
-					onClick: () => this.showCancelReasonMenu(this.cancelWorkingDay),
+					onClick: this.showCancelWorkingDayMenu,
 				}),
 			);
 		}
@@ -469,6 +453,14 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 				imageSent: Boolean(shiftDto.imageFileId),
 			});
 		}
+
+		showStartNotWorkingDayMenu = () => {
+			this.showCancelReasonMenu(this.startNotWorkingDay);
+		};
+
+		showCancelWorkingDayMenu = () => {
+			this.showCancelReasonMenu(this.cancelWorkingDay);
+		};
 
 		// eslint-disable-next-line consistent-return
 		startNotWorkingDay(cancelReason)
@@ -575,11 +567,11 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 				cancelButtonText: Loc.getMessage('M_STAFFTRACK_CHECK_IN_START_WORKDAY_CONFIRM_CANCEL'),
 				onAction: () => {
 					this.confirmStartWorkDayResult = false;
-					this.startWorkingDay();
+					void this.startWorkingDay();
 				},
 				onCancel: () => {
 					this.confirmStartWorkDayResult = true;
-					this.startWorkingDay();
+					void this.startWorkingDay();
 				},
 			});
 		}
@@ -595,7 +587,7 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 				cancelButtonText: Loc.getMessage('M_STAFFTRACK_CHECK_IN_EXPIRED_WORKDAY_CONFIRM_ACTION'),
 				onAction: () => {
 					this.confirmExpiredWorkDayResult = true;
-					this.startWorkingDay();
+					void this.startWorkingDay();
 				},
 				onCancel: () => {
 					this.confirmExpiredWorkDayResult = false;
@@ -635,32 +627,6 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 			}
 
 			return OptionManager.getOption(OptionEnum.TIMEMAN_INTEGRATION_ENABLED) === false;
-		}
-
-		showButtonContainer()
-		{
-			if (!this.isButtonContainerVisible)
-			{
-				void this.animateToggleButtonContainer({ show: true });
-			}
-		}
-
-		hideButtonContainer()
-		{
-			if (this.isButtonContainerVisible)
-			{
-				void this.animateToggleButtonContainer({ show: false });
-			}
-		}
-
-		animateToggleButtonContainer({ show })
-		{
-			this.isButtonContainerVisible = show;
-
-			return animate(this.refs.buttonContainer, {
-				opacity: show ? 1 : 0,
-				duration: 0,
-			});
 		}
 	}
 

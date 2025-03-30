@@ -126,10 +126,7 @@ class Save implements Contract\Operation
 		if ($member->dateSigned === null)
 		{
 			$member->dateSigned = new Main\Type\DateTime();
-			// avoid unexpected changes
-			$freshMember = $this->memberRepository->getById($member->id);
-			$freshMember->dateSigned = new Main\Type\DateTime();
-			$this->memberRepository->update($freshMember);
+			$this->memberRepository->update($member);
 		}
 	}
 

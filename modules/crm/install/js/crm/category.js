@@ -218,56 +218,87 @@ if(typeof(BX.Crm.DealCategoryChanger) === "undefined")
 		},
 		prepareMenuItems: function()
 		{
-			var results = [];
+			const categoryIds = BX.prop.getArray(this._settings, 'categoryIds', []);
+			if (categoryIds.length === 0)
+			{
+				return [];
+			}
 
-			var callback = BX.delegate(this.onMenuItemClick, this);
-			var itemInfos = this.getFilteredCategories();
-			for(var i = 0, length = itemInfos.length; i < length; i++)
+			const results = [];
+			const callback = BX.delegate(this.onMenuItemClick, this);
+			const itemInfos = this.getFilteredCategories();
+			for (var i = 0, length = itemInfos.length; i < length; i++)
 			{
 				results.push({ id: itemInfos[i]["id"], text: BX.Text.encode(itemInfos[i]["name"]), onclick: callback });
 			}
 
 			return results;
 		},
-		onMenuItemClick: function(event, menuItem)
+
+		onMenuItemClick(event, menuItem)
 		{
-			if(menuItem.menuWindow)
+			if (menuItem.menuWindow)
 			{
 				menuItem.menuWindow.close();
 			}
 
-			this.startRequest(BX.prop.getInteger(menuItem, "id", 0));
+			this.startRequest(BX.prop.getInteger(menuItem, 'id', 0));
 		},
-		//endregion
-		startRequest: function(categoryId)
+		// endregion
+
+		startRequest(categoryId)
 		{
-			BX.ajax(
-				{
-					url: this._serviceUrl,
-					method: "POST",
-					dataType: "json",
-					data:
-						{
-							"ACTION": BX.prop.getString(this._settings, "action", "MOVE_TO_CATEGORY"),
-							"ACTION_ENTITY_ID": this._entityId,
-							"CATEGORY_ID": categoryId
-						},
-					onsuccess: BX.delegate(this.onRequestSuccess, this)
-				}
-			);
-		},
-		onRequestSuccess: function(data)
-		{
-			var error = BX.prop.getString(data, "ERROR", "");
-			if(error !== "")
+			if (this.getEntityId() <= 0)
 			{
-				this.openErrorDialog(error);
+				BX.UI.Dialogs.MessageBox.show({
+					modal: true,
+					title: this.getMessage('changeFunnelConfirmDialogTitle'),
+					message: this.getMessage('changeFunnelConfirmDialogMessage'),
+					minHeight: 100,
+					buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
+					okCaption: this.getMessage('changeFunnelConfirmDialogOkBtn'),
+					onOk: (messageBox) => {
+						messageBox.close();
+						this.reloadPageWhenCategoryChanged(categoryId);
+					},
+					onCancel: (messageBox) => messageBox.close(),
+				});
+
+				return;
 			}
-			else
+
+			BX.ajax({
+				url: this._serviceUrl,
+				method: 'POST',
+				dataType: 'json',
+				data: {
+					ACTION: BX.prop.getString(this._settings, 'action', 'MOVE_TO_CATEGORY'),
+					ACTION_ENTITY_ID: this._entityId,
+					CATEGORY_ID: categoryId,
+				},
+				onsuccess: BX.delegate(this.onRequestSuccess, this),
+			});
+		},
+
+		reloadPageWhenCategoryChanged(categoryId)
+		{
+			const url = new BX.Uri(window.location.href);
+			url.setQueryParam('category_id', categoryId);
+			window.location.href = url.toString();
+		},
+
+		onRequestSuccess(data)
+		{
+			const error = BX.prop.getString(data, 'ERROR', '');
+			if (error === '')
 			{
 				window.location.reload();
 			}
-		}
+			else
+			{
+				this.openErrorDialog(error);
+			}
+		},
 	};
 
 	if(typeof(BX.Crm.DealCategoryChanger.messages) === "undefined")
@@ -293,19 +324,22 @@ if(typeof(BX.Crm.DealCategoryChanger) === "undefined")
 		}
 		return null;
 	};
+
 	BX.Crm.DealCategoryChanger.processEntity = function(entityId, options)
 	{
-		var item = this.getByEntityId(entityId);
-		if(item)
+		const item = this.getByEntityId(entityId);
+		if (item)
 		{
 			item.process(options);
 		}
 	};
+
 	BX.Crm.DealCategoryChanger.create = function(id, settings)
 	{
-		var self = new BX.Crm.DealCategoryChanger();
+		const self = new BX.Crm.DealCategoryChanger();
 		self.initialize(id, settings);
 		this.items[self.getId()] = self;
+
 		return self;
 	};
 }

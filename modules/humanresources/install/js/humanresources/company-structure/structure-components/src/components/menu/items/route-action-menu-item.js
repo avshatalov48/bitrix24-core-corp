@@ -1,4 +1,4 @@
-import "./styles/route-action-menu-item.css";
+import './styles/route-action-menu-item.css';
 import { BIcon } from 'ui.icon-set.api.vue';
 
 export const RouteActionMenuItem = {
@@ -52,7 +52,7 @@ export const RouteActionMenuItem = {
 					class="hr-structure-route-action-popup-menu-item__content-icon-container"
 
 				>
-					<div 
+					<div
 						class="hr-structure-route-action-popup-menu-item__content-icon"
 						:class="imageClass"
 					/>
@@ -67,5 +67,5 @@ export const RouteActionMenuItem = {
 				</div>
 			</div>
 		</div>
-	`
-}
+	`,
+};

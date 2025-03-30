@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'ui.vue3.pinia',
+		'humanresources.company-structure.api',
 	],
 	'skip_core' => true,
 ];

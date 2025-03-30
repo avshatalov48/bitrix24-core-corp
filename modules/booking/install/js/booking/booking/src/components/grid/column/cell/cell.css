@@ -6,3 +6,11 @@
 	border-bottom: 1px solid var(--ui-color-base-10);
 	border-right: 1px solid var(--ui-color-base-10);
 }
+
+.booking-booking-grid-cell.--quick-filter-hovered {
+	background: var(--ui-color-palette-blue-20);
+}
+
+.booking-booking-grid-cell.--quick-filter-active {
+	background: var(--ui-color-palette-blue-10);
+}

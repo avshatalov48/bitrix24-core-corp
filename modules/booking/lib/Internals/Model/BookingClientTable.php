@@ -98,7 +98,8 @@ final class BookingClientTable extends DataManager
 						WHERE
 							booking_client.CLIENT_TYPE_ID = %s
 							AND booking_client.CLIENT_ID = %s
-							AND booking.DATE_TO < " . (int)time() . "
+							AND booking.DATE_FROM < " . strtotime("midnight") . "
+							AND booking.DATE_TO < " . strtotime("tomorrow") - 1 . "
 							AND booking.VISIT_STATUS IN (
 								'" . BookingVisitStatus::Visited->value . "',
 								'" . BookingVisitStatus::Unknown->value . "'

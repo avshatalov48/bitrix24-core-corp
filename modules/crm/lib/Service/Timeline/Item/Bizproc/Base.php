@@ -67,7 +67,7 @@ abstract class Base extends Configurable
 		}
 
 		return [
-			'open' => $this->createOpenButton($workflowId),
+			'open' => $this->createOpenButton($workflowId)->setState(!$this->isBizprocEnabled() ? 'hidden' : null),
 		];
 	}
 
@@ -101,7 +101,7 @@ abstract class Base extends Configurable
 		}
 
 		$menuItems['timeline'] = $this->createTimelineMenuItem($workflowId);
-		$menuItems['log'] = $this->createLogMenuItem($workflowId);
+		$menuItems['log'] = $this->createLogMenuItem($workflowId)?->setScopeWeb();
 
 		return $menuItems;
 	}

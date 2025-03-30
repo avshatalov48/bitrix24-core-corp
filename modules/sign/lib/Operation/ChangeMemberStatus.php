@@ -323,10 +323,6 @@ final class ChangeMemberStatus implements Contract\Operation
 
 	private function saveAnalytics(): void
 	{
-		if (!Type\DocumentScenario::isB2eScenarioByDocument($this->document))
-		{
-			return;
-		}
 		if ($this->member->party !== $this->document->parties || $this->member->status !== Type\MemberStatus::DONE)
 		{
 			return;

@@ -1,4 +1,4 @@
-import type { ProviderCodeType } from 'sign.v2.api';
+import type { ProviderCodeType } from 'sign.type';
 import { post } from '../request';
 import type { Template, TemplateField, FieldValue } from './type';
 

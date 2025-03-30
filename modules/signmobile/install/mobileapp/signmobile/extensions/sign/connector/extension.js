@@ -79,6 +79,21 @@ jn.define('sign/connector', (require, exports, module) => {
 	}
 
 	/**
+	 * @function reviewAccept
+	 *
+	 * @param memberId
+	 * @returns {Promise}
+	 */
+	function reviewAccept(memberId)
+	{
+		return BX.ajax.runAction('signmobile.api.document.reviewAccept', {
+			data: {
+				memberId: Number(memberId),
+			},
+		});
+	}
+
+	/**
 	 * @function signingAccept
 	 *
 	 * @param memberId
@@ -155,6 +170,7 @@ jn.define('sign/connector', (require, exports, module) => {
 		getMember,
 		getSigningLinkPromise,
 		signingAccept,
+		reviewAccept,
 		confirmationAccept,
 		rejectConfirmation,
 		confirmationPostpone,

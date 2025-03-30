@@ -1,6 +1,8 @@
 import { RouteActionMenu } from 'humanresources.company-structure.structure-components';
 import { UserListItem } from './item/item';
+
 import 'ui.icon-set.main';
+import './styles/list.css';
 
 export const UserList = {
 	name: 'userList',

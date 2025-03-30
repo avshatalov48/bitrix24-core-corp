@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
-(function (exports,sign_v2_helper,main_popup,sign_tour,spotlight,ui_buttons,ui_dialogs_messagebox,ui_infoHelper,sign_backend,date,ui_notification,ui_stamp_uploader,crm_form_fields_selector,crm_requisite_fieldsetViewer,sign_v2_documentSetup,sign_v2_b2e_fieldSelector,sign_ui,color_picker,sign_document,main_core,ui_draganddrop_draggable,main_core_events,sign_v2_api) {
+(function (exports,sign_v2_analytics,sign_v2_helper,main_popup,sign_tour,spotlight,ui_buttons,ui_dialogs_messagebox,ui_infoHelper,sign_backend,date,ui_notification,ui_stamp_uploader,sign_v2_api,crm_form_fields_selector,crm_requisite_fieldsetViewer,sign_type,sign_v2_b2e_fieldSelector,sign_ui,color_picker,sign_document,main_core,ui_draganddrop_draggable,main_core_events) {
 	'use strict';
 
 	let _ = t => t,
@@ -2379,7 +2379,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  } = member;
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$6)[_cache$6].remember('fieldSelector', () => {
 	    const categories = ['COMPANY', 'PROFILE'];
-	    if (this.block.blocksManager.documentInitiatedByType !== sign_v2_documentSetup.DocumentInitiated.employee) {
+	    if (this.block.blocksManager.documentInitiatedByType !== sign_type.DocumentInitiated.employee) {
 	      categories.push('SMART_B2E_DOC');
 	    }
 	    const selector = new sign_v2_b2e_fieldSelector.FieldSelector({
@@ -5167,6 +5167,7 @@ this.BX.Sign = this.BX.Sign || {};
 	        popup.show();
 	        return null;
 	      }
+	      console.error(firstError.message);
 	      return postData;
 	    });
 	  }
@@ -5544,15 +5545,20 @@ this.BX.Sign = this.BX.Sign || {};
 	var _disabledSections = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disabledSections");
 	var _needSaveBlocksOnSidePanelClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needSaveBlocksOnSidePanelClose");
 	var _needToLockSidePanelClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needToLockSidePanelClose");
+	var _analytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
+	var _isTemplateMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTemplateMode");
 	var _isB2e = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isB2e");
 	var _getArticleCode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getArticleCode");
 	var _covertRoleToBlockParty = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("covertRoleToBlockParty");
 	var _render = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("render");
 	var _createHeader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createHeader");
+	var _onSaveBtnClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSaveBtnClick");
+	var _onEditBtnClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onEditBtnClick");
 	var _createContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createContent");
 	var _createSections = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createSections");
 	var _toggleEditMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toggleEditMode");
 	var _getSectionsData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSectionsData");
+	var _isDocumentInitiatedByEmployee = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDocumentInitiatedByEmployee");
 	var _onSidePanelCloseStart = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSidePanelCloseStart");
 	var _isDynamicEmployeeFieldAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDynamicEmployeeFieldAvailable");
 	var _isBlockCanBeInitialized = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isBlockCanBeInitialized");
@@ -5569,6 +5575,9 @@ this.BX.Sign = this.BX.Sign || {};
 	    Object.defineProperty(this, _onSidePanelCloseStart, {
 	      value: _onSidePanelCloseStart2
 	    });
+	    Object.defineProperty(this, _isDocumentInitiatedByEmployee, {
+	      value: _isDocumentInitiatedByEmployee2
+	    });
 	    Object.defineProperty(this, _getSectionsData, {
 	      value: _getSectionsData2
 	    });
@@ -5580,6 +5589,12 @@ this.BX.Sign = this.BX.Sign || {};
 	    });
 	    Object.defineProperty(this, _createContent, {
 	      value: _createContent2
+	    });
+	    Object.defineProperty(this, _onEditBtnClick, {
+	      value: _onEditBtnClick2
+	    });
+	    Object.defineProperty(this, _onSaveBtnClick, {
+	      value: _onSaveBtnClick2
 	    });
 	    Object.defineProperty(this, _createHeader, {
 	      value: _createHeader2
@@ -5652,6 +5667,14 @@ this.BX.Sign = this.BX.Sign || {};
 	      writable: true,
 	      value: true
 	    });
+	    Object.defineProperty(this, _analytics, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _isTemplateMode, {
+	      writable: true,
+	      value: void 0
+	    });
 	    this.setEventNamespace('BX.Sign.V2.Editor');
 	    const {
 	      Instance
@@ -5666,8 +5689,9 @@ this.BX.Sign = this.BX.Sign || {};
 	      disableEdit: false,
 	      languages: options.languages,
 	      isTemplateMode: Boolean(options.isTemplateMode),
-	      documentInitiatedByType: (_options$documentInit = options.documentInitiatedByType) != null ? _options$documentInit : sign_v2_documentSetup.DocumentInitiated.company
+	      documentInitiatedByType: (_options$documentInit = options.documentInitiatedByType) != null ? _options$documentInit : sign_type.DocumentInitiated.company
 	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _isTemplateMode)[_isTemplateMode] = Boolean(options.isTemplateMode);
 	    babelHelpers.classPrivateFieldLooseBase(this, _wizardType)[_wizardType] = wizardType;
 	    babelHelpers.classPrivateFieldLooseBase(this, _urls)[_urls] = [];
 	    babelHelpers.classPrivateFieldLooseBase(this, _totalPages)[_totalPages] = 0;
@@ -5698,8 +5722,11 @@ this.BX.Sign = this.BX.Sign || {};
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].setDocumentUid(uid);
 	  }
+	  setSenderType(senderType) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].documentInitiatedByType = senderType;
+	  }
 	  set entityData(entityData) {
-	    const forbiddenRoles = new Set([sign_v2_api.MemberRole.editor, sign_v2_api.MemberRole.reviewer]);
+	    const forbiddenRoles = new Set([sign_type.MemberRole.editor, sign_type.MemberRole.reviewer]);
 	    const members = Object.values(entityData).filter(member => !forbiddenRoles.has(member.role)).map(member => {
 	      const {
 	        id: cid,
@@ -5796,6 +5823,9 @@ this.BX.Sign = this.BX.Sign || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _disabledSections)[_disabledSections].add(type);
 	    }
 	  }
+	  setAnalytics(analytic) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics] = analytic;
+	  }
 	}
 	function _isB2e2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _wizardType)[_wizardType] === 'b2e';
@@ -5805,9 +5835,9 @@ this.BX.Sign = this.BX.Sign || {};
 	}
 	function _covertRoleToBlockParty2(part, role) {
 	  switch (role) {
-	    case sign_v2_api.MemberRole.assignee:
+	    case sign_type.MemberRole.assignee:
 	      return 1;
-	    case sign_v2_api.MemberRole.signer:
+	    case sign_type.MemberRole.signer:
 	      return 2;
 	    default:
 	      return part;
@@ -5842,7 +5872,7 @@ this.BX.Sign = this.BX.Sign || {};
 					data-hint="${0}"
 				></span>
 			</p>
-		`), main_core.Loc.getMessage('SIGN_EDITOR_EDITING'), main_core.Loc.getMessage('SIGN_EDITOR_EDITING_HINT'));
+		`), main_core.Loc.getMessage('SIGN_EDITOR_EDITING'), main_core.Loc.getMessage('SIGN_EDITOR_EDITING_HINT_MSGVER_1'));
 	  sign_v2_helper.Hint.create(headTitleNode);
 	  return main_core.Tag.render(_t6$2 || (_t6$2 = _$i`
 			<div class="sign-editor__header">
@@ -5865,29 +5895,43 @@ this.BX.Sign = this.BX.Sign || {};
 					</span>
 				</div>
 			</div>
-		`), headTitleNode, helpArticleElement, editButtonClassName, editButtonTitle, () => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _toggleEditMode)[_toggleEditMode](true);
-	  }, editButtonTitle, saveButtonClassName, saveButtonTitle, async ({
-	    target
-	  }) => {
-	    main_core.Dom.addClass(target, 'ui-btn-wait');
-	    const blocks = await babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].save();
-	    const uid = babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].getDocumentUid();
-	    main_core.Dom.removeClass(target, 'ui-btn-wait');
-	    if (!blocks) {
-	      return;
-	    }
-	    main_core_events.EventEmitter.subscribeOnce('SidePanel.Slider:onCloseComplete', () => {
-	      this.emit('save', {
-	        uid,
-	        blocks
-	      });
+		`), headTitleNode, helpArticleElement, editButtonClassName, editButtonTitle, () => babelHelpers.classPrivateFieldLooseBase(this, _onEditBtnClick)[_onEditBtnClick](), editButtonTitle, saveButtonClassName, saveButtonTitle, e => babelHelpers.classPrivateFieldLooseBase(this, _onSaveBtnClick)[_onSaveBtnClick](e), saveButtonTitle);
+	}
+	async function _onSaveBtnClick2({
+	  target
+	}) {
+	  main_core.Dom.addClass(target, 'ui-btn-wait');
+	  const blocks = await babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].save();
+	  const uid = babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].getDocumentUid();
+	  main_core.Dom.removeClass(target, 'ui-btn-wait');
+	  if (!blocks) {
+	    return;
+	  }
+	  main_core_events.EventEmitter.subscribeOnce('SidePanel.Slider:onCloseComplete', () => {
+	    this.emit('save', {
+	      uid,
+	      blocks
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _needSaveBlocksOnSidePanelClose)[_needSaveBlocksOnSidePanelClose] = false;
-	    babelHelpers.classPrivateFieldLooseBase(this, _sidePanel)[_sidePanel].close();
-	    babelHelpers.classPrivateFieldLooseBase(this, _needSaveBlocksOnSidePanelClose)[_needSaveBlocksOnSidePanelClose] = true;
-	    babelHelpers.classPrivateFieldLooseBase(this, _toggleEditMode)[_toggleEditMode](false);
-	  }, saveButtonTitle);
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics] instanceof sign_v2_analytics.Analytics && babelHelpers.classPrivateFieldLooseBase(this, _isTemplateMode)[_isTemplateMode]) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics].send({
+	        event: 'proceed_step_document_editor',
+	        status: 'success'
+	      });
+	    }
+	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _needSaveBlocksOnSidePanelClose)[_needSaveBlocksOnSidePanelClose] = false;
+	  babelHelpers.classPrivateFieldLooseBase(this, _sidePanel)[_sidePanel].close();
+	  babelHelpers.classPrivateFieldLooseBase(this, _needSaveBlocksOnSidePanelClose)[_needSaveBlocksOnSidePanelClose] = true;
+	  babelHelpers.classPrivateFieldLooseBase(this, _toggleEditMode)[_toggleEditMode](false);
+	}
+	function _onEditBtnClick2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _toggleEditMode)[_toggleEditMode](true);
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics] instanceof sign_v2_analytics.Analytics && babelHelpers.classPrivateFieldLooseBase(this, _isTemplateMode)[_isTemplateMode]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics].send({
+	      event: 'open_document_editor',
+	      status: 'success'
+	    });
+	  }
 	}
 	function _createContent2() {
 	  const sections = babelHelpers.classPrivateFieldLooseBase(this, _createSections)[_createSections]();
@@ -5936,7 +5980,7 @@ this.BX.Sign = this.BX.Sign || {};
 							${0}
 						</span>
 					</div>
-				`), code, section.part, main_core.Loc.getMessage(title), main_core.Loc.getMessage(hint), main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_ADD_TO_DOCUMENT'));
+				`), code, section.part, main_core.Loc.getMessage(title), main_core.Text.encode(main_core.Loc.getMessage(hint)), main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_ADD_TO_DOCUMENT'));
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].initRepository(blocks);
 	    const sectionElement = main_core.Tag.render(_t9$2 || (_t9$2 = _$i`
@@ -5993,10 +6037,18 @@ this.BX.Sign = this.BX.Sign || {};
 	    partner: 'SIGN_EDITOR_BLOCKS_PARTNER'
 	  };
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _wizardType)[_wizardType] === 'b2e') {
+	    let personalDataMessageCode = 'SIGN_EDITOR_BLOCK_B2E_REFERENCE_HINT';
+	    let otherDataMessageCode = 'SIGN_EDITOR_BLOCK_B2E_EMPLOYEE_DYNAMIC_HINT';
+	    let mainDataMessageCode = 'SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_HINT';
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].isTemplateMode) {
+	      personalDataMessageCode = babelHelpers.classPrivateFieldLooseBase(this, _isDocumentInitiatedByEmployee)[_isDocumentInitiatedByEmployee]() ? 'SIGN_EDITOR_BLOCK_B2E_REFERENCE_HINT_TEMPLATE_EMPLOYEE' : 'SIGN_EDITOR_BLOCK_B2E_REFERENCE_HINT_TEMPLATE_COMPANY';
+	      otherDataMessageCode = babelHelpers.classPrivateFieldLooseBase(this, _isDocumentInitiatedByEmployee)[_isDocumentInitiatedByEmployee]() ? 'SIGN_EDITOR_BLOCK_B2E_EMPLOYEE_DYNAMIC_HINT_TEMPLATE_EMPLOYEE' : 'SIGN_EDITOR_BLOCK_B2E_EMPLOYEE_DYNAMIC_HINT_TEMPLATE_COMPANY';
+	      mainDataMessageCode = babelHelpers.classPrivateFieldLooseBase(this, _isDocumentInitiatedByEmployee)[_isDocumentInitiatedByEmployee]() ? 'SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_HINT_TEMPLATE_EMPLOYEE' : 'SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_HINT_TEMPLATE_COMPANY';
+	    }
 	    Object.assign(firstPartyBlocks, {
 	      myb2ereference: {
 	        title: 'SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_MSG_VER_1',
-	        hint: 'SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_HINT'
+	        hint: mainDataMessageCode
 	      },
 	      myrequisites: {
 	        title: 'SIGN_EDITOR_BLOCK_REQUISITES_MSG_VER_1',
@@ -6006,14 +6058,14 @@ this.BX.Sign = this.BX.Sign || {};
 	    Object.assign(partnerBlocks, {
 	      b2ereference: {
 	        title: 'SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1',
-	        hint: 'SIGN_EDITOR_BLOCK_B2E_REFERENCE_HINT'
+	        hint: personalDataMessageCode
 	      }
 	    });
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isDynamicEmployeeFieldAvailable)[_isDynamicEmployeeFieldAvailable]()) {
 	      Object.assign(partnerBlocks, {
 	        employeedynamic: {
 	          title: 'SIGN_EDITOR_BLOCK_B2E_EMPLOYEE_DYNAMIC',
-	          hint: 'SIGN_EDITOR_BLOCK_B2E_EMPLOYEE_DYNAMIC_HINT'
+	          hint: otherDataMessageCode
 	        }
 	      });
 	    }
@@ -6094,7 +6146,10 @@ this.BX.Sign = this.BX.Sign || {};
 	    }];
 	  }
 	}
-	function _onSidePanelCloseStart2(event) {
+	function _isDocumentInitiatedByEmployee2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].documentInitiatedByType === sign_type.DocumentInitiated.employee;
+	}
+	async function _onSidePanelCloseStart2(event) {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _needSaveBlocksOnSidePanelClose)[_needSaveBlocksOnSidePanelClose]) {
 	    return;
 	  }
@@ -6102,7 +6157,8 @@ this.BX.Sign = this.BX.Sign || {};
 	    return;
 	  }
 	  event.denyAction();
-	  void babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].save().then(blocks => {
+	  try {
+	    const blocks = await babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].save();
 	    if (!blocks) {
 	      return;
 	    }
@@ -6114,7 +6170,18 @@ this.BX.Sign = this.BX.Sign || {};
 	      uid,
 	      blocks
 	    });
-	  });
+	    babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics].send({
+	      event: 'proceed_step_document_editor',
+	      status: 'success'
+	    });
+	  } catch {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics] instanceof sign_v2_analytics.Analytics && babelHelpers.classPrivateFieldLooseBase(this, _isTemplateMode)[_isTemplateMode]) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics].send({
+	        event: 'proceed_step_document_editor',
+	        status: 'error'
+	      });
+	    }
+	  }
 	}
 	function _isDynamicEmployeeFieldAvailable2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _isB2e)[_isB2e]() && babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].isTemplateMode;
@@ -6129,5 +6196,5 @@ this.BX.Sign = this.BX.Sign || {};
 	exports.SectionType = SectionType;
 	exports.Editor = Editor;
 
-}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX.Sign.V2,BX.Main,BX.Sign.Tour,BX,BX.UI,BX.UI.Dialogs,BX.UI,BX.Sign,BX,BX,BX.UI.Stamp,BX.Crm.Form.Fields,BX.Crm.Requisite,BX.Sign.V2,BX.Sign.B2e,BX.Sign,BX,BX.Sign,BX,BX.UI.DragAndDrop,BX.Event,BX.Sign.V2));
+}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX.Sign.V2,BX.Sign.V2,BX.Main,BX.Sign.Tour,BX,BX.UI,BX.UI.Dialogs,BX.UI,BX.Sign,BX,BX,BX.UI.Stamp,BX.Sign.V2,BX.Crm.Form.Fields,BX.Crm.Requisite,BX.Sign,BX.Sign.B2e,BX.Sign,BX,BX.Sign,BX,BX.UI.DragAndDrop,BX.Event));
 //# sourceMappingURL=editor.bundle.js.map

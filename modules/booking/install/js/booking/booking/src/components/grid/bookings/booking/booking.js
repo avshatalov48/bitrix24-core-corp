@@ -1,18 +1,25 @@
 import { mapGetters } from 'ui.vue3.vuex';
 
-import { Counter as UiCounter, CounterSize, CounterColor } from 'booking.component.counter';
-import { CrmEntity, Model } from 'booking.const';
-import type { BookingModel, DealData } from 'booking.model.bookings';
+import { Model } from 'booking.const';
+import { Duration } from 'booking.lib.duration';
+import { mousePosition } from 'booking.lib.mouse-position';
+import { isRealId } from 'booking.lib.is-real-id';
+import { grid } from 'booking.lib.grid';
+import type { BookingModel } from 'booking.model.bookings';
 import type { ClientModel, ClientData } from 'booking.model.clients';
 
-import { grid } from '../../../../lib/grid/grid';
 
 import { AddClient } from './add-client/add-client';
 import { BookingTime } from './booking-time/booking-time';
 import { Actions } from './actions/actions';
+import { Name } from './name/name';
 import { Note } from './note/note';
+import { Profit } from './profit/profit';
 import { Communication } from './communication/communication';
+import { CrmButton } from './crm-button/crm-button';
+import { Counter } from './counter/counter';
 import { DisabledPopup } from './disabled-popup/disabled-popup';
+import { Resize } from './resize/resize';
 import type { BookingUiDuration } from './types';
 import './booking.css';
 
@@ -48,12 +55,28 @@ export const Booking = {
 		return {
 			visible: true,
 			isDisabledPopupShown: false,
+			resizeFromTs: null,
+			resizeToTs: null,
 		};
 	},
 	mounted(): void
 	{
 		this.updateVisibility();
 		this.updateVisibilityDuringTransition();
+
+		setTimeout(() => {
+			if (!this.isReal && mousePosition.isMousePressed())
+			{
+				void this.$refs.resize.startResize();
+			}
+		}, 200);
+	},
+	beforeUnmount(): void
+	{
+		if (this.deletingBookings[this.bookingId] || !this.booking?.resourcesIds.includes(this.resourceId))
+		{
+			this.$el.remove();
+		}
 	},
 	computed: {
 		...mapGetters({
@@ -62,7 +85,12 @@ export const Booking = {
 			scroll: `${Model.Interface}/scroll`,
 			editingBookingId: `${Model.Interface}/editingBookingId`,
 			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
+			deletingBookings: `${Model.Interface}/deletingBookings`,
 		}),
+		isReal(): boolean
+		{
+			return isRealId(this.bookingId);
+		},
 		booking(): BookingModel
 		{
 			return this.$store.getters[`${Model.Bookings}/getById`](this.bookingId);
@@ -73,50 +101,50 @@ export const Booking = {
 
 			return clientData ? this.$store.getters[`${Model.Clients}/getByClientData`](clientData) : null;
 		},
-		deal(): DealData | null
-		{
-			return this.booking.externalData?.find((data) => data.entityTypeId === CrmEntity.Deal) ?? null;
-		},
-		bookingName(): string
-		{
-			return this.client ? this.client.name : this.booking.name;
-		},
 		left(): number
 		{
 			return grid.calculateLeft(this.resourceId);
 		},
 		top(): number
 		{
-			return grid.calculateTop(this.booking.dateFromTs);
+			return grid.calculateTop(this.dateFromTs);
 		},
 		height(): number
 		{
-			return grid.calculateHeight(this.booking.dateFromTs, this.booking.dateToTs);
+			return grid.calculateHeight(this.dateFromTs, this.dateToTs);
 		},
 		realHeight(): number
 		{
-			return grid.calculateRealHeight(this.booking.dateFromTs, this.booking.dateToTs);
+			return grid.calculateRealHeight(this.dateFromTs, this.dateToTs);
+		},
+		dateFromTs(): number
+		{
+			return this.resizeFromTs ?? this.booking.dateFromTs;
+		},
+		dateToTs(): number
+		{
+			return this.resizeToTs ?? this.booking.dateToTs;
+		},
+		dateFromTsRounded(): number
+		{
+			return this.roundTimestamp(this.resizeFromTs) ?? this.dateFromTs;
+		},
+		dateToTsRounded(): number
+		{
+			return this.roundTimestamp(this.resizeToTs) ?? this.dateToTs;
 		},
 		disabled(): boolean
 		{
 			return this.isEditingBookingMode && this.editingBookingId !== this.bookingId;
 		},
-		counterOptions(): Object
-		{
-			return Object.freeze({
-				color: CounterColor.DANGER,
-				size: CounterSize.LARGE,
-			});
-		},
 		overlappingBookings(): BookingUiDuration[]
 		{
-			const { dateFromTs } = this.booking;
-			const uiBooking = this.uiBookings.find((booking) => dateFromTs === booking.fromTs);
-
+			const uiBooking = this.uiBookings.find((booking) => this.booking.dateFromTs === booking.fromTs);
 			if (!uiBooking)
 			{
 				return [];
 			}
+
 			const { fromTs, toTs } = uiBooking;
 
 			return [
@@ -160,17 +188,13 @@ export const Booking = {
 		},
 		updateVisibility(): void
 		{
-			if (!this.$refs.container)
+			if (!this.$el)
 			{
 				return;
 			}
 
-			const rect = this.$refs.container.getBoundingClientRect();
+			const rect = this.$el.getBoundingClientRect();
 			this.visible = rect.right > 0 && rect.left < window.innerWidth;
-		},
-		getBindElement(): HTMLElement
-		{
-			return this.$refs.container;
 		},
 		onNoteMouseEnter(): void
 		{
@@ -189,6 +213,17 @@ export const Booking = {
 
 				event.stopPropagation();
 			}
+		},
+		resizeUpdate(resizeFromTs: number | null, resizeToTs: number | null): void
+		{
+			this.resizeFromTs = resizeFromTs;
+			this.resizeToTs = resizeToTs;
+		},
+		roundTimestamp(timestamp: number | null): number | null
+		{
+			const fiveMinutes = Duration.getUnitDurations().i * 5;
+
+			return timestamp ? Math.round(timestamp / fiveMinutes) * fiveMinutes : null;
 		},
 	},
 	watch: {
@@ -209,10 +244,14 @@ export const Booking = {
 		AddClient,
 		BookingTime,
 		Actions,
+		Name,
 		Note,
+		Profit,
 		Communication,
-		UiCounter,
+		CrmButton,
+		Counter,
 		DisabledPopup,
+		Resize,
 	},
 	template: `
 		<div
@@ -227,15 +266,16 @@ export const Booking = {
 				'--width': bookingWidth + 'px',
 			}"
 			:class="{
+				'--not-real': !isReal,
 				'--zoom-is-less-than-08': zoom < 0.8,
 				'--compact-mode': realHeight < 40 || zoom < 0.8,
-				'--small': realHeight <= 12.5,
+				'--small': realHeight <= 15,
 				'--short': shortView,
 				'--disabled': disabled,
 				'--confirmed': booking.isConfirmed,
 				'--expired': isExpiredBooking,
+				'--resizing': resizeFromTs && resizeToTs,
 			}"
-			ref="container"
 			@click.capture="onClick"
 		>
 			<div v-if="visible" class="booking-booking-booking-padding">
@@ -249,41 +289,32 @@ export const Booking = {
 								@mouseleave="onNoteMouseLeave"
 								@click="$refs.note.showViewPopup()"
 							>
-								<div
-									class="booking-booking-booking-name"
-									:title="bookingName"
-									data-element="booking-booking-name"
-									:data-id="bookingId"
-									:data-resource-id="resourceId"
-								>
-									{{ bookingName }}
-								</div>
+								<Name :bookingId="bookingId" :resourceId="resourceId"/>
 								<Note
 									:bookingId="bookingId"
-									:bindElement="getBindElement"
+									:bindElement="() => $el"
 									ref="note"
 								/>
 							</div>
 							<BookingTime
 								:bookingId="bookingId"
 								:resourceId="resourceId"
+								:dateFromTs="dateFromTsRounded"
+								:dateToTs="dateToTsRounded"
 							/>
-							<div
-								v-if="deal"
-								class="booking-booking-booking-profit"
-								data-element="booking-booking-profit"
-								:data-id="bookingId"
-								:data-resource-id="resourceId"
-								:data-profit="deal.data.opportunity"
-								v-html="deal.data.formattedOpportunity"
-							></div>
+							<Profit :bookingId="bookingId" :resourceId="resourceId"/>
 						</div>
 						<div class="booking-booking-booking-content-row --lower">
 							<BookingTime
 								:bookingId="bookingId"
 								:resourceId="resourceId"
+								:dateFromTs="dateFromTsRounded"
+								:dateToTs="dateToTsRounded"
 							/>
-							<Communication v-if="client"/>
+							<div v-if="client" class="booking-booking-booking-buttons">
+								<Communication/>
+								<CrmButton :bookingId="bookingId"/>
+							</div>
 							<AddClient
 								v-else
 								:bookingId="bookingId"
@@ -295,19 +326,19 @@ export const Booking = {
 					<Actions :bookingId="bookingId" :resourceId="resourceId"/>
 				</div>
 			</div>
-			<UiCounter
-				v-if="booking.counter > 0"
-				:value="booking.counter"
-				:color="counterOptions.color"
-				:size="counterOptions.size"
-				border
-				counter-class="booking--counter"
+			<Resize
+				v-if="!disabled"
+				:bookingId="bookingId"
+				:resourceId="resourceId"
+				ref="resize"
+				@update="resizeUpdate"
 			/>
+			<Counter :bookingId="bookingId"/>
 			<DisabledPopup
 				v-if="isDisabledPopupShown"
 				:bookingId="bookingId"
 				:resourceId="resourceId"
-				:bindElement="() => $refs.container"
+				:bindElement="() => $el"
 				@close="isDisabledPopupShown = false"
 			/>
 		</div>

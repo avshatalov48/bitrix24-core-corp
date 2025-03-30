@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\ImConnector\Provider\ImConnectorServer;
 
+use Bitrix\ImConnector\Connector;
 use Bitrix\Main\Text\Encoding;
 
 use Bitrix\ImConnector\DeliveryMark;
@@ -121,15 +122,19 @@ class Input extends Base\Input
 		return $result;
 	}
 
+	/**
+	 * @return Result
+	 */
 	protected function receivingStatusDelivery(): Result
 	{
 		$result = parent::receivingStatusDelivery();
 
 		if ($result->isSuccess())
 		{
+			$connectorHandler = Connector::initConnectorHandler($this->connector);
 			foreach ($this->data as $messageData)
 			{
-				DeliveryMark::unsetDeliveryMark(
+				$connectorHandler->removeMessageDeliveryMark(
 					(int)$messageData['im']['message_id'],
 					(int)$messageData['im']['chat_id']
 				);

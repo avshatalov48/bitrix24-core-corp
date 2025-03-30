@@ -734,7 +734,8 @@ abstract class Queue
 			$chat = \Bitrix\Im\V2\Chat::getInstance((int)$this->session['CHAT_ID']);
 			if ($chat->getChatId())
 			{
-				$chat->deleteUser((int)$this->session['OPERATOR_ID'], false, false, false);
+				$config = new Im\V2\Relation\DeleteUserConfig(false, false, false);
+				$chat->deleteUser((int)$this->session['OPERATOR_ID'], $config);
 			}
 		}
 		else

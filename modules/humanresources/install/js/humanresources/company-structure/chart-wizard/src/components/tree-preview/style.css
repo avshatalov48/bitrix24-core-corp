@@ -131,11 +131,17 @@
 }
 
 .chart-wizard-tree-preview__node_head-rest {
-	background: #eeeff0;
+	background-color: var(--ui-color-palette-gray-10);
 	border-radius: 32px;
 	padding: 2px 8px 3px 8px;
 	color: var(--ui-color-palette-gray-90);
 	font: var(--ui-font-weight-semi-bold) 10px/10px var(--ui-font-family-system);
+	cursor: pointer;
+}
+
+.chart-wizard-tree-preview__node_head-rest:hover,
+.chart-wizard-tree-preview__node_head-rest.--active {
+	background-color: var(--ui-color-palette-gray-20);
 }
 
 .chart-wizard-tree-preview__node_employees {
@@ -161,6 +167,11 @@
 
 .chart-wizard-tree-preview__node_deputies {
 	min-width: 0;
+}
+
+.chart-wizard-tree-preview__node_head-text,
+.chart-wizard-tree-preview__node_deputies {
+	flex-grow: 1;
 }
 
 .chart-wizard-tree-preview__node .chart-wizard-tree-preview__node {

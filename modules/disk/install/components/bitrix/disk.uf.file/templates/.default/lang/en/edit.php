@@ -5,7 +5,6 @@ $MESS["DISK_UF_FILE_CLOUD_IMPORT_TITLE_SERVICE_OFFICE365"] = "Office 365";
 $MESS["DISK_UF_FILE_EDIT_SERVICE_LABEL"] = "Create new document using #NAME#";
 $MESS["WDUF_ALLOW_COLLAGE"] = "Allow photo collage";
 $MESS["WDUF_ALLOW_EDIT"] = "Allow document editing";
-$MESS["WDUF_CREATE_DOCUMENT"] = "New document";
 $MESS["WDUF_CREATE_DOCX"] = "Document";
 $MESS["WDUF_CREATE_PPTX"] = "Presentation";
 $MESS["WDUF_CREATE_XLSX"] = "Spreadsheet";

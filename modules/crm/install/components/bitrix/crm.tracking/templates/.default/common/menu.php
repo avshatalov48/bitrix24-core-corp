@@ -1,5 +1,9 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /** @var CMain $APPLICATION*/
 /** @var array $arResult*/
@@ -75,35 +79,38 @@ if ($shouldDisplayMenu)
 	);
 }
 
-?>
-<script>
-	BX.SidePanel.Instance.bindAnchors({
-		rules:
-			[
-				{
-					condition: [
-						"/crm/tracking/settings/",
-						"/crm/tracking/source/archive/"
-					],
-					options: {
-						width: 800,
-						cacheable: false
+if (!$sliderMode)
+{
+	?>
+	<script>
+		BX.SidePanel.Instance.bindAnchors({
+			rules:
+				[
+					{
+						condition: [
+							"/crm/tracking/settings/",
+							"/crm/tracking/source/archive/"
+						],
+						options: {
+							width: 800,
+							cacheable: false
+						}
+					},
+					{
+						condition: [
+							"/crm/tracking/source/edit/(\\d+)/"
+						],
+						options: {
+							width: 735,
+							cacheable: false
+						}
 					}
-				},
-				{
-					condition: [
-						"/crm/tracking/source/edit/(\\d+)/"
-					],
-					options: {
-						width: 735,
-						cacheable: false
-					}
-				}
-			]
-	});
-</script>
+				]
+		});
+	</script>
+	<?php
+}
 
-<?
 if (SITE_TEMPLATE_ID === "bitrix24")
 {
 	$this->EndViewTarget();

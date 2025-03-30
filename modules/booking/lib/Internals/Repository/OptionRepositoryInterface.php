@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Internals\Repository;
 
-use Bitrix\Booking\Internals\OptionDictionary;
+use Bitrix\Booking\Internals\Service\OptionDictionary;
 
 interface OptionRepositoryInterface
 {

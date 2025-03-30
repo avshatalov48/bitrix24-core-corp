@@ -18,10 +18,10 @@ return [
 		'ui-system/blocks/icon',
 		'ui-system/typography/text',
 		'ui-system/typography/heading',
+		'ui-system/blocks/avatar',
 
 		'layout/pure-component',
 		'layout/ui/scroll-view',
-		'layout/ui/user/avatar',
 
 		'stafftrack:data-managers/shift-manager',
 		'stafftrack:data-managers/option-manager',

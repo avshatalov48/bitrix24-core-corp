@@ -1,0 +1,2 @@
+<?php
+$MESS['CRM_CONFIG_PERMISSION_CRM'] = "CRM";

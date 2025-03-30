@@ -19,6 +19,8 @@ jn.define('stafftrack/model/shift/location', (require, exports, module) => {
 		static OUTSIDE = new LocationEnum('OUTSIDE', 'STAFFTRACK_LOCATION_OUTSIDE');
 		// eslint-disable-next-line @bitrix24/bitrix24-janative/no-static-variable-in-class
 		static CUSTOM = new LocationEnum('CUSTOM', 'STAFFTRACK_LOCATION_CUSTOM');
+		// eslint-disable-next-line @bitrix24/bitrix24-janative/no-static-variable-in-class
+		static DELETED = new LocationEnum('DELETED', 'STAFFTRACK_LOCATION_DELETED');
 	}
 
 	module.exports = { LocationEnum };

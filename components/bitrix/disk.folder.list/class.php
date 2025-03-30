@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Disk\Configuration;
+use Bitrix\Disk\Controller\Integration\Flipchart;
 use Bitrix\Disk\Integration\Collab\CollabService;
 use Bitrix\Disk\Integration\Socialnetwork\Context\Context;
 use Bitrix\Disk\Document\DocumentHandler;
@@ -9,8 +10,10 @@ use Bitrix\Disk\Search\Reindex\BaseObjectIndex;
 use Bitrix\Disk\Search\Reindex\ExtendedIndex;
 use Bitrix\Disk\Search\Reindex\HeadIndex;
 use Bitrix\Disk\Storage;
+use Bitrix\Disk\TypeFile;
 use Bitrix\Disk\Ui\Avatar;
 use Bitrix\Disk\Ui\FileAttributes;
+use Bitrix\Disk\UrlManager;
 use Bitrix\Disk\ZipNginx;
 use Bitrix\Disk\Document\Contract;
 use Bitrix\Disk\Document\LocalDocumentController;
@@ -29,7 +32,6 @@ use Bitrix\Disk\BaseObject;
 use Bitrix\Disk\Sharing;
 use Bitrix\Disk\Ui;
 use Bitrix\Main\Application;
-use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query\Filter;
@@ -40,6 +42,7 @@ use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Search\Content;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\UI\UiTour;
 use Bitrix\Main\UI\Viewer\ItemAttributes;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Socialnetwork;
@@ -58,6 +61,8 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 	const FILTER_SHARED_FROM_ME     = 2;
 	const FILTER_SHARED_TO_ME       = 3;
 
+	const COLLABER_TOUR_ON_ADD_BUTTON_ID =  'tour-guide-on-add-button-for-collaber';
+
 	protected $componentId = 'folder_list';
 
 	protected $trashMode = false;
@@ -72,6 +77,8 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 	/** @var  array */
 	private $imageSize = array('width' => 64, 'height' => 64, 'exact' => 'Y');
 	private $templateBizProc;
+	/** @var CollabService */
+	private $collabService;
 
 	protected function processBeforeAction($actionName)
 	{
@@ -93,6 +100,8 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		{
 			$this->gridOptions->storeSortMode($this->request->getQuery('sortMode')?: $this->request->getPost('sortMode'));
 		}
+
+		$this->collabService = new CollabService();
 
 		return true;
 	}
@@ -246,8 +255,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		$filterOptions = new \Bitrix\Main\UI\Filter\Options($this->gridOptions->getGridId());
 		$folderListFilter = new Ui\FolderListFilter($this->storage->getId(), $this->isTrashMode());
 
-		$collabService = new CollabService();
-		$isCollab = $collabService->isCollabStorage($this->storage);
+		$isCollab = $this->collabService->isCollabStorage($this->storage);
 		$avatar = null;
 		if ($isCollab)
 		{
@@ -313,6 +321,9 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			'DOCUMENT_HANDLERS' => $this->getDocumentHandlersForCreatingFile(),
 			'STATUS_BIZPROC' => $this->storage->isEnabledBizProc() && Loader::includeModule("bizproc"),
 			'SHOW_SEARCH_NOTICE' => \Bitrix\Main\Config\Option::get('disk', 'needBaseObjectIndex', 'x') !== 'N',
+			'IS_USER_COLLABER' => $this->isCollaber(),
+			'COLLABER_TOUR_ON_ADD_BUTTON_ID' => self::COLLABER_TOUR_ON_ADD_BUTTON_ID,
+			'IS_COLLABER_TOUR_ON_ADD_BUTTON_VIEWED' => $this->isCollaberTourOnAddButtonViewed(),
 		);
 
 		if ($this->gridOptions->getViewMode() === FolderListOptions::VIEW_MODE_TILE)
@@ -347,7 +358,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 					'attributes' => $dataSet,
 				];
 
-				if ($object instanceof File && \Bitrix\Disk\TypeFile::isImage($object))
+				if ($object instanceof File && TypeFile::isImage($object))
 				{
 					$info['image'] = \Bitrix\Main\Engine\UrlManager::getInstance()->create('disk.api.file.showImage', [
 						'fileId' => $object->getId(),
@@ -429,6 +440,16 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		);
 
 		$parameters['order'] = $this->gridOptions->getOrderForOrm();
+
+		if ($this->isCollaber())
+		{
+			$folderForUploadedFilesId = $this->storage->getFolderForUploadedFiles()?->getId();
+			if ($folderForUploadedFilesId !== null)
+			{
+				$parameters['filter']['!=ID'] = $folderForUploadedFilesId;
+			}
+		}
+
 		$parameters = $this->modifyByFilter($parameters);
 
 		$parameters['select'] = ['ID'];
@@ -562,6 +583,17 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 						});",
 					);
 				}
+				elseif ($object->getTypeFile() == TypeFile::FLIPCHART)
+				{
+					$openUrl = $this->getUrlManager()->getUrlForViewBoard($objectId);
+					$openAction = [
+						'id' => 'open',
+						'text' => Loc::getMessage('DISK_FOLDER_LIST_ACT_OPEN'),
+						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_open.svg',
+						'className' => 'disk-folder-list-context-menu-item',
+						'onclick' => "BX.Disk.Viewer.Actions.openInNewTab({id: {$objectId}}, {url: '{$openUrl}'});",
+					];
+				}
 				else
 				{
 					$exportData['OPEN_URL'] = $urlManager->encodeUrn($detailPageFile);
@@ -637,8 +669,8 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				else
 				{
 					$internalLink = $urlManager->getUrlFocusController('showObjectInGrid', [
-							'objectId' => $object->getId(),
-							'cmd' => 'show',
+						'objectId' => $object->getId(),
+						'cmd' => 'show',
 					], true);
 				}
 
@@ -668,7 +700,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 						'className' => 'disk-folder-list-context-menu-item',
 						"onclick" =>
 							$this->filterB24Feature(
-								$isFolder? 'disk_manual_external_folder' : 'disk_manual_external_link',
+								$this->getExternalLinkFeature($object),
 								"BX.Disk['FolderListClass_{$this->componentId}'].openExternalLinkDetailSettingsWithEditing({$objectId});"
 							),
 					);
@@ -859,7 +891,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 					if(
 						!$isStorageCurrentUser &&
 						(!isset($sharedObjectIds[$object->getRealObjectId()]) ||
-						$sharedObjectIds[$object->getRealObjectId()]['TO_ENTITY'] != Sharing::CODE_USER . $this->getUser()->getId())
+							$sharedObjectIds[$object->getRealObjectId()]['TO_ENTITY'] != Sharing::CODE_USER . $this->getUser()->getId())
 					)
 					{
 						$actions[] = array(
@@ -1002,17 +1034,22 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 						}
 					}
 
-					$attr->addAction([
-						'type' => 'edit',
-						'buttonIconClass' => ' ',
-						'action' => 'BX.Disk.Viewer.Actions.runActionDefaultEdit',
-						'params' => [
-							'objectId' => $objectId,
-							'name' => $documentName,
-							'dependsOnService' => $items? null : LocalDocumentController::getCode(),
-						],
-						'items' => $items,
-					]);
+					if ($object->getTypeFile() != TypeFile::FLIPCHART)
+					{
+						$attr->addAction(
+							[
+								'type' => 'edit',
+								'buttonIconClass' => ' ',
+								'action' => 'BX.Disk.Viewer.Actions.runActionDefaultEdit',
+								'params' => [
+									'objectId' => $objectId,
+									'name' => $documentName,
+									'dependsOnService' => $items ? null : LocalDocumentController::getCode(),
+								],
+								'items' => $items,
+							]
+						);
+					}
 				}
 
 				$attr->addAction([
@@ -1023,6 +1060,23 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 					],
 					'extension' => 'disk.viewer.actions',
 				]);
+
+				if ($object->getTypeFile() == TypeFile::FLIPCHART)
+				{
+					$openUrl = $this->getUrlManager()->getUrlForViewBoard($objectId);
+					$attr->addAction(
+						[
+							'type' => 'open',
+							'buttonIconClass' => ' ',
+							'action' => 'BX.Disk.Viewer.Actions.openInNewTab',
+							'params' => [
+								'objectId' => $objectId,
+								'url' => $openUrl,
+							],
+							'items' => $items,
+						]
+					);
+				}
 
 
 				if($grid['MODE'] === FolderListOptions::VIEW_MODE_TILE)
@@ -1039,6 +1093,13 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				}
 
 				$nameSpecialChars = htmlspecialcharsbx($name);
+
+				$fileNameFormatted = <<<HTML
+					<span href="{$exportData['OPEN_URL']}" class="bx-disk-folder-title" style='cursor: pointer;' id="disk_obj_{$objectId}" {$attr}>
+						{$nameSpecialChars}
+					</span>
+HTML;
+
 				$columnName = "
 					<table class=\"bx-disk-object-name\"><tr>
 						<td style=\"width: 45px;\">
@@ -1050,6 +1111,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 						<td>{$bizprocIcon['BIZPROC']}</td>
 					</tr></table>
 				";
+
 			}
 
 			$timestampCreate = $object->getCreateTime()->toUserTime()->getTimestamp();
@@ -2249,15 +2311,15 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				'ID' => $item['ID'],
 				'NAME' => Ui\Text::cleanTrashCanSuffix($item['NAME']),
 				'LINK' => rtrim(
-							  CComponentEngine::MakePathFromTemplate(
-								  $template,
-								  array(
-									  'PATH' => $path,
-									  'TRASH_PATH' => $path,
-								  )
-							  ),
-							  '/'
-						  ) . '/',
+						CComponentEngine::MakePathFromTemplate(
+							$template,
+							array(
+								'PATH' => $path,
+								'TRASH_PATH' => $path,
+							)
+						),
+						'/'
+					) . '/',
 			);
 		}
 
@@ -2458,5 +2520,45 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		{
 			$gridOptions->storeViewSize($viewSize);
 		}
+	}
+
+	private function isCollaber(): bool
+	{
+		$user = $this->getUser();
+		if ($user instanceof CUser)
+		{
+			return $this->collabService->isCollaberUserById($user->getId());
+		}
+
+		return false;
+	}
+
+	private function isCollaberTourOnAddButtonViewed(): bool
+	{
+		$user = $this->getUser();
+		if ($user instanceof CUser)
+		{
+			return (new UiTour(self::COLLABER_TOUR_ON_ADD_BUTTON_ID))->isViewed($this->getUser()->getId());
+		}
+
+		return false;
+	}
+
+	private function getExternalLinkFeature(BaseObject $object): string
+	{
+		$isFolder = $object instanceof Folder;
+
+		if ($isFolder)
+		{
+			return 'disk_manual_external_folder';
+		}
+
+		$isBoard = ($object instanceof File) && ((int)$object->getTypeFile() === TypeFile::FLIPCHART);
+		if ($isBoard)
+		{
+			return 'disk_board_external_link';
+		}
+
+		return 'disk_manual_external_link';
 	}
 }

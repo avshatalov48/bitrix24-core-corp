@@ -27,11 +27,13 @@ class OperationsApiInContact extends BaseFeature
 	public function enable(): void
 	{
 		ContactSettings::getCurrent()->setFactoryEnabled(true);
+		$this->logEnabled();
 	}
 
 	public function disable(): void
 	{
 		ContactSettings::getCurrent()->setFactoryEnabled(false);
+		$this->logDisabled();
 	}
 
 	public function getSort(): int

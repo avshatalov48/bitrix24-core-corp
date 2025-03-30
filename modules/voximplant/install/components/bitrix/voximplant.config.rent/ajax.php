@@ -42,9 +42,9 @@ class VoximplantRentAjaxController extends \Bitrix\Main\Engine\Controller
 		return $result;
 	}
 
-	public function getPhoneNumbersAction($country, $category, $region, $offset = 0, $count = 20)
+	public function getPhoneNumbersAction($country, $category, $region, $offset = 0, $count = 20, $countryState = '')
 	{
-		return CVoxImplantPhone::GetPhoneNumbers($country, $region, $category, $offset, $count);
+		return CVoxImplantPhone::GetPhoneNumbers($country, $region, $category, $offset, $count, $countryState);
 	}
 
 	public function getAvailableVerificationsAction($country, $category, $region)

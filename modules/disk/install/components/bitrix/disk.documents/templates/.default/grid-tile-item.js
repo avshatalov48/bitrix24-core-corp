@@ -184,12 +184,12 @@ BX.Disk.TileGrid.Item.prototype =
 		{
 			return this.item.title = BX.create('div', {
 				props: {
-					className: 'disk-folder-list-item-title'
+					className: 'disk-folder-list-item-title',
 				},
 				children: [
-					this.item.titleWrapper = BX.create("div", {
+					this.item.titleWrapper = BX.create('div', {
 						props: {
-							className: 'disk-folder-list-item-title-wrapper'
+							className: 'disk-folder-list-item-title-wrapper',
 						},
 						children: [
 							this.getTitleInput(),
@@ -198,18 +198,18 @@ BX.Disk.TileGrid.Item.prototype =
 									className: 'disk-folder-list-item-title-link',
 									href: this.link,
 									title: this.title,
-									id: 'disk_obj_' + this.id
+									id: `disk_obj_${this.id}`,
 								},
 								text: this.title,
 								dataset: BX.mergeEx({
 									objectId: this.id,
-									canAdd: this.canAdd
-								}, this.attributes)
-							})
-						]
-					})
-				]
-			})
+									canAdd: this.canAdd,
+								}, this.attributes),
+							}),
+						],
+					}),
+				],
+			});
 		},
 
 		getTitleInput: function()
@@ -300,7 +300,7 @@ BX.Disk.TileGrid.Item.prototype =
 
 		rebuildLinkAfterRename: function(name)
 		{
-			if (this.link !== '')
+			if (this.link !== null && this.link !== '')
 			{
 				this.link = this.link.substring(0, this.link.lastIndexOf('/') + 1) + encodeURIComponent(name);
 				this.item.titleLink.href = this.link;
@@ -500,6 +500,11 @@ BX.Disk.TileGrid.Item.prototype =
 				case 'jpeg':
 				case 'gif':
 					fileExtension = 'img';
+					break;
+
+				case 'flp':
+				case 'board':
+					fileExtension = 'board';
 					break;
 
 				default:

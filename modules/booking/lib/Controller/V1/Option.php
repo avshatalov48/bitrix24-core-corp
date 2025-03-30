@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Controller\V1;
 
 use Bitrix\Booking\Internals\Container;
-use Bitrix\Booking\Internals\OptionDictionary;
+use Bitrix\Booking\Internals\Exception\ErrorBuilder;
+use Bitrix\Booking\Internals\Exception\Exception;
+use Bitrix\Booking\Internals\Service\OptionDictionary;
 use Bitrix\Booking\Internals\Repository\OptionRepositoryInterface;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Request;
@@ -23,14 +25,16 @@ class Option extends BaseController
 		$this->optionRepository = Container::getOptionRepository();
 	}
 
-	public function setBoolAction(string $optionName, bool $value): void
+	public function setBoolAction(string $optionName, bool $value): array|null
 	{
-		$this->handleRequest(function() use ($optionName, $value)
+		try
 		{
 			$option = OptionDictionary::tryFrom($optionName);
 			if (!$option)
 			{
-				return;
+				$this->addError(ErrorBuilder::build('Unknown option'));
+
+				return null;
 			}
 
 			$this->optionRepository->set(
@@ -38,6 +42,14 @@ class Option extends BaseController
 				option: $option,
 				value: $value ? 'true' : 'false',
 			);
-		});
+
+			return [];
+		}
+		catch (Exception $e)
+		{
+			$this->addError(ErrorBuilder::buildFromException($e));
+
+			return null;
+		}
 	}
 }

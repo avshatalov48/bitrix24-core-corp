@@ -278,7 +278,7 @@ this.BX.Booking = this.BX.Booking || {};
 	            this.onAfterMenuShown();
 	          }
 	        }
-	      }, 100);
+	      }, 200);
 	    },
 	    onMouseDown() {
 	      if (!this.isMenuShown) {

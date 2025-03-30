@@ -6,7 +6,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Booking\Exception\Exception;
 
 Loc::loadMessages(__FILE__);
 \CBitrixComponent::includeComponentClass('bitrix:booking.base');
@@ -38,7 +37,7 @@ class BookingDetailComponent extends BookingBaseComponent implements \Bitrix\Mai
 			}
 
 			$this->setResult('booking', $booking->toArray());
-			$this->setResult('company', \Bitrix\Booking\Integration\Crm\MyCompany::getName() ?? '');
+			$this->setResult('company', \Bitrix\Booking\Internals\Integration\Crm\MyCompany::getName() ?? '');
 		}
 		catch (Throwable $e)
 		{

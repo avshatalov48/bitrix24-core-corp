@@ -53,7 +53,7 @@ class B2eCompany extends \Bitrix\Sign\Engine\Controller
 		}
 
 		$myCompanyService = $this->container->getCrmMyCompanyService();
-		$myCompanies = $myCompanyService->listWithTaxIds();
+		$myCompanies = $myCompanyService->listWithTaxIds(checkRequisitePermissions: false);
 
 		$companies = $this->getFilledRegisteredCompanies($myCompanies, $initiatedByType);
 

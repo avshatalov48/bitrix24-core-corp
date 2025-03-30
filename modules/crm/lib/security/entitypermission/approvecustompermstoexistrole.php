@@ -80,8 +80,8 @@ final class ApproveCustomPermsToExistRole
 
 		$modelBuilder = RoleManagementModelBuilder::getInstance();
 		$modelBuilder->clearEntitiesCache();
-		$entities = $modelBuilder->getEntityNamesWithPermissionClass($defaultPermission)
-		;
+		$entities = $modelBuilder->getEntityNamesWithPermissionClass($defaultPermission);
+
 		$existedPermissions = [];
 
 		$this->log('Affected entities', ['entities' => $entities]);
@@ -109,8 +109,6 @@ final class ApproveCustomPermsToExistRole
 		$processedRolesCount = 0;
 		foreach ($entities as $entity)
 		{
-			$newRolePermissions = RolePermissionTable::createCollection();
-
 			foreach ($roleIds as $roleId)
 			{
 				$rolePermission = (new EO_RolePermission())
@@ -127,18 +125,13 @@ final class ApproveCustomPermsToExistRole
 					continue;
 				}
 
-				$newRolePermissions[] = $rolePermission;
-			}
+				$rolePermission->save();
+				$processedRolesCount++;
 
-			if (!$newRolePermissions->isEmpty())
-			{
-				$newRolePermissions->save();
-				$processedRolesCount+= $newRolePermissions->count();
-			}
-
-			if ($processedRolesCount > $maxProcessedRolesCount)
-			{
-				return self::CONTINUE;
+				if ($processedRolesCount > $maxProcessedRolesCount)
+				{
+					return self::CONTINUE;
+				}
 			}
 		}
 		RolePermissionLogContext::getInstance()->clear();

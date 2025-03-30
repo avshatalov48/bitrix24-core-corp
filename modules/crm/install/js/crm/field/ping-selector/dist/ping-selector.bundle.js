@@ -313,6 +313,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    return offset1 < offset2 ? -1 : offset1 > offset2 ? 1 : 0;
 	  }));
 	  _classPrivateMethodGet(this, _close, _close2).call(this);
+	  _classPrivateMethodGet(this, _adjustAddButtonCompact, _adjustAddButtonCompact2).call(this);
 	  _classPrivateMethodGet(this, _emitEvent, _emitEvent2).call(this);
 	}
 	function _getOffsetTitle2(offset) {

@@ -167,6 +167,14 @@ class User
 		return self::$cacheFields[$this->userId];
 	}
 
+	/**
+	 * @deprecated
+	 * @return array
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws \Bitrix\Main\LoaderException
+	 */
 	protected function createFilterForInvitedExtranetUser(): array
 	{
 		$result = [];

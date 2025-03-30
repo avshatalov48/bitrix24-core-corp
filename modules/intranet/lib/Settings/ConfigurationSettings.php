@@ -2,6 +2,9 @@
 
 namespace Bitrix\Intranet\Settings;
 
+use Bitrix\Bitrix24\Integration\Network\ProfileService;
+use Bitrix\Bitrix24\Portal\Remove\Verification\VerificationFactory;
+use Bitrix\Intranet\CurrentUser;
 use Bitrix\Intranet\Settings\Controls\Section;
 use Bitrix\Intranet\Settings\Controls\Selector;
 use Bitrix\Intranet\Settings\Controls\Switcher;
@@ -445,8 +448,6 @@ class ConfigurationSettings extends AbstractSettings
 
 		if ($this->isBitrix24 && Option::get('bitrix24', 'is_delete_portal_feature_enabled') === 'Y')
 		{
-			$validator = new Portal\Remove\RemoveValidator();
-
 			$data['sectionDeletePortal'] = new Section(
 				'settings-configuration-section-delete-portal',
 				Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_DELETE_PORTAL'),
@@ -454,16 +455,41 @@ class ConfigurationSettings extends AbstractSettings
 				false
 			);
 
+			$isEmployeesLeft = \Bitrix\Bitrix24\License\UserActive::getInstance()->getCount() > 1;
+			$isFreeLicense = \CBitrix24::isLicenseNeverPayed();
+			$verificationOptions = null;
+
+			if ($isFreeLicense)
+			{
+				$verificationOptions = $this->getVerificationOptions();
+			}
+
 			$data['deletePortalOptions'] = [
-				'isEmployeesLeft' => \Bitrix\Bitrix24\License\UserActive::getInstance()->getCount() > 1,
+				'isEmployeesLeft' => $isEmployeesLeft,
 				'portalUrl' => \Bitrix\Bitrix24\PortalSettings::getInstance()->getDomain()->getHostname(),
-				'isFreeLicense' => \CBitrix24::isLicenseNeverPayed(),
-				'checkWord' => $validator->getCheckWord(),
-				'mailForRequest' => $validator->getMailToRequest(),
+				'isFreeLicense' => $isFreeLicense,
+				'mailForRequest' => Portal\Remove\RemoveValidator::getMailToRequest(),
+				'verificationOptions' => $verificationOptions,
+				'isAdmin' => \Bitrix\Bitrix24\CurrentUser::get()->isAdmin() && !\Bitrix\Bitrix24\CurrentUser::get()->isIntegrator()
 			];
 		}
 
 		return new static($data);
+	}
+
+	private function getVerificationOptions(): ?array
+	{
+		try
+		{
+			$userId = CurrentUser::get()->getId();
+			$profileContacts = ProfileService::getInstance()->fetchNetworkProfileContacts($userId);
+
+			return (new VerificationFactory())->getVerificationOptionsByNetworkProfileContacts($profileContacts);
+		}
+		catch (\Exception $exception)
+		{
+			return null;
+		}
 	}
 
 	private function getGoogleKeyProductProperties(): string
@@ -757,19 +783,19 @@ class ConfigurationSettings extends AbstractSettings
 		}
 
 		$searchEngine = SearchEngine::initWithDefaultFormatter($searchSections + [
-			'culture' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DATETIME_REGION_FORMAT'),
-			'isFormat24Hour' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_TIME_FORMAT24'),
-			'trackOutMailsRead' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_TRACK_OUT_MAILS'),
-			'trackOutMailsClick' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_TRACK_OUT_MAILS_CLICKS'),
-			'defaultEmailFrom' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DEFAULT_EMAIL'),
-			'cardsProviderCRM' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS'),
-			'cardsProviderProductProperties' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS'),
-			'allowUserInstallApplication' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION'),
-			'allCanBuyTariff' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALL_CAN_BUY_TARIFF'),
-			'allowMeasureStressLevel' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_MEASURE_STRESS_LEVEL'),
-			//TODO: commented on issue task#488392
-			//'collectGeoData' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_COLLECT_GEO_DATA'),
-		]);
+				'culture' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DATETIME_REGION_FORMAT'),
+				'isFormat24Hour' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_TIME_FORMAT24'),
+				'trackOutMailsRead' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_TRACK_OUT_MAILS'),
+				'trackOutMailsClick' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_TRACK_OUT_MAILS_CLICKS'),
+				'defaultEmailFrom' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DEFAULT_EMAIL'),
+				'cardsProviderCRM' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS'),
+				'cardsProviderProductProperties' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS'),
+				'allowUserInstallApplication' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION'),
+				'allCanBuyTariff' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALL_CAN_BUY_TARIFF'),
+				'allowMeasureStressLevel' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_MEASURE_STRESS_LEVEL'),
+				//TODO: commented on issue task#488392
+				//'collectGeoData' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_COLLECT_GEO_DATA'),
+			]);
 
 		return $searchEngine->find($query);
 	}

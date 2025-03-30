@@ -18,6 +18,7 @@ export type ResourceCreationWizardState = {
 	invalidResourceName: boolean;
 	invalidResourceType: boolean;
 	weekStart: string;
+	checkedForAll: { [type: string]: boolean };
 }
 
 export type InitPayload = {

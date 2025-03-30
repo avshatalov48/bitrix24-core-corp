@@ -64,6 +64,20 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	  boundTypesTagSelector: null,
 	  externalTypesTagSelector: null,
 	  crmTypesTagSelector: null,
+	  computed: {
+	    isShowPermissionsResetAlert: function isShowPermissionsResetAlert() {
+	      if (!this.$store.state.isPermissionsLayoutV2Enabled) {
+	        return false;
+	      }
+	      var currentTypeIds = babelHelpers.toConsumableArray(this.$store.state.automatedSolution.typeIds);
+	      var originallyTypeIds = babelHelpers.toConsumableArray(this.$store.state.automatedSolutionOrigTypeIds);
+	      return currentTypeIds.some(function (id) {
+	        return !originallyTypeIds.includes(id);
+	      }) || originallyTypeIds.some(function (id) {
+	        return !currentTypeIds.includes(id);
+	      });
+	    }
+	  },
 	  mounted: function mounted() {
 	    var _this = this;
 	    this.boundTypesTagSelector = new ui_entitySelector.TagSelector({
@@ -117,7 +131,7 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	        },
 	        events: {
 	          onTagAdd: this.addTypeIdByTagAddEvent,
-	          onTagRemove: this.removeTypeIdByTagRemoveEvent
+	          onTagRemove: this.removeTypeIdIfNotContainsInBoundTypes
 	        }
 	      });
 	      if (locked) {
@@ -134,6 +148,17 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	      var _event$getData2 = event.getData(),
 	        tag = _event$getData2.tag;
 	      this.$store.dispatch('removeTypeId', tag.getId());
+	    },
+	    removeTypeIdIfNotContainsInBoundTypes: function removeTypeIdIfNotContainsInBoundTypes(event) {
+	      var _event$getData3 = event.getData(),
+	        tag = _event$getData3.tag;
+	      var boundSelectedTags = this.boundTypesTagSelector.getTags();
+	      var isTagContainsInBoundTags = boundSelectedTags.some(function (boundTag) {
+	        return boundTag.getId() === tag.getId();
+	      });
+	      if (!isTagContainsInBoundTags) {
+	        this.removeTypeIdByTagRemoveEvent(event);
+	      }
 	    },
 	    handleCreateTypeClick: function handleCreateTypeClick() {
 	      var _this2 = this;
@@ -166,7 +191,7 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	      return wrapPromiseInAnalytics(this.$store.dispatch('save'), builder);
 	    }
 	  },
-	  template: "\n\t\t<div>\n\t\t\t<div class=\"ui-title-3\">{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_TAB_TITLE_TYPES') }}</div>\n\t\t\t<Card\n\t\t\t\t:title=\"$Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_CARD_TYPES_TITLE')\"\n\t\t\t\t:description=\"$Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_CARD_TYPES_DESCRIPTION')\"\n\t\t\t/>\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_CREATE_TYPE') }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t<div ref=\"boundTypesTagSelectorContainer\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_CRM_TYPES') }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t<div ref=\"crmTypesTagSelectorContainer\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_EXTERNAL_TYPES') }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t<div ref=\"externalTypesTagSelectorContainer\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div>\n\t\t\t<div class=\"ui-title-3\">{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_TAB_TITLE_TYPES') }}</div>\n\t\t\t<Card\n\t\t\t\t:title=\"$Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_CARD_TYPES_TITLE')\"\n\t\t\t\t:description=\"$Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_CARD_TYPES_DESCRIPTION')\"\n\t\t\t/>\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_CREATE_TYPE') }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t<div ref=\"boundTypesTagSelectorContainer\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_CRM_TYPES') }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t<div ref=\"crmTypesTagSelectorContainer\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_EXTERNAL_TYPES') }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t<div ref=\"externalTypesTagSelectorContainer\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-if=\"isShowPermissionsResetAlert\" class=\"ui-alert ui-alert-warning\">\n\t\t\t\t<span class=\"ui-alert-message\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_PERMISSIONS_WILL_BE_RESET_ALERT') }}\n\t\t\t\t</span>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
@@ -523,15 +548,18 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	   * Sets new initial state for the store. Modification flag is reset
 	   */
 	  setState: function setState(state, stateToSet) {
-	    var _stateToSet$automated, _stateToSet$automated2, _stateToSet$automated3, _stateToSet$permissio, _stateToSet$permissio2, _stateToSet$permissio3, _stateToSet$permissio4;
+	    var _stateToSet$automated, _stateToSet$automated2, _stateToSet$automated3, _stateToSet$permissio, _stateToSet$permissio2, _stateToSet$permissio3, _stateToSet$permissio4, _stateToSet$isPermiss;
 	    state.automatedSolution.id = normalizeId((_stateToSet$automated = stateToSet.automatedSolution) === null || _stateToSet$automated === void 0 ? void 0 : _stateToSet$automated.id);
 	    state.automatedSolution.title = normalizeTitle((_stateToSet$automated2 = stateToSet.automatedSolution) === null || _stateToSet$automated2 === void 0 ? void 0 : _stateToSet$automated2.title);
-	    state.automatedSolution.typeIds = normalizeTypesIds((_stateToSet$automated3 = stateToSet.automatedSolution) === null || _stateToSet$automated3 === void 0 ? void 0 : _stateToSet$automated3.typeIds);
+	    var typeIds = normalizeTypesIds((_stateToSet$automated3 = stateToSet.automatedSolution) === null || _stateToSet$automated3 === void 0 ? void 0 : _stateToSet$automated3.typeIds);
+	    state.automatedSolution.typeIds = babelHelpers.toConsumableArray(typeIds);
+	    state.automatedSolutionOrigTypeIds = babelHelpers.toConsumableArray(typeIds);
 	    state.permissions.canMoveSmartProcessFromCrm = main_core.Text.toBoolean((_stateToSet$permissio = (_stateToSet$permissio2 = stateToSet.permissions) === null || _stateToSet$permissio2 === void 0 ? void 0 : _stateToSet$permissio2.canMoveSmartProcessFromCrm) !== null && _stateToSet$permissio !== void 0 ? _stateToSet$permissio : false);
 	    state.permissions.canMoveSmartProcessFromAnotherAutomatedSolution = main_core.Text.toBoolean((_stateToSet$permissio3 = (_stateToSet$permissio4 = stateToSet.permissions) === null || _stateToSet$permissio4 === void 0 ? void 0 : _stateToSet$permissio4.canMoveSmartProcessFromAnotherAutomatedSolution) !== null && _stateToSet$permissio3 !== void 0 ? _stateToSet$permissio3 : false);
 	    state.dynamicTypesTitles = normalizeDynamicTypesTitles(stateToSet.dynamicTypesTitles);
 	    state.errors = normalizeErrors(stateToSet.errors);
 	    state.isModified = false;
+	    state.isPermissionsLayoutV2Enabled = main_core.Text.toBoolean((_stateToSet$isPermiss = stateToSet.isPermissionsLayoutV2Enabled) !== null && _stateToSet$isPermiss !== void 0 ? _stateToSet$isPermiss : false);
 	  },
 	  setErrors: function setErrors(state, errors) {
 	    state.errors = normalizeErrors(errors);
@@ -581,6 +609,7 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	  strict: true,
 	  state: function state() {
 	    return {
+	      automatedSolutionOrigTypeIds: [],
 	      automatedSolution: {
 	        id: null,
 	        title: null,
@@ -592,7 +621,8 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	      },
 	      dynamicTypesTitles: {},
 	      errors: [],
-	      isModified: false
+	      isModified: false,
+	      isPermissionsLayoutV2Enabled: false
 	    };
 	  },
 	  getters: {

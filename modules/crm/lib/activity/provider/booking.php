@@ -199,29 +199,50 @@ class Booking extends Activity\Provider\Base
 
 		foreach ($booking['clients'] as $client)
 		{
-			$contactId = isset($client['id']) ? (int)$client['id'] : 0;
-			if (!$contactId)
+			$clientTypeModule = $client['type']['module'] ?? '';
+			$clientTypeCode = $client['type']['code'] ?? '';
+
+			if ($clientTypeModule !== 'crm')
+			{
+				continue;
+			}
+
+			$ownerTypeId = \CCrmOwnerType::ResolveID($clientTypeCode);
+			if (!in_array($ownerTypeId, [\CCrmOwnerType::Contact, \CCrmOwnerType::Company], true))
+			{
+				continue;
+			}
+
+			$ownerId = isset($client['id']) ? (int)$client['id'] : 0;
+			if (!$ownerId)
 			{
 				continue;
 			}
 
 			$bindings[] = [
-				'OWNER_TYPE_ID' => \CCrmOwnerType::Contact,
-				'OWNER_ID' => $client['id'],
+				'OWNER_TYPE_ID' => $ownerTypeId,
+				'OWNER_ID' => $ownerId,
 			];
 		}
 
 		foreach ($booking['externalData'] as $externalData)
 		{
 			$isCrm = isset($externalData['moduleId']) && $externalData['moduleId'] === 'crm';
-			$isDeal = isset($externalData['entityTypeId']) && $externalData['entityTypeId'] === 'DEAL';
-			$dealId = isset($externalData['value']) ? (int)$externalData['value'] : 0;
+			$ownerTypeId = \CCrmOwnerType::ResolveID($externalData['entityTypeId']);
+			$ownerId = isset($externalData['value']) ? (int)$externalData['value'] : 0;
 
-			if ($isCrm && $isDeal && $dealId)
+			if (
+				$isCrm
+				&& (
+					$ownerTypeId === \CCrmOwnerType::Deal
+					|| \CCrmOwnerType::isPossibleDynamicTypeId($ownerTypeId)
+				)
+				&& $ownerId
+			)
 			{
 				$bindings[] = [
-					'OWNER_TYPE_ID' => \CCrmOwnerType::Deal,
-					'OWNER_ID' => $dealId,
+					'OWNER_TYPE_ID' => $ownerTypeId,
+					'OWNER_ID' => $ownerId,
 				];
 			}
 		}

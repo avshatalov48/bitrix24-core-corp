@@ -91,6 +91,7 @@ jn.define('catalog/store/document-card/component', (require, exports, module) =>
 					return {
 						entity: 'store-document',
 						type: model && model.DOC_TYPE,
+						analyticsSection: 'inventory',
 					};
 				})
 				.setMenuActionsProvider((detailCard, callbacks) => {

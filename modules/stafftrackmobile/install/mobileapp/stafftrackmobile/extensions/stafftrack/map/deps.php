@@ -34,5 +34,6 @@ return [
 	'bundle' => [
 		'./src/location-menu',
 		'./src/disabled-geo-aha',
+		'./src/disabled-geo-user-enum',
 	],
 ];

@@ -378,6 +378,19 @@ final class AIManager
 			return null;
 		}
 
+		$customData = $error->getCustomData();
+		if (!empty($customData['sliderCode']))
+		{
+			$sliderCode = $customData['sliderCode'];
+
+			if (!empty($customData['showSliderWithMsg']))
+			{
+				return ErrorCode::getAILimitOfRequestsExceededError([
+					'sliderCode' => $sliderCode,
+				]);
+			}
+		}
+
 		return match ($errorCode)
 		{
 			'LIMIT_IS_EXCEEDED_BAAS' => ErrorCode::getAILimitOfRequestsExceededError([
@@ -385,7 +398,7 @@ final class AIManager
 				'limitCode' => self::AI_LIMIT_BAAS,
 			]),
 			'LIMIT_IS_EXCEEDED_MONTHLY' => ErrorCode::getAILimitOfRequestsExceededError([
-				'sliderCode' => self::AI_LIMIT_SLIDERS_MAP[self::AI_LIMIT_CODE_MONTHLY],
+				'sliderCode' => $sliderCode ?? self::AI_LIMIT_SLIDERS_MAP[self::AI_LIMIT_CODE_MONTHLY],
 				'limitCode' => self::AI_LIMIT_CODE_MONTHLY,
 			]),
 			'LIMIT_IS_EXCEEDED_DAILY' => ErrorCode::getAILimitOfRequestsExceededError([

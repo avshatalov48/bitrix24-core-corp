@@ -1,10 +1,12 @@
 <?php
+
+use Bitrix\Disk\Analytics\DiskAnalytics;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
 use Bitrix\Disk\Integration\Bitrix24Manager;
-use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Storage;
 use Bitrix\Disk\ProxyType;
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 
 define('STOP_STATISTICS', true);
@@ -212,10 +214,18 @@ class DiskFileUploadAjaxController extends \Bitrix\Disk\Internals\Controller
 			));
 		}
 
-		return ($this->request->getPost('targetFileId') ?
+		$result = $this->request->getPost('targetFileId') ?
 			$this->processActionUpdateFile($hash, $file, $package, $upload, $error) :
-			$this->processActionUploadFile($hash, $file, $package, $upload, $error)
-		);
+			$this->processActionUploadFile($hash, $file, $package, $upload, $error);
+
+		if ($result)
+		{
+			Application::getInstance()->addBackgroundJob(function () use ($file) {
+				DiskAnalytics::sendUploadFileDirectlyToDiskByIdEvent((int)$file['fileId']);
+			});
+		}
+
+		return $result;
 	}
 
 	/**

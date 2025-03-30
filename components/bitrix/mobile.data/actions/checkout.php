@@ -60,7 +60,18 @@ if (array_key_exists("logincheck", $_REQUEST) && $_REQUEST["login"])
 
 if (array_key_exists("servercheck", $_REQUEST))
 {
-	$data["cloud"] = ModuleManager::isModuleInstalled("bitrix24") && COption::GetOptionString('bitrix24', 'network', 'N') == 'Y';
+	$data['cloud'] = false;
+	$data['host'] = null;
+
+	if (ModuleManager::isModuleInstalled("bitrix24"))
+	{
+		$data['cloud'] = COption::GetOptionString('bitrix24', 'network', 'N') == 'Y';
+
+		if (\Bitrix\Main\Loader::includeModule('socialservices'))
+		{
+			$data['host'] = (new Uri(\CSocServBitrix24Net::NETWORK_URL))->getHost();
+		}
+	}
 
 	return $data;
 }

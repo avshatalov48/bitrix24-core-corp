@@ -366,11 +366,6 @@ class NodeEventHandler
 
 			if (!$alreadyExisted && $currentHead)
 			{
-				Container::getEventSenderService()->removeEventHandlers(
-					'humanresources',
-					EventName::MEMBER_ADDED->name,
-				);
-
 				Container::getNodeMemberRepository()
 					->create(
 						new NodeMember(

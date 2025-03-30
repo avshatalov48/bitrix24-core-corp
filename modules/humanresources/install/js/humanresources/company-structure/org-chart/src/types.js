@@ -1,10 +1,24 @@
 type ChartData = {
-	movingTo: boolean;
-	modelTransform: {
-		x: number;
-		y: number;
-		zoom: number;
-	};
+	canvas: {
+		shown: boolean;
+		movingTo: boolean;
+		modelTransform: {
+			x: number;
+			y: number;
+			zoom: number;
+		};
+	},
+	wizard: {
+		shown: boolean;
+		isEditMode: boolean;
+		showEntitySelector: boolean;
+		entity: string;
+		nodeId: number;
+	},
+	detailPanel: {
+		collapsed: boolean;
+		preventSwitch: boolean;
+	},
 };
 
 type Head = {
@@ -23,6 +37,7 @@ type TreeItem = {
 	userCount: number;
 	parentId: number;
 	children?: Array<string>;
+	description?: string;
 };
 
 type Point = {
@@ -45,9 +60,18 @@ type TreeData = {
 };
 
 type TreeNodeData = {
+	chidldrenLoaded: boolean;
 	childrenOffset: number;
 	childrenMounted: boolean;
 	showInfo: boolean;
+};
+
+type FirstPopupData = {
+	show: boolean;
+	title: string;
+	description: string;
+	subDescription: string;
+	features: string[];
 };
 
 export type {
@@ -56,4 +80,6 @@ export type {
 	TreeData,
 	TreeNodeData,
 	ChartData,
+	FirstPopupData,
+	Head,
 };

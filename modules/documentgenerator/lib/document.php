@@ -1019,7 +1019,7 @@ class Document
 		$dataProvider = DataProviderManager::getInstance()->createDataProvider($field, $value, $parentDataProvider);
 		if($dataProvider && $dataProvider->isLoaded())
 		{
-			if($this->isCheckAccess && !DataProviderManager::getInstance()->checkDataProviderAccess($dataProvider))
+			if($this->isCheckAccess && !DataProviderManager::getInstance()->checkDataProviderAccess($dataProvider, $this->getUserId()))
 			{
 				$this->result->addError(new Error('Access denied to provider '.$field['PROVIDER'].' for placeholder '.$name));
 				return;
@@ -1107,7 +1107,7 @@ class Document
 			$dataProvider = DataProviderManager::getInstance()->createDataProvider($this->fields[$name], $value);
 			if($dataProvider && $dataProvider->isLoaded())
 			{
-				if($this->isCheckAccess && !DataProviderManager::getInstance()->checkDataProviderAccess($dataProvider))
+				if($this->isCheckAccess && !DataProviderManager::getInstance()->checkDataProviderAccess($dataProvider, $this->getUserId()))
 				{
 					$value = null;
 				}
@@ -1232,6 +1232,11 @@ class Document
 			$valueName = implode('.', $nameParts);
 			if($value instanceof ArrayDataProvider)
 			{
+				if (!$this->hasAccessToDataProvider($value))
+				{
+					return null;
+				}
+
 				// if current value is an ArrayDataProvider and $valueName doesn't point to ArrayDataProvider outer field
 				// then we assume that this $name points to the field of ArrayDataProvider item - thus
 				// we need to return $name as it is.
@@ -1257,11 +1262,7 @@ class Document
 			}
 			if($value instanceof DataProvider)
 			{
-				if(
-					$this->isCheckAccess
-					&& $value->isLoaded()
-					&& !DataProviderManager::getInstance()->checkDataProviderAccess($value)
-				)
+				if(!$this->hasAccessToDataProvider($value))
 				{
 					$value = null;
 				}
@@ -1359,6 +1360,16 @@ class Document
 		}
 
 		return DataProviderManager::getInstance()->getValueFromList($value);
+	}
+
+	private function hasAccessToDataProvider(DataProvider $provider): bool
+	{
+		if (!$this->isCheckAccess || !$provider->isLoaded())
+		{
+			return true;
+		}
+
+		return DataProviderManager::getInstance()->checkDataProviderAccess($provider, $this->getUserId());
 	}
 
 	/**

@@ -208,7 +208,6 @@ jn.define('sign/grid', (require, exports, module) => {
 		#onItemsLoaded = (responseData, context) => {
 			const { users = [], needActionCount = '', needCountForSendPreset = '' } = responseData || {};
 			const isCache = context === 'cache';
-
 			const actions = [];
 
 			if (users.length > 0)

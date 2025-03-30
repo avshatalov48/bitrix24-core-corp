@@ -12,6 +12,7 @@ return [
 		'sign.v2.b2e.company-selector',
 		'sign.v2.b2e.document-validation',
 		'sign.v2.b2e.representative-selector',
+		'sign.type',
 		'sign.v2.helper',
 		'sign.v2.sign-settings',
 	],

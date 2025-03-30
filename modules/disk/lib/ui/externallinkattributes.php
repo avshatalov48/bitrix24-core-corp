@@ -3,6 +3,7 @@
 namespace Bitrix\Disk\Ui;
 
 use Bitrix\Disk\Document\BitrixHandler;
+use Bitrix\Disk\Document\BoardsHandler;
 use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Disk\Driver;
 use Bitrix\Main\UI\Extension;
@@ -16,8 +17,11 @@ final class ExternalLinkAttributes extends ItemAttributes
 	{
 		parent::setDefaultAttributes();
 
-		$documentHandler = Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
-		if ($documentHandler instanceof OnlyOfficeHandler && $this->getViewerType() === 'cloud-document')
+		$documentHandlersManager = Driver::getInstance()->getDocumentHandlersManager();
+
+		$documentHandler = $documentHandlersManager->getDefaultHandlerForView();
+		$viewerType = $this->getViewerType();
+		if ($documentHandler instanceof OnlyOfficeHandler && $viewerType === 'cloud-document')
 		{
 			$this->setTypeClass('BX.Disk.Viewer.OnlyofficeExternalLinkItem');
 			$this->setAttribute('data-viewer-separate-item', true);
@@ -25,6 +29,17 @@ final class ExternalLinkAttributes extends ItemAttributes
 			$this->setExtension('disk.viewer.onlyoffice-item');
 
 			Extension::load('disk.viewer.onlyoffice-item');
+		}
+
+		$boardsHandler = $documentHandlersManager->getHandlerByCode(BoardsHandler::getCode());
+		if ($viewerType === 'board' && isset($boardsHandler))
+		{
+			$this->setTypeClass('BX.Disk.Viewer.BoardItem');
+			$this->setAttribute('data-viewer-separate-item', true);
+
+			$this->setExtension('disk.viewer.board-item');
+
+			Extension::load(['disk.viewer.board-item', 'disk.viewer.actions']);
 		}
 	}
 

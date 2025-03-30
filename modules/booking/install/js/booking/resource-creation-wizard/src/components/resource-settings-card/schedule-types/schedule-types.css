@@ -44,6 +44,9 @@
 }
 
 .booking--rcw--schedule-item-text-description {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
 	font-size: var(--ui-font-size-sm);
 }
 

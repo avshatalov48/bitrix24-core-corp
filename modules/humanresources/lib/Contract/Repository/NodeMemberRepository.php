@@ -66,6 +66,14 @@ interface NodeMemberRepository
 
 	public function findAllByRoleIdAndNodeId(?int $roleId, ?int $nodeId, ?int $limit, ?int $offset, bool $ascendingSort = true): Item\Collection\NodeMemberCollection;
 
+	public function findAllByRoleIdAndNodeCollection(
+		?int $roleId,
+		Item\Collection\NodeCollection $nodeCollection,
+		int $limit = 0,
+		int $offset = 0,
+		bool $ascendingSort = true,
+	): Item\Collection\NodeMemberCollection;
+
 	/**
 	 * @param \Bitrix\HumanResources\Item\NodeMember $member
 	 *

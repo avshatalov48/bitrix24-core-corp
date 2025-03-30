@@ -24,6 +24,16 @@ class Facade
 		if ($documentType === StoreDocumentTable::TYPE_SALES_ORDERS)
 		{
 			$items = RealizationProduct::load($documentId, $context);
+			if (!$documentId && !empty($items))
+			{
+				$total = 0.0;
+				foreach ($items as $item)
+				{
+					$total += $item->price['vat']['priceWithVat'] * $item->amount;
+				}
+				$document->total['amount'] = $total;
+				$document->total['currency'] = $items[0]->price['sell']['currency'];
+			}
 		}
 		else
 		{

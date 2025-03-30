@@ -80,7 +80,7 @@ class Collection extends Dictionary
 	 * @param mixed $value Value.
 	 * @return void
 	 */
-	public function offsetSet($offset, $value)
+	public function offsetSet($offset, $value): void
 	{
 		$this->setChannel($value, $offset);
 	}

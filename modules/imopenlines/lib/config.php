@@ -1537,9 +1537,19 @@ class Config
 	 */
 	public function get($configId, $withQueue = true, $showOffline = true, $withConfigQueue = false)
 	{
-		$config = false;
+		static $cache = [];
 
 		$configId = (int)$configId;
+
+		$cacheKey = md5(serialize([$configId, $withQueue, $showOffline, $withConfigQueue]));
+
+		if (isset($cache[$cacheKey]))
+		{
+			return $cache[$cacheKey];
+		}
+
+		$config = false;
+
 		if (
 			!empty($configId) ||
 			$configId > 0
@@ -1640,6 +1650,11 @@ class Config
 					$config[$textFieldName] = Emoji::decode($config[$textFieldName]);
 				}
 			}
+		}
+
+		if ($config)
+		{
+			$cache[$cacheKey] = $config;
 		}
 
 		return $config;

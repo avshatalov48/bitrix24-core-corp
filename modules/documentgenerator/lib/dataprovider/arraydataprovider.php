@@ -66,6 +66,27 @@ class ArrayDataProvider extends DataProvider implements \Iterator, \Countable
 		}
 	}
 
+	public function hasAccess($userId)
+	{
+		// has access to this provider if the user has access to least one of its items
+		if (is_array($this->data))
+		{
+			foreach ($this->data as $item)
+			{
+				if ($item instanceof DataProvider)
+				{
+					$hasAccess = DataProviderManager::getInstance()->checkDataProviderAccess($item, $userId);
+					if ($hasAccess)
+					{
+						return true;
+					}
+				}
+			}
+		}
+
+		return parent::hasAccess($userId);
+	}
+
 	/**
 	 * @return array
 	 */
@@ -165,7 +186,7 @@ class ArrayDataProvider extends DataProvider implements \Iterator, \Countable
 		return $this->itemKey;
 	}
 
-	public function current()
+	public function current(): mixed
 	{
 		if(is_array($this->data))
 		{
@@ -175,18 +196,15 @@ class ArrayDataProvider extends DataProvider implements \Iterator, \Countable
 		return false;
 	}
 
-	public function next()
+	public function next(): void
 	{
 		if(is_array($this->data))
 		{
 			next($this->data);
-			return $this->current();
 		}
-
-		return false;
 	}
 
-	public function key()
+	public function key(): string|int|null
 	{
 		if(is_array($this->data))
 		{
@@ -196,28 +214,20 @@ class ArrayDataProvider extends DataProvider implements \Iterator, \Countable
 		return null;
 	}
 
-	public function valid()
+	public function valid(): bool
 	{
-		if(is_array($this->data))
-		{
-			return($this->current());
-		}
-
-		return false;
+		return $this->key() !== null;
 	}
 
-	public function rewind()
+	public function rewind(): void
 	{
 		if(is_array($this->data))
 		{
 			reset($this->data);
-			return $this->current();
 		}
-
-		return false;
 	}
 
-	public function count()
+	public function count(): int
 	{
 		if(is_array($this->data))
 		{

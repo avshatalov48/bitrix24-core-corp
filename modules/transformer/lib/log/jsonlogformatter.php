@@ -8,12 +8,19 @@ use Bitrix\Main\Web\Json;
 final class JsonLogFormatter extends LogFormatter
 {
 	private bool $lineBreakAfterEachMessage;
+	private readonly array $globalContext;
 
-	public function __construct($showArguments = false, $argMaxChars = 30, bool $lineBreakAfterEachMessage = false)
+	public function __construct(
+		$showArguments = false,
+		$argMaxChars = 30,
+		bool $lineBreakAfterEachMessage = false,
+		array $globalContext = [],
+	)
 	{
 		parent::__construct($showArguments, $argMaxChars);
 
 		$this->lineBreakAfterEachMessage = $lineBreakAfterEachMessage;
+		$this->globalContext = $globalContext;
 	}
 
 	/**
@@ -21,10 +28,12 @@ final class JsonLogFormatter extends LogFormatter
 	 */
 	public function format($message, array $context = []): string
 	{
-		$message = parent::format($message, $context);
+		$localContext = $context + $this->globalContext;
+
+		$message = parent::format($message, $localContext);
 
 		$jsonifiedContext = [];
-		foreach ($context as $key => $value)
+		foreach ($localContext as $key => $value)
 		{
 			$jsonifiedContext[$key] = $this->jsonify($value);
 		}

@@ -1,0 +1,3 @@
+<?php
+$MESS["MARKET_PRICE_POLICY_FREE"] = "Тегін";
+$MESS["MARKET_PRICE_POLICY_SUBSCRIPTION"] = "Жазылым";

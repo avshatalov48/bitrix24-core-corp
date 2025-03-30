@@ -2,9 +2,10 @@
 
 namespace Bitrix\Sign\Type\Document;
 
+use Bitrix\Sign\Contract\Item\IntModelValue;
 use Bitrix\Sign\Type\ValuesTrait;
 
-enum InitiatedByType: string
+enum InitiatedByType: string implements IntModelValue
 {
 	use ValuesTrait;
 

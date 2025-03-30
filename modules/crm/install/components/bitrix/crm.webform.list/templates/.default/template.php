@@ -39,6 +39,8 @@ if(Main\Loader::includeModule("bitrix24"))
 	]);
 }
 
+echo \Bitrix\Crm\Tour\Permissions\WebForm::getInstance()->build();
+
 $region = Main\Application::getInstance()->getLicense()->getRegion();
 $privacyDesc = $region
 	? Loc::getMessage('CRM_WEBFORM_LIST_NOTIFY_USER_CONSENT_TEXT_' . mb_strtoupper($region))

@@ -42,5 +42,11 @@
 	cursor: pointer;
 }
 
+.hr-hcmlink-item-employee__user-container {
+	width: 100%;
+}
 
-
+.ui-tag-selector-outer-container.hr-hcmlink-item-employee__person-container {
+	width: 100%;
+	border: 1px solid var(--ui-color-palette-orange-30);
+}

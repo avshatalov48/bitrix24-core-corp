@@ -19,6 +19,7 @@ return [
 		'ui.vue',
 		'ui.vue3.vuex',
 		'im.v2.lib.phone',
+		'im.v2.lib.desktop-api',
 		'main.core',
 	],
 	'skip_core' => false,

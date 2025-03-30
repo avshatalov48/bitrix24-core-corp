@@ -20,6 +20,7 @@
 	padding: 10px;
 	border-color: var(--ui-color-palette-gray-10);
 }
+
 .resource-creation-wizard__form-notification-info-switcher {
 	margin-left: auto;
 }
@@ -41,12 +42,11 @@
 
 .resource-creation-wizard__form-notification-info-title {
 	color: var(--ui-color-palette-black-solid);
-	font-size: 18px;
-	font-weight: 400;
-	text-align: left;
+	font-size: var(--ui-font-size-2xl);
+	transition: color 200ms;
 }
 
-.resource-creation-wizard__form-notification-info-title.--disabled {
+.resource-creation-wizard__form-notification.--disabled .resource-creation-wizard__form-notification-info-title {
 	color: var(--ui-color-palette-gray-90);
 }
 
@@ -55,7 +55,7 @@
 	--ui-icon-set__icon-color: var(--ui-color-primary);
 }
 
-.resource-creation-wizard__form-notification-info-title-row .ui-icon-set.--disabled {
+.resource-creation-wizard__form-notification.--disabled .resource-creation-wizard__form-notification-info-title-row .ui-icon-set {
 	--ui-icon-set__icon-color: var(--ui-color-palette-gray-30);
 }
 
@@ -66,7 +66,6 @@
 
 .resource-creation-wizard__form-notification-text-row {
 	display: flex;
-	flex-direction: row;
 }
 
 .resource-creation-wizard__form-notification-text-row-icon {
@@ -98,21 +97,24 @@
 .resource-creation-wizard__form-notification-text {
 	align-self: center;
 	color: var(--ui-color-palette-gray-90);
-	font-size: 13px;
-	font-weight: 400;
-	line-height: 15px;
-	text-align: left;
+	font-size: var(--ui-font-size-sm);
 }
 
 .resource-creation-wizard__form-notification-info-template {
 	display: block;
 	padding: 10px 0 10px;
+	transition: opacity 200ms, filter 200ms;
 }
 
 .resource-creation-wizard__form-notification-text.--more,
 .resource-creation-wizard__form-notification-info-template span {
 	color: var(--ui-color-link-primary-base);
 	cursor: pointer;
+}
+
+.resource-creation-wizard__form-notification.--disabled .resource-creation-wizard__form-notification-info-template {
+	opacity: 0.5;
+	filter: grayscale(1);
 }
 
 .notification-label {
@@ -132,22 +134,12 @@
 	margin-top: 10px;
 }
 
+.booking-resource-creation-wizard-choose-template-button {
+	max-width: max-content;
+}
+
 .resource-creation-wizard__form-notification-info-template-choose-buttons button {
 	text-transform: initial;
 	font-size: var(--ui-font-size-md);
 	font-weight: var(--ui-font-weight-regular);
-}
-
-.resource-creation-wizard__form-notification__info-text-row-message-text .channel-menu-btn {
-	font-weight: var(--ui-font-weight-normal);
-	text-transform: initial;
-	border-bottom: 1px dotted;
-	border-top: 0;
-	border-left: 0;
-	border-right: 0;
-	cursor: pointer;
-	background: none;
-	border-radius: 0;
-	color: var(--ui-color-palette-gray-60);
-	font-size: var(--ui-font-size-sm);
 }

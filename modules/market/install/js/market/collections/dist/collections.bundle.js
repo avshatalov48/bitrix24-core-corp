@@ -1,10 +1,10 @@
 this.BX = this.BX || {};
-(function (exports,market_collectionItemAds,market_collectionItem,market_collectionTop,market_collectionTop2) {
+(function (exports,market_collectionItemAi,market_collectionItem,market_collectionTop,market_collectionTop2) {
 	'use strict';
 
 	const Collections = {
 	  components: {
-	    CollectionItemAds: market_collectionItemAds.CollectionItemAds,
+	    CollectionItemAi: market_collectionItemAi.CollectionItemAi,
 	    CollectionItem: market_collectionItem.CollectionItem,
 	    CollectionTop: market_collectionTop.CollectionTop,
 	    CollectionTop2: market_collectionTop2.CollectionTop2
@@ -91,8 +91,8 @@ this.BX = this.BX || {};
 					<div class="market-single-item"
 						 v-if="item.SINGLE_VIEW === 'Y'"
 					>
-						<CollectionItemAds
-							v-if="item.IS_AD === 'Y'"
+						<CollectionItemAi
+							v-if="item.IS_AI_SITES === 'Y'"
 							:item="item"
 						/>
 						<CollectionItem

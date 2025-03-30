@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Entity\Slot;
 
-use Bitrix\Booking\Entity\BaseEntity;
 use Bitrix\Booking\Entity\DatePeriod;
-use Bitrix\Booking\Exception\InvalidArgumentException;
-use Bitrix\Booking\Internals\Time;
+use Bitrix\Booking\Entity\EntityInterface;
+use Bitrix\Booking\Internals\Exception\InvalidArgumentException;
+use Bitrix\Booking\Internals\Service\Time;
 use DateTimeImmutable;
 use DateInterval;
 
-class Range extends BaseEntity
+class Range implements EntityInterface
 {
 	private int $from;
 	private int $to;

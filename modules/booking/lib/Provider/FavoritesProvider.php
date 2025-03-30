@@ -6,25 +6,36 @@ namespace Bitrix\Booking\Provider;
 
 use Bitrix\Booking\Entity\DatePeriod;
 use Bitrix\Booking\Entity\Favorites\Favorites;
-use Bitrix\Booking\Internals\Query\Favorites\GetListHandler;
-use Bitrix\Booking\Internals\Query\Favorites\GetListRequest;
+use Bitrix\Booking\Internals\Container;
+use Bitrix\Booking\Internals\Repository\FavoritesRepositoryInterface;
 
 class FavoritesProvider
 {
+	private FavoritesRepositoryInterface $repository;
+
+	public function __construct()
+	{
+		$this->repository = Container::getFavoritesRepository();
+	}
+
 	public function getList(
 		int $managerId,
-		int $limit = null,
-		int $offset = null,
 		DatePeriod $datePeriod = null,
 		bool $withCounters = false,
 	): Favorites
 	{
-		$request = new GetListRequest(
-			managerId: $managerId,
-			datePeriod: $datePeriod,
-			withCounters: $withCounters,
-		);
+		$favorites = $this->repository->getList($managerId);
 
-		return (new GetListHandler())($request);
+		if ($withCounters)
+		{
+			(new ResourceProvider())
+				->withCounters(
+					collection: $favorites->getResources(),
+					managerId: $managerId,
+					datePeriod: $datePeriod,
+				);
+		}
+
+		return $favorites;
 	}
 }

@@ -1,0 +1,34 @@
+.hr-department-detail-content__user-action-text-container {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+	padding-bottom: 14px;
+
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-3xs);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.hr-department-detail-content__user-belongs-to-department-text-container {
+	text-align: center;
+}
+
+.hr-department-detail-content__move-user-department-user-link {
+	text-decoration: none;
+	border-bottom: 1px dashed;
+	cursor: pointer;
+}
+
+.hr-department-detail-content__move-user-department_item-error {
+	display: flex;
+	align-items: center;
+	font: 13px/16px var(--ui-font-family-system);
+	color: var(--ui-field-color-warning);
+	margin-top: 3px;
+}
+
+.hr-department-detail-content__move-user-department_item-error .ui-icon-set.--warning {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-field-color-warning);
+}

@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/analytics.bundle.js',
 	'rel' => [
 		'main.core',
+		'sign.type',
 		'sign.v2.api',
-		'sign.v2.b2e.company-selector',
 		'ui.analytics',
 	],
 	'skip_core' => false,

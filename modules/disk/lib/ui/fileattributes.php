@@ -15,6 +15,7 @@ use Bitrix\Main\UI\Extension;
 use Bitrix\Main\UI\Viewer\ItemAttributes;
 use Bitrix\Main\UI\Viewer\Renderer;
 use Bitrix\Main\Web\MimeType;
+use \Bitrix\Disk;
 
 final class FileAttributes extends ItemAttributes
 {
@@ -27,6 +28,7 @@ final class FileAttributes extends ItemAttributes
 
 	public const JS_TYPE_CLASS_CLOUD_DOCUMENT = 'BX.Disk.Viewer.DocumentItem';
 	public const JS_TYPE_CLASS_ONLYOFFICE = 'BX.Disk.Viewer.OnlyOfficeItem';
+	public const JS_TYPE_CLASS_BOARD = 'BX.Disk.Viewer.BoardItem';
 
 	public static function tryBuildByFileId($fileId, $sourceUri)
 	{
@@ -72,6 +74,18 @@ final class FileAttributes extends ItemAttributes
 	{
 		parent::setDefaultAttributes();
 
+		if ($this->getViewerType() === Disk\UI\Viewer\Renderer\Board::getJsType())
+		{
+			$this
+				->setAttribute('data-viewer-type-class', 'BX.Disk.Viewer.BoardItem')
+				->setTypeClass(self::JS_TYPE_CLASS_BOARD)
+				->setAsSeparateItem()
+				->setExtension('disk.viewer.board-item')
+			;
+
+			Extension::load('disk.viewer.board-item');
+		}
+
 		if (self::isSetViewDocumentInClouds() && self::isAllowedUseClouds($this->fileData['CONTENT_TYPE']))
 		{
 			$documentHandler = self::getDefaultHandlerForView();
@@ -97,7 +111,7 @@ final class FileAttributes extends ItemAttributes
 
 	public function setGroupBy($id)
 	{
-		if ($this->getTypeClass() === self::JS_TYPE_CLASS_ONLYOFFICE)
+		if (in_array($this->getTypeClass(), [self::JS_TYPE_CLASS_ONLYOFFICE, self::JS_TYPE_CLASS_BOARD]))
 		{
 			//temp fix: we have to disable view in group because onlyoffice uses SidePanel
 			$this->unsetGroupBy();

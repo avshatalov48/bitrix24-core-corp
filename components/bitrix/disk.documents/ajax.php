@@ -3,6 +3,8 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Disk;
+use Bitrix\Disk\Controller\Integration\Flipchart;
+use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Main;
@@ -36,7 +38,7 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 
 	public function getMenuActionsAction(Disk\Document\TrackedObject $trackedObject)
 	{
-		$urlManager = Disk\Driver::getInstance()->getUrlManager();
+		$urlManager = Driver::getInstance()->getUrlManager();
 		if (!$trackedObject->canRead($this->getCurrentUser()->getId()))
 		{
 			if ($trackedObject->getUserId() == $this->getCurrentUser()->getId())
@@ -63,7 +65,7 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 		$actionToShare = [];
 		if (Disk\Configuration::isPossibleToShowExternalLinkControl())
 		{
-			$featureBlocker = Bitrix24Manager::filterJsAction('disk_manual_external_link', '');
+			$featureBlocker = Bitrix24Manager::filterJsAction($this->getExternalLinkFeature($trackedObject), '');
 			$actionToShare[] = [
 				'id' => 'externalLink',
 				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_GET_EXT_LINK'),
@@ -145,6 +147,20 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 					'objectName' => $trackedObject->getFile()->getName(),
 				],
 			];
+		}
+
+		if ($trackedObject->getFile()->getTypeFile() == Disk\TypeFile::FLIPCHART)
+		{
+			$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($trackedObject->getFileId());
+			array_unshift(
+				$actions,
+				[
+					'id' => 'open',
+					'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_OPEN'),
+					'href' => $openUrl,
+					'target' => '_blank',
+				]
+			);
 		}
 
 		return $actions;
@@ -246,4 +262,40 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 	{
 		return 'someUrl';
 	}
+
+	public function formattedRowAction(int $id): mixed
+	{
+		$grid = new \Bitrix\Main\Engine\Response\Component(
+			'bitrix:disk.documents',
+			'',
+			array(
+				'SEF_MODE' => 'N',
+				'USER_ID' => (int)$this->getCurrentUser()->getId(),
+				'VARIANT' => \Bitrix\Disk\Type\DocumentGridVariant::DocumentsList,
+			),
+			[],
+			array("HIDE_ICONS" => "Y")
+		);
+
+		[$items, $nextPage] = $grid->getItems(
+			[
+				'TRACKED_OBJECT.OBJECT_ID' => $id,
+			],
+			null,
+			['ACTIVITY_TIME' => 'desc'],
+			$grid->getGridHeaders()
+		);
+
+		$preparedRows = $grid->formatRows($items);
+
+		return $preparedRows[0];
+	}
+
+	private function getExternalLinkFeature(Disk\Document\TrackedObject $trackedObject): string
+	{
+		$isBoardType = (int)$trackedObject->getFile()->getTypeFile() === Disk\TypeFile::FLIPCHART;
+
+		return $isBoardType ? 'disk_board_external_link' : 'disk_manual_external_link';
+	}
+
 }

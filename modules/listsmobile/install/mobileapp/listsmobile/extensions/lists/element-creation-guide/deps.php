@@ -9,7 +9,6 @@ return [
 		'loc',
 		'apptheme',
 		'event-emitter',
-		'feature',
 		'alert',
 		'haptics',
 

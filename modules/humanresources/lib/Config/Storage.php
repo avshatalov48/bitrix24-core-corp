@@ -25,6 +25,7 @@ class Storage
 	private const STRUCT_EMPLOYEES_OPTION_NAME = 'company_employees_transferred';
 	private const STRUCT_DISABLE_INTRANET_UTILS = 'disable_intranet_utilities';
 	private const STRUCT_PUBLIC_IS_AVAILABLE_OPTION_NAME = 'public_structure_is_available';
+	private const STRUCT_INVITE_PERMISSION_OPTION_NAME = 'use_hr_invite_permission';
 
 	public function isCompanyStructureConverted(bool $checkIsEmployeesTransferred = true): bool
 	{
@@ -100,5 +101,10 @@ class Storage
 		}
 
 		return Feature::isFeatureEnabled('humanresources_security');
+	}
+
+	public static function isHRInvitePermissionAvailable(): bool
+	{
+		return Main\Config\Option::get(self::MODULE_NAME, self::STRUCT_INVITE_PERMISSION_OPTION_NAME, 'N') === 'Y';
 	}
 }

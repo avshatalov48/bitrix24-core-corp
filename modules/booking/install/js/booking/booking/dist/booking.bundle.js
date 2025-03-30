@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,booking_component_mixin_locMixin,main_loader,booking_provider_service_mainPageService,booking_provider_service_dictionaryService,booking_provider_service_calendarService,booking_lib_mousePosition,main_core_events,ui_counterpanel,ui_cnt,booking_component_counter,booking_component_timeSelector,booking_component_popupMaker,ui_vue3_directives_lazyload,main_sidepanel,ui_notificationManager,booking_provider_service_bookingActionsService,booking_component_loader,ui_vue3_directives_hint,ui_iconSet_main,booking_component_popup,booking_lib_range,booking_core,ui_datePicker,booking_lib_currencyFormat,booking_component_statisticsPopup,ui_dialogs_messagebox,ui_hint,booking_provider_service_resourcesService,ui_iconSet_actions,booking_resourceCreationWizard,booking_provider_service_resourceDialogService,booking_lib_resources,booking_lib_resourcesDateCache,main_popup,ui_iconSet_api_core,ui_iconSet_api_vue,booking_provider_service_optionService,booking_lib_helpDesk,ui_entitySelector,booking_lib_limit,booking_provider_service_bookingService,ui_ears,main_date,booking_lib_duration,booking_component_clientPopup,booking_component_button,ui_autoLaunch,ui_vue3_vuex,main_core,ui_vue3,ui_bannerDispatcher,booking_lib_resolvable,booking_const,booking_lib_ahaMoments) {
+(function (exports,booking_component_mixin_locMixin,main_loader,booking_provider_service_mainPageService,booking_provider_service_dictionaryService,booking_provider_service_calendarService,main_core_events,ui_counterpanel,ui_cnt,ui_vue3_components_richLoc,booking_lib_drag,booking_lib_mousePosition,booking_component_timeSelector,booking_component_popupMaker,main_sidepanel,ui_vue3_directives_lazyload,ui_notificationManager,booking_provider_service_bookingActionsService,booking_component_loader,ui_vue3_directives_hint,ui_iconSet_crm,booking_lib_dealHelper,booking_component_counter,booking_lib_isRealId,booking_component_popup,booking_lib_grid,booking_lib_range,booking_core,ui_datePicker,booking_lib_removeBooking,booking_lib_currencyFormat,booking_component_statisticsPopup,ui_dialogs_messagebox,ui_hint,booking_provider_service_resourcesService,ui_iconSet_actions,booking_resourceCreationWizard,booking_provider_service_resourceDialogService,booking_lib_resources,booking_lib_resourcesDateCache,main_popup,ui_iconSet_api_vue,ui_iconSet_main,booking_provider_service_optionService,booking_lib_helpDesk,booking_lib_busySlots,ui_entitySelector,booking_lib_limit,booking_provider_service_bookingService,ui_ears,main_date,booking_lib_duration,booking_component_clientPopup,booking_component_button,ui_autoLaunch,ui_vue3_vuex,main_core,ui_vue3,ui_bannerDispatcher,booking_lib_resolvable,booking_const,booking_lib_ahaMoments) {
 	'use strict';
 
 	const cellHeight = 50;
@@ -576,96 +576,6 @@ this.BX = this.BX || {};
 	`
 	};
 
-	var _selectedDateTs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedDateTs");
-	var _offset = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("offset");
-	var _zoom = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("zoom");
-	var _resourcesIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resourcesIds");
-	var _fromHour$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fromHour");
-	var _toHour$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toHour");
-	var _offHoursExpanded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("offHoursExpanded");
-	class Grid {
-	  constructor() {
-	    Object.defineProperty(this, _offHoursExpanded, {
-	      get: _get_offHoursExpanded,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _toHour$1, {
-	      get: _get_toHour$1,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _fromHour$1, {
-	      get: _get_fromHour$1,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _resourcesIds, {
-	      get: _get_resourcesIds,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _zoom, {
-	      get: _get_zoom,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _offset, {
-	      get: _get_offset,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _selectedDateTs, {
-	      get: _get_selectedDateTs,
-	      set: void 0
-	    });
-	  }
-	  calculateLeft(resourceId) {
-	    const cellWidth = 280 * babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
-	    const indexOfResource = babelHelpers.classPrivateFieldLooseBase(this, _resourcesIds)[_resourcesIds].indexOf(resourceId);
-	    return indexOfResource * cellWidth;
-	  }
-	  calculateTop(fromTs) {
-	    const hourHeight = 50 * babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
-	    const from = new Date(Math.max(babelHelpers.classPrivateFieldLooseBase(this, _selectedDateTs)[_selectedDateTs], fromTs + babelHelpers.classPrivateFieldLooseBase(this, _offset)[_offset]));
-	    const bookingMinutes = from.getHours() * 60 + from.getMinutes();
-	    const fromMinutes = babelHelpers.classPrivateFieldLooseBase(this, _fromHour$1)[_fromHour$1] * 60;
-	    return (bookingMinutes - fromMinutes) * (hourHeight / 60);
-	  }
-	  calculateHeight(fromTs, toTs) {
-	    const hourHeight = 50 * babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
-	    const minHeight = hourHeight / 4;
-	    const from = Math.max(babelHelpers.classPrivateFieldLooseBase(this, _selectedDateTs)[_selectedDateTs], fromTs + babelHelpers.classPrivateFieldLooseBase(this, _offset)[_offset]);
-	    const to = Math.min(new Date(babelHelpers.classPrivateFieldLooseBase(this, _selectedDateTs)[_selectedDateTs]).setHours(24), toTs + babelHelpers.classPrivateFieldLooseBase(this, _offset)[_offset]);
-	    return Math.max((to - from) / booking_lib_duration.Duration.getUnitDurations().H * hourHeight, minHeight);
-	  }
-	  calculateRealHeight(fromTs, toTs) {
-	    const hourHeight = 50 * babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
-	    const minHeight = hourHeight / 4;
-	    const minTs = new Date(babelHelpers.classPrivateFieldLooseBase(this, _selectedDateTs)[_selectedDateTs]).setHours(babelHelpers.classPrivateFieldLooseBase(this, _offHoursExpanded)[_offHoursExpanded] ? 0 : babelHelpers.classPrivateFieldLooseBase(this, _fromHour$1)[_fromHour$1]);
-	    const maxTs = new Date(babelHelpers.classPrivateFieldLooseBase(this, _selectedDateTs)[_selectedDateTs]).setHours(babelHelpers.classPrivateFieldLooseBase(this, _offHoursExpanded)[_offHoursExpanded] ? 24 : babelHelpers.classPrivateFieldLooseBase(this, _toHour$1)[_toHour$1]);
-	    const from = Math.max(minTs, fromTs + babelHelpers.classPrivateFieldLooseBase(this, _offset)[_offset]);
-	    const to = Math.min(maxTs, toTs + babelHelpers.classPrivateFieldLooseBase(this, _offset)[_offset]);
-	    return Math.max((to - from) / booking_lib_duration.Duration.getUnitDurations().H * hourHeight, minHeight);
-	  }
-	}
-	function _get_selectedDateTs() {
-	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/selectedDateTs`] + babelHelpers.classPrivateFieldLooseBase(this, _offset)[_offset];
-	}
-	function _get_offset() {
-	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/offset`];
-	}
-	function _get_zoom() {
-	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/zoom`];
-	}
-	function _get_resourcesIds() {
-	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/resourcesIds`];
-	}
-	function _get_fromHour$1() {
-	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/fromHour`];
-	}
-	function _get_toHour$1() {
-	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/toHour`];
-	}
-	function _get_offHoursExpanded() {
-	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/offHoursExpanded`];
-	}
-	const grid = new Grid();
-
 	const OffHours = {
 	  props: {
 	    bottom: {
@@ -715,7 +625,7 @@ this.BX = this.BX || {};
 	  template: `
 		<div
 			class="booking-booking-off-hours"
-			:class="{'--hover': offHoursHover, '--bottom': bottom}"
+			:class="{'--hover': offHoursHover, '--bottom': bottom, '--top': !bottom}"
 			@click="animateOffHours({ keepScroll: bottom })"
 			@mouseenter="$store.dispatch('interface/setOffHoursHover', true)"
 			@mouseleave="$store.dispatch('interface/setOffHoursHover', false)"
@@ -723,6 +633,131 @@ this.BX = this.BX || {};
 			<div class="booking-booking-off-hours-border"></div>
 			<span>{{ fromFormatted }}</span>
 			<span>{{ toFormatted }}</span>
+		</div>
+	`
+	};
+
+	const HelpPopup = {
+	  emits: ['close'],
+	  props: {
+	    bindElement: {
+	      type: HTMLElement,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    popupId() {
+	      return 'booking-quick-filter-help-popup';
+	    },
+	    config() {
+	      return {
+	        className: 'booking-quick-filter-help-popup',
+	        bindElement: this.bindElement,
+	        offsetLeft: this.bindElement.offsetWidth,
+	        offsetTop: this.bindElement.offsetHeight,
+	        maxWidth: 220
+	      };
+	    }
+	  },
+	  methods: {
+	    closePopup() {
+	      this.$emit('close');
+	    }
+	  },
+	  components: {
+	    StickyPopup: booking_component_popup.StickyPopup,
+	    RichLoc: ui_vue3_components_richLoc.RichLoc
+	  },
+	  template: `
+		<StickyPopup
+			:id="popupId"
+			:config="config"
+			@close="closePopup"
+		>
+			<div class="booking-quick-filter-help-popup-content">
+				<div class="booking-quick-filter-help-popup-icon-container">
+					<div class="booking-quick-filter-help-popup-icon"></div>
+				</div>
+				<div class="booking-quick-filter-help-popup-description">
+					<RichLoc :text="loc('BOOKING_QUICK_FILTER_HELP')" placeholder="[bold]">
+						<template #bold="{ text }">
+							<span>{{ text }}</span>
+						</template>
+					</RichLoc>
+				</div>
+			</div>
+		</StickyPopup>
+	`
+	};
+
+	const QuickFilter = {
+	  props: {
+	    hour: {
+	      type: Number,
+	      required: true
+	    }
+	  },
+	  data() {
+	    return {
+	      IconSet: ui_iconSet_api_vue.Set,
+	      isHelpPopupShown: false
+	    };
+	  },
+	  computed: {
+	    active() {
+	      return this.hour in this.$store.getters[`${booking_const.Model.Interface}/quickFilter`].active;
+	    },
+	    hovered() {
+	      return this.hour in this.$store.getters[`${booking_const.Model.Interface}/quickFilter`].hovered;
+	    }
+	  },
+	  methods: {
+	    onClick() {
+	      this.closeHelpPopup();
+	      if (this.active) {
+	        void this.$store.dispatch(`${booking_const.Model.Interface}/deactivateQuickFilter`, this.hour);
+	      } else {
+	        void this.$store.dispatch(`${booking_const.Model.Interface}/activateQuickFilter`, this.hour);
+	      }
+	    },
+	    hover() {
+	      this.helpPopupTimeout = setTimeout(() => this.showHelpPopup(), 1000);
+	      void this.$store.dispatch(`${booking_const.Model.Interface}/hoverQuickFilter`, this.hour);
+	    },
+	    flee() {
+	      this.closeHelpPopup();
+	      void this.$store.dispatch(`${booking_const.Model.Interface}/fleeQuickFilter`, this.hour);
+	    },
+	    showHelpPopup() {
+	      this.isHelpPopupShown = true;
+	    },
+	    closeHelpPopup() {
+	      clearTimeout(this.helpPopupTimeout);
+	      this.isHelpPopupShown = false;
+	    }
+	  },
+	  components: {
+	    Icon: ui_iconSet_api_vue.BIcon,
+	    HelpPopup
+	  },
+	  template: `
+		<div
+			class="booking-booking-quick-filter-container"
+			:class="{'--hover': hovered || active, '--active': active}"
+		>
+			<div
+				class="booking-booking-quick-filter"
+				@mouseenter="hover"
+				@mouseleave="flee"
+				@click="onClick"
+			>
+				<Icon :name="active ? IconSet.CROSS_25 : IconSet.FUNNEL"/>
+			</div>
+			<HelpPopup
+				v-if="isHelpPopupShown"
+				:bindElement="$el"
+				@close="closeHelpPopup"
+			/>
 		</div>
 	`
 	};
@@ -750,7 +785,8 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  components: {
-	    OffHours
+	    OffHours,
+	    QuickFilter
 	  },
 	  template: `
 		<div class="booking-booking-grid-left-panel-container">
@@ -772,6 +808,7 @@ this.BX = this.BX || {};
 						<div class="booking-booking-grid-left-panel-time-text">
 							{{ hour.formatted }}
 						</div>
+						<QuickFilter :hour="hour.value"/>
 					</div>
 				</template>
 			</div>
@@ -845,345 +882,6 @@ this.BX = this.BX || {};
 	`
 	};
 
-	var _busySlots = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("busySlots");
-	var _getBookings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBookings");
-	var _getIntersectingBookings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getIntersectingBookings");
-	var _selectedWeekDay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedWeekDay");
-	var _selectedDateTs$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedDateTs");
-	var _offset$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("offset");
-	var _timezoneOffset = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("timezoneOffset");
-	var _resourcesIds$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resourcesIds");
-	var _intersections = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("intersections");
-	var _loadIntersections = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadIntersections");
-	var _calculateOffHoursBusySlots = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("calculateOffHoursBusySlots");
-	var _calculateIntersectionBusySlots = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("calculateIntersectionBusySlots");
-	var _calculateMinutesRange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("calculateMinutesRange");
-	var _subtractRanges = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subtractRanges");
-	var _rangesOverlap = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rangesOverlap");
-	var _getResource = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getResource");
-	var _getNextDay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getNextDay");
-	var _getPreviousDay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPreviousDay");
-	class BusySlots {
-	  constructor() {
-	    Object.defineProperty(this, _getPreviousDay, {
-	      value: _getPreviousDay2
-	    });
-	    Object.defineProperty(this, _getNextDay, {
-	      value: _getNextDay2
-	    });
-	    Object.defineProperty(this, _getResource, {
-	      value: _getResource2
-	    });
-	    Object.defineProperty(this, _rangesOverlap, {
-	      value: _rangesOverlap2
-	    });
-	    Object.defineProperty(this, _subtractRanges, {
-	      value: _subtractRanges2
-	    });
-	    Object.defineProperty(this, _calculateMinutesRange, {
-	      value: _calculateMinutesRange2
-	    });
-	    Object.defineProperty(this, _calculateIntersectionBusySlots, {
-	      value: _calculateIntersectionBusySlots2
-	    });
-	    Object.defineProperty(this, _calculateOffHoursBusySlots, {
-	      value: _calculateOffHoursBusySlots2
-	    });
-	    Object.defineProperty(this, _loadIntersections, {
-	      value: _loadIntersections2
-	    });
-	    Object.defineProperty(this, _intersections, {
-	      get: _get_intersections,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _resourcesIds$1, {
-	      get: _get_resourcesIds$1,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _timezoneOffset, {
-	      get: _get_timezoneOffset,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _offset$1, {
-	      get: _get_offset$1,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _selectedDateTs$1, {
-	      get: _get_selectedDateTs$1,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _selectedWeekDay, {
-	      get: _get_selectedWeekDay,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _getIntersectingBookings, {
-	      value: _getIntersectingBookings2
-	    });
-	    Object.defineProperty(this, _getBookings, {
-	      value: _getBookings2
-	    });
-	    Object.defineProperty(this, _busySlots, {
-	      writable: true,
-	      value: []
-	    });
-	  }
-	  async loadBusySlots() {
-	    await babelHelpers.classPrivateFieldLooseBase(this, _loadIntersections)[_loadIntersections]();
-	    void booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/clearDisabledBusySlots`);
-	    void booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/clearBusySlots`);
-	    const resourcesWithIntersections = Object.keys(babelHelpers.classPrivateFieldLooseBase(this, _intersections)[_intersections]).flatMap(key => {
-	      const resourceId = Number(key);
-	      if (resourceId > 0) {
-	        return resourceId;
-	      }
-	      return babelHelpers.classPrivateFieldLooseBase(this, _resourcesIds$1)[_resourcesIds$1];
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _busySlots)[_busySlots] = [...babelHelpers.classPrivateFieldLooseBase(this, _resourcesIds$1)[_resourcesIds$1].flatMap(resourceId => babelHelpers.classPrivateFieldLooseBase(this, _calculateOffHoursBusySlots)[_calculateOffHoursBusySlots](resourceId)), ...resourcesWithIntersections.flatMap(resourceId => babelHelpers.classPrivateFieldLooseBase(this, _calculateIntersectionBusySlots)[_calculateIntersectionBusySlots](resourceId))];
-	    return booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/upsertBusySlotMany`, babelHelpers.classPrivateFieldLooseBase(this, _busySlots)[_busySlots]);
-	  }
-	  filterSlotRanges(slotRanges) {
-	    return slotRanges.map(({
-	      from,
-	      to
-	    }) => ({
-	      from,
-	      to
-	    })).sort((a, b) => a.from - b.from).reduce((acc, {
-	      from,
-	      to
-	    }) => {
-	      const last = acc.length - 1;
-	      if (acc[last] && acc[last].to >= from) {
-	        if (acc[last].to <= to) {
-	          acc[last].to = to;
-	        }
-	      } else {
-	        acc.push({
-	          from,
-	          to
-	        });
-	      }
-	      return acc;
-	    }, []).filter(({
-	      from,
-	      to
-	    }) => to - from > 0);
-	  }
-	}
-	function _getBookings2() {
-	  return booking_core.Core.getStore().getters[`${booking_const.Model.Bookings}/getByDateAndResources`](babelHelpers.classPrivateFieldLooseBase(this, _selectedDateTs$1)[_selectedDateTs$1], babelHelpers.classPrivateFieldLooseBase(this, _resourcesIds$1)[_resourcesIds$1]);
-	}
-	function _getIntersectingBookings2(resourcesIds) {
-	  return booking_core.Core.getStore().getters[`${booking_const.Model.Bookings}/getByDateAndResources`](babelHelpers.classPrivateFieldLooseBase(this, _selectedDateTs$1)[_selectedDateTs$1], resourcesIds);
-	}
-	function _get_selectedWeekDay() {
-	  return booking_const.DateFormat.WeekDays[new Date(babelHelpers.classPrivateFieldLooseBase(this, _selectedDateTs$1)[_selectedDateTs$1] + babelHelpers.classPrivateFieldLooseBase(this, _offset$1)[_offset$1]).getDay()];
-	}
-	function _get_selectedDateTs$1() {
-	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/selectedDateTs`];
-	}
-	function _get_offset$1() {
-	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/offset`];
-	}
-	function _get_timezoneOffset() {
-	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/timezoneOffset`];
-	}
-	function _get_resourcesIds$1() {
-	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/resourcesIds`];
-	}
-	function _get_intersections() {
-	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/intersections`];
-	}
-	async function _loadIntersections2() {
-	  const selectedResourceIds = [...new Set(Object.values(babelHelpers.classPrivateFieldLooseBase(this, _intersections)[_intersections]).flat())];
-	  const dateTs = babelHelpers.classPrivateFieldLooseBase(this, _selectedDateTs$1)[_selectedDateTs$1] / 1000;
-	  const loadedResourcesIds = new Set(booking_lib_resourcesDateCache.resourcesDateCache.getIdsByDateTs(dateTs));
-	  const idsToLoad = selectedResourceIds.filter(id => !loadedResourcesIds.has(id));
-	  await booking_provider_service_resourceDialogService.resourceDialogService.loadByIds(idsToLoad, dateTs);
-	}
-	function _calculateOffHoursBusySlots2(resourceId) {
-	  const resource = babelHelpers.classPrivateFieldLooseBase(this, _getResource)[_getResource](resourceId);
-	  if (resource.slotRanges.length === 0) {
-	    return [];
-	  }
-	  const bookingRanges = babelHelpers.classPrivateFieldLooseBase(this, _getBookings)[_getBookings]().filter(booking => booking.resourcesIds.includes(resourceId)).map(booking => babelHelpers.classPrivateFieldLooseBase(this, _calculateMinutesRange)[_calculateMinutesRange](booking));
-	  const minutesInDay = booking_lib_duration.Duration.getUnitDurations().d / booking_lib_duration.Duration.getUnitDurations().i;
-	  const slotRanges = resource.slotRanges.map(slotRange => {
-	    const timeZone = slotRange.timezone;
-	    const date = new Date(babelHelpers.classPrivateFieldLooseBase(this, _selectedDateTs$1)[_selectedDateTs$1]);
-	    const dateInTimezone = new Date(date.toLocaleString('en-US', {
-	      timeZone
-	    }));
-	    const dateInUTC = new Date(date.toLocaleString('en-US', {
-	      timeZone: 'UTC'
-	    }));
-	    const timezoneOffset = (dateInTimezone.getTime() - dateInUTC.getTime()) / 1000;
-	    const minutesOffset = (babelHelpers.classPrivateFieldLooseBase(this, _timezoneOffset)[_timezoneOffset] - timezoneOffset) / 60;
-	    return {
-	      ...slotRange,
-	      from: slotRange.from + minutesOffset,
-	      to: slotRange.to + minutesOffset
-	    };
-	  }).map(slotRange => {
-	    if (slotRange.from > minutesInDay) {
-	      return {
-	        ...slotRange,
-	        from: slotRange.from - minutesInDay,
-	        to: slotRange.to - minutesInDay,
-	        weekDays: slotRange.weekDays.map(weekDay => babelHelpers.classPrivateFieldLooseBase(this, _getNextDay)[_getNextDay](weekDay))
-	      };
-	    }
-	    if (slotRange.to < 0) {
-	      return {
-	        ...slotRange,
-	        from: slotRange.from + minutesInDay,
-	        to: slotRange.to + minutesInDay,
-	        weekDays: slotRange.weekDays.map(weekDay => babelHelpers.classPrivateFieldLooseBase(this, _getPreviousDay)[_getPreviousDay](weekDay))
-	      };
-	    }
-	    return slotRange;
-	  }).flatMap(slotRange => {
-	    if (slotRange.from < 0) {
-	      return [{
-	        ...slotRange,
-	        from: 0
-	      }, ...slotRange.weekDays.map(weekDay => ({
-	        ...slotRange,
-	        from: minutesInDay + slotRange.from,
-	        to: minutesInDay,
-	        weekDays: [babelHelpers.classPrivateFieldLooseBase(this, _getPreviousDay)[_getPreviousDay](weekDay)]
-	      }))];
-	    }
-	    if (slotRange.to > minutesInDay) {
-	      return [{
-	        ...slotRange,
-	        to: minutesInDay
-	      }, ...slotRange.weekDays.map(weekDay => ({
-	        ...slotRange,
-	        from: 0,
-	        to: slotRange.to - minutesInDay,
-	        weekDays: [babelHelpers.classPrivateFieldLooseBase(this, _getNextDay)[_getNextDay](weekDay)]
-	      }))];
-	    }
-	    return slotRange;
-	  }).filter(slotRange => slotRange.weekDays.includes(babelHelpers.classPrivateFieldLooseBase(this, _selectedWeekDay)[_selectedWeekDay]));
-	  const freeRanges = this.filterSlotRanges([...slotRanges, ...bookingRanges]);
-	  const busyRanges = [0, ...freeRanges.flatMap(({
-	    from,
-	    to
-	  }) => [from, to]), 24 * 60].reduce((acc, minutes, index) => {
-	    var _acc$chunkIndex;
-	    const chunkIndex = Math.floor(index / 2);
-	    (_acc$chunkIndex = acc[chunkIndex]) != null ? _acc$chunkIndex : acc[chunkIndex] = [];
-	    acc[chunkIndex].push(minutes);
-	    return acc;
-	  }, []);
-	  return busyRanges.filter(([from, to]) => to - from > 0).map(([from, to]) => {
-	    const fromTs = new Date(babelHelpers.classPrivateFieldLooseBase(this, _selectedDateTs$1)[_selectedDateTs$1]).setMinutes(from);
-	    const toTs = new Date(babelHelpers.classPrivateFieldLooseBase(this, _selectedDateTs$1)[_selectedDateTs$1]).setMinutes(to);
-	    const id = `${resourceId}-${fromTs}-${toTs}`;
-	    const type = booking_const.BusySlot.OffHours;
-	    return {
-	      id,
-	      fromTs,
-	      toTs,
-	      resourceId,
-	      type
-	    };
-	  });
-	}
-	function _calculateIntersectionBusySlots2(resourceId) {
-	  var _babelHelpers$classPr, _babelHelpers$classPr2;
-	  const resource = babelHelpers.classPrivateFieldLooseBase(this, _getResource)[_getResource](resourceId);
-	  if (resource.slotRanges.length === 0) {
-	    return [];
-	  }
-	  const intersectingResourcesIds = [...((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _intersections)[_intersections][0]) != null ? _babelHelpers$classPr : []), ...((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _intersections)[_intersections][resourceId]) != null ? _babelHelpers$classPr2 : [])];
-	  const intersectingBookings = babelHelpers.classPrivateFieldLooseBase(this, _getIntersectingBookings)[_getIntersectingBookings](intersectingResourcesIds).filter(booking => !booking.resourcesIds.includes(resourceId));
-	  const intersectingBookingRanges = intersectingBookings.map(booking => babelHelpers.classPrivateFieldLooseBase(this, _calculateMinutesRange)[_calculateMinutesRange](booking));
-	  if (intersectingBookingRanges.length === 0) {
-	    return [];
-	  }
-	  const bookingRanges = babelHelpers.classPrivateFieldLooseBase(this, _getBookings)[_getBookings]().filter(booking => resourceId === booking.resourcesIds[0]).map(booking => babelHelpers.classPrivateFieldLooseBase(this, _calculateMinutesRange)[_calculateMinutesRange](booking));
-	  const busyRanges = intersectingBookingRanges.flatMap(intersectingRange => {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _subtractRanges)[_subtractRanges](intersectingRange, bookingRanges);
-	  });
-	  return busyRanges.map(({
-	    from,
-	    to,
-	    id
-	  }) => {
-	    const fromTs = new Date(babelHelpers.classPrivateFieldLooseBase(this, _selectedDateTs$1)[_selectedDateTs$1]).setMinutes(from);
-	    const toTs = new Date(babelHelpers.classPrivateFieldLooseBase(this, _selectedDateTs$1)[_selectedDateTs$1]).setMinutes(to);
-	    const type = booking_const.BusySlot.Intersection;
-	    const booking = intersectingBookings.find(intersectingBooking => intersectingBooking.id === id);
-	    const intersectingResourceId = booking ? booking.resourcesIds.find(it => intersectingResourcesIds.includes(it)) : 0;
-	    return {
-	      id: `${resourceId}-${fromTs}-${toTs}`,
-	      fromTs,
-	      toTs,
-	      resourceId,
-	      intersectingResourceId,
-	      type
-	    };
-	  });
-	}
-	function _calculateMinutesRange2(booking) {
-	  const date = new Date(babelHelpers.classPrivateFieldLooseBase(this, _selectedDateTs$1)[_selectedDateTs$1]);
-	  const dateFromTs = Math.max(date.getTime(), booking.dateFromTs) + babelHelpers.classPrivateFieldLooseBase(this, _offset$1)[_offset$1];
-	  const dateToTs = Math.min(date.setDate(date.getDate() + 1), booking.dateToTs) + babelHelpers.classPrivateFieldLooseBase(this, _offset$1)[_offset$1];
-	  const dateFrom = new Date(dateFromTs);
-	  const dateTo = new Date(dateToTs);
-	  const to = dateTo.getHours() * 60 + dateTo.getMinutes();
-	  return {
-	    from: dateFrom.getHours() * 60 + dateFrom.getMinutes(),
-	    to: to === 0 ? 60 * 24 : to,
-	    id: booking.id
-	  };
-	}
-	function _subtractRanges2(range, bookingRanges) {
-	  let remainingRanges = [{
-	    ...range
-	  }];
-	  bookingRanges.forEach(bookingRange => {
-	    remainingRanges = remainingRanges.flatMap(remainingRange => {
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _rangesOverlap)[_rangesOverlap](remainingRange, bookingRange)) {
-	        const parts = [];
-	        if (remainingRange.from < bookingRange.from) {
-	          parts.push({
-	            from: remainingRange.from,
-	            to: bookingRange.from,
-	            id: remainingRange.id
-	          });
-	        }
-	        if (remainingRange.to > bookingRange.to) {
-	          parts.push({
-	            from: bookingRange.to,
-	            to: remainingRange.to,
-	            id: remainingRange.id
-	          });
-	        }
-	        return parts;
-	      }
-	      return [remainingRange];
-	    });
-	  });
-	  return remainingRanges;
-	}
-	function _rangesOverlap2(range1, range2) {
-	  return range1.from < range2.to && range2.from < range1.to;
-	}
-	function _getResource2(resourceId) {
-	  return booking_core.Core.getStore().getters[`${booking_const.Model.Resources}/getById`](resourceId);
-	}
-	function _getNextDay2(weekDay) {
-	  return booking_const.DateFormat.WeekDays[(booking_const.DateFormat.WeekDays.indexOf(weekDay) + 1) % 7];
-	}
-	function _getPreviousDay2(weekDay) {
-	  return booking_const.DateFormat.WeekDays[(booking_const.DateFormat.WeekDays.indexOf(weekDay) + 7 - 1) % 7];
-	}
-	const busySlots = new BusySlots();
-
 	const AddClient = {
 	  props: {
 	    bookingId: {
@@ -1205,7 +903,7 @@ this.BX = this.BX || {};
 	    };
 	  },
 	  mounted() {
-	    if (this.isRealId(this.bookingId)) {
+	    if (booking_lib_isRealId.isRealId(this.bookingId)) {
 	      booking_lib_ahaMoments.ahaMoments.setBookingForAhaMoment(this.bookingId);
 	    }
 	    if (booking_lib_ahaMoments.ahaMoments.shouldShow(booking_const.AhaMoment.AddClient, {
@@ -1232,9 +930,6 @@ this.BX = this.BX || {};
 	        id: booking.id,
 	        clients
 	      });
-	    },
-	    isRealId(id) {
-	      return /^[1-9]\d*$/.test(id);
 	    },
 	    async showAhaMoment() {
 	      await booking_lib_ahaMoments.ahaMoments.show({
@@ -1444,6 +1139,14 @@ this.BX = this.BX || {};
 	    resourceId: {
 	      type: Number,
 	      required: true
+	    },
+	    dateFromTs: {
+	      type: Number,
+	      required: true
+	    },
+	    dateToTs: {
+	      type: Number,
+	      required: true
 	    }
 	  },
 	  data() {
@@ -1462,8 +1165,8 @@ this.BX = this.BX || {};
 	    timeFormatted() {
 	      const timeFormat = main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
 	      return this.loc('BOOKING_BOOKING_TIME_RANGE', {
-	        '#FROM#': main_date.DateTimeFormat.format(timeFormat, (this.booking.dateFromTs + this.offset) / 1000),
-	        '#TO#': main_date.DateTimeFormat.format(timeFormat, (this.booking.dateToTs + this.offset) / 1000)
+	        '#FROM#': main_date.DateTimeFormat.format(timeFormat, (this.dateFromTs + this.offset) / 1000),
+	        '#TO#': main_date.DateTimeFormat.format(timeFormat, (this.dateToTs + this.offset) / 1000)
 	      });
 	    }
 	  },
@@ -1472,16 +1175,10 @@ this.BX = this.BX || {};
 	      if (!this.isFeatureEnabled) {
 	        return;
 	      }
-	      if (!this.isRealId(this.bookingId)) {
-	        return;
-	      }
 	      this.showPopup = true;
 	    },
 	    closePopup() {
 	      this.showPopup = false;
-	    },
-	    isRealId(id) {
-	      return /^[1-9]\d*$/.test(id);
 	    }
 	  },
 	  components: {
@@ -2193,6 +1890,9 @@ this.BX = this.BX || {};
 	      saveDealDebounce: main_core.Runtime.debounce(this.saveDeal, 10, this)
 	    };
 	  },
+	  created() {
+	    this.dealHelper = new booking_lib_dealHelper.DealHelper(this.bookingId);
+	  },
 	  mounted() {
 	    this.dialog = new ui_entitySelector.Dialog({
 	      context: 'BOOKING',
@@ -2254,49 +1954,15 @@ this.BX = this.BX || {};
 	      this.$emit('unfreeze');
 	    },
 	    createDeal() {
-	      var _this$booking$clients;
 	      if (!this.isFeatureEnabled) {
-	        booking_lib_limit.limit.show();
+	        void booking_lib_limit.limit.show();
 	        return;
 	      }
-	      const bookingIdParamName = 'bookingId';
-	      const createDealUrl = new main_core.Uri('/crm/deal/details/0/');
-	      createDealUrl.setQueryParam(bookingIdParamName, this.bookingId);
-	      ((_this$booking$clients = this.booking.clients) != null ? _this$booking$clients : []).forEach(client => {
-	        const paramName = {
-	          [booking_const.CrmEntity.Contact]: 'contact_id',
-	          [booking_const.CrmEntity.Company]: 'company_id'
-	        }[client.type.code];
-	        createDealUrl.setQueryParam(paramName, client.id);
-	      });
-	      main_sidepanel.SidePanel.Instance.open(createDealUrl.toString(), {
-	        events: {
-	          onLoad: ({
-	            slider
-	          }) => {
-	            slider.getWindow().BX.Event.EventEmitter.subscribe('onCrmEntityCreate', event => {
-	              const [data] = event.getData();
-	              const isDeal = data.entityTypeName === booking_const.CrmEntity.Deal;
-	              const bookingId = Number(new main_core.Uri(data.sliderUrl).getQueryParam(bookingIdParamName));
-	              if (!isDeal || bookingId !== this.bookingId) {
-	                return;
-	              }
-	              const dealData = this.mapEntityInfoToDeal(data.entityInfo);
-	              this.saveDealDebounce(dealData);
-	            });
-	          },
-	          onClose: () => {
-	            var _this$deal;
-	            if ((_this$deal = this.deal) != null && _this$deal.value) {
-	              this.saveDealDebounce(this.deal);
-	            }
-	          }
-	        }
-	      });
+	      this.dealHelper.createDeal();
 	    },
 	    showMenu() {
 	      if (!this.isFeatureEnabled) {
-	        booking_lib_limit.limit.show();
+	        void booking_lib_limit.limit.show();
 	        return;
 	      }
 	      const bindElement = this.$refs.moreButton.$el;
@@ -2333,7 +1999,7 @@ this.BX = this.BX || {};
 	    },
 	    showDealDialog() {
 	      if (!this.isFeatureEnabled) {
-	        booking_lib_limit.limit.show();
+	        void booking_lib_limit.limit.show();
 	        return;
 	      }
 	      this.dialog.setTargetNode(this.getDialogButton());
@@ -2349,16 +2015,7 @@ this.BX = this.BX || {};
 	      return main_popup.MenuManager.getMenuById(this.menuId);
 	    },
 	    openDeal() {
-	      main_sidepanel.SidePanel.Instance.open(`/crm/deal/details/${this.deal.value}/`, {
-	        events: {
-	          onClose: () => {
-	            var _this$deal2;
-	            if ((_this$deal2 = this.deal) != null && _this$deal2.value) {
-	              void booking_provider_service_bookingService.bookingService.getById(this.bookingId);
-	            }
-	          }
-	        }
-	      });
+	      this.dealHelper.openDeal();
 	    },
 	    itemChange() {
 	      const dealData = this.getDealData();
@@ -2370,22 +2027,10 @@ this.BX = this.BX || {};
 	      if (!item) {
 	        return null;
 	      }
-	      return this.mapEntityInfoToDeal(item.getCustomData().get('entityInfo'));
-	    },
-	    mapEntityInfoToDeal(info) {
-	      return {
-	        moduleId: booking_const.Module.Crm,
-	        entityTypeId: info.typeName,
-	        value: info.id,
-	        data: []
-	      };
+	      return this.dealHelper.mapEntityInfoToDeal(item.getCustomData().get('entityInfo'));
 	    },
 	    saveDeal(dealData) {
-	      const externalData = dealData ? [dealData] : [];
-	      void booking_provider_service_bookingService.bookingService.update({
-	        id: this.booking.id,
-	        externalData
-	      });
+	      this.dealHelper.saveDeal(dealData);
 	    },
 	    getDialogButton() {
 	      return this.deal ? this.$refs.moreButton.$el : this.$refs.addButton.$el;
@@ -3375,7 +3020,6 @@ this.BX = this.BX || {};
 	`
 	};
 
-	const secondsToDelete = 5;
 	const RemoveBtn = {
 	  name: 'BookingActionsPopupRemoveBtn',
 	  emits: ['close'],
@@ -3387,72 +3031,21 @@ this.BX = this.BX || {};
 	  },
 	  data() {
 	    return {
-	      secondsLeft: secondsToDelete
+	      IconSet: ui_iconSet_api_vue.Set
 	    };
+	  },
+	  methods: {
+	    removeBooking() {
+	      this.$emit('close');
+	      new booking_lib_removeBooking.RemoveBooking(this.bookingId);
+	    }
 	  },
 	  components: {
 	    Icon: ui_iconSet_api_vue.BIcon
 	  },
-	  methods: {
-	    reset(intervalId, balloon) {
-	      clearInterval(intervalId);
-	      balloon.close();
-	      this.secondsLeft = secondsToDelete;
-	    },
-	    removeBooking() {
-	      this.$emit('close');
-	      const balloon = BX.UI.Notification.Center.notify({
-	        id: this.balloonId,
-	        content: this.balloonTitle,
-	        actions: [{
-	          title: this.balloonCancelText,
-	          events: {
-	            click: () => {
-	              this.reset(interval, balloon);
-	              void this.$store.dispatch(`${booking_const.Model.Interface}/removeDeletingBooking`, this.bookingId);
-	            }
-	          }
-	        }]
-	      });
-	      void this.$store.dispatch(`${booking_const.Model.Interface}/addDeletingBooking`, this.bookingId);
-	      const interval = setInterval(() => {
-	        this.secondsLeft--;
-	        if (this.secondsLeft >= 1) {
-	          balloon.update({
-	            content: this.balloonTitle
-	          });
-	        } else {
-	          this.reset(interval, balloon);
-	          void booking_provider_service_bookingService.bookingService.delete(this.bookingId);
-	        }
-	      }, 1000);
-	    }
-	  },
-	  computed: {
-	    balloonId() {
-	      return `booking-notify-${this.bookingId}`;
-	    },
-	    balloonCancelText() {
-	      return this.loc('BB_BOOKING_REMOVE_BALLOON_CANCEL');
-	    },
-	    balloonTitle() {
-	      return this.loc('BB_BOOKING_REMOVE_BALLOON_TEXT', {
-	        '#countdown#': this.secondsLeft
-	      });
-	    },
-	    removeIcon() {
-	      return ui_iconSet_api_vue.Set.TRASH_BIN;
-	    },
-	    removeIconSize() {
-	      return 20;
-	    },
-	    removeIconColor() {
-	      return 'var(--ui-color-palette-gray-20)';
-	    }
-	  },
 	  template: `
 		<div
-			class="booking-actions-popup__item-remove-btn-icon --end"
+			class="booking-actions-popup__item-remove-button"
 			data-element="booking-menu-remove-button"
 			:data-booking-id="bookingId"
 			@click="removeBooking"
@@ -3460,7 +3053,7 @@ this.BX = this.BX || {};
 			<div class="booking-actions-popup__item-overbooking-label">
 				{{ loc('BB_ACTIONS_POPUP_OVERBOOKING_REMOVE') }}
 			</div>
-			<Icon :name="removeIcon" :size="removeIconSize" :color="removeIconColor"/>
+			<Icon :name="IconSet.TRASH_BIN"/>
 		</div>
 	`
 	};
@@ -3642,6 +3235,43 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const Name = {
+	  props: {
+	    bookingId: {
+	      type: [Number, String],
+	      required: true
+	    },
+	    resourceId: {
+	      type: Number,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    booking() {
+	      return this.$store.getters[`${booking_const.Model.Bookings}/getById`](this.bookingId);
+	    },
+	    client() {
+	      const clientData = this.booking.primaryClient;
+	      return clientData ? this.$store.getters[`${booking_const.Model.Clients}/getByClientData`](clientData) : null;
+	    },
+	    bookingName() {
+	      var _this$client$name, _this$client;
+	      return (_this$client$name = (_this$client = this.client) == null ? void 0 : _this$client.name) != null ? _this$client$name : this.booking.name;
+	    }
+	  },
+	  template: `
+		<div
+			class="booking-booking-booking-name"
+			:title="bookingName"
+			data-element="booking-booking-name"
+			:data-id="bookingId"
+			:data-resource-id="resourceId"
+		>
+			{{ bookingName }}
+		</div>
+	`
+	};
+
 	const Note$1 = {
 	  props: {
 	    bookingId: {
@@ -3720,6 +3350,39 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const Profit$1 = {
+	  props: {
+	    bookingId: {
+	      type: [Number, String],
+	      required: true
+	    },
+	    resourceId: {
+	      type: Number,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    booking() {
+	      return this.$store.getters[`${booking_const.Model.Bookings}/getById`](this.bookingId);
+	    },
+	    deal() {
+	      var _this$booking$externa, _this$booking$externa2;
+	      return (_this$booking$externa = (_this$booking$externa2 = this.booking.externalData) == null ? void 0 : _this$booking$externa2.find(data => data.entityTypeId === booking_const.CrmEntity.Deal)) != null ? _this$booking$externa : null;
+	    }
+	  },
+	  template: `
+		<div
+			v-if="deal"
+			class="booking-booking-booking-profit"
+			data-element="booking-booking-profit"
+			:data-id="bookingId"
+			:data-resource-id="resourceId"
+			:data-profit="deal.data.opportunity"
+			v-html="deal.data.formattedOpportunity"
+		></div>
+	`
+	};
+
 	const Communication = {
 	  data() {
 	    return {
@@ -3747,6 +3410,88 @@ this.BX = this.BX || {};
 			<Icon :name="IconSet.TELEPHONY_HANDSET_1"/>
 			<Icon :name="IconSet.CHATS_2"/>
 		</div>
+	`
+	};
+
+	const CrmButton = {
+	  props: {
+	    bookingId: [Number, String],
+	    required: true
+	  },
+	  data() {
+	    return {
+	      IconSet: ui_iconSet_api_vue.Set
+	    };
+	  },
+	  created() {
+	    this.dealHelper = new booking_lib_dealHelper.DealHelper(this.bookingId);
+	  },
+	  computed: {
+	    hasDeal() {
+	      return this.dealHelper.hasDeal();
+	    },
+	    isFeatureEnabled() {
+	      return this.$store.getters[`${booking_const.Model.Interface}/isFeatureEnabled`];
+	    }
+	  },
+	  methods: {
+	    onClick() {
+	      if (!this.isFeatureEnabled) {
+	        void booking_lib_limit.limit.show();
+	        return;
+	      }
+	      if (this.hasDeal) {
+	        this.dealHelper.openDeal();
+	      } else {
+	        this.dealHelper.createDeal();
+	      }
+	    }
+	  },
+	  components: {
+	    Icon: ui_iconSet_api_vue.BIcon
+	  },
+	  template: `
+		<Icon
+			:name="IconSet.CRM_LETTERS"
+			class="booking-booking-booking-crm-button"
+			:class="{'--no-deal': !hasDeal}"
+			data-element="booking-crm-button"
+			:data-booking-id="bookingId"
+			@click="onClick"
+		/>
+	`
+	};
+
+	const Counter = {
+	  props: {
+	    bookingId: {
+	      type: [Number, String],
+	      required: true
+	    }
+	  },
+	  computed: {
+	    booking() {
+	      return this.$store.getters[`${booking_const.Model.Bookings}/getById`](this.bookingId);
+	    },
+	    counterOptions() {
+	      return Object.freeze({
+	        color: booking_component_counter.CounterColor.DANGER,
+	        size: booking_component_counter.CounterSize.LARGE
+	      });
+	    }
+	  },
+	  components: {
+	    UiCounter: booking_component_counter.Counter
+	  },
+	  template: `
+		<UiCounter
+			v-if="booking.counter > 0"
+			:value="booking.counter"
+			:color="counterOptions.color"
+			:size="counterOptions.size"
+			border
+			counter-class="booking--counter"
+		/>
 	`
 	};
 
@@ -3818,6 +3563,145 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const ResizeDirection = Object.freeze({
+	  From: -1,
+	  None: 0,
+	  To: 1
+	});
+	const minDuration = booking_lib_duration.Duration.getUnitDurations().i * 5;
+	const minInitialDuration = booking_lib_duration.Duration.getUnitDurations().i * 15;
+	const Resize = {
+	  props: {
+	    bookingId: {
+	      type: [Number, String],
+	      required: true
+	    },
+	    resourceId: {
+	      type: Number,
+	      required: true
+	    }
+	  },
+	  data() {
+	    return {
+	      resizeDirection: ResizeDirection.None,
+	      resizeFromTs: null,
+	      resizeToTs: null
+	    };
+	  },
+	  computed: {
+	    booking() {
+	      return this.$store.getters[`${booking_const.Model.Bookings}/getById`](this.bookingId);
+	    },
+	    initialHeight() {
+	      return booking_lib_grid.grid.calculateHeight(this.booking.dateFromTs, this.booking.dateToTs);
+	    },
+	    initialDuration() {
+	      return Math.max(this.booking.dateToTs - this.booking.dateFromTs, minInitialDuration);
+	    },
+	    dateFromTsRounded() {
+	      return this.roundTimestamp(this.resizeFromTs);
+	    },
+	    dateToTsRounded() {
+	      return this.roundTimestamp(this.resizeToTs);
+	    },
+	    closestOnFrom() {
+	      return this.colliding.reduce((closest, {
+	        toTs
+	      }) => {
+	        return closest < toTs && toTs <= this.booking.dateFromTs ? toTs : closest;
+	      }, 0);
+	    },
+	    closestOnTo() {
+	      return this.colliding.reduce((closest, {
+	        fromTs
+	      }) => {
+	        return this.booking.dateToTs <= fromTs && fromTs < closest ? fromTs : closest;
+	      }, Infinity);
+	    },
+	    colliding() {
+	      return this.$store.getters[`${booking_const.Model.Interface}/getColliding`](this.resourceId, [this.bookingId]);
+	    }
+	  },
+	  methods: {
+	    onMouseDown(event) {
+	      const direction = main_core.Dom.hasClass(event.target, '--from') ? ResizeDirection.From : ResizeDirection.To;
+	      void this.startResize(direction);
+	    },
+	    async startResize(direction = ResizeDirection.To) {
+	      main_core.Dom.style(document.body, 'user-select', 'none');
+	      main_core.Event.bind(window, 'mouseup', this.endResize);
+	      main_core.Event.bind(window, 'pointermove', this.resize);
+	      this.resizeDirection = direction;
+	      void this.updateIds(this.bookingId, this.resourceId);
+	    },
+	    resize(event) {
+	      if (!this.resizeDirection) {
+	        return;
+	      }
+	      const resizeHeight = this.resizeDirection === ResizeDirection.To ? event.clientY - this.$el.getBoundingClientRect().top : this.$el.getBoundingClientRect().bottom - event.clientY;
+	      const duration = resizeHeight * this.initialDuration / this.initialHeight;
+	      const newDuration = Math.max(duration, minDuration);
+	      if (this.resizeDirection === ResizeDirection.To) {
+	        this.resizeFromTs = this.booking.dateFromTs;
+	        this.resizeToTs = Math.min(this.booking.dateFromTs + newDuration, this.closestOnTo);
+	      } else {
+	        this.resizeFromTs = Math.max(this.booking.dateToTs - newDuration, this.closestOnFrom);
+	        this.resizeToTs = this.booking.dateToTs;
+	      }
+	      this.$emit('update', this.resizeFromTs, this.resizeToTs);
+	    },
+	    async endResize() {
+	      this.resizeBooking();
+	      main_core.Dom.style(document.body, 'user-select', '');
+	      main_core.Event.unbind(window, 'mouseup', this.endResize);
+	      main_core.Event.unbind(window, 'pointermove', this.resize);
+	      this.$emit('update', null, null);
+	      void this.updateIds(null, null);
+	    },
+	    async updateIds(bookingId, resourceId) {
+	      await Promise.all([this.$store.dispatch(`${booking_const.Model.Interface}/setResizedBookingId`, bookingId), this.$store.dispatch(`${booking_const.Model.Interface}/setDraggedBookingResourceId`, resourceId)]);
+	      void booking_lib_busySlots.busySlots.loadBusySlots();
+	    },
+	    resizeBooking() {
+	      if (!this.dateFromTsRounded || !this.dateToTsRounded) {
+	        return;
+	      }
+	      if (this.dateFromTsRounded === this.booking.dateFromTs && this.dateToTsRounded === this.booking.dateToTs) {
+	        return;
+	      }
+	      const id = this.bookingId;
+	      const booking = {
+	        id,
+	        dateFromTs: this.dateFromTsRounded,
+	        dateToTs: this.dateToTsRounded,
+	        timezoneFrom: this.booking.timezoneFrom,
+	        timezoneTo: this.booking.timezoneTo
+	      };
+	      if (!booking_lib_isRealId.isRealId(this.bookingId)) {
+	        void this.$store.dispatch(`${booking_const.Model.Bookings}/update`, {
+	          id,
+	          booking
+	        });
+	        return;
+	      }
+	      void booking_provider_service_bookingService.bookingService.update({
+	        id,
+	        ...booking
+	      });
+	    },
+	    roundTimestamp(timestamp) {
+	      const fiveMinutes = booking_lib_duration.Duration.getUnitDurations().i * 5;
+	      return Math.round(timestamp / fiveMinutes) * fiveMinutes;
+	    }
+	  },
+	  template: `
+		<div>
+			<div class="booking-booking-resize --from" @mousedown="onMouseDown"></div>
+			<div class="booking-booking-resize --to" @mousedown="onMouseDown"></div>
+		</div>
+	`
+	};
+
 	const BookingWidth = 280;
 	const Booking = {
 	  name: 'Booking',
@@ -3845,12 +3729,25 @@ this.BX = this.BX || {};
 	  data() {
 	    return {
 	      visible: true,
-	      isDisabledPopupShown: false
+	      isDisabledPopupShown: false,
+	      resizeFromTs: null,
+	      resizeToTs: null
 	    };
 	  },
 	  mounted() {
 	    this.updateVisibility();
 	    this.updateVisibilityDuringTransition();
+	    setTimeout(() => {
+	      if (!this.isReal && booking_lib_mousePosition.mousePosition.isMousePressed()) {
+	        void this.$refs.resize.startResize();
+	      }
+	    }, 200);
+	  },
+	  beforeUnmount() {
+	    var _this$booking;
+	    if (this.deletingBookings[this.bookingId] || !((_this$booking = this.booking) != null && _this$booking.resourcesIds.includes(this.resourceId))) {
+	      this.$el.remove();
+	    }
 	  },
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
@@ -3858,8 +3755,12 @@ this.BX = this.BX || {};
 	      zoom: `${booking_const.Model.Interface}/zoom`,
 	      scroll: `${booking_const.Model.Interface}/scroll`,
 	      editingBookingId: `${booking_const.Model.Interface}/editingBookingId`,
-	      isEditingBookingMode: `${booking_const.Model.Interface}/isEditingBookingMode`
+	      isEditingBookingMode: `${booking_const.Model.Interface}/isEditingBookingMode`,
+	      deletingBookings: `${booking_const.Model.Interface}/deletingBookings`
 	    }),
+	    isReal() {
+	      return booking_lib_isRealId.isRealId(this.bookingId);
+	    },
 	    booking() {
 	      return this.$store.getters[`${booking_const.Model.Bookings}/getById`](this.bookingId);
 	    },
@@ -3867,39 +3768,39 @@ this.BX = this.BX || {};
 	      const clientData = this.booking.primaryClient;
 	      return clientData ? this.$store.getters[`${booking_const.Model.Clients}/getByClientData`](clientData) : null;
 	    },
-	    deal() {
-	      var _this$booking$externa, _this$booking$externa2;
-	      return (_this$booking$externa = (_this$booking$externa2 = this.booking.externalData) == null ? void 0 : _this$booking$externa2.find(data => data.entityTypeId === booking_const.CrmEntity.Deal)) != null ? _this$booking$externa : null;
-	    },
-	    bookingName() {
-	      return this.client ? this.client.name : this.booking.name;
-	    },
 	    left() {
-	      return grid.calculateLeft(this.resourceId);
+	      return booking_lib_grid.grid.calculateLeft(this.resourceId);
 	    },
 	    top() {
-	      return grid.calculateTop(this.booking.dateFromTs);
+	      return booking_lib_grid.grid.calculateTop(this.dateFromTs);
 	    },
 	    height() {
-	      return grid.calculateHeight(this.booking.dateFromTs, this.booking.dateToTs);
+	      return booking_lib_grid.grid.calculateHeight(this.dateFromTs, this.dateToTs);
 	    },
 	    realHeight() {
-	      return grid.calculateRealHeight(this.booking.dateFromTs, this.booking.dateToTs);
+	      return booking_lib_grid.grid.calculateRealHeight(this.dateFromTs, this.dateToTs);
+	    },
+	    dateFromTs() {
+	      var _this$resizeFromTs;
+	      return (_this$resizeFromTs = this.resizeFromTs) != null ? _this$resizeFromTs : this.booking.dateFromTs;
+	    },
+	    dateToTs() {
+	      var _this$resizeToTs;
+	      return (_this$resizeToTs = this.resizeToTs) != null ? _this$resizeToTs : this.booking.dateToTs;
+	    },
+	    dateFromTsRounded() {
+	      var _this$roundTimestamp;
+	      return (_this$roundTimestamp = this.roundTimestamp(this.resizeFromTs)) != null ? _this$roundTimestamp : this.dateFromTs;
+	    },
+	    dateToTsRounded() {
+	      var _this$roundTimestamp2;
+	      return (_this$roundTimestamp2 = this.roundTimestamp(this.resizeToTs)) != null ? _this$roundTimestamp2 : this.dateToTs;
 	    },
 	    disabled() {
 	      return this.isEditingBookingMode && this.editingBookingId !== this.bookingId;
 	    },
-	    counterOptions() {
-	      return Object.freeze({
-	        color: booking_component_counter.CounterColor.DANGER,
-	        size: booking_component_counter.CounterSize.LARGE
-	      });
-	    },
 	    overlappingBookings() {
-	      const {
-	        dateFromTs
-	      } = this.booking;
-	      const uiBooking = this.uiBookings.find(booking => dateFromTs === booking.fromTs);
+	      const uiBooking = this.uiBookings.find(booking => this.booking.dateFromTs === booking.fromTs);
 	      if (!uiBooking) {
 	        return [];
 	      }
@@ -3939,14 +3840,11 @@ this.BX = this.BX || {};
 	      this.animation.animate();
 	    },
 	    updateVisibility() {
-	      if (!this.$refs.container) {
+	      if (!this.$el) {
 	        return;
 	      }
-	      const rect = this.$refs.container.getBoundingClientRect();
+	      const rect = this.$el.getBoundingClientRect();
 	      this.visible = rect.right > 0 && rect.left < window.innerWidth;
-	    },
-	    getBindElement() {
-	      return this.$refs.container;
 	    },
 	    onNoteMouseEnter() {
 	      this.showNoteTimeout = setTimeout(() => this.$refs.note.showViewPopup(), 100);
@@ -3960,6 +3858,14 @@ this.BX = this.BX || {};
 	        this.isDisabledPopupShown = true;
 	        event.stopPropagation();
 	      }
+	    },
+	    resizeUpdate(resizeFromTs, resizeToTs) {
+	      this.resizeFromTs = resizeFromTs;
+	      this.resizeToTs = resizeToTs;
+	    },
+	    roundTimestamp(timestamp) {
+	      const fiveMinutes = booking_lib_duration.Duration.getUnitDurations().i * 5;
+	      return timestamp ? Math.round(timestamp / fiveMinutes) * fiveMinutes : null;
 	    }
 	  },
 	  watch: {
@@ -3977,10 +3883,14 @@ this.BX = this.BX || {};
 	    AddClient,
 	    BookingTime,
 	    Actions,
+	    Name,
 	    Note: Note$1,
+	    Profit: Profit$1,
 	    Communication,
-	    UiCounter: booking_component_counter.Counter,
-	    DisabledPopup
+	    CrmButton,
+	    Counter,
+	    DisabledPopup,
+	    Resize
 	  },
 	  template: `
 		<div
@@ -3995,15 +3905,16 @@ this.BX = this.BX || {};
 				'--width': bookingWidth + 'px',
 			}"
 			:class="{
+				'--not-real': !isReal,
 				'--zoom-is-less-than-08': zoom < 0.8,
 				'--compact-mode': realHeight < 40 || zoom < 0.8,
-				'--small': realHeight <= 12.5,
+				'--small': realHeight <= 15,
 				'--short': shortView,
 				'--disabled': disabled,
 				'--confirmed': booking.isConfirmed,
 				'--expired': isExpiredBooking,
+				'--resizing': resizeFromTs && resizeToTs,
 			}"
-			ref="container"
 			@click.capture="onClick"
 		>
 			<div v-if="visible" class="booking-booking-booking-padding">
@@ -4017,41 +3928,32 @@ this.BX = this.BX || {};
 								@mouseleave="onNoteMouseLeave"
 								@click="$refs.note.showViewPopup()"
 							>
-								<div
-									class="booking-booking-booking-name"
-									:title="bookingName"
-									data-element="booking-booking-name"
-									:data-id="bookingId"
-									:data-resource-id="resourceId"
-								>
-									{{ bookingName }}
-								</div>
+								<Name :bookingId="bookingId" :resourceId="resourceId"/>
 								<Note
 									:bookingId="bookingId"
-									:bindElement="getBindElement"
+									:bindElement="() => $el"
 									ref="note"
 								/>
 							</div>
 							<BookingTime
 								:bookingId="bookingId"
 								:resourceId="resourceId"
+								:dateFromTs="dateFromTsRounded"
+								:dateToTs="dateToTsRounded"
 							/>
-							<div
-								v-if="deal"
-								class="booking-booking-booking-profit"
-								data-element="booking-booking-profit"
-								:data-id="bookingId"
-								:data-resource-id="resourceId"
-								:data-profit="deal.data.opportunity"
-								v-html="deal.data.formattedOpportunity"
-							></div>
+							<Profit :bookingId="bookingId" :resourceId="resourceId"/>
 						</div>
 						<div class="booking-booking-booking-content-row --lower">
 							<BookingTime
 								:bookingId="bookingId"
 								:resourceId="resourceId"
+								:dateFromTs="dateFromTsRounded"
+								:dateToTs="dateToTsRounded"
 							/>
-							<Communication v-if="client"/>
+							<div v-if="client" class="booking-booking-booking-buttons">
+								<Communication/>
+								<CrmButton :bookingId="bookingId"/>
+							</div>
 							<AddClient
 								v-else
 								:bookingId="bookingId"
@@ -4063,19 +3965,19 @@ this.BX = this.BX || {};
 					<Actions :bookingId="bookingId" :resourceId="resourceId"/>
 				</div>
 			</div>
-			<UiCounter
-				v-if="booking.counter > 0"
-				:value="booking.counter"
-				:color="counterOptions.color"
-				:size="counterOptions.size"
-				border
-				counter-class="booking--counter"
+			<Resize
+				v-if="!disabled"
+				:bookingId="bookingId"
+				:resourceId="resourceId"
+				ref="resize"
+				@update="resizeUpdate"
 			/>
+			<Counter :bookingId="bookingId"/>
 			<DisabledPopup
 				v-if="isDisabledPopupShown"
 				:bookingId="bookingId"
 				:resourceId="resourceId"
-				:bindElement="() => $refs.container"
+				:bindElement="() => $el"
 				@close="isDisabledPopupShown = false"
 			/>
 		</div>
@@ -4199,22 +4101,24 @@ this.BX = this.BX || {};
 	    ...mapInterfaceGetters({
 	      disabledBusySlots: 'disabledBusySlots',
 	      isFilterMode: 'isFilterMode',
-	      isEditingBookingMode: 'isEditingBookingMode'
+	      isEditingBookingMode: 'isEditingBookingMode',
+	      isDragMode: 'isDragMode'
 	    }),
 	    isDisabled() {
-	      if (this.isFilterMode) {
+	      const isDragOffHours = this.isDragMode && this.busySlot.type === booking_const.BusySlot.OffHours;
+	      if (this.isFilterMode || isDragOffHours) {
 	        return true;
 	      }
 	      return this.busySlot.id in this.disabledBusySlots;
 	    },
 	    left() {
-	      return grid.calculateLeft(this.busySlot.resourceId);
+	      return booking_lib_grid.grid.calculateLeft(this.busySlot.resourceId);
 	    },
 	    top() {
-	      return grid.calculateTop(this.busySlot.fromTs);
+	      return booking_lib_grid.grid.calculateTop(this.busySlot.fromTs);
 	    },
 	    height() {
-	      return grid.calculateHeight(this.busySlot.fromTs, this.busySlot.toTs);
+	      return booking_lib_grid.grid.calculateHeight(this.busySlot.fromTs, this.busySlot.toTs);
 	    }
 	  },
 	  methods: {
@@ -4252,7 +4156,7 @@ this.BX = this.BX || {};
 	    updatePopup(event) {
 	      var _this$$refs$container, _this$showTimeout;
 	      const rect = (_this$$refs$container = this.$refs.container) == null ? void 0 : _this$$refs$container.getBoundingClientRect();
-	      if (!rect || event.clientY > rect.top + rect.height || event.clientY < rect.top || event.clientX < rect.left || event.clientX > rect.left + rect.width) {
+	      if (this.isDragMode || !rect || event.clientY > rect.top + rect.height || event.clientY < rect.top || event.clientX < rect.left || event.clientX > rect.left + rect.width) {
 	        this.closePopup();
 	        return;
 	      }
@@ -4272,8 +4176,9 @@ this.BX = this.BX || {};
 	  },
 	  template: `
 		<div
+			v-if="left >= 0"
 			:class="[BookingBusySlotClassName, {
-				'--disabled': isDisabled
+				'--disabled': isDisabled,
 			}]"
 			:style="{
 				'--left': left + 'px',
@@ -4328,7 +4233,8 @@ this.BX = this.BX || {};
 	      intersections: `${booking_const.Model.Interface}/intersections`,
 	      timezone: `${booking_const.Model.Interface}/timezone`,
 	      offset: `${booking_const.Model.Interface}/offset`,
-	      isFeatureEnabled: `${booking_const.Model.Interface}/isFeatureEnabled`
+	      isFeatureEnabled: `${booking_const.Model.Interface}/isFeatureEnabled`,
+	      draggedBookingId: `${booking_const.Model.Interface}/draggedBookingId`
 	    }),
 	    selected() {
 	      return this.cell.id in this.selectedCells;
@@ -4344,7 +4250,7 @@ this.BX = this.BX || {};
 	      });
 	    },
 	    height() {
-	      return grid.calculateRealHeight(this.cell.fromTs, this.cell.toTs);
+	      return booking_lib_grid.grid.calculateRealHeight(this.cell.fromTs, this.cell.toTs);
 	    }
 	  },
 	  methods: {
@@ -4363,21 +4269,35 @@ this.BX = this.BX || {};
 	        this.$store.dispatch(`${booking_const.Model.Interface}/removeSelectedCell`, this.cell);
 	      }
 	    },
-	    addBooking() {
+	    onMouseDown() {
 	      var _this$intersections$, _this$intersections$t;
 	      if (!this.isFeatureEnabled) {
-	        booking_lib_limit.limit.show();
+	        void booking_lib_limit.limit.show();
 	        return;
 	      }
 	      void this.$store.dispatch(`${booking_const.Model.Interface}/setHoveredCell`, null);
-	      void booking_provider_service_bookingService.bookingService.add({
-	        id: `tmp-id-${Date.now()}-${Math.random()}`,
+	      this.creatingBookingId = `tmp-id-${Date.now()}-${Math.random()}`;
+	      void this.$store.dispatch(`${booking_const.Model.Interface}/addQuickFilterIgnoredBookingId`, this.creatingBookingId);
+	      void this.$store.dispatch(`${booking_const.Model.Bookings}/add`, {
+	        id: this.creatingBookingId,
 	        dateFromTs: this.cell.fromTs,
 	        dateToTs: this.cell.toTs,
 	        name: this.loc('BOOKING_BOOKING_DEFAULT_BOOKING_NAME'),
 	        resourcesIds: [...new Set([this.cell.resourceId, ...((_this$intersections$ = this.intersections[0]) != null ? _this$intersections$ : []), ...((_this$intersections$t = this.intersections[this.cell.resourceId]) != null ? _this$intersections$t : [])])],
 	        timezoneFrom: this.timezone,
 	        timezoneTo: this.timezone
+	      });
+	      main_core.Event.bind(window, 'mouseup', this.addBooking);
+	    },
+	    addBooking() {
+	      main_core.Event.unbind(window, 'mouseup', this.addBooking);
+	      if (!this.isFeatureEnabled) {
+	        void booking_lib_limit.limit.show();
+	        return;
+	      }
+	      setTimeout(() => {
+	        const creatingBooking = this.$store.getters[`${booking_const.Model.Bookings}/getById`](this.creatingBookingId);
+	        void booking_provider_service_bookingService.bookingService.add(creatingBooking);
 	      });
 	    }
 	  },
@@ -4408,6 +4328,7 @@ this.BX = this.BX || {};
 					>
 						<span class="booking-booking-grid-cell-time-inner">
 							<input
+								v-if="!draggedBookingId"
 								class="booking-booking-grid-cell-checkbox"
 								type="checkbox"
 								:checked="selected"
@@ -4419,7 +4340,7 @@ this.BX = this.BX || {};
 						</span>
 					</label>
 					<div
-						v-if="!hasSelectedCells"
+						v-if="!hasSelectedCells && !draggedBookingId"
 						class="booking-booking-grid-cell-select-button-container"
 						ref="button"
 					>
@@ -4427,7 +4348,7 @@ this.BX = this.BX || {};
 							class="booking-booking-grid-cell-select-button"
 							:class="{'--lock': !isFeatureEnabled}"
 							data-element="booking-grid-cell-add-button"
-							@click="addBooking"
+							@mousedown="onMouseDown"
 						>
 							<div class="booking-booking-grid-cell-select-button-text">
 								{{ loc('BOOKING_BOOKING_SELECT') }}
@@ -4460,13 +4381,13 @@ this.BX = this.BX || {};
 	  },
 	  computed: {
 	    left() {
-	      return grid.calculateLeft(this.cell.resourceId);
+	      return booking_lib_grid.grid.calculateLeft(this.cell.resourceId);
 	    },
 	    top() {
-	      return grid.calculateTop(this.cell.fromTs);
+	      return booking_lib_grid.grid.calculateTop(this.cell.fromTs);
 	    },
 	    height() {
-	      return grid.calculateHeight(this.cell.fromTs, this.cell.toTs);
+	      return booking_lib_grid.grid.calculateHeight(this.cell.fromTs, this.cell.toTs);
 	    }
 	  },
 	  components: {
@@ -4474,6 +4395,7 @@ this.BX = this.BX || {};
 	  },
 	  template: `
 		<div
+			v-if="left >= 0"
 			class="booking-booking-selected-cell"
 			:style="{
 				'--left': left + 'px',
@@ -4486,6 +4408,39 @@ this.BX = this.BX || {};
 				:cell="cell"
 			/>
 		</div>
+	`
+	};
+
+	const QuickFilterLine = {
+	  props: {
+	    hour: {
+	      type: Number,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    ...ui_vue3_vuex.mapGetters({
+	      selectedDateTs: `${booking_const.Model.Interface}/selectedDateTs`,
+	      resourcesIds: `${booking_const.Model.Interface}/resourcesIds`
+	    }),
+	    top() {
+	      return booking_lib_grid.grid.calculateTop(this.fromTs);
+	    },
+	    width() {
+	      return this.resourcesIds.length * 280;
+	    },
+	    fromTs() {
+	      return new Date(this.selectedDateTs).setHours(this.hour);
+	    }
+	  },
+	  template: `
+		<div
+			class="booking-booking-quick-filter-line"
+			:style="{
+				'--top': top + 'px',
+				'--width': width + 'px',
+			}"
+		></div>
 	`
 	};
 
@@ -4508,10 +4463,32 @@ this.BX = this.BX || {};
 	      filteredBookingsIds: 'filteredBookingsIds',
 	      selectedCells: 'selectedCells',
 	      hoveredCell: 'hoveredCell',
-	      busySlots: 'busySlots'
+	      busySlots: 'busySlots',
+	      quickFilter: 'quickFilter',
+	      isFeatureEnabled: 'isFeatureEnabled',
+	      editingBookingId: 'editingBookingId'
 	    }),
+	    resourcesHash() {
+	      const resources = this.$store.getters[`${booking_const.Model.Resources}/getByIds`](this.resourcesIds).map(({
+	        id,
+	        slotRanges
+	      }) => ({
+	        id,
+	        slotRanges
+	      }));
+	      return JSON.stringify(resources);
+	    },
 	    bookingsHash() {
-	      return JSON.stringify(this.bookings);
+	      const bookings = this.bookings.map(({
+	        id,
+	        dateFromTs,
+	        dateToTs
+	      }) => ({
+	        id,
+	        dateFromTs,
+	        dateToTs
+	      }));
+	      return JSON.stringify(bookings);
 	    },
 	    bookings() {
 	      const dateTs = this.selectedDateTs;
@@ -4533,10 +4510,25 @@ this.BX = this.BX || {};
 	      const dateFromTs = this.selectedDateTs;
 	      const dateToTs = new Date(dateFromTs).setDate(new Date(dateFromTs).getDate() + 1);
 	      return cells.filter(cell => cell && cell.toTs > dateFromTs && dateToTs > cell.fromTs);
+	    },
+	    quickFilterHours() {
+	      const activeHours = new Set(Object.values(this.quickFilter.active));
+	      return Object.values(this.quickFilter.hovered).filter(hour => !activeHours.has(hour));
 	    }
 	  },
 	  mounted() {
 	    this.startInterval();
+	    if (this.isFeatureEnabled) {
+	      const dataId = this.editingBookingId ? `[data-id="${this.editingBookingId}"]` : '';
+	      this.dragManager = new booking_lib_drag.Drag({
+	        container: this.$el.parentElement,
+	        draggable: `.booking-booking-booking${dataId}`
+	      });
+	    }
+	  },
+	  beforeUnmount() {
+	    var _this$dragManager;
+	    (_this$dragManager = this.dragManager) == null ? void 0 : _this$dragManager.destroy();
 	  },
 	  methods: {
 	    generateBookingKey(booking) {
@@ -4563,19 +4555,20 @@ this.BX = this.BX || {};
 	  },
 	  watch: {
 	    selectedDateTs() {
-	      void busySlots.loadBusySlots();
+	      void booking_lib_busySlots.busySlots.loadBusySlots();
 	    },
 	    bookingsHash() {
-	      void busySlots.loadBusySlots();
+	      void booking_lib_busySlots.busySlots.loadBusySlots();
 	    },
-	    resourcesIds() {
-	      void busySlots.loadBusySlots();
+	    resourcesHash() {
+	      void booking_lib_busySlots.busySlots.loadBusySlots();
 	    }
 	  },
 	  components: {
 	    Booking,
 	    BusySlot,
-	    Cell
+	    Cell,
+	    QuickFilterLine
 	  },
 	  template: `
 		<div class="booking-booking-bookings">
@@ -4599,6 +4592,11 @@ this.BX = this.BX || {};
 					:cell="cell"
 				/>
 			</template>
+			<template v-for="hour of quickFilterHours" :key="hour">
+				<QuickFilterLine
+					:hour="hour"
+				/>
+			</template>
 		</div>
 	`
 	};
@@ -4615,27 +4613,19 @@ this.BX = this.BX || {};
 	  },
 	  data() {
 	    return {
-	      hovered: false,
 	      halfOffset: 0
 	    };
 	  },
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
-	      zoom: `${booking_const.Model.Interface}/zoom`,
-	      disabledBusySlots: `${booking_const.Model.Interface}/disabledBusySlots`,
-	      selectedCells: `${booking_const.Model.Interface}/selectedCells`,
-	      bookings: `${booking_const.Model.Bookings}/get`,
 	      isFilterMode: `${booking_const.Model.Interface}/isFilterMode`,
 	      isEditingBookingMode: `${booking_const.Model.Interface}/isEditingBookingMode`,
-	      busySlots: `${booking_const.Model.Interface}/busySlots`
+	      draggedBookingId: `${booking_const.Model.Interface}/draggedBookingId`,
+	      resizedBookingId: `${booking_const.Model.Interface}/resizedBookingId`,
+	      quickFilter: `${booking_const.Model.Interface}/quickFilter`
 	    }),
-	    activeBusySlots() {
-	      return this.busySlots.filter(({
-	        id
-	      }) => !(id in this.disabledBusySlots));
-	    },
 	    isAvailable() {
-	      if (this.isFilterMode || this.isEditingBookingMode) {
+	      if (this.isFilterMode || this.resizedBookingId || this.isEditingBookingMode && !this.draggedBookingId) {
 	        return false;
 	      }
 	      const {
@@ -4646,13 +4636,6 @@ this.BX = this.BX || {};
 	      const cellHalfTs = this.cell.fromTs + halfHour;
 	      return (toTs > cellFromTs || toTs > cellHalfTs) && toTs - fromTs >= this.duration;
 	    },
-	    timeFormatted() {
-	      const timeFormat = main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
-	      return this.loc('BOOKING_BOOKING_TIME_RANGE', {
-	        '#FROM#': main_date.DateTimeFormat.format(timeFormat, this.fromTs / 1000),
-	        '#TO#': main_date.DateTimeFormat.format(timeFormat, this.toTs / 1000)
-	      });
-	    },
 	    fromTs() {
 	      return Math.min(this.freeSpace.toTs - this.duration, this.cell.fromTs) + this.halfOffset;
 	    },
@@ -4660,7 +4643,14 @@ this.BX = this.BX || {};
 	      return this.fromTs + this.duration;
 	    },
 	    duration() {
+	      if (this.draggedBooking) {
+	        return this.draggedBooking.dateToTs - this.draggedBooking.dateFromTs;
+	      }
 	      return this.cell.toTs - this.cell.fromTs;
+	    },
+	    draggedBooking() {
+	      var _this$$store$getters;
+	      return (_this$$store$getters = this.$store.getters[`${booking_const.Model.Bookings}/getById`](this.draggedBookingId)) != null ? _this$$store$getters : null;
 	    },
 	    freeSpace() {
 	      let maxFrom = 0;
@@ -4687,25 +4677,13 @@ this.BX = this.BX || {};
 	      };
 	    },
 	    colliding() {
-	      return [...this.bookings.filter(booking => booking.resourcesIds.includes(this.cell.resourceId)).map(({
-	        dateFromTs,
-	        dateToTs
-	      }) => ({
-	        fromTs: dateFromTs,
-	        toTs: dateToTs
-	      })), ...this.activeBusySlots.filter(busySlot => busySlot.resourceId === this.cell.resourceId).map(({
-	        fromTs,
-	        toTs
-	      }) => ({
-	        fromTs,
-	        toTs
-	      })), ...Object.values(this.selectedCells).filter(cell => cell.resourceId === this.cell.resourceId).map(({
-	        fromTs,
-	        toTs
-	      }) => ({
-	        fromTs,
-	        toTs
-	      }))];
+	      return this.$store.getters[`${booking_const.Model.Interface}/getColliding`](this.cell.resourceId, [this.draggedBookingId]);
+	    },
+	    quickFilterHovered() {
+	      return this.cell.minutes / 60 in this.quickFilter.hovered;
+	    },
+	    quickFilterActive() {
+	      return this.cell.minutes / 60 in this.quickFilter.active;
 	    }
 	  },
 	  methods: {
@@ -4727,18 +4705,22 @@ this.BX = this.BX || {};
 	      if ((_this$$refs$button = this.$refs.button) != null && _this$$refs$button.contains(event.target)) {
 	        return;
 	      }
+	      this.halfOffset = 0;
 	      const clientY = event.clientY - window.scrollY;
 	      const rect = this.$el.getBoundingClientRect();
 	      const bottomHalf = clientY > (rect.top + rect.top + rect.height) / 2;
-	      const canSubtractHalfHour = this.fromTs - this.halfOffset >= this.freeSpace.fromTs;
-	      const canAddHalfHour = this.toTs - this.halfOffset + halfHour <= this.freeSpace.toTs;
+	      const canSubtractHalfHour = this.fromTs >= this.freeSpace.fromTs;
+	      const canAddHalfHour = this.toTs + halfHour <= this.freeSpace.toTs;
 	      if (bottomHalf && canAddHalfHour || !bottomHalf && !canSubtractHalfHour) {
 	        this.halfOffset = halfHour;
+	      }
+	      if (!bottomHalf && !canSubtractHalfHour && this.freeSpace.fromTs - this.cell.fromTs > 0) {
+	        this.halfOffset = this.freeSpace.fromTs - this.cell.fromTs;
 	      }
 	      if (!bottomHalf && canSubtractHalfHour || bottomHalf && !canAddHalfHour) {
 	        this.halfOffset = 0;
 	      }
-	      const offsetNotMatchesHalf = bottomHalf && this.halfOffset === 0 || !bottomHalf && this.halfOffset !== 0;
+	      const offsetNotMatchesHalf = bottomHalf === (this.halfOffset === 0);
 	      if (this.duration <= halfHour && offsetNotMatchesHalf) {
 	        this.clearCell(event);
 	        return;
@@ -4765,9 +4747,20 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  },
+	  watch: {
+	    draggedBookingId() {
+	      if (!this.draggedBookingId) {
+	        void this.$store.dispatch(`${booking_const.Model.Interface}/setHoveredCell`, null);
+	      }
+	    }
+	  },
 	  template: `
 		<div
 			class="booking-booking-grid-cell"
+			:class="{
+				'--quick-filter-hovered': quickFilterHovered,
+				'--quick-filter-active': quickFilterActive,
+			}"
 			data-element="booking-grid-cell"
 			:data-resource-id="cell.resourceId"
 			:data-from="cell.fromTs"
@@ -4775,8 +4768,7 @@ this.BX = this.BX || {};
 			@mouseenter="mouseEnterHandler"
 			@mouseleave="mouseLeaveHandler"
 			@mousemove="mouseMoveHandler"
-		>
-		</div>
+		></div>
 	`
 	};
 
@@ -4943,10 +4935,8 @@ this.BX = this.BX || {};
 	const counterPanelScopeClass = 'ui-counter-panel__scope';
 	const darkThemeClass = 'bitrix24-dark-theme';
 	var _slider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("slider");
-	var _label = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("label");
 	var _overlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("overlay");
 	var _handleSliderClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSliderClose");
-	var _renderLabel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderLabel");
 	var _renderOverlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderOverlay");
 	var _appContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appContainer");
 	var _appHeader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appHeader");
@@ -5011,17 +5001,10 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _renderOverlay, {
 	      value: _renderOverlay2
 	    });
-	    Object.defineProperty(this, _renderLabel, {
-	      value: _renderLabel2
-	    });
 	    Object.defineProperty(this, _handleSliderClose, {
 	      value: _handleSliderClose2
 	    });
 	    Object.defineProperty(this, _slider, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _label, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -5031,8 +5014,7 @@ this.BX = this.BX || {};
 	    });
 	    this.onOverlayClick = onOverlayClick;
 	    babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider] = new (BX.SidePanel.Manager.getSliderClass())('');
-	    babelHelpers.classPrivateFieldLooseBase(this, _label)[_label] = babelHelpers.classPrivateFieldLooseBase(this, _renderLabel)[_renderLabel](babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay] = babelHelpers.classPrivateFieldLooseBase(this, _renderOverlay)[_renderOverlay](babelHelpers.classPrivateFieldLooseBase(this, _label)[_label]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay] = babelHelpers.classPrivateFieldLooseBase(this, _renderOverlay)[_renderOverlay]();
 	    if (top.BX) {
 	      this.handleSliderClose = babelHelpers.classPrivateFieldLooseBase(this, _handleSliderClose)[_handleSliderClose].bind(this);
 	      top.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', this.handleSliderClose);
@@ -5045,7 +5027,7 @@ this.BX = this.BX || {};
 	    BX.SidePanel.Instance.disablePageScrollbar();
 	    const start = babelHelpers.classPrivateFieldLooseBase(this, _getInset)[_getInset](babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer]);
 	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], 'position', 'fixed');
-	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], 'inset', `0 0 0 ${babelHelpers.classPrivateFieldLooseBase(this, _imBarWidth)[_imBarWidth]}px`);
+	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], 'inset', '0 0 0 0');
 	    const finish = babelHelpers.classPrivateFieldLooseBase(this, _getInset)[_getInset](babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _applyMaximizedStyles)[_applyMaximizedStyles]();
 	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay], '--closing');
@@ -5075,17 +5057,10 @@ this.BX = this.BX || {};
 	    BX.SidePanel.Instance.disablePageScrollbar();
 	  }
 	}
-	function _renderLabel2(slider) {
-	  slider.getLabel().setOnclick(this.onOverlayClick);
-	  main_core.Dom.addClass(slider.getLabel().getContainer(), 'booking-booking-slider-label');
-	  return slider.getLabel().getContainer();
-	}
-	function _renderOverlay2(label) {
+	function _renderOverlay2() {
 	  return main_core.Tag.render(_t || (_t = _`
-			<div class="booking-booking-overlay" onclick="${0}">
-				${0}
-			</div>
-		`), this.onOverlayClick, label);
+			<div class="booking-booking-overlay" onclick="${0}"></div>
+		`), this.onOverlayClick);
 	}
 	function _get_appContainer() {
 	  return BX('content-table');
@@ -5133,8 +5108,6 @@ this.BX = this.BX || {};
 	      left
 	    }) => {
 	      main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], 'inset', `${top}px ${right}px ${bottom}px ${left}px`);
-	      main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _label)[_label], 'top', `${top}px`);
-	      main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _label)[_label], 'left', `${left}px`);
 	    },
 	    complete
 	  }).animate());
@@ -5189,6 +5162,11 @@ this.BX = this.BX || {};
 	      maxZoom: 1
 	    };
 	  },
+	  mounted() {
+	    if (location.hash === '#maximize') {
+	      void this.maximize.maximize();
+	    }
+	  },
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
 	      zoom: 'interface/zoom',
@@ -5201,8 +5179,15 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  methods: {
-	    expand() {
-	      void this.maximize.maximize();
+	    expand(event) {
+	      if (location.hash === '#maximize' || this.isAnyModifierKeyPressed(event)) {
+	        void this.maximize.maximize();
+	      } else {
+	        window.open(`${location.href}#maximize`, '_blank').focus();
+	      }
+	    },
+	    isAnyModifierKeyPressed(event) {
+	      return event.altKey || event.shiftKey || event.ctrlKey || event.metaKey;
 	    },
 	    collapse() {
 	      void this.maximize.minimize();
@@ -5216,6 +5201,9 @@ this.BX = this.BX || {};
 	    },
 	    zoomInto(zoomInto) {
 	      var _this$animation;
+	      if (Number.isNaN(zoomInto)) {
+	        return;
+	      }
 	      const noTransitionClass = '--booking-booking-no-transition';
 	      const container = booking_core.Core.getParams().container;
 	      const maxAnimationDuration = 400;
@@ -5504,7 +5492,40 @@ this.BX = this.BX || {};
 	`
 	};
 
-	const Grid$1 = {
+	const DragDelete = {
+	  data() {
+	    return {
+	      IconSet: ui_iconSet_api_vue.Set
+	    };
+	  },
+	  computed: ui_vue3_vuex.mapGetters({
+	    draggedBookingId: `${booking_const.Model.Interface}/draggedBookingId`
+	  }),
+	  methods: {
+	    onMouseUp() {
+	      new booking_lib_removeBooking.RemoveBooking(this.draggedBookingId);
+	    }
+	  },
+	  components: {
+	    Icon: ui_iconSet_api_vue.BIcon
+	  },
+	  template: `
+		<div v-if="draggedBookingId" class="booking-booking-drag-delete">
+			<div
+				class="booking-booking-drag-delete-button"
+				data-element="booking-drag-delete"
+				@mouseup.capture="onMouseUp"
+			>
+				<Icon :name="IconSet.TRASH_BIN"/>
+				<div class="booking-booking-drag-delete-button-text">
+					{{ loc('BOOKING_BOOKING_DRAG_DELETE') }}
+				</div>
+			</div>
+		</div>
+	`
+	};
+
+	const Grid = {
 	  data() {
 	    return {
 	      scrolledToBooking: false
@@ -5543,8 +5564,8 @@ this.BX = this.BX || {};
 	      if (!this.editingBooking || this.scrolledToBooking) {
 	        return;
 	      }
-	      const top = grid.calculateTop(this.editingBooking.dateFromTs);
-	      const height = grid.calculateHeight(this.editingBooking.dateFromTs, this.editingBooking.dateToTs);
+	      const top = booking_lib_grid.grid.calculateTop(this.editingBooking.dateFromTs);
+	      const height = booking_lib_grid.grid.calculateHeight(this.editingBooking.dateFromTs, this.editingBooking.dateToTs);
 	      this.$refs.inner.scrollTop = top + height / 2 + this.$refs.inner.offsetHeight / 2;
 	      this.scrolledToBooking = true;
 	    },
@@ -5570,7 +5591,8 @@ this.BX = this.BX || {};
 	    Column,
 	    Bookings,
 	    ScalePanel,
-	    Sidebar
+	    Sidebar,
+	    DragDelete
 	  },
 	  template: `
 		<div class="booking-booking-grid">
@@ -5582,12 +5604,17 @@ this.BX = this.BX || {};
 				<LeftPanel/>
 				<NowLine/>
 				<div
+					id="booking-booking-grid-columns"
 					class="booking-booking-grid-columns --horizontal-scroll-bar"
 					ref="columnsContainer"
 					@scroll="$store.dispatch('interface/setScroll', $refs.columnsContainer.scrollLeft)"
 				>
 					<Bookings/>
-					<TransitionGroup name="booking-transition-resource" @after-leave="updateEars" @after-enter="updateEars">
+					<TransitionGroup
+						name="booking-transition-resource"
+						@after-leave="updateEars"
+						@after-enter="updateEars"
+					>
 						<template v-for="resourceId of resourcesIds" :key="resourceId">
 							<Column :resourceId="resourceId"/>
 						</template>
@@ -5598,6 +5625,7 @@ this.BX = this.BX || {};
 				:getColumnsContainer="() => $refs.columnsContainer"
 				ref="scalePanel"
 			/>
+			<DragDelete/>
 		</div>
 		<Sidebar/>
 	`
@@ -5817,7 +5845,7 @@ this.BX = this.BX || {};
 	      var _this$resource$slotRa;
 	      const selectedDate = new Date(this.selectedDateTs);
 	      const selectedWeekDay = booking_const.DateFormat.WeekDays[selectedDate.getDay()];
-	      const slotRanges = busySlots.filterSlotRanges(this.resource.slotRanges.filter(slotRange => {
+	      const slotRanges = booking_lib_busySlots.busySlots.filterSlotRanges(this.resource.slotRanges.filter(slotRange => {
 	        return slotRange.weekDays.includes(selectedWeekDay);
 	      }));
 	      const slotSize = (_this$resource$slotRa = this.resource.slotRanges[0].slotSize) != null ? _this$resource$slotRa : 60;
@@ -6351,7 +6379,7 @@ this.BX = this.BX || {};
 	`
 	};
 
-	const Resize = {
+	const Resize$1 = {
 	  emits: ['startResize', 'endResize'],
 	  props: {
 	    getNode: {
@@ -6470,7 +6498,7 @@ this.BX = this.BX || {};
 	  },
 	  components: {
 	    ResourceTypes,
-	    Resize,
+	    Resize: Resize$1,
 	    Search
 	  },
 	  template: `
@@ -6899,9 +6927,12 @@ this.BX = this.BX || {};
 	  },
 	  methods: {
 	    createSelector() {
+	      var _this$intersections$t;
+	      const selectedIds = (_this$intersections$t = this.intersections[this.resourceId]) != null ? _this$intersections$t : [];
 	      return new ui_entitySelector.Dialog({
 	        id: `booking-intersection-selector-resource-${this.resourceId}`,
 	        targetNode: this.$refs.intersectionField,
+	        preselectedItems: selectedIds.map(id => [booking_const.EntitySelectorEntity.Resource, id]),
 	        width: 400,
 	        enableSearch: true,
 	        dropdownMode: true,
@@ -6921,7 +6952,8 @@ this.BX = this.BX || {};
 	          }
 	        },
 	        events: {
-	          onHide: this.changeSelected.bind(this)
+	          onHide: this.changeSelected.bind(this),
+	          onLoad: this.changeSelected.bind(this)
 	        }
 	      });
 	    },
@@ -6929,7 +6961,7 @@ this.BX = this.BX || {};
 	      if (this.isFeatureEnabled) {
 	        this.selector.show();
 	      } else {
-	        booking_lib_limit.limit.show();
+	        void booking_lib_limit.limit.show();
 	      }
 	    },
 	    changeSelected() {
@@ -6945,10 +6977,15 @@ this.BX = this.BX || {};
 	  },
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
+	      intersections: `${booking_const.Model.Interface}/intersections`,
 	      isFeatureEnabled: `${booking_const.Model.Interface}/isFeatureEnabled`,
-	      resourcesIds: `${booking_const.Model.Interface}/resourcesIds`,
 	      resources: `${booking_const.Model.Resources}/get`
 	    }),
+	    resourcesIds() {
+	      return this.resources.map(({
+	        id
+	      }) => id);
+	    },
 	    firstItemTitle() {
 	      return this.selectedItems.length > 0 ? this.selectedItems[0].title : '';
 	    },
@@ -6958,6 +6995,9 @@ this.BX = this.BX || {};
 	  },
 	  watch: {
 	    resourcesIds(resourcesIds, previousResourcesIds) {
+	      if (resourcesIds.join(',') === previousResourcesIds.join(',')) {
+	        return;
+	      }
 	      const deletedIds = previousResourcesIds.filter(id => !resourcesIds.includes(id));
 	      const newIds = resourcesIds.filter(id => !previousResourcesIds.includes(id));
 	      deletedIds.forEach(id => {
@@ -7080,20 +7120,27 @@ this.BX = this.BX || {};
 	  beforeUnmount() {
 	    this.destroySelector();
 	  },
-	  computed: ui_vue3_vuex.mapGetters({
-	    isEditingBookingMode: `${booking_const.Model.Interface}/isEditingBookingMode`,
-	    intersections: `${booking_const.Model.Interface}/intersections`,
-	    isLoaded: `${booking_const.Model.Interface}/isLoaded`,
-	    resourcesIds: `${booking_const.Model.Interface}/resourcesIds`,
-	    isFeatureEnabled: `${booking_const.Model.Interface}/isFeatureEnabled`,
-	    resources: `${booking_const.Model.Resources}/get`
-	  }),
+	  computed: {
+	    ...ui_vue3_vuex.mapGetters({
+	      isEditingBookingMode: `${booking_const.Model.Interface}/isEditingBookingMode`,
+	      intersections: `${booking_const.Model.Interface}/intersections`,
+	      isLoaded: `${booking_const.Model.Interface}/isLoaded`,
+	      isFeatureEnabled: `${booking_const.Model.Interface}/isFeatureEnabled`,
+	      resources: `${booking_const.Model.Resources}/get`
+	    }),
+	    resourcesIds() {
+	      return this.resources.map(({
+	        id
+	      }) => id);
+	    }
+	  },
 	  methods: {
 	    createSelector() {
 	      return new ui_entitySelector.TagSelector({
 	        multiple: true,
 	        addButtonCaption: this.loc('BOOKING_BOOKING_ADD_INTERSECTION'),
 	        showCreateButton: false,
+	        maxHeight: 50,
 	        dialogOptions: {
 	          header: this.loc('BOOKING_BOOKING_ADD_INTERSECTION_DIALOG_HEADER'),
 	          context: 'bookingResourceIntersection',
@@ -7160,7 +7207,7 @@ this.BX = this.BX || {};
 	    },
 	    click() {
 	      if (!this.isFeatureEnabled) {
-	        booking_lib_limit.limit.show();
+	        void booking_lib_limit.limit.show();
 	      }
 	    }
 	  },
@@ -7186,6 +7233,9 @@ this.BX = this.BX || {};
 	      this.tryShowAhaMoment();
 	    },
 	    resourcesIds(resourcesIds, previousResourcesIds) {
+	      if (resourcesIds.join(',') === previousResourcesIds.join(',')) {
+	        return;
+	      }
 	      const deletedIds = previousResourcesIds.filter(id => !resourcesIds.includes(id));
 	      const newIds = resourcesIds.filter(id => !previousResourcesIds.includes(id));
 	      deletedIds.forEach(id => {
@@ -7249,7 +7299,7 @@ this.BX = this.BX || {};
 	  },
 	  data() {
 	    return {
-	      IconSet: ui_iconSet_api_core.Set,
+	      IconSet: ui_iconSet_api_vue.Set,
 	      intersectionModeMenuItemId: 'booking-intersection-menu-mode'
 	    };
 	  },
@@ -7269,35 +7319,32 @@ this.BX = this.BX || {};
 	      if (this.isFeatureEnabled) {
 	        this.menu.show();
 	      } else {
-	        booking_lib_limit.limit.show();
+	        void booking_lib_limit.limit.show();
 	      }
 	    },
 	    getMenuItems() {
-	      return [{
+	      return [this.getIntersectionForAllItem(), {
+	        delimiter: true
+	      }, this.getHelpDeskItem()];
+	    },
+	    getIntersectionForAllItem() {
+	      return {
 	        id: this.intersectionModeMenuItemId,
 	        dataset: {
 	          id: this.intersectionModeMenuItemId
 	        },
 	        text: this.loc('BOOKING_BOOKING_INTERSECTION_MENU_ALL'),
 	        className: this.isIntersectionForAll ? 'menu-popup-item menu-popup-item-accept' : 'menu-popup-item menu-popup-no-icon',
-	        onclick: async (event, item) => {
+	        onclick: () => {
 	          this.menu.close();
 	          const value = !this.isIntersectionForAll;
-	          await this.$store.dispatch(`${booking_const.Model.Interface}/setIntersectionMode`, value);
-	          await booking_provider_service_optionService.optionService.setBool(booking_const.Option.IntersectionForAll, value);
+	          void this.$store.dispatch(`${booking_const.Model.Interface}/setIntersectionMode`, value);
+	          void booking_provider_service_optionService.optionService.setBool(booking_const.Option.IntersectionForAll, value);
 	        }
-	      }, {
-	        delimiter: true
-	      },
-	      // {
-	      // 	id: 'booking-intersection-menu-settings',
-	      // 	dataset: {
-	      // 		id: 'booking-intersection-menu-settings',
-	      // 	},
-	      // 	text: this.loc('BOOKING_BOOKING_INTERSECTION_MENU_SETTINGS'),
-	      // 	onclick: () => {},
-	      // },
-	      {
+	      };
+	    },
+	    getHelpDeskItem() {
+	      return {
 	        id: 'booking-intersection-menu-info',
 	        dataset: {
 	          id: 'booking-intersection-menu-info'
@@ -7306,7 +7353,7 @@ this.BX = this.BX || {};
 	        onclick: () => {
 	          booking_lib_helpDesk.helpDesk.show(booking_const.HelpDesk.Intersection.code, booking_const.HelpDesk.Intersection.anchorCode);
 	        }
-	      }];
+	      };
 	    },
 	    async showIntersections(selectedResourceIds, resourceId = 0) {
 	      const intersections = {
@@ -7314,29 +7361,32 @@ this.BX = this.BX || {};
 	        [resourceId]: selectedResourceIds
 	      };
 	      await this.$store.dispatch(`${booking_const.Model.Interface}/setIntersections`, intersections);
-	      await busySlots.loadBusySlots();
+	      await booking_lib_busySlots.busySlots.loadBusySlots();
 	    },
 	    toggleMenuItemActivityState(item) {
 	      main_core.Dom.toggleClass(item.getContainer(), 'menu-popup-item-accept');
 	      main_core.Dom.toggleClass(item.getContainer(), 'menu-popup-no-icon');
+	    },
+	    updateScroll() {
+	      if (this.$refs.inner) {
+	        this.$refs.inner.scrollLeft = this.scroll;
+	      }
 	    }
 	  },
 	  watch: {
 	    async isIntersectionForAll() {
 	      await this.$store.dispatch(`${booking_const.Model.Interface}/setIntersections`, {});
-	      await busySlots.loadBusySlots();
+	      this.updateScroll();
+	      await booking_lib_busySlots.busySlots.loadBusySlots();
 	      this.toggleMenuItemActivityState(this.menu.getMenuItem(this.intersectionModeMenuItemId));
 	    },
-	    scroll(value) {
-	      if (this.$refs.inner) {
-	        this.$refs.inner.scrollLeft = value;
-	      }
+	    scroll() {
+	      this.updateScroll();
 	    }
 	  },
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
 	      resourcesIds: `${booking_const.Model.Interface}/resourcesIds`,
-	      bookings: `${booking_const.Model.Bookings}/get`,
 	      isFilterMode: `${booking_const.Model.Interface}/isFilterMode`,
 	      isEditingBookingMode: `${booking_const.Model.Interface}/isEditingBookingMode`,
 	      intersections: `${booking_const.Model.Interface}/intersections`,
@@ -7363,12 +7413,10 @@ this.BX = this.BX || {};
 			>
 				<div class="ui-icon-set --double-rhombus"></div>
 				<div v-if="!isFeatureEnabled" class="booking-lock-icon-container">
-					<Icon :name="IconSet.LOCK" />
+					<Icon :name="IconSet.LOCK"/>
 				</div>
 			</div>
-			<template v-if="isIntersectionForAll">
-				<Single @change="showIntersections"/>
-			</template>
+			<Single v-if="isIntersectionForAll" @change="showIntersections"/>
 			<template v-else>
 				<div
 					ref="inner"
@@ -7377,10 +7425,7 @@ this.BX = this.BX || {};
 				>
 					<div class="booking-booking-intersections-row">
 						<div class="booking-booking-intersections-row-inner">
-							<template
-								v-for="resourceId of resourcesIds"
-								:key="resourceId"
-							>
+							<template v-for="resourceId of resourcesIds" :key="resourceId">
 								<Multiple :resourceId="resourceId" @change="showIntersections"/>
 							</template>
 						</div>
@@ -7406,7 +7451,7 @@ this.BX = this.BX || {};
 	  components: {
 	    Header,
 	    Intersections,
-	    Grid: Grid$1
+	    Grid
 	  },
 	  template: `
 		<div
@@ -7640,13 +7685,11 @@ this.BX = this.BX || {};
 	const CancelButton = {
 	  name: 'CancelButton',
 	  emits: ['click'],
-	  computed: {
-	    color() {
-	      return booking_component_button.ButtonColor.LINK;
-	    },
-	    size() {
-	      return booking_component_button.ButtonSize.EXTRA_SMALL;
-	    }
+	  setup() {
+	    return {
+	      color: booking_component_button.ButtonColor.LINK,
+	      size: booking_component_button.ButtonSize.EXTRA_SMALL
+	    };
 	  },
 	  template: `
 		<button
@@ -7655,8 +7698,8 @@ this.BX = this.BX || {};
 			ref="button"
 			@click="$emit('click')"
 		>
-			<i 
-				class="ui-icon-set --cross-25" 
+			<i
+				class="ui-icon-set --cross-25"
 				style="--ui-icon-set__icon-base-color: rgba(var(--ui-color-palette-white-base-rgb), 0.3);--ui-icon-set__icon-size: var(--ui-size-2xl)"></i>
 		</button>
 	`
@@ -7848,13 +7891,18 @@ this.BX = this.BX || {};
 	      loader: new main_loader.Loader()
 	    };
 	  },
+	  beforeMount() {
+	    booking_lib_mousePosition.mousePosition.init();
+	  },
 	  async mounted() {
-	    booking_lib_mousePosition.mousePosition.bindMouseMove();
 	    this.showLoader();
 	    expandOffHours.setExpanded(true);
 	    this.addAfterTitle();
 	    await Promise.all([booking_provider_service_dictionaryService.dictionaryService.fetchData(), this.fetchPage(this.isEditingBookingMode ? 0 : this.selectedDateTs / 1000)]);
 	    void this.$store.dispatch(`${booking_const.Model.Interface}/setIsLoaded`, true);
+	  },
+	  beforeUnmount() {
+	    booking_lib_mousePosition.mousePosition.destroy();
 	  },
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
@@ -8053,5 +8101,5 @@ this.BX = this.BX || {};
 
 	exports.Booking = Booking$1;
 
-}((this.BX.Booking = this.BX.Booking || {}),BX.Booking.Component.Mixin,BX,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Event,BX.UI,BX.UI,BX.Booking.Component,BX.Booking.Component,BX.Booking.Component,BX.Vue3.Directives,BX,BX.UI.NotificationManager,BX.Booking.Provider.Service,BX.Booking.Component,BX.Vue3.Directives,BX,BX.Booking.Component,BX.Booking.Lib,BX.Booking,BX.UI.DatePicker,BX.Booking.Lib,BX.Booking.Component,BX.UI.Dialogs,BX,BX.Booking.Provider.Service,BX,BX.Booking,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.Main,BX.UI.IconSet,BX.UI.IconSet,BX.Booking.Provider.Service,BX.Booking.Lib,BX.UI.EntitySelector,BX.Booking.Lib,BX.Booking.Provider.Service,BX.UI,BX.Main,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Component,BX.UI.AutoLaunch,BX.Vue3.Vuex,BX,BX.Vue3,BX.UI,BX.Booking.Lib,BX.Booking.Const,BX.Booking.Lib));
+}((this.BX.Booking = this.BX.Booking || {}),BX.Booking.Component.Mixin,BX,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Event,BX.UI,BX.UI,BX.UI.Vue3.Components,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Component,BX,BX.Vue3.Directives,BX.UI.NotificationManager,BX.Booking.Provider.Service,BX.Booking.Component,BX.Vue3.Directives,BX,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Lib,BX.Booking.Lib,BX.Booking,BX.UI.DatePicker,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Component,BX.UI.Dialogs,BX,BX.Booking.Provider.Service,BX,BX.Booking,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.Main,BX.UI.IconSet,BX,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.UI.EntitySelector,BX.Booking.Lib,BX.Booking.Provider.Service,BX.UI,BX.Main,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Component,BX.UI.AutoLaunch,BX.Vue3.Vuex,BX,BX.Vue3,BX.UI,BX.Booking.Lib,BX.Booking.Const,BX.Booking.Lib));
 //# sourceMappingURL=booking.bundle.js.map

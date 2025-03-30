@@ -10,8 +10,10 @@ use Bitrix\Sign\Type\Member\Notification\ReminderType;
 use Bitrix\Sign\Type\MemberStatus;
 use Bitrix\Sign\Type\ProcessingStatus;
 
-class Member implements Contract\Item
+class Member implements Contract\Item, Contract\Item\TrackableItem
 {
+	use TrackableItemTrait;
+
 	public Reminder $reminder;
 
 	public function __construct(
@@ -49,6 +51,7 @@ class Member implements Contract\Item
 			type: ReminderType::NONE,
 			startDate: null,
 		);
+		$this->initOriginal();
 	}
 
 	public function __clone()
@@ -61,5 +64,20 @@ class Member implements Contract\Item
 		$this->reminder->lastSendDate = CloneHelper::cloneIfNotNull($this->reminder->lastSendDate);
 		$this->reminder->plannedNextSendDate = CloneHelper::cloneIfNotNull($this->reminder->plannedNextSendDate);
 		$this->reminder->startDate = CloneHelper::cloneIfNotNull($this->reminder->startDate);
+	}
+
+	protected function getExcludedFromCopyProperties(): array
+	{
+		return [
+			'id',
+			'dateModify',
+			'processingStatus',
+			'name',
+			'companyName',
+			'signedFileId',
+			'dateCreated',
+			'signatureFileId',
+			'role',
+		];
 	}
 }

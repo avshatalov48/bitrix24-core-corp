@@ -41,7 +41,8 @@
 }
 
 .sign-personal-download-dropdown-menu-btn {
-	width: 200px;
+	width: auto;
+	min-width: 200px;
 }
 
 .sign-personal-download-dropdown-menu-btn a,

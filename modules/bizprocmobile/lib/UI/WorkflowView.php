@@ -256,6 +256,11 @@ class WorkflowView implements \JsonSerializable
 			$hashData['ACTIVITY_NAME'] = $task['ACTIVITY_NAME'];
 		}
 
+		if (isset($task['ACTIVITY']) && $task['ACTIVITY'] === 'HandleExternalEventActivity')
+		{
+			$hashData['TASK_ID'] = $task['ID'];
+		}
+
 		$parameters = $task['PARAMETERS'] ?? null;
 
 		if (is_array($parameters))

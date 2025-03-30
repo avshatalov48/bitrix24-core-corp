@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\Tour\PermissionsOnboardingPopup;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 
@@ -15,8 +16,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? "{$bodyClass} " : '') . 'no-all-paddings no-background');
 
-$APPLICATION->SetTitle(Loc::getMessage('CRM_COMMON_PERMISSIONS_SETTINGS_ITEM'));
-
 
 \Bitrix\Main\Loader::includeModule('ui');
 \Bitrix\Main\UI\Extension::load([
@@ -27,9 +26,15 @@ $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'no-all-paddings no-background');
 
 $searchContainerId = 'crm-config-perms-v2-search-container';
-$this->SetViewTarget('inside_pagetitle', 100);
-echo "<div id=\"${searchContainerId}\"></div>";
-$this->EndViewTarget();
+
+?>
+<div class="crm-config-perms-v2-header"">
+	<?php if (!$arResult['shouldDisplayLeftMenu']):?>
+		<div class="crm-config-perms-v2-header-title"><?=Loc::getMessage('CRM_COMMON_PERMISSIONS_SETTINGS_ITEM')?></div>
+	<?php endif;?>
+	<div id="<?=$searchContainerId?>"></div>
+</div>
+<?php
 
 /** @var \Bitrix\Crm\Security\Role\UIAdapters\AccessRights\AccessRightsDTO $rolesData */
 $rolesData = $arResult['accessRightsData'];
@@ -39,16 +44,35 @@ $maxVisibleUserGroups = $arResult['maxVisibleUserGroups'];
 /** @var array|null $analytics */
 $analytics = $arResult['analytics'];
 
+if ($arResult['isSharedCrmPermissionsSlider'])
+{
+	echo PermissionsOnboardingPopup::getInstance()->build();
+}
+
+if ($arResult['shouldDisplayLeftMenu'])
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:ui.sidepanel.wrappermenu',
+		'',
+		[
+			'TITLE' => Loc::getMessage('CRM_COMMON_PERMISSIONS_SETTINGS_ITEM'),
+			'ITEMS' => $arResult['leftMenu'],
+			'AUTO_HIDE_SUBMENU' => true,
+		],
+	);
+}
+
+$messages = Loc::loadLanguageFile(__FILE__);
 ?>
 
 <div id='bx-crm-perms-config-permissions'></div>
 
 <script>
+	BX.message(<?=Json::encode($messages)?>);
 	const userGroups = <?= Json::encode($rolesData->userGroups) ?>;
 	const accessRights = <?= Json::encode($rolesData->accessRights) ?>;
 	const additionalSaveParams = <?= Json::encode($controllerData) ?>;
-
-	const AccessRights = new BX.UI.AccessRights.V2.App({
+	const AccessRightsOption = {
 		component: 'bitrix:crm.config.perms.v2',
 		actionSave: 'save',
 		bodyType: 'json',
@@ -60,9 +84,16 @@ $analytics = $arResult['analytics'];
 		maxVisibleUserGroups: <?= is_int($maxVisibleUserGroups) ? $maxVisibleUserGroups : 'null' ?>,
 		searchContainerSelector: '#<?= $searchContainerId ?>',
 		analytics: <?= Json::encode($analytics) ?>,
+	}
+	const AccessRights = new BX.UI.AccessRights.V2.App(AccessRightsOption)
+	const ConfigPerms = new BX.Crm.ConfigPermsComponent({
+		menuId: '<?=$arResult['menuId']?>',
+		AccessRightsOption,
+		AccessRights,
+		hasLeftMenu: <?=$arResult['shouldDisplayLeftMenu'] ? 'true' : 'false' ?>,
 	});
 
-	AccessRights.draw();
+	ConfigPerms.init();
 </script>
 
 <?php
@@ -73,14 +104,14 @@ $APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 	'BUTTONS' => [
 		[
 			'TYPE' => 'save',
-			'ONCLICK' => 'AccessRights.sendActionRequest()',
+			'ONCLICK' => 'ConfigPerms.AccessRights.sendActionRequest()',
 		],
 		[
 			'TYPE' => 'custom',
 			'LAYOUT' => (new \Bitrix\UI\Buttons\Button())
 				->setColor(\Bitrix\UI\Buttons\Color::LINK)
 				->setText(\Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_CANCEL'))
-				->bindEvent('click', new \Bitrix\UI\Buttons\JsCode('AccessRights.fireEventReset()'))
+				->bindEvent('click', new \Bitrix\UI\Buttons\JsCode('ConfigPerms.AccessRights.fireEventReset()'))
 				->render()
 			,
 		],

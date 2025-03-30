@@ -4,7 +4,6 @@
 jn.define('bizproc/workflow/required-parameters', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { BottomSheet } = require('bottom-sheet');
-	const { Feature } = require('feature');
 	const { Loc } = require('loc');
 	const { NotifyManager } = require('notify-manager');
 	const { Type } = require('type');
@@ -53,10 +52,7 @@ jn.define('bizproc/workflow/required-parameters', (require, exports, module) => 
 
 					.open()
 					.then((widget) => {
-						if (Feature.isPreventBottomSheetDismissSupported())
-						{
-							widget.preventBottomSheetDismiss(true);
-						}
+						widget.preventBottomSheetDismiss(true);
 					})
 					.catch(() => {})
 				;

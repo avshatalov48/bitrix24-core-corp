@@ -106,6 +106,19 @@ final class Configuration
 		return $isAllow;
 	}
 
+	public static function isEnabledBoardExternalLink(): bool
+	{
+		static $isAllow = null;
+		if($isAllow === null)
+		{
+			$isAllow =
+				static::isPossibleToShowExternalLinkControl() &&
+				Bitrix24Manager::isFeatureEnabled('disk_board_external_link')
+			;
+		}
+		return (bool)$isAllow;
+	}
+
 	public static function isEnabledObjectLock()
 	{
 		static $isAllow = null;

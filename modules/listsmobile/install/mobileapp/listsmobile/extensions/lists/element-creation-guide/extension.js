@@ -5,7 +5,6 @@ jn.define('lists/element-creation-guide', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { EventEmitter } = require('event-emitter');
-	const { Feature } = require('feature');
 	const { Wizard } = require('layout/ui/wizard');
 	const { PureComponent } = require('layout/pure-component');
 
@@ -75,11 +74,8 @@ jn.define('lists/element-creation-guide', (require, exports, module) => {
 		{
 			super.componentDidMount();
 
-			if (Feature.isPreventBottomSheetDismissSupported())
-			{
-				this.layout.preventBottomSheetDismiss(true);
-				this.layout.on('preventDismiss', () => this.handleExit());
-			}
+			this.layout.preventBottomSheetDismiss(true);
+			this.layout.on('preventDismiss', () => this.handleExit());
 		}
 
 		handleExit()

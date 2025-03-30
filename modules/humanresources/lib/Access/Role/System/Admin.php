@@ -24,6 +24,7 @@ class Admin extends Base
 			PermissionDictionary::HUMAN_RESOURCES_CHANEL_UNBIND_TO_STRUCTURE => PermissionVariablesDictionary::VARIABLE_SELF_DEPARTMENTS_SUB_DEPARTMENTS,
 
 			PermissionDictionary::HUMAN_RESOURCES_USERS_ACCESS_EDIT => 1,
+			PermissionDictionary::HUMAN_RESOURCES_USER_INVITE=> 1,
 		];
 	}
 }

@@ -1,13 +1,12 @@
 import { SettingsSection } from 'ui.form-elements.field';
 import { BaseSettingsElement, SettingsRow } from 'ui.form-elements.field';
-import { Loc, Dom } from 'main.core';
-import { Row, Section } from 'ui.section';
+import { Dom } from 'main.core';
+import { Row } from 'ui.section';
 import 'ui.form';
 import { PortalDeleteForm } from './portal-delete-form';
-import { PortalDeleteFormEmployee } from "./portal-delete-form-employee";
-import {PortalDeleteFormCheckword} from "./portal-delete-form-checkword";
-import {PortalDeleteFormMail} from "./portal-delete-form-mail";
-import {PortalDeleteFormNotAdmin} from "./portal-delete-form-not-admin";
+import { PortalDeleteFormEmployee } from './portal-delete-form-employee';
+import { PortalDeleteFormMail } from './portal-delete-form-mail';
+import { PortalDeleteFormNotAdmin } from './portal-delete-form-not-admin';
 
 export type PortalDeleteSectionType = {
 	parent: BaseSettingsElement,
@@ -17,9 +16,10 @@ export type PortalDeleteSectionType = {
 export type PortalDeleteOptionsType = {
 	isFreeLicense: boolean,
 	isEmployeesLeft: boolean,
-	checkWord: string,
 	mailForRequest: string,
 	portalUrl: string,
+	verificationOptions: ?Object,
+	isAdmin: boolean,
 }
 
 export class PortalDeleteSection extends SettingsSection
@@ -37,13 +37,21 @@ export class PortalDeleteSection extends SettingsSection
 		this.#options = params.options;
 		let type;
 
-		if (!this.#options.isFreeLicense)
+		if (!this.#options.isAdmin)
+		{
+			type = 'not_admin';
+		}
+		else if (!this.#options.isFreeLicense)
 		{
 			type = 'mail';
 		}
 		else if (this.#options.isEmployeesLeft)
 		{
 			type = 'employee';
+		}
+		else if (!this.#options.verificationOptions)
+		{
+			type = 'mail';
 		}
 		else
 		{
@@ -63,10 +71,6 @@ export class PortalDeleteSection extends SettingsSection
 
 		switch (type)
 		{
-			case 'checkword':
-				this.#form = new PortalDeleteFormCheckword(this.#options.checkWord);
-				break;
-
 			case 'mail':
 				this.#form = new PortalDeleteFormMail(this.#options.mailForRequest, this.#options.portalUrl);
 				break;
@@ -80,7 +84,7 @@ export class PortalDeleteSection extends SettingsSection
 				break;
 
 			default:
-				this.#form = new PortalDeleteForm();
+				this.#form = new PortalDeleteForm(this.#options.verificationOptions);
 				break;
 		}
 

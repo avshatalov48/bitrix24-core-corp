@@ -46,4 +46,6 @@ interface PermissionRepository
 	 * @return array<array-key, int>
 	 */
 	public function getPermissionsByRoleIds(array $roleIds): array;
+
+	public function setPermissionByRoleId(int $roleId, string $permissionId, int $value): void;
 }

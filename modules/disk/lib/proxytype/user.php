@@ -11,6 +11,7 @@ Loc::loadMessages(__FILE__);
 class User extends Disk
 {
 	public const SUFFIX_DOCUMENTS_LIST = 'documents/';
+	public const SUFFIX_BOARDS_LIST = 'boards/';
 
 	/** @var \Bitrix\Disk\User */
 	private $user;
@@ -129,5 +130,14 @@ class User extends Disk
 	public function getBaseUrlDocumentList(): string
 	{
 		return '/' . trim($this->getStorageBaseUrl(), '/') . '/' . static::SUFFIX_DOCUMENTS_LIST;
+	}
+
+	/**
+	 * Gets url for boards list.
+	 * @return string
+	 */
+	public function getBaseUrlBoardsList(): string
+	{
+		return '/' . trim($this->getStorageBaseUrl(), '/') . '/' . static::SUFFIX_BOARDS_LIST;
 	}
 }

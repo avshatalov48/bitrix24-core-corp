@@ -1,12 +1,14 @@
 import { createNamespacedHelpers } from 'ui.vue3.vuex';
 import { Model } from 'booking.const';
+import { busySlots } from 'booking.lib.busy-slots';
+import { Drag } from 'booking.lib.drag';
 import type { BookingModel } from 'booking.model.bookings';
 
-import { busySlots } from '../../../lib/busy-slots/busy-slots';
 import type { BookingUiDuration } from './booking/types';
 import { Booking } from './booking/booking';
 import { BusySlot } from './busy-slot/busy-slot';
 import { Cell } from './cell/cell';
+import { QuickFilterLine } from './quick-filter-line/quick-filter-line';
 import './bookings.css';
 
 const { mapGetters: mapInterfaceGetters } = createNamespacedHelpers(Model.Interface);
@@ -30,10 +32,25 @@ export const Bookings = {
 			selectedCells: 'selectedCells',
 			hoveredCell: 'hoveredCell',
 			busySlots: 'busySlots',
+			quickFilter: 'quickFilter',
+			isFeatureEnabled: 'isFeatureEnabled',
+			editingBookingId: 'editingBookingId',
 		}),
+		resourcesHash(): string
+		{
+			const resources = this.$store.getters[`${Model.Resources}/getByIds`](this.resourcesIds)
+				.map(({ id, slotRanges }) => ({ id, slotRanges }))
+			;
+
+			return JSON.stringify(resources);
+		},
 		bookingsHash(): string
 		{
-			return JSON.stringify(this.bookings);
+			const bookings = this.bookings
+				.map(({ id, dateFromTs, dateToTs }) => ({ id, dateFromTs, dateToTs }))
+			;
+
+			return JSON.stringify(bookings);
 		},
 		bookings(): BookingModel[]
 		{
@@ -67,10 +84,30 @@ export const Bookings = {
 
 			return cells.filter((cell: CellDto) => cell && cell.toTs > dateFromTs && dateToTs > cell.fromTs);
 		},
+		quickFilterHours(): number[]
+		{
+			const activeHours = new Set(Object.values(this.quickFilter.active));
+
+			return Object.values(this.quickFilter.hovered).filter((hour) => !activeHours.has(hour));
+		},
 	},
 	mounted(): void
 	{
 		this.startInterval();
+
+		if (this.isFeatureEnabled)
+		{
+			const dataId = this.editingBookingId ? `[data-id="${this.editingBookingId}"]` : '';
+
+			this.dragManager = new Drag({
+				container: this.$el.parentElement,
+				draggable: `.booking-booking-booking${dataId}`,
+			});
+		}
+	},
+	beforeUnmount(): void
+	{
+		this.dragManager?.destroy();
 	},
 	methods: {
 		generateBookingKey(booking: BookingModel): string
@@ -110,7 +147,7 @@ export const Bookings = {
 		{
 			void busySlots.loadBusySlots();
 		},
-		resourcesIds(): void
+		resourcesHash(): void
 		{
 			void busySlots.loadBusySlots();
 		},
@@ -119,6 +156,7 @@ export const Bookings = {
 		Booking,
 		BusySlot,
 		Cell,
+		QuickFilterLine,
 	},
 	template: `
 		<div class="booking-booking-bookings">
@@ -140,6 +178,11 @@ export const Bookings = {
 			<template v-for="cell of cells" :key="cell.id">
 				<Cell
 					:cell="cell"
+				/>
+			</template>
+			<template v-for="hour of quickFilterHours" :key="hour">
+				<QuickFilterLine
+					:hour="hour"
 				/>
 			</template>
 		</div>

@@ -33,13 +33,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    });
 	  }
 	  let response = null;
-	  if (method === 'POST') {
-	    response = await main_core.ajax.runAction(endPoint, config);
-	  } else {
-	    const getConfig = {
-	      data
-	    };
-	    response = await main_core.ajax.runAction(endPoint, getConfig);
+	  try {
+	    if (method === 'POST') {
+	      response = await main_core.ajax.runAction(endPoint, config);
+	    } else {
+	      const getConfig = {
+	        data
+	      };
+	      response = await main_core.ajax.runAction(endPoint, getConfig);
+	    }
+	  } catch (ex) {
+	    handleResponseError(ex);
+	    return null;
 	  }
 	  if ((analytics == null ? void 0 : (_analytics$event = analytics.event) == null ? void 0 : _analytics$event.length) > 0) {
 	    ui_analytics.sendData(analytics);
@@ -49,7 +54,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	const handleResponseError = response => {
 	  var _response$errors;
 	  if (((_response$errors = response.errors) == null ? void 0 : _response$errors.length) > 0) {
-	    const error = response.errors[0];
+	    const [error] = response.errors;
 	    if (error.code !== 'STRUCTURE_ACCESS_DENIED') {
 	      throw error;
 	    }
@@ -59,8 +64,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    });
 	  }
 	};
-	const getData = (endPoint, data, analytics) => request('GET', endPoint, data != null ? data : {}, analytics != null ? analytics : {}).catch(handleResponseError);
-	const postData = (endPoint, data, analytics) => request('POST', endPoint, data, analytics != null ? analytics : {}).catch(handleResponseError);
+	const getData = (endPoint, data, analytics) => request('GET', endPoint, data != null ? data : {}, analytics != null ? analytics : {});
+	const postData = (endPoint, data, analytics) => request('POST', endPoint, data, analytics != null ? analytics : {});
 
 	exports.getData = getData;
 	exports.postData = postData;

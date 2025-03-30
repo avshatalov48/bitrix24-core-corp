@@ -60,7 +60,7 @@ abstract class Base extends Activity
 		}
 
 		return [
-			'log' => $this->createLogMenuItem($workflowId)
+			'log' => $this->createLogMenuItem($workflowId)?->setScopeWeb()
 		];
 	}
 

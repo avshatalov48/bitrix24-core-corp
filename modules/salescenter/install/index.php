@@ -144,7 +144,9 @@ class salescenter extends CModule
 
 		RegisterModule($this->MODULE_ID);
 
-		if(\Bitrix\Main\Loader::includeModule($this->MODULE_ID))
+		$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+		$shouldInstallApp = $request->get('install_app') === 'Y';
+		if ($shouldInstallApp && \Bitrix\Main\Loader::includeModule($this->MODULE_ID))
 		{
 			\Bitrix\SalesCenter\Integration\ImManager::installApplication();
 		}
@@ -173,16 +175,39 @@ class salescenter extends CModule
 	{
 		global $APPLICATION, $step;
 
-		$step = intval($step);
-		if($step < 2)
+		$step = (int)$step;
+		if ($step < 2)
 		{
 			$APPLICATION->IncludeAdminFile(GetMessage("SALESCENTER_UNINSTALL_TITLE_MSGVER_1"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/unstep1.php");
 		}
-		elseif($step==2)
+		elseif ($step === 2)
 		{
 			$this->UnInstallDB(["savedata" => $_REQUEST["savedata"]]);
 
+			UnRegisterModule($this->MODULE_ID);
+
 			$APPLICATION->IncludeAdminFile(GetMessage("SALESCENTER_UNINSTALL_TITLE_MSGVER_1"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/unstep2.php");
+		}
+
+		return true;
+	}
+
+	function UnInstallDB($params = [])
+	{
+		global $DB, $APPLICATION;
+
+		$connection = \Bitrix\Main\Application::getConnection();
+		$errors = false;
+
+		if (!isset($params['savedata']) || $params['savedata'] !== "Y")
+		{
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/" . $this->MODULE_ID."/install/db/" . $connection->getType() . "/uninstall.sql");
+		}
+
+		if ($errors !== false)
+		{
+			$APPLICATION->ThrowException(implode("", $errors));
+			return false;
 		}
 
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('sale', 'OnSaleOrderSaved', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'OnSaleOrderSaved');
@@ -197,7 +222,7 @@ class salescenter extends CModule
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('landing', 'onLandingAfterUnPublication', 'salescenter', '\Bitrix\SalesCenter\Integration\LandingManager', 'onLandingAfterUnPublication');
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('landing', 'onBeforeSiteRecycle', 'salescenter', '\Bitrix\SalesCenter\Integration\LandingManager', 'onBeforeSiteRecycle');
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('landing', 'onBeforeLandingRecycle', 'salescenter', '\Bitrix\SalesCenter\Integration\LandingManager', 'onBeforeLandingRecycle');
-        \Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('landing', 'onLandingStartPublication', 'salescenter', '\Bitrix\SalesCenter\Integration\LandingManager', 'onLandingStartPublication');
+		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('landing', 'onLandingStartPublication', 'salescenter', '\Bitrix\SalesCenter\Integration\LandingManager', 'onLandingStartPublication');
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('crm', 'OnActivityAdd', 'salescenter', '\Bitrix\SalesCenter\Integration\CrmManager', 'onActivityAdd');
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('pull', 'OnGetDependentModule', 'salescenter', '\Bitrix\SalesCenter\Driver', 'onGetDependentModule');
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('sale', 'OnPaymentPaid', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'onPaymentPaid');
@@ -242,32 +267,11 @@ class salescenter extends CModule
 			'onPaySystemServiceProcessRequest'
 		);
 
-		\Bitrix\SalesCenter\Integration\ImManager::unInstallApplication();
-
-		UnRegisterModule($this->MODULE_ID);
-
-		return true;
-	}
-
-	function UnInstallDB($params = [])
-	{
-		global $DB, $APPLICATION;
-
-		$connection = \Bitrix\Main\Application::getConnection();
-		$errors = false;
-
-		if(!isset($params['savedata']) || $params['savedata'] !== "Y")
+		if (\Bitrix\Main\Loader::includeModule($this->MODULE_ID))
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/db/".$connection->getType()."/uninstall.sql");
+			\Bitrix\SalesCenter\Integration\ImManager::unInstallApplication();
 		}
 
-		if($errors !== false)
-		{
-			$APPLICATION->ThrowException(implode("", $errors));
-			return false;
-		}
-
-		UnRegisterModule($this->MODULE_ID);
 		return true;
 	}
 }

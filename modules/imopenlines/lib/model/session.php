@@ -552,11 +552,18 @@ class SessionTable extends DataManager
 			return;
 		}
 
-		$select = self::getSelectFieldsPerformance();
-		$select['CONFIG_LINE_NAME'] = 'CONFIG.LINE_NAME';
-
 		$record = parent::getByPrimary($id, [
-			'select' => $select
+			'select' => [
+				'CRM_ACTIVITY_ID',
+				'CHAT_ID',
+				'CLOSED',
+				'OPERATOR_ID',
+				'USER_ID',
+				'START_ID',
+				'END_ID',
+				'EXTRA_URL',
+				'ID',
+			]
 		])->fetch();
 		if (!is_array($record))
 		{

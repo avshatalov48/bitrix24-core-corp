@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Sign\Access\Model\UserModelRepository;
 use Bitrix\Sign\Access\Service\AccessService;
 use Bitrix\Sign\Service;
 use Bitrix\Sign\Config;
@@ -553,6 +554,12 @@ return [
 			],
 			'sign.service.preset.templates' => [
 				'className' => Service\Sign\PresetTemplatesService::class,
+			],
+			'sign.repository.access.userModel' => [
+				'className' => UserModelRepository::class,
+			],
+			'sign.access.controller.factory' => [
+				'className' => \Bitrix\Sign\Access\AccessController\AccessControllerFactory::class,
 			],
 		]
 	],

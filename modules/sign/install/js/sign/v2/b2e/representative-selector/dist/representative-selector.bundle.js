@@ -34,16 +34,12 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _onChangeButtonClickHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onChangeButtonClickHandler");
 	var _showItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showItem");
 	var _onSelectorItemSelectedHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSelectorItemSelectedHandler");
-	var _onSelectorItemDeselectedHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSelectorItemDeselectedHandler");
 	var _refreshView = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("refreshView");
 	class RepresentativeSelector {
 	  constructor(options = {}) {
 	    var _options$context;
 	    Object.defineProperty(this, _refreshView, {
 	      value: _refreshView2
-	    });
-	    Object.defineProperty(this, _onSelectorItemDeselectedHandler, {
-	      value: _onSelectorItemDeselectedHandler2
 	    });
 	    Object.defineProperty(this, _onSelectorItemSelectedHandler, {
 	      value: _onSelectorItemSelectedHandler2
@@ -214,6 +210,10 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  getRepresentativeId() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].id;
 	  }
+	  onSelectorItemDeselectedHandler(event) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].id = null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _onSelectorItemSelectedHandler)[_onSelectorItemSelectedHandler](event);
+	  }
 	}
 	function _setInfoState2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].info.container.style.display = 'flex';
@@ -231,7 +231,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  BX.bind(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].changeBtn.element, 'click', () => babelHelpers.classPrivateFieldLooseBase(this, _onChangeButtonClickHandler)[_onChangeButtonClickHandler]());
 	  BX.bind(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].select.button, 'click', () => babelHelpers.classPrivateFieldLooseBase(this, _onChangeButtonClickHandler)[_onChangeButtonClickHandler]());
 	  babelHelpers.classPrivateFieldLooseBase(this, _userSelector)[_userSelector].subscribe(sign_v2_b2e_userSelector.UserSelectorEvent.onItemSelect, event => babelHelpers.classPrivateFieldLooseBase(this, _onSelectorItemSelectedHandler)[_onSelectorItemSelectedHandler](event));
-	  babelHelpers.classPrivateFieldLooseBase(this, _userSelector)[_userSelector].subscribe(sign_v2_b2e_userSelector.UserSelectorEvent.onItemDeselect, event => babelHelpers.classPrivateFieldLooseBase(this, _onSelectorItemDeselectedHandler)[_onSelectorItemDeselectedHandler](event));
+	  babelHelpers.classPrivateFieldLooseBase(this, _userSelector)[_userSelector].subscribe(sign_v2_b2e_userSelector.UserSelectorEvent.onItemDeselect, event => this.onSelectorItemDeselectedHandler(event));
 	}
 	function _onChangeButtonClickHandler2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _userSelector)[_userSelector].getDialog().setTargetNode(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].container.firstElementChild);
@@ -262,17 +262,13 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	}
 	function _onSelectorItemSelectedHandler2(event) {
 	  var _event$data;
-	  if (!((_event$data = event.data) != null && _event$data.items) || event.data.items.length === 0) {
+	  if (!(event != null && (_event$data = event.data) != null && _event$data.items) || event.data.items.length === 0) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].id = null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _setEmptyState)[_setEmptyState]();
 	    return;
 	  }
 	  const item = event.data.items[0];
 	  babelHelpers.classPrivateFieldLooseBase(this, _showItem)[_showItem](item);
-	}
-	function _onSelectorItemDeselectedHandler2(event) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].id = null;
-	  babelHelpers.classPrivateFieldLooseBase(this, _onSelectorItemSelectedHandler)[_onSelectorItemSelectedHandler](event);
 	}
 	function _refreshView2() {
 	  var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3;

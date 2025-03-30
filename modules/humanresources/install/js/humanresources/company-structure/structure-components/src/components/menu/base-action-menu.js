@@ -1,7 +1,7 @@
 import { BasePopup } from '../popup/base-popup';
 import type { PopupOptions } from 'main.popup';
 
-import "./styles/base-action-menu.css";
+import './styles/base-action-menu.css';
 
 export const BaseActionMenuPropsMixin = {
 	props: {
@@ -17,6 +17,10 @@ export const BaseActionMenuPropsMixin = {
 			type: Array,
 			required: true,
 			default: [],
+		},
+		titleBar: {
+			type: String,
+			required: false,
 		},
 	},
 };
@@ -37,6 +41,19 @@ export const BaseActionMenu = {
 			required: false,
 			default: true,
 		},
+		angleOffset: {
+			type: Number,
+			required: false,
+			default: 0,
+		},
+		titleBar: {
+			type: String,
+			required: false,
+		},
+		className: {
+			type: String,
+			required: false,
+		},
 	},
 
 	emits: ['action', 'close'],
@@ -47,7 +64,7 @@ export const BaseActionMenu = {
 	computed: {
 		popupConfig(): PopupOptions
 		{
-			return {
+			const options = {
 				width: this.width,
 				bindElement: this.bindElement,
 				borderRadius: 12,
@@ -56,6 +73,23 @@ export const BaseActionMenu = {
 				padding: 0,
 				offsetTop: 4,
 			};
+
+			if (this.angleOffset >= 0)
+			{
+				options.angleOffset = this.angleOffset;
+			}
+
+			if (this.titleBar)
+			{
+				options.titleBar = this.titleBar;
+			}
+
+			if (this.className)
+			{
+				options.className = this.className;
+			}
+
+			return options;
 		},
 	},
 
@@ -76,19 +110,19 @@ export const BaseActionMenu = {
 		close(): void
 		{
 			this.$emit('close');
-		}
+		},
 	},
 
 	template: `
 		<BasePopup
 			:config="popupConfig"
-            v-slot="{closePopup}"
+			v-slot="{closePopup}"
 			:id="id"
 			@close="close"
 		>
-		  <div class="hr-structure-components-action-menu-container">
+			<div class="hr-structure-components-action-menu-container">
 			<template v-for="(item, index) in items">
-				<div 
+				<div
 					class="hr-structure-components-action-menu-item-wrapper"
 					:class="{ '--disabled': item.disabled ?? false }"
 					@click="onItemClick($event, item, closePopup)"
@@ -99,7 +133,7 @@ export const BaseActionMenu = {
 					class="hr-structure-action-popup-menu-item-delimiter"
 				></span>
 			</template>
-		  </div>
+			</div>
 		</BasePopup>
 	`,
-}
+};

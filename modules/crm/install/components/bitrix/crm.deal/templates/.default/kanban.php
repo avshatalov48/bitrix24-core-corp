@@ -8,6 +8,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\UI\NavigationBarPanel;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 
 // js/css
@@ -317,3 +318,5 @@ else
 		['HIDE_ICONS' => 'Y']
 	);
 }
+
+echo (\Bitrix\Crm\Tour\AiPreset::getInstance()->build());

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Internals\Repository\ORM;
 
 use Bitrix\Booking\Entity;
-use Bitrix\Booking\Exception\Resource\ResourceSlotException;
+use Bitrix\Booking\Internals\Exception\Resource\ResourceSlotException;
 use Bitrix\Booking\Internals\Model\ResourceSettingsTable;
 use Bitrix\Booking\Internals\Repository\ORM\Mapper\ResourceSlotMapper;
 use Bitrix\Booking\Internals\Repository\ResourceSlotRepositoryInterface;

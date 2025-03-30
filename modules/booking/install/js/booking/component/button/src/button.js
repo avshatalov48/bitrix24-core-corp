@@ -2,8 +2,8 @@ import { Button as UIButton, ButtonColor, ButtonSize, ButtonState, ButtonIcon } 
 import { Type } from 'main.core';
 
 export const Button = {
-	emits: ['click'],
 	name: 'UiButton',
+	emits: ['click'],
 	props: {
 		text: {
 			type: String,
@@ -91,10 +91,11 @@ export const Button = {
 			},
 		},
 		disabled: {
-			handler(disabled): void
+			async handler(disabled): void
 			{
-				this.button?.setDisabled(disabled === false);
-				this.button?.setDisabled(disabled === true);
+				await this.$nextTick(() => {
+					this.button?.setDisabled(Boolean(disabled));
+				});
 			},
 			immediate: true,
 		},

@@ -2,7 +2,7 @@ import { Loc, Type } from 'main.core';
 import { BuilderModel } from 'ui.vue3.vuex';
 import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
 
-import { Model } from 'booking.const';
+import { Model, NotificationFieldsMap } from 'booking.const';
 import { SlotRange } from 'booking.model.resources';
 import { getEmptyResource, getResource } from './lib';
 import type {
@@ -35,6 +35,7 @@ export class ResourceCreationWizardModel extends BuilderModel
 			isCompanyScheduleAccess: false,
 			weekStart: 'Mon',
 			globalSchedule: false,
+			checkedForAll: {},
 		};
 	}
 
@@ -76,6 +77,8 @@ export class ResourceCreationWizardModel extends BuilderModel
 			isCompanyScheduleAccess: (state): boolean => state.isCompanyScheduleAccess,
 			/** @function resource-creation-wizard/weekStart */
 			weekStart: (state): boolean => state.weekStart,
+			/** @function resource-creation-wizard/isCheckedForAll */
+			isCheckedForAll: (state) => (type: string): boolean => state.checkedForAll[type] ?? true,
 		};
 	}
 
@@ -146,8 +149,22 @@ export class ResourceCreationWizardModel extends BuilderModel
 				commit('setAdvertisingResourceTypes', advertisingResourceType);
 			},
 			/** @function resource-creation-wizard/updateResource */
-			updateResource({ commit }, patch: Partial<ResourceModel>): void
+			updateResource({ commit, rootGetters }, patch: Partial<ResourceModel>): void
 			{
+				if (patch.typeId)
+				{
+					const resourceType = rootGetters[`${Model.ResourceTypes}/getById`](patch.typeId);
+					const notifications = [
+						...Object.values(NotificationFieldsMap.NotificationOn),
+						...Object.values(NotificationFieldsMap.TemplateType),
+					].reduce((acc: Partial<ResourceModel>, field: $Keys<ResourceModel>) => ({
+						...acc,
+						[field]: resourceType[field],
+					}), {});
+
+					Object.assign(patch, notifications);
+				}
+
 				commit('updateResource', patch);
 			},
 			/** @function resource-creation-wizard/setCompanyScheduleSlots */
@@ -191,6 +208,11 @@ export class ResourceCreationWizardModel extends BuilderModel
 			setWeekStart({ commit }, weekStart: string): void
 			{
 				commit('setWeekStart', weekStart);
+			},
+			/** @function resource-creation-wizard/setCheckedForAll */
+			setCheckedForAll({ commit }, { type, isChecked }: { type: string, isChecked: boolean }): void
+			{
+				commit('setCheckedForAll', { type, isChecked });
 			},
 		};
 	}
@@ -254,6 +276,10 @@ export class ResourceCreationWizardModel extends BuilderModel
 			setWeekStart(state, weekStart: string): void
 			{
 				state.weekStart = weekStart;
+			},
+			setCheckedForAll(state, { type, isChecked }: { type: string, isChecked: boolean }): void
+			{
+				state.checkedForAll[type] = isChecked;
 			},
 		};
 	}

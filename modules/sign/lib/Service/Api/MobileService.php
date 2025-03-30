@@ -50,6 +50,34 @@ class MobileService
 		return $response;
 	}
 
+	public function acceptReview(Item\Api\Mobile\Signing\ReviewRequest $request): Item\Api\Mobile\Signing\ReviewResponse
+	{
+		$result = new Main\Result();
+
+		if (empty($request->documentUid))
+		{
+			$result->addError(new Main\Error('Request: field `documentUid` is empty'));
+		}
+
+		if (empty($request->memberUid))
+		{
+			$result->addError(new Main\Error('Request: field `memberUid` is empty'));
+		}
+
+		if ($result->isSuccess())
+		{
+			$result = $this->api->post(
+				"v1/b2e.document.reviewer.accept/$request->documentUid/$request->memberUid/",
+				$this->serializer->serialize($request)
+			);
+		}
+
+		$response = new Item\Api\Mobile\Signing\ReviewResponse();
+		$response->addErrors($result->getErrors());
+
+		return $response;
+	}
+
 	public function refuseSigning(Item\Api\Mobile\Signing\RefuseRequest $request): Item\Api\Mobile\Signing\RefuseResponse
 	{
 		$result = new Main\Result();

@@ -1,0 +1,33 @@
+.hr-department-detail-content__list-header-button {
+	position: relative;
+	font-family: var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-medium);
+	font-size: var(--ui-font-size-3xs);
+	line-height: var(--ui-font-line-height-sm);
+	color: var(--ui-color-palette-gray-90);
+	padding-right: 16px;
+	padding-left: 8px;
+	height: 18px;
+	background: none;
+	border: none;
+	border-radius: var(--ui-border-radius-lg);
+}
+
+.hr-department-detail-content__list-header-button::before {
+	content: '';
+	position: absolute;
+	width: 8px;
+	height: 4px;
+	background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOCIgaGVpZ2h0PSI0IiB2aWV3Qm94PSIwIDAgOCA0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBvcGFjaXR5PSIwLjYiIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNMCAwSDhMNCA0TDAgMFoiIGZpbGw9IiM4MjhCOTUiLz4KPC9zdmc+Cg==');
+	right: 4px;
+	top: 6px;
+}
+
+.hr-department-detail-content__list-header-button.--focused,
+.hr-department-detail-content__list-header-button:hover {
+	background-color: var(--ui-color-palette-gray-10);
+}
+
+.hr-department-detail-content__list-header-button.--focused::before {
+	transform: rotate(180deg);
+}

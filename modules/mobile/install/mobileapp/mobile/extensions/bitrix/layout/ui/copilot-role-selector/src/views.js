@@ -86,6 +86,7 @@ jn.define('layout/ui/copilot-role-selector/src/views', (require, exports, module
 							color: AppTheme.colors.base4,
 							fontSize: 15,
 							fontWeight: '400',
+							marginTop: 6,
 						},
 						text: item.description,
 					}),

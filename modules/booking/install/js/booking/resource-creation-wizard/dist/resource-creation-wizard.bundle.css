@@ -137,10 +137,6 @@
 	font-size: var(--ui-font-size-2xl);
 }
 
-.booking--resource-category-card__header__sub-title {
-	letter-spacing: -0.2px;
-}
-
 .resource-category-card__content {
 	padding: 14px 10px;
 }
@@ -184,6 +180,7 @@
 	padding: 10px;
 	border-color: var(--ui-color-palette-gray-10);
 }
+
 .resource-creation-wizard__form-notification-info-switcher {
 	margin-left: auto;
 }
@@ -205,12 +202,11 @@
 
 .resource-creation-wizard__form-notification-info-title {
 	color: var(--ui-color-palette-black-solid);
-	font-size: 18px;
-	font-weight: 400;
-	text-align: left;
+	font-size: var(--ui-font-size-2xl);
+	transition: color 200ms;
 }
 
-.resource-creation-wizard__form-notification-info-title.--disabled {
+.resource-creation-wizard__form-notification.--disabled .resource-creation-wizard__form-notification-info-title {
 	color: var(--ui-color-palette-gray-90);
 }
 
@@ -219,7 +215,7 @@
 	--ui-icon-set__icon-color: var(--ui-color-primary);
 }
 
-.resource-creation-wizard__form-notification-info-title-row .ui-icon-set.--disabled {
+.resource-creation-wizard__form-notification.--disabled .resource-creation-wizard__form-notification-info-title-row .ui-icon-set {
 	--ui-icon-set__icon-color: var(--ui-color-palette-gray-30);
 }
 
@@ -230,7 +226,6 @@
 
 .resource-creation-wizard__form-notification-text-row {
 	display: flex;
-	flex-direction: row;
 }
 
 .resource-creation-wizard__form-notification-text-row-icon {
@@ -262,21 +257,24 @@
 .resource-creation-wizard__form-notification-text {
 	align-self: center;
 	color: var(--ui-color-palette-gray-90);
-	font-size: 13px;
-	font-weight: 400;
-	line-height: 15px;
-	text-align: left;
+	font-size: var(--ui-font-size-sm);
 }
 
 .resource-creation-wizard__form-notification-info-template {
 	display: block;
 	padding: 10px 0 10px;
+	transition: opacity 200ms, filter 200ms;
 }
 
 .resource-creation-wizard__form-notification-text.--more,
 .resource-creation-wizard__form-notification-info-template span {
 	color: var(--ui-color-link-primary-base);
 	cursor: pointer;
+}
+
+.resource-creation-wizard__form-notification.--disabled .resource-creation-wizard__form-notification-info-template {
+	opacity: 0.5;
+	filter: grayscale(1);
 }
 
 .notification-label {
@@ -296,24 +294,15 @@
 	margin-top: 10px;
 }
 
+.booking-resource-creation-wizard-choose-template-button {
+	max-width: -webkit-max-content;
+	max-width: max-content;
+}
+
 .resource-creation-wizard__form-notification-info-template-choose-buttons button {
 	text-transform: initial;
 	font-size: var(--ui-font-size-md);
 	font-weight: var(--ui-font-weight-regular);
-}
-
-.resource-creation-wizard__form-notification__info-text-row-message-text .channel-menu-btn {
-	font-weight: var(--ui-font-weight-normal);
-	text-transform: initial;
-	border-bottom: 1px dotted;
-	border-top: 0;
-	border-left: 0;
-	border-right: 0;
-	cursor: pointer;
-	background: none;
-	border-radius: 0;
-	color: var(--ui-color-palette-gray-60);
-	font-size: var(--ui-font-size-sm);
 }
 
 .rcw__resource-type {
@@ -457,6 +446,9 @@
 }
 
 .booking--rcw--schedule-item-text-description {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
 	font-size: var(--ui-font-size-sm);
 }
 
@@ -525,11 +517,6 @@
 .resource-creation-wizard__form-settings-text {
 	color: var(--ui-color-palette-gray-90);
 	font-size: var(--ui-font-size-sm);
-}
-
-.resource-creation-wizard__form-settings-text span {
-	color: var(--ui-color-link-primary-base);
-	cursor: pointer;
 }
 
 .resource-creation-wizard__form-work-time-selector {
@@ -616,163 +603,6 @@
 
 .resource-creation-wizard__form-slot-length-precision {
 	margin-top: 14px;
-}
-
-.booking-resource-wizard-choose-template-popup-header-title {
-	font-size: var(--ui-font-size-2xl);
-	font-weight: var(--ui-font-weight-medium);
-	display: flex;
-	justify-content: space-between;
-}
-
-.booking-resource-wizard-choose-template-popup-header-title {
-	font-size: var(--ui-font-size-2xl);
-	font-weight: var(--ui-font-weight-medium);
-}
-
-.booking-resource-wizard-choose-template-popup-header-title .channel-menu-btn {
-	font-weight: var(--ui-font-weight-normal);
-	text-transform: initial;
-}
-
-.booking-resource-wizard-choose-template-popup-header-title .--close-btn:hover {
-	cursor: pointer;
-}
-
-.booking-resource-wizard-choose-template-popup-header-line {
-	margin-top: 10px;
-	margin-bottom: 10px;
-	border: 1px solid var(--ui-color-palette-gray-10);
-}
-
-.booking-resource-wizard-choose-template-popup-container {
-	max-height: 450px;
-	overflow-y: auto;
-}
-
-.booking-resource-wizard-choose-template-popup-content {
-	margin-bottom: 10px;
-}
-
-.booking-resource-wizard-choose-template-popup-content-title {
-	font-size: var(--ui-font-size-2xl);
-	font-weight: var(--ui-font-weight-medium);
-}
-
-.booking-resource-wizard-choose-template-popup-content-desc {
-	font-size: var(--ui-font-size-lg);
-	font-weight: var(--ui-font-weight-normal);
-	color: var(--ui-color-palette-gray-60);
-}
-
-.booking-resource-wizard-choose-template-popup-content-msg-example {
-	margin-top: 10px;
-	border: 1px solid var(--ui-color-palette-gray-15);
-	border-radius: var(--ui-border-radius-xl);
-}
-
-.booking-resource-wizard-choose-template-popup-content-msg-example-body {
-	color: var(--ui-color-palette-black-solid);
-	font-size: var(--ui-font-size-sm);
-	font-weight: var(--ui-font-weight-normal);
-
-	padding: 12px;
-	border-top-left-radius: var(--ui-border-radius-lg);
-	border-top-right-radius: var(--ui-border-radius-lg);
-
-}
-
-.booking-resource-wizard-choose-template-popup-content-msg-example-body.wha {
-	overflow: hidden;
-	background: url('../images/whatsapp-msg-bg.svg') no-repeat;
-	background-size: cover;
-}
-
-.booking-resource-wizard-choose-template-popup-content-msg-example-body-text {
-	padding-top: 7px;
-	padding-bottom: 12px;
-	padding-left: 7px;
-	padding-right: 7px;
-	border-radius: 8px;
-	justify-content: center;
-	align-items: center;
-	gap: 10px;
-	display: inline-flex;
-}
-
-.booking-resource-wizard-choose-template-popup-content-msg-example-body-text.wha {
-	background: var(--ui-color-palette-white-base);
-	box-shadow: 0 1px 7px rgba(0, 0, 0, 0.14);
-}
-
-.booking-resource-wizard-choose-template-popup-content-msg-example-body-text.sms {
-	background: var(--ui-color-palette-gray-15);
-	border-radius: 16px;
-	padding-left: 14px;
-	padding-right: 14px;
-}
-
-.booking-resource-wizard-choose-template-popup-content-msg-example-body-text-tail.wha {
-	display: none;
-}
-
-.booking-resource-wizard-choose-template-popup-content-msg-example-body-text-tail.sms {
-	width: 19px;
-	height: 19px;
-	background: url('../images/tail.svg') no-repeat;
-	margin-top: -15px;
-	margin-left: -5px;
-}
-
-
-.booking-resource-wizard-choose-template-popup-content-msg-example-body-text-time.wha {
-	display: block;
-	text-align: right;
-	color: var(--ui-color-palette-gray-60);
-	font-size: var(--ui-font-size-3xs);
-	font-weight: var(--ui-font-weight-normal);
-	word-wrap: break-word;
-	align-self: flex-end;
-}
-
-.booking-resource-wizard-choose-template-popup-content-msg-example-body-text-time.sms {
-	display: none;
-}
-
-
-
-.booking-resource-wizard-choose-template-popup-content-msg-example-actions {
-	padding-left: 12px;
-	padding-top: 10px;
-	padding-bottom: 10px;
-	justify-content: flex-start;
-	align-items: flex-start;
-	gap: 6px;
-	display: inline-flex;
-}
-
-.booking-resource-wizard-choose-template-popup-content-msg-example-actions button.--selected {
-	background: none;
-	border: 0;
-	padding-left: 0;
-}
-
-.booking-resource-creation-wizard-message-template-empty {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	padding: 27px;
-}
-
-.booking-resource-creation-wizard-message-template-empty-icon {
-	width: 110px;
-	height: 93px;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg viewBox='0 0 110 93' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d_2685_137577)'%3E%3Cmask id='a' fill='%23fff'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M27.123 13.423c-6.627 0-12 5.372-12 12v28.883c0 6.628 5.373 12 12 12h4.312v10.096c0 2.554 2.987 3.94 4.937 2.29l14.641-12.386h32.105c6.627 0 12-5.372 12-12V25.423c0-6.628-5.373-12-12-12H27.123z'/%3E%3C/mask%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M27.123 13.423c-6.627 0-12 5.372-12 12v28.883c0 6.628 5.373 12 12 12h4.312v10.096c0 2.554 2.987 3.94 4.937 2.29l14.641-12.386h32.105c6.627 0 12-5.372 12-12V25.423c0-6.628-5.373-12-12-12H27.123z' fill='%23fff'/%3E%3Cpath d='M31.435 66.306h1v-1h-1v1zm4.937 12.386l.646.764-.646-.764zm14.641-12.386v-1h-.366l-.28.237.646.763zm-34.89-40.883c0-6.075 4.925-11 11-11v-2c-7.18 0-13 5.82-13 13h2zm0 28.883V25.423h-2v28.883h2zm11 11c-6.075 0-11-4.925-11-11h-2c0 7.18 5.82 13 13 13v-2zm4.312 0h-4.312v2h4.312v-2zm1 11.096V66.306h-2v10.096h2zm3.291 1.527c-1.3 1.1-3.291.175-3.291-1.527h-2c0 3.405 3.983 5.253 6.583 3.053l-1.292-1.526zm14.641-12.386l-14.64 12.386 1.291 1.526L51.659 67.07l-1.292-1.527zm32.75-.237H51.014v2h32.105v-2zm11-11c0 6.075-4.924 11-11 11v2c7.18 0 13-5.82 13-13h-2zm0-28.883v28.883h2V25.423h-2zm-11-11c6.076 0 11 4.925 11 11h2c0-7.18-5.82-13-13-13v2zm-55.994 0h55.995v-2H27.123v2z' fill='%231EC6FA' fill-opacity='.5' mask='url(%23a)'/%3E%3C/g%3E%3Crect opacity='.33' x='26' y='24' width='47.467' height='4.989' rx='2.495' fill='%232FC6F6'/%3E%3Crect opacity='.33' x='26' y='34.977' width='44.155' height='4.989' rx='2.495' fill='%232FC6F6'/%3E%3Crect opacity='.33' x='26' y='45.953' width='26.493' height='4.989' rx='2.495' fill='%232FC6F6'/%3E%3Cdefs%3E%3Cfilter id='filter0_d_2685_137577' x='11.286' y='12.783' width='87.669' height='73.659' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='3.198'/%3E%3CfeGaussianBlur stdDeviation='1.919'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0.294033 0 0 0 0 0.3875 0 0 0 0.06 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_2685_137577'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_2685_137577' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
-}
-
-.booking-resource-creation-wizard-message-template-empty-text {
-	color: var(--ui-color-base-50);
-	font-size: var(--ui-font-size-lg);
 }
 
 .resource-creation-wizard__form-work-time-selector-widget {
@@ -911,26 +741,162 @@
 	opacity: .4;
 	pointer-events: none;
 }
-.booking-choose-channel-menu .menu-popup-item.menu-item-divider {
-	height: 15px;
-	width: 100%;
+.booking-resource-creation-wizard-channel-menu-button {
+	height: -webkit-max-content;
+	height: max-content;
+	border-bottom: 1px dashed var(--ui-color-base-30);
+	color: var(--ui-color-base-60);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	cursor: pointer;
 }
 
-.booking-choose-channel-menu .menu-popup-item.menu-item-divider::before {
-	position: absolute;
+.booking-resource-wizard-choose-template-popup-header-title {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.booking-resource-wizard-choose-template-popup-header-title .ui-icon-set {
+	cursor: pointer;
+}
+
+.booking-resource-wizard-choose-template-popup-header-line {
+	margin-top: 10px;
+	margin-bottom: 10px;
+	border: 1px solid var(--ui-color-palette-gray-10);
+}
+
+.booking-resource-wizard-choose-template-popup-container {
+	max-height: 450px;
+	overflow-y: auto;
+}
+
+.booking-resource-wizard-choose-template-popup-content {
+	margin-bottom: 10px;
+}
+
+.booking-resource-wizard-choose-template-popup-content-title {
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.booking-resource-wizard-choose-template-popup-content-desc {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-palette-gray-60);
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example {
+	margin-top: 10px;
+	border: 1px solid var(--ui-color-palette-gray-15);
+	border-radius: var(--ui-border-radius-xl);
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-body {
+	color: var(--ui-color-palette-black-solid);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+
+	padding: 12px;
+	border-top-left-radius: var(--ui-border-radius-lg);
+	border-top-right-radius: var(--ui-border-radius-lg);
+
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-body.wha {
+	overflow: hidden;
+	background: url('../images/whatsapp-msg-bg.svg') no-repeat;
+	background-size: cover;
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-body-text {
+	padding-top: 7px;
+	padding-bottom: 12px;
+	padding-left: 7px;
+	padding-right: 7px;
+	border-radius: 8px;
+	justify-content: center;
+	align-items: center;
+	gap: 10px;
+	display: inline-flex;
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-body-text.wha {
+	background: var(--ui-color-palette-white-base);
+	box-shadow: 0 1px 7px rgba(0, 0, 0, 0.14);
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-body-text.sms {
+	background: var(--ui-color-palette-gray-15);
+	border-radius: 16px;
+	padding-left: 14px;
+	padding-right: 14px;
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-body-text-tail.wha {
+	display: none;
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-body-text-tail.sms {
+	width: 19px;
+	height: 19px;
+	background: url('../images/tail.svg') no-repeat;
+	margin-top: -15px;
+	margin-left: -5px;
+}
+
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-body-text-time.wha {
 	display: block;
-	top: 50%;
-	left: 0;
-	width: 100%;
-	content: "";
-	border-top: 1px solid rgba(0, 0, 0, 0.1);
+	text-align: right;
+	color: var(--ui-color-palette-gray-60);
+	font-size: var(--ui-font-size-3xs);
+	font-weight: var(--ui-font-weight-normal);
+	word-wrap: break-word;
+	align-self: flex-end;
 }
 
-.channel-menu-btn {
-	height: 21px;
-	border: 1px solid var(--ui-color-palette-blue-40);
-	background: var(--ui-color-palette-blue-15);
-	max-width: 104px;
+.booking-resource-wizard-choose-template-popup-content-msg-example-body-text-time.sms {
+	display: none;
+}
+
+
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-actions {
+	padding-left: 12px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	justify-content: flex-start;
+	align-items: flex-start;
+	gap: 6px;
+	display: inline-flex;
+}
+
+.booking-resource-wizard-choose-template-popup-content-msg-example-actions button.--selected {
+	background: none;
+	border: 0;
+	padding-left: 0;
+}
+
+.booking-resource-creation-wizard-message-template-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 27px;
+}
+
+.booking-resource-creation-wizard-message-template-empty-icon {
+	width: 110px;
+	height: 93px;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg viewBox='0 0 110 93' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d_2685_137577)'%3E%3Cmask id='a' fill='%23fff'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M27.123 13.423c-6.627 0-12 5.372-12 12v28.883c0 6.628 5.373 12 12 12h4.312v10.096c0 2.554 2.987 3.94 4.937 2.29l14.641-12.386h32.105c6.627 0 12-5.372 12-12V25.423c0-6.628-5.373-12-12-12H27.123z'/%3E%3C/mask%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M27.123 13.423c-6.627 0-12 5.372-12 12v28.883c0 6.628 5.373 12 12 12h4.312v10.096c0 2.554 2.987 3.94 4.937 2.29l14.641-12.386h32.105c6.627 0 12-5.372 12-12V25.423c0-6.628-5.373-12-12-12H27.123z' fill='%23fff'/%3E%3Cpath d='M31.435 66.306h1v-1h-1v1zm4.937 12.386l.646.764-.646-.764zm14.641-12.386v-1h-.366l-.28.237.646.763zm-34.89-40.883c0-6.075 4.925-11 11-11v-2c-7.18 0-13 5.82-13 13h2zm0 28.883V25.423h-2v28.883h2zm11 11c-6.075 0-11-4.925-11-11h-2c0 7.18 5.82 13 13 13v-2zm4.312 0h-4.312v2h4.312v-2zm1 11.096V66.306h-2v10.096h2zm3.291 1.527c-1.3 1.1-3.291.175-3.291-1.527h-2c0 3.405 3.983 5.253 6.583 3.053l-1.292-1.526zm14.641-12.386l-14.64 12.386 1.291 1.526L51.659 67.07l-1.292-1.527zm32.75-.237H51.014v2h32.105v-2zm11-11c0 6.075-4.924 11-11 11v2c7.18 0 13-5.82 13-13h-2zm0-28.883v28.883h2V25.423h-2zm-11-11c6.076 0 11 4.925 11 11h2c0-7.18-5.82-13-13-13v2zm-55.994 0h55.995v-2H27.123v2z' fill='%231EC6FA' fill-opacity='.5' mask='url(%23a)'/%3E%3C/g%3E%3Crect opacity='.33' x='26' y='24' width='47.467' height='4.989' rx='2.495' fill='%232FC6F6'/%3E%3Crect opacity='.33' x='26' y='34.977' width='44.155' height='4.989' rx='2.495' fill='%232FC6F6'/%3E%3Crect opacity='.33' x='26' y='45.953' width='26.493' height='4.989' rx='2.495' fill='%232FC6F6'/%3E%3Cdefs%3E%3Cfilter id='filter0_d_2685_137577' x='11.286' y='12.783' width='87.669' height='73.659' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='3.198'/%3E%3CfeGaussianBlur stdDeviation='1.919'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0.294033 0 0 0 0 0.3875 0 0 0 0.06 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_2685_137577'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_2685_137577' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
+}
+
+.booking-resource-creation-wizard-message-template-empty-text {
+	color: var(--ui-color-base-50);
+	font-size: var(--ui-font-size-lg);
 }
 
 .resource-creation-wizard__form-week-days-popup {

@@ -67,6 +67,11 @@
 		BX.Disk.Viewer.Actions.runActionEdit(paramsToEdit);
 	};
 
+	BX.Disk.Viewer.Actions.openInNewTab = function (item, params, additionalParams)
+	{
+		window.open(params.url, '_blank').focus();
+	};
+
 	BX.Disk.Viewer.Actions.runActionEdit = function (params)
 	{
 		params = params || {};

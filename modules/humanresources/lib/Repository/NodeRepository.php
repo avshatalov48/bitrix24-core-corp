@@ -91,17 +91,17 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			type: NodeEntityType::tryFrom($node['TYPE']),
 			structureId: $node['STRUCTURE_ID'],
 			accessCode: $node['HUMANRESOURCES_MODEL_NODE_ACCESS_CODE_ACCESS_CODE'],
-			id: $node['ID'],
-			parentId: $node['PARENT_ID'],
+			id: $node['ID'] ?? null,
+			parentId: $node['PARENT_ID'] ?? null,
 			depth: $node['HUMANRESOURCES_MODEL_NODE_CHILD_NODES_DEPTH'] ?? null,
-			createdBy: $node['CREATED_BY'],
-			createdAt: $node['CREATED_AT'],
-			updatedAt: $node['UPDATED_AT'],
-			xmlId: $node['XML_ID'],
+			createdBy: $node['CREATED_BY'] ?? null,
+			createdAt: $node['CREATED_AT'] ?? null,
+			updatedAt: $node['UPDATED_AT'] ?? null,
+			xmlId: $node['XML_ID'] ?? null,
 			active: $node['ACTIVE'] === 'Y',
 			globalActive: $node['GLOBAL_ACTIVE'] === 'Y',
-			sort: $node['SORT'],
-			description: $node['DESCRIPTION'],
+			sort: $node['SORT'] ?? 500,
+			description: $node['DESCRIPTION'] ?? null,
 		);
 	}
 
@@ -460,7 +460,12 @@ class NodeRepository implements Contract\Repository\NodeRepository
 
 		if (is_int($depthLevel))
 		{
-			$nodeQuery->where('CHILD_NODES.DEPTH', $depthLevel);
+			if ($node->depth === null)
+			{
+				$node = $this->getById($node->id, true);
+			}
+
+			$nodeQuery->where('CHILD_NODES.DEPTH', '>=', $node->depth - $depthLevel);
 		}
 
 		$nodeModelCollection = $nodeQuery->fetchAll();
@@ -509,7 +514,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 
 		if (is_int($depthLevel))
 		{
-			$nodeQuery->where('CHILD_NODES.DEPTH', $depthLevel);
+			$nodeQuery->where('CHILD_NODES.DEPTH', '<=', $depthLevel);
 		}
 
 		$nodeQuery = $this->setNodeActiveFilter($nodeQuery, $activeFilter);
@@ -914,7 +919,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 
 		if (is_int($depthLevel))
 		{
-			$nodeQuery->where('CHILD_NODES.DEPTH', $depthLevel);
+			$nodeQuery->where('CHILD_NODES.DEPTH', '<=', $depthLevel);
 		}
 
 		$nodeQuery = $this->setNodeActiveFilter($nodeQuery, $activeFilter);
@@ -1036,7 +1041,14 @@ class NodeRepository implements Contract\Repository\NodeRepository
 		}
 
 		$query = NodeTable::query()
-			->setSelect(['*'])
+			->setSelect([
+				'ID',
+				'TYPE',
+				'STRUCTURE_ID',
+				'ACTIVE',
+				'GLOBAL_ACTIVE',
+				'NAME'
+			])
 			->addSelect('ACCESS_CODE')
 			->addSelect('CHILD_NODES')
 			->whereIn('ID', $departmentIds)

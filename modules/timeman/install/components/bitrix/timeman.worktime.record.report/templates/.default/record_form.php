@@ -62,6 +62,16 @@ $APPLICATION->IncludeComponent(
 		>
 		<input
 			type="hidden"
+			value="<?= htmlspecialcharsbx($arResult['FIELD_CELLS']['START']['TIME_PICKER_INIT_DATE'] ?? '') ?>"
+			data-role="state-start-date"
+		>
+		<input
+			type="hidden"
+			value="<?= htmlspecialcharsbx($arResult['FIELD_CELLS']['END']['TIME_PICKER_INIT_DATE'] ?? '') ?>"
+			data-role="state-end-date"
+		>
+		<input
+			type="hidden"
 			name="<?= htmlspecialcharsbx($startTimeInputName); ?>"
 			value="<?= htmlspecialcharsbx($arResult['RECORDED_START_TIME'] ?? '') ?>"
 		>
@@ -115,7 +125,7 @@ $APPLICATION->IncludeComponent(
 								htmlspecialcharsbx($fieldCell['RECORDED_VALUE'])
 								?></span>
 							<? if (isset($fieldCell['DATE'])): ?>
-								<span class="timeman-report-time-item-value-real"><?=
+								<span class="timeman-report-time-item-value-real" data-role="<?= htmlspecialcharsbx($fieldCell['DATA_ROLE']) ?>-real"><?=
 									'(' . htmlspecialcharsbx($fieldCell['DATE']) . ')';
 									?></span>
 							<? endif; ?>

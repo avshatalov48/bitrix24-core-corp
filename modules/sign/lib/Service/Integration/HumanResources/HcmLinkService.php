@@ -93,7 +93,7 @@ class HcmLinkService
 			$job = HumanResources\Service\Container::getHcmLinkJobRepository()->getById($jobId);
 			if (!$job)
 			{
-				return (new Result())->addError(new Error('No jon found','NO_JOB_FOUND'));
+				return (new Result())->addError(new Error('No job found','NO_JOB_FOUND'));
 			}
 
 			if ($job->status === JobStatus::CANCELED)

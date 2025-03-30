@@ -6,7 +6,6 @@ use Bitrix\Disk\Document\TrackedObject;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\Error\IErrorable;
-use Bitrix\Disk\Internals\ObjectPathTable;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\Rights\SetupSession;
 use Bitrix\Disk\Internals\Rights\Table\TmpSimpleRight;
@@ -17,6 +16,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\DB\MysqlCommonConnection;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
+use Bitrix\Main\Event;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Collection;
@@ -1190,6 +1190,15 @@ class RightsManager implements IErrorable
 		}
 
 		Collection::sortByColumn($rights, array('DEPTH_LEVEL' => SORT_DESC));
+
+		$event = new Event('disk', 'OnRetrievingUserRights', ['userId' => $userId, 'objectId' => $objectId, 'rights' => $rights]);
+		$event->send();
+
+		$eventResults = $event->getResults();
+		foreach($eventResults as $eventResult)
+		{
+			$rights = $eventResult->getParameters();
+		}
 
 		return $rights;
 	}

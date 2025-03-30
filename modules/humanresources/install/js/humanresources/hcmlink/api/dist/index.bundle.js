@@ -48,6 +48,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  createUpdateEmployeeListJob(data) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('humanresources.HcmLink.Mapper.start', data, true);
 	  }
+	  getLastJob(data) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('humanresources.HcmLink.Mapper.getLastJob', data, true);
+	  }
+	  cancelJob(data) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('humanresources.HcmLink.Mapper.cancelJob', data, true);
+	  }
 	  createCompleteMappingEmployeeListJob(data) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('humanresources.HcmLink.Mapper.end', data, true);
 	  }

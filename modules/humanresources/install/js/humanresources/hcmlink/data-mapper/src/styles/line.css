@@ -6,22 +6,23 @@
 	color: var(--ui-color-palette-gray-30);
 }
 
-.hr-hcmlink-separator__container {
-	flex: 1;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	padding: 0 15px;
-}
-
 .hr-hcmlink-sync__line-left-container {
 	display: flex;
 	flex-grow: 4;
 	flex-basis: 250px;
 }
 
+.hr-hcmlink-sync__line-right-container.--person {
+	border: 10px solid var(--ui-color-palette-orange-30);
+}
+
+.hr-hcmlink-sync__line-right-container.--user {
+	border: 10px solid var(--ui-color-palette-blue-30);
+}
+
 .hr-hcmlink-sync__line-right-container {
 	display: flex;
 	flex-grow: 4;
-	flex-basis: 250px;
+	flex-basis: 230px;
+	border-radius: 6px;
 }

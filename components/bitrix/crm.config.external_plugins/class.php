@@ -1,9 +1,9 @@
 <?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
 use \Bitrix\Main\Localization\Loc;
-use \Bitrix\Rest\APAuth\PermissionTable;
 use \Bitrix\Rest\APAuth\PasswordTable;
 use \Bitrix\Main\Config\Option;
+use Bitrix\Rest;
 
 class CrmConfigExternalPluginsComponent extends \CBitrixComponent
 {
@@ -117,35 +117,32 @@ class CrmConfigExternalPluginsComponent extends \CBitrixComponent
 		{
 			$plugins = array();
 		}
+
+		$passwordService = Rest\Service\ServiceContainer::getInstance()->getAPAuthPasswordService();
+
 		// enable plugin
 		if ($status && !isset($plugins[$this->id]))
 		{
-			$result = PasswordTable::add(
-				array(
-					'USER_ID' => $this->uid,
-					'PASSWORD' => PasswordTable::generatePassword(),
-					'DATE_CREATE' => new \Bitrix\Main\Type\DateTime(),
-					'TITLE' => $this->id,
-			   )
+			$password = $passwordService->create(
+				new Rest\Dto\APAuth\CreatePasswordDto(
+					userId: $this->uid,
+					type: Rest\Enum\APAuth\PasswordType::System,
+					title: $this->id,
+					comment: '',
+					permissions: ['user', 'crm'],
+				),
 			);
-			if ($result->getId())
-			{
-				PermissionTable::add(array(
-					'PASSWORD_ID' => $result->getId(),
-					'PERM' => 'crm',
-				));
 
-				PermissionTable::add(array(
-					'PASSWORD_ID' => $result->getId(),
-					'PERM' => 'user',
-				));
-				$plugins[$this->id] = $result->getId();
+			if ($password)
+			{
+				$plugins[$this->id] = $password->getId();
 			}
 		}
+
 		// disable plugin
 		if (!$status && isset($plugins[$this->id]))
 		{
-			PasswordTable::delete($plugins[$this->id]);
+			$passwordService->deleteById($plugins[$this->id]);
 			unset($plugins[$this->id]);
 		}
 		// set option

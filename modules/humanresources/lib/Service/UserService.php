@@ -178,6 +178,7 @@ final class UserService implements Contract\Service\UserService
 			'url' => $this->getUserUrl($user),
 			'workPosition' => $user->workPosition,
 			'gender' => $user->personalGender,
+			'isInvited' => $this->isUserInvited($user),
 		];
 	}
 
@@ -193,5 +194,15 @@ final class UserService implements Contract\Service\UserService
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param User $user
+	 *
+	 * @return bool
+	 */
+	public function isUserInvited(User $user): bool
+	{
+		return $user->active && $user->hasConfirmCode;
 	}
 }

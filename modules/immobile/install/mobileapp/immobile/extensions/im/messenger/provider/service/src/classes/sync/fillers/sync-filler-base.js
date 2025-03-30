@@ -40,6 +40,11 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 			this.subscribeEvents();
 		}
 
+		get emitter()
+		{
+			return serviceLocator.get('emitter');
+		}
+
 		bindMethods()
 		{
 			this.onSyncRequestResultReceive = this.onSyncRequestResultReceive.bind(this);

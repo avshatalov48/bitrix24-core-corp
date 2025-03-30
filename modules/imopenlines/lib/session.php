@@ -644,6 +644,7 @@ class Session
 				$eventData['SESSION'] = $this->session;
 				$eventData['RUNTIME_SESSION'] = $this;
 				$eventData['CONFIG'] = $this->config;
+				$eventData['CONNECTOR'] = $params['CONNECTOR'];
 
 				$event = new Main\Event('imopenlines', 'OnSessionStart', $eventData);
 				$event->send();
@@ -682,9 +683,10 @@ class Session
 
 	/**
 	 * @param array $params
+	 * @param bool $sessionOnly
 	 * @return Result
 	 */
-	public function getLast(array $params): Result
+	public function getLast(array $params, bool $sessionOnly = false): Result
 	{
 		$result = new Result();
 
@@ -709,10 +711,14 @@ class Session
 		{
 			$loadSession['SESSION_ID'] = $loadSession['ID'];
 			$this->session = $loadSession;
-			$this->chat = new Chat($this->session['CHAT_ID']);
 
-			$configManager = new Config();
-			$this->config = $configManager->get($loadSession['CONFIG_ID']);
+			if (!$sessionOnly)
+			{
+				$this->chat = new Chat($this->session['CHAT_ID']);
+
+				$configManager = new Config();
+				$this->config = $configManager->get($loadSession['CONFIG_ID']);
+			}
 		}
 		else
 		{

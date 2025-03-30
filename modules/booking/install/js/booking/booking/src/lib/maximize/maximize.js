@@ -17,15 +17,13 @@ const darkThemeClass = 'bitrix24-dark-theme';
 export class Maximize
 {
 	#slider;
-	#label: HTMLElement;
 	#overlay: HTMLElement;
 
 	constructor({ onOverlayClick })
 	{
 		this.onOverlayClick = onOverlayClick;
 		this.#slider = new (BX.SidePanel.Manager.getSliderClass())('');
-		this.#label = this.#renderLabel(this.#slider);
-		this.#overlay = this.#renderOverlay(this.#label);
+		this.#overlay = this.#renderOverlay();
 
 		if (top.BX)
 		{
@@ -44,20 +42,10 @@ export class Maximize
 		}
 	}
 
-	#renderLabel(slider): HTMLElement
-	{
-		slider.getLabel().setOnclick(this.onOverlayClick);
-		Dom.addClass(slider.getLabel().getContainer(), 'booking-booking-slider-label');
-
-		return slider.getLabel().getContainer();
-	}
-
-	#renderOverlay(label: HTMLElement): HTMLElement
+	#renderOverlay(): HTMLElement
 	{
 		return Tag.render`
-			<div class="booking-booking-overlay" onclick="${this.onOverlayClick}">
-				${label}
-			</div>
+			<div class="booking-booking-overlay" onclick="${this.onOverlayClick}"></div>
 		`;
 	}
 
@@ -110,7 +98,7 @@ export class Maximize
 
 		const start = this.#getInset(this.#appContainer);
 		Dom.style(this.#appContainer, 'position', 'fixed');
-		Dom.style(this.#appContainer, 'inset', `0 0 0 ${this.#imBarWidth}px`);
+		Dom.style(this.#appContainer, 'inset', '0 0 0 0');
 		const finish = this.#getInset(this.#appContainer);
 
 		this.#applyMaximizedStyles();
@@ -162,8 +150,6 @@ export class Maximize
 			finish,
 			step: ({ top, right, bottom, left }: Inset) => {
 				Dom.style(this.#appContainer, 'inset', `${top}px ${right}px ${bottom}px ${left}px`);
-				Dom.style(this.#label, 'top', `${top}px`);
-				Dom.style(this.#label, 'left', `${left}px`);
 			},
 			complete,
 		}).animate());

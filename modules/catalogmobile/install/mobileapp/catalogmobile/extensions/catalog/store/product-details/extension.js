@@ -744,6 +744,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 				title: Loc.getMessage('CSPD_OPEN_PRODUCT_IN_DESKTOP_VERSION'),
 				redirectUrl: productUrl || catalogUrl,
 				layout: this.layout,
+				analyticsSection: 'inventory',
 			});
 		}
 

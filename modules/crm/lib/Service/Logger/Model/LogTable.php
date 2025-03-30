@@ -38,12 +38,9 @@ class LogTable extends DataManager
 			,
 			(new ArrayField('CONTEXT'))
 				->configureSerializationJson()
-				->configureRequired()
 				->configureDefaultValue([])
 			,
-			(new TextField('URL'))
-				->configureRequired()
-			,
+			(new TextField('URL')),
 		];
 	}
 }

@@ -7,7 +7,7 @@
 	    #dicts#
 	</array>
 	<key>PayloadDisplayName</key>
-	<string>#host#</string>
+	<string>#host##profileType#</string>
 	<key>PayloadIdentifier</key>
 	<string>com.#host#.#profileIdentifier#maini</string>
 	<key>PayloadRemovalDisallowed</key>

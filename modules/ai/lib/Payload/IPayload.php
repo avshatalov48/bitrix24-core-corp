@@ -76,6 +76,8 @@ interface IPayload
 	 */
 	public function getCost(): int;
 
+	public function setCost(int $cost): static;
+
 	/**
 	 * Packs the payload's data in string and returns it.
 	 *

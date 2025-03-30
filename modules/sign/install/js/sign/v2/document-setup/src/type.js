@@ -1,4 +1,4 @@
-import type { DocumentInitiatedType } from './index';
+import type { DocumentInitiatedType } from 'sign.type';
 
 type Block = {
 	code: string;

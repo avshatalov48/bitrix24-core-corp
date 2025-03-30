@@ -1,3 +1,18 @@
+import type { ProviderCodeType } from 'sign.type';
+
+export type Provider = {
+	code: ProviderCodeType,
+	uid: ?string,
+	timestamp: ?number,
+	virtual: boolean,
+	autoRegister: boolean,
+	name: ?string;
+	description: ?string,
+	iconUrl: ?string,
+	expires: ?number,
+	externalProviderId: ?string,
+};
+
 export type LoadedDocumentData = {
 	blankId: number;
 	entityId: number;
@@ -50,30 +65,12 @@ export type LoadedBlock = {
 	style: BlockSettings['style'];
 };
 
-export type Role = 'assignee' | 'signer' | 'editor' | 'reviewer';
-export const MemberRole: $ReadOnly<{ [key: Role]: Role }> = Object.freeze({
-	assignee: 'assignee',
-	signer: 'signer',
-	editor: 'editor',
-	reviewer: 'reviewer',
-});
-
 export type SetupMember = {
 	entityType: string;
 	entityId: number;
 	party: number;
 	role?: Role;
 };
-export type MemberStatusType = 'done' | 'wait' | 'ready' | 'refused' | 'stopped' | 'stoppable_ready' | 'processing';
-export const MemberStatus: Readonly<Record<string, MemberStatusType>> = Object.freeze({
-	done: 'done',
-	wait: 'wait',
-	ready: 'ready',
-	refused: 'refused',
-	stopped: 'stopped',
-	stoppableReady: 'stoppable_ready',
-	processing: 'processing',
-});
 
 export type Company = {
 	id: ?number,
@@ -83,24 +80,32 @@ export type Company = {
 	providers: ?Array<Provider>,
 };
 
-export type Provider = {
-	code: ProviderCodeType,
-	uid: ?string,
-	timestamp: ?number,
-	virtual: boolean,
-	autoRegister: boolean,
-	name: ?string;
-	description: ?string,
-	iconUrl: ?string,
-	expires: ?number,
-	externalProviderId: ?string,
-};
-
-export type ProviderCodeType = 'goskey' | 'ses-com' | 'ses-ru' | 'external';
-
 export type B2eCompanyList = { companies: Array<Company>, showTaxId: boolean };
 
 export type CountMember = {
 	entityType: string;
 	entityId: number;
+};
+
+export type HcmLinkMultipleVacancyEmployee = {
+	userId: number,
+	fullName: string,
+	avatarLink: string,
+	positions: Array<{
+		position: string,
+		employeeId: number,
+	}>,
+	order: number,
+};
+
+export type HcmLinkMultipleVacancyEmployeesLoadData = {
+	company: {
+		title: string,
+	},
+	employees: Array<HcmLinkMultipleVacancyEmployee>
+};
+
+export type EmployeeSaveData = {
+	documentUid: string,
+	selectedEmployeeCollection: Array<{userId: number, employeeId: number}>,
 };

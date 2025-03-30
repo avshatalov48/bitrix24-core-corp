@@ -9,6 +9,7 @@ use Bitrix\HumanResources\Contract\Repository\NodeRepository;
 use Bitrix\HumanResources\Enum\EventName;
 use Bitrix\HumanResources\Item\Node;
 use Bitrix\HumanResources\Model\NodeTable;
+use Bitrix\HumanResources\Repository\NodeMemberRepository;
 use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Service\UserService;
 use Bitrix\HumanResources\Type\MemberEntityType;
@@ -440,6 +441,7 @@ class NewToOldEventHandler
 		}
 
 		StructureBackwardAdapter::clearCache();
+		Container::getCacheManager()->cleanDir(NodeMemberRepository::NODE_MEMBER_CACHE_DIR);
 		Container::getCacheManager()->clean(NodeRepository::NODE_ENTITY_RESTRICTION_CACHE);
 		NodeTable::cleanCache();
 
@@ -477,7 +479,7 @@ class NewToOldEventHandler
 		}, [$node, $member]);
 
 		static $tagGroupCache = [];
-		$groupCacheKey = (int)($member->entityId / TAGGED_user_card_size);
+		$groupCacheKey = (int)($member?->entityId / TAGGED_user_card_size);
 
 		if (isset($tagGroupCache[$groupCacheKey]))
 		{

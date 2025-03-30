@@ -1,0 +1,12 @@
+.booking--counter {
+	position: absolute;
+	top: 0;
+	right: 0;
+	cursor: default;
+}
+
+.booking--counter .ui-counter-inner {
+	min-width: unset;
+	width: var(--ui-counter-current-size);
+	border-width: 2px;
+}

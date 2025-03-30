@@ -24,7 +24,7 @@ export class App
 		EventEmitter.subscribe(events.HR_ORG_CHART_CLOSE, onClose);
 	}
 
-	static async mount(containerId: string): void
+	static async mount(containerId: string): Promise<void>
 	{
 		const container = document.getElementById(containerId);
 		const app = BitrixVue.createApp(Chart);

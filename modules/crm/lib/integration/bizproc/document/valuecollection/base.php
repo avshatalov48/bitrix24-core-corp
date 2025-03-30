@@ -3,9 +3,9 @@
 namespace Bitrix\Crm\Integration\BizProc\Document\ValueCollection;
 
 use Bitrix\Bizproc\Document\ValueCollection;
+use Bitrix\Crm;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
-use Bitrix\Crm;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 
@@ -29,7 +29,7 @@ abstract class Base extends ValueCollection
 
 	abstract protected function loadEntityValues(): void;
 
-	public function offsetGet($offset)
+	public function offsetGet($offset): mixed
 	{
 		if (!array_key_exists($offset, $this->document))
 		{
@@ -39,7 +39,7 @@ abstract class Base extends ValueCollection
 		return parent::offsetGet($offset);
 	}
 
-	public function offsetExists($offset)
+	public function offsetExists($offset): bool
 	{
 		if (!array_key_exists($offset, $this->document))
 		{

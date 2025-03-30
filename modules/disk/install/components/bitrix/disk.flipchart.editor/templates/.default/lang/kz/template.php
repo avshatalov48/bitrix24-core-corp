@@ -1,0 +1,6 @@
+<?php
+$MESS["DISK_BOARDS_HEADER_BTN_SHARING_EXT_LINK"] = "Жалпыға ортақ сілтеме";
+$MESS["DISK_BOARDS_HEADER_BTN_SHARING_SHARE"] = "Өңдеуге шақыру";
+$MESS["DISK_FLIPCHART_EDITOR_ACCESS_RIGHTS"] = "Қол жеткізу құқықтары";
+$MESS["DISK_FLIPCHART_EDITOR_AUTOSAVE"] = "Автосақтау";
+$MESS["DISK_FLIPCHART_EDITOR_HEADER_BOARDS"] = "Тақталар";

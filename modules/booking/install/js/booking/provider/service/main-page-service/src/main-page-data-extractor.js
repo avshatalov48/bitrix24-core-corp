@@ -80,27 +80,15 @@ export class MainPageDataExtractor
 
 	getResources(): ResourceModel[]
 	{
-		const resourcesIds: Set<number> = new Set();
-		const resourcesModels: ResourceModel[] = (this.#response.favorites?.resources ?? [])
-			.map((resourceDto: ResourceDto) => {
-				resourcesIds.add(resourceDto.id);
+		const favoriteResources = this.#response.favorites?.resources ?? [];
+		const bookingResources = this.#response.bookings.flatMap(({ resources }) => resources);
 
-				return ResourceMappers.mapDtoToModel(resourceDto);
-			});
+		const result = {};
+		[...favoriteResources, ...bookingResources].forEach((resourceDto: ResourceDto) => {
+			result[resourceDto.id] ??= ResourceMappers.mapDtoToModel(resourceDto);
+		});
 
-		this.#response.bookings
-			.flatMap(({ resources }: BookingDto) => resources)
-			.forEach((resourceDto: ResourceDto) => {
-				if (resourcesIds.has(resourceDto.id))
-				{
-					return;
-				}
-
-				resourcesIds.add(resourceDto.id);
-				resourcesModels.push(ResourceMappers.mapDtoToModel(resourceDto));
-			});
-
-		return resourcesModels;
+		return Object.values(result);
 	}
 
 	getResourceTypes(): ResourceTypeModel[]

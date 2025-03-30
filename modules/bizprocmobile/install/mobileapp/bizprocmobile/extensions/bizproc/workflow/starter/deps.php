@@ -5,7 +5,6 @@ return [
 		'apptheme',
 		'alert',
 		'event-emitter',
-		'feature',
 		'haptics',
 		'loc',
 

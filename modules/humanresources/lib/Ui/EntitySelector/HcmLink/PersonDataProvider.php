@@ -18,8 +18,8 @@ use Bitrix\UI\EntitySelector\Item;
 
 class PersonDataProvider extends EntitySelector\BaseProvider
 {
-	const ENTITY_ID = 'hcmlink_person';
-	const ENTITY_TYPE = 'hcmlink_person';
+	public const ENTITY_ID = 'hcmlink-person-data';
+	public const ENTITY_TYPE = 'hcmlink-person-data';
 
 	private PersonRepository $personRepository;
 	private EmployeeRepository $employeeRepository;
@@ -66,7 +66,7 @@ class PersonDataProvider extends EntitySelector\BaseProvider
 
 	public function getPreselectedItems(array $ids): array
 	{
-		return [];
+		return $this->getItems($ids);
 	}
 
 	public function fillDialog(EntitySelector\Dialog $dialog): void

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Entity;
 
-use Bitrix\Booking\Exception\InvalidArgumentException;
-use Bitrix\Booking\Internals\Rrule;
-use Bitrix\Booking\Internals\Time;
+use Bitrix\Booking\Internals\Exception\InvalidArgumentException;
+use Bitrix\Booking\Internals\Service\Rrule;
+use Bitrix\Booking\Internals\Service\Time;
 use DateTimeImmutable;
 use DateInterval;
 use DateTimeZone;

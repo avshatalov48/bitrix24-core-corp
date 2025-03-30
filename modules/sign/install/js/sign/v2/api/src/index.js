@@ -6,9 +6,11 @@ import type {
 	Communication,
 	LoadedBlock,
 	LoadedDocumentData,
-	MemberStatusType,
+	HcmLinkMultipleVacancyEmployeesLoadData,
+	EmployeeSaveData,
 } from './type';
 import { CountMember, SetupMember } from './type';
+import type { MemberStatusType } from 'sign.type';
 
 export * from './type';
 export * from './template/type';
@@ -455,13 +457,30 @@ export class Api
 		return this.#post('sign.api_v1.b2e.document.template.delete', { templateId });
 	}
 
+	copyTemplate(templateId: number): Promise<void>
+	{
+		return this.#post('sign.api_v1.b2e.document.template.copy', { templateId });
+	}
+
 	checkCompanyHrIntegration(id: number): Promise<Array<{ id: number, title: string }>>
 	{
 		return this.#post('sign.api_v1.integration.humanresources.hcmLink.checkCompany', { id });
 	}
 
-	checkNotMappedMembersHrIntegration(documentUid: string): Promise<{ integrationId: number, members: Array<number> }>
+	checkNotMappedMembersHrIntegration(
+		documentUid: string,
+	): Promise<{ integrationId: number, userIds: Array<number>, allUserIds: Array<number> }>
 	{
 		return this.#post('sign.api_v1.integration.humanresources.hcmLink.loadNotMappedMembers', { documentUid });
+	}
+
+	getMultipleVacancyMemberHrIntegration(documentUid: string): Promise<HcmLinkMultipleVacancyEmployeesLoadData>
+	{
+		return this.#post('sign.api_v1.integration.humanresources.hcmLink.loadMultipleVacancyEmployee', { documentUid });
+	}
+
+	saveEmployeesForSignProcess(data: EmployeeSaveData): Promise<[]>
+	{
+		return this.#post('sign.api_v1.integration.humanresources.hcmLink.saveSelectedEmployees', data);
 	}
 }

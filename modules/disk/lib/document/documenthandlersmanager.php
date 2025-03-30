@@ -9,6 +9,7 @@ use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
+use Bitrix\Disk\UI\Viewer\Renderer\Board;
 use Bitrix\Disk\User;
 use Bitrix\Disk\UserConfiguration;
 use Bitrix\Main\Event;
@@ -235,6 +236,11 @@ class DocumentHandlersManager
 			$this->documentHandlerList[OnlyOfficeHandler::getCode()] = OnlyOfficeHandler::class;
 		}
 
+		if(Flipchart\Configuration::isBoardsEnabled())
+		{
+			$this->documentHandlerList[BoardsHandler::getCode()] = BoardsHandler::class;
+		}
+
 		$this->documentHandlerList[BitrixHandler::getCode()] = BitrixHandler::class;
 		$this->documentHandlerList[GoogleHandler::getCode()] = GoogleHandler::class;
 		$this->documentHandlerList[OneDriveHandler::getCode()] = OneDriveHandler::class;
@@ -306,5 +312,14 @@ class DocumentHandlersManager
 	public function getErrorByCode($code)
 	{
 		return $this->errorCollection->getErrorByCode($code);
+	}
+
+	public static function additionalPreviewManagersList(Event $event)
+	{
+		$renderersList = [
+			Board::class,
+		];
+
+		$event->addResult(new EventResult(EventResult::SUCCESS, $renderersList));
 	}
 }

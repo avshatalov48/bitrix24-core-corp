@@ -2285,17 +2285,16 @@ class EntityAddress
 
 	public static function checkReadPermissionOwnerEntity($entityTypeID = 0, $entityID = 0)
 	{
-		if(intval($entityTypeID)<=0 && intval($entityID) <= 0)
-		{
-			return (EntityRequisite::checkReadPermissionOwnerEntity() &&
-					\CCrmCompany::CheckReadPermission(0) &&
-					\CCrmContact::CheckReadPermission(0) &&
-					\CCrmLead::CheckReadPermission(0));
-		}
+		$entityTypeID = (int)$entityTypeID;
+		$entityID = $entityID > 0 ? (int)$entityID : 0;
 
-		if(!is_int($entityTypeID))
+		if (($entityTypeID <= 0 || $entityTypeID === CCrmOwnerType::Requisite) && $entityID <= 0)
 		{
-			$entityTypeID = (int)$entityTypeID;
+			return (
+				\CCrmCompany::CheckReadPermission(0)
+				&& \CCrmContact::CheckReadPermission(0)
+				&& \CCrmLead::CheckReadPermission(0)
+			);
 		}
 
 		if ($entityTypeID === CCrmOwnerType::Requisite ||
@@ -2310,8 +2309,8 @@ class EntityAddress
 				$entityTypeID = $r['ENTITY_TYPE_ID'];
 				$entityID = $r['ENTITY_ID'];
 			}
-
 			$entityType = CCrmOwnerType::ResolveName($entityTypeID);
+
 			return \CCrmAuthorizationHelper::CheckReadPermission($entityType, $entityID);
 		}
 

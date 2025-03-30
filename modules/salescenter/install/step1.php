@@ -25,6 +25,7 @@ else
 		<input type="hidden" name="lang" value="<?echo LANG?>">
 		<input type="hidden" name="id" value="salescenter">
 		<input type="hidden" name="install" value="Y">
+		<input type="hidden" name="install_app" value="Y">
 		<input type="hidden" name="step" value="2">
 		<input type="submit" name="inst" value="<?= GetMessage("MOD_INSTALL")?>">
 	</form>

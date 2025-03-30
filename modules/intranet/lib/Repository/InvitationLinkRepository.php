@@ -107,12 +107,17 @@ class InvitationLinkRepository implements InvitationLinkRepositoryContract
 		;
 		$createdAt = $entity->getCreatedAt() !== null ? $entity->getCreatedAt() : new DateTime();
 
-		return $model->setEntityId($entity->getEntityId())
+		$model->setEntityId($entity->getEntityId())
 			->setEntityType($entity->getEntityType()->value)
 			->setCode($entity->getCode())
-			->setId($entity->getId())
 			->setCreatedBy($createdBy)
 			->setCreatedAt($createdAt)
 			->setExpiredAt($entity->getExpiredAt());
+		 if ((int)$entity->getId() > 0)
+		 {
+			 $model->setId($entity->getId());
+		 }
+
+		 return $model;
 	}
 }

@@ -55,11 +55,13 @@ class Add extends AbstractCommand
 	{
 		parent::init();
 
-		$this->addObserver(new Observer\Message\Add());
-		$this->addObserver(new Observer\Option\Add());
-		$this->addObserver(new Observer\WorkDay\Add());
-		$this->addObserver(new Observer\Counter\Add());
-		$this->addObserver(new Observer\Geo\Add());
-		$this->addObserver(new Observer\Cancellation\Add());
+		$this
+			->addObserver(new Observer\Message\Add())
+			->addObserver(new Observer\Option\Add())
+			->addObserver(new Observer\WorkDay\Add())
+			->addObserver(new Observer\Counter\Add())
+			->addObserver(new Observer\Geo\Add())
+			->addObserver(new Observer\Cancellation\Add())
+		;
 	}
 }

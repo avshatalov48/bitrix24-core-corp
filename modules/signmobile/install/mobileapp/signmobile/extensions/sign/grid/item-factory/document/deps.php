@@ -25,6 +25,7 @@ return [
 		'utils/date/formats',
 		'utils/date',
 		'tokens',
+		'utils/function',
 		'loc',
 	],
 ];

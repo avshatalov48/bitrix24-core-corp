@@ -9,6 +9,9 @@ use Bitrix\HumanResources\Result\Service\HcmLink\FilterNotMappedUserIdsResult;
 use Bitrix\HumanResources\Result\Service\HcmLink\GetMappingEntityCollectionResult;
 use Bitrix\HumanResources\Result\Service\HcmLink\JobServiceResult;
 use Bitrix\HumanResources\Service\Container;
+use Bitrix\HumanResources\Type\HcmLink\JobType;
+use Bitrix\HumanResources\Ui\EntitySelector\HcmLink\PersonDataProvider;
+use Bitrix\HumanResources\Type\HcmLink\JobStatus;
 use Bitrix\Main;
 use Bitrix\Intranet;
 use Bitrix\Main\Localization\Loc;
@@ -18,7 +21,7 @@ class Mapper extends HcmLinkController
 	private const MODE_DIRECT = 'direct';
 	private const MODE_REVERSE = 'reverse';
 
-	private const LIMIT_USERS_FOR_MAPPER = 50;
+	private const LIMIT_USERS_FOR_MAPPER = 60;
 	private const LIMIT_PERSONS_FOR_MAPPER = 10;
 
 	public function getDefaultPreFilters(): array
@@ -33,7 +36,7 @@ class Mapper extends HcmLinkController
 		];
 	}
 
-	public function loadAction(int $companyId, array $userIds, string $mode): array
+	public function loadAction(int $companyId, array $userIds, string $mode, ?string $searchName = null): array
 	{
 		if (!$this->checkAccess())
 		{
@@ -42,39 +45,47 @@ class Mapper extends HcmLinkController
 
 		$items = [];
 		$mappedUserIds = [];
-		$countMappedPersons = 0;
-		$countUnmappedPersons = 0;
+
 		if ($mode === self::MODE_DIRECT)
 		{
 			$result = Container::getHcmLinkMapperService()->filterNotMappedUserIds($companyId, ...$userIds);
 			if ($result instanceof FilterNotMappedUserIdsResult)
 			{
 				$items = Container::getHcmLinkUserRepository()
-					->getMappingEntityCollectionByUserIds($result->userIds, self::LIMIT_USERS_FOR_MAPPER)
+					->getMappingEntityCollectionByUserIds($result->userIds, self::LIMIT_USERS_FOR_MAPPER, 0, $searchName)
 					->getValues()
 				;
+				$items = Container::getHcmLinkMapperService()->getSuggestForUsers($companyId, $items)->items;
 			}
 
 			$countMappedPersons =
 				Container::getHcmLinkPersonRepository()->getCountMappedPersonsByUserIds($companyId, $userIds);
+
+			$countUnmappedPersons = count($userIds) - $countMappedPersons;
 		}
 		else
 		{
 			$personRepo = Container::getHcmLinkPersonRepository();
-			$personCollection = $personRepo->getUnmappedPersonsByCompanyId($companyId, self::LIMIT_PERSONS_FOR_MAPPER);
+
+			$mappedUserIds = $personRepo->getMappedUserIdsByCompanyId($companyId);
+			$countMappedPersons = count($mappedUserIds);
+
+			$personCollection = $personRepo->getUnmappedPersonsByCompanyId($companyId, self::LIMIT_PERSONS_FOR_MAPPER, $searchName);
+
 			if ($personCollection->count() > 0)
 			{
 				$result = Container::getHcmLinkMapperService()->getMappingEntitiesForUnmappedPersons($personCollection);
 				$items = $result->collection->getValues();
+				$items = Container::getHcmLinkMapperService()->getSuggestForPeople($items, $mappedUserIds)->items;
+
+				usort($items, static fn($a, $b) => $a->name <=> $b->name);
 
 				foreach ($personCollection as $person)
 				{
 					$personRepo->updateCounter($person->id);
 				}
-
-				$mappedUserIds = $personRepo->getMappedUserIdsByCompanyId($companyId);
-				$countUnmappedPersons = Container::getHcmLinkPersonRepository()->countUnmappedPersons($companyId);
 			}
+			$countUnmappedPersons = Container::getHcmLinkPersonRepository()->countUnmappedPersons($companyId);
 		}
 
 		$userId = Main\Engine\CurrentUser::get()->getId();
@@ -205,7 +216,7 @@ class Mapper extends HcmLinkController
 		return array_map(fn(Person $person) => $person->id, $newCollection->getItemMap());
 	}
 
-	public function startAction(int $companyId): array
+	public function startAction(int $companyId, bool $isForced): array
 	{
 		if (!$this->checkAccess())
 		{
@@ -213,12 +224,14 @@ class Mapper extends HcmLinkController
 		}
 
 		$company = Container::getHcmLinkCompanyRepository()->getById($companyId);
-		$result = Container::getHcmLinkJobService()->requestEmployeeList($company->id);
+		$result = Container::getHcmLinkJobService()->requestEmployeeList($company->id, $isForced);
 		if ($result instanceof JobServiceResult)
 		{
 			$jobId = $result->job->id;
+			$status = $result->job->status->value;
+			$finishedAt = $result->job->finishedAt;
 
-			return compact('jobId');
+			return compact('jobId', 'status', 'finishedAt');
 		}
 
 		$this->addErrors($result->getErrors());
@@ -277,11 +290,52 @@ class Mapper extends HcmLinkController
 		}
 
 		$params = [
-			'jobId' => $job->id,
-			'status' => $job->status->value,
+			'jobId' 	=> $job->id,
+			'status' 	=> $job->status->value,
+			'finishedAt'=> $job->finishedAt,
 		];
 
 		return compact('params');
+	}
+
+	public function getLastJobAction(int $companyId): array
+	{
+		if (!$this->checkAccess())
+		{
+			return [];
+		}
+
+		$job = Container::getHcmLinkJobService()->getLastUserListJob(
+			null,
+			$companyId,
+			[JobStatus::DONE->value]
+		);
+		if ($job === null)
+		{
+			return [];
+		}
+
+		return [
+			'jobId' => $job->id,
+			'status' => $job->status->value,
+			'finishedAt'=> $job->finishedAt,
+		];
+	}
+
+	public function cancelJobAction(int $jobId): array
+	{
+		if (!$this->checkAccess())
+		{
+			return [];
+		}
+
+		$job = Container::getHcmLinkJobRepository()->getById($jobId);
+		if ($job !== null && $job->status !== JobStatus::DONE && $job->type === JobType::USER_LIST)
+		{
+			Container::getHcmLinkJobRepository()->updateStatusByIds([$jobId], JobStatus::CANCELED);
+		}
+
+		return [];
 	}
 
 	private function checkAccess(): bool

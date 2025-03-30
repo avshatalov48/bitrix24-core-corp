@@ -1,21 +1,8 @@
-.booking-choose-channel-menu .menu-popup-item.menu-item-divider {
-	height: 15px;
-	width: 100%;
-}
-
-.booking-choose-channel-menu .menu-popup-item.menu-item-divider::before {
-	position: absolute;
-	display: block;
-	top: 50%;
-	left: 0;
-	width: 100%;
-	content: "";
-	border-top: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.channel-menu-btn {
-	height: 21px;
-	border: 1px solid var(--ui-color-palette-blue-40);
-	background: var(--ui-color-palette-blue-15);
-	max-width: 104px;
+.booking-resource-creation-wizard-channel-menu-button {
+	height: max-content;
+	border-bottom: 1px dashed var(--ui-color-base-30);
+	color: var(--ui-color-base-60);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	cursor: pointer;
 }

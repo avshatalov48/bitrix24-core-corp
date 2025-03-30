@@ -5,9 +5,10 @@ import { SignDropdown } from 'sign.v2.b2e.sign-dropdown';
 import { FeatureStorage } from 'sign.feature-storage';
 import { DocumentCounters } from 'sign.v2.b2e.document-counters';
 import { type BlankSelectorConfig } from 'sign.v2.blank-selector';
-import { type DocumentDetails, DocumentInitiated, type DocumentInitiatedType, DocumentSetup as BaseDocumentSetup } from 'sign.v2.document-setup';
+import { type DocumentInitiatedType, DocumentInitiated } from 'sign.type';
+import { type DocumentDetails, DocumentSetup as BaseDocumentSetup } from 'sign.v2.document-setup';
 import { Helpdesk, Hint } from 'sign.v2.helper';
-import { isTemplateMode, type DocumentModeType } from 'sign.v2.sign-settings';
+import { isTemplateMode } from 'sign.v2.sign-settings';
 import { DateSelector } from './date-selector';
 import './style.css';
 
@@ -69,18 +70,21 @@ export class DocumentSetup extends BaseDocumentSetup
 		}
 
 		this.#disableDocumentInputs();
+		this.disableAddButton();
 
 		this.blankSelector.subscribe('toggleSelection', ({ data }) => {
 			this.setDocumentTitle(data.title);
 			if (data.selected)
 			{
 				this.#enableDocumentInputs();
+				this.enableAddButton();
 			}
 		});
 		this.blankSelector.subscribe('addFile', ({ data }) => {
 			this.isFileAdded = true;
 			this.setDocumentTitle(data.title);
 			this.#enableDocumentInputs();
+			this.enableAddButton();
 		});
 		this.#init();
 	}
@@ -114,10 +118,12 @@ export class DocumentSetup extends BaseDocumentSetup
 			});
 			this.documentCounters.subscribe('limitNotExceeded', () => {
 				this.enableAddButton();
+				this.#setAddDocumentNoticeText();
 				this.emit('documentsLimitNotExceeded');
 			});
 			this.documentCounters.subscribe('limitExceeded', () => {
 				this.disableAddButton();
+				this.#setDocumentLimitNoticeText();
 				this.emit('documentsLimitExceeded');
 			});
 			Dom.append(this.documentCounters.getLayout(), this.layout);
@@ -208,6 +214,8 @@ export class DocumentSetup extends BaseDocumentSetup
 			className: 'sign-b2e-document-setup__sender-type-selector',
 			withCaption: true,
 			isEnableSearch: false,
+			height: 110,
+			width: 350,
 		});
 		this.#senderDocumentTypes.forEach((item) => {
 			if (Type.isStringFilled(item))
@@ -354,12 +362,22 @@ export class DocumentSetup extends BaseDocumentSetup
 	disableAddButton(): void
 	{
 		Dom.addClass(this.getAddDocumentButton(), '--disabled');
-		this.getAddDocumentNotice().textContent = Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_LIMIT_NOTICE');
 	}
 
 	enableAddButton(): void
 	{
 		Dom.removeClass(this.getAddDocumentButton(), '--disabled');
+	}
+
+	#setDocumentLimitNoticeText(): void
+	{
+		Dom.addClass(this.getAddDocumentNotice(), '--warning');
+		this.getAddDocumentNotice().textContent = Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_LIMIT_NOTICE');
+	}
+
+	#setAddDocumentNoticeText(): void
+	{
+		Dom.removeClass(this.getAddDocumentNotice(), '--warning');
 		this.getAddDocumentNotice().textContent = Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_DOCUMENT_NOTICE');
 	}
 
@@ -492,6 +510,7 @@ export class DocumentSetup extends BaseDocumentSetup
 			// eslint-disable-next-line no-param-reassign
 			editButton.textContent = Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_EDIT_BUTTON');
 			this.#disableDocumentInputs();
+			this.disableAddButton();
 			this.editMode = false;
 		}
 		else
@@ -500,6 +519,7 @@ export class DocumentSetup extends BaseDocumentSetup
 			editButton.textContent = Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_CANCEL_BUTTON');
 			this.editMode = true;
 			this.#enableDocumentInputs();
+			this.enableAddButton();
 			this.#currentEditedId = id;
 			this.#currentEditButton = editButton;
 			this.#currentEditBlock = documentBlock;
@@ -637,12 +657,15 @@ export class DocumentSetup extends BaseDocumentSetup
 
 	getDocumentSectionLayout(): HTMLElement
 	{
-		this.documentSectionLayout = Tag.render`
-			<div class="sign-b2e-settings__item">
-				${this.getDocumentSectionInnerLayout()}
-			</div>
-		`;
-		this.createHintPopup();
+		if (!this.documentSectionLayout)
+		{
+			this.documentSectionLayout = Tag.render`
+				<div class="sign-b2e-settings__item">
+					${this.getDocumentSectionInnerLayout()}
+				</div>
+			`;
+			this.createHintPopup();
+		}
 
 		return this.documentSectionLayout;
 	}
@@ -818,6 +841,7 @@ export class DocumentSetup extends BaseDocumentSetup
 
 		this.isFileAdded = false;
 		this.#disableDocumentInputs();
+		this.disableAddButton();
 	}
 
 	#enableDocumentInputs(): void

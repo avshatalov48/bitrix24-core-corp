@@ -10,7 +10,7 @@ return [
 	'rel' => [
 		'main.core',
 		'sign.v2.b2e.representative-selector',
-		'sign.v2.api',
+		'sign.type',
 		'sign.v2.helper',
 	],
 	'skip_core' => false,

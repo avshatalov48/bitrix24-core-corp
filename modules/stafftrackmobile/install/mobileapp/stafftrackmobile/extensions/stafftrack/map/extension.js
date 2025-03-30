@@ -21,7 +21,8 @@ jn.define('stafftrack/map', (require, exports, module) => {
 	const { TextField } = require('ui-system/typography/text-field');
 
 	const { LocationMenu } = require('stafftrack/map/location-menu');
-	const { DisabledGeoUserEnum, showDisabledGeoAhaMoment } = require('stafftrack/map/disabled-geo-aha');
+	const { DisabledGeoAha } = require('stafftrack/map/disabled-geo-aha');
+	const { DisabledGeoUserEnum } = require('stafftrack/map/disabled-geo-user-enum');
 	const { ShiftAjax } = require('stafftrack/ajax');
 	const { LocationEnum } = require('stafftrack/model/shift');
 	const { Analytics } = require('stafftrack/analytics');
@@ -50,7 +51,7 @@ jn.define('stafftrack/map', (require, exports, module) => {
 			this.state = {
 				mapLoading: false,
 				readOnly: this.props.readOnly || false,
-				sendGeo: this.getDefaultSendGeo(),
+				sendGeo: this.props.sendGeo,
 				location: this.props.location || LocationEnum.OFFICE.getValue(),
 				signedGeoImageUrl: null,
 				signedAddressString: null,
@@ -86,16 +87,6 @@ jn.define('stafftrack/map', (require, exports, module) => {
 		get isUserAdmin()
 		{
 			return this.props.userInfo?.isAdmin;
-		}
-
-		getDefaultSendGeo()
-		{
-			if (Type.isNil(this.props.sendGeo))
-			{
-				return SettingsManager.isGeoEnabled();
-			}
-
-			return SettingsManager.isGeoEnabled() && this.props.sendGeo;
 		}
 
 		componentDidMount()
@@ -425,6 +416,7 @@ jn.define('stafftrack/map', (require, exports, module) => {
 				case LocationEnum.HOME.getValue():
 				case LocationEnum.OUTSIDE.getValue():
 				case LocationEnum.CUSTOM.getValue():
+				case LocationEnum.DELETED.getValue():
 					return locationList[value].fullName;
 				default:
 					return value;
@@ -436,6 +428,7 @@ jn.define('stafftrack/map', (require, exports, module) => {
 			switch (value)
 			{
 				case LocationEnum.REMOTELY.getValue():
+				case LocationEnum.DELETED.getValue():
 					return Icon.EARTH;
 				case LocationEnum.OFFICE.getValue():
 					return Icon.COMPANY;
@@ -605,11 +598,13 @@ jn.define('stafftrack/map', (require, exports, module) => {
 
 			if (!SettingsManager.isGeoEnabled())
 			{
-				showDisabledGeoAhaMoment({
+				const geoAha = new DisabledGeoAha({
 					layoutWidget: this.layoutWidget,
 					targetRef: this.switcherRef,
 					type: this.isUserAdmin ? DisabledGeoUserEnum.ADMIN : DisabledGeoUserEnum.REGULAR,
 				});
+
+				geoAha.show();
 
 				return;
 			}
@@ -622,7 +617,7 @@ jn.define('stafftrack/map', (require, exports, module) => {
 
 			if (sendGeo === true && Type.isNil(this.state.addressString))
 			{
-				this.handleUserGeo();
+				void this.handleUserGeo();
 			}
 			else
 			{

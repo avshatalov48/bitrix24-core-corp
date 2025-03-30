@@ -6,9 +6,11 @@ use Bitrix\HumanResources\Exception\CreationFailedException;
 use Bitrix\HumanResources\Model\Access\AccessPermissionTable;
 use Bitrix\HumanResources\Item;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\DuplicateEntryException;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\HumanResources\Access\Role\RoleUtil;
 
 class PermissionRepository implements \Bitrix\HumanResources\Contract\Repository\Access\PermissionRepository
 {
@@ -26,13 +28,20 @@ class PermissionRepository implements \Bitrix\HumanResources\Contract\Repository
 			return;
 		}
 
-		$permissionCreateResult =
-			$permissionEntity
-				->setRoleId($permission->roleId)
-				->setPermissionId($permission->permissionId)
-				->setValue($permission->value)
-				->save()
-		;
+		try
+		{
+			$permissionCreateResult =
+				$permissionEntity
+					->setRoleId($permission->roleId)
+					->setPermissionId($permission->permissionId)
+					->setValue($permission->value)
+					->save()
+			;
+		}
+		catch (DuplicateEntryException)
+		{
+			return;
+		}
 
 		if (!$permissionCreateResult->isSuccess())
 		{
@@ -43,30 +52,28 @@ class PermissionRepository implements \Bitrix\HumanResources\Contract\Repository
 	}
 
 	/**
-	 * @throws ArgumentException
+	 * @param Item\Collection\Access\PermissionCollection $permissionCollection
+	 *
+	 * @return void
 	 * @throws SqlQueryException
-	 * @throws CreationFailedException
 	 * @throws SystemException
 	 */
 	public function createByCollection(
 		Item\Collection\Access\PermissionCollection $permissionCollection
 	): void
 	{
+		$query = [];
+		foreach ($permissionCollection as $permission)
+		{
+			$query[] = [
+				'ROLE_ID' => $permission->roleId,
+				'PERMISSION_ID' => $permission->permissionId,
+				'VALUE' => $permission->value,
+			];
+		}
+
 		$connection = \Bitrix\Main\Application::getConnection();
-		try
-		{
-			$connection->startTransaction();
-			foreach ($permissionCollection as $permission)
-			{
-				$this->create($permission);
-			}
-			$connection->commitTransaction();
-		}
-		catch (\Exception $exception)
-		{
-			$connection->rollbackTransaction();
-			throw $exception;
-		}
+		RoleUtil::insertPermissions($query);
 	}
 
 	/**
@@ -145,5 +152,34 @@ class PermissionRepository implements \Bitrix\HumanResources\Contract\Repository
 		}
 
 		return $permissions;
+	}
+
+	public function setPermissionByRoleId(int $roleId, string $permissionId, int $value): void
+	{
+		$rolePermissionId = AccessPermissionTable::query()
+			->addSelect("ID")
+			->where("ROLE_ID", $roleId)
+			->where("PERMISSION_ID", $permissionId)
+			->fetch()
+		;
+
+		if (!$rolePermissionId)
+		{
+			$rolePermissionItem = new Item\Access\Permission(
+				roleId: (int)$roleId,
+				permissionId: $permissionId,
+				value: (int)$value,
+			);
+
+			$this->create($rolePermissionItem);
+
+			return;
+		}
+		AccessPermissionTable::update(
+			$rolePermissionId["ID"],
+			[
+				"VALUE" => $value,
+			]
+		);
 	}
 }

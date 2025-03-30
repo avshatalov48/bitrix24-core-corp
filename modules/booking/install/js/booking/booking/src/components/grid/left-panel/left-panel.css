@@ -14,6 +14,7 @@
 }
 
 .booking-booking-grid-left-panel-time {
+	position: relative;
 	height: calc(50px * var(--zoom));
 }
 
@@ -27,6 +28,8 @@
 }
 
 .booking-booking-grid-left-panel-time-text {
+	position: relative;
+	z-index: 1;
 	line-height: 0;
 	margin-right: 5px;
 	color: var(--ui-color-base-90);

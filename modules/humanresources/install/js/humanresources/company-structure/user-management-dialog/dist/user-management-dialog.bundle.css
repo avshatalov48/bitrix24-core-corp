@@ -1,0 +1,86 @@
+.hr-user-management-dialog__header {
+	padding: 20px 14px 0 18px;
+	margin-bottom: -5px;
+	display: flex;
+	flex-direction: column;
+	position: relative;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	font-family: var(--ui-font-family-system);
+	justify-content: center;
+}
+
+.hr-user-management-dialog__header-title {
+	font-weight: var(--ui-font-weight-semi-bold);
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-3xs);
+	margin-bottom: 6px;
+	max-width: 340px;
+}
+
+.hr-user-management-dialog__header-close_button {
+	position: absolute;
+	width: 24px;
+	height: 24px;
+	right: 12px;
+	top: 20px;
+	background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUiIGhlaWdodD0iMjUiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xNC4xNjIgMTIuNWwzLjg5IDMuODkxYS42LjYgMCAwMTAgLjg0OWwtLjgxNC44MTRhLjYuNiAwIDAxLS44NDggMGwtMy44OS0zLjg5LTMuODkxIDMuODlhLjYuNiAwIDAxLS44NDkgMGwtLjgxNC0uODE0YS42LjYgMCAwMTAtLjg0OWwzLjg5LTMuODktMy44OS0zLjg5MWEuNi42IDAgMDEwLS44NDlsLjgxNC0uODE0YS42LjYgMCAwMS44NDkgMGwzLjg5IDMuODkgMy44OTEtMy44OWEuNi42IDAgMDEuODQ4IDBsLjgxNS44MTRhLjYuNiAwIDAxMCAuODQ5bC0zLjg5IDMuODl6IiBmaWxsPSIjQzlDQ0QwIi8+PC9zdmc+');
+	cursor: pointer;
+}
+
+.hr-user-management-dialog__role_switcher-container {
+	display: flex;
+	gap: 4px;
+}
+
+.hr-user-management-dialog__role_switcher {
+	position: relative;
+	-webkit-user-select: none;
+	        user-select: none;
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-link-primary-base);
+	border-bottom: 1px dashed var(--ui-color-link-primary-base);
+	cursor: pointer;
+}
+
+.hr-user-management-dialog__role_switcher::after {
+	position: absolute;
+	content: '';
+	width: 15px;
+	height: 14px;
+	background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUiIGhlaWdodD0iMTQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMC44MDYgNC43NTRsLTIuNjQgMi42NC0uNjY2LjY1Ni0uNjUyLS42NTUtMi42NDEtMi42NC0uOTMyLjkzMSA0LjIzMiA0LjIzMiA0LjIzMS00LjIzMi0uOTMxLS45MzJ6IiBmaWxsPSIjNTI1QzY5IiBmaWxsLW9wYWNpdHk9Ii40Ii8+PC9zdmc+');
+}
+
+.hr-user-management-dialog__role_switcher.--focused::after {
+	transform: rotate(180deg);
+}
+
+.hr-user-management-dialog__footer {
+	padding: 15px 0;
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	box-shadow: 0px -1px 4px 0px rgba(0, 0, 0, 0.05);
+}
+
+.hr-user-management-dialog__footer-btn-width {
+	width: 131px;
+}
+
+.hr-user-management-dialog__role_switcher_title {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-palette-gray-90);
+	line-height: var(--ui-font-line-height-3xs);
+}
+
+.hr-user-management-dialog__header-description {
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-palette-gray-70);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-3xs);
+	max-width: 340px;
+}

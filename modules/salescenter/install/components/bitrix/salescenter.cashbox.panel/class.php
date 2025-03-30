@@ -401,7 +401,7 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 			}
 			else
 			{
-				$handlerCashboxes = $cashboxes[$code];
+				$handlerCashboxes = $cashboxes[$code] ?? null;
 			}
 
 			if (isset($handlerCashboxes) && is_array($handlerCashboxes))
@@ -722,12 +722,10 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 		while($cashbox = $cashboxList->fetch())
 		{
 			$handler = $cashbox['HANDLER'];
-			if ($cashbox['ACTIVE'] === 'N' || $handler === '\Bitrix\Sale\Cashbox\CashboxRest')
+			if ($handler === '\Bitrix\Sale\Cashbox\CashboxRest')
 			{
 				continue;
 			}
-
-			$handler = $cashbox['HANDLER'];
 
 			if ($handler === '\Bitrix\Sale\Cashbox\CashboxCheckbox')
 			{

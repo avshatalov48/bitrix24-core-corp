@@ -307,6 +307,8 @@ export class PingSelector
 
 		this.#close();
 
+		this.#adjustAddButtonCompact();
+
 		this.#emitEvent();
 	}
 

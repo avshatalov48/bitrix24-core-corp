@@ -846,7 +846,8 @@ class CRM
 	public static function getMyDefaultPresetId(
 		int $documentEntityId,
 		int $companyId = 0,
-		?int $documentEntityTypeId = null
+		?int $documentEntityTypeId = null,
+		bool $checkCrmPermissions = true,
 	): ?int
 	{
 		if (!\Bitrix\Main\Loader::includeModule('crm'))
@@ -864,6 +865,7 @@ class CRM
 			$defaultRequisite = new DefaultRequisite(
 				new ItemIdentifier(\CCrmOwnerType::Company, $companyId)
 			);
+			$defaultRequisite->setCheckPermissions($checkCrmPermissions);
 
 			$requisites = $defaultRequisite->get();
 		}

@@ -2,6 +2,7 @@ import { DatetimeConverter } from 'crm.timeline.tools';
 import { Runtime, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { DateTimeFormat } from 'main.date';
+import { TextEditor, TextEditorComponent } from 'ui.text-editor';
 import { ElementIds, EventIds } from '../analytics';
 import type { BlockSettings } from '../todo-editor';
 import BlockFactory from './block-factory';
@@ -15,7 +16,6 @@ import {
 import { TodoEditorColorSelector } from './color-selector/todo-editor-color-selector';
 import { TodoEditorPingSelector } from './todo-editor-ping-selector';
 import { TodoEditorResponsibleUserSelector } from './todo-editor-responsible-user-selector';
-import { TextEditorComponent, TextEditor } from 'ui.text-editor';
 
 const ADD_MODE = 'add';
 
@@ -157,6 +157,7 @@ export const TodoEditor = {
 			this.prepareBlockData(blocksData, {
 				currentDeadline,
 				responsibleUserId: this.responsibleUserId || this.currentUser.userId,
+				userId: this.currentUser.userId,
 			});
 		},
 
@@ -276,7 +277,7 @@ export const TodoEditor = {
 				if (!this.responsibleUserSelectorChangeSended)
 				{
 					this.responsibleUserSelectorChangeSended = true;
-					this.sendAnalytics(EventIds.activityTouch, ElementIds.responsibleUserId);
+					this.sendAnalytics(EventIds.activityView, ElementIds.responsibleUserId);
 				}
 			}
 		},
@@ -319,9 +320,18 @@ export const TodoEditor = {
 			this.$refs.pingSelector?.setValue(this.pingSettings.selectedValues);
 		},
 
-		resetResponsibleUserToDefault(): void
+		resetResponsibleUserToDefault(user: ?Object): void
 		{
-			this.setResponsibleUserId(this.currentUser.userId);
+			if (user)
+			{
+				this.currentUserData = { ...this.currentUserData, ...user };
+			}
+			else
+			{
+				this.currentUserData = { ...this.currentUserData, ...this.currentUser };
+			}
+
+			this.setResponsibleUserId(this.currentUserData.userId);
 
 			const userSelector = this.$refs.userSelector;
 			if (userSelector)
@@ -361,7 +371,7 @@ export const TodoEditor = {
 			if (!this.colorSelectorChangeSended)
 			{
 				this.colorSelectorChangeSended = true;
-				this.sendAnalytics(EventIds.activityTouch, ElementIds.colorSettings);
+				this.sendAnalytics(EventIds.activityView, ElementIds.colorSettings);
 			}
 		},
 
@@ -370,7 +380,7 @@ export const TodoEditor = {
 			if (!this.pingSettingsSelectorChangeSended)
 			{
 				this.pingSettingsSelectorChangeSended = true;
-				this.sendAnalytics(EventIds.activityTouch, ElementIds.pingSettings);
+				this.sendAnalytics(EventIds.activityView, ElementIds.pingSettings);
 			}
 		},
 
@@ -378,7 +388,7 @@ export const TodoEditor = {
 		{
 			if (!this.isDeadlineChanged)
 			{
-				this.sendAnalytics(EventIds.activityTouch, ElementIds.deadline);
+				this.sendAnalytics(EventIds.activityView, ElementIds.deadline);
 				this.isDeadlineChanged = true;
 			}
 		},
@@ -387,7 +397,7 @@ export const TodoEditor = {
 		{
 			if (!this.isCalendarSectionChanged)
 			{
-				this.sendAnalytics(EventIds.activityTouch, ElementIds.calendarSection);
+				this.sendAnalytics(EventIds.activityView, ElementIds.calendarSection);
 				this.isCalendarSectionChanged = true;
 			}
 		},
@@ -424,7 +434,7 @@ export const TodoEditor = {
 
 			if (value !== this.defaultTitle && value !== this.titleBeforeFocus)
 			{
-				this.sendAnalytics(EventIds.activityTouch, ElementIds.title);
+				this.sendAnalytics(EventIds.activityView, ElementIds.title);
 			}
 		},
 
@@ -438,7 +448,7 @@ export const TodoEditor = {
 			const description = this.textEditor.getText();
 			if (Type.isStringFilled(description) && description !== this.descriptionBeforeFocus)
 			{
-				this.sendAnalytics(EventIds.activityTouch, ElementIds.description);
+				this.sendAnalytics(EventIds.activityView, ElementIds.description);
 			}
 		},
 
@@ -486,7 +496,7 @@ export const TodoEditor = {
 			if (!this.addBlockSended)
 			{
 				this.addBlockSended = true;
-				this.sendAnalytics(EventIds.activityTouch, ElementIds.addBlock);
+				this.sendAnalytics(EventIds.activityView, ElementIds.addBlock);
 			}
 		},
 

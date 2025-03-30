@@ -158,6 +158,25 @@ this.BX.Booking = this.BX.Booking || {};
 	  Crm: 'crm'
 	});
 
+	const NotificationOn = Object.freeze({
+	  info: 'isInfoNotificationOn',
+	  confirmation: 'isConfirmationNotificationOn',
+	  reminder: 'isReminderNotificationOn',
+	  delayed: 'isDelayedNotificationOn',
+	  feedback: 'isFeedbackNotificationOn'
+	});
+	const TemplateType = Object.freeze({
+	  info: 'templateTypeInfo',
+	  confirmation: 'templateTypeConfirmation',
+	  reminder: 'templateTypeReminder',
+	  delayed: 'templateTypeDelayed',
+	  feedback: 'templateTypeFeedback'
+	});
+	const NotificationFieldsMap = Object.freeze({
+	  NotificationOn,
+	  TemplateType
+	});
+
 	const Option = Object.freeze({
 	  BookingEnabled: 'aha_banner',
 	  IntersectionForAll: 'IntersectionForAll',
@@ -189,6 +208,7 @@ this.BX.Booking = this.BX.Booking || {};
 	exports.Limit = Limit;
 	exports.Model = Model;
 	exports.Module = Module;
+	exports.NotificationFieldsMap = NotificationFieldsMap;
 	exports.Option = Option;
 	exports.NotificationChannel = NotificationChannel;
 

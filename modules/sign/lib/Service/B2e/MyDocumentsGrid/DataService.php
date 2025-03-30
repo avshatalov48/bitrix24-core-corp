@@ -122,13 +122,14 @@ class DataService
 				);
 			}
 
-			if (!in_array($memberData->id, $userIds, true))
+			if (!in_array($memberData->userId, $userIds, true))
 			{
-				$userIds[] = $memberData->id;
+				$userIds[] = $memberData->userId;
 			}
-			if (!in_array($initiatorData->id, $userIds, true))
+
+			if (!in_array($initiatorData->userId, $userIds, true))
 			{
-				$userIds[] = $initiatorData->id;
+				$userIds[] = $initiatorData->userId;
 			}
 
 			$isDocumentHasSuccessfulSigners = $document->status === DocumentStatus::STOPPED

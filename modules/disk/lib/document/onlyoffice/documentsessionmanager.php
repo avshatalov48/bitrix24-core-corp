@@ -3,6 +3,9 @@
 namespace Bitrix\Disk\Document\OnlyOffice;
 
 use Bitrix\Disk\AttachedObject;
+use Bitrix\Disk\Document\Models\DocumentService;
+use Bitrix\Disk\Document\Models\DocumentSession;
+use Bitrix\Disk\Document\Models\DocumentSessionContext;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
@@ -25,8 +28,9 @@ final class DocumentSessionManager implements IErrorable
 	protected $userId;
 	/** @var int */
 	protected $sessionType;
-	/** @var Models\DocumentSessionContext */
+	/** @var DocumentSessionContext */
 	protected $sessionContext;
+	protected DocumentService $service = DocumentService::OnlyOffice;
 	/** @var  ErrorCollection */
 	protected $errorCollection;
 
@@ -68,7 +72,7 @@ final class DocumentSessionManager implements IErrorable
 		return $this;
 	}
 
-	public function setSessionContext(Models\DocumentSessionContext $sessionContext): self
+	public function setSessionContext(DocumentSessionContext $sessionContext): self
 	{
 		$this->sessionContext = $sessionContext;
 
@@ -108,7 +112,14 @@ final class DocumentSessionManager implements IErrorable
 		return $this;
 	}
 
-	public function findOrCreateSession(): ?Models\DocumentSession
+	public function setService(DocumentService $service): self
+	{
+		$this->service = $service;
+
+		return $this;
+	}
+
+	public function findOrCreateSession(): ?DocumentSession
 	{
 		$session = $this->findSession() ?: $this->addSession();
 		if (!$session)
@@ -144,11 +155,11 @@ final class DocumentSessionManager implements IErrorable
 		return $session;
 	}
 
-	public function findSession(): ?Models\DocumentSession
+	public function findSession(): ?DocumentSession
 	{
 		$filter = $this->buildFilter();
 
-		$models = Models\DocumentSession::getModelList([
+		$models = DocumentSession::getModelList([
 			'select' => ['*'],
 			'filter' => $filter,
 			'limit' => 1,
@@ -162,7 +173,7 @@ final class DocumentSessionManager implements IErrorable
 		}
 
 		unset($filter['USER_ID']);
-		$models = Models\DocumentSession::getModelList([
+		$models = DocumentSession::getModelList([
 			'select' => ['*'],
 			'filter' => $filter,
 			'limit' => 1,
@@ -178,8 +189,9 @@ final class DocumentSessionManager implements IErrorable
 			'USER_ID' => $this->userId,
 			'TYPE' => $this->sessionType,
 			'IS_EXCLUSIVE' => false,
-			'STATUS' => Models\DocumentSession::STATUS_ACTIVE,
+			'STATUS' => DocumentSession::STATUS_ACTIVE,
 			'VERSION_ID' => null,
+			'SERVICE' => $this->service->value,
 		];
 
 		if ($this->version)
@@ -207,13 +219,14 @@ final class DocumentSessionManager implements IErrorable
 		return $filter;
 	}
 
-	public function addSession(): ?Models\DocumentSession
+	public function addSession(): ?DocumentSession
 	{
 		$fields = $this->buildFilter();
 		$fields['OWNER_ID'] = $this->userId;
 		$fields['CONTEXT'] = $this->sessionContext->toJson();
+		$fields['SERVICE'] = $this->service->value;
 
-		return Models\DocumentSession::add($fields, $this->errorCollection);
+		return DocumentSession::add($fields, $this->errorCollection);
 	}
 
 	/**

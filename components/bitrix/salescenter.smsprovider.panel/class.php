@@ -25,19 +25,19 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 	{
 		if (!Loader::includeModule('salescenter'))
 		{
-			$this->showError(Loc::getMessage('SCP_SALESCENTER_MODULE_ERROR'));
+			showError(Loc::getMessage('SCP_SALESCENTER_MODULE_ERROR'));
 			return;
 		}
 
 		if (!Loader::includeModule('sale'))
 		{
-			$this->showError(Loc::getMessage('SCP_SALE_MODULE_ERROR'));
+			showError(Loc::getMessage('SCP_SALE_MODULE_ERROR'));
 			return;
 		}
 
-		if(!SaleManager::getInstance()->isManagerAccess())
+		if (!SaleManager::getInstance()->isManagerAccess())
 		{
-			$this->showError(Loc::getMessage('SCP_ACCESS_DENIED'));
+			showError(Loc::getMessage('SCP_ACCESS_DENIED'));
 			return;
 		}
 

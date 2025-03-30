@@ -4,6 +4,7 @@ import { AhaMoment, HelpDesk, Model } from 'booking.const';
 import { bookingService } from 'booking.provider.service.booking-service';
 import { ahaMoments } from 'booking.lib.aha-moments';
 import { limit } from 'booking.lib.limit';
+import { isRealId } from 'booking.lib.is-real-id';
 import type { ClientData } from 'booking.model.clients';
 import './add-client.css';
 
@@ -30,7 +31,7 @@ export const AddClient = {
 	},
 	mounted(): void
 	{
-		if (this.isRealId(this.bookingId))
+		if (isRealId(this.bookingId))
 		{
 			ahaMoments.setBookingForAhaMoment(this.bookingId);
 		}
@@ -63,10 +64,6 @@ export const AddClient = {
 				id: booking.id,
 				clients,
 			});
-		},
-		isRealId(id: number): number
-		{
-			return /^[1-9]\d*$/.test(id);
 		},
 		async showAhaMoment(): Promise<void>
 		{

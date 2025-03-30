@@ -1,0 +1,1 @@
+{"version":3,"file":"collection-item-ai.bundle.map.js","names":["this","BX","exports","CollectionItemAi","props","template","Market"],"sources":["collection-item-ai.bundle.js"],"mappings":"AAAAA,KAAKC,GAAKD,KAAKC,IAAM,CAAC,GACrB,SAAUC,GACV,aAEA,MAAMC,EAAmB,CACvBC,MAAO,CAAC,QACRC,SAAU,4TAQZH,EAAQC,iBAAmBA,CAE5B,EAfA,CAeGH,KAAKC,GAAGK,OAASN,KAAKC,GAAGK,QAAU,CAAC","ignoreList":[]}

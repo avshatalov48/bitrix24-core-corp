@@ -8,6 +8,7 @@ import { PermissionActions, PermissionChecker } from 'humanresources.company-str
 
 import 'ui.icon-set.crm';
 import 'ui.icon-set.main';
+import './styles/empty-state-container.css';
 
 const MenuOption = Object.freeze({
 	moveUser: 'moveUser',
@@ -192,6 +193,7 @@ export const EmptyStateContainer = {
 						class="hr-add-employee-empty-tab-entity-btn ui-btn ui-btn ui-btn-sm ui-btn-primary ui-btn-round"
 						ref="actionMenuButton"
 						@click.stop="menuVisible = true"
+						data-id="hr-department-detail-content__user-empty-tab_add-user-button"
 					>
 						<span class="hr-add-employee-empty-tab-entity-btn-text">{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_EMPLOYEES_ADD_USER_ADD_BUTTON')}}</span>
 					</button>

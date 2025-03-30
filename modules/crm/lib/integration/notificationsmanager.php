@@ -2,7 +2,7 @@
 
 namespace Bitrix\Crm\Integration;
 
-use Bitrix\Crm\Integration\Booking\TemplateRepository;
+use Bitrix\Booking\Provider\NotificationTemplateCodesProvider;
 use Bitrix\Crm\Integration\ImOpenLines\GoToChat;
 use Bitrix\Crm\MessageSender\Channel;
 use Bitrix\Crm\MessageSender\ICanSendMessage;
@@ -227,9 +227,9 @@ class NotificationsManager implements ICanSendMessage
 		$templateCode = $messageFields['TEMPLATE_CODE'] ?? null;
 
 		$canSendMessage = (
-		is_string($templateCode) && self::checkTemplateCode($templateCode)
-			? static::canUse()
-			: static::canSendMessage()
+			is_string($templateCode) && self::checkTemplateCode($templateCode)
+				? static::canUse()
+				: static::canSendMessage()
 		);
 
 		if ($canSendMessage)
@@ -484,14 +484,14 @@ class NotificationsManager implements ICanSendMessage
 					if (crmShopMasterJustFinished === 'Y')
 					{
 						<?if (is_string($connectUrl)):?>
-						BX.SidePanel.Instance.open("<?=\CUtil::JSescape($connectUrl)?>");
+							BX.SidePanel.Instance.open("<?=\CUtil::JSescape($connectUrl)?>");
 						<?elseif (is_array($connectUrl) && isset($connectUrl['type'])):?>
-						<?if ($connectUrl['type'] === 'ui_helper'):?>
-						BX.loadExt('ui.info-helper').then(() =>
-						{
-							BX.UI.InfoHelper.show("<?=\CUtil::JSescape($connectUrl['value'])?>");
-						});
-						<?endif;?>
+							<?if ($connectUrl['type'] === 'ui_helper'):?>
+								BX.loadExt('ui.info-helper').then(() =>
+								{
+									BX.UI.InfoHelper.show("<?=\CUtil::JSescape($connectUrl['value'])?>");
+								});
+							<?endif;?>
 						<?endif;?>
 
 						localStorage.removeItem(key);
@@ -528,7 +528,7 @@ class NotificationsManager implements ICanSendMessage
 		return
 			Loader::includeModule('notifications')
 			&&  Settings::getScenarioAvailability(Settings::SCENARIO_CRM_PAYMENT) === FeatureStatus::AVAILABLE
-			;
+		;
 	}
 
 	private static function checkTemplateCode(string $templateCode): bool
@@ -542,10 +542,12 @@ class NotificationsManager implements ICanSendMessage
 			Calendar\Notification\NotificationService::TEMPLATE_SHARING_EVENT_EDITED,
 		];
 
-		$bookingTemplates = TemplateRepository::getCodes();
-		foreach ($bookingTemplates as $bookingTemplate)
+		if (Loader::includeModule('booking'))
 		{
-			$availableTemplates[] = $bookingTemplate;
+			foreach (NotificationTemplateCodesProvider::getAll() as $bookingTemplate)
+			{
+				$availableTemplates[] = $templateCode;
+			}
 		}
 
 		return in_array($templateCode, $availableTemplates, true);

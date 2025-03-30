@@ -5,7 +5,6 @@ jn.define('bizproc/workflow/starter', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { EventEmitter } = require('event-emitter');
-	const { Feature } = require('feature');
 	const { Haptics } = require('haptics');
 	const { confirmClosing } = require('alert');
 	const { PureComponent } = require('layout/pure-component');
@@ -75,11 +74,8 @@ jn.define('bizproc/workflow/starter', (require, exports, module) => {
 
 		componentDidMount()
 		{
-			if (Feature.isPreventBottomSheetDismissSupported())
-			{
-				this.layout.preventBottomSheetDismiss(true);
-				this.layout.on('preventDismiss', this.handleExit);
-			}
+			this.layout.preventBottomSheetDismiss(true);
+			this.layout.on('preventDismiss', this.handleExit);
 
 			this.customEventEmitter
 				.on('CatalogStep:OnSelectTemplate', this.handleSelectTemplate)
@@ -89,11 +85,8 @@ jn.define('bizproc/workflow/starter', (require, exports, module) => {
 
 		componentWillUnmount()
 		{
-			if (Feature.isPreventBottomSheetDismissSupported())
-			{
-				this.layout.preventBottomSheetDismiss(false);
-				this.layout.off('preventDismiss', this.handleExit);
-			}
+			this.layout.preventBottomSheetDismiss(false);
+			this.layout.off('preventDismiss', this.handleExit);
 
 			this.customEventEmitter
 				.off('CatalogStep:OnSelectTemplate', this.handleSelectTemplate)

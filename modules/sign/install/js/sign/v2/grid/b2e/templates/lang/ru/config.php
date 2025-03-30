@@ -10,3 +10,5 @@ $MESS['SIGN_TEMPLATE_GRID_DELETE_POPUP_YES'] = 'Да, удалить';
 $MESS['SIGN_TEMPLATE_GRID_DELETE_POPUP_NO'] = 'Отмена';
 $MESS['SIGN_TEMPLATE_GRID_EXPORT_BLANK_SUCCESS'] = 'Шаблон скачан в машиночитаемом формате';
 $MESS['SIGN_TEMPLATE_GRID_EXPORT_BLANK_FAILURE'] = 'Не удалось экспортировать шаблон';
+$MESS['SIGN_TEMPLATE_GRID_COPY_HINT_SUCCESS'] = 'Шаблон скопирован';
+$MESS['SIGN_TEMPLATE_GRID_COPY_HINT_FAIL'] = 'Не удалось скопировать шаблон, попробуйте ещё раз';

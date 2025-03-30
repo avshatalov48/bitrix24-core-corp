@@ -1,9 +1,3 @@
-.booking-booking-slider-label {
-	position: absolute;
-	transition: none;
-	transform: translate(-100%, 17px);
-}
-
 .booking-booking-overlay {
 	--right: 65px;
 	position: absolute;
@@ -18,10 +12,6 @@
 
 .booking-booking-overlay.--closing {
 	animation-direction: reverse;
-}
-
-.booking-booking-overlay.--closing .booking-booking-slider-label {
-	display: none;
 }
 
 @keyframes booking-booking-overlay-opening {

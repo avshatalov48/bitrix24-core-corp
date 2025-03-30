@@ -422,6 +422,11 @@ class CTimeManReportFull
 
 	public static function SetPeriodSection($arFields)
 	{
+		if (!\Bitrix\Main\Loader::IncludeModule('iblock'))
+		{
+			return false;
+		}
+
 		$dep = new CIBlockSection;
 
 		$entity_id = 'IBLOCK_'.COption::GetOptionInt('intranet', 'iblock_structure', false).'_SECTION';
@@ -635,6 +640,7 @@ class CUserReportFull
 					$submitDay,
 					$submitDayTime,
 					$tmDay,
+					true,
 				);
 			}
 			else
@@ -657,7 +663,8 @@ class CUserReportFull
 		string $reportPeriod,
 		int $submitDay,
 		int $submitDayTime,
-		$tmDay
+		$tmDay,
+		$isRecalc = false,
 	)
 	{
 		$fields = [
@@ -699,10 +706,20 @@ class CUserReportFull
 				}
 				else//fri,sat,sun
 				{
-					if ($lastReportDate>strtotime("last sun") && $lastReportDate<=strtotime("next sun"))
-						$fields["DATE_FROM"] = $lastReportDate+$this->oneDayTime;
+					if ($isRecalc)
+					{
+						$fields["DATE_FROM"] = strtotime("last mon", $lastReportDate - date('Z'));
+					}
+					elseif (
+						$lastReportDate > strtotime("last sun")
+						&& $lastReportDate <= strtotime("next sun"))
+					{
+						$fields["DATE_FROM"] = $lastReportDate + $this->oneDayTime;
+					}
 					else
-						$fields["DATE_FROM"] = strtotime("mon next week",$lastReportDate-date('Z'));
+					{
+						$fields["DATE_FROM"] = strtotime("mon next week", $lastReportDate - date('Z'));
+					}
 
 					$fields["DATE_TO"] = strtotime(
 						"next sun",
@@ -1420,6 +1437,7 @@ class CUserReportFull
 	{
 		$settings = $this->GetSettings();
 		$submitDayTime = CTimeman::MakeShortTS($settings['UF_TM_TIME']);
+		$shortFormat = CSite::getDateFormat('SHORT', SITE_ID);
 
 		$dateTimeTo = new \Bitrix\Main\Type\DateTime($dateTo);
 		$dateTimeTo = \Bitrix\Main\Type\DateTime::createFromTimestamp(
@@ -1437,7 +1455,7 @@ class CUserReportFull
 		);
 		if ($currentReport = $queryObject->fetch())
 		{
-			$reportDate = ConvertTimeStamp(time(),'SHORT');
+			$reportDate = ConvertTimeStamp(MakeTimeStamp($currentReport['TIMESTAMP_X'], $shortFormat));
 			$entriesInfo['REPORT'] = $entriesInfo['REPORT'] ?? '';
 			if (
 				strpos($entriesInfo['REPORT'], $reportDate) === false
@@ -1651,32 +1669,35 @@ class CReportSettings
 
 		$ibDept = COption::GetOptionInt('intranet', 'iblock_structure', false);
 
-		$dbRes = CIBlockSection::GetList(
-			array("LEFT_MARGIN"=>"ASC"),
-			array('IBLOCK_ID' => $ibDept, 'ACTIVE' => 'Y'),
-			false,
-			array('ID','NAME','IBLOCK_SECTION_ID','UF_TIMEMAN','UF_REPORT_PERIOD','UF_TM_REPORT_DATE','UF_TM_DAY','UF_TM_TIME','UF_SETTING_DATE')
-		);
-
-		while ($arRes = $dbRes->Fetch())
+		if (\Bitrix\Main\Loader::includeModule('iblock'))
 		{
-			$arRes["UF_REPORT_PERIOD"] = CReportSettings::GetPeriodByID($arRes['UF_REPORT_PERIOD'], 'IBLOCK_'.$ibDept.'_SECTION' );
-			$arSectionSettings = $arRes;
+			$dbRes = CIBlockSection::GetList(
+				array("LEFT_MARGIN"=>"ASC"),
+				array('IBLOCK_ID' => $ibDept, 'ACTIVE' => 'Y'),
+				false,
+				array('ID','NAME','IBLOCK_SECTION_ID','UF_TIMEMAN','UF_REPORT_PERIOD','UF_TM_REPORT_DATE','UF_TM_DAY','UF_TM_TIME','UF_SETTING_DATE')
+			);
 
-			if (!$arRes["UF_REPORT_PERIOD"] && $arRes['IBLOCK_SECTION_ID']>0)
+			while ($arRes = $dbRes->Fetch())
 			{
-				$parent = self::$SECTIONS_SETTINGS_CACHE[$arRes['IBLOCK_SECTION_ID']];
-				$parent["PARENT"] = ($parent["PARENT"] ?? false) ? $parent["PARENT"] : $arRes['IBLOCK_SECTION_ID'];
-				$parent["ID"] = $arRes["ID"];
-				$parent["PARENT_NAME"] = ($parent["PARENT_NAME"] ?? false) ? $parent["PARENT_NAME"] : $parent["NAME"];
-				$parent["NAME"] = $arRes["NAME"];
-				$arSectionSettings = $parent;
+				$arRes["UF_REPORT_PERIOD"] = CReportSettings::GetPeriodByID($arRes['UF_REPORT_PERIOD'], 'IBLOCK_'.$ibDept.'_SECTION' );
+				$arSectionSettings = $arRes;
+
+				if (!$arRes["UF_REPORT_PERIOD"] && $arRes['IBLOCK_SECTION_ID']>0)
+				{
+					$parent = self::$SECTIONS_SETTINGS_CACHE[$arRes['IBLOCK_SECTION_ID']];
+					$parent["PARENT"] = ($parent["PARENT"] ?? false) ? $parent["PARENT"] : $arRes['IBLOCK_SECTION_ID'];
+					$parent["ID"] = $arRes["ID"];
+					$parent["PARENT_NAME"] = ($parent["PARENT_NAME"] ?? false) ? $parent["PARENT_NAME"] : $parent["NAME"];
+					$parent["NAME"] = $arRes["NAME"];
+					$arSectionSettings = $parent;
+				}
+
+				if (!$arSectionSettings['UF_TIMEMAN'])
+					$arSectionSettings['UF_TIMEMAN'] = 'Y';
+
+				self::$SECTIONS_SETTINGS_CACHE[$arRes['ID']] = $arSectionSettings;
 			}
-
-			if (!$arSectionSettings['UF_TIMEMAN'])
-				$arSectionSettings['UF_TIMEMAN'] = 'Y';
-
-			self::$SECTIONS_SETTINGS_CACHE[$arRes['ID']] = $arSectionSettings;
 		}
 	}
 

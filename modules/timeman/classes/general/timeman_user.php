@@ -1,6 +1,8 @@
 <?php
 
 use Bitrix\Main\Context;
+use Bitrix\Main\ORM\Fields\FieldTypeMask;
+use Bitrix\Main\ORM\Objectify\Values;
 use Bitrix\Main\Web\Cookie;
 use Bitrix\Timeman\Form\Worktime\WorktimeRecordForm;
 use Bitrix\Timeman\Helper\TimeHelper;
@@ -328,16 +330,14 @@ class CTimeManUser
 				CTimeManReport::Reopen($lastEntry['ID']);
 				CTimeManReportDaily::Reopen($lastEntry['ID']);
 
-				if ($leak > BX_TIMEMAN_ALLOWED_TIME_DELTA)
-				{
-					$this->setLastPauseInfo($this->USER_ID, $ts_finish, $ts_finish + $leak);
+				$this->setLastPauseInfo($this->USER_ID, $ts_finish, $ts_finish + $leak);
 
-					$report = \Bitrix\Timeman\Model\Worktime\Report\WorktimeReport::createReopenReport(
-						$lastEntry['USER_ID'],
-						$lastEntry['ID']
-					);
-					$report->save();
-				}
+				$report = \Bitrix\Timeman\Model\Worktime\Report\WorktimeReport::createReopenReport(
+					$lastEntry['USER_ID'],
+					$lastEntry['ID']
+				);
+				$report->save();
+
 				static::clearFullReportCache();
 
 				$data = WorktimeRecordTable::convertFieldsCompatible($result->getWorktimeRecord()->collectValues());
@@ -1243,28 +1243,30 @@ class CTimeManUser
 				}
 			} //if ($cnt > 0)
 
-			$arRes['UF_TIMEMAN'] = true; // it can be only Y|null at this moment
-			$arRes['UF_TM_MAX_START'] = $arRes['UF_TM_MAX_START'];
-			$arRes['UF_TM_MAX_START'] = $arRes['UF_TM_MAX_START'] > 0
-				? $arRes['UF_TM_MAX_START']
-				: COption::GetOptionInt('timeman', 'workday_max_start', 33300);
-			$arRes['UF_TM_MIN_FINISH'] = $arRes['UF_TM_MIN_FINISH'];
-			$arRes['UF_TM_MIN_FINISH'] = $arRes['UF_TM_MIN_FINISH'] > 0
-				? $arRes['UF_TM_MIN_FINISH']
-				: COption::GetOptionInt('timeman', 'workday_min_finish', 63900);
-			$arRes['UF_TM_MIN_DURATION'] = $arRes['UF_TM_MIN_DURATION'];
-			$arRes['UF_TM_MIN_DURATION'] = $arRes['UF_TM_MIN_DURATION'] > 0
-				? $arRes['UF_TM_MIN_DURATION']
-				: COption::GetOptionInt('timeman', 'workday_min_duration', 28800);
-			$arRes['UF_TM_REPORT_REQ'] = $arRes['UF_TM_REPORT_REQ']
-				? $arRes['UF_TM_REPORT_REQ']
-				: COption::GetOptionString('timeman', 'workday_report_required', 'A');
-			$arRes['UF_TM_REPORT_TPL'] = $arRes['UF_TM_REPORT_TPL']
-				? $arRes['UF_TM_REPORT_TPL']
-				: [];
-			$arRes['UF_TM_ALLOWED_DELTA'] = $arRes['UF_TM_ALLOWED_DELTA'] > -1
-				? $arRes['UF_TM_ALLOWED_DELTA']
-				: COption::GetOptionInt('timeman', 'workday_allowed_delta', '900');
+			$dependencyManager = \Bitrix\Timeman\Service\DependencyManager::getInstance();
+			$scheduleProvider = $dependencyManager->getScheduleProvider();
+
+			$schedules = $scheduleProvider->findSchedulesByUserId(
+				$this->USER_ID,
+				['select' => ['ID', 'SCHEDULE_VIOLATION_RULES']],
+			);
+
+			$rules = [];
+			foreach ($schedules as $schedule)
+			{
+				$scheduleViolationRules = $schedule->obtainScheduleViolationRules();
+				if ($scheduleViolationRules->getId() > 0)
+				{
+					$rules = $scheduleViolationRules->collectValues(
+						Values::ACTUAL,
+						FieldTypeMask::SCALAR,
+					);
+
+					break;
+				}
+			}
+
+			$arRes = $this->prepareSettingsValues($arRes, $rules);
 		}
 		else
 		{
@@ -1339,6 +1341,59 @@ class CTimeManUser
 		{
 			return true;
 		}
+	}
+
+	public function prepareSettingsValues(array $arRes, array $rules): array
+	{
+		$arRes['UF_TIMEMAN'] = true; // it can be only Y|null at this moment
+
+		$arRes['UF_TM_MAX_START'] = $this->getSettingsValue(
+			$rules['MAX_EXACT_START'] ?? null,
+			$arRes['UF_TM_MAX_START'] ?? null,
+			COption::GetOptionInt('timeman', 'workday_max_start', 33300)
+		);
+
+		$arRes['UF_TM_MIN_FINISH'] = $this->getSettingsValue(
+			$rules['MIN_EXACT_END'] ?? null,
+			$arRes['UF_TM_MIN_FINISH'] ?? null,
+			COption::GetOptionInt('timeman', 'workday_min_finish', 63900)
+		);
+
+		$arRes['UF_TM_MIN_DURATION'] = $this->getSettingsValue(
+			$rules['MIN_DAY_DURATION'] ?? null,
+			$arRes['UF_TM_MIN_DURATION'] ?? null,
+			COption::GetOptionInt('timeman', 'workday_min_duration', 28800)
+		);
+
+		$arRes['UF_TM_REPORT_REQ'] = (
+			$arRes['UF_TM_REPORT_REQ']
+			?: COption::GetOptionString('timeman', 'workday_report_required', 'A')
+		);
+
+		$arRes['UF_TM_REPORT_TPL'] = $arRes['UF_TM_REPORT_TPL'] ?: [];
+
+		$arRes['UF_TM_ALLOWED_DELTA'] = $this->getSettingsValue(
+			$rules['MAX_ALLOWED_TO_EDIT_WORK_TIME'] ?? null,
+			$arRes['UF_TM_ALLOWED_DELTA'] ?? null,
+			COption::GetOptionInt('timeman', 'workday_allowed_delta', 900)
+		);
+
+		return $arRes;
+	}
+
+	private function getSettingsValue($ruleValue, $currentValue, $defaultValue)
+	{
+		if ($currentValue !== null && $currentValue > -1)
+		{
+			return $currentValue;
+		}
+
+		if ($ruleValue !== null && $ruleValue > -1)
+		{
+			return $ruleValue;
+		}
+
+		return $defaultValue;
 	}
 }
 

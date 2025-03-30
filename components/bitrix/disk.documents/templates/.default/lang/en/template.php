@@ -1,4 +1,6 @@
 <?php
+$MESS["DISK_BOARD_TOUR_DESCRIPTION"] = "Select one of the templates, or create a board from scratch.";
+$MESS["DISK_BOARD_TOUR_TITLE"] = "Create your first board";
 $MESS["DISK_DOCUMENTS_ACT_DELETE_MESSAGE"] = "Do you want to move \"#NAME#\" to the Recycle Bin?";
 $MESS["DISK_DOCUMENTS_ACT_DELETE_OK_BUTTON"] = "Move to the Recycle Bin";
 $MESS["DISK_DOCUMENTS_ACT_DELETE_TITLE"] = "Confirm delete";
@@ -14,8 +16,11 @@ $MESS["DISK_DOCUMENTS_GRID_VIEW_SMALL_TILE"] = "Grid";
 $MESS["DISK_DOCUMENTS_GRID_VIEW_TILE"] = "Tile";
 $MESS["DISK_DOCUMENTS_MY_LIBRARY"] = "My Drive";
 $MESS["DISK_DOCUMENTS_PAGE_TITLE"] = "Documents";
+$MESS["DISK_DOCUMENTS_PAGE_TITLE_BOARDS"] = "Boards";
 $MESS["DISK_DOCUMENTS_TOOLBAR_CHOOSE_DISK"] = "Select from Bitrix24.Drive";
 $MESS["DISK_DOCUMENTS_TOOLBAR_CREATE"] = "Create";
+$MESS["DISK_DOCUMENTS_TOOLBAR_CREATE_BOARD"] = "Board";
+$MESS["DISK_DOCUMENTS_TOOLBAR_CREATE_BOARD_TEXT"] = "Create";
 $MESS["DISK_DOCUMENTS_TOOLBAR_CREATE_DOC"] = "Document";
 $MESS["DISK_DOCUMENTS_TOOLBAR_CREATE_DOC_TEXT"] = "New document";
 $MESS["DISK_DOCUMENTS_TOOLBAR_CREATE_PPT"] = "Presentation";
@@ -28,3 +33,5 @@ $MESS["DISK_DOCUMENTS_TOOLBAR_OPEN_LOCAL"] = "Open from my computer";
 $MESS["DISK_DOCUMENTS_TOOLBAR_OPEN_OFFICE_365"] = "Select from Office 365";
 $MESS["DISK_DOCUMENTS_TOOLBAR_SETTINGS"] = "Settings for working with documents";
 $MESS["DISK_DOCUMENTS_TOOLBAR_TRASH"] = "Recycle Bin";
+$MESS["DISK_DOCUMENTS_TOUR_DESCRIPTION"] = "Create boards; share and discuss your boards with other people.";
+$MESS["DISK_DOCUMENTS_TOUR_TITLE"] = "Bitrix24 Boards";

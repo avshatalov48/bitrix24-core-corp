@@ -137,12 +137,45 @@ class GoToChat extends Base
 			'openLineItems' => $this->getOpenLineItems(),
 			'contactCenterUrl' => Container::getInstance()->getRouter()->getContactCenterUrl(), // @todo for crmmobile
 			'marketplaceUrl' => Router::getBasePath() . 'category/crm_robot_sms/',
+			'hasClients' => $this->hasClients($entity),
 			'services' => [
 				'telegrambot' => true,
 				'ru-whatsapp' => !$isBox,
 				'whatsapp' => !$isBox,
 			],
 		];
+	}
+
+	private function hasClients(Item $entity): bool
+	{
+		if (
+			$entity->hasField(Item::FIELD_NAME_CONTACT_BINDINGS)
+			&& !empty($entity->getContactIds())
+		)
+		{
+			return true;
+		}
+
+		if (
+			$entity->getEntityTypeId() === \CCrmOwnerType::Contact
+			|| $entity->hasField(Item\Contact::FIELD_NAME_COMPANY_BINDINGS)
+		)
+		{
+			if (!empty($entity->getCompanies()))
+			{
+				return true;
+			}
+		}
+
+		if (
+			$entity->hasField(Item::FIELD_NAME_COMPANY)
+			&& $entity->getCompanyId() > 0
+		)
+		{
+			return true;
+		}
+
+		return false;
 	}
 
 	private function getChannels(int $entityTypeId, int $entityId): array

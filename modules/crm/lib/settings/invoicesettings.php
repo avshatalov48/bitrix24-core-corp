@@ -204,7 +204,7 @@ class InvoiceSettings
 
 	public function isOldInvoicesEnablingPossible(): bool
 	{
-		return $this->isSmartInvoiceEnabled();
+		return $this->isSmartInvoiceEnabled() && $this->isOldInvoicesEnabled();
 	}
 
 	public function isShowInvoiceTransitionNotice(): bool

@@ -33,8 +33,8 @@ class CrmEntitySelection extends EntitySelection
 			->filterByCategory(Permission::Deal, $this->categoryId)
 			->filterByEntityTypeIds(Permission::Dynamic, [ $this->entityTypeId ])
 			->filterByCategory(Permission::Dynamic, $this->categoryId)
-			->filterByCategory(Permission::Contact, 0)
-			->filterByCategory(Permission::Company, 0)
+			->filterByCategory(Permission::Contact, $this->categoryId ? : 0)
+			->filterByCategory(Permission::Company, $this->categoryId ? : 0)
 			->buildOfMade()
 		;
 	}

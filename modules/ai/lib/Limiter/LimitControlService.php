@@ -16,6 +16,7 @@ use Bitrix\Main\Type\Date;
 class LimitControlService
 {
 	protected const DEFAULT_COST = 1;
+	protected const FREE_COST = 0;
 
 	protected BaasTokenService $baasTokenService;
 	protected CounterRepository $counterRepository;
@@ -23,6 +24,11 @@ class LimitControlService
 
 	public function commitRequest(ReserveRequest $reservedRequest): string
 	{
+		if ($reservedRequest->getCost() === self::FREE_COST)
+		{
+			return '';
+		}
+
 		if (!$reservedRequest->isSuccess())
 		{
 			return '';
@@ -49,6 +55,10 @@ class LimitControlService
 	public function reserveRequest(Usage $limiter, int $cost = self::DEFAULT_COST): ReserveRequest
 	{
 		$reserveRequest = new ReserveRequest(TypeLimit::PROMO, $limiter, $cost);
+		if ($cost === self::FREE_COST)
+		{
+			return $reserveRequest;
+		}
 
 		if (!$this->isAvailableBaas())
 		{
@@ -81,6 +91,11 @@ class LimitControlService
 
 	public function rollbackConsumption(Usage $limiter, int $cost, string $consumptionId): void
 	{
+		if ($cost === self::FREE_COST)
+		{
+			return;
+		}
+
 		if (!empty($consumptionId))
 		{
 			try

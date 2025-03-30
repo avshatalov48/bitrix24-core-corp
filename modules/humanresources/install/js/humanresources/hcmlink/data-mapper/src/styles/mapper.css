@@ -1,5 +1,14 @@
-
 .wrapper {
 	display: flex;
 	justify-content: space-between;
+}
+
+.hr-hcmlink-sync__toolbar {
+	display: block;
+	max-height: 150px;
+}
+
+.hr-hcmlink-sync__toolbar .ui-sidepanel-layout-toolbar {
+	margin-left: 8px;
+	display: block;
 }

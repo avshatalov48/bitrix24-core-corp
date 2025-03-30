@@ -42,10 +42,25 @@ class ToDo extends BaseActivity
 			return;
 		}
 
+		$calendarEventId = null;
+		if ($this->getCalendarEventId())
+		{
+			$calendarEventId = $this->getCalendarEventId();
+		}
+		elseif ($this->getId())
+		{
+			$existedActivity = \CCrmActivity::GetByID($this->getId());
+
+			if ($existedActivity && isset($existedActivity['CALENDAR_EVENT_ID']))
+			{
+				$calendarEventId = $existedActivity['CALENDAR_EVENT_ID'];
+			}
+		}
+
 		$userIds = $additionalFields['SETTINGS']['USERS'];
 		$fromTimestampEvent = DateTime::createFromUserTime($additionalFields['START_TIME'])->getTimestamp();
 		$toTimestampEvent = DateTime::createFromUserTime($additionalFields['END_TIME'])->getTimestamp();
-		$calendarEventId = $this->getCalendarEventId();
+
 		if ($this->hasOverlapEvent($userIds, $fromTimestampEvent, $toTimestampEvent, $calendarEventId))
 		{
 			$additionalFields['SETTINGS']['TAGS'] = ['OVERLAP_EVENT' => true];

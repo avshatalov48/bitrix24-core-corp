@@ -6,6 +6,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Component\Base;
+use Bitrix\Crm\Feature;
+use Bitrix\Crm\Feature\PermissionsLayoutV2;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 
@@ -96,6 +98,7 @@ class CrmAutomatedSolutionDetailsComponent extends Base
 				'automatedSolution' => [],
 				'dynamicTypesTitles' => [],
 				'permissions' => $permissions,
+				'isPermissionsLayoutV2Enabled' => Feature::enabled(PermissionsLayoutV2::class),
 			];
 		}
 
@@ -103,6 +106,7 @@ class CrmAutomatedSolutionDetailsComponent extends Base
 			'automatedSolution' => Container::getInstance()->getAutomatedSolutionConverter()->toJson($this->automatedSolution),
 			'dynamicTypesTitles' => $this->getTitlesOfDynamicTypes($this->automatedSolution['TYPE_IDS']),
 			'permissions' => $permissions,
+			'isPermissionsLayoutV2Enabled' => Feature::enabled(PermissionsLayoutV2::class),
 		];
 	}
 

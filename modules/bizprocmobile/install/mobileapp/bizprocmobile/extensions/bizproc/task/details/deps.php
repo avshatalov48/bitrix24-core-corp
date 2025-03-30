@@ -11,7 +11,6 @@ return [
 		'in-app-url',
 		'loc',
 		'rest',
-		'feature',
 		'haptics',
 		'event-emitter',
 		'notify-manager',

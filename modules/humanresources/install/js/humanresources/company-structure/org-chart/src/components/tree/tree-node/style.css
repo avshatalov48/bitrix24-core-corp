@@ -1,0 +1,375 @@
+.humanresources-tree__node {
+	position: relative;
+	width: 278px;
+	margin: 0 auto;
+	height: max-content;
+}
+
+.humanresources-tree__node.--current-department:before {
+	position: absolute;
+	top: -5px;
+	right: 10px;
+	background: var(--ui-color-palette-blue-50);
+	font: var(--ui-font-weight-semi-bold) 10px/12px var(--ui-font-family-system);
+	content: attr(data-title);
+	color: var(--ui-color-palette-white-base);
+	padding: 3px 10px 3px 8px;
+	border-radius: 17px;
+	text-transform: uppercase;
+}
+
+.humanresources-tree__node.--current-department.--with-restricted-access-rights:before {
+	display: none;
+}
+
+.humanresources-tree__node_summary {
+	background: var(--ui-color-palette-white-base);
+	box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 12%);
+	border-radius: 12px;
+	padding-top: 13px;
+	border: 2px solid transparent;
+	cursor: pointer;
+}
+
+.humanresources-tree__node_summary:hover {
+	box-shadow: 0px 2px 18px 0px rgba(0, 0, 0, 0.16);
+}
+
+.humanresources-tree__node.--expanded > .humanresources-tree__node_summary {
+	border-color: var(--ui-color-palette-blue-50);
+}
+
+.humanresources-tree__node.--focused > .humanresources-tree__node_summary {
+	border-color: var(--ui-color-palette-blue-50);
+	box-shadow: 0px 2px 4px 0 rgba(0, 0, 0, 0.12), 0px 0px 0px 9px rgba(203, 213, 255);
+}
+
+.humanresources-tree__node.--expanded:not(.--focused) > .humanresources-tree__node_summary {
+	box-shadow: none;
+}
+
+.humanresources-tree__node > .humanresources-tree__node_summary .humanresources-tree__node_subdivisions:hover {
+	background: var(--ui-color-palette-blue-10);
+}
+
+.humanresources-tree__node.--root > .humanresources-tree__node_summary .humanresources-tree__node_subdivisions:hover {
+	background: var(--ui-color-palette-green-10);
+}
+
+.humanresources-tree__node.--expanded > .humanresources-tree__node_summary .humanresources-tree__node_subdivisions {
+	background: var(--ui-color-palette-blue-15);
+	color: var(--ui-color-palette-blue-70);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.humanresources-tree__node.--expanded.--root > .humanresources-tree__node_summary .humanresources-tree__node_subdivisions {
+	background: var(--ui-color-palette-green-15);
+	color: var(--ui-color-palette-green-70);
+}
+
+.humanresources-tree__node_description {
+	padding: 0 16px;
+	min-height: 136px;
+}
+
+.humanresources-tree__node.--with-restricted-access-rights > .humanresources-tree__node_summary .humanresources-tree__node_description {
+	min-height: auto;
+}
+
+.humanresources-tree__node_department {
+	display: flex;
+	justify-content: space-between;
+	font: var(--ui-font-weight-semi-bold) 14px/16.71px var(--ui-font-family-system);
+	color: var(--ui-color-palette-black-base);
+	margin: 0 0 10px 0;
+}
+
+.humanresources-tree__node.--with-restricted-access-rights > .humanresources-tree__node_summary .humanresources-tree__node_department  {
+	justify-content: center;
+}
+
+.humanresources-tree__node_department-title {
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.humanresources-tree__node_department-title_text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: block;
+}
+
+.humanresources-tree__node.--root > .humanresources-tree__node_summary .humanresources-tree__node_department-title {
+	display: flex;
+	align-items: center;
+}
+
+.humanresources-tree__node.--root > .humanresources-tree__node_summary .humanresources-tree__node_department-title::before{
+	content: '';
+	display: inline-block;
+	vertical-align: middle;
+	margin-right: 2px;
+	min-width: 20px;
+	height: 20px;
+	background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjEiIGhlaWdodD0iMjEiIHZpZXdCb3g9IjAgMCAyMSAyMSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMy4xMDA0IDguOTI2NTJDMTMuMTAwNCA4Ljg4MjE1IDEzLjEwNTggOC44Mzc5MyAxMy4xMTYzIDguNzk0ODdDMTMuMTg3NSA4LjUwNDA0IDEzLjQ3NjEgOC4zMjcyIDEzLjc2MDkgOC4zOTk5MUwxNi4yNDE0IDkuMDMzMkMxNi40NzgxIDkuMDkzNjEgMTYuNjQ0MSA5LjMxMDcxIDE2LjY0NDEgOS41NTk4VjE0LjU2NDJIMTcuMTI5OUMxNy4zNTA5IDE0LjU2NDIgMTcuNTI5OSAxNC43NDMzIDE3LjUyOTkgMTQuOTY0MlYxNS45NzM2QzE3LjUyOTkgMTYuMTk0NSAxNy4zNTA5IDE2LjM3MzYgMTcuMTI5OSAxNi4zNzM2SDMuNzU1NDdDMy41MzQ1NSAxNi4zNzM2IDMuMzU1NDcgMTYuMTk0NSAzLjM1NTQ3IDE1Ljk3MzZWMTQuOTY0MkMzLjM1NTQ3IDE0Ljc0MzMgMy41MzQ1NSAxNC41NjQyIDMuNzU1NDcgMTQuNTY0Mkg0LjI0MTM4VjUuODAwNjJDNC4yNDEzOCA1LjM1Njk5IDQuNTU2MzggNC45Nzg4IDQuOTg1MTcgNC45MDc2NEwxMS4xODY1IDMuODc4NDJDMTEuMjMzNiAzLjg3MDYyIDExLjI4MSAzLjg2NjcgMTEuMzI4NiAzLjg2NjdDMTEuODE3OSAzLjg2NjcgMTIuMjE0NiA0LjI3MTc1IDEyLjIxNDYgNC43NzE0VjE0LjU2NDJIMTMuMTAwNFY4LjkyNjUyWk04LjA2MDI2IDE0LjQ3NTFWMTEuNjk1NUg2LjQ3MTkyVjE0LjQ3NTFIOC4wNjAyNlpNMTAuNDgxOSAxMy4yODM4VjExLjY5NTVIOC44OTM1OVYxMy4yODM4SDEwLjQ4MTlaTTE1LjYwNDggMTEuNjE2NkgxNC4wMTY0VjEzLjIwNDlIMTUuNjA0OFYxMS42MTY2Wk0xMC40ODE5IDYuODUxNzNIOC44OTM1OVY4LjQ0MDA2SDEwLjQ4MTlWNi44NTE3M1pNOC4wNjAxOCA2Ljg1MTU1SDYuNDcxODVWOC40Mzk4OEg4LjA2MDE4VjYuODUxNTVaTTEwLjQ4MTkgOS4yNzM2SDguODkzNTlWMTAuODYxOUgxMC40ODE5VjkuMjczNlpNOC4wNjAyNiA5LjI3MzZINi40NzE5MlYxMC44NjE5SDguMDYwMjZWOS4yNzM2WiIgZmlsbD0iIzk1QzUwMCIvPgo8L3N2Zz4K) no-repeat center;
+}
+
+.humanresources-tree__node_employees {
+	display: flex;
+	margin-bottom: 15px;
+	white-space: nowrap;
+	width: 100%;
+}
+
+.humanresources-tree__node_employees > div {
+	box-sizing: border-box;
+}
+
+.humanresources-tree__node_employees > div:first-child {
+	width: 40%;
+}
+
+.humanresources-tree__node_employees > div:last-child {
+	width: 60%;
+	padding-left: 8px;
+	margin-left: 0;
+}
+
+.humanresources-tree__node_head-position,
+.humanresources-tree__node_employees-title {
+	font: 11px/13.13px var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-60);
+}
+
+.humanresources-tree__node_employees-title {
+	margin: 0 0 5px 0;
+}
+
+.humanresources-tree__node_employees-count {
+	border: 1px solid #e9e9e9;
+	border-radius: 30px;
+	font: 11px/16px var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-90);
+	padding: 2px 7px;
+	display: inline-block;
+	width: max-content;
+}
+
+.humanresources-tree__node_employees-count:hover {
+	background: var(--ui-color-palette-gray-03);
+}
+
+.humanresources-tree__node_employees-count:active {
+	background: #e9e9e9;
+}
+
+.humanresources-tree__node_avatar.--deputy {
+	width: 20px;
+	height: 20px;
+	vertical-align: middle;
+}
+
+.humanresources-tree__node_deputy-name {
+	font: 12px/14.32px var(--ui-font-family-system);
+	color: var(--ui-color-palette-black-base);
+}
+
+.humanresources-tree__node_subdivisions {
+	border-top: 1px solid var(--ui-color-palette-gray-10);
+	text-align: center;
+	padding: 10px 16px 10px 16px;
+	font: 11px/16px var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-90);
+	border-bottom-left-radius: 12px;
+	border-bottom-right-radius: 12px;
+}
+
+.humanresources-tree__node > .humanresources-tree__node_summary .humanresources-tree__node_subdivisions.--transparent {
+	opacity: .5;
+	background: none;
+}
+
+.humanresources-tree__node_arrow:after {
+	content: '';
+	display: inline-block;
+	border: 2px solid var(--ui-color-palette-gray-60);
+	border-left: none;
+	border-top: none;
+	width: 5px;
+	height: 5px;
+	margin-left: 7px;
+}
+
+.humanresources-tree__node_arrow.--up:after {
+	transform: rotate(-135deg);
+}
+
+.humanresources-tree__node_arrow.--down:after {
+	transform: rotate(45deg);
+}
+
+.humanresources-tree__node_arrow.--right:after {
+	transform: rotate(-45deg);
+}
+
+.humanresources-tree__node.--expanded > .humanresources-tree__node_summary .humanresources-tree__node_arrow.--up:after {
+	border-color: var(--ui-color-palette-blue-70);
+}
+
+.humanresources-tree__node.--expanded.--root > .humanresources-tree__node_summary .humanresources-tree__node_arrow.--up:after {
+	border-color: var(--ui-color-palette-green-70);
+}
+
+.humanresources-tree__node_children {
+	position: absolute;
+	display: flex;
+	gap: 20px;
+	top: 420px;
+}
+
+.humanresources-tree__node.--with-restricted-access-rights > .humanresources-tree__node_children {
+	top: 200px;
+}
+
+.humanresources-tree__node_add-subdivision {
+	position: relative;
+	display: flex;
+	justify-content: center;
+}
+
+.humanresources-tree__node_head-rest {
+	margin-left: auto;
+	background-color: var(--ui-color-palette-gray-10);
+	border-radius: 32px;
+	padding: 2px 8px 3px 8px;
+	color: var(--ui-color-palette-gray-90);
+	font: var(--ui-font-weight-semi-bold) 10px/10px var(--ui-font-family-system);
+}
+
+.humanresources-tree__node_head-rest:hover,
+.humanresources-tree__node_head-rest.--active {
+	background-color: var(--ui-color-palette-gray-20);
+}
+
+.humanresources-tree__node_head {
+	margin-bottom: 12px;
+	display: flex;
+	align-items: center;
+	gap: 5px;
+}
+.humanresources-tree__node_head.--collapsed {
+	margin-bottom: 5px;
+}
+
+.humanresources-tree__node_head.--collapsed:last-child {
+	margin-bottom: 0;
+}
+
+.humanresources-tree__node_head-text {
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.humanresources-tree__node_head-name,
+.humanresources-tree__node_head-position {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.humanresources-tree__node_head-name {
+	border-bottom: 1px solid transparent;
+	font: 13px/15.51px var(--ui-font-family-system);
+	color: var(--ui-color-palette-black-base);
+	margin-bottom: 2px;
+	width: max-content;
+	max-width: 100%;
+}
+
+.humanresources-tree__node_head-name:hover {
+	border-bottom-color: var(--ui-color-palette-black-base);
+}
+
+.humanresources-tree__node_avatar {
+	border-radius: 50%;
+}
+
+.humanresources-tree__node_avatar.--head {
+	width: 28px;
+	height: 28px;
+}
+
+.humanresources-tree__node_avatar.--head.--collapsed {
+	width: 20px;
+	height: 20px;
+}
+
+.humanresources-tree__node_department-menu-button {
+	background-size: contain;
+	--ui-icon-set__icon-size: 22px;
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-50);
+}
+
+.humanresources-tree__node_department-menu-button:hover {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-80);
+}
+
+.humanresources-tree__node_department-menu-button.--focused {
+	background-size: contain;
+	--ui-icon-set__icon-color: var(--ui-color-palette-blue-60);
+}
+
+.humanresources-tree__node_add-button {
+	position: absolute;
+	bottom: -45px;
+	background-color: var(--ui-color-palette-white-base);
+	border: none;
+	border-radius: 50%;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	font-size: 20px;
+	cursor: pointer;
+	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 12%);
+}
+
+.humanresources-tree__node_add-button:hover {
+	background-color: var(--ui-color-palette-blue-50);
+	color: var(--ui-color-palette-white-base);
+}
+
+.humanresources-tree__node_add-icon {
+	background: var(--ui-color-palette-blue-50);
+}
+
+.humanresources-tree__node_add-icon:hover {
+	background: var(--ui-color-palette-white-base);
+}
+
+.humanresources-tree__node_empty-skeleton {
+	background: url('./images/empty-skeleton.svg') no-repeat;
+	position: absolute;
+	left: -279.5px;
+	transform: translateY(7px);
+	z-index: -1;
+	width: 825px;
+	height: 420px;
+}
+
+.humanresources-tree__node_load-skeleton {
+	max-width: 100%;
+	height: 40px;
+	margin-top: 5px;
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+.humanresources-tree__node_load-skeleton.--heads {
+	background-image: url('./images/heads-load-skeleton.svg');
+}
+
+.humanresources-tree__node_load-skeleton.--deputies {
+	background-image: url('./images/deputies-load-skeleton.svg');
+}

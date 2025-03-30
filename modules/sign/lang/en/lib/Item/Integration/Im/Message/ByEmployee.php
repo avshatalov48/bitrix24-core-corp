@@ -1,12 +1,12 @@
 <?php
-$MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEE"] = "[b]Document declined[/b][br][br]#INITIATOR_NAME# has declined the document #DOC_NAME#. Fix the issues and send the document again.";
-$MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEEF"] = "[b][b]Document declined[/b][br][br]#INITIATOR_NAME# has declined the document #DOC_NAME#. Fix the issues and send the document again.";
-$MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEEM"] = "[b][b]Document declined[/b][br][br]#INITIATOR_NAME# has declined the document #DOC_NAME#. Fix the issues and send the document again.";
+$MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEE"] = "[b]Document declined[/b][br][br]#INITIATOR_NAME# has declined the document \"#DOC_NAME#\". Fix the issues and send the document again.";
+$MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEEF"] = "[b][b]Document declined[/b][br][br]#INITIATOR_NAME# has declined the document \"#DOC_NAME#\". Fix the issues and send the document again.";
+$MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEEM"] = "[b][b]Document declined[/b][br][br]#INITIATOR_NAME# has declined the document \"#DOC_NAME#\". Fix the issues and send the document again.";
 $MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_DONE_COMPANY"] = "[b]Document approved[/b][br][br]\"#DOC_NAME#\" by #INITIATOR_NAME# has been approved and put to the Company vault.";
 $MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_DONE_EMPLOYEE"] = "[b]Document approved[/b][br][br]#INITIATOR_NAME# has approved \"#DOC_NAME#\". It is available for viewing and downloading in your profile on the \"My documents\" tab.[br][br][url=#SIGN_URL#]View document[/url]";
 $MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_DONE_EMPLOYEEF"] = "[b]Document approved[/b][br][br]#INITIATOR_NAME# has approved \"#DOC_NAME#\". It is available for viewing and downloading in your profile on the \"My documents\" tab.[br][br][url=#SIGN_URL#]View document[/url]";
 $MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_DONE_EMPLOYEEM"] = "[b]Document approved[/b][br][br]#INITIATOR_NAME# has approved \"#DOC_NAME#\". It is available for viewing and downloading in your profile on the \"My documents\" tab.[br][br][url=#SIGN_URL#]View document[/url]";
-$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_INVITE_COMPANY"] = "[b]Sign document[/b][br][br]#INITIATOR_NAME# has sent the document #DOC_NAME# for you to sign.[br][br][url=#SIGN_URL#]Sign now[/url]";
-$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_INVITE_EMPLOYEE"] = "[b]Sign document[/b][br][br]Sign the document #DOCUMENT_NAME# and watch its progress in your profile on the \"My documents\" tab.[br][br][url=#SIGN_URL#]Sign now[/url]";
-$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_INVITE_REVIEWER"] = "[b]Approve document[/b][br][br]#INITIATOR_LINK# has sent the document #DOC_NAME# for you to approve.[br][br][url=#SIGN_URL#]Approve[/url]";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_INVITE_COMPANY"] = "[b]Sign document[/b][br][br]#INITIATOR_NAME# has sent the document \"#DOC_NAME#\" for you to sign.[br][br][url=#SIGN_URL#]Sign now[/url]";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_INVITE_EMPLOYEE"] = "[b]Sign document[/b][br][br]Sign the document \"#DOC_NAME#\" and watch its progress in your profile on the \"My documents\" tab.[br][br][url=#SIGN_URL#]Sign now[/url]";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_INVITE_REVIEWER"] = "[b]Approve document[/b][br][br]#INITIATOR_NAME# has sent the document \"#DOC_NAME#\" for you to approve.[br][br][url=#SIGN_URL#]Approve[/url]";
 $MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_SIGNED_BY_EMPLOYEE"] = "[b]Document sent[/b][br][br]You have signed and sent the document \"#DOC_NAME#\". You will be notified as soon as the company finishes processing it.[br][br][url=#SIGN_URL#]View document[/url]";

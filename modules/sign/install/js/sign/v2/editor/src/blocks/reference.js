@@ -1,6 +1,5 @@
 import { Cache, Loc, Tag, Text as TextFormat, Type, Dom } from 'main.core';
 import { BaseEvent } from 'main.core.events';
-import { DocumentInitiated } from 'sign.v2.document-setup';
 import type { FieldSelectEvent, FieldSelectEventData } from '../types/events/fieldSelectEvent';
 import Dummy from './dummy';
 import { Selector } from "crm.form.fields.selector";

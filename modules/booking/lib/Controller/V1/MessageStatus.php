@@ -6,13 +6,15 @@ namespace Bitrix\Booking\Controller\V1;
 
 use Bitrix\Booking\Controller\V1\Response\MessageStatusGetResponse;
 use Bitrix\Booking\Internals\Model\BookingMessageTable;
-use Bitrix\Booking\Internals\Notifications\MessageSenderPicker;
-use Bitrix\Booking\Internals\NotificationType;
+use Bitrix\Booking\Internals\Service\Notifications\MessageSenderPicker;
+use Bitrix\Booking\Internals\Service\Notifications\NotificationType;
 use Bitrix\Booking\Provider\BookingProvider;
+use Bitrix\Booking\Provider\Params\Booking\BookingFilter;
+use Bitrix\Booking\Provider\Params\Booking\BookingSelect;
+use Bitrix\Booking\Provider\Params\GridParams;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Request;
-use Bitrix\Booking\Integration\Booking\Message;
 
 class MessageStatus extends BaseController
 {
@@ -33,9 +35,11 @@ class MessageStatus extends BaseController
 	public function getAction(int $bookingId): MessageStatusGetResponse|null
 	{
 		$booking = $this->bookingProvider->getList(
+			gridParams: new GridParams(
+				filter: new BookingFilter(['ID' => $bookingId]),
+				select: new BookingSelect(['CLIENTS']),
+			),
 			userId: (int)CurrentUser::get()->getId(),
-			filter: ['ID' => $bookingId],
-			select: ['CLIENTS'],
 		)->getFirstCollectionItem();
 
 		if (!$booking)
@@ -100,8 +104,8 @@ class MessageStatus extends BaseController
 		}
 
 		$semanticsMap = [
-			Message\MessageStatus::SEMANTIC_SUCCESS => self::SEMANTIC_PRIMARY,
-			Message\MessageStatus::SEMANTIC_FAILURE => self::SEMANTIC_FAILURE,
+			\Bitrix\Booking\Entity\Message\MessageStatus::SEMANTIC_SUCCESS => self::SEMANTIC_PRIMARY,
+			\Bitrix\Booking\Entity\Message\MessageStatus::SEMANTIC_FAILURE => self::SEMANTIC_FAILURE,
 		];
 
 		return new MessageStatusGetResponse(

@@ -8,6 +8,7 @@ use Bitrix\Crm\Integration\AI\Operation\Scenario;
 use Bitrix\Crm\Integration\AI\Operation\ScoreCall;
 use Bitrix\Crm\Integration\AI\Operation\SummarizeCallTranscription;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\MultiValueStoreService;
 use CCrmOwnerType;
 
 final class CopilotLauncher
@@ -115,7 +116,14 @@ final class CopilotLauncher
 
 		if (!$this->transcriptionResult?->isSuccess())
 		{
-			return AIManager::launchCallRecordingTranscription($this->activityId, $this->scenario);
+			$result = AIManager::launchCallRecordingTranscription($this->activityId, $this->scenario);
+			if ($assessmentSettingsId !== null)
+			{
+				$key = ScoreCall::generateJobCallAssessmentBindKey($result->getJobId(), $this->activityId);
+				MultiValueStoreService::getInstance()->set($key, $assessmentSettingsId);
+			}
+
+			return $result;
 		}
 
 		if ($this->callScoringResult?->isPending())

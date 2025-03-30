@@ -58,23 +58,6 @@ class BlockRepository
 		return new Main\Result();
 	}
 
-	public function update(Item\Block $item): Main\Result
-	{
-		if ($item->id === null)
-		{
-			return (new Main\Result())->addError(new Main\Error('Item field `id` is null'));
-		}
-
-		$model = Internal\BlockTable::getById($item->id)->fetchObject();
-		if (!$model)
-		{
-			return (new Main\Result())->addError(new Main\Error("Block with `id` = $item->id doesn\'t exist"));
-		}
-
-		$block = $this->getFilledModelFromItem($item, $model);
-		return $block->save();
-	}
-
 	public function deleteById($id): Main\Result
 	{
 		return Internal\BlockTable::delete($id);
@@ -191,11 +174,6 @@ class BlockRepository
 				$modelCollection->getAll()
 			)
 		);
-	}
-
-	private function extractModelFromItem(Item\Block $item): Internal\Block
-	{
-		return $this->getFilledModelFromItem($item, Internal\BlockTable::createObject(false));
 	}
 
 	private function getFilledModelFromItem(Item\Block $item, Internal\Block $model): Internal\Block

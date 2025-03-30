@@ -1,0 +1,13 @@
+<?php
+$MESS["EXTRANET_LEFT_MENU_BLOG"] = "Хабарламалар";
+$MESS["EXTRANET_LEFT_MENU_CALENDAR"] = "Күнтізбе";
+$MESS["EXTRANET_LEFT_MENU_CONTACTS"] = "Байланыс ақпараты";
+$MESS["EXTRANET_LEFT_MENU_DISK"] = "Менің дискім";
+$MESS["EXTRANET_LEFT_MENU_FILES_COLLAB"] = "Файлдар";
+$MESS["EXTRANET_LEFT_MENU_GROUPS"] = "Топтар";
+$MESS["EXTRANET_LEFT_MENU_IM_COLLAB"] = "Коллабтар";
+$MESS["EXTRANET_LEFT_MENU_IM_MESSENGER"] = "Мессенджер";
+$MESS["EXTRANET_LEFT_MENU_LIVE_FEED"] = "Жанды лента";
+$MESS["EXTRANET_LEFT_MENU_LIVE_FEED2"] = "Жаңалықтар";
+$MESS["EXTRANET_LEFT_MENU_ONLY_TASKS"] = "Міндеттер";
+$MESS["EXTRANET_LEFT_MENU_PHOTO"] = "Фотосуреттер";

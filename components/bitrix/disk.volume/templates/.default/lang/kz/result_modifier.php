@@ -1,0 +1,23 @@
+<?php
+$MESS["DISK_VOLUME_CRM_COUNT"] = "Іс CRM";
+$MESS["DISK_VOLUME_EXTERNAL_LINK_COUNT"] = "Сыртқы сілтемелер";
+$MESS["DISK_VOLUME_IM_AUTHOR"] = "Автор";
+$MESS["DISK_VOLUME_IM_CALL"] = "Телефон қоңырауы";
+$MESS["DISK_VOLUME_IM_CHAT"] = "Топтық чат";
+$MESS["DISK_VOLUME_IM_CHAT_2"] = "Жабық чат";
+$MESS["DISK_VOLUME_IM_CHAT_OWNER"] = "Чат құрылды";
+$MESS["DISK_VOLUME_IM_LINES"] = "Ашық желі";
+$MESS["DISK_VOLUME_IM_LIVECHAT"] = "Ашық желі";
+$MESS["DISK_VOLUME_IM_OPEN"] = "Ашық чат";
+$MESS["DISK_VOLUME_IM_PRIVATE"] = "Бірге-бір чаты";
+$MESS["DISK_VOLUME_MORE"] = "Толығырақ";
+$MESS["DISK_VOLUME_OPEN"] = "Ашу";
+$MESS["DISK_VOLUME_PAGE_TITLE"] = "Дискідегі орынды тазалау";
+$MESS["DISK_VOLUME_PARENT_FOLDER"] = "Ата-аналық бума";
+$MESS["DISK_VOLUME_ROOT_FILES"] = "Түбірдегі файлдар";
+$MESS["DISK_VOLUME_SHARING_COUNT"] = "Ортақ файл";
+$MESS["DISK_VOLUME_USING_CHAT"] = "Чаттағы хабарлама";
+$MESS["DISK_VOLUME_USING_COUNT_END1"] = "байланыс ";
+$MESS["DISK_VOLUME_USING_COUNT_END2"] = "байланыстар";
+$MESS["DISK_VOLUME_USING_COUNT_END3"] = "байланыс";
+$MESS["DISK_VOLUME_USING_COUNT_NONE"] = "Байланыс жоқ";

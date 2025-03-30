@@ -693,6 +693,12 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 						$hint = Loc::getMessage('SALESCENTER_SP_CASHBOX_VAT_HINT');
 					}
 
+					if ($group === 'MARK')
+					{
+						$warning = Loc::getMessage('SALESCENTER_SP_CASHBOX_MARK_ATTENTION');
+						$hint = Loc::getMessage('SALESCENTER_SP_CASHBOX_MARK_HINT');
+					}
+
 					if ($group === 'MEASURE')
 					{
 						$hint = Loc::getMessage('SALESCENTER_SP_CASHBOX_MEASURE_HINT');

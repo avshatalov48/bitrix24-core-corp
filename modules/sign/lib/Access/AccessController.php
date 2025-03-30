@@ -9,6 +9,7 @@ use Bitrix\Main\Access\User\AccessibleUser;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
 use Bitrix\Sign\Access\Model\UserModel;
+use Bitrix\Sign\Access\Model\UserModelRepository;
 use Bitrix\Sign\Access\Permission\PermissionDictionary;
 use Bitrix\Sign\Access\Permission\SignPermissionDictionary;
 use Bitrix\Sign\Access\Rule\Factory\SignRuleFactory;
@@ -26,12 +27,16 @@ class AccessController extends BaseAccessController
 	/** @var array<int, array<string, array{general: bool, toItems: array<int, bool>}>> */
 	protected array $userAccessCache = [];
 	private readonly AccessibleItemFactory $accessibleItemFactory;
+	private readonly UserModelRepository $userModelRepository;
 
-	public function __construct($userId)
+	public function __construct($userId, ?UserModelRepository $userModelRepository = null)
 	{
 		parent::__construct($userId);
+		$container = Container::instance();
+
 		$this->signRuleFactory = new SignRuleFactory();
-		$this->accessibleItemFactory = Container::instance()->getAccessibleItemFactory();
+		$this->accessibleItemFactory = $container->getAccessibleItemFactory();
+		$this->userModelRepository = $userModelRepository ?? $container->getAccessUserModelRepository();
 	}
 
 	public function checkByItem(string $action, Contract\Item $item, array $params = null): bool
@@ -122,7 +127,9 @@ class AccessController extends BaseAccessController
 
 	protected function loadUser(int $userId): AccessibleUser
 	{
-		return UserModel::createFromId($userId);
+		return Container::instance()->getAccessUserModelRepository()
+			->getByUserId($userId)
+		;
 	}
 
 	/**

@@ -36,9 +36,12 @@ export const Multiple = {
 	methods: {
 		createSelector(): Dialog
 		{
+			const selectedIds = this.intersections[this.resourceId] ?? [];
+
 			return new Dialog({
 				id: `booking-intersection-selector-resource-${this.resourceId}`,
 				targetNode: this.$refs.intersectionField,
+				preselectedItems: selectedIds.map((id: number) => [EntitySelectorEntity.Resource, id]),
 				width: 400,
 				enableSearch: true,
 				dropdownMode: true,
@@ -61,6 +64,7 @@ export const Multiple = {
 				},
 				events: {
 					onHide: this.changeSelected.bind(this),
+					onLoad: this.changeSelected.bind(this),
 				},
 			});
 		},
@@ -72,7 +76,7 @@ export const Multiple = {
 			}
 			else
 			{
-				limit.show();
+				void limit.show();
 			}
 		},
 		changeSelected(): void
@@ -94,10 +98,14 @@ export const Multiple = {
 	},
 	computed: {
 		...mapGetters({
+			intersections: `${Model.Interface}/intersections`,
 			isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
-			resourcesIds: `${Model.Interface}/resourcesIds`,
 			resources: `${Model.Resources}/get`,
 		}),
+		resourcesIds(): number[]
+		{
+			return this.resources.map(({ id }) => id);
+		},
 		firstItemTitle(): string
 		{
 			return this.selectedItems.length > 0 ? this.selectedItems[0].title : '';
@@ -110,6 +118,11 @@ export const Multiple = {
 	watch: {
 		resourcesIds(resourcesIds: number[], previousResourcesIds: number[]): void
 		{
+			if (resourcesIds.join(',') === previousResourcesIds.join(','))
+			{
+				return;
+			}
+
 			const deletedIds = previousResourcesIds.filter((id: number) => !resourcesIds.includes(id));
 			const newIds = resourcesIds.filter((id: number) => !previousResourcesIds.includes(id));
 

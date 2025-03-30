@@ -102,13 +102,24 @@ class Filter
 			$result['=OPERATOR_ID'] = $allowedUserIds;
 		}
 
-		$extractDateRange = function($fieldName) use (&$filter, &$result)
+		if (\CTimeZone::GetOffset() == 0)
+		{
+			$userOffset = (new \DateTime())->getOffset();
+		}
+		else
+		{
+			$userOffset = \CTimeZone::GetOffset() + (new \DateTime())->getOffset();
+		}
+		$userTimeZone = \Bitrix\Main\Type\DateTime::secondsToOffset($userOffset);
+		$timeZone = new \DateTimeZone($userTimeZone);
+
+		$extractDateRange = function($fieldName) use (&$filter, &$result, $timeZone)
 		{
 			if (!empty($filter["{$fieldName}_from"]))
 			{
 				try
 				{
-					$result[">={$fieldName}"] = new \Bitrix\Main\Type\DateTime($filter["{$fieldName}_from"]);
+					$result[">={$fieldName}"] = new \Bitrix\Main\Type\DateTime($filter["{$fieldName}_from"], null, $timeZone);
 				}
 				catch (\Exception $e)
 				{
@@ -118,7 +129,7 @@ class Filter
 			{
 				try
 				{
-					$result["<={$fieldName}"] = new \Bitrix\Main\Type\DateTime($filter["{$fieldName}_to"]);
+					$result["<={$fieldName}"] = new \Bitrix\Main\Type\DateTime($filter["{$fieldName}_to"], null, $timeZone);
 				}
 				catch (\Exception $e)
 				{

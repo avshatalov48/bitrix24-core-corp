@@ -226,6 +226,9 @@ this.BX.Call.Component = this.BX.Call.Component || {};
 	      }
 	      this.source().currentTime = seconds;
 	      this.audioEventRouter('timeupdate');
+	      if (this.state !== ui_vue3_components_audioplayer.AudioPlayerState.play) {
+	        this.clickToButton();
+	      }
 	    },
 	    startSeeking(event) {
 	      this.isSeeking = true;
@@ -349,7 +352,7 @@ this.BX.Call.Component = this.BX.Call.Component || {};
 	      }
 	    },
 	    onClickControlButton() {
-	      if (this.state !== AudioPlayerState.play) {
+	      if (this.state !== ui_vue3_components_audioplayer.AudioPlayerState.play) {
 	        this.analyticsCallback();
 	      }
 	      this.clickToButton();

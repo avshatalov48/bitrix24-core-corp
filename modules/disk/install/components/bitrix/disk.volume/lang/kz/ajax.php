@@ -1,0 +1,22 @@
+<?php
+$MESS["DISK_VOLUME_DATA_DELETED"] = "Деректер жойылды";
+$MESS["DISK_VOLUME_DATA_DELETED_QUEUE"] = "Алдыңғы деректер жойылды. Қадам #QUEUE_STEP#/#QUEUE_LENGTH#";
+$MESS["DISK_VOLUME_ERROR_BAD_RIGHTS_FILE"] = "Файлға кіру құқығы жеткіліксіз.";
+$MESS["DISK_VOLUME_ERROR_BAD_RIGHTS_FOLDER"] = "Бумаға кіру құқығы жеткіліксіз.";
+$MESS["DISK_VOLUME_FILE_DELETE_OK"] = "Файл жойылды";
+$MESS["DISK_VOLUME_FILE_VERSION_DELETE_OK"] = "Пайдаланылмаған файл нұсқалары жойылды";
+$MESS["DISK_VOLUME_FOLDER_DELETE_OK"] = "Бума жойылды";
+$MESS["DISK_VOLUME_FOLDER_EMPTY_OK"] = "Бума  ішіндегісі жойылды";
+$MESS["DISK_VOLUME_GROUP_FILE_DELETE_OK"] = "Файлдар жойылды";
+$MESS["DISK_VOLUME_GROUP_FILE_VERSION_DELETE_OK"] = "Пайдаланылмаған файл нұсқалары жойылды";
+$MESS["DISK_VOLUME_NOTIFICATION_SEND_OK"] = "Ескерту жіберілді";
+$MESS["DISK_VOLUME_NOTIFY_CHAT"] = "Ескерту!  \"#TITLE#\" чатыңыздың файлдары тым көп көлемді алады #FILE_SIZE#.";
+$MESS["DISK_VOLUME_NOTIFY_FOLDER"] = "Ескерту! Бумаңыз<a href=\"#URL#\">\"#TITLE#\"</a> тым көп көлемді алады #FILE_SIZE#.";
+$MESS["DISK_VOLUME_NOTIFY_RECOMMENDATION"] = "Ұсынымдар: файлдарды басқа қоймаларға тасымалдаңыз; <a href=\"#URL_TRASHCAN#\">Себетті тазарту</a> орындаңыз; <a href=\"#URL_CLEAR#\">қажет емес файлдарды жойыңыз</a>. Әйтпесе, әкімші тазалауды өз қалауы бойынша орындайды.";
+$MESS["DISK_VOLUME_NOTIFY_STORAGE_GROUP"] = "Ескерту! <a href=\"#URL#\">Тобыңыздың </a> дискісі \"#TITLE#\" тым көп көлемді алады #FILE_SIZE#.";
+$MESS["DISK_VOLUME_NOTIFY_STORAGE_STORAGE"] = "Ескерту! Дискіңіз <a href=\"#URL#\">\"#TITLE#\"</a> тым көп көлемді алады #FILE_SIZE#. ";
+$MESS["DISK_VOLUME_NOTIFY_STORAGE_TRASHCAN"] = "Ескерту! <a href=\"#URL#\">Себетіңіз </a> тым көп көлемді алады #FILE_SIZE#.";
+$MESS["DISK_VOLUME_NOTIFY_STORAGE_UPLOADED"] = "Ескерту!  <a href=\"#URL#\">\"Жүктелген файлдар#\"</a> бумаңыз тым көп көлемді алады #FILE_SIZE#.";
+$MESS["DISK_VOLUME_NOTIFY_STORAGE_USER"] = "Ескерту! Дискіңіз <a href=\"#URL#\"></a> тым көп көлемді алады #FILE_SIZE#.";
+$MESS["DISK_VOLUME_PERFORMING_QUEUE"] = "Деректер жинау. Қадам #QUEUE_STEP#/#QUEUE_LENGTH#";
+$MESS["DISK_VOLUME_UNNECESSARY_VERSION_DELETE_OK"] = "Пайдаланылмаған нұсқалар жойылды";

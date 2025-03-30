@@ -8,8 +8,6 @@ return [
 	'css' => 'dist/department-content.bundle.css',
 	'js' => 'dist/department-content.bundle.js',
 	'rel' => [
-		'humanresources.company-structure.add-user-dialog',
-		'humanresources.company-structure.move-user-from-dialog',
 		'main.core',
 		'ui.entity-selector',
 		'ui.notification',
@@ -22,6 +20,7 @@ return [
 		'ui.icon-set.main',
 		'humanresources.company-structure.api',
 		'humanresources.company-structure.permission-checker',
+		'humanresources.company-structure.user-management-dialog',
 		'ui.buttons',
 		'humanresources.company-structure.chart-store',
 		'ui.vue3.pinia',

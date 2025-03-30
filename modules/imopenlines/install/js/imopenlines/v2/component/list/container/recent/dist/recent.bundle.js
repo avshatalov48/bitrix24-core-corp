@@ -25,12 +25,15 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	        layoutName: im_v2_const.Layout.openlinesV2.name,
 	        entityId: dialogId
 	      });
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
 	  },
 	  template: `
 		<div class="bx-imol-list-container-recent__container bx-imol-messenger__scope">
 			<div class="bx-imol-list-container-recent__header_container">
-				<h2 class="bx-imol-list-container-recent__header_title">OpenLines</h2>
+				<h2 class="bx-imol-list-container-recent__header_title">{{ loc('IMOL_LIST_RECENT_CONTAINER_HEADING') }}</h2>
 			</div>
 			<div class="bx-imol-list-container-recent__elements_container">
 				<div class="bx-imol-list-container-recent__elements">

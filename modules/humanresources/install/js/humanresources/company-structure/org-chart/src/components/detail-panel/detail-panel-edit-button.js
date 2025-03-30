@@ -92,7 +92,11 @@ export const DetailPanelEditButton = {
 					id: MenuOption.editEmployee,
 					title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_EMPLOYEE_LIST_TITLE'),
 					description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_EMPLOYEE_LIST_SUBTITLE'),
-					imageClass: '-hr-department-org-chart-menu-edit-list',
+					bIcon: {
+						name: Main.EDIT_MENU,
+						size: 20,
+						color: getColorCode('paletteBlue50'),
+					},
 					permission: { action: PermissionActions.employeeAddToDepartment },
 				},
 				{
@@ -156,6 +160,7 @@ export const DetailPanelEditButton = {
 			class="humanresources-detail-panel__edit-button"
 			:class="{ '--focused': menuVisible }"
 			:ref="'detailPanelEditButton'"
+			data-id="hr-department-detail-panel__edit-menu-button"
 			@click.stop="menuVisible = true"
 		>
 			<BIcon

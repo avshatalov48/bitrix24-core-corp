@@ -2,6 +2,7 @@
 	position: relative;
 	height: 100%;
 	overflow: hidden;
+	padding-bottom: 25px;
 	--padding-top: 34px;
 }
 
@@ -12,6 +13,7 @@
 	overflow-y: scroll;
 	overflow-x: hidden;
 	height: 100%;
+	padding-bottom: 25px;
 }
 
 .booking-booking-grid-columns {

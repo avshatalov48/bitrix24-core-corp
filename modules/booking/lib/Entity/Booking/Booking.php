@@ -4,21 +4,22 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Entity\Booking;
 
-use Bitrix\Booking\Entity\BaseEntity;
 use Bitrix\Booking\Entity\DatePeriod;
+use Bitrix\Booking\Entity\EntityInterface;
 use Bitrix\Booking\Entity\EventInterface;
 use Bitrix\Booking\Entity\EventTrait;
 use Bitrix\Booking\Entity\Resource\Resource;
 use Bitrix\Booking\Entity\Resource\ResourceCollection;
-use Bitrix\Booking\Exception\Booking\ConfirmBookingException;
-use Bitrix\Booking\Internals\Feature\BookingConfirmReminder;
-use Bitrix\Booking\Internals\NotificationType;
-use Bitrix\Booking\Internals\Rrule;
-use Bitrix\Booking\Internals\Time;
+use Bitrix\Booking\Internals\Exception\Booking\ConfirmBookingException;
+use Bitrix\Booking\Internals\Container;
+use Bitrix\Booking\Internals\Service\Feature\BookingConfirmReminder;
+use Bitrix\Booking\Internals\Service\Notifications\NotificationType;
+use Bitrix\Booking\Internals\Service\Rrule;
+use Bitrix\Booking\Internals\Service\Time;
 use DateTimeImmutable;
 use DateTimeZone;
 
-class Booking extends BaseEntity implements EventInterface
+class Booking implements EntityInterface, EventInterface
 {
 	use EventTrait;
 
@@ -118,6 +119,16 @@ class Booking extends BaseEntity implements EventInterface
 	public function getPrimaryClient(): Client|null
 	{
 		return $this->getClientCollection()->getPrimaryClient();
+	}
+
+	public function getPrimaryClientUrl(): string
+	{
+		$url = Container::getProviderManager()::getProviderByBooking($this)
+			?->getClientProvider()
+			?->getClientUrl($this->getPrimaryClient())
+		;
+
+		return $url ?? '#';
 	}
 
 	public function setClientCollection(ClientCollection $clientCollection): Booking
@@ -398,7 +409,7 @@ class Booking extends BaseEntity implements EventInterface
 
 		if (isset($props['isDeleted']))
 		{
-			$result->setDeleted((bool)$props['isDeleted'] ?? false);
+			$result->setDeleted((bool)$props['isDeleted']);
 		}
 
 		if (

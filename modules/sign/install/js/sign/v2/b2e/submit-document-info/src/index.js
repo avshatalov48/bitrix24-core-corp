@@ -1,8 +1,10 @@
 import { Dom, Loc, Tag, Text, Type } from 'main.core';
 import { MemoryCache } from 'main.core.cache';
 import { type BaseEvent, EventEmitter } from 'main.core.events';
-import type { FieldValue, MemberStatusType, ProviderCodeType, TemplateField } from 'sign.v2.api';
-import { Api, MemberStatus } from 'sign.v2.api';
+import { Api } from 'sign.v2.api';
+import type { FieldValue, TemplateField } from 'sign.v2.api';
+import type { ProviderCodeType, MemberStatusType } from 'sign.type';
+import { MemberStatus } from 'sign.type';
 import './style.css';
 import 'ui.forms';
 import { SignLink } from 'sign.v2.b2e.sign-link';

@@ -14,6 +14,8 @@ abstract class Payload
 {
 	protected const DEFAULT_USAGE_COST = 1;
 
+	protected const PROPERTY_CUSTOM_COST = 'customCost';
+
 	protected array $markers = [];
 	protected array $hiddenTokens = [];
 	protected array $processedReplacements = [];
@@ -23,6 +25,8 @@ abstract class Payload
 
 	private bool $instructionFormatted = false;
 	protected bool $useCache = false;
+
+	protected ?int $customCost = null;
 
 	/**
 	 * Returns current payload data without any transformations as is.
@@ -202,8 +206,23 @@ abstract class Payload
 		return $this->useCache;
 	}
 
+	public function setCost(int $cost): static
+	{
+		$this->customCost = $cost;
+
+		return $this;
+	}
+
 	public static function getShareService(): ShareService
 	{
 		return Container::init()->getItem(ShareService::class);
+	}
+
+	protected static function setCustomCost(Payload $payload, $unpackedData): void
+	{
+		if (!is_null($unpackedData[static::PROPERTY_CUSTOM_COST]))
+		{
+			$payload->setCost($unpackedData[static::PROPERTY_CUSTOM_COST]);
+		}
 	}
 }

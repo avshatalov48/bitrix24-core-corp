@@ -4,50 +4,121 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Provider;
 
+use Bitrix\Booking\Entity\Booking\BookingCollection;
+use Bitrix\Booking\Entity\DatePeriod;
+use Bitrix\Booking\Entity\Resource\Resource;
 use Bitrix\Booking\Entity\Resource\ResourceCollection;
-use Bitrix\Booking\Exception\Resource\ResourceNotFoundException;
-use Bitrix\Booking\Internals\Query;
-use Bitrix\Booking\Internals\Query\Resource\ResourceFilter;
-use Bitrix\Booking\Internals\Query\Resource\ResourceSort;
+use Bitrix\Booking\Internals\Container;
+use Bitrix\Booking\Internals\Repository\ResourceRepositoryInterface;
+use Bitrix\Booking\Provider\Params\Booking\BookingFilter;
+use Bitrix\Booking\Provider\Params\Booking\BookingSelect;
+use Bitrix\Booking\Provider\Params\GridParams;
+use Bitrix\Booking\Provider\Params\Resource\ResourceFilter;
 
 class ResourceProvider
 {
-	public function getList(
-		int $userId,
-		int $limit = null,
-		int $offset = null,
-		array|null $filter = null,
-		array|null $sort = null,
-	): ResourceCollection
-	{
-		$request = new Query\Resource\GetListRequest(
-			userId: $userId,
-			limit: $limit,
-			offset: $offset,
-			filter: new ResourceFilter($filter ?? []),
-			sort: new ResourceSort($sort ?? []),
-		);
+	private ResourceRepositoryInterface $repository;
 
-		return (new Query\Resource\GetListHandler())($request);
+	public function __construct()
+	{
+		$this->repository = Container::getResourceRepository();
 	}
 
-	/**
-	 * @throws ResourceNotFoundException
-	 */
-	public function getById(int $userId, int $resourceId): Query\Resource\GetByIdResponse
+	public function getList(GridParams $gridParams, int $userId): ResourceCollection
 	{
-		return (new Query\Resource\GetByIdHandler())(
-			resourceId: $resourceId,
+		return $this->repository->getList(
+			limit: $gridParams->limit,
+			offset: $gridParams->offset,
+			filter: $gridParams->getFilter(),
+			sort: $gridParams->getSort(),
 			userId: $userId,
 		);
 	}
 
-	public function getTotal(
-		array|null $filter = null,
-	): int
+	public function getById(int $userId, int $resourceId): Resource|null
 	{
-		$request = new Query\Resource\GetTotalRequest(new ResourceFilter($filter ?? []));
+		return $this->repository->getById(
+			id: $resourceId,
+			userId: $userId,
+		);
+	}
 
-		return (new Query\Resource\GetTotalHandler())($request);
+	public function getTotal(ResourceFilter $filter, int $userId): int
+	{
+		return $this->repository->getTotal(
+			filter: $filter->prepareFilter(),
+			userId: $userId
+		);
+	}
+
+	public function withCounters(ResourceCollection $collection, int $managerId, DatePeriod|null $datePeriod = null): self
+	{
+		if ($collection->isEmpty())
+		{
+			return $this;
+		}
+
+		if ($datePeriod === null)
+		{
+			// default is today
+			$datePeriod = new DatePeriod(
+				dateFrom: new \DateTimeImmutable("today 00:00"),
+				dateTo: new \DateTimeImmutable("today 24:00"),
+			);
+		}
+
+		$bookingCollection = $this->getBookingCollection($collection, $managerId, $datePeriod);
+
+		if ($bookingCollection->isEmpty())
+		{
+			return $this;
+		}
+
+		/** @var Resource $resource */
+		foreach ($collection as $resource)
+		{
+			$resourceCounter = 0;
+
+			/** @var \Bitrix\Booking\Entity\Booking\Booking $booking */
+			foreach ($bookingCollection as $booking)
+			{
+				if (in_array($resource->getId(), $booking->getResourceCollection()->getEntityIds()))
+				{
+					$resourceCounter += $booking->getCounter();
+				}
+			}
+
+			$resource->setCounter($resourceCounter);
+		}
+
+		return $this;
+	}
+
+	private function getBookingCollection(
+		ResourceCollection $resourceCollection,
+		int $managerId,
+		DatePeriod $datePeriod
+	): BookingCollection
+	{
+		$bookingProvider = new BookingProvider();
+		$bookingCollection = $bookingProvider->getList(
+			new GridParams(
+				filter: new BookingFilter([
+					'RESOURCE_ID' => $resourceCollection->getEntityIds(),
+					'WITHIN' => [
+						'DATE_FROM' => $datePeriod->getDateFrom()->getTimestamp(),
+						'DATE_TO' => $datePeriod->getDateTo()->getTimestamp(),
+					],
+				]),
+				select: new BookingSelect([
+					'RESOURCES',
+				]),
+			),
+			userId: $managerId,
+		);
+
+		$bookingProvider->withCounters($bookingCollection, $managerId);
+
+		return $bookingCollection;
 	}
 }

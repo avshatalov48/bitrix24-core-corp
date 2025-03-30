@@ -7,10 +7,6 @@ this.BX.Sign = this.BX.Sign || {};
 	let _ = t => t,
 	  _t,
 	  _t2;
-	const DocumentInitiated = Object.freeze({
-	  employee: 'employee',
-	  company: 'company'
-	});
 	var _notificationContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("notificationContainer");
 	var _changeDomainWarningContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("changeDomainWarningContainer");
 	var _scenarioType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scenarioType");
@@ -432,7 +428,6 @@ this.BX.Sign = this.BX.Sign || {};
 	  main_core.Dom.append(alert.getContainer(), babelHelpers.classPrivateFieldLooseBase(this, _notificationContainer)[_notificationContainer]);
 	}
 
-	exports.DocumentInitiated = DocumentInitiated;
 	exports.DocumentSetup = DocumentSetup;
 
 }((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX,BX.Event,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX.UI,BX.UI));

@@ -1,0 +1,25 @@
+<?php
+$MESS["DISK_UF_FILE_CLOUD_IMPORT_TITLE_SERVICE_DROPBOX"] = "Dropbox";
+$MESS["DISK_UF_FILE_CLOUD_IMPORT_TITLE_SERVICE_GDRIVE"] = "Google Drive";
+$MESS["DISK_UF_FILE_CLOUD_IMPORT_TITLE_SERVICE_OFFICE365"] = "Office365";
+$MESS["DISK_UF_FILE_EDIT_SERVICE_LABEL"] = "#NAME# арқылы құжат құру";
+$MESS["WDUF_ALLOW_COLLAGE"] = "Фото коллажға рұқсат ету";
+$MESS["WDUF_ALLOW_EDIT"] = "Құжаттарды редакциялауға рұқсат ету";
+$MESS["WDUF_CREATE_DOCUMENT_MSGVER_1"] = "Құжатты жасау";
+$MESS["WDUF_CREATE_DOCX"] = "Құжат";
+$MESS["WDUF_CREATE_PPTX"] = "Презентация";
+$MESS["WDUF_CREATE_XLSX"] = "Кесте";
+$MESS["WDUF_DND_AREA_TITLE"] = "Файлды осы жерге көшіруіңізге болады";
+$MESS["WDUF_FILE_IS_EXISTS"] = "Файл бұрыннан бері бар.";
+$MESS["WDUF_ITEM_ERROR"] = "Қате";
+$MESS["WDUF_ITEM_MENU_DELETE"] = "Жою";
+$MESS["WDUF_ITEM_MENU_EDIT"] = "Редакциялау";
+$MESS["WDUF_ITEM_MENU_FILE"] = "Файл";
+$MESS["WDUF_ITEM_MENU_INSERT_INTO_THE_TEXT"] = "Мәтінге қою";
+$MESS["WDUF_ITEM_MENU_RENAME"] = "Атауын өзгерту";
+$MESS["WDUF_ITEM_MENU_RENAME_CANCEL"] = "Болдырмау";
+$MESS["WDUF_ITEM_MENU_RENAME_SAVE"] = "Сақтау";
+$MESS["WDUF_ITEM_MENU_RENAME_TITLE"] = "Атауын өзгерту";
+$MESS["WDUF_MY_DISK"] = "Менің дискім";
+$MESS["WDUF_UPLOAD"] = "Жүктеу";
+$MESS["WDUF_UPLOAD_DOCUMENT"] = "Құжаттарды жүктеу";

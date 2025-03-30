@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 (function (exports,main_popup,ui_notification,sign_tour,main_core,sign_document) {

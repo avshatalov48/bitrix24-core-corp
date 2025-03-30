@@ -8321,6 +8321,7 @@ var Vue = exports.Vue;
               babelHelpers.classPrivateFieldGet(_this2, _dependence).trigger(field, 'change');
             }
           });
+          this.pager.first();
         }
       }, {
         key: "show",

@@ -17,3 +17,4 @@ $MESS['HUMAN_RESOURCES_CHAT_UNBIND_TO_STRUCTURE_MSGVER_1'] = 'Удаление �
 $MESS['HUMAN_RESOURCES_CHANEL_UNBIND_TO_STRUCTURE_MSGVER_1'] = 'Удаление канала из структуры';
 
 $MESS['HUMAN_RESOURCES_USERS_ACCESS_EDIT_MSGVER_1'] = 'Управление правами доступа';
+$MESS['HUMAN_RESOURCES_USER_INVITE'] = 'Приглашение сотрудников в Битрикс24';

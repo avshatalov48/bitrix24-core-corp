@@ -56,7 +56,7 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method void removeFrom($fieldName, $value)
 	 * @method void removeAll($fieldName)
 	 * @method \Bitrix\Main\ORM\Data\Result delete()
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
 	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
 	 * @method static \Bitrix\StaffTrack\Model\EO_UserStatisticsHash wakeUp($data)
@@ -94,7 +94,7 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method \Bitrix\StaffTrack\Model\EO_UserStatisticsHash[] getAll()
 	 * @method bool remove(\Bitrix\StaffTrack\Model\EO_UserStatisticsHash $object)
 	 * @method void removeByPrimary($primary)
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method array|\Bitrix\Main\ORM\Objectify\Collection|null fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method static \Bitrix\StaffTrack\Model\EO_UserStatisticsHash_Collection wakeUp($data)
 	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
 	 * @method void offsetSet() ArrayAccess
@@ -208,7 +208,7 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method void removeFrom($fieldName, $value)
 	 * @method void removeAll($fieldName)
 	 * @method \Bitrix\Main\ORM\Data\Result delete()
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
 	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
 	 * @method static \Bitrix\StaffTrack\Model\EO_ShiftGeo wakeUp($data)
@@ -248,7 +248,7 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method \Bitrix\StaffTrack\Model\EO_ShiftGeo[] getAll()
 	 * @method bool remove(\Bitrix\StaffTrack\Model\EO_ShiftGeo $object)
 	 * @method void removeByPrimary($primary)
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method array|\Bitrix\Main\ORM\Objectify\Collection|null fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method static \Bitrix\StaffTrack\Model\EO_ShiftGeo_Collection wakeUp($data)
 	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
 	 * @method void offsetSet() ArrayAccess
@@ -330,6 +330,16 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method \Bitrix\StaffTrack\Model\EO_ShiftMessage resetMessageId()
 	 * @method \Bitrix\StaffTrack\Model\EO_ShiftMessage unsetMessageId()
 	 * @method \int fillMessageId()
+	 * @method \Bitrix\StaffTrack\Model\Shift getShift()
+	 * @method \Bitrix\StaffTrack\Model\Shift remindActualShift()
+	 * @method \Bitrix\StaffTrack\Model\Shift requireShift()
+	 * @method \Bitrix\StaffTrack\Model\EO_ShiftMessage setShift(\Bitrix\StaffTrack\Model\Shift $object)
+	 * @method \Bitrix\StaffTrack\Model\EO_ShiftMessage resetShift()
+	 * @method \Bitrix\StaffTrack\Model\EO_ShiftMessage unsetShift()
+	 * @method bool hasShift()
+	 * @method bool isShiftFilled()
+	 * @method bool isShiftChanged()
+	 * @method \Bitrix\StaffTrack\Model\Shift fillShift()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -352,7 +362,7 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method void removeFrom($fieldName, $value)
 	 * @method void removeAll($fieldName)
 	 * @method \Bitrix\Main\ORM\Data\Result delete()
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
 	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
 	 * @method static \Bitrix\StaffTrack\Model\EO_ShiftMessage wakeUp($data)
@@ -368,7 +378,7 @@ namespace Bitrix\StaffTrack\Model {
 }
 namespace Bitrix\StaffTrack\Model {
 	/**
-	 * EO_ShiftMessage_Collection
+	 * ShiftMessageCollection
 	 *
 	 * Custom methods:
 	 * ---------------
@@ -378,6 +388,9 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method \int[] fillShiftId()
 	 * @method \int[] getMessageIdList()
 	 * @method \int[] fillMessageId()
+	 * @method \Bitrix\StaffTrack\Model\Shift[] getShiftList()
+	 * @method \Bitrix\StaffTrack\Model\ShiftMessageCollection getShiftCollection()
+	 * @method \Bitrix\StaffTrack\Model\ShiftCollection fillShift()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -390,8 +403,8 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method \Bitrix\StaffTrack\Model\EO_ShiftMessage[] getAll()
 	 * @method bool remove(\Bitrix\StaffTrack\Model\EO_ShiftMessage $object)
 	 * @method void removeByPrimary($primary)
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method static \Bitrix\StaffTrack\Model\EO_ShiftMessage_Collection wakeUp($data)
+	 * @method array|\Bitrix\Main\ORM\Objectify\Collection|null fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\StaffTrack\Model\ShiftMessageCollection wakeUp($data)
 	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
 	 * @method void offsetSet() ArrayAccess
 	 * @method void offsetExists() ArrayAccess
@@ -403,7 +416,7 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
-	 * @method \Bitrix\StaffTrack\Model\EO_ShiftMessage_Collection merge(?\Bitrix\StaffTrack\Model\EO_ShiftMessage_Collection $collection)
+	 * @method \Bitrix\StaffTrack\Model\ShiftMessageCollection merge(?\Bitrix\StaffTrack\Model\ShiftMessageCollection $collection)
 	 * @method bool isEmpty()
 	 */
 	class EO_ShiftMessage_Collection implements \ArrayAccess, \Iterator, \Countable {
@@ -418,7 +431,7 @@ namespace Bitrix\StaffTrack\Model {
 	 *
 	 * @method EO_ShiftMessage_Result exec()
 	 * @method \Bitrix\StaffTrack\Model\EO_ShiftMessage fetchObject()
-	 * @method \Bitrix\StaffTrack\Model\EO_ShiftMessage_Collection fetchCollection()
+	 * @method \Bitrix\StaffTrack\Model\ShiftMessageCollection fetchCollection()
 	 *
 	 * Custom methods:
 	 * ---------------
@@ -427,14 +440,14 @@ namespace Bitrix\StaffTrack\Model {
 	class EO_ShiftMessage_Query extends \Bitrix\Main\ORM\Query\Query {}
 	/**
 	 * @method \Bitrix\StaffTrack\Model\EO_ShiftMessage fetchObject()
-	 * @method \Bitrix\StaffTrack\Model\EO_ShiftMessage_Collection fetchCollection()
+	 * @method \Bitrix\StaffTrack\Model\ShiftMessageCollection fetchCollection()
 	 */
 	class EO_ShiftMessage_Result extends \Bitrix\Main\ORM\Query\Result {}
 	/**
 	 * @method \Bitrix\StaffTrack\Model\EO_ShiftMessage createObject($setDefaultValues = true)
-	 * @method \Bitrix\StaffTrack\Model\EO_ShiftMessage_Collection createCollection()
+	 * @method \Bitrix\StaffTrack\Model\ShiftMessageCollection createCollection()
 	 * @method \Bitrix\StaffTrack\Model\EO_ShiftMessage wakeUpObject($row)
-	 * @method \Bitrix\StaffTrack\Model\EO_ShiftMessage_Collection wakeUpCollection($rows)
+	 * @method \Bitrix\StaffTrack\Model\ShiftMessageCollection wakeUpCollection($rows)
 	 */
 	class EO_ShiftMessage_Entity extends \Bitrix\Main\ORM\Entity {}
 }
@@ -504,7 +517,7 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method void removeFrom($fieldName, $value)
 	 * @method void removeAll($fieldName)
 	 * @method \Bitrix\Main\ORM\Data\Result delete()
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
 	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
 	 * @method static \Bitrix\StaffTrack\Model\EO_ShiftCancellation wakeUp($data)
@@ -544,7 +557,7 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method \Bitrix\StaffTrack\Model\EO_ShiftCancellation[] getAll()
 	 * @method bool remove(\Bitrix\StaffTrack\Model\EO_ShiftCancellation $object)
 	 * @method void removeByPrimary($primary)
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method array|\Bitrix\Main\ORM\Objectify\Collection|null fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method static \Bitrix\StaffTrack\Model\EO_ShiftCancellation_Collection wakeUp($data)
 	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
 	 * @method void offsetSet() ArrayAccess
@@ -658,7 +671,7 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method void removeFrom($fieldName, $value)
 	 * @method void removeAll($fieldName)
 	 * @method \Bitrix\Main\ORM\Data\Result delete()
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
 	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
 	 * @method static \Bitrix\StaffTrack\Model\Option wakeUp($data)
@@ -698,7 +711,7 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method \Bitrix\StaffTrack\Model\Option[] getAll()
 	 * @method bool remove(\Bitrix\StaffTrack\Model\Option $object)
 	 * @method void removeByPrimary($primary)
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method array|\Bitrix\Main\ORM\Objectify\Collection|null fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method static \Bitrix\StaffTrack\Model\EO_Option_Collection wakeUp($data)
 	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
 	 * @method void offsetSet() ArrayAccess
@@ -830,6 +843,27 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method bool isCancellationFilled()
 	 * @method bool isCancellationChanged()
 	 * @method \Bitrix\StaffTrack\Model\EO_ShiftCancellation fillCancellation()
+	 * @method \Bitrix\StaffTrack\Model\EO_ShiftGeo getGeoInner()
+	 * @method \Bitrix\StaffTrack\Model\EO_ShiftGeo remindActualGeoInner()
+	 * @method \Bitrix\StaffTrack\Model\EO_ShiftGeo requireGeoInner()
+	 * @method \Bitrix\StaffTrack\Model\Shift setGeoInner(\Bitrix\StaffTrack\Model\EO_ShiftGeo $object)
+	 * @method \Bitrix\StaffTrack\Model\Shift resetGeoInner()
+	 * @method \Bitrix\StaffTrack\Model\Shift unsetGeoInner()
+	 * @method bool hasGeoInner()
+	 * @method bool isGeoInnerFilled()
+	 * @method bool isGeoInnerChanged()
+	 * @method \Bitrix\StaffTrack\Model\EO_ShiftGeo fillGeoInner()
+	 * @method \Bitrix\StaffTrack\Model\ShiftMessageCollection getMessages()
+	 * @method \Bitrix\StaffTrack\Model\ShiftMessageCollection requireMessages()
+	 * @method \Bitrix\StaffTrack\Model\ShiftMessageCollection fillMessages()
+	 * @method bool hasMessages()
+	 * @method bool isMessagesFilled()
+	 * @method bool isMessagesChanged()
+	 * @method void addToMessages(\Bitrix\StaffTrack\Model\EO_ShiftMessage $shiftMessage)
+	 * @method void removeFromMessages(\Bitrix\StaffTrack\Model\EO_ShiftMessage $shiftMessage)
+	 * @method void removeAllMessages()
+	 * @method \Bitrix\StaffTrack\Model\Shift resetMessages()
+	 * @method \Bitrix\StaffTrack\Model\Shift unsetMessages()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -852,7 +886,7 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method void removeFrom($fieldName, $value)
 	 * @method void removeAll($fieldName)
 	 * @method \Bitrix\Main\ORM\Data\Result delete()
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
 	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
 	 * @method static \Bitrix\StaffTrack\Model\Shift wakeUp($data)
@@ -890,6 +924,12 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method \Bitrix\StaffTrack\Model\EO_ShiftCancellation[] getCancellationList()
 	 * @method \Bitrix\StaffTrack\Model\ShiftCollection getCancellationCollection()
 	 * @method \Bitrix\StaffTrack\Model\EO_ShiftCancellation_Collection fillCancellation()
+	 * @method \Bitrix\StaffTrack\Model\EO_ShiftGeo[] getGeoInnerList()
+	 * @method \Bitrix\StaffTrack\Model\ShiftCollection getGeoInnerCollection()
+	 * @method \Bitrix\StaffTrack\Model\EO_ShiftGeo_Collection fillGeoInner()
+	 * @method \Bitrix\StaffTrack\Model\ShiftMessageCollection[] getMessagesList()
+	 * @method \Bitrix\StaffTrack\Model\ShiftMessageCollection getMessagesCollection()
+	 * @method \Bitrix\StaffTrack\Model\ShiftMessageCollection fillMessages()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -902,7 +942,7 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method \Bitrix\StaffTrack\Model\Shift[] getAll()
 	 * @method bool remove(\Bitrix\StaffTrack\Model\Shift $object)
 	 * @method void removeByPrimary($primary)
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method array|\Bitrix\Main\ORM\Objectify\Collection|null fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method static \Bitrix\StaffTrack\Model\ShiftCollection wakeUp($data)
 	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
 	 * @method void offsetSet() ArrayAccess
@@ -1016,7 +1056,7 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method void removeFrom($fieldName, $value)
 	 * @method void removeAll($fieldName)
 	 * @method \Bitrix\Main\ORM\Data\Result delete()
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
 	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
 	 * @method static \Bitrix\StaffTrack\Model\Counter wakeUp($data)
@@ -1056,7 +1096,7 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method \Bitrix\StaffTrack\Model\Counter[] getAll()
 	 * @method bool remove(\Bitrix\StaffTrack\Model\Counter $object)
 	 * @method void removeByPrimary($primary)
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method array|\Bitrix\Main\ORM\Objectify\Collection|null fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method static \Bitrix\StaffTrack\Model\EO_Counter_Collection wakeUp($data)
 	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
 	 * @method void offsetSet() ArrayAccess
@@ -1150,7 +1190,7 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method void removeFrom($fieldName, $value)
 	 * @method void removeAll($fieldName)
 	 * @method \Bitrix\Main\ORM\Data\Result delete()
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
 	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
 	 * @method static \Bitrix\StaffTrack\Model\EO_HandledChat wakeUp($data)
@@ -1186,7 +1226,7 @@ namespace Bitrix\StaffTrack\Model {
 	 * @method \Bitrix\StaffTrack\Model\EO_HandledChat[] getAll()
 	 * @method bool remove(\Bitrix\StaffTrack\Model\EO_HandledChat $object)
 	 * @method void removeByPrimary($primary)
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method array|\Bitrix\Main\ORM\Objectify\Collection|null fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method static \Bitrix\StaffTrack\Model\EO_HandledChat_Collection wakeUp($data)
 	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
 	 * @method void offsetSet() ArrayAccess

@@ -47,28 +47,26 @@ export const Switcher = {
 		loading: Boolean,
 		hiddenText: Boolean,
 	},
-	data(): { switcher: UISwitcher }
+	beforeCreate(): void
 	{
-		return {
-			switcher: new UISwitcher({
-				id: this.id,
-				inputName: this.inputName,
-				checked: this.modelValue,
-				size: this.size,
-				color: this.color,
-				disabled: this.disabled,
-				loading: this.loading,
-				handlers: {
-					toggled: this.toggle,
-					checked: this.checked,
-					unchecked: this.unchecked,
-					lock: this.lock,
-					unlock: this.unlock,
-				},
-			}),
-		};
+		this.switcher = new UISwitcher({
+			id: this.id,
+			inputName: this.inputName,
+			checked: this.modelValue,
+			size: this.size,
+			color: this.color,
+			disabled: this.disabled,
+			loading: this.loading,
+			handlers: {
+				toggled: this.toggle,
+				checked: this.checked,
+				unchecked: this.unchecked,
+				lock: this.lock,
+				unlock: this.unlock,
+			},
+		});
 	},
-	mounted()
+	mounted(): void
 	{
 		this.switcher.renderTo(this.$refs.switcherWrapper);
 	},
@@ -105,52 +103,51 @@ export const Switcher = {
 			if (hidden)
 			{
 				Dom.addClass(elOn, 'switcher-transparent-text');
-				Dom.addClass(elOn, 'switcher-transparent-text');
+				Dom.addClass(elOff, 'switcher-transparent-text');
 			}
 			else
 			{
-				Dom.removeClass(elOff, 'switcher-transparent-text');
+				Dom.removeClass(elOn, 'switcher-transparent-text');
 				Dom.removeClass(elOff, 'switcher-transparent-text');
 			}
 		},
 	},
-	watch:
-		{
-			disabled: {
-				handler(disabled)
+	watch: {
+		disabled: {
+			handler(disabled)
+			{
+				if (disabled !== this.switcher.isDisabled())
 				{
-					if (disabled !== this.switcher.isDisabled())
-					{
-						this.switcher.disable(disabled);
-					}
-				},
-			},
-			loading: {
-				handler(loading)
-				{
-					if (loading !== this.switcher.isLoading())
-					{
-						this.switcher.setLoading(loading);
-					}
-				},
-			},
-			modelValue: {
-				handler(checked)
-				{
-					if (checked !== this.switcher.checked)
-					{
-						this.switcher.check(checked);
-					}
-				},
-			},
-			hiddenText: {
-				handler(hidden)
-				{
-					this.toggleTextVisibility(hidden);
-				},
-				immediate: true,
+					this.switcher.disable(disabled);
+				}
 			},
 		},
+		loading: {
+			handler(loading)
+			{
+				if (loading !== this.switcher.isLoading())
+				{
+					this.switcher.setLoading(loading);
+				}
+			},
+		},
+		modelValue: {
+			handler(checked)
+			{
+				if (checked !== this.switcher.checked)
+				{
+					this.switcher.check(checked);
+				}
+			},
+		},
+		hiddenText: {
+			handler(hidden)
+			{
+				this.toggleTextVisibility(hidden);
+			},
+			immediate: true,
+		},
+	},
 	template: `
 		<div ref="switcherWrapper"></div>
 	`,

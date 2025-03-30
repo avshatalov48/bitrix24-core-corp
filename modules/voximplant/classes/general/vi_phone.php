@@ -469,7 +469,7 @@ class CVoxImplantPhone
 		return $arResult;
 	}
 
-	public static function GetPhoneNumbers($country, $regionId, $category, $offset = 0, $count = 20)
+	public static function GetPhoneNumbers($country, $regionId, $category, $offset = 0, $count = 20, $countryState = '')
 	{
 		$arResult = Array();
 		if (!in_array($category, self::GetCategories()))
@@ -481,7 +481,7 @@ class CVoxImplantPhone
 		$currency = $viAccount->GetAccountCurrency();
 
 		$viHttp = new CVoxImplantHttp();
-		$result = $viHttp->GetNewPhoneNumbers($category, $country, $regionId, $offset, $count);
+		$result = $viHttp->GetNewPhoneNumbers($category, $country, $regionId, $offset, $count, $countryState);
 
 		if ($result && !empty($result->result))
 		{

@@ -143,4 +143,24 @@ final class CustomSectionSelection implements RoleSelectionManager
 
 		return (int)$solution['ID'];
 	}
+
+	public function getMenuId(): ?string
+	{
+		return $this->customSection->getId();
+	}
+
+	public function getControllerData(): array
+	{
+		return [
+			'criterion' => null,
+			'sectionCode' => $this->customSection->getCode(),
+			'isAutomation' => false,
+			'menuId' => $this->getMenuId(),
+		];
+	}
+
+	public function getTitle(): string
+	{
+		return $this->customSection->getTitle();
+	}
 }

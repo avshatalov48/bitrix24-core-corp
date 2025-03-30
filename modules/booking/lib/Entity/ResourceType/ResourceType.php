@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Entity\ResourceType;
 
-use Bitrix\Booking\Entity\BaseEntity;
-use Bitrix\Booking\Internals\NotificationTemplateType;
+use Bitrix\Booking\Entity\EntityInterface;
+use Bitrix\Booking\Internals\Service\Notifications\NotificationTemplateType;
 
-class ResourceType extends BaseEntity
+class ResourceType implements EntityInterface
 {
 	public const INTERNAL_MODULE_ID = 'booking';
 

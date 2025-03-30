@@ -1,7 +1,7 @@
 import { Cache, Dom, Loc, Tag, Text as TextFormat, Type } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 import { FieldSelector } from 'sign.v2.b2e.field-selector';
-import { DocumentInitiated } from 'sign.v2.document-setup';
+import { DocumentInitiated } from 'sign.type';
 import type { FieldSelectEvent, FieldSelectEventData } from '../../types/events/fieldSelectEvent';
 import Dummy from '../dummy';
 

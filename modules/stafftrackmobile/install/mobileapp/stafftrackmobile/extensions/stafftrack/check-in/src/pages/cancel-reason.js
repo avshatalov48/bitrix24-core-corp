@@ -10,7 +10,6 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 	const { Haptics } = require('haptics');
 	const { BottomSheet } = require('bottom-sheet');
 	const { AvaMenu } = require('ava-menu');
-	const { animate } = require('animation');
 
 	const { Box } = require('ui-system/layout/box');
 	const { Area } = require('ui-system/layout/area');
@@ -19,8 +18,8 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 	const { H3 } = require('ui-system/typography/heading');
 	const { Link3, LinkDesign, LinkMode } = require('ui-system/blocks/link');
 	const { Text3 } = require('ui-system/typography/text');
+	const { DialogFooter } = require('ui-system/layout/dialog-footer');
 
-	const { ContinueButton } = require('stafftrack/check-in/continue-button');
 	const { Message } = require('stafftrack/check-in/message');
 	const { ShiftManager } = require('stafftrack/data-managers/shift-manager');
 	const { CancelReasonMenu } = require('stafftrack/check-in/cancel-reason-menu');
@@ -38,7 +37,6 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 
 			this.refs = {
 				layoutWidget: this.props.layoutWidget || PageManager,
-				continueButton: null,
 				textField: null,
 				reasonSelector: null,
 				message: null,
@@ -52,15 +50,10 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 			};
 
 			this.cancelReasonMenu = null;
-			this.isButtonContainerVisible = true;
 
 			this.previousToast = null;
 
-			this.onKeyboardWillShowHandler = this.onKeyboardWillShowHandler.bind(this);
-			this.onKeyboardWillHideHandler = this.onKeyboardWillHideHandler.bind(this);
 			this.onSwitcherClick = this.onSwitcherClick.bind(this);
-			this.onViewShown = this.onViewShown.bind(this);
-			this.onViewHidden = this.onViewHidden.bind(this);
 
 			this.onConfirmButtonClick = this.onConfirmButtonClick.bind(this);
 			this.onReasonSelectorClick = this.onReasonSelectorClick.bind(this);
@@ -84,8 +77,6 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 
 		componentDidMount()
 		{
-			this.bindEvents();
-
 			if (this.isCustomReason())
 			{
 				this.refs.message?.focus();
@@ -102,29 +93,6 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 			}
 		}
 
-		componentWillUnmount()
-		{
-			this.unbindEvents();
-		}
-
-		bindEvents()
-		{
-			Keyboard.on(Keyboard.Event.WillShow, this.onKeyboardWillShowHandler);
-			Keyboard.on(Keyboard.Event.WillHide, this.onKeyboardWillHideHandler);
-
-			this.refs?.layoutWidget.on('onViewShown', this.onViewShown);
-			this.refs?.layoutWidget.on('onViewHidden', this.onViewHidden);
-		}
-
-		unbindEvents()
-		{
-			Keyboard.off(Keyboard.Event.WillShow, this.onKeyboardWillShowHandler);
-			Keyboard.off(Keyboard.Event.WillHide, this.onKeyboardWillHideHandler);
-
-			this.refs?.layoutWidget.off('onViewShown', this.onViewShown);
-			this.refs?.layoutWidget.off('onViewHidden', this.onViewHidden);
-		}
-
 		show(parentLayout = PageManager)
 		{
 			void new BottomSheet({ component: this })
@@ -139,34 +107,6 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 					this.refs.layoutWidget = widget;
 				})
 			;
-		}
-
-		onKeyboardWillShowHandler()
-		{
-			this.refs.continueButton?.show();
-			this.hideButtonContainer();
-		}
-
-		onKeyboardWillHideHandler()
-		{
-			this.refs.continueButton?.hide();
-			this.showButtonContainer();
-		}
-
-		onViewShown()
-		{
-			if (this.props.onViewShown)
-			{
-				this.props.onViewShown();
-			}
-		}
-
-		onViewHidden()
-		{
-			if (this.props.onViewHidden)
-			{
-				this.props.onViewHidden();
-			}
 		}
 
 		changeHeight(mediumPositionHeight)
@@ -256,7 +196,7 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 				},
 				this.renderHeader(),
 				this.renderBody(),
-				this.renderContinueButton(),
+				this.renderDialogFooter(),
 			);
 		}
 
@@ -315,7 +255,6 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 				},
 				this.renderMessage(),
 				this.renderReasonSelector(),
-				this.renderConfirmButton(),
 			);
 		}
 
@@ -413,13 +352,19 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 			return Loc.getMessage('M_STAFFTRACK_CHECK_IN_CANCEL');
 		}
 
-		renderContinueButton()
+		renderDialogFooter()
 		{
-			return new ContinueButton({
-				ref: (ref) => {
-					this.refs.continueButton = ref;
+			return DialogFooter(
+				{
+					safeArea: true,
+					keyboardButton: {
+						text: Loc.getMessage('M_STAFFTRACK_CHECK_IN_CONTINUE'),
+						testId: 'stafftrack-checkin-continue-button',
+						onClick: () => Keyboard.dismiss(),
+					},
 				},
-			});
+				this.renderConfirmButton(),
+			);
 		}
 
 		onReasonSelectorClick()
@@ -572,32 +517,6 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 		isCustomReason()
 		{
 			return this.state.selectedReason === CancelReasonEnum.CUSTOM.getValue();
-		}
-
-		showButtonContainer()
-		{
-			if (!this.isButtonContainerVisible)
-			{
-				void this.animateToggleButtonContainer({ show: true });
-			}
-		}
-
-		hideButtonContainer()
-		{
-			if (this.isButtonContainerVisible)
-			{
-				void this.animateToggleButtonContainer({ show: false });
-			}
-		}
-
-		animateToggleButtonContainer({ show })
-		{
-			this.isButtonContainerVisible = show;
-
-			return animate(this.refs.buttonContainer, {
-				opacity: show ? 1 : 0,
-				duration: 0,
-			});
 		}
 	}
 

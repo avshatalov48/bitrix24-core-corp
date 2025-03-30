@@ -220,7 +220,7 @@ export class RepresentativeSelector
 		BX.bind(this.#ui.changeBtn.element, 'click', () => this.#onChangeButtonClickHandler());
 		BX.bind(this.#ui.select.button, 'click', () => this.#onChangeButtonClickHandler());
 		this.#userSelector.subscribe(UserSelectorEvent.onItemSelect, (event) => this.#onSelectorItemSelectedHandler(event))
-		this.#userSelector.subscribe(UserSelectorEvent.onItemDeselect, (event) => this.#onSelectorItemDeselectedHandler(event))
+		this.#userSelector.subscribe(UserSelectorEvent.onItemDeselect, (event) => this.onSelectorItemDeselectedHandler(event))
 	}
 
 	#onChangeButtonClickHandler(): void
@@ -261,7 +261,7 @@ export class RepresentativeSelector
 
 	#onSelectorItemSelectedHandler(event): void
 	{
-		if (!event.data?.items || event.data.items.length === 0)
+		if (!event?.data?.items || event.data.items.length === 0)
 		{
 			this.#data.id = null;
 			this.#setEmptyState();
@@ -273,7 +273,7 @@ export class RepresentativeSelector
 		this.#showItem(item);
 	}
 
-	#onSelectorItemDeselectedHandler(event): void
+	onSelectorItemDeselectedHandler(event): void
 	{
 		this.#data.id = null;
 		this.#onSelectorItemSelectedHandler(event);

@@ -1,18 +1,18 @@
 import { Dom, Loc, Tag, Type, Extension } from 'main.core';
-import { type Role } from 'sign.v2.api';
-import { CompanySelector, type Provider } from 'sign.v2.b2e.company-selector';
+import { CompanySelector } from 'sign.v2.b2e.company-selector';
 import { DocumentValidation } from 'sign.v2.b2e.document-validation';
 import { RepresentativeSelector } from 'sign.v2.b2e.representative-selector';
 import type { BlankSelectorConfig } from 'sign.v2.blank-selector';
-import type { DocumentInitiatedType } from 'sign.v2.document-setup';
+import type { Provider } from 'sign.v2.api';
+import type { DocumentInitiatedType, MemberRoleType, DocumentModeType } from 'sign.type';
+import { DocumentMode } from 'sign.type';
 import { Hint } from 'sign.v2.helper';
-import { DocumentMode } from 'sign.v2.sign-settings';
-import { type DocumentModeType, isTemplateMode } from 'sign.v2.sign-settings';
+import { isTemplateMode } from 'sign.v2.sign-settings';
 
 const blockWarningClass = 'sign-document-b2e-parties__item_content--warning';
 
-type PartiesData = { entityType: string, entityId: ?number, role?: Role };
-type Options = BlankSelectorConfig & { hideValidationParty?: boolean, documentInitiatedType?: DocumentInitiatedType, documentMode?: DocumentModeType };
+type PartiesData = { entityType: string, entityId: ?number, role?: MemberRoleType };
+type Options = BlankSelectorConfig & { documentInitiatedType?: DocumentInitiatedType, documentMode?: DocumentModeType };
 
 const currentUserId = Extension.getSettings('sign.v2.b2e.parties').get('currentUserId');
 
@@ -30,18 +30,16 @@ export class Parties
 		},
 	};
 
-	#hideEditor: boolean;
-
 	constructor(blankSelectorConfig: Options, hcmLinkAvailable: boolean)
 	{
-		const { region, hideValidationParty = true, documentInitiatedType, documentMode } = blankSelectorConfig;
-		this.#hideEditor = hideValidationParty ?? false;
+		const { region, documentInitiatedType, documentMode } = blankSelectorConfig;
 		this.#representativeSelector = new RepresentativeSelector({ context: `sign_b2e_representative_selector_assignee_${currentUserId}` });
 		const isTemplate = isTemplateMode(documentMode || DocumentMode.document);
+
 		this.#companySelector = new CompanySelector({
 			region,
 			documentInitiatedType,
-			hcmLinkAvailable,
+			isHcmLinkAvailable: hcmLinkAvailable,
 			needOpenCrmSaveAndEditCompanySliders: isTemplate,
 		});
 		this.#documentValidation = new DocumentValidation();
@@ -62,6 +60,29 @@ export class Parties
 		this.#companySelector.setLastSavedIntegrationId(integrationId);
 	}
 
+	setIntegrationSelectorAvailability(isAvailable: boolean): void
+	{
+		this.#companySelector.setIntegrationSelectorAvailability(isAvailable);
+	}
+
+	async reloadCompanyProviders(): void
+	{
+		await this.#companySelector.reloadCompanyProviders();
+	}
+
+	setEditorAvailability(isAvailable: boolean): void
+	{
+		if (isAvailable)
+		{
+			this.#addEditorLayout();
+
+			return;
+		}
+
+		this.#removeEditorLayout();
+		this.#documentValidation.editorRepresentativeSelector.onSelectorItemDeselectedHandler();
+	}
+
 	loadCompany(companyUid: string): void
 	{
 		this.#companySelector.load(companyUid);
@@ -72,7 +93,7 @@ export class Parties
 		this.#representativeSelector.load(representativeId);
 	}
 
-	loadValidator(memberId: number, role: Role): void
+	loadValidator(memberId: number, role: MemberRoleType): void
 	{
 		this.#documentValidation.load(memberId, role);
 	}
@@ -116,19 +137,16 @@ export class Parties
 			</div>
 		`;
 
-		if (!this.#hideEditor)
-		{
-			this.#ui.blocks.validationEditorLayout = Tag.render`
-				<div class="sign-b2e-settings__item --editor">
-					<p class="sign-b2e-settings__item_title">
-						${Loc.getMessage('SIGN_PARTIES_ITEM_VALIDATION_EDITOR')}
-					</p>
-					${this.#documentValidation.getEditorLayout()}
-				</div>
-			`;
-		}
+		this.#ui.blocks.validationEditorLayout = Tag.render`
+			<div class="sign-b2e-settings__item --editor">
+				<p class="sign-b2e-settings__item_title">
+					${Loc.getMessage('SIGN_PARTIES_ITEM_VALIDATION_EDITOR')}
+				</p>
+				${this.#documentValidation.getEditorLayout()}
+			</div>
+		`;
 
-		return Tag.render`
+		this.#ui.container = Tag.render`
 			<div>
 				<h1 class="sign-b2e-settings__header">${Loc.getMessage('SIGN_PARTIES_HEADER')}</h1>
 				${this.#ui.blocks.companyContent}
@@ -138,6 +156,8 @@ export class Parties
 				${this.#ui.blocks.validationEditorLayout}
 			</div>
 		`;
+
+		return this.#ui.container;
 	}
 
 	#validate(): boolean
@@ -219,5 +239,15 @@ export class Parties
 
 			Dom.removeClass(block, blockWarningClass);
 		}
+	}
+
+	#addEditorLayout(): void
+	{
+		Dom.append(this.#ui.blocks.validationEditorLayout, this.#ui.container);
+	}
+
+	#removeEditorLayout(): void
+	{
+		Dom.remove(this.#ui.blocks.validationEditorLayout);
 	}
 }

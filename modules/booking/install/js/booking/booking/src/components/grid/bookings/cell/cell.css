@@ -1,5 +1,6 @@
 .booking-booking-selected-cell {
 	position: absolute;
+	z-index: 2;
 	width: calc(280px * var(--zoom));
 
 	--left: 0px;

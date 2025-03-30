@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
-(function (exports,main_core,sign_v2_api,sign_v2_b2e_companySelector,ui_analytics) {
+(function (exports,main_core,sign_type,sign_v2_api,ui_analytics) {
 	'use strict';
 
 	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
@@ -121,12 +121,12 @@ this.BX.Sign = this.BX.Sign || {};
 	}
 	function _convertProviderCodeToP1IntegrationType2(providerType) {
 	  switch (providerType) {
-	    case sign_v2_b2e_companySelector.ProviderCode.sesRu:
-	    case sign_v2_b2e_companySelector.ProviderCode.sesCom:
+	    case sign_type.ProviderCode.sesRu:
+	    case sign_type.ProviderCode.sesCom:
 	      return 'integration_bitrix24KEDO';
-	    case sign_v2_b2e_companySelector.ProviderCode.goskey:
+	    case sign_type.ProviderCode.goskey:
 	      return 'integration_Goskluch';
-	    case sign_v2_b2e_companySelector.ProviderCode.external:
+	    case sign_type.ProviderCode.external:
 	      return 'integration_external';
 	    default:
 	      return 'integration_N';
@@ -136,5 +136,5 @@ this.BX.Sign = this.BX.Sign || {};
 	exports.Context = Context;
 	exports.Analytics = Analytics;
 
-}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX,BX.Sign.V2,BX.Sign.V2.B2e,BX.UI.Analytics));
+}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX,BX.Sign,BX.Sign.V2,BX.UI.Analytics));
 //# sourceMappingURL=analytics.bundle.js.map

@@ -3,8 +3,8 @@
 namespace Bitrix\HumanResources\Access\Rule;
 
 use Bitrix\HumanResources\Access\Permission\PermissionDictionary;
-use Bitrix\HumanResources\Access\Permission\PermissionVariablesDictionary;
 use Bitrix\Main\Access\Rule\AbstractRule;
+use Bitrix\Main\Engine\CurrentUser;
 
 final class UsersAccessEditRule extends AbstractRule
 {

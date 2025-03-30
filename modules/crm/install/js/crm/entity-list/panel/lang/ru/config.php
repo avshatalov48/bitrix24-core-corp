@@ -10,4 +10,4 @@ $MESS['CRM_ENTITY_LIST_PANEL_SHOW_DETAILS'] = 'Подробнее';
 
 $MESS['CRM_ENTITY_LIST_PANEL_ANOTHER_PROCESS_IN_PROGRESS'] = 'Дождитесь завершения другого процесса';
 
-$MESS['CRM_ENTITY_LIST_PANEL_SELECT_OBSERVERS_BY_ID'] = 'Выберите нового наблюдателя';
+$MESS['CRM_ENTITY_LIST_PANEL_SELECT_OBSERVERS_BY_ID'] = 'Выберите наблюдателей';

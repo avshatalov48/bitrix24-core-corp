@@ -173,7 +173,7 @@ final class SaveProductCommand extends Command
 
 	private function getProductData(BaseSku $variation): array
 	{
-		$morePhotoProperty = $variation->getPropertyCollection()->findByCode(MorePhotoImage::CODE);
+		$morePhotoProperty = $variation->getPropertyCollection()->findByCodeLazy(MorePhotoImage::CODE);
 		$propertyId = $morePhotoProperty ? $morePhotoProperty->getId() : '';
 		$signedValues = (new ImageInput($variation))->getFormattedField()['values'];
 

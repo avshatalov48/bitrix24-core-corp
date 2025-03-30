@@ -41,7 +41,7 @@ Extension::load(['ui.buttons', 'ui.icons', 'ui.common', 'ui.alerts', 'ui.sidepan
 				</div>
 				<div style="padding-top: 20px;padding-bottom: 20px;" class="salescenter-button-container">
 					<button class="ui-btn ui-btn-md ui-btn-primary" onclick="location.href='<?=$arResult['addUrl'];?>';"><?=Loc::getMessage("SC_ADD_CASHBOX_BUTTOM")?></button>
-					<?php if ($arResult['connectionInfoUrl']): ?>
+					<?php if (isset($arResult['connectionInfoUrl'])): ?>
 					<button class="ui-btn ui-btn-md ui-btn-light-border" onclick="window.open('<?= $arResult['connectionInfoUrl'] ?>');"><?=Loc::getMessage("SC_CASHBOX_CONNECTION_INFORMATION")?></button>
 					<?php endif; ?>
 				</div>
@@ -49,7 +49,7 @@ Extension::load(['ui.buttons', 'ui.icons', 'ui.common', 'ui.alerts', 'ui.sidepan
 		</div>
 
 		<?php
-		if(is_array($arResult['errors']) && !empty($arResult['errors']))
+		if(!empty($arResult['errors']) && is_array($arResult['errors']))
 		{?>
 			<div class="ui-alert ui-alert-danger">
 				<span class="ui-alert-message" id="salescenter-cashbox-error"><?php

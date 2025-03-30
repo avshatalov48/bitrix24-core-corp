@@ -2,13 +2,25 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports,main_core,sign_v2_signSettings,sign_v2_documentSetup,sign_v2_b2b_documentSend,sign_v2_b2b_requisites) {
+(function (exports,main_core,sign_v2_b2b_documentSend,sign_v2_b2b_requisites,sign_v2_documentSetup,sign_v2_signSettings) {
 	'use strict';
 
 	var _requisites = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requisites");
+	var _decorateStepsBeforeCompletionWithAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("decorateStepsBeforeCompletionWithAnalytics");
+	var _sendAnalyticsOnStart = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalyticsOnStart");
+	var _sendAnalyticsOnDocumentApply = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalyticsOnDocumentApply");
 	class B2BSignSettings extends sign_v2_signSettings.SignSettings {
 	  constructor(containerId, signOptions) {
 	    super(containerId, signOptions);
+	    Object.defineProperty(this, _sendAnalyticsOnDocumentApply, {
+	      value: _sendAnalyticsOnDocumentApply2
+	    });
+	    Object.defineProperty(this, _sendAnalyticsOnStart, {
+	      value: _sendAnalyticsOnStart2
+	    });
+	    Object.defineProperty(this, _decorateStepsBeforeCompletionWithAnalytics, {
+	      value: _decorateStepsBeforeCompletionWithAnalytics2
+	    });
 	    Object.defineProperty(this, _requisites, {
 	      writable: true,
 	      value: void 0
@@ -38,11 +50,13 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    } = this.documentSetup;
 	    babelHelpers.classPrivateFieldLooseBase(this, _requisites)[_requisites].documentData = setupData;
 	    this.editor.documentData = setupData;
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendAnalyticsOnDocumentApply)[_sendAnalyticsOnDocumentApply](setupData.id);
 	    this.documentsGroup.set(setupData.uid, setupData);
 	    return true;
 	  }
-	  getStepsMetadata(signSettings) {
-	    return {
+	  getStepsMetadata(signSettings, documentUid) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendAnalyticsOnStart)[_sendAnalyticsOnStart](documentUid);
+	    const steps = {
 	      setup: {
 	        get content() {
 	          return signSettings.documentSetup.layout;
@@ -77,7 +91,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	            uid,
 	            isTemplate,
 	            title,
-	            initiator
+	            initiator,
+	            initiatedByType
 	          } = this.documentSetup.setupData;
 	          const valid = babelHelpers.classPrivateFieldLooseBase(this, _requisites)[_requisites].checkInitiator(initiator);
 	          if (!valid) {
@@ -94,6 +109,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	            blocks
 	          };
 	          this.editor.entityData = entityData;
+	          this.editor.setSenderType(initiatedByType);
 	          this.documentSend.documentData = {
 	            uid,
 	            title,
@@ -118,6 +134,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	        }
 	      }
 	    };
+	    babelHelpers.classPrivateFieldLooseBase(this, _decorateStepsBeforeCompletionWithAnalytics)[_decorateStepsBeforeCompletionWithAnalytics](steps);
+	    return steps;
 	  }
 	  subscribeOnEvents() {
 	    super.subscribeOnEvents();
@@ -130,6 +148,33 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      };
 	    });
 	  }
+	}
+	function _decorateStepsBeforeCompletionWithAnalytics2(steps) {
+	  const analytics = this.getAnalytics();
+	  steps.send.beforeCompletion = sign_v2_signSettings.decorateResultBeforeCompletion(steps.send.beforeCompletion, () => {
+	    analytics.sendWithDocId({
+	      event: 'sent_document_to_sign',
+	      status: 'success'
+	    }, this.documentSend.documentData.uid);
+	  }, () => {
+	    analytics.send({
+	      event: 'sent_document_to_sign',
+	      status: 'error'
+	    });
+	  });
+	}
+	function _sendAnalyticsOnStart2() {
+	  const analytics = this.getAnalytics();
+	  if (!this.isEditMode()) {
+	    analytics.send({
+	      event: 'click_create_document'
+	    });
+	  }
+	}
+	function _sendAnalyticsOnDocumentApply2(documentId) {
+	  this.getAnalytics().sendWithDocId({
+	    event: 'click_create_document'
+	  }, documentId);
 	}
 
 	exports.B2BSignSettings = B2BSignSettings;

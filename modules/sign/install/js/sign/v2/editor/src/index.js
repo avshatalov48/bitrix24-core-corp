@@ -1,12 +1,11 @@
-import { Tag, Reflection, Loc, Dom } from 'main.core';
-import { DocumentInitiated } from 'sign.v2.document-setup';
-import type { DocumentInitiatedType } from 'sign.v2.document-setup';
+import { Dom, Loc, Reflection, Tag, Text } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { Analytics } from 'sign.v2.analytics';
+import type { DocumentInitiatedType, MemberRoleType } from 'sign.type';
+import { DocumentInitiated, MemberRole } from 'sign.type';
 import { Hint } from 'sign.v2.helper';
 import { BlocksManager } from './blocks/blocksManager';
-import { EventEmitter } from 'main.core.events';
-import { MemberRole, type Role } from 'sign.v2.api';
 import './style.css';
-import type { BlockItem } from './types/document';
 
 const buttonClassList = [
 	'ui-btn',
@@ -61,6 +60,8 @@ export class Editor extends EventEmitter
 
 	#needSaveBlocksOnSidePanelClose: boolean = true;
 	#needToLockSidePanelClose: boolean = true;
+	#analytics: Analytics | null = null;
+	#isTemplateMode: boolean;
 
 	constructor(wizardType: string, options: EditorOptions)
 	{
@@ -79,6 +80,7 @@ export class Editor extends EventEmitter
 			isTemplateMode: Boolean(options.isTemplateMode),
 			documentInitiatedByType: options.documentInitiatedByType ?? DocumentInitiated.company,
 		});
+		this.#isTemplateMode = Boolean(options.isTemplateMode);
 		this.#wizardType = wizardType;
 		this.#urls = [];
 		this.#totalPages = 0;
@@ -131,6 +133,11 @@ export class Editor extends EventEmitter
 		this.#blocksManager.setDocumentUid(uid);
 	}
 
+	setSenderType(senderType: string)
+	{
+		this.#blocksManager.documentInitiatedByType = senderType;
+	}
+
 	set entityData(entityData)
 	{
 		const forbiddenRoles = new Set([
@@ -165,7 +172,7 @@ export class Editor extends EventEmitter
 		this.#blocksManager.addMembers(members);
 	}
 
-	#covertRoleToBlockParty(part: number, role: ?Role): number
+	#covertRoleToBlockParty(part: number, role: ?MemberRoleType): number
 	{
 		switch (role)
 		{
@@ -283,7 +290,7 @@ export class Editor extends EventEmitter
 			<p class="sign-editor__header_title">
 				<span>${Loc.getMessage('SIGN_EDITOR_EDITING')}</span>
 				<span
-					data-hint="${Loc.getMessage('SIGN_EDITOR_EDITING_HINT')}"
+					data-hint="${Loc.getMessage('SIGN_EDITOR_EDITING_HINT_MSGVER_1')}"
 				></span>
 			</p>
 		`;
@@ -297,38 +304,59 @@ export class Editor extends EventEmitter
 					<span
 						class="${editButtonClassName}"
 						title="${editButtonTitle}"
-						onclick="${() => {
-							this.#toggleEditMode(true);
-						}}"
+						onclick="${() => this.#onEditBtnClick()}"
 					>
 						${editButtonTitle}
 					</span>
 					<span
 						class="${saveButtonClassName}"
 						title="${saveButtonTitle}"
-						onclick="${async ({ target }) => {
-							Dom.addClass(target, 'ui-btn-wait');
-							const blocks = await this.#blocksManager.save();
-							const uid = this.#blocksManager.getDocumentUid();
-							Dom.removeClass(target, 'ui-btn-wait');
-							if (!blocks)
-							{
-								return;
-							}
-							EventEmitter.subscribeOnce('SidePanel.Slider:onCloseComplete', () => {
-								this.emit('save', { uid, blocks });
-							});
-							this.#needSaveBlocksOnSidePanelClose = false;
-							this.#sidePanel.close();
-							this.#needSaveBlocksOnSidePanelClose = true;
-							this.#toggleEditMode(false);
-						}}"
+						onclick="${(e) => this.#onSaveBtnClick(e)}"
 					>
 						${saveButtonTitle}
 					</span>
 				</div>
 			</div>
 		`;
+	}
+
+	async #onSaveBtnClick({ target }: MouseEvent): Promise<void>
+	{
+		Dom.addClass(target, 'ui-btn-wait');
+		const blocks = await this.#blocksManager.save();
+		const uid = this.#blocksManager.getDocumentUid();
+		Dom.removeClass(target, 'ui-btn-wait');
+		if (!blocks)
+		{
+			return;
+		}
+		EventEmitter.subscribeOnce('SidePanel.Slider:onCloseComplete', () => {
+			this.emit('save', { uid, blocks });
+			if (this.#analytics instanceof Analytics && this.#isTemplateMode)
+			{
+				this.#analytics.send({
+					event: 'proceed_step_document_editor',
+					status: 'success',
+				});
+			}
+		});
+
+		this.#needSaveBlocksOnSidePanelClose = false;
+		this.#sidePanel.close();
+		this.#needSaveBlocksOnSidePanelClose = true;
+		this.#toggleEditMode(false);
+	}
+
+	#onEditBtnClick(): void
+	{
+		this.#toggleEditMode(true);
+		if (this.#analytics instanceof Analytics && this.#isTemplateMode)
+		{
+			this.#analytics.send({
+				event: 'open_document_editor',
+				status: 'success',
+			});
+		}
 	}
 
 	#createContent(): HTMLElement
@@ -370,7 +398,7 @@ export class Editor extends EventEmitter
 					>
 						<div class="sign-editor__section_block-subject">
 							<span>${Loc.getMessage(title)}</span>
-							<span data-hint="${Loc.getMessage(hint)}"></span>
+							<span data-hint="${Text.encode(Loc.getMessage(hint))}"></span>
 						</div>
 						<span class="sign-editor__section_add-block-btn">
 							${Loc.getMessage('SIGN_EDITOR_BLOCK_ADD_TO_DOCUMENT')}
@@ -469,10 +497,26 @@ export class Editor extends EventEmitter
 
 		if (this.#wizardType === 'b2e')
 		{
+			let personalDataMessageCode = 'SIGN_EDITOR_BLOCK_B2E_REFERENCE_HINT';
+			let otherDataMessageCode = 'SIGN_EDITOR_BLOCK_B2E_EMPLOYEE_DYNAMIC_HINT';
+			let mainDataMessageCode = 'SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_HINT';
+			if (this.#blocksManager.isTemplateMode)
+			{
+				personalDataMessageCode = this.#isDocumentInitiatedByEmployee()
+					? 'SIGN_EDITOR_BLOCK_B2E_REFERENCE_HINT_TEMPLATE_EMPLOYEE'
+					: 'SIGN_EDITOR_BLOCK_B2E_REFERENCE_HINT_TEMPLATE_COMPANY';
+				otherDataMessageCode = this.#isDocumentInitiatedByEmployee()
+					? 'SIGN_EDITOR_BLOCK_B2E_EMPLOYEE_DYNAMIC_HINT_TEMPLATE_EMPLOYEE'
+					: 'SIGN_EDITOR_BLOCK_B2E_EMPLOYEE_DYNAMIC_HINT_TEMPLATE_COMPANY';
+				mainDataMessageCode = this.#isDocumentInitiatedByEmployee()
+					? 'SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_HINT_TEMPLATE_EMPLOYEE'
+					: 'SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_HINT_TEMPLATE_COMPANY';
+			}
+
 			Object.assign(firstPartyBlocks, {
 				myb2ereference: {
 					title: 'SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_MSG_VER_1',
-					hint: 'SIGN_EDITOR_BLOCK_MY_B2E_REFERENCE_HINT',
+					hint: mainDataMessageCode,
 				},
 				myrequisites: {
 					title: 'SIGN_EDITOR_BLOCK_REQUISITES_MSG_VER_1',
@@ -482,7 +526,7 @@ export class Editor extends EventEmitter
 			Object.assign(partnerBlocks, {
 				b2ereference: {
 					title: 'SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1',
-					hint: 'SIGN_EDITOR_BLOCK_B2E_REFERENCE_HINT',
+					hint: personalDataMessageCode,
 				},
 			});
 
@@ -491,7 +535,7 @@ export class Editor extends EventEmitter
 				Object.assign(partnerBlocks, {
 					employeedynamic: {
 						title: 'SIGN_EDITOR_BLOCK_B2E_EMPLOYEE_DYNAMIC',
-						hint: 'SIGN_EDITOR_BLOCK_B2E_EMPLOYEE_DYNAMIC_HINT',
+						hint: otherDataMessageCode,
 					},
 				});
 			}
@@ -500,6 +544,7 @@ export class Editor extends EventEmitter
 				firstParty: 'SIGN_EDITOR_BLOCKS_FIRST_PARTY_B2E',
 				partner: 'SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E',
 			};
+
 			return [
 				{
 					title: titles.firstParty,
@@ -584,7 +629,12 @@ export class Editor extends EventEmitter
 		}
 	}
 
-	#onSidePanelCloseStart(event: BX.SidePanel.Event): Promise<void>
+	#isDocumentInitiatedByEmployee(): DocumentInitiatedType
+	{
+		return this.#blocksManager.documentInitiatedByType === DocumentInitiated.employee;
+	}
+
+	async #onSidePanelCloseStart(event: BX.SidePanel.Event): Promise<void>
 	{
 		if (!this.#needSaveBlocksOnSidePanelClose)
 		{
@@ -597,7 +647,9 @@ export class Editor extends EventEmitter
 		}
 
 		event.denyAction();
-		void this.#blocksManager.save().then((blocks) => {
+		try
+		{
+			const blocks = await this.#blocksManager.save();
 			if (!blocks)
 			{
 				return;
@@ -607,7 +659,21 @@ export class Editor extends EventEmitter
 			this.#sidePanel.close();
 			this.#needToLockSidePanelClose = true;
 			this.emit('save', { uid, blocks });
-		});
+			this.#analytics.send({
+				event: 'proceed_step_document_editor',
+				status: 'success',
+			});
+		}
+		catch
+		{
+			if (this.#analytics instanceof Analytics && this.#isTemplateMode)
+			{
+				this.#analytics.send({
+					event: 'proceed_step_document_editor',
+					status: 'error',
+				});
+			}
+		}
 	}
 
 	#isDynamicEmployeeFieldAvailable(): boolean
@@ -625,5 +691,10 @@ export class Editor extends EventEmitter
 		return !this.#blocksManager.isTemplateMode
 			|| !String(block.data.field).startsWith('SMART_B2E_DOC')
 		;
+	}
+
+	setAnalytics(analytic: Analytics): void
+	{
+		this.#analytics = analytic;
 	}
 }

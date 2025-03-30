@@ -1,4 +1,5 @@
 import { PhoneManager } from 'im.v2.lib.phone';
+import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { Loc, Type } from 'main.core';
 import { Controller } from './controller';
 import { CallCardReplacementApp } from '../app';
@@ -7,7 +8,7 @@ export class CallCardIntegrator
 {
 	static async integrate(): ?CallCardReplacementApp
 	{
-		const callView = PhoneManager.getInstance().getPhoneCallView();
+		const callView = DesktopApi.isDesktop() ? window?.PCW : PhoneManager.getInstance().getPhoneCallView();
 		if (!callView)
 		{
 			return null;

@@ -10,7 +10,6 @@ class CardDav extends ComponentBase
 {
 	const TEMPLATE_DICT_NAME = 'carddav';
 
-
 	/**
 	 * @return bool
 	 */
@@ -18,5 +17,4 @@ class CardDav extends ComponentBase
 	{
 		return true;
 	}
-
 }

@@ -5,7 +5,6 @@ namespace Bitrix\HumanResources\Controller;
 use Bitrix\HumanResources\Access\Model\UserModel;
 use Bitrix\HumanResources\Access\Permission\PermissionDictionary;
 use Bitrix\HumanResources\Access\Permission\PermissionVariablesDictionary;
-use Bitrix\HumanResources\Access\StructureAccessController;
 use Bitrix\HumanResources\Access\StructureActionDictionary;
 use Bitrix\HumanResources\Util\StructureHelper;
 use Bitrix\HumanResources\Engine\Controller;
@@ -16,6 +15,7 @@ use Bitrix\HumanResources\Contract\Repository\NodeRepository;
 use Bitrix\HumanResources\Service\Container;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
+use Bitrix\HumanResources\Config;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
@@ -119,15 +119,28 @@ final class Structure extends Controller
 				StructureActionDictionary::ACTION_USERS_ACCESS_EDIT => $userModel->isAdmin()
 					? 1
 					: $userModel->getPermission(PermissionDictionary::HUMAN_RESOURCES_USERS_ACCESS_EDIT),
-				StructureActionDictionary::ACTION_CAN_INVITE_USERS =>
-					(\Bitrix\Intranet\CurrentUser::get()->canDoOperation('edit_all_users')
-					|| (
-						Loader::includeModule('bitrix24')
-						&& Option::get('bitrix24', 'allow_invite_users', 'N') === 'Y'
-					)) ? PermissionVariablesDictionary::VARIABLE_ALL : PermissionVariablesDictionary::VARIABLE_NONE,
+				StructureActionDictionary::ACTION_USER_INVITE => $this->canInviteUsers()
+					? PermissionVariablesDictionary::VARIABLE_ALL
+					: PermissionVariablesDictionary::VARIABLE_NONE
+				,
 			],
 			'permissionVariablesDictionary' => PermissionVariablesDictionary::getVariables(),
 			'firstTimeOpened' => \CUserOptions::GetOption("humanresources", 'first_time_opened', 'N')
 		];
+	}
+
+	private function canInviteUsers(): bool
+	{
+		if (Config\Storage::instance()->isHRInvitePermissionAvailable())
+		{
+			$userModel = UserModel::createFromId(CurrentUser::get()->getId());
+
+			return (bool)$userModel->getPermission(PermissionDictionary::HUMAN_RESOURCES_USER_INVITE);
+		}
+
+		return
+			\Bitrix\Intranet\CurrentUser::get()->canDoOperation('edit_all_users')
+			|| (Loader::includeModule('bitrix24') && Option::get('bitrix24', 'allow_invite_users', 'N') === 'Y')
+		;
 	}
 }

@@ -44,7 +44,8 @@ export const ChooseTemplatePopup = {
 			}),
 		},
 	},
-	data(): Object {
+	data(): Object
+	{
 		return {
 			IconSet,
 			messenger: NotificationChannel.WhatsApp,
@@ -60,21 +61,25 @@ export const ChooseTemplatePopup = {
 	{
 		this.messenger = this.currentChannel;
 	},
-	mounted(): void {
+	mounted(): void
+	{
 		this.adjustPosition();
 		Event.bind(document, 'scroll', this.adjustPosition, { capture: true });
 	},
-	beforeUnmount(): void {
+	beforeUnmount(): void
+	{
 		Event.unbind(document, 'scroll', this.adjustPosition, { capture: true });
 	},
 	computed: {
 		...mapGetters({
 			templateTypes: `${Model.Dictionary}/getNotificationTemplates`,
 		}),
-		popupId(): string {
+		popupId(): string
+		{
 			return `booking-resource-wizard-choose-template-popup-${Text.getRandom(4)}`;
 		},
-		config(): Object {
+		config(): Object
+		{
 			return {
 				className: 'booking-resource-wizard-choose-template-popup',
 				bindElement: this.bindElement,
@@ -95,12 +100,14 @@ export const ChooseTemplatePopup = {
 				targetContainer: document.querySelector('div.resource-creation-wizard__wrapper'),
 			};
 		},
-		getFormattedTime(): string {
+		getFormattedTime(): string
+		{
 			return DateTimeFormat.format(DateTimeFormat.getFormat('SHORT_TIME_FORMAT'), Date.now() / 1000);
 		},
 	},
 	methods: {
-		getMessageTemplate(messenger: string, templateType: string): string {
+		getMessageTemplate(messenger: string, templateType: string): string
+		{
 			const templateModel = this.model.templates.find((template: NotificationsTemplateModel): boolean => {
 				return template.type === templateType;
 			});
@@ -120,30 +127,36 @@ export const ChooseTemplatePopup = {
 					return '';
 			}
 		},
-		handleChannelChange(selectedChannel): void {
+		handleChannelChange(selectedChannel): void
+		{
 			this.messenger = selectedChannel;
 		},
-		chooseType(selectedType): void {
+		chooseType(selectedType): void
+		{
 			this.selectedTemplateType = selectedType;
 			this.$emit('templateTypeSelected', this.selectedTemplateType);
 		},
-		adjustPosition(): void {
+		adjustPosition(): void
+		{
 			this.$refs.popup.adjustPosition({
 				forceBindPosition: true,
 				forceTop: true,
 			});
 		},
-		getButtonText(templateType): string {
+		getButtonText(templateType): string
+		{
 			return (this.selectedTemplateType === templateType)
 				? this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_BTN_SELECTED')
 				: this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_BTN_SELECT_TYPE');
 		},
-		getButtonColor(templateType: string): string {
+		getButtonColor(templateType: string): string
+		{
 			return (this.selectedTemplateType === templateType)
 				? this.buttonColors.selected
 				: this.buttonColors.default;
 		},
-		getTemplateTitle(templateType: string): string {
+		getTemplateTitle(templateType: string): string
+		{
 			const typeDictionary = Object.values(this.templateTypes)
 				.find((templateDictionary: { name: string, value: string }): boolean => {
 					return templateDictionary.value === templateType;
@@ -170,7 +183,7 @@ export const ChooseTemplatePopup = {
 							:current-channel="messenger"
 							@popupShown="freeze"
 							@popupClosed="unfreeze"
-							@update:value="handleChannelChange"
+							@updateChannel="handleChannelChange"
 						/>
 						<Icon
 							:class="['--close-btn']"

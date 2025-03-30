@@ -2,6 +2,7 @@
 
 namespace Bitrix\Sign\Repository;
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Entity\UpdateResult;
 use Bitrix\Main\Error;
@@ -11,9 +12,11 @@ use Bitrix\Main\ORM\Query\Filter\Condition;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Security\Random;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sign\Internal;
 use Bitrix\Sign\Item;
+use Bitrix\Sign\Model\ItemBinder\MemberBinder;
 use Bitrix\Sign\Service\Cache\Memory\Sign\UserCache;
 use Bitrix\Sign\Type;
 use Bitrix\Sign\Type\DocumentStatus;
@@ -62,6 +65,7 @@ class MemberRepository
 		}
 
 		$item->id = $saveResult->getId();
+		$item->initOriginal();
 
 		return (new Main\Result())->setData(['member' => $item]);
 	}
@@ -240,6 +244,43 @@ class MemberRepository
 		{
 			$models->setLimit($limit);
 		}
+
+		return $this->extractItemCollectionFromModelCollection($models->fetchCollection());
+	}
+
+	public function listMembersByDocumentIdAndUserIds(int $documentId, int $representativeId, int ...$userIds): Item\MemberCollection
+	{
+		if (empty($userIds))
+		{
+			return new Item\MemberCollection();
+		}
+
+		$filter = Query::filter()
+		   ->logic('or')
+		   ->where(
+			   Query::filter()
+					->logic('and')
+					->where('ENTITY_TYPE', '=', EntityType::USER)
+					->whereIn('ENTITY_ID', $userIds),
+		   )
+		;
+
+		if (in_array($representativeId, $userIds, true))
+		{
+			$filter->where(
+				Query::filter()
+					 ->logic('and')
+					 ->where('ENTITY_TYPE', '=', EntityType::COMPANY)
+					 ->where('ROLE', '=', $this->convertRoleToInt(Role::ASSIGNEE))
+					 ->where('DOCUMENT.REPRESENTATIVE_ID', '=', $representativeId),
+			);
+		}
+
+		$models = Internal\MemberTable::query()
+			->setSelect(['*'])
+			->where('DOCUMENT_ID', $documentId)
+			->where($filter)
+		;
 
 		return $this->extractItemCollectionFromModelCollection($models->fetchCollection());
 	}
@@ -562,109 +603,18 @@ class MemberRepository
 		$member = Internal\MemberTable::getById($item->id)
 			->fetchObject();
 
-		if (isset($item->documentId))
-		{
-			$member->setDocumentId($item->documentId);
-		}
-
-		if (isset($item->party))
-		{
-			$member->setPart($item->party);
-		}
-
-		if (isset($item->uid))
-		{
-			$member->setHash($item->uid);
-		}
-
-		if (isset($item->channelType))
-		{
-			$member->setCommunicationType($item->channelType);
-		}
-
-		if (isset($item->channelValue))
-		{
-			$member->setCommunicationValue($item->channelValue);
-		}
-
-		if (isset($item->dateSigned))
-		{
-			$member->setDateSign($item->dateSigned);
-		}
-
-		if (isset($item->entityType))
-		{
-			$member->setEntityType($item->entityType);
-		}
-
-		if (isset($item->entityId))
-		{
-			$member->setEntityId($item->entityId);
-		}
-
-		if (isset($item->presetId))
-		{
-			$member->setPresetId($item->presetId);
-		}
-
-		if (isset($item->stampFileId))
-		{
-			$member->setStampFileId($item->stampFileId);
-		}
-
-		if (isset($item->status))
-		{
-			$member->setSigned($item->status);
-		}
-
-		if (isset($item->configured))
-		{
-			$member->setConfigured($item->configured);
-		}
-
-		if (isset($item->reminder->startDate))
-		{
-			$member->setReminderStartDate($item->reminder->startDate);
-		}
-		if (isset($item->reminder->lastSendDate))
-		{
-			$member->setReminderLastSendDate($item->reminder->lastSendDate);
-		}
-		if (isset($item->reminder->plannedNextSendDate))
-		{
-			$member->setReminderPlannedNextSendDate($item->reminder->plannedNextSendDate);
-		}
-		if (isset($item->reminder->completed))
-		{
-			$member->setReminderCompleted($item->reminder->completed);
-		}
-		if (isset($item->reminder->type))
-		{
-			$member->setReminderType($item->reminder->type->toInt());
-		}
-		if (isset($item->dateSend))
-		{
-			$member->setDateSend($item->dateSend);
-		}
-
-		if (isset($item->employeeId))
-		{
-			$member->setEmployeeId($item->employeeId);
-		}
-
-		if (isset($item->hcmLinkJobId))
-		{
-			$member->setHcmlinkJobId($item->hcmLinkJobId);
-		}
+		$binder = new MemberBinder($item, $member);
+		$binder->setChangedItemPropertiesToModel();
 
 		$member->setDateModify(new DateTime());
 
-		if (isset($item->dateStatusChanged))
+		$result = $member->save();
+		if ($result->isSuccess())
 		{
-			$member->setDateStatusChanged($item->dateStatusChanged);
+			$item->initOriginal();
 		}
 
-		return $member->save();
+		return $result;
 	}
 
 	public function getByDocumentAndPartAndEntityTypeAndEntityId(
@@ -2149,7 +2099,41 @@ class MemberRepository
 		return $flatArray;
 	}
 
-	private function getSomeSignedSubQuery(): Query
+	/**
+	 * @param int $documentId
+	 *
+	 * @return array<int>
+	 * @throws ArgumentException
+	 * @throws SystemException
+	 */
+	public function listUserIdsWithEmployeeIdIsNotSetByDocumentId(int $documentId, ?int $representativeId = null): array
+	{
+		$result = Internal\MemberTable::query()
+			->setSelect(['ENTITY_ID', 'ENTITY_TYPE'])
+			->setDistinct()
+			->where('DOCUMENT_ID', $documentId)
+			->whereNull('EMPLOYEE_ID')
+			->exec()
+		;
+
+		$userIds = [];
+		while ($row = $result->fetch())
+		{
+			$entityId = $row['ENTITY_ID'];
+			if ($representativeId > 0 && $row['ENTITY_TYPE'] === EntityType::COMPANY)
+			{
+				$entityId = $representativeId;
+			}
+
+			$userIds[] = (int)$entityId;
+		}
+
+		return array_values(
+			array_unique($userIds)
+		);
+	}
+
+	private function getSomeSignedSubQuery(): Query	
 	{
 		return Internal\MemberTable::query()
 			->setCustomBaseTableAlias("sign_internal_member_someone_signed")

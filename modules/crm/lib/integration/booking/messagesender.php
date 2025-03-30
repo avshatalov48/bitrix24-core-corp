@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Bitrix\Crm\Integration\Booking;
 
+use Bitrix\Booking\Entity\Booking\Booking;
 use Bitrix\Booking\Entity\Booking\Client;
-use Bitrix\Booking\Integration\Booking;
-use Bitrix\Booking\Integration\Notifications\Availability;
+use Bitrix\Booking\Entity\Message\MessageStatus;
+use Bitrix\Booking\Entity\Message\MessageTemplateBased;
+use Bitrix\Booking\Provider\NotificationsAvailabilityProvider;
 use Bitrix\Crm\Integration\NotificationsManager;
 use Bitrix\Crm\Item\Deal;
 use Bitrix\Crm\MessageSender\Channel\ChannelRepository;
@@ -19,11 +21,10 @@ use Bitrix\Main\Result;
 use CCrmOwnerType;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\MessageSender\SendFacilitator;
-use Bitrix\Booking\Integration\Booking\Message\MessageStatus;
 use Bitrix\Notifications;
 use Bitrix\Crm\Multifield\Type\Phone;
 
-class MessageSender extends Booking\Message\MessageSender
+class MessageSender implements \Bitrix\Booking\Interfaces\MessageSender
 {
 	public function getModuleId(): string
 	{
@@ -35,17 +36,14 @@ class MessageSender extends Booking\Message\MessageSender
 		return NotificationsManager::getSenderCode();
 	}
 
-	/**
-	 * @inheritdoc
-	 */
-	public function getMessageClass(): string
+	public function createMessage(): MessageTemplateBased
 	{
-		return Booking\Message\MessageTemplateBased::class;
+		return new MessageTemplateBased();
 	}
 
-	public function sendMessageConcrete(\Bitrix\Booking\Entity\Booking\Booking $booking, $message): Result
+	public function send(Booking $booking, $message): Result
 	{
-		if (!$message instanceof Booking\Message\MessageTemplateBased)
+		if (!$message instanceof MessageTemplateBased)
 		{
 			throw new ArgumentException('Message should be instance of MessageTemplateBased');
 		}
@@ -194,6 +192,6 @@ class MessageSender extends Booking\Message\MessageSender
 
 	public function canUse(): bool
 	{
-		return Availability::isAvailable() && NotificationsManager::canUse();
+		return NotificationsAvailabilityProvider::isAvailable() && NotificationsManager::canUse();
 	}
 }

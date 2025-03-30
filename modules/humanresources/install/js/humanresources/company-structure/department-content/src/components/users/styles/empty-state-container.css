@@ -1,0 +1,16 @@
+.hr-department-detail-content__tab-entity-icon {
+	height: 121px;
+	width: 121px;
+}
+
+.hr-department-detail-content__tab-entity-icon.--with-add-permission {
+	background-image: url('../images/add-user.svg');
+}
+
+.hr-department-detail-content__tab-entity-icon.--user-not-found {
+	background-image: url('../images/user-not-found.svg');
+}
+
+.hr-department-detail-content__tab-entity-icon.--without-add-permission {
+	background-image: url('../images/empty-department.svg');
+}

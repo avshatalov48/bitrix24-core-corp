@@ -159,15 +159,17 @@ class Document extends \Bitrix\Sign\Engine\Controller
 	 *
 	 * @return array{uid: string}
 	 */
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid'
-	)]
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid'
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		)
 	)]
 	public function changeBlankAction(string $uid, int $blankId): array
 	{
@@ -204,15 +206,17 @@ class Document extends \Bitrix\Sign\Engine\Controller
 	 *
 	 * @return array
 	 */
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid'
-	)]
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid'
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		)
 	)]
 	public function uploadAction(
 		string $uid,
@@ -222,7 +226,7 @@ class Document extends \Bitrix\Sign\Engine\Controller
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($result->getErrors());
-            $this->documentService->rollbackDocumentByUid($uid);
+			$this->documentService->rollbackDocumentByUid($uid);
 			return [];
 		}
 
@@ -237,15 +241,17 @@ class Document extends \Bitrix\Sign\Engine\Controller
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid'
-	)]
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid'
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		)
 	)]
 	public function loadAction(string $uid): array
 	{
@@ -304,15 +310,17 @@ class Document extends \Bitrix\Sign\Engine\Controller
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid'
-	)]
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid'
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		)
 	)]
 	public function modifyTitleAction(
 		string $uid,
@@ -340,15 +348,17 @@ class Document extends \Bitrix\Sign\Engine\Controller
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid'
-	)]
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid'
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		)
 	)]
 	public function modifyLangIdAction(
 		string $uid,
@@ -369,15 +379,17 @@ class Document extends \Bitrix\Sign\Engine\Controller
 	 * @throws \Bitrix\Main\SystemException
 	 * @throws \Bitrix\Main\ArgumentException
 	 */
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid'
-	)]
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid'
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		)
 	)]
 	public function modifyInitiatorAction(
 		string $uid,
@@ -393,15 +405,17 @@ class Document extends \Bitrix\Sign\Engine\Controller
 		return [];
 	}
 
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'documentUid'
-	)]
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'documentUid'
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'documentUid'
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'documentUid'
+		)
 	)]
 	public function refreshEntityNumberAction(string $documentUid): array
 	{
@@ -420,15 +434,17 @@ class Document extends \Bitrix\Sign\Engine\Controller
 		return [];
 	}
 
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid'
-	)]
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid'
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		)
 	)]
 	public function configureAction(string $uid): array
 	{
@@ -571,7 +587,10 @@ class Document extends \Bitrix\Sign\Engine\Controller
 		return [];
 	}
 
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT)]
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT),
+		new Attribute\ActionAccess(ActionDictionary::ACTION_B2E_TEMPLATE_EDIT),
+	)]
 	public function modifyIntegrationIdAction(string $uid, ?int $integrationId = null): array
 	{
 		$result = $this->documentService->modifyHcmLinkCompanyId($uid, $integrationId);
@@ -580,15 +599,17 @@ class Document extends \Bitrix\Sign\Engine\Controller
 		return [];
 	}
 
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_DOCUMENT_READ,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid'
-	)]
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_READ,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'uid'
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_READ,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_READ,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid'
+		)
 	)]
 	public function getFillAndStartProgressAction(string $uid): array
 	{

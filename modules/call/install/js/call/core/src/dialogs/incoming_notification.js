@@ -32,6 +32,7 @@ export type IncomingNotificationParams = {
 	onClose: () => void,
 	onDestroy: () => void,
 	onButtonClick: () => void,
+	isMessengerOpen: boolean,
 }
 
 export class IncomingNotification extends EventEmitter
@@ -58,6 +59,7 @@ export class IncomingNotification extends EventEmitter
 		this.video = config.video;
 		this.hasCamera = config.hasCamera === true;
 		this.zIndex = config.zIndex;
+		this.isMessengerOpen = config.isMessengerOpen;
 		this.contentReady = false;
 		this.postponedEvents = [];
 		this.microphoneState = config.microphoneState;
@@ -100,6 +102,7 @@ export class IncomingNotification extends EventEmitter
 				callerColor: this.callerColor,
 				microphoneState: this.microphoneState,
 				cameraState: this.cameraState,
+				isMessengerOpen: this.isMessengerOpen,
 			};
 
 			if (this.window)
@@ -128,14 +131,27 @@ export class IncomingNotification extends EventEmitter
 				callerColor: this.callerColor,
 				microphoneState: this.microphoneState,
 				cameraState: this.cameraState,
+				isMessengerOpen: this.isMessengerOpen,
 				onClose: () => this.emit(Events.onClose),
 				onDestroy: () => this.emit(Events.onDestroy),
 				onButtonClick: (e) => this.emit(Events.onButtonClick, Object.assign({}, e.data)),
 			});
 			this.createPopup(this.content.render());
 			this.popup.show();
+
+			window.addEventListener('resize', () => {
+				this.onResize();
+			});
 		}
 	};
+
+	onResize()
+	{
+		if (this.popup)
+		{
+			this.popup.setMaxHeight(document.body.clientHeight);
+		}
+	}
 
 	createPopup(content)
 	{
@@ -147,6 +163,8 @@ export class IncomingNotification extends EventEmitter
 			closeIcon: false,
 			noAllPaddings: true,
 			zIndex: this.zIndex,
+			disableScroll: true,
+			maxHeight: document.body.clientHeight,
 			offsetLeft: 0,
 			offsetTop: 0,
 			closeByEsc: false,
@@ -154,7 +172,14 @@ export class IncomingNotification extends EventEmitter
 			borderRadius: '25px',
 			overlay: {backgroundColor: 'black', opacity: 30},
 			events: {
-				onPopupClose: () => this.emit(Events.onClose),
+				onPopupClose: () =>
+				{
+					window.removeEventListener('resize', () =>
+					{
+						this.onResize();
+					});
+					this.emit(Events.onClose);
+				},
 				onPopupDestroy: () => this.popup = null,
 			}
 		});
@@ -262,6 +287,7 @@ export class IncomingNotificationContent extends EventEmitter
 		this.callerColor = config.callerColor || '';
 		this.microphoneState = config.microphoneState;
 		this.cameraState = config.cameraState;
+		this.isMessengerOpen = config.isMessengerOpen;
 
 		this.elements = {
 			root: null,
@@ -573,6 +599,11 @@ export class IncomingNotificationContent extends EventEmitter
 		{
 			this.cameraState = false;
 			this.microphoneState = true;
+		}
+
+		if (this.isMessengerOpen && typeof BX.SidePanel !== 'undefined' && BX.SidePanel.Instance.isOpen())
+		{
+			BX.SidePanel.Instance.close();
 		}
 
 		if (DesktopApi.isDesktop())

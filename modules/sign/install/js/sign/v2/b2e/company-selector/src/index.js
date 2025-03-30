@@ -5,27 +5,19 @@ import { DateTimeFormat } from 'main.date';
 import { Loader } from 'main.loader';
 import { Menu } from 'main.popup';
 import { Guide } from 'sign.tour';
-import type { B2eCompanyList, Company, Provider, ProviderCodeType } from 'sign.v2.api';
-import { Api } from 'sign.v2.api';
+import type { B2eCompanyList, Company } from 'sign.v2.api';
+import { type Provider, Api } from 'sign.v2.api';
 import { HcmLinkCompanySelector } from 'sign.v2.b2e.hcm-link-company-selector';
 import { type Scheme, SchemeType } from 'sign.v2.b2e.scheme-selector';
 import { CompanyEditor, CompanyEditorMode, DocumentEntityTypeId, EditorTypeGuid } from 'sign.v2.company-editor';
-import type { DocumentInitiatedType } from 'sign.v2.document-setup';
-import { DocumentInitiated } from 'sign.v2.document-setup';
+import { DocumentInitiated, ProviderCode } from 'sign.type';
+import type { DocumentInitiatedType, ProviderCodeType } from 'sign.type';
 import { Helpdesk, Link } from 'sign.v2.helper';
 import { Alert, AlertColor, AlertSize } from 'ui.alerts';
 import { Dialog } from 'ui.entity-selector';
 import { Label, LabelColor } from 'ui.label';
 
 import './style.css';
-
-export type { ProviderCodeType };
-export const ProviderCode: Readonly<Record<string, ProviderCodeType>> = Object.freeze({
-	goskey: 'goskey',
-	sesCom: 'ses-com',
-	sesRu: 'ses-ru',
-	external: 'external',
-});
 
 type CompanyData = {
 	id: ?number,
@@ -41,7 +33,7 @@ export type CompanySelectorOptions = {
 	canCreateCompany?: boolean;
 	canEditCompany?: boolean;
 	isCompaniesDeselectable?: boolean,
-	hcmLinkAvailable: boolean,
+	isHcmLinkAvailable: boolean,
 	needOpenCrmSaveAndEditCompanySliders?: boolean,
 };
 
@@ -83,6 +75,7 @@ export class CompanySelector extends EventEmitter
 	#providerMenu: Dialog = null;
 	#dialog: Dialog = null;
 	#showTaxId: boolean = true;
+	#isHcmLinkAvailable: boolean = false;
 	#integrationSelector: HcmLinkCompanySelector;
 
 	#ui = {
@@ -136,8 +129,8 @@ export class CompanySelector extends EventEmitter
 	#registerIframe: HTMLElement | null;
 	#iframeConnectInterval = null;
 	#options: CompanySelectorOptions;
-	#loadPromise: Promise<void>;
 	#providerExpiresDaysToShowInfo: Number = 45;
+	#loadPromise: Promise<void>;
 
 	constructor(options: CompanySelectorOptions = {})
 	{
@@ -145,13 +138,33 @@ export class CompanySelector extends EventEmitter
 		this.setEventNamespace('BX.Sign.V2.B2e.CompanySelector');
 		this.#api = new Api();
 		this.#integrationSelector = new HcmLinkCompanySelector();
-		this.#integrationSelector.setAvailability(options.hcmLinkAvailable);
+		this.setIntegrationSelectorAvailability(options.isHcmLinkAvailable);
+		this.#isHcmLinkAvailable = options.isHcmLinkAvailable;
 		this.#options = options;
 		this.#ui.provider.container = this.getProviderLayout();
 		this.#ui.container = this.getLayout();
 		this.#setEmptyState();
 		this.#bindEvents();
 		this.#loadPromise = this.#load();
+	}
+
+	setIntegrationSelectorAvailability(isAvailable: boolean): void
+	{
+		this.#integrationSelector.setAvailability(isAvailable);
+
+		if (isAvailable)
+		{
+			Dom.append(this.#integrationSelector.render(), this.#ui.container);
+			this.#integrationSelector.setCompanyId(this.#company.id);
+			this.#integrationSelector.isLayoutExisted = true;
+			this.#isHcmLinkAvailable = true;
+
+			return;
+		}
+
+		this.#integrationSelector.hide();
+		this.#integrationSelector.isLayoutExisted = false;
+		this.#isHcmLinkAvailable = false;
 	}
 
 	#showLoader(): void
@@ -164,6 +177,10 @@ export class CompanySelector extends EventEmitter
 	#hideLoader(): void
 	{
 		this.#setEmptyState();
+		if (this.#options.isHcmLinkAvailable && !Type.isNull(this.getCompanyId()))
+		{
+			this.#integrationSelector.show();
+		}
 		this.#getLoader().hide();
 	}
 
@@ -381,7 +398,7 @@ export class CompanySelector extends EventEmitter
 			</div>
 		`;
 
-		if (this.#options.hcmLinkAvailable)
+		if (this.#options.isHcmLinkAvailable)
 		{
 			Dom.append(this.#integrationSelector.render(), this.#ui.container);
 		}
@@ -1291,7 +1308,7 @@ export class CompanySelector extends EventEmitter
 		await this.#registerVirtualProviderIfNeed();
 		const provider = this.#company.provider;
 
-		if (this.#options.hcmLinkAvailable)
+		if (this.#isHcmLinkAvailable)
 		{
 			await this.#api.changeIntegrationId(documentId, this.#integrationSelector?.getSelectedId());
 		}
@@ -1458,5 +1475,10 @@ export class CompanySelector extends EventEmitter
 
 			return alert.render();
 		});
+	}
+
+	async reloadCompanyProviders(): Promise<void>
+	{
+		await this.#load();
 	}
 }

@@ -1,0 +1,10 @@
+.booking-booking-booking-crm-button {
+	--ui-icon-set__icon-color: rgba(var(--ui-color-palette-white-base-rgb), 0.8);
+	--ui-icon-set__icon-size: calc(20px * var(--zoom));
+	margin-left: 2px;
+	cursor: pointer;
+}
+
+.booking-booking-booking-crm-button.--no-deal {
+	opacity: 0.5;
+}

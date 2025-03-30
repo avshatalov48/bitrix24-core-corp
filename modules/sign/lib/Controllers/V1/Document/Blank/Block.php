@@ -36,15 +36,17 @@ class Block extends \Bitrix\Sign\Engine\Controller
 		parent::__construct($request);
 	}
 
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-        itemIdOrUidRequestKey: 'documentUid'
-	)]
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-        itemIdOrUidRequestKey: 'documentUid'
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'documentUid'
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'documentUid'
+		),
 	)]
 	public function saveAction(string $documentUid, array $blocks): array
 	{
@@ -142,15 +144,17 @@ class Block extends \Bitrix\Sign\Engine\Controller
 		return [];
 	}
 
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-        itemIdOrUidRequestKey: 'documentUid'
-	)]
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-        itemIdOrUidRequestKey: 'documentUid'
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'documentUid'
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'documentUid'
+		)
 	)]
 	public function loadDataAction(string $documentUid, array $blocks): array
 	{
@@ -189,15 +193,17 @@ class Block extends \Bitrix\Sign\Engine\Controller
 		return $result;
 	}
 
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-        itemIdOrUidRequestKey: 'documentUid'
-	)]
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-        itemIdOrUidRequestKey: 'documentUid'
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'documentUid'
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'documentUid'
+		)
 	)]
 	public function loadByDocumentAction(string $documentUid): array
 	{

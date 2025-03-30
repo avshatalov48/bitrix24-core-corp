@@ -11,6 +11,7 @@ enum Location: string
 	case OUTSIDE = 'STAFFTRACK_LOCATION_OUTSIDE';
 	case HOME = 'STAFFTRACK_LOCATION_HOME';
 	case CUSTOM = 'STAFFTRACK_LOCATION_CUSTOM';
+	case DELETED = 'STAFFTRACK_LOCATION_DELETED';
 
 	/**
 	 * @param string $name

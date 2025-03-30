@@ -8,8 +8,7 @@ use Bitrix\Catalog\Config\State;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Type\Date;
-use Bitrix\Mobile\UI\File;
+use Bitrix\CatalogMobile\InventoryControl\DataProvider\DocumentProducts\Product\RealizationProduct;
 
 Loader::requireModule('crm');
 
@@ -646,22 +645,11 @@ class RealizationDocumentProvider extends \Bitrix\UI\EntityEditor\BaseProvider
 		{
 			if (!$entityData['ID'])
 			{
-				if ($this->context['orderId'])
+				$entityProducts = RealizationProduct::getEntityProducts($this->context);
+				foreach ($entityProducts as $entityProduct)
 				{
-					foreach ($this->order->getBasket() as $basketItem)
-					{
-						$total += $basketItem->getPriceWithVat() * $basketItem->getQuantity();
-						$count++;
-					}
-				}
-				else if ($this->context['paymentId'])
-				{
-					foreach ($this->payment->getPayableItemCollection()->getBasketItems() as $payableItem)
-					{
-						$basketItem = $payableItem->getEntityObject();
-						$total += $basketItem->getPriceWithVat() * $payableItem->getQuantity();
-						$count++;
-					}
+					$total += $entityProduct['price']['vat']['priceWithVat'] * $entityProduct['amount'];
+					$count++;
 				}
 			}
 			else

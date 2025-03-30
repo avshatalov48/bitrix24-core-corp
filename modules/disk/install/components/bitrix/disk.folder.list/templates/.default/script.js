@@ -44,6 +44,10 @@ BX.Disk.FolderListClass = (function (){
 		this.defaultService = parameters.defaultService;
 		this.defaultServiceLabel = parameters.defaultServiceLabel;
 
+		this.isUserCollaber = parameters.isUserCollaber;
+		this.collaberTourOnAddButtonId = parameters.collaberTourOnAddButtonId;
+		this.isCollaberTourOnAddButtonViewed = parameters.isCollaberTourOnAddButtonViewed;
+
 		this.sortFields = parameters.sortFields;
 		this.sort = parameters.sort;
 
@@ -88,7 +92,7 @@ BX.Disk.FolderListClass = (function (){
 
 		if (!this.currentFolder.canAdd)
 		{
-			this.blockCreateItemsButton();
+			this.setInactiveStateToCreateItemsButton();
 		}
 
 		if (this.needRunFilterUnderLinks())
@@ -1414,7 +1418,7 @@ BX.Disk.FolderListClass = (function (){
 				}).then(function (response) {
 
 					var operations = response.data.operations;
-					operations.disk_add? this.unblockCreateItemsButton() : this.blockCreateItemsButton();
+					operations.disk_add? this.setActiveStateToCreateItemsButton() : this.setInactiveStateToCreateItemsButton();
 
 					folder.canAdd = !!operations.disk_add;
 
@@ -1422,7 +1426,7 @@ BX.Disk.FolderListClass = (function (){
 			}
 			else
 			{
-				folder.canAdd? this.unblockCreateItemsButton() : this.blockCreateItemsButton();
+				folder.canAdd? this.setActiveStateToCreateItemsButton() : this.setInactiveStateToCreateItemsButton();
 			}
 
 			window.scroll(0, 0);
@@ -1454,6 +1458,59 @@ BX.Disk.FolderListClass = (function (){
 		return this.commonGrid.instance.getRows().getById(objectId);
 	};
 
+	FolderListClass.prototype.setInactiveStateToCreateItemsButton = function()
+	{
+		this.blockCreateItemsButton();
+
+		if (this.isUserCollaber)
+		{
+			this.addHintToCreateItemButtons();
+		}
+	};
+
+	FolderListClass.prototype.setActiveStateToCreateItemsButton = function()
+	{
+		this.unblockCreateItemsButton();
+
+		if (this.isUserCollaber)
+		{
+			this.removeHintFromCreateItemButtons();
+			this.showCollaberTourOnCreateItemsButton();
+		}
+	};
+
+	FolderListClass.prototype.showCollaberTourOnCreateItemsButton = function()
+	{
+		if (!this.isCollaberTourOnAddButtonViewed)
+		{
+			const guide = new BX.UI.Tour.Guide({
+				id: this.collaberTourOnAddButtonId,
+				simpleMode: true,
+				overlay: false,
+				onEvents: true,
+				autoSave: true,
+				steps: [
+					{
+						target: this.layout.createItemsButton,
+						title: BX.message('DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TITLE'),
+						text: BX.message('DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TEXT'),
+						position: 'left',
+						condition: {
+							color: 'white',
+							bottom: false,
+							top: false,
+						},
+					},
+				],
+			});
+			guide.getPopup().setWidth(420);
+
+			guide.start();
+
+			this.isCollaberTourOnAddButtonViewed = true;
+		}
+	};
+
 	FolderListClass.prototype.blockCreateItemsButton = function()
 	{
 		if (this.layout.createItemsButton)
@@ -1483,6 +1540,23 @@ BX.Disk.FolderListClass = (function (){
 		if (this.layout.emptyBlockCreateFolderButtonId)
 		{
 			BX.removeClass(this.layout.emptyBlockCreateFolderButtonId, 'disk-folder-list-no-data-disabled')
+		}
+	};
+
+	FolderListClass.prototype.addHintToCreateItemButtons = function()
+	{
+		if (this.layout.createItemsButton)
+		{
+			this.layout.createItemsButton.dataset.hint = BX.message('DISK_FOLDER_LIST_COLLABER_HINT');
+			BX.UI.Hint.initNode(this.layout.createItemsButton);
+		}
+	};
+
+	FolderListClass.prototype.removeHintFromCreateItemButtons = function()
+	{
+		if (this.layout.createItemsButton)
+		{
+			delete this.layout.createItemsButton.dataset.hint;
 		}
 	};
 
@@ -5473,22 +5547,24 @@ BX.Disk.FolderListClass = (function (){
 
 		rebuildLinkAfterRename: function(name)
 		{
-			if (this.isFile)
-			{
-				this.link = this.link.substring(0, this.link.lastIndexOf('/') + 1) + encodeURIComponent(name);
-			}
-			else
-			{
-				this.link = this.link.substring(0, this.link.lastIndexOf('/', this.link.length-2) + 1) + encodeURIComponent(name) + '/';
-			}
-
-			this.item.titleLink.href = this.link;
-			this.actions.forEach(function(action){
-				if (action.id === 'open' && action.href)
+			if(this.link){
+				if (this.isFile)
 				{
-					action.href = this.link;
+					this.link = this.link.substring(0, this.link.lastIndexOf('/') + 1) + encodeURIComponent(name);
 				}
-			}, this);
+				else
+				{
+					this.link = this.link.substring(0, this.link.lastIndexOf('/', this.link.length-2) + 1) + encodeURIComponent(name) + '/';
+				}
+
+				this.item.titleLink.href = this.link;
+				this.actions.forEach(function(action){
+					if (action.id === 'open' && action.href)
+					{
+						action.href = this.link;
+					}
+				}, this);
+			}
 
 			this.destroyActionsMenu();
 		},
@@ -5684,6 +5760,11 @@ BX.Disk.FolderListClass = (function (){
 				case 'jpeg':
 				case 'gif':
 					fileExtension = 'img';
+					break;
+
+				case 'flp':
+				case 'board':
+					fileExtension = 'board'
 					break;
 
 				default:

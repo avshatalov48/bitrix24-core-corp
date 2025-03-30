@@ -5,8 +5,8 @@ jn.define('layout/ui/copilot-role-selector/src/roles-list', (require, exports, m
 	const { CopilotRoleSelectorBaseList } = require('layout/ui/copilot-role-selector/src/base-list');
 	const { RolesListItem, RolesListSkeleton } = require('layout/ui/copilot-role-selector/src/views');
 	const { ListItemType } = require('layout/ui/copilot-role-selector/src/types');
-	const { Type } = require('type');
 	const { checkValueMatchQuery } = require('utils/search');
+	const { loadIndustries } = require('layout/ui/copilot-role-selector/src/api');
 
 	class CopilotRoleSelectorRolesList extends CopilotRoleSelectorBaseList
 	{
@@ -54,7 +54,7 @@ jn.define('layout/ui/copilot-role-selector/src/roles-list', (require, exports, m
 				clickHandler: () => {
 					this.props.listItemClickHandler(item, ListItemType.ROLE);
 				},
-				industryName: this.props.selectedIndustry.name,
+				showIndustry: false,
 			});
 		}
 
@@ -63,14 +63,23 @@ jn.define('layout/ui/copilot-role-selector/src/roles-list', (require, exports, m
 			return RolesListSkeleton(count);
 		}
 
-		loadItems()
+		async loadItems()
 		{
-			return new Promise((resolve) => {
-				const items = Type.isArrayFilled(this.props.selectedIndustry?.roles)
-					? [...this.props.selectedIndustry.roles]
-					: [];
-				resolve(items);
-			});
+			const response = await loadIndustries(true);
+			if (response?.status === 'success')
+			{
+				this.universalRoleItemData = {
+					...response.data.universalrole,
+					type: ListItemType.UNIVERSAL_ROLE,
+				};
+
+				if (response.data?.industries?.length > 0)
+				{
+					return response.data.industries[0].roles;
+				}
+			}
+
+			return [];
 		}
 
 		isRenderFeedbackItemForEmptySearchString()

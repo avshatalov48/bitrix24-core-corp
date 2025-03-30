@@ -990,6 +990,14 @@ if (Loader::includeModule('rest'))
 				throw new ArgumentNullException("NAME");
 			}
 
+			if (
+				empty($params['USER_ID'])
+				&& !\Bitrix\ImConnector\Connector::isChatGroup($params['CONNECTOR'])
+			)
+			{
+				throw new ArgumentNullException('USER_ID');
+			}
+
 			$converter = new Converter(Converter::TO_LOWER | Converter::KEYS | Converter::RECURSIVE);
 			$params = $converter->process($params);
 			$resultSend = CC::setChatName($params['connector'], $params['line'], $params);

@@ -61,7 +61,7 @@ export const OffHours = {
 	template: `
 		<div
 			class="booking-booking-off-hours"
-			:class="{'--hover': offHoursHover, '--bottom': bottom}"
+			:class="{'--hover': offHoursHover, '--bottom': bottom, '--top': !bottom}"
 			@click="animateOffHours({ keepScroll: bottom })"
 			@mouseenter="$store.dispatch('interface/setOffHoursHover', true)"
 			@mouseleave="$store.dispatch('interface/setOffHoursHover', false)"

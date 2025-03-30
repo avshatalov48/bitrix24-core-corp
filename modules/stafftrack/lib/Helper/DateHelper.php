@@ -31,6 +31,7 @@ class DateHelper
 	/** @var int[] */
 	private array $timezoneOffset = [];
 
+	/** @var int|null  */
 	private ?int $serverOffset = null;
 
 	/**
@@ -157,6 +158,4 @@ class DateHelper
 
 		return $this->serverOffset;
 	}
-
-
 }

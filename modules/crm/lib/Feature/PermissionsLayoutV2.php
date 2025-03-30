@@ -34,4 +34,12 @@ class PermissionsLayoutV2 extends BaseFeature
 			);
 		}
 	}
+
+	public function enableWithoutAgent(): void
+	{
+		if (!$this->isEnabled())
+		{
+			parent::enable();
+		}
+	}
 }

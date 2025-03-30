@@ -26,6 +26,8 @@ $this->getComponent()->addToolbar($this);
 
 \Bitrix\Main\Loader::includeModule('ui');
 
+echo \Bitrix\Crm\Tour\Permissions\AutomatedSolutionList::getInstance()->build();
+
 echo '<div class="crm-automated-solution-list-wrapper">';
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',

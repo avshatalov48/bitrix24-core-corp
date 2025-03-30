@@ -1,8 +1,14 @@
 /* eslint-disable */
-(function (exports,crm_integration_analytics,crm_router,crm_toolbarComponent,crm_typeModel,main_core,main_core_events,main_loader,ui_analytics,ui_dialogs_messagebox,ui_entitySelector) {
+(function (exports,crm_integration_analytics,crm_router,crm_toolbarComponent,crm_typeModel,main_core,main_core_events,main_loader,ui_analytics,ui_dialogs_messagebox,ui_entitySelector,ui_alerts) {
 	'use strict';
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9;
+	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
+	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
+	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
+	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
+	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
@@ -35,6 +41,7 @@
 	    babelHelpers.defineProperty(this, "isSaveFromTypeDetail", true);
 	    babelHelpers.defineProperty(this, "isCreateSectionsViaAutomatedSolutionDetails", false);
 	    babelHelpers.defineProperty(this, "canEditAutomatedSolution", false);
+	    babelHelpers.defineProperty(this, "permissionsUrl", null);
 	    _classPrivateFieldInitSpec(this, _isCancelEventRegistered, {
 	      writable: true,
 	      value: false
@@ -53,6 +60,9 @@
 	      this.isExternal = Boolean(params.isExternal);
 	      this.isCreateSectionsViaAutomatedSolutionDetails = Boolean(params.isCreateSectionsViaAutomatedSolutionDetails);
 	      this.canEditAutomatedSolution = Boolean(params.canEditAutomatedSolution);
+	      if (main_core.Type.isStringFilled(params.permissionsUrl)) {
+	        this.permissionsUrl = params.permissionsUrl;
+	      }
 	    }
 	    this.buttonsPanel = document.getElementById('ui-button-panel');
 	    this.saveButton = document.getElementById('ui-button-panel-save');
@@ -572,7 +582,9 @@
 	        selectorContainer: this.container.querySelector('[data-role="crm-type-custom-section-selector"]'),
 	        customSections: this.type.getCustomSections() || [],
 	        isCreateSectionsViaAutomatedSolutionDetails: this.isCreateSectionsViaAutomatedSolutionDetails,
-	        canEditAutomatedSolution: this.canEditAutomatedSolution
+	        canEditAutomatedSolution: this.canEditAutomatedSolution,
+	        isNew: this.isNew,
+	        permissionsUrl: this.permissionsUrl
 	      });
 	    }
 	  }], [{
@@ -808,7 +820,11 @@
 	}();
 	var CustomSectionsController = /*#__PURE__*/function () {
 	  function CustomSectionsController(options) {
+	    var _this$customSections$;
 	    babelHelpers.classCallCheck(this, CustomSectionsController);
+	    babelHelpers.defineProperty(this, "permissionsResetAlert", null);
+	    babelHelpers.defineProperty(this, "isPermissionsResetAlertShown", false);
+	    babelHelpers.defineProperty(this, "permissionsUrl", null);
 	    this.switcher = options.switcher;
 	    this.container = options.container;
 	    this.selectorContainer = options.selectorContainer;
@@ -817,11 +833,18 @@
 	    } else {
 	      this.customSections = [];
 	    }
+	    this.originallySelectedCustomSection = (_this$customSections$ = this.customSections.find(function (section) {
+	      return section.isSelected;
+	    })) !== null && _this$customSections$ !== void 0 ? _this$customSections$ : null;
+	    this.isNew = main_core.Type.isBoolean(options.isNew) ? options.isNew : false;
 	    if (main_core.Type.isBoolean(options.isCreateSectionsViaAutomatedSolutionDetails)) {
 	      this.isCreateSectionsViaAutomatedSolutionDetails = options.isCreateSectionsViaAutomatedSolutionDetails;
 	    }
 	    if (main_core.Type.isBoolean(options.canEditAutomatedSolution)) {
 	      this.canEditAutomatedSolution = options.canEditAutomatedSolution;
+	    }
+	    if (main_core.Type.isStringFilled(options.permissionsUrl)) {
+	      this.permissionsUrl = options.permissionsUrl;
 	    }
 	    this.initSelector();
 	    this.settingsContainer = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-type-hidden crm-type-custom-sections-settings-container\">\n\t\t\t\t<div class=\"crm-type-relation-subtitle\">", "</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_LIST_MSGVER_1'));
@@ -854,6 +877,7 @@
 	          selectedItems.push(item);
 	        }
 	      });
+	      var adjustResetPermissionsAlertDebounce = main_core.Runtime.debounce(this.adjustResetPermissionsAlert.bind(this), 200);
 	      var tagSelectorOptions = {
 	        multiple: false,
 	        dialogOptions: {
@@ -862,6 +886,10 @@
 	          dropdownMode: true,
 	          height: 200,
 	          showAvatars: false
+	        },
+	        events: {
+	          onAfterTagRemove: adjustResetPermissionsAlertDebounce,
+	          onAfterTagAdd: adjustResetPermissionsAlertDebounce
 	        }
 	      };
 	      if (this.isCreateSectionsViaAutomatedSolutionDetails) {
@@ -879,6 +907,46 @@
 	      }
 	      this.selector = new ui_entitySelector.TagSelector(tagSelectorOptions);
 	      this.selector.renderTo(this.selectorContainer);
+	    }
+	  }, {
+	    key: "adjustResetPermissionsAlert",
+	    value: function adjustResetPermissionsAlert() {
+	      var _selectedItems$, _this$originallySelec;
+	      if (!FeatureManager.getInstance().isPermissionsLayoutV2Enabled() || this.permissionsUrl === null || this.isNew) {
+	        return;
+	      }
+	      var selectedItems = this.selector.getDialog().getSelectedItems();
+	      var item = (_selectedItems$ = selectedItems[0]) !== null && _selectedItems$ !== void 0 ? _selectedItems$ : null;
+	      var alert = this.getPermissionsResetAlert();
+	      var isItemChanged = (item === null || item === void 0 ? void 0 : item.getId()) !== ((_this$originallySelec = this.originallySelectedCustomSection) === null || _this$originallySelec === void 0 ? void 0 : _this$originallySelec.id) && this.switcher.isChecked();
+	      var isDetachCustomSection = this.originallySelectedCustomSection && !this.switcher.isChecked();
+	      var isShow = isItemChanged || isDetachCustomSection;
+	      if (isShow) {
+	        if (!this.isPermissionsResetAlertShown) {
+	          this.isPermissionsResetAlertShown = true;
+	          alert.renderTo(this.container.parentNode);
+	          alert.show();
+	        }
+	        return;
+	      }
+	      if (this.isPermissionsResetAlertShown) {
+	        this.isPermissionsResetAlertShown = false;
+	        alert.hide();
+	      }
+	    }
+	  }, {
+	    key: "getPermissionsResetAlert",
+	    value: function getPermissionsResetAlert() {
+	      if (this.permissionsResetAlert === null) {
+	        var text = main_core.Loc.getMessage('CRM_TYPE_DETAIL_PERMISSIONS_WILL_BE_RESET_ALERT').replace('#LINK#', this.permissionsUrl);
+	        this.permissionsResetAlert = new ui_alerts.Alert({
+	          size: ui_alerts.AlertSize.MD,
+	          color: ui_alerts.AlertColor.WARNING,
+	          customClass: 'crm-type-permissions-reset-alert',
+	          text: text
+	        });
+	      }
+	      return this.permissionsResetAlert;
 	    }
 	  }, {
 	    key: "reInitSelector",
@@ -913,6 +981,7 @@
 	      this.adjust = this.adjust.bind(this);
 	      this.onAutomatedSolutionUpdate = this.onAutomatedSolutionUpdate.bind(this);
 	      main_core_events.EventEmitter.subscribe(this.switcher, 'toggled', this.adjust);
+	      main_core_events.EventEmitter.subscribe(this.switcher, 'toggled', this.adjustResetPermissionsAlert.bind(this));
 	      if (this.isCreateSectionsViaAutomatedSolutionDetails) {
 	        crm_toolbarComponent.ToolbarComponent.Instance.subscribeAutomatedSolutionUpdatedEvent(this.onAutomatedSolutionUpdate);
 	      }
@@ -1153,6 +1222,42 @@
 	  }]);
 	  return CustomSectionItem;
 	}();
+	var _isPermissionsLayoutV2Enabled = /*#__PURE__*/new WeakMap();
+	var FeatureManager = /*#__PURE__*/function () {
+	  function FeatureManager() {
+	    babelHelpers.classCallCheck(this, FeatureManager);
+	    _classPrivateFieldInitSpec(this, _isPermissionsLayoutV2Enabled, {
+	      writable: true,
+	      value: false
+	    });
+	  }
+	  babelHelpers.createClass(FeatureManager, [{
+	    key: "setPermissionsLayoutV2Enabled",
+	    value: function setPermissionsLayoutV2Enabled(isEnabled) {
+	      babelHelpers.classPrivateFieldSet(this, _isPermissionsLayoutV2Enabled, isEnabled);
+	      return this;
+	    }
+	  }, {
+	    key: "isPermissionsLayoutV2Enabled",
+	    value: function isPermissionsLayoutV2Enabled() {
+	      return babelHelpers.classPrivateFieldGet(this, _isPermissionsLayoutV2Enabled);
+	    }
+	  }], [{
+	    key: "getInstance",
+	    value: function getInstance() {
+	      if (_classStaticPrivateFieldSpecGet(this, FeatureManager, _instance4) === null) {
+	        _classStaticPrivateFieldSpecSet(this, FeatureManager, _instance4, new FeatureManager());
+	      }
+	      return _classStaticPrivateFieldSpecGet(this, FeatureManager, _instance4);
+	    }
+	  }]);
+	  return FeatureManager;
+	}();
+	var _instance4 = {
+	  writable: true,
+	  value: null
+	};
+	namespace.FeatureManager = FeatureManager;
 
-}((this.window = this.window || {}),BX.Crm.Integration.Analytics,BX.Crm,BX.Crm,BX.Crm.Models,BX,BX.Event,BX,BX.UI.Analytics,BX.UI.Dialogs,BX.UI.EntitySelector));
+}((this.window = this.window || {}),BX.Crm.Integration.Analytics,BX.Crm,BX.Crm,BX.Crm.Models,BX,BX.Event,BX,BX.UI.Analytics,BX.UI.Dialogs,BX.UI.EntitySelector,BX.UI));
 //# sourceMappingURL=script.js.map

@@ -115,6 +115,8 @@ export const UserFieldWidgetComponent: BitrixVueComponentProps = {
 					const { item }: { item: TileWidgetItem } = event.getData();
 					this.userFieldControl.getMainPostForm().insertIntoText(item);
 				};
+
+				tileWidgetOptions.enableDropzone = false;
 			}
 
 			const settingsMenu: SettingsMenu = new SettingsMenu(this.userFieldControl);

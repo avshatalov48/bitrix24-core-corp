@@ -621,11 +621,8 @@ class WorktimeRecord extends EO_WorktimeRecord
 
 	private function increaseBreaks($newBreak)
 	{
-		if ($newBreak > BX_TIMEMAN_ALLOWED_TIME_DELTA)
-		{
-			$this->setRecordedBreakLength($this->getRecordedBreakLength() + $newBreak);
-			$this->setActualBreakLength($this->getActualBreakLength() + $newBreak);
-		}
+		$this->setRecordedBreakLength($this->getRecordedBreakLength() + $newBreak);
+		$this->setActualBreakLength($this->getActualBreakLength() + $newBreak);
 	}
 
 	private function correctDuration(int $duration): int

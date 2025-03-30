@@ -1,11 +1,11 @@
-import {CollectionItemAds} from "market.collection-item-ads"
-import {CollectionItem} from "market.collection-item"
-import {CollectionTop} from "market.collection-top";
-import {CollectionTop2} from "market.collection-top2";
+import { CollectionItemAi } from "market.collection-item-ai"
+import { CollectionItem } from "market.collection-item"
+import { CollectionTop } from "market.collection-top";
+import { CollectionTop2 } from "market.collection-top2";
 
 export const Collections = {
 	components: {
-		CollectionItemAds, CollectionItem, CollectionTop, CollectionTop2,
+		CollectionItemAi, CollectionItem, CollectionTop, CollectionTop2,
 	},
 	props: [
 		'params', 'items', 'nextPage',
@@ -100,8 +100,8 @@ export const Collections = {
 					<div class="market-single-item"
 						 v-if="item.SINGLE_VIEW === 'Y'"
 					>
-						<CollectionItemAds
-							v-if="item.IS_AD === 'Y'"
+						<CollectionItemAi
+							v-if="item.IS_AI_SITES === 'Y'"
 							:item="item"
 						/>
 						<CollectionItem

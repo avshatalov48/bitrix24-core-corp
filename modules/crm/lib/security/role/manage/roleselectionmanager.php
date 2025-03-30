@@ -38,4 +38,6 @@ interface RoleSelectionManager
 	public function printInaccessibilityContent(): void;
 
 	public function getGroupCode(): ?string;
+
+	public function getMenuId(): ?string;
 }

@@ -5,7 +5,7 @@ import { Backend } from 'sign.backend';
 import { Guide } from 'sign.tour';
 import { Api } from 'sign.v2.api';
 import 'spotlight';
-import type { DocumentInitiatedType } from 'sign.v2.document-setup';
+import type { DocumentInitiatedType } from 'sign.type';
 import { Button, ButtonColor } from 'ui.buttons';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import 'ui.info-helper';
@@ -744,6 +744,8 @@ export class BlocksManager
 
 				return null;
 			}
+
+			console.error(firstError.message);
 
 			return postData;
 		});

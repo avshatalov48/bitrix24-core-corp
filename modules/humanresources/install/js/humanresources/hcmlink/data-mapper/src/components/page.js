@@ -3,6 +3,8 @@ import { Line } from './line';
 import { ColumnTitle } from './column-title';
 import { Counter } from './counter';
 import { Event, Loc, Tag } from 'main.core';
+import { StateScreen } from './state-screen';
+import { SearchBar } from './search-bar';
 
 import '../styles/page.css';
 
@@ -23,9 +25,18 @@ export const Page = {
 		config: {
 			required: true,
 			type: {
-				mode: String,
+				companyId: Number,
 				isHideInfoAlert: Boolean,
+				mode: 'direct' | 'reverse',
 			},
+		},
+		searchActive: {
+			required: true,
+			type: Boolean,
+		},
+		dataLoading: {
+			required: true,
+			type: Boolean,
 		},
 	},
 
@@ -33,6 +44,8 @@ export const Page = {
 		Line,
 		ColumnTitle,
 		Counter,
+		StateScreen,
+		SearchBar,
 	},
 
 	emits:
@@ -40,18 +53,33 @@ export const Page = {
 		'createLink',
 		'removeLink',
 		'closeAlert',
+		'search',
 	],
 
-	mounted()
+	mounted(): void
 	{
 		if (!this.config.isHideInfoAlert)
 		{
-			this.showAlert();
+			this.createAlert();
 		}
 	},
 
+	computed:
+	{
+		isSearchResultEmpty(): boolean
+		{
+			return this.collection.length === 0 && this.searchActive;
+		},
+		searchPlaceholder(): string
+		{
+			return this.config.mode === 'direct'
+				? Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_USERS_SEARCH_PLACEHOLDER_DIRECT')
+				: Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_USERS_SEARCH_PLACEHOLDER_REVERSE');
+		},
+	},
+
 	methods: {
-		showAlert()
+		createAlert(): void
 		{
 			const moreButton = Tag.render`<span class="hr-hcmlink-mapping-alert-container__more-button">${Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_SHOW_MORE_BUTTON')}</span>`;
 			const alert = new Alert({
@@ -69,7 +97,7 @@ export const Page = {
 			Event.bind(alert.getCloseBtn(), 'click', this.onCloseAlertButton);
 			Event.bind(moreButton, 'click', this.showDocumentation);
 		},
-		showDocumentation(event)
+		showDocumentation(event): void
 		{
 			if (top.BX.Helper)
 			{
@@ -77,44 +105,74 @@ export const Page = {
 				top.BX.Helper.show(`redirect=detail&code=${HELPDESK_CODE}`);
 			}
 		},
-		onCloseAlertButton()
+		onCloseAlertButton(): void
 		{
 			this.$emit('closeAlert');
 		},
-		onCreateLink(options)
+		onCreateLink(options): void
 		{
 			this.$emit('createLink', options);
 		},
-		onRemoveLink(options)
+		onRemoveLink(options): void
 		{
 			this.$emit('removeLink', options);
+		},
+		onSearchPersonName(query): void
+		{
+			this.$emit('search', query);
 		},
 	},
 
 	template: `
-		<div>
-			<div ref="alertContainer" v-if="!config.isHideInfoAlert"></div>
-			<div class="hr-hcmlink-mapping-page-container" ref="container">
-				<div style="z-index: 100">
-					<ColumnTitle
-						:mode = config.mode
-					></ColumnTitle>
-					<div
-						v-for="item in collection"
-						:key="item.id"
-					>
-						<Line
-							:item = item
-							:config = config
-							:mappedUserIds=mappedUserIds
-							@createLink="onCreateLink"
-							@removeLink="onRemoveLink"
-						></Line>
-					</div>
-				</div>
-				<div class="hr-hcmlink-mapping-page-person-wrapper hr-hcmlink-mapping-page-person-wrapper_right" ref="person_wrapper" v-if="config.mode == 'direct'"></div>
-				<div class="hr-hcmlink-mapping-page-person-wrapper hr-hcmlink-mapping-page-person-wrapper_left" ref="person_wrapper" v-if="config.mode == 'reverse'"></div>
+		<div 
+			class="hr-hcmlink-sync__page-subtitle-box"
+			:class="{'--alert-hidden': config.isHideInfoAlert}"
+		>
+			<div class="hr-hcmlink-sync__page-subtitle">
+				{{ $Bitrix.Loc.getMessage('HUMANRESOURCES_HCMLINK_MAPPER_DIALOG_PAGE_TITLE') }}
 			</div>
+			<div class="hr-hcmlink-sync__search-container">
+				<SearchBar
+					:placeholder="searchPlaceholder"
+					:debounceWait="500"
+					@search="onSearchPersonName"
+				/>
+			</div>
+		</div>
+		<div
+			ref="alertContainer"
+			class="hr-hcmlink-mapping-alert"
+			:class="{'--hide': config.isHideInfoAlert}"
+		></div>
+		<div  v-if="isSearchResultEmpty" class="hr-hcmlink-mapping-page-state-container">
+			<StateScreen
+				status="searchNotFound"
+				:isBlock="true"
+				:mode=config.mode
+			></StateScreen>
+		</div>
+		<div v-if="!isSearchResultEmpty && !dataLoading" class="hr-hcmlink-mapping-page-container" ref="container">
+			<div class="hr-hcmlink-mapping-page-container__wrapper">
+				<ColumnTitle
+					:mode=config.mode
+				></ColumnTitle>
+				<div
+					v-for="item in collection"
+					:key="item.id"
+				>
+					<Line
+						:item=item
+						:config=config
+						:mappedUserIds=mappedUserIds
+						@createLink="onCreateLink"
+						@removeLink="onRemoveLink"
+					></Line>
+				</div>
+			</div>
+			<div class="hr-hcmlink-mapping-page-person-wrapper hr-hcmlink-mapping-page-person-wrapper_right"
+				 ref="person_wrapper" :class="[this.config.mode === 'direct' ? '--person' : '--user']"></div>
+			<div class="hr-hcmlink-mapping-page-person-wrapper hr-hcmlink-mapping-page-person-wrapper_left"
+				 ref="person_wrapper" :class="[this.config.mode === 'direct' ? '--user' : '--person']"></div>
 		</div>
 	`,
 };

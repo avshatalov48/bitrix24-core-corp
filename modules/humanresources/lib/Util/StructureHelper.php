@@ -74,7 +74,38 @@ class StructureHelper
 	 *     userCount: int
 	 * }
 	 */
-	public static function getNodeInfo(Item\Node $node): array
+	public static function getNodeInfo(Item\Node $node, bool $withHeads = false): array
+	{
+		$nodeMemberRepository = Container::getNodeMemberRepository();
+		static $countByStructureId = [];
+
+		if (!isset($countByStructureId[$node->structureId]))
+		{
+			$structure = Container::getStructureRepository()->getById($node->structureId);
+			if ($structure)
+			{
+				$countByStructureId[$node->structureId] = $nodeMemberRepository->countAllByStructureAndGroupByNode($structure);
+			}
+		}
+
+		$result = [
+			'id' => $node->id,
+			'parentId' => $node->parentId,
+			'name' => $node->name,
+			'description' => $node->description ?? '',
+			'accessCode' => $node->accessCode,
+			'userCount' => $countByStructureId[$node->structureId][$node->id] ?? 0,
+		];
+
+		if ($withHeads)
+		{
+			$result['heads'] = self::getNodeHeads($node);
+		}
+
+		return $result;
+	}
+
+	public static function getNodeHeads(Item\Node $node): array
 	{
 		$headUsers = [];
 		$roleRepository  = Container::getRoleRepository();
@@ -90,7 +121,7 @@ class StructureHelper
 		if ($headRole)
 		{
 			$headEmployees = $nodeMemberService->getDefaultHeadRoleEmployees($node->id);
-			if ($headEmployees->count() > 0)
+			if (!$headEmployees->empty())
 			{
 				$headUserCollection = $userService->getUserCollectionFromMemberCollection($headEmployees);
 				foreach ($headUserCollection as $user)
@@ -114,7 +145,7 @@ class StructureHelper
 		if ($deputyHeadRole)
 		{
 			$deputyHeadEmployees = $nodeMemberRepository->findAllByRoleIdAndNodeId($deputyHeadRole->id, $node->id);
-			if ($deputyHeadEmployees->count() > 0)
+			if (!$deputyHeadEmployees->empty())
 			{
 				$deputyHeadUserCollection = $userService->getUserCollectionFromMemberCollection($deputyHeadEmployees);
 				foreach ($deputyHeadUserCollection as $user)
@@ -126,14 +157,6 @@ class StructureHelper
 			}
 		}
 
-		return [
-			'id' => $node->id,
-			'parentId' => $node->parentId,
-			'name' => $node->name,
-			'description' => $node->description ?? '',
-			'heads' => $headUsers,
-			'accessCode' => $node->accessCode,
-			'userCount' => $nodeMemberRepository->countAllByByNodeId($node->id)
-		];
+		return $headUsers;
 	}
 }

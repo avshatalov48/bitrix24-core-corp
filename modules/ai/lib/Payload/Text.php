@@ -27,6 +27,7 @@ class Text extends Payload implements IPayload
 			'data' => $this->payload,
 			'markers' => $this->markers,
 			'role' => $this->role?->getCode(),
+			static::PROPERTY_CUSTOM_COST => $this->customCost
 		]);
 	}
 
@@ -41,6 +42,10 @@ class Text extends Payload implements IPayload
 		$markers = $unpackedData['markers'] ?? [];
 		$role = $unpackedData['role'] ?? null;
 
-		return (new static($data))->setMarkers($markers)->setRole(Role::get($role));
+		$payload = (new static($data))->setMarkers($markers)->setRole(Role::get($role));
+
+		static::setCustomCost($payload, $unpackedData);
+
+		return $payload;
 	}
 }

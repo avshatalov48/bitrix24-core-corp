@@ -25,6 +25,7 @@ CJSCore::Init([
 	'sidepanel',
 	'ui.buttons',
 	'disk.viewer.document-item',
+	'disk.viewer.board-item',
 ]);
 ?>
 

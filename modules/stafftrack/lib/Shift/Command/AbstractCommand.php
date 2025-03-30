@@ -28,9 +28,11 @@ abstract class AbstractCommand
 		$this->mapper = new ShiftMapper();
 	}
 
-	protected function addObserver(ObserverInterface $observer): void
+	protected function addObserver(ObserverInterface $observer): self
 	{
 		$this->observers[] = $observer;
+
+		return $this;
 	}
 
 	protected function notify(ObserverInterface ...$observers): void

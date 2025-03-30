@@ -253,13 +253,6 @@
 	background-color: #289D37;
 }
 
-.salescenter-yandexcheckout-qiwi-icon { width: 97px; }
-.salescenter-yandexcheckout-qiwi-icon i {
-	background-image: url(images/yandexcheckout_qiwi.svg);
-	background-size: 80% auto;
-	background-color: #E9832C;
-}
-
 .salescenter-yandexcheckout-embedded-icon { width: 97px; }
 .salescenter-yandexcheckout-embedded-icon i {
 	background-image: url(images/yandexcheckout_embedded.svg);

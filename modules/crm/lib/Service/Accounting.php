@@ -222,11 +222,11 @@ class Accounting
 	 * Returns original price before tax
 	 *
 	 * @param float $priceWithTax
-	 * @param float $taxRate
+	 * @param float|null $taxRate
 	 *
 	 * @return float
 	 */
-	public function calculatePriceWithoutTax(float $priceWithTax, float $taxRate): float
+	public function calculatePriceWithoutTax(float $priceWithTax, ?float $taxRate): float
 	{
 		return \CCrmProductRow::CalculateExclusivePrice($priceWithTax, $taxRate);
 	}
@@ -235,11 +235,11 @@ class Accounting
 	 * Applies tax with $taxRate to the price and returns its new value
 	 *
 	 * @param float $priceWithoutTax
-	 * @param float $taxRate
+	 * @param float|null $taxRate
 	 *
 	 * @return float
 	 */
-	public function calculatePriceWithTax(float $priceWithoutTax, float $taxRate): float
+	public function calculatePriceWithTax(float $priceWithoutTax, ?float $taxRate): float
 	{
 		return \CCrmProductRow::CalculateInclusivePrice($priceWithoutTax, $taxRate);
 	}

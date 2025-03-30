@@ -2,8 +2,17 @@ import { Type } from 'main.core';
 import { BuilderModel } from 'ui.vue3.vuex';
 import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
 
-import { Model } from 'booking.const';
-import type { InterfaceModelState, Intersections, MousePosition, MoneyStatistics } from './types';
+import { Model, BusySlot } from 'booking.const';
+import type { BusySlotDto } from 'booking.lib.busy-slots';
+import type { BookingModel } from 'booking.model.bookings';
+import type {
+	InterfaceModelState,
+	Intersections,
+	MousePosition,
+	MoneyStatistics,
+	QuickFilter,
+	Occupancy,
+} from './types';
 
 export class Interface extends BuilderModel
 {
@@ -22,6 +31,9 @@ export class Interface extends BuilderModel
 			canTurnOnTrial: this.getVariable('canTurnOnTrial', false),
 			canTurnOnDemo: this.getVariable('canTurnOnDemo', false),
 			editingBookingId: this.getVariable('editingBookingId', 0),
+			draggedBookingId: 0,
+			draggedBookingResourceId: 0,
+			resizedBookingId: 0,
 			isLoaded: false,
 			zoom: 1,
 			expanded: false,
@@ -48,6 +60,11 @@ export class Interface extends BuilderModel
 			totalNewClientsToday: this.getVariable('totalNewClientsToday', 0),
 			moneyStatistics: this.getVariable('moneyStatistics', null),
 			intersections: {},
+			quickFilter: {
+				hovered: {},
+				active: {},
+				ignoredBookingIds: {},
+			},
 			timezone: this.getVariable('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone),
 			mousePosition: {
 				top: 0,
@@ -58,6 +75,7 @@ export class Interface extends BuilderModel
 		};
 	}
 
+	// eslint-disable-next-line max-lines-per-function
 	getGetters(): GetterTree<InterfaceModelState>
 	{
 		return {
@@ -75,6 +93,14 @@ export class Interface extends BuilderModel
 			editingBookingId: (state): number => state.editingBookingId,
 			/** @function interface/isEditingBookingMode */
 			isEditingBookingMode: (state): boolean => state.editingBookingId > 0,
+			/** @function interface/draggedBookingId */
+			draggedBookingId: (state): number => state.draggedBookingId,
+			/** @function interface/draggedBookingResourceId */
+			draggedBookingResourceId: (state): number => state.draggedBookingResourceId,
+			/** @function interface/resizedBookingId */
+			resizedBookingId: (state): number => state.resizedBookingId,
+			/** @function interface/isDragMode */
+			isDragMode: (state): boolean => state.draggedBookingId || state.resizedBookingId,
 			/** @function interface/isLoaded */
 			isLoaded: (state): boolean => state.isLoaded,
 			/** @function interface/zoom */
@@ -102,19 +128,30 @@ export class Interface extends BuilderModel
 			/** @function interface/hoveredCell */
 			hoveredCell: (state): CellDto | null => state.hoveredCell,
 			/** @function interface/busySlots */
-			busySlots: (state): { [id: string]: Object } => Object.values(state.busySlots),
+			busySlots: (state): BusySlotDto[] => Object.values(state.busySlots),
 			/** @function interface/disabledBusySlots */
-			disabledBusySlots: (state): { [id: string]: Object } => state.disabledBusySlots,
+			disabledBusySlots: (state): { [id: string]: BusySlotDto } => state.disabledBusySlots,
 			/** @function interface/resourcesIds */
 			resourcesIds: (state, getters, rootState, rootGetters): number[] => {
-				const extraResourcesIds: Set<number> = new Set(state.resourcesIds);
-
-				rootGetters[`${Model.Bookings}/getByDate`](state.selectedDateTs)
+				const extraResourcesIds = rootGetters[`${Model.Bookings}/getByDate`](state.selectedDateTs)
 					.filter((booking) => booking.counter > 0)
-					.forEach((booking) => extraResourcesIds.add(booking.resourcesIds[0]))
+					.map((booking) => booking.resourcesIds[0])
 				;
 
-				return [...extraResourcesIds];
+				const resourcesIds = [...new Set([...state.resourcesIds, ...extraResourcesIds])];
+
+				const excludeResources = new Set(
+					getters.getOccupancy(resourcesIds, Object.values(state.quickFilter.ignoredBookingIds))
+						.filter((occupancy: Occupancy) => Object.values(state.quickFilter.active).some((hour) => {
+							const fromTs = new Date(state.selectedDateTs).setHours(hour) - getters.offset;
+							const toTs = new Date(state.selectedDateTs).setHours(hour + 1) - getters.offset;
+
+							return toTs > occupancy.fromTs && fromTs < occupancy.toTs;
+						}))
+						.flatMap((occupancy: Occupancy) => occupancy.resourcesIds),
+				);
+
+				return resourcesIds.filter((id) => !excludeResources.has(id));
 			},
 			extraResourcesIds: (state, getters) => {
 				const resourcesIds = state.resourcesIds;
@@ -145,12 +182,10 @@ export class Interface extends BuilderModel
 
 				return state.counterMarks.filter((date) => filterDates.includes(date));
 			},
-			/** @function interface/selectedIntersectingResourcesIds */
-			selectedIntersectingResourcesIds: (state): number[] => state.intersection.selectedIntersectingResourcesIds,
-			/** @function interface/isMultipleIntersectionMode */
-			isMultipleIntersectionMode: (state): boolean => state.intersection.isMultipleMode,
 			/** @function interface/intersections */
 			intersections: (state): Intersections => state.intersections,
+			/** @function interface/quickFilter */
+			quickFilter: (state): QuickFilter => state.quickFilter,
 			/** @function interface/timezone */
 			timezone: (state): string => state.timezone,
 			/** @function interface/timezoneOffset */
@@ -170,15 +205,74 @@ export class Interface extends BuilderModel
 			mousePosition: (state): MousePosition => state.mousePosition,
 			/** @function interface/isCurrentSenderAvailable */
 			isCurrentSenderAvailable: (state): boolean => state.isCurrentSenderAvailable,
+			/** @function interface/getColliding */
+			getColliding: (state, getters) => {
+				return (resourceId: number, excludedBookingIds: number[]): Occupancy[] => [
+					...getters.getOccupancy([resourceId], excludedBookingIds),
+					...Object.values(state.selectedCells)
+						.filter((cell: CellDto) => cell.resourceId === resourceId)
+						.map((cell: CellDto) => ({
+							fromTs: cell.fromTs,
+							toTs: cell.toTs,
+							resourcesIds: [cell.resourceId],
+						})),
+				];
+			},
+			/** @function interface/getOccupancy */
+			getOccupancy: (state, getters, rootState, rootGetters) => {
+				return (resourcesIds: number[], excludedBookingIds: number[] = []): Occupancy[] => {
+					const resources = new Set(resourcesIds);
+
+					const bookings = rootGetters[`${Model.Bookings}/get`]
+						.filter((booking: BookingModel) => {
+							const belongsToResources = booking.resourcesIds.some((id) => resources.has(id));
+							const isNotExcluded = !excludedBookingIds.includes(booking.id);
+
+							return belongsToResources && isNotExcluded;
+						})
+						.map((booking: BookingModel) => ({
+							fromTs: booking.dateFromTs,
+							toTs: booking.dateToTs,
+							resourcesIds: booking.resourcesIds,
+						}))
+					;
+
+					const busySlots = Object.values(state.busySlots)
+						.filter((busySlot: BusySlotDto) => {
+							const isDragOffHours = getters.isDragMode && busySlot.type === BusySlot.OffHours;
+							const isActive = !(busySlot.id in state.disabledBusySlots) && !isDragOffHours;
+							const belongsToResources = resources.has(busySlot.resourceId);
+
+							return isActive && belongsToResources;
+						})
+						.map(({ fromTs, toTs, resourceId }) => ({ fromTs, toTs, resourcesIds: [resourceId] }))
+					;
+
+					return [...bookings, ...busySlots];
+				};
+			},
 		};
 	}
 
+	// eslint-disable-next-line max-lines-per-function
 	getActions(): ActionTree<InterfaceModelState>
 	{
 		return {
 			/** @function interface/setEditingBookingId */
 			setEditingBookingId: (store, editingBookingId: number) => {
 				store.commit('setEditingBookingId', editingBookingId);
+			},
+			/** @function interface/setDraggedBookingId */
+			setDraggedBookingId: (store, draggedBookingId: number) => {
+				store.commit('setDraggedBookingId', draggedBookingId);
+			},
+			/** @function interface/setDraggedBookingResourceId */
+			setDraggedBookingResourceId: (store, draggedBookingResourceId: number) => {
+				store.commit('setDraggedBookingResourceId', draggedBookingResourceId);
+			},
+			/** @function interface/setResizedBookingId */
+			setResizedBookingId: (store, resizedBookingId: number) => {
+				store.commit('setResizedBookingId', resizedBookingId);
 			},
 			/** @function interface/setIsLoaded */
 			setIsLoaded: (store, isLoaded: boolean) => {
@@ -237,7 +331,7 @@ export class Interface extends BuilderModel
 				store.commit('setHoveredCell', cell);
 			},
 			/** @function interface/upsertBusySlotMany */
-			upsertBusySlotMany: (store: Store, busySlots: Object[]): void => {
+			upsertBusySlotMany: (store: Store, busySlots: BusySlotDto[]): void => {
 				busySlots.forEach((busySlot) => store.commit('upsertBusySlot', busySlot));
 			},
 			/** @function interface/clearBusySlots */
@@ -245,7 +339,7 @@ export class Interface extends BuilderModel
 				store.commit('clearBusySlots');
 			},
 			/** @function interface/addDisabledBusySlot */
-			addDisabledBusySlot: (store, busySlot: Object) => {
+			addDisabledBusySlot: (store, busySlot: BusySlotDto) => {
 				store.commit('addDisabledBusySlot', busySlot);
 			},
 			/** @function interface/clearDisabledBusySlots */
@@ -299,6 +393,28 @@ export class Interface extends BuilderModel
 			setIntersections: (store, intersections: Intersections) => {
 				store.commit('setIntersections', intersections);
 			},
+			/** @function interface/hoverQuickFilter */
+			hoverQuickFilter: (store, hour: number) => {
+				store.commit('hoverQuickFilter', hour);
+			},
+			/** @function interface/fleeQuickFilter */
+			fleeQuickFilter: (store, hour: number) => {
+				store.commit('fleeQuickFilter', hour);
+			},
+			/** @function interface/activateQuickFilter */
+			activateQuickFilter: (store, hour: number) => {
+				store.commit('activateQuickFilter', hour);
+				store.commit('clearQuickFilterIgnoredBookingIds');
+			},
+			/** @function interface/deactivateQuickFilter */
+			deactivateQuickFilter: (store, hour: number) => {
+				store.commit('deactivateQuickFilter', hour);
+				store.commit('clearQuickFilterIgnoredBookingIds');
+			},
+			/** @function interface/addQuickFilterIgnoredBookingId */
+			addQuickFilterIgnoredBookingId: (store, bookingId: number) => {
+				store.commit('addQuickFilterIgnoredBookingId', bookingId);
+			},
 			/** @function interface/setMousePosition */
 			setMousePosition: (store, mousePosition: MousePosition) => {
 				store.commit('setMousePosition', mousePosition);
@@ -322,11 +438,21 @@ export class Interface extends BuilderModel
 		};
 	}
 
+	// eslint-disable-next-line max-lines-per-function
 	getMutations(): MutationTree<InterfaceModelState>
 	{
 		return {
 			setEditingBookingId: (state, editingBookingId: number) => {
 				state.editingBookingId = editingBookingId;
+			},
+			setDraggedBookingId: (state, draggedBookingId: number) => {
+				state.draggedBookingId = draggedBookingId;
+			},
+			setResizedBookingId: (state, resizedBookingId: number) => {
+				state.resizedBookingId = resizedBookingId;
+			},
+			setDraggedBookingResourceId: (state, draggedBookingResourceId: number) => {
+				state.draggedBookingResourceId = draggedBookingResourceId;
 			},
 			setIsLoaded: (state, isLoaded: boolean) => {
 				state.isLoaded = isLoaded;
@@ -370,14 +496,14 @@ export class Interface extends BuilderModel
 			setHoveredCell: (state, cell: CellDto | null) => {
 				state.hoveredCell = cell;
 			},
-			upsertBusySlot: (state, busySlot: Object): void => {
+			upsertBusySlot: (state, busySlot: BusySlotDto): void => {
 				state.busySlots[busySlot.id] ??= busySlot;
 				Object.assign(state.busySlots[busySlot.id], busySlot);
 			},
 			clearBusySlots: (state) => {
 				state.busySlots = {};
 			},
-			addDisabledBusySlot: (state, busySlot: Object) => {
+			addDisabledBusySlot: (state, busySlot: BusySlotDto) => {
 				state.disabledBusySlots[busySlot.id] = busySlot;
 			},
 			clearDisabledBusySlots: (state) => {
@@ -418,6 +544,24 @@ export class Interface extends BuilderModel
 			},
 			setIntersections: (state, intersections: Intersections) => {
 				state.intersections = intersections;
+			},
+			hoverQuickFilter: (state, hour: number) => {
+				state.quickFilter.hovered[hour] = hour;
+			},
+			fleeQuickFilter: (state, hour: number) => {
+				delete state.quickFilter.hovered[hour];
+			},
+			activateQuickFilter: (state, hour: number) => {
+				state.quickFilter.active[hour] = hour;
+			},
+			deactivateQuickFilter: (state, hour: number) => {
+				delete state.quickFilter.active[hour];
+			},
+			addQuickFilterIgnoredBookingId: (state, bookingId: number) => {
+				state.quickFilter.ignoredBookingIds[bookingId] = bookingId;
+			},
+			clearQuickFilterIgnoredBookingIds: (state) => {
+				state.quickFilter.ignoredBookingIds = {};
 			},
 			setMousePosition: (state, mousePosition: MousePosition) => {
 				state.mousePosition = mousePosition;

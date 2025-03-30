@@ -1,0 +1,43 @@
+.booking-booking-drag-delete {
+	position: absolute;
+	z-index: 4;
+	left: 50%;
+	transform: translateX(-50%);
+	bottom: 18px;
+	padding: 6px;
+	border-radius: 1in;
+	border: 1px solid var(--ui-color-base-10);
+	background: var(--ui-color-background-primary);
+}
+
+.booking-booking-drag-delete-button {
+	display: flex;
+	align-items: center;
+	padding: 4px 14px 4px 9px;
+	border-radius: 1in;
+	border: 1px dashed var(--ui-color-palette-red-50);
+	background: var(--ui-color-palette-red-15);
+	cursor: pointer;
+}
+
+.booking-booking-drag-delete-button .ui-icon-set {
+	--ui-icon-set__icon-size: 22px;
+	--ui-icon-set__icon-color: var(--ui-color-palette-red-60);
+}
+
+.booking-booking-drag-delete-button-text {
+	color: var(--ui-color-palette-red-70);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.booking-booking-drag-delete-button:hover {
+	background: var(--ui-color-palette-red-60);
+}
+
+.booking-booking-drag-delete-button:hover .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-palette-white-base);
+}
+
+.booking-booking-drag-delete-button:hover .booking-booking-drag-delete-button-text {
+	color: var(--ui-color-palette-white-base);
+}

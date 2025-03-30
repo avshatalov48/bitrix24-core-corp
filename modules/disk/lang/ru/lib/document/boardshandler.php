@@ -1,0 +1,4 @@
+<?php
+
+$MESS["DISK_BOARDS_HANDLER_NAME"] = "Доски";
+$MESS["DISK_BOARDS_VIEWER_HANDLER_ERROR_METHOD_IS_NOT_SUPPORTED"] = "Действие не поддерживается";

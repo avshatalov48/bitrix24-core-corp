@@ -178,7 +178,10 @@ class DataProviderManager
 			if($provider && $provider instanceof DataProvider)
 			{
 				$value = $provider->getValue(implode('.', array_slice($placeholderParts, 1)));
-				if($this->getContext()->getIsCheckAccess() && !$this->checkDataProviderAccess($provider))
+				if (
+					$this->getContext()->getIsCheckAccess()
+					&& !$this->checkDataProviderAccess($provider, $this->getContext()->getUserId())
+				)
 				{
 					$value = false;
 				}

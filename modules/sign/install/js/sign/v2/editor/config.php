@@ -8,6 +8,7 @@ return [
 	'css' => 'dist/editor.bundle.css',
 	'js' => 'dist/editor.bundle.js',
 	'rel' => [
+		'sign.v2.analytics',
 		'sign.v2.helper',
 		'main.popup',
 		'sign.tour',
@@ -19,9 +20,10 @@ return [
 		'date',
 		'ui.notification',
 		'ui.stamp.uploader',
+		'sign.v2.api',
 		'crm.form.fields.selector',
 		'crm.requisite.fieldset-viewer',
-		'sign.v2.document-setup',
+		'sign.type',
 		'sign.v2.b2e.field-selector',
 		'sign.ui',
 		'color_picker',
@@ -29,7 +31,6 @@ return [
 		'main.core',
 		'ui.draganddrop.draggable',
 		'main.core.events',
-		'sign.v2.api',
 	],
 	'skip_core' => false,
 ];

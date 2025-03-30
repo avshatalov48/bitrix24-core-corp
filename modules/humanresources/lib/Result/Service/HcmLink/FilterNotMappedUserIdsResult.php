@@ -6,6 +6,9 @@ use Bitrix\HumanResources\Result\SuccessResult;
 
 class FilterNotMappedUserIdsResult extends SuccessResult
 {
+	/**
+	 * @param array<int, int> $userIds
+	 */
 	public function __construct(
 		public array $userIds,
 	)

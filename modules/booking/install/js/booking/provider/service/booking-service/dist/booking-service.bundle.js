@@ -133,12 +133,14 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  async add(booking) {
 	    const id = booking.id;
 	    try {
+	      await booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/addQuickFilterIgnoredBookingId`, id);
 	      await booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/add`, booking);
 	      const bookingDto = mapModelToDto(booking);
 	      const data = await new booking_lib_apiClient.ApiClient().post('Booking.add', {
 	        booking: bookingDto
 	      });
 	      const createdBooking = mapDtoToModel(data);
+	      await booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/addQuickFilterIgnoredBookingId`, createdBooking.id);
 	      void booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/update`, {
 	        id,
 	        booking: createdBooking

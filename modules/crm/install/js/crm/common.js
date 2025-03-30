@@ -13422,7 +13422,7 @@ BX.Crm.Page =
 		dynamicAutomation: { condition: new RegExp("/crm/type/[0-9]+/automation/[0-9]+/", "i"), stopParameters: ['grid_action', 'page'], options: { customLeftBoundary: 0, loader: 'bizproc:automation-loader' } },
 		activity: { condition: new RegExp("/bitrix/components/bitrix/crm.activity.planner/slider.php", "i"), options: { allowChangeHistory: false, width: 1080 }},
 		factoryBasedMerge: { condition: new RegExp('/crm/type/[0-9]+/merge/', 'i'), options: { allowHistoryChange: false, customLeftBoundary: 0 } },
-		permissions: { condition: new RegExp('/crm/perms/[A-Za-z0-9-_]+/?', 'i'), options: { loader: null} },
+		permissions: { condition: new RegExp('/crm/perms/[A-Za-z0-9-_]+/?', 'i'), options: { loader: null, customLeftBoundary: 0,} },
 		workflow: { condition: new RegExp('/company/personal/bizproc/([a-zA-Z0-9.]+)/', 'i'), options: { cacheable: false, loader: 'bizproc:workflow-info', width: window.innerWidth > 1500 ? (1500 + Math.floor((window.innerWidth - 1500) / 3)) : null } },
 	},
 	items: [],

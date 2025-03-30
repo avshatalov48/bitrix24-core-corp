@@ -19,6 +19,7 @@ final class TypeFile
 	const AUDIO        = 9;
 	const KNOWN        = 10;
 	const VECTOR_IMAGE = 11;
+	const FLIPCHART    = 12;
 
 	/**
 	 * Allowed values.
@@ -37,6 +38,7 @@ final class TypeFile
 			self::AUDIO,
 			self::KNOWN,
 			self::VECTOR_IMAGE,
+			self::FLIPCHART,
 		);
 	}
 
@@ -142,6 +144,10 @@ final class TypeFile
 			case 'woff':
 			case 'pfa':
 				return self::KNOWN;
+
+			case 'flp':
+			case 'board':
+				return self::FLIPCHART;
 		}
 
 		return self::UNKNOWN;
@@ -220,6 +226,11 @@ final class TypeFile
 	public static function isDocument($file)
 	{
 		return (self::getByFlexibleVar($file) === self::DOCUMENT || self::isPdf($file));
+	}
+
+	public static function isBoard($file)
+	{
+		return (self::getByFlexibleVar($file) === self::FLIPCHART);
 	}
 
 	public static function isArchive($file)
@@ -335,6 +346,10 @@ final class TypeFile
 			'eml' => 'message/rfc822',
 			'odt' => 'application/vnd.oasis.opendocument.text',
 
+			// BOARDS
+			'board' => 'application/board',
+			'flp' => 'application/board',
+
 			// ARCHIVE
 			'rar' => 'application/x-rar-compressed',
 			'zip' => 'application/zip',
@@ -395,7 +410,7 @@ final class TypeFile
 			case '':
 			case 'application/zip':
 			case 'application/octet-stream':
-				if(self::isDocument($filename))
+				if(self::isDocument($filename) || self::isBoard($filename))
 				{
 					return self::getMimeTypeByFilename($filename);
 				}
@@ -426,6 +441,8 @@ final class TypeFile
 			case self::PDF:
 			case self::KNOWN:
 				return Loc::getMessage("DISK_TYPE_FILE_DOCUMENT");
+			case self::FLIPCHART:
+				return Loc::getMessage("DISK_TYPE_FILE_BOARD");
 			case self::ARCHIVE:
 				return Loc::getMessage("DISK_TYPE_FILE_ARCHIVE");
 			case self::SCRIPT:

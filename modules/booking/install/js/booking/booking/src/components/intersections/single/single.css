@@ -1,5 +1,5 @@
 .booking-booking-intersections-line {
-	width: 100%;
+	width: calc(100% - 310px);
 	padding: 0 6px;
 	box-sizing: border-box;
 	min-height: 48px;

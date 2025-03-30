@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Bitrix\Crm\Integration\Booking;
 
-use Bitrix\Booking\Integration\Booking\ProviderInterface;
+use Bitrix\Booking\Interfaces\ProviderInterface;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Crm\Activity;

@@ -84,8 +84,8 @@
 }
 
 .disk-user-field-panel-card-icon {
-	width: 44px;
-	height: 52px;
+	width: 50px;
+	height: 50px;
 	margin: 33px auto 15px auto;
 	background-image: url(images/blank.svg);
 	background-position: center;
@@ -216,17 +216,25 @@
 
 .disk-user-field-panel-card--doc .disk-user-field-panel-card-icon,
 .disk-user-field-panel-card--docx .disk-user-field-panel-card-icon {
-	background-image: url(images/doc.svg);
+	background-image: url(images/doc.svg?v2);
+	background-size: cover;
 }
 
 .disk-user-field-panel-card--xls .disk-user-field-panel-card-icon,
 .disk-user-field-panel-card--xlsx .disk-user-field-panel-card-icon{
-	background-image: url(images/xls.svg);
+	background-image: url(images/xls.svg?v2);
+	background-size: cover;
 }
 
 .disk-user-field-panel-card--ppt .disk-user-field-panel-card-icon,
 .disk-user-field-panel-card--pptx .disk-user-field-panel-card-icon {
-	background-image: url(images/ppt.svg);
+	background-image: url(images/ppt.svg?v2);
+	background-size: cover;
+}
+
+.disk-user-field-panel-card--board .disk-user-field-panel-card-icon {
+	background-image: url(images/disk-board-card-icon.svg);
+	background-size: cover;
 }
 
 .disk-user-field-panel-card--doc .disk-user-field-panel-card-btn {
@@ -239,6 +247,10 @@
 
 .disk-user-field-panel-card--ppt .disk-user-field-panel-card-btn {
 	background-color: #e89e00;
+}
+
+.disk-user-field-panel-card--board .disk-user-field-panel-card-btn {
+	background-color: #20adbf;
 }
 
 .disk-user-field-panel-card-name {

@@ -1,7 +1,6 @@
-import { EventEmitter } from 'main.core.events';
-import { useChartStore } from 'humanresources.company-structure.chart-store';
-import { mapWritableState } from 'ui.vue3.pinia';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { Confetti } from 'ui.confetti';
+import { mapState } from 'ui.vue3.pinia';
 import { TransformCanvas } from 'humanresources.company-structure.canvas';
 import { AnalyticsSourceType } from 'humanresources.company-structure.api';
 import { TitlePanel } from './components/title-panel/title-panel';
@@ -9,9 +8,12 @@ import { Tree } from './components/tree/tree';
 import { TransformPanel } from './components/transfrom-panel';
 import { DetailPanel } from './components/detail-panel/detail-panel';
 import { FirstPopup } from './components/first-popup/first-popup';
+import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { ChartWizard } from 'humanresources.company-structure.chart-wizard';
+import { getInvitedUserData } from 'humanresources.company-structure.utils';
 import { chartAPI } from './api';
 import { events } from './events';
+import { OrgChartActions } from './actions';
 import { sendData as analyticsSendData } from 'ui.analytics';
 
 import type { ChartData } from './types';
@@ -59,28 +61,25 @@ export const Chart = {
 	async created(): Promise<void>
 	{
 		const slider = BX.SidePanel.Instance.getTopSlider();
-		if (slider)
-		{
-			slider.showLoader();
-		}
+		slider?.showLoader();
 		const [departments, currentDepartments, userId] = await Promise.all([
-			chartAPI.getChartData(),
-			chartAPI.getCurrentDepartment(),
+			chartAPI.getDepartmentsData(),
+			chartAPI.getCurrentDepartments(),
 			chartAPI.getUserId(),
 		]);
+		slider?.closeLoader();
 		const parsedDepartments = chartAPI.createTreeDataStore(departments);
-		if (slider)
-		{
-			slider.closeLoader();
-		}
-		this.departments = parsedDepartments;
-		this.currentDepartments = currentDepartments;
-		this.userId = userId;
-		this.searchedUserId = this.userId;
-		const [currentDepartment] = this.currentDepartments;
-		this.transformCanvas(currentDepartment);
+		OrgChartActions.applyData(parsedDepartments, currentDepartments, userId);
+		this.rootOffset = 100;
+		this.transformCanvas();
 		this.canvas.shown = true;
 		this.showConfetti = false;
+		EventEmitter.subscribe(events.HR_DEPARTMENT_SLIDER_ON_MESSAGE, this.handleInviteSliderMessage);
+	},
+
+	unmounted(): void
+	{
+		EventEmitter.unsubscribe(events.HR_DEPARTMENT_SLIDER_ON_MESSAGE, this.handleInviteSliderMessage);
 	},
 
 	computed:
@@ -93,16 +92,17 @@ export const Chart = {
 
 			return rootId;
 		},
-		...mapWritableState(useChartStore, ['departments', 'currentDepartments', 'userId', 'searchedUserId']),
+		...mapState(useChartStore, ['departments', 'currentDepartments']),
 	},
 
 	methods:
 	{
-		onMoveTo({ x, y }: { x: Number; y: Number; }): void
+		onMoveTo({ x, y, nodeId }: { x: Number; y: Number; nodeId: Number; }): void
 		{
 			const { x: prevX, y: prevY, zoom } = this.canvas.modelTransform;
 			const detailPanelWidth = 364 * zoom;
 			const newX = x - detailPanelWidth / 2;
+			const newY = nodeId === this.rootId ? this.rootOffset : y / zoom;
 			const notSamePoint = Math.round(newX) !== Math.round(prevX) || Math.round(y) !== Math.round(prevY);
 			const shouldMove = notSamePoint && !this.canvas.moving;
 			this.detailPanel = {
@@ -117,7 +117,7 @@ export const Chart = {
 			this.canvas = {
 				...this.canvas,
 				moving: true,
-				modelTransform: { ...this.canvas.modelTransform, x: newX / zoom, y: y / zoom, zoom: 1 },
+				modelTransform: { ...this.canvas.modelTransform, x: newX / zoom, y: newY, zoom: 1 },
 			};
 		},
 		onLocate(nodeId: ?number): void
@@ -237,11 +237,12 @@ export const Chart = {
 				collapsed: false,
 			};
 		},
-		transformCanvas(currentDepartment: number): void
+		transformCanvas(): void
 		{
 			const { zoom } = this.canvas.modelTransform;
 			const { offsetWidth, offsetHeight } = this.$el;
-			const y = currentDepartment === this.rootId ? 10 : offsetHeight / 2 - (offsetHeight * zoom) / 2;
+			const [currentDepartment] = this.currentDepartments;
+			const y = currentDepartment === this.rootId ? this.rootOffset : offsetHeight / 2 - (offsetHeight * zoom) / 2;
 			this.canvas.modelTransform = {
 				...this.canvas.modelTransform,
 				x: offsetWidth / 2 - (offsetWidth * zoom) / 2,
@@ -251,6 +252,21 @@ export const Chart = {
 		onUpdateTransform(): void
 		{
 			EventEmitter.emit(events.HR_DEPARTMENT_MENU_CLOSE);
+		},
+		handleInviteSliderMessage(event: BaseEvent): void
+		{
+			const [messageEvent] = event.getData();
+			const eventId = messageEvent.getEventId();
+			if (eventId !== 'BX.Intranet.Invitation:onAdd')
+			{
+				return;
+			}
+
+			const { users } = messageEvent.getData();
+			users.forEach((user) => {
+				const invitedUserData = getInvitedUserData(user);
+				OrgChartActions.inviteUser(invitedUserData);
+			});
 		},
 	},
 

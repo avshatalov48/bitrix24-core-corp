@@ -104,6 +104,11 @@ if (!$isActivityLimitIsExceeded && CounterSettings::getInstance()->isEnabled())
 
 $section = $arParams['EXTRA']['ANALYTICS']['c_section'] ?? null;
 $subSection = $arParams['EXTRA']['ANALYTICS']['c_sub_section'] ?? null;
+
+echo Tour\Permissions\AutomatedSolution::getInstance()
+	->setEntityTypeId($entityTypeId)
+	->build()
+;
 ?>
 
 <div id="crm_kanban"></div>

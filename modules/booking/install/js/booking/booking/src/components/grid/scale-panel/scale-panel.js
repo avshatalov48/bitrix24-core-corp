@@ -23,6 +23,13 @@ export const ScalePanel = {
 			maxZoom: 1,
 		};
 	},
+	mounted(): void
+	{
+		if (location.hash === '#maximize')
+		{
+			void this.maximize.maximize();
+		}
+	},
 	computed: {
 		...mapGetters({
 			zoom: 'interface/zoom',
@@ -36,9 +43,20 @@ export const ScalePanel = {
 		},
 	},
 	methods: {
-		expand(): void
+		expand(event: MouseEvent): void
 		{
-			void this.maximize.maximize();
+			if (location.hash === '#maximize' || this.isAnyModifierKeyPressed(event))
+			{
+				void this.maximize.maximize();
+			}
+			else
+			{
+				window.open(`${location.href}#maximize`, '_blank').focus();
+			}
+		},
+		isAnyModifierKeyPressed(event: MouseEvent): boolean
+		{
+			return event.altKey || event.shiftKey || event.ctrlKey || event.metaKey;
 		},
 		collapse(): void
 		{
@@ -55,6 +73,11 @@ export const ScalePanel = {
 		},
 		zoomInto(zoomInto: number): void
 		{
+			if (Number.isNaN(zoomInto))
+			{
+				return;
+			}
+
 			const noTransitionClass = '--booking-booking-no-transition';
 			const container = Core.getParams().container;
 			const maxAnimationDuration = 400;

@@ -6,66 +6,113 @@ namespace Bitrix\Booking\Provider;
 
 use Bitrix\Booking\Entity\Booking\Booking;
 use Bitrix\Booking\Entity\Booking\BookingCollection;
-use Bitrix\Booking\Internals\Feature\BookingConfirmLink;
-use Bitrix\Booking\Internals\Query\Booking\GetBookingForManagerHandler;
-use Bitrix\Booking\Internals\Query\Booking\GetByIdHandler;
-use Bitrix\Booking\Internals\Query\Booking\GetIntersectionsHandler;
-use Bitrix\Booking\Internals\Query\Booking\GetIntersectionsRequest;
-use Bitrix\Booking\Internals\Query\Booking\GetListFilter;
-use Bitrix\Booking\Internals\Query\Booking\GetListHandler;
-use Bitrix\Booking\Internals\Query\Booking\GetListRequest;
-use Bitrix\Booking\Internals\Query\Booking\GetListSelect;
-use Bitrix\Booking\Internals\Query\Booking\GetListSort;
+use Bitrix\Booking\Internals\Container;
+use Bitrix\Booking\Internals\Repository\BookingRepositoryInterface;
+use Bitrix\Booking\Internals\Service\CounterDictionary;
+use Bitrix\Booking\Internals\Service\Feature\BookingConfirmLink;
+use Bitrix\Booking\Provider\Params\GridParams;
 
 class BookingProvider
 {
-	public function getList(
-		int $userId,
-		int $limit = null,
-		int $offset = null,
-		array|null $filter = null,
-		array|null $sort = null,
-		array|null $select = null,
-		bool $withCounters = false,
-		bool $withClientData = false,
-		bool $withExternalData = false,
-	): BookingCollection
+	private BookingRepositoryInterface $repository;
+
+	public function __construct()
 	{
-		return (new GetListHandler())(
-			new GetListRequest(
-				userId: $userId,
-				limit: $limit,
-				offset: $offset,
-				filter: new GetListFilter($filter ?? []),
-				sort: new GetListSort($sort ?? []),
-				select: new GetListSelect($select ?? []),
-				withCounters: $withCounters,
-				withClientData: $withClientData,
-				withExternalData: $withExternalData,
-			)
+		$this->repository = Container::getBookingRepository();
+	}
+
+	public function getList(GridParams $gridParams, int $userId): BookingCollection
+	{
+		return $this->repository->getList(
+			limit: $gridParams->limit,
+			offset: $gridParams->offset,
+			filter: $gridParams->filter,
+			sort: $gridParams->getSort(),
+			select: $gridParams->getSelect(),
 		);
 	}
 
-	public function getIntersectionsList(
-		int $userId,
-		Booking $booking,
-	): BookingCollection
+	public function withCounters(BookingCollection $bookingCollection, int $userId): self
 	{
-		return (new GetIntersectionsHandler())(
-			new GetIntersectionsRequest(
-				booking: $booking,
-			)
-		);
+		$counterRepository = Container::getCounterRepository();
+
+		/** @var Booking $booking */
+		foreach ($bookingCollection as $booking)
+		{
+			$counters = [];
+
+			$value = $counterRepository->get(
+				userId: $userId,
+				type: CounterDictionary::BookingUnConfirmed,
+				entityId: $booking->getId(),
+			);
+			$counters[] = [
+				'type' => CounterDictionary::BookingUnConfirmed->value,
+				'value' => $value,
+			];
+
+			$value += $counterRepository->get(
+				userId: $userId,
+				type: CounterDictionary::BookingDelayed,
+				entityId: $booking->getId(),
+			);
+			$counters[] = [
+				'type' => CounterDictionary::BookingDelayed->value,
+				'value' => $value,
+			];
+
+			$booking->setCounter($value);
+			$booking->setCounters($counters);
+		}
+
+		return $this;
+	}
+
+	public function withClientsData(BookingCollection $bookingCollection): self
+	{
+		$clientCollections = [];
+
+		foreach ($bookingCollection as $booking)
+		{
+			$clientCollections[] = $booking->getClientCollection();
+		}
+
+		Container::getProviderManager()::getCurrentProvider()
+			?->getClientProvider()
+			?->loadClientDataForCollection(...$clientCollections);
+
+		return $this;
+	}
+
+	public function withExternalData(BookingCollection $bookingCollection): self
+	{
+		$externalDataCollections = [];
+
+		foreach ($bookingCollection as $booking)
+		{
+			$externalDataCollections[] = $booking->getExternalDataCollection();
+		}
+
+		Container::getProviderManager()::getCurrentProvider()
+			?->getDataProvider()
+			?->loadDataForCollection(...$externalDataCollections);
+
+		return $this;
+	}
+
+	public function getIntersectionsList(int $userId, Booking $booking): BookingCollection
+	{
+		return $this->repository->getIntersectionsList($booking, $userId);
 	}
 
 	public function getById(int $userId, int $id): Booking|null
 	{
-		return (new GetByIdHandler())($id);
+		return $this->repository->getById($id, $userId);
 	}
 
 	public function getBookingForManager(int $id): Booking|null
 	{
-		return (new GetBookingForManagerHandler())($id);
+		return $this->repository->getByIdForManager($id);
 	}
 
 	public function getByHash(string $hash): Booking

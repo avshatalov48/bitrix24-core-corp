@@ -5,6 +5,8 @@ namespace Bitrix\StaffTrack\Integration\Im;
 use Bitrix\Im\Common;
 use Bitrix\Im\Dialog;
 use Bitrix\Im\User;
+use Bitrix\Im\V2\Message;
+use Bitrix\Im\V2\Message\Delete\DeleteService;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
@@ -20,6 +22,7 @@ class MessageService
 	private ?ShiftDto $shiftDto = null;
 
 	private ?int $chatId = null;
+	private ?DeleteService $deleteService = null;
 
 	public const COMPONENT_MESSAGE_ID = 'CheckInMessage';
 
@@ -30,8 +33,10 @@ class MessageService
 
 	/**
 	 * @param ShiftDto $shiftDto
+	 *
 	 * @return Result
 	 * @throws LoaderException
+	 * @throws \Exception
 	 */
 	public function sendShiftStart(ShiftDto $shiftDto): Result
 	{
@@ -174,6 +179,42 @@ class MessageService
 		];
 	}
 
+	/**
+	 * @param int $messageId
+	 *
+	 * @return void
+	 * @throws LoaderException
+	 */
+	public function deleteMessage(int $messageId): void
+	{
+		if (!$this->isAvailable())
+		{
+			return;
+		}
+
+		$message = new Message($messageId);
+
+		$this->getDeleteMessageService($message)->delete();
+	}
+
+	/**
+	 * @param \Bitrix\Im\V2\Message $message
+	 * @return DeleteService
+	 */
+	private function getDeleteMessageService(\Bitrix\Im\V2\Message $message): DeleteService
+	{
+		if ($this->deleteService === null)
+		{
+			$this->deleteService = (new DeleteService($message))->setMode(DeleteService::DELETE_COMPLETE);
+		}
+		else
+		{
+			$this->deleteService->setMessage($message);
+		}
+
+		return $this->deleteService;
+	}
+
 
 	/**
 	 * @return void
@@ -206,6 +247,7 @@ class MessageService
 
 	/**
 	 * @return void
+	 * @throws \Exception
 	 */
 	private function handleCheckInMessage(): void
 	{
@@ -221,7 +263,7 @@ class MessageService
 		if (!empty($this->shiftDto->address))
 		{
 			$componentParams['LOCATION'] = Loc::getMessage('STAFFTRACK_INTEGRATION_IM_ADDRESS', [
-				'#ADDRESS#' => $this->shiftDto->address
+				'#ADDRESS#' => $this->shiftDto->address,
 			]);
 		}
 		else if (!empty($this->shiftDto->location))

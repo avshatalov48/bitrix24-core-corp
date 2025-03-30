@@ -3,7 +3,7 @@
 namespace Bitrix\Disk\Document\OnlyOffice\Editor;
 
 use Bitrix\Disk\Document\Language;
-use Bitrix\Disk\Document\OnlyOffice\Models\DocumentSession;
+use Bitrix\Disk\Document\Models\DocumentSession;
 use Bitrix\Disk\File;
 use Bitrix\Disk\User;
 use Bitrix\Main\ArgumentOutOfRangeException;

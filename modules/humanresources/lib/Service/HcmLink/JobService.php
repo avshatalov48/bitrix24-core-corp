@@ -38,24 +38,38 @@ class JobService implements Contract\Service\HcmLink\JobService
 	{
 		try
 		{
-			$this->jobRepository->update($job);
+			$updatedJob = $this->jobRepository->update($job);
 		}
 		catch (UpdateFailedException $exception)
 		{
 			return null;
 		}
 
-		$this->fireEvents($job);
+		$this->fireEvents($updatedJob);
 
 		return $job;
 	}
 
-	public function requestEmployeeList(int $companyId): Result|JobServiceResult
+	public function requestEmployeeList(int $companyId, bool $isForced = false): Result|JobServiceResult
 	{
 		$company = $this->companyRepository->getById($companyId);
 		if ($company === null)
 		{
 			return (new Result())->addError(new Error('Company not found'));
+		}
+
+		if (!$isForced) {
+			$existingJob = $this->jobRepository->getLastByTypeAndDate(
+				JobType::USER_LIST,
+				(new DateTime())->add('-1 day'),
+				$companyId,
+				[JobStatus::STARTED->value, JobStatus::IN_PROGRESS->value, JobStatus::DONE->value]
+			)->getFirst();
+
+			// if we already have a job < 1 day old witch either successful or in progress, we return this job
+			if ($existingJob) {
+				return new JobServiceResult($existingJob);
+			}
 		}
 
 		$data = [
@@ -69,8 +83,8 @@ class JobService implements Contract\Service\HcmLink\JobService
 				new Job(
 					companyId: $company->id,
 					type: JobType::USER_LIST,
-					outputData: $data
-				)
+					outputData: $data,
+				),
 			);
 		}
 		catch (CreationFailedException $exception)
@@ -125,8 +139,8 @@ class JobService implements Contract\Service\HcmLink\JobService
 				new Job(
 					companyId: $company->id,
 					type: JobType::FIELD_VALUES,
-					outputData: $data
-				)
+					outputData: $data,
+				),
 			);
 		}
 		catch (CreationFailedException $exception)
@@ -177,8 +191,8 @@ class JobService implements Contract\Service\HcmLink\JobService
 				new Job(
 					companyId: $company->id,
 					type: JobType::COMPLETE_MAPPING,
-					outputData: $data
-				)
+					outputData: $data,
+				),
 			);
 		}
 		catch (CreationFailedException $exception)
@@ -191,6 +205,16 @@ class JobService implements Contract\Service\HcmLink\JobService
 		return new JobServiceResult($job);
 	}
 
+	public function getLastUserListJob(?DateTime $date, int $companyId, array $statuses): ?Job
+	{
+		return $this->jobRepository->getLastByTypeAndDate(
+			JobType::USER_LIST,
+			$date,
+			$companyId,
+			[JobStatus::DONE->value]
+		)->getFirst();
+	}
+
 	/**
 	 * @throws CreationFailedException
 	 */
@@ -200,5 +224,25 @@ class JobService implements Contract\Service\HcmLink\JobService
 		Container::getHcmLinkJobKillerService()->plan();
 
 		return $job;
+	}
+
+	public function sendJob(Job $job): Result
+	{
+		$restEventType = match ($job->type)
+		{
+			JobType::FIELD_VALUES => RestEventType::onFieldValueRequested,
+			JobType::COMPLETE_MAPPING => RestEventType::onEmployeeListMapped,
+			JobType::USER_LIST => RestEventType::onEmployeeListRequested,
+			default => null
+		};
+
+		if (!$restEventType)
+		{
+			return (new Result())->addError(new Error('Unsupported Job type'));
+		}
+
+		$this->riseRestEvents($restEventType, $job);
+
+		return new Result();
 	}
 }

@@ -1,0 +1,20 @@
+<?php
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_CARD_CLOSE_TITLE"] = "Benachrichtigung ausblenden";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_CARD_COMMON_DESCRIPTION"] = "Angepasster automatisierter Arbeitsbereich für Ihre Abteilung. Alle automatisierten Lösungen werden im Menü links angezeigt, damit Sie darauf schnell zugreifen können.";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_CARD_COMMON_TITLE"] = "Automatisierte Lösung";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_CARD_TYPES_DESCRIPTION"] = "Smartprozesse sind Baublöcke für Ihre automatisierten Lösungen. Nutzen Sie sie, um Ihre eigenen Elemente, bspw. Bewerber oder Lebenslauf, zu erstellen und ihre Abhängigkeiten zu verwalten. Sie finden Smartprozesse im Top-Menü.";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_CARD_TYPES_TITLE"] = "Smartprozesse";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_CREATE_TYPE"] = "Einen neuen Smartprozess erstellen:";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_CRM_TYPES"] = "CRM-Smartprozess migrieren:";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_EXTERNAL_TYPES"] = "Smartprozess der automatisierten Lösung migrieren:";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_TITLE"] = "Name der automatisierten Lösung:";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_PLACEHOLDER_TITLE"] = "Zum Beispiel: Personalabteilung";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_NEED_SAVE_POPUP_MESSAGE"] = "Speichern Sie die automatisierte Lösung, bevor Sie den Smartprozess erstellen.";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_NEED_SAVE_POPUP_YES_CAPTION"] = "Speichern";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_PERMISSIONS_WILL_BE_RESET_ALERT"] = "Sie müssen die Zugriffsrechte für diesen Smartprozess erneut bearbeiten.";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_TAB_COMMON"] = "Einstellungen";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_TAB_TITLE_COMMON"] = "Einstellungen der automatisierten Lösung";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_TAB_TITLE_TYPES"] = "Automatisierung der Smartprozesse";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_TAB_TYPES"] = "Automatisierung der Smartprozesse";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_TAG_SELECTOR_ADD_BUTTON_CAPTION"] = "Auswählen";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_TITLE"] = "Automatisierte Lösung";

@@ -1,0 +1,9 @@
+<?php
+$MESS["IMCONNECTOR_UPDATER_DISCONNECT_OLD_BOTFRAMEWORK_ADMIN_NOTIFY"] = "Microsoft компаниясы 2019 жылғы 31 қазаннан бастап Skype чат-боттарын жариялауға сұраныстарды қабылдамайды. <br>Microsoft Bot Framework арналарын енді Битрикс24 Ашық желілеріне қосу мүмкін емес. <br>Microsoft Bot Framework (Skype, Slack, Kik, GroupMe, SMS, email және т. б.) платформасы арқылы қосылған барлық чат-боттар мәжбүрлі түрде ажыратылды. <a href=\"#HREF#\" target=\"_blank\">Толығырақ</a>";
+$MESS["IMCONNECTOR_UPDATER_DISCONNECT_OLD_BOTFRAMEWORK_CHAT"] = "Microsoft компаниясы 2019 жылғы 31 қазаннан бастап Skype чат-боттарын жариялауға сұраныстарды қабылдамайды.
+Microsoft Bot Framework арналарын енді Битрикс24 Ашық желілеріне қосу мүмкін емес.
+Microsoft Bot Framework (Skype, Slack, Kik, GroupMe, SMS, email және т. б.) платформасы арқылы қосылған барлық чат-боттар мәжбүрлі түрде ажыратылды. #A_START#Толығырақ#A_END#.";
+$MESS["IMCONNECTOR_UPDATER_NOTICE_BOTFRAMEWORK_ADMIN_NOTIFY"] = "Microsoft компаниясы 2019 жылғы 31 қазаннан бастап Skype чат-боттарын жариялауға сұраныстарды қабылдамайды. <br>Жақын арада Microsoft Bot Framework арнасын Битрикс24 Ашық желілеріне қосу мүмкін болмайды. <br>Microsoft Bot Framework (Skype, Slack, Kik, GroupMe, SMS, email және т. б.) платформасы арқылы қосылған барлық чат-боттар мәжбүрлі түрде ажыратылады. <a href=\"#HREF#\" target=\"_blank\">Толығырақ</a>";
+$MESS["IMCONNECTOR_UPDATER_NOTICE_BOTFRAMEWORK_CHAT"] = "Microsoft компаниясы 2019 жылғы 31 қазаннан бастап Skype чат-боттарын жариялауға сұраныстарды қабылдамайды.
+Жақын арада Microsoft Bot Framework арналарын Битрикс24 Ашық желілеріне қосу мүмкін болмайды.
+Microsoft Bot Framework (Skype, Slack, Kik, GroupMe, SMS, email және т. б.) платформасы арқылы қосылған барлық чат-боттар мәжбүрлі түрде ажыратылады. #A_START#Толығырақ#A_END#.";

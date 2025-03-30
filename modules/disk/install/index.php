@@ -3,7 +3,7 @@ global $MESS;
 
 use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Document\BitrixHandler;
-use Bitrix\Disk\Document\OnlyOffice\Models\DocumentSessionTable;
+use Bitrix\Disk\Document\Models\DocumentSessionTable;
 use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Disk\UserConfiguration;
 use Bitrix\Main\Application;
@@ -233,6 +233,7 @@ Class disk extends CModule
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->registerEventHandler("main", "onFileTransformationComplete", "disk", "\\Bitrix\\Disk\\Integration\\TransformerManager", "resetCacheInUfAfterTransformation");
+		$eventManager->registerEventHandler('disk', 'OnRetrievingUserRights', 'disk', "\\Bitrix\\Disk\\Integration\\Collab\\CollabHandlers", 'onRetrievingUserRights');
 	}
 
 	function UnInstallDB($arParams = Array())
@@ -304,6 +305,7 @@ Class disk extends CModule
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->unRegisterEventHandler("main", "onFileTransformationComplete", "disk", "\\Bitrix\\Disk\\Integration\\TransformerManager", "resetCacheInUfAfterTransformation");
+		$eventManager->unRegisterEventHandler('disk', 'OnRetrievingUserRights', 'disk', "\\Bitrix\\Disk\\Integration\\Collab\\CollabHandlers", 'onRetrievingUserRights');
 
 		UnRegisterModule("disk");
 

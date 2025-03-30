@@ -219,7 +219,7 @@ class booking extends CModule
 			'crm',
 			'OnAfterCrmContactDelete',
 			'booking',
-			'\Bitrix\Booking\Integration\Crm\EventsHandler',
+			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
 			'onContactDelete'
 		);
 
@@ -227,7 +227,7 @@ class booking extends CModule
 			'crm',
 			'OnAfterCrmCompanyDelete',
 			'booking',
-			'\Bitrix\Booking\Integration\Crm\EventsHandler',
+			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
 			'onCompanyDelete'
 		);
 
@@ -235,7 +235,7 @@ class booking extends CModule
 			'crm',
 			'OnAfterCrmDealDelete',
 			'booking',
-			'\Bitrix\Booking\Integration\Crm\EventsHandler',
+			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
 			'onDealDelete'
 		);
 	}
@@ -243,7 +243,7 @@ class booking extends CModule
 	public function InstallAgents(): void
 	{
 		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Agent\\Booking\\Notifications\\InfoNotificationAgent::execute();',
+			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\InfoNotificationAgent::execute();',
 			module: 'booking',
 			interval: 300,
 			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL'),
@@ -251,7 +251,7 @@ class booking extends CModule
 		);
 
 		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Agent\\Booking\\Notifications\\ConfirmationNotificationAgent::execute();',
+			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\ConfirmationNotificationAgent::execute();',
 			module: 'booking',
 			interval: 300,
 			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 120, 'FULL'),
@@ -259,7 +259,7 @@ class booking extends CModule
 		);
 
 		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Agent\\Booking\\Notifications\\ReminderNotificationAgent::execute();',
+			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\ReminderNotificationAgent::execute();',
 			module: 'booking',
 			interval: 300,
 			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 180, 'FULL'),
@@ -267,7 +267,7 @@ class booking extends CModule
 		);
 
 		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Agent\\Booking\\Notifications\\DelayedNotificationAgent::execute();',
+			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\DelayedNotificationAgent::execute();',
 			module: 'booking',
 			interval: 300,
 			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 240, 'FULL'),
@@ -281,7 +281,7 @@ class booking extends CModule
 			'crm',
 			'OnAfterCrmContactDelete',
 			'booking',
-			'\Bitrix\Booking\Integration\Crm\EventsHandler',
+			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
 			'onContactDelete'
 		);
 
@@ -289,7 +289,7 @@ class booking extends CModule
 			'crm',
 			'OnAfterCrmCompanyDelete',
 			'booking',
-			'\Bitrix\Booking\Integration\Crm\EventsHandler',
+			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
 			'onCompanyDelete'
 		);
 
@@ -297,7 +297,7 @@ class booking extends CModule
 			'crm',
 			'OnAfterCrmDealDelete',
 			'booking',
-			'\Bitrix\Booking\Integration\Crm\EventsHandler',
+			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
 			'onDealDelete'
 		);
 	}

@@ -1,6 +1,6 @@
 <?php
 
-use Bitrix\Booking\Integration\Calendar\Schedule;
+use Bitrix\Booking\Internals\Integration\Calendar\Schedule;
 use Bitrix\Main\Loader;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)

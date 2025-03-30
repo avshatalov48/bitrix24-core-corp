@@ -263,9 +263,6 @@
 	}
 	function _prepareSteps2(stepsConfig) {
 	  var _this5 = this;
-	  if (stepsConfig.length > 0) {
-	    this.tourPromise = main_core.Runtime.loadExtension('ui.tour');
-	  }
 	  babelHelpers.classPrivateFieldSet(this, _steps, stepsConfig.map(function (stepConfig) {
 	    var _stepConfig$articleAn;
 	    var step = {
@@ -286,19 +283,30 @@
 	      if (target && main_core.Dom.style(target, 'display') !== 'none') {
 	        step.target = stepConfig.target;
 	      } else if (main_core.Type.isArrayFilled(stepConfig.reserveTargets)) {
-	        stepConfig.reserveTargets.some(function (reserveTarget) {
+	        var isFound = stepConfig.reserveTargets.some(function (reserveTarget) {
 	          if (document.querySelector(reserveTarget)) {
 	            step.target = reserveTarget;
 	            return true;
 	          }
 	          return false;
 	        });
+	        if (!isFound && stepConfig.ignoreIfTargetNotFound) {
+	          return null;
+	        }
+	      } else if (stepConfig.ignoreIfTargetNotFound) {
+	        return null;
 	      } else {
 	        step.target = stepConfig.target;
 	      }
 	    }
 	    return step;
 	  }));
+	  babelHelpers.classPrivateFieldSet(this, _steps, babelHelpers.classPrivateFieldGet(this, _steps).filter(function (step) {
+	    return step !== null;
+	  }));
+	  if (babelHelpers.classPrivateFieldGet(this, _steps).length > 0) {
+	    this.tourPromise = main_core.Runtime.loadExtension('ui.tour');
+	  }
 	}
 	function _showStepByEvent2(event) {
 	  var _this6 = this;

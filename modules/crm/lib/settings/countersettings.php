@@ -7,6 +7,9 @@ use Bitrix\Crm\Counter\EntityCounter;
 use Bitrix\Crm\Integration\Bitrix24Manager;
 use Bitrix\Crm\Traits;
 use Bitrix\Main\Application;
+use Bitrix\Main\Entity\ExpressionField;
+use Bitrix\Main\ORM\Entity;
+use Bitrix\Main\ORM\Query\Query;
 
 class CounterSettings
 {
@@ -70,6 +73,21 @@ class CounterSettings
 	public function getCounterCurrentValue(): int
 	{
 		return EntityCountableActivityTable::getCount();
+	}
+
+	public function isCounterCurrentValueExceeded(int $limit): int
+	{
+		$query = EntityCountableActivityTable::query()
+			->setSelect(['ID'])
+			->setLimit($limit + 1)
+		;
+
+		$newQuery = (new Query(Entity::getInstanceByQuery($query)));
+		$newQuery->registerRuntimeField('', new ExpressionField('QTY', 'COUNT(%s)', 'ID'));
+		$newQuery->addSelect('QTY');
+		$count = $newQuery->fetch()['QTY'];
+
+		return $count > $limit;
 	}
 
 	public function useActivityResponsible(): bool

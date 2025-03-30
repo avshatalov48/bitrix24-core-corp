@@ -337,7 +337,7 @@ final class Member extends Controller
 	public function moveUserListToDepartmentAction(Item\Node $node, array $userIds = []): array
 	{
 		$departmentUserIds = [];
-		foreach ($userIds as $roleXmlId => $ids)
+		foreach ($userIds as $ids)
 		{
 			$ids = array_filter(array_map('intval', $ids));
 			if (empty($ids))
@@ -345,14 +345,14 @@ final class Member extends Controller
 				continue;
 			}
 
-			if (empty($depaertmentUserIds))
+			if (empty($departmentUserIds))
 			{
 				$departmentUserIds = $ids;
 
 				continue;
 			}
 
-			$departmentUserIds = array_merge($depaertmentUserIds, $ids);
+			$departmentUserIds = array_merge($departmentUserIds, $ids);
 			$departmentUserIds = array_unique($departmentUserIds);
 		}
 

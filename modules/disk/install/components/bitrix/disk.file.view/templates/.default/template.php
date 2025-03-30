@@ -26,6 +26,7 @@ CJSCore::Init([
 	'ui.avatar',
 	'disk.viewer.actions',
 	'disk.viewer.document-item',
+	'disk.viewer.board-item',
 	'disk.document',
 	'disk_information_popups',
 	'sidepanel',

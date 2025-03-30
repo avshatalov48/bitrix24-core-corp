@@ -1748,6 +1748,10 @@ class CCrmLeadDetailsComponent
 			if(is_object($dbResult))
 			{
 				$this->entityData = $dbResult->Fetch();
+				if (is_null($this->entityData['OPPORTUNITY']))
+				{
+					$this->entityData['OPPORTUNITY'] = 0.0;
+				}
 			}
 
 			if(!is_array($this->entityData))

@@ -26,7 +26,7 @@ class MyCardView extends Permission
 
 	public function getDefaultAttribute(): ?string
 	{
-		return \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL;
+		return \Bitrix\Crm\Service\UserPermissions::PERMISSION_NONE;
 	}
 
 	protected function createDefaultControlMapper(): BaseControlMapper

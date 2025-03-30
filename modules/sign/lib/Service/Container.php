@@ -3,6 +3,8 @@
 namespace Bitrix\Sign\Service;
 
 use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Sign\Access\AccessController\AccessControllerFactory;
+use Bitrix\Sign\Access\Model\UserModelRepository;
 use Bitrix\Sign\Access\Service\AccessService;
 use Bitrix\Sign\Access\Service\RolePermissionService;
 use Bitrix\Sign\Factory\Access\AccessibleItemFactory;
@@ -469,5 +471,15 @@ class Container
 	public function getPresetTemplatesService(): Service\Sign\PresetTemplatesService
 	{
 		return static::getService('sign.service.preset.templates');
+	}
+
+	public function getAccessUserModelRepository(): UserModelRepository
+	{
+		return static::getService('sign.repository.access.userModel');
+	}
+
+	public function getAccessControllerFactory(): AccessControllerFactory
+	{
+		return static::getService('sign.access.controller.factory');
 	}
 }

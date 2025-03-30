@@ -1,0 +1,20 @@
+.booking-booking-resize {
+	position: absolute;
+	left: 0;
+	width: 100%;
+	height: 8px;
+	cursor: ns-resize;
+	user-select: none;
+}
+
+.booking-booking-resize.--from {
+	top: -2px;
+}
+
+.booking-booking-resize.--to {
+	bottom: -2px;
+}
+
+.booking-booking-booking.--compact-mode .booking-booking-resize {
+	height: 5px;
+}

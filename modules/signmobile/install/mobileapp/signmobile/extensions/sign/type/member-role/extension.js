@@ -22,9 +22,20 @@ jn.define('sign/type/member-role', (require, exports, module) => {
 		 * @param {MemberRole.value} value
 		 * @returns {Boolean}
 		 * */
-		static getEnumByValue(value)
+
+		static isReviewerRole(value)
 		{
-			return Object.values(MemberRole).find((memberRole) => memberRole.value === value);
+			return MemberRole.REVIEWER.value === value;
+		}
+
+		/**
+		 * @param {MemberRole.value} value
+		 * @returns {Boolean}
+		 * */
+
+		static isSignerRole(value)
+		{
+			return MemberRole.SIGNER.value === value;
 		}
 	}
 

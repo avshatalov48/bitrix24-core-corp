@@ -1,0 +1,20 @@
+<?php
+$MESS["MARKET_DONT_HAVE_REVIEWS"] = "Сізде әзірге пікірлер жоқ";
+$MESS["MARKET_DONT_HAVE_REVIEWS_FILTER"] = "Тиісті пікірлер жоқ";
+$MESS["MARKET_MY_REVIEWS"] = "Менің пікірлерім";
+$MESS["MARKET_NO_REVIEW_APPS"] = "Сіз пікір білдірген қосымшалар жоқ";
+$MESS["MARKET_NO_REVIEW_APPS_FILTER"] = "Сіздің пікірлеріңіздің арасында аталған шарттарға сәйкес келетіндер жоқ";
+$MESS["MARKET_REVIEWS_DEVELOPER"] = "Әзірлеуші";
+$MESS["MARKET_REVIEWS_MENU_ITEM_EDITING"] = "Редакциялау";
+$MESS["MARKET_REVIEW_ANSWER"] = "Әзірлеушінің жауабы";
+$MESS["MARKET_REVIEW_EDITING_CANCEL"] = "Болдырмау";
+$MESS["MARKET_REVIEW_EDITING_RE_MODERATION_TITLE"] = "Редакцияланған пікір қайтадан модерацияға жіберіледі.";
+$MESS["MARKET_REVIEW_EDITING_SAVE"] = "Сақтау";
+$MESS["MARKET_REVIEW_EDITING_TITLE"] = "Пікірді редакциялау";
+$MESS["MARKET_REVIEW_EDIT_REVIEW_ERROR"] = "Өзгерістерді сақтау мүмкін болмады. Кейінірек қайталап көріңіз";
+$MESS["MARKET_REVIEW_EDIT_REVIEW_NOT_ALLOWED"] = "Бұл пікірді енді редакциялау мүмкін емес.";
+$MESS["MARKET_REVIEW_EDIT_REVIEW_SUCCESS"] = "Пікір өзгертілді";
+$MESS["MARKET_REVIEW_EDIT_REVIEW_TEXT_ERROR"] = "Пікір жазыңыз";
+$MESS["MARKET_REVIEW_NO_PUBLISHED"] = "Жарияланбаған";
+$MESS["MARKET_REVIEW_PUBLISHED"] = "Жарияланды";
+$MESS["MARKET_REVIEW_SENT_TO_DEVELOPER"] = "Әзірлеушіге жіберілді";

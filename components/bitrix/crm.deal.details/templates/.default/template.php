@@ -6,6 +6,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Page\Asset;
 
 /** @var array $arParams */
 /** @var array $arResult */
@@ -25,13 +26,46 @@ $isRecurring = isset($arResult['ENTITY_DATA']['IS_RECURRING']) && $arResult['ENT
 	'ui.tour',
 ]);
 
+Asset::getInstance()->addJs('/bitrix/js/crm/category.js');
+
 //region LEGEND
-if(isset($arResult['LEGEND']))
+if (!empty($arResult['LEGEND']))
 {
 	$this->SetViewTarget('crm_details_legend');
-	?><a href="#" onclick="BX.Crm.DealCategoryChanger.processEntity(<?=$arResult['ENTITY_ID']?>,{ usePopupMenu: true, anchor: this }); return false;">
-		<?=htmlspecialcharsbx($arResult['LEGEND'])?>
-	</a><?
+	$isConversion = isset($arResult['CONTEXT']['PARAMS']['CONVERSION_SOURCE']);
+	if ($arResult['ENTITY_ID'] <= 0 && !$isConversion)
+	{
+		$moveToCategoryIDs = array_values(
+			array_diff(
+				\CCrmDeal::GetPermittedToMoveCategoryIDs(),
+				[$arResult['CATEGORY_ID']]
+			)
+		);
+		?><script>
+			// beautify element
+			const categorySelectorElement = document.getElementById('pagetitle_sub');
+			BX.Dom.style(categorySelectorElement, {
+				position: 'relative',
+				padding: '10px',
+				'z-index': 1000,
+				'background-size': 'contain',
+			});
+			BX.Crm.DealCategoryChanger.create('deal_category_change_new', {
+				entityId: 0,
+				categoryIds: <?=\Bitrix\Main\Web\Json::encode($moveToCategoryIDs)?>,
+			});
+
+			BX.Crm.DealCategoryChanger.messages = {
+				changeFunnelConfirmDialogTitle: "<?=GetMessageJS('CRM_DEAL_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_TITLE')?>",
+				changeFunnelConfirmDialogMessage: "<?=GetMessageJS('CRM_DEAL_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_MESSAGE')?>",
+				changeFunnelConfirmDialogOkBtn: "<?=GetMessageJS('CRM_DEAL_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_OK_BTN')?>",
+			};
+		</script><?php
+	}
+	?>
+		<a href="#" onclick="BX.Crm.DealCategoryChanger.processEntity(<?=$arResult['ENTITY_ID']?>,{ usePopupMenu: true, anchor: this }); return false;">
+			<?=htmlspecialcharsbx($arResult['LEGEND'])?>
+		</a><?php
 	$this->EndViewTarget();
 }
 

@@ -7,7 +7,6 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { NotifyManager } = require('notify-manager');
 	const { EventEmitter } = require('event-emitter');
-	const { Feature } = require('feature');
 	const { Haptics } = require('haptics');
 	const { PureComponent } = require('layout/pure-component');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
@@ -109,11 +108,8 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 				.on('UI.EntityEditor::onScrollToFocusedField', this.handleScrollToFocusedField)
 			;
 
-			if (Feature.isPreventBottomSheetDismissSupported())
-			{
-				this.layout.preventBottomSheetDismiss(true);
-				this.layout.on('preventDismiss', this.handleExit);
-			}
+			this.layout.preventBottomSheetDismiss(true);
+			this.layout.on('preventDismiss', this.handleExit);
 
 			this.loadWorkflow();
 		}
@@ -127,11 +123,8 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 				.off('UI.EntityEditor::onScrollToFocusedField', this.handleScrollToFocusedField)
 			;
 
-			if (Feature.isPreventBottomSheetDismissSupported())
-			{
-				this.layout.preventBottomSheetDismiss(false);
-				this.layout.off('preventDismiss', this.handleExit);
-			}
+			this.layout.preventBottomSheetDismiss(false);
+			this.layout.off('preventDismiss', this.handleExit);
 		}
 
 		handleExit()

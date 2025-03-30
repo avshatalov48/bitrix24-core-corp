@@ -67,7 +67,7 @@ export class MarketLinks
 			}
 		}
 
-		if (MarketLinks.siteTemplateUrn.length > 0) {
+		if (MarketLinks.siteTemplateUrn.length > 0 && MarketLinks.siteTemplateUrn.startsWith('/')) {
 			let uri = new URL(MarketLinks.siteTemplateUrn, window.location.href);
 			uri.searchParams.append('IS_FRAME', 'Y');
 			uri.searchParams.append('tpl', 'market/' + appCode);

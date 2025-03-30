@@ -33,11 +33,20 @@ final class FrontendBlockService
 			};
 		}
 
-		return match ($blockParty)
+		return match ($document->isTemplated())
 		{
-			BlockParty::COMMON_PARTY => 0,
-			BlockParty::LAST_PARTY => $document->parties,
-			default => $document->parties - 1,
+			true => match ($blockParty)
+			{
+				BlockParty::COMMON_PARTY => 0,
+				BlockParty::NOT_LAST_PARTY => $document->parties,
+				default => $document->parties + 1,
+			},
+			default => match ($blockParty)
+			{
+				BlockParty::COMMON_PARTY => 0,
+				BlockParty::LAST_PARTY => $document->parties,
+				default => $document->parties - 1,
+			},
 		};
 	}
 
@@ -60,5 +69,4 @@ final class FrontendBlockService
 			default => BlockParty::COMMON_PARTY,
 		};
 	}
-
 }

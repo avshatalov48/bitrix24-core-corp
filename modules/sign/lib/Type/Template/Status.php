@@ -3,9 +3,10 @@
 namespace Bitrix\Sign\Type\Template;
 
 use Bitrix\Main\SystemException;
+use Bitrix\Sign\Contract\Item\IntModelValue;
 use Bitrix\Sign\Type\ValuesTrait;
 
-enum Status: string
+enum Status: string implements IntModelValue
 {
 	case NEW = 'new';
 	case COMPLETED = 'completed';

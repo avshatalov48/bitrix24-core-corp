@@ -342,6 +342,58 @@ CREATE TABLE IF NOT EXISTS b_disk_onlyoffice_restriction_log
 	KEY IX_DISK_O_RL_USAGE(EXTERNAL_HASH, USER_ID)
 );
 
+CREATE TABLE IF NOT EXISTS b_disk_document_session
+(
+	ID int not null auto_increment,
+	SERVICE VARCHAR(50) NULL DEFAULT NULL,
+	OBJECT_ID int,
+	VERSION_ID int,
+	USER_ID int not null,
+	OWNER_ID int not null,
+	IS_EXCLUSIVE tinyint default 0,
+	EXTERNAL_HASH varchar(128) not null,
+	CREATE_TIME datetime not null,
+	TYPE tinyint not null default 0,
+	STATUS int default 0,
+	CONTEXT text,
+
+	PRIMARY KEY (ID),
+
+	KEY IX_DISK_OODS_1 (EXTERNAL_HASH),
+	KEY IX_DISK_OODS_2 (OBJECT_ID, USER_ID)
+);
+
+CREATE TABLE b_disk_document_info
+(
+	EXTERNAL_HASH varchar(128) not null,
+	SERVICE VARCHAR(50) NULL DEFAULT NULL,
+	OBJECT_ID int,
+	VERSION_ID int,
+	OWNER_ID int not null,
+	CREATE_TIME datetime not null,
+	UPDATE_TIME datetime not null,
+	USERS int not null default 0,
+	CONTENT_STATUS int default 0,
+
+	PRIMARY KEY (EXTERNAL_HASH)
+);
+
+CREATE TABLE IF NOT EXISTS b_disk_document_restriction_log
+(
+	ID int not null auto_increment,
+	SERVICE VARCHAR(50) NULL DEFAULT NULL,
+	USER_ID int not null,
+	EXTERNAL_HASH varchar(128) not null,
+	STATUS tinyint DEFAULT 0,
+	CREATE_TIME datetime,
+	UPDATE_TIME datetime,
+
+	PRIMARY KEY (ID),
+
+	KEY IX_DISK_O_RL_UPDATE(UPDATE_TIME),
+	KEY IX_DISK_O_RL_USAGE(EXTERNAL_HASH, USER_ID)
+);
+
 CREATE TABLE b_disk_edit_session
 (
 	ID int(11) not null auto_increment,
@@ -475,6 +527,7 @@ CREATE TABLE b_disk_tracked_object
 	OBJECT_ID int(11) not null,
 	REAL_OBJECT_ID int(11) not null,
 	ATTACHED_OBJECT_ID int(11),
+	TYPE_FILE int(11) null default null,
 	CREATE_TIME datetime not null,
 	UPDATE_TIME datetime not null,
 

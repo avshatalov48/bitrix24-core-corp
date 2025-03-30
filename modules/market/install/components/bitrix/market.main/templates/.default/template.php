@@ -36,5 +36,19 @@ Content::showAdditional($arResult);
 			'result' => $arResult,
 		])?>;
 		new BX.Market.Market(marketMainData);
+
+		<?php
+		$marketExpiredCurtain = \Bitrix\Rest\Notification\MarketExpiredCurtain::getByDefault();
+		if ($marketExpiredCurtain->isReadyToShow("Application"))
+		{
+			\Bitrix\Main\UI\Extension::load([
+				'rest.market-expired-curtain'
+			]);
+		?>
+			const curtain = new BX.Rest.MarketExpiredCurtain("Application");
+			curtain.show();
+		<?php
+		}
+		?>
 	});
 </script>

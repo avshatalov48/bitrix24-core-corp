@@ -270,14 +270,19 @@ class NodeMemberService implements Contract\Service\NodeMemberService
 
 	public function getDefaultHeadRoleEmployees(int $nodeId): Item\Collection\NodeMemberCollection
 	{
-		$headRole = Container::getRoleRepository()->findByXmlId(NodeMember::DEFAULT_ROLE_XML_ID['HEAD'])?->id;
+		static $headRole = null;
+
+		if ($headRole === null)
+		{
+			$headRole = Container::getRoleRepository()->findByXmlId(NodeMember::DEFAULT_ROLE_XML_ID['HEAD'])?->id;
+		}
 
 		if ($headRole === null)
 		{
 			return new Item\Collection\NodeMemberCollection();
 		}
 
-		return Container::getNodeMemberRepository()->findAllByRoleIdAndNodeId($headRole, $nodeId);
+		return $this->nodeMemberRepository->findAllByRoleIdAndNodeId($headRole, $nodeId);
 	}
 
 	/**
@@ -313,6 +318,15 @@ class NodeMemberService implements Contract\Service\NodeMemberService
 			return null;
 		}
 
+		$lockName = "remove_from_department_user_{$nodeMember->entityId}";
+		$timeout = 10;
+		$connection = Application::getInstance()->getConnection();
+
+		if (!$connection->lock($lockName, $timeout))
+		{
+			return null;
+		}
+
 		$nodeMemberCollection = $this->nodeMemberRepository->findAllByEntityIdAndEntityTypeAndNodeType(
 			entityId: $nodeMember->entityId,
 			entityType: $nodeMember->entityType,
@@ -323,21 +337,26 @@ class NodeMemberService implements Contract\Service\NodeMemberService
 		$departmentsCollectionCount = $nodeMemberCollection->count();
 		if (
 			$nodeMember->nodeId === $rootNode->id
-			&& $departmentsCollectionCount === 1
+			&& $departmentsCollectionCount <= 1
 		)
 		{
+			$connection->unlock($lockName);
+
 			return null;
+
 		}
 
-		if ($departmentsCollectionCount === 1)
+		if ($departmentsCollectionCount <= 1)
 		{
 			$nodeMember->role = $this->roleRepository->findByXmlId(NodeMember::DEFAULT_ROLE_XML_ID['EMPLOYEE'])->id;
 			$nodeMember->nodeId = $rootNode->id;
+			$connection->unlock($lockName);
 
 			return $this->nodeMemberRepository->update($nodeMember);
 		}
 
 		$this->nodeMemberRepository->remove($nodeMember);
+		$connection->unlock($lockName);
 
 		return null;
 	}
@@ -491,7 +510,6 @@ class NodeMemberService implements Contract\Service\NodeMemberService
 	public function moveUsersToDepartment(Item\Node $node, array $departmentUserIds = []): Item\Collection\NodeMemberCollection
 	{
 		$nodeMemberCollection = new Item\Collection\NodeMemberCollection();
-		$nodeMemberCollectionToAdd = new Item\Collection\NodeMemberCollection();
 		$nodeMemberCollectionToUpdate = new Item\Collection\NodeMemberCollection();
 		$nodeMemberCollectionToRemove = new Item\Collection\NodeMemberCollection();
 
@@ -548,32 +566,8 @@ class NodeMemberService implements Contract\Service\NodeMemberService
 				$nodeMemberCollectionToUpdate->add($updatedUserMember);
 				$nodeMemberCollection->add($updatedUserMember);
 			}
-
-			foreach ($userIds as $userId)
-			{
-				if ($nodeMemberCollectionToUpdate->getFirstByEntityId($userId))
-				{
-					continue;
-				}
-
-				if (in_array($userId, $userAlreadyBelongsToNode, true))
-				{
-					continue;
-				}
-
-				$nodeMemberToAdd = new NodeMember(
-					entityType: MemberEntityType::USER,
-					entityId: $userId,
-					nodeId: $node->id,
-					active: true,
-					role: $role->id,
-				);
-				$nodeMemberCollectionToAdd->add($nodeMemberToAdd);
-				$nodeMemberCollectionToUpdate->add($nodeMemberToAdd);
-			}
 		}
 
-		$this->nodeMemberRepository->createByCollection($nodeMemberCollectionToAdd);
 		$this->nodeMemberRepository->removeByCollection($nodeMemberCollectionToRemove);
 		$this->nodeMemberRepository->updateByCollection($nodeMemberCollectionToUpdate);
 

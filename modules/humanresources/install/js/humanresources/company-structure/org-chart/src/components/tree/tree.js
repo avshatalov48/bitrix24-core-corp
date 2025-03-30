@@ -3,15 +3,14 @@ import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { UI } from 'ui.notification';
 import { ButtonColor } from 'ui.buttons';
 import { TreeNode } from './tree-node/tree-node';
-import { memberRoles, AnalyticsSourceType } from 'humanresources.company-structure.api';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
-import { mapWritableState, mapState } from 'ui.vue3.pinia';
+import { mapState } from 'ui.vue3.pinia';
 import { EventEmitter } from 'main.core.events';
 import { events } from '../../events';
 import { chartAPI } from '../../api';
-import { MenuActions } from './tree-node/department-menu-button/department-menu-button';
+import { MenuActions } from './tree-node/department-menu-button';
 import { sendData as analyticsSendData } from 'ui.analytics';
-
+import { OrgChartActions } from '../../actions';
 import type { ConnectorData, TreeData } from '../../types';
 import './style.css';
 
@@ -41,21 +40,24 @@ export const Tree = {
 	{
 		this.treeNodes = new Map();
 		this.subscribeOnEvents();
+		this.loadHeads([this.rootId]);
 		this.prevWindowWidth = window.innerWidth;
 		const [currentDepartment] = this.currentDepartments;
-		if (currentDepartment)
+		if (!currentDepartment)
 		{
-			if (currentDepartment !== this.rootId)
-			{
-				this.expandDepartmentParents(currentDepartment);
-				this.focus(currentDepartment, { expandAfterFocus: true });
-
-				return;
-			}
-
-			this.expandLowerDepartments();
-			this.focus(currentDepartment);
+			return;
 		}
+
+		if (currentDepartment !== this.rootId)
+		{
+			this.expandDepartmentParents(currentDepartment);
+			this.focus(currentDepartment, { expandAfterFocus: true });
+
+			return;
+		}
+
+		this.expandLowerDepartments();
+		this.focus(currentDepartment);
 	},
 
 	beforeUnmount(): void
@@ -67,9 +69,6 @@ export const Tree = {
 	{
 		return {
 			getTreeBounds: () => this.getTreeBounds(),
-			getHeightDifference: (nodeId: number, parentNode: HTMLElement, currentNode: HTMLElement) => {
-				return this.getHeightDifference(nodeId, parentNode, currentNode);
-			},
 		};
 	},
 
@@ -83,8 +82,7 @@ export const Tree = {
 
 			return rootId;
 		},
-		...mapState(useChartStore, ['currentDepartments', 'userId']),
-		...mapWritableState(useChartStore, ['departments', 'focusedNode', 'searchedUserId']),
+		...mapState(useChartStore, ['currentDepartments', 'userId', 'focusedNode', 'departments']),
 	},
 
 	methods:
@@ -97,45 +95,6 @@ export const Tree = {
 		{
 			return this.$el.getBoundingClientRect();
 		},
-		getHeightDifference(nodeId: number, parentNode: HTMLElement, currentNode: HTMLElement): number
-		{
-			const node = this.departments.get(nodeId);
-
-			if (!node || !node.parentId)
-			{
-				return 0;
-			}
-			const parent = this.departments.get(node.parentId);
-
-			if (!parent.parentId)
-			{
-				return 0;
-			}
-
-			let parentHtml = this.treeNodes.get(node.parentId);
-
-			if (!parentHtml && parentNode)
-			{
-				this.treeNodes.set(node.parentId, parentNode);
-				parentHtml = parentNode;
-			}
-
-			let currentHtml = this.treeNodes.get(node.id);
-
-			if (!currentHtml && currentNode)
-			{
-				this.treeNodes.set(node.id, currentNode);
-				currentHtml = currentNode;
-			}
-
-			if (parentHtml)
-			{
-				return parentHtml.offsetHeight
-					- parentHtml.firstElementChild.offsetHeight;
-			}
-
-			return 0;
-		},
 		getPath(id: string): string
 		{
 			const connector = this.connectors[id];
@@ -146,12 +105,10 @@ export const Tree = {
 				return '';
 			}
 
-			const calculatedHeightDifference = this.getHeightDifference(connector.id);
-
-			const lineLength = 50 + calculatedHeightDifference;
+			const lineLength = 90;
 			const shiftY = 1;
 
-			const startY = startPoint.y - shiftY - calculatedHeightDifference;
+			const startY = startPoint.y - shiftY;
 			const shadowOffset = this.focusedNode === connector.id ? 9 : 0;
 			const rounded = { start: '', end: '' };
 			let arcRadius = 0;
@@ -218,7 +175,7 @@ export const Tree = {
 			delete department.prevParentId;
 			if (!department.parentId)
 			{
-				this.departments.delete(id);
+				OrgChartActions.removeDepartment(id);
 			}
 		},
 		onAdaptSiblings({ data }): void
@@ -309,6 +266,16 @@ export const Tree = {
 				}
 			});
 		},
+		onAdaptConnectorHeight({ data }): void
+		{
+			const { shift, nodeId } = data;
+			Object.entries(this.connectors).forEach(([id, connector]) => {
+				if (connector.parentId === nodeId)
+				{
+					Object.assign(connector.startPoint, { y: connector.startPoint.y + shift });
+				}
+			});
+		},
 		collapse(nodeId: number): void
 		{
 			this.expandedNodes = this.expandedNodes.filter((expandedId) => expandedId !== nodeId);
@@ -338,12 +305,20 @@ export const Tree = {
 				deepCollapse(expandedNode);
 			}
 		},
-		expand(nodeId: number): void
+		expand(departmentId: number): void
 		{
-			this.collapseRecursively(nodeId);
-			this.expandedNodes = [...this.expandedNodes, nodeId];
-			this.toggleConnectorsVisibility(nodeId, true);
-			this.toggleConnectorHighlighting(nodeId, true);
+			this.collapseRecursively(departmentId);
+			this.expandedNodes = [...this.expandedNodes, departmentId];
+			this.toggleConnectorsVisibility(departmentId, true);
+			this.toggleConnectorHighlighting(departmentId, true);
+			const department = this.departments.get(departmentId);
+			const childrenWithoutHeads = department.children.filter((childId) => {
+				return !this.departments.get(childId).heads;
+			});
+			if (childrenWithoutHeads.length > 0)
+			{
+				this.loadHeads(childrenWithoutHeads);
+			}
 
 			analyticsSendData({ tool: 'structure', category: 'structure', event: 'expand_department' });
 		},
@@ -373,7 +348,7 @@ export const Tree = {
 				this.toggleConnectorHighlighting(this.focusedNode, false);
 			}
 
-			this.focusedNode = nodeId;
+			OrgChartActions.focusDepartment(nodeId);
 			this.toggleConnectorHighlighting(this.focusedNode, true);
 		},
 		onFocusDepartment({ data }: { nodeId: number }): void
@@ -452,106 +427,17 @@ export const Tree = {
 		{
 			await chartAPI.removeDepartment(nodeId);
 			const removableDepartment = this.departments.get(nodeId);
-			const {
-				parentId,
-				children: removableDeparmentChildren = [],
-				userCount: removableDepartmentUserCount,
-				heads: removableDeparmentHeads,
-				employees: removableDeparmentEmployees = [],
-			} = removableDepartment;
-			const parentDepartment = this.departments.get(parentId);
+			const { parentId, children: removableDeparmentChildren = [] } = removableDepartment;
 			if (removableDeparmentChildren.length > 0)
 			{
 				this.collapse(nodeId);
 			}
 
-			removableDeparmentChildren.forEach((childId) => {
-				const department = this.departments.get(childId);
-				department.parentId = parentId;
-			});
-			if (removableDepartmentUserCount > 0)
-			{
-				const parentDepartmentUsersIds = new Set([
-					...parentDepartment.heads,
-					...(parentDepartment.employees ?? []),
-				].map((user) => user.id));
-				const removableDeparmentUsers = [...removableDeparmentHeads, ...removableDeparmentEmployees];
-				const movableUsers = removableDeparmentUsers.filter((user) => {
-					return !parentDepartmentUsersIds.has(user.id);
-				});
-				for (const user of movableUsers)
-				{
-					user.role = memberRoles.employee;
-				}
-				parentDepartment.userCount += movableUsers.length;
-				parentDepartment.employees = [
-					...(parentDepartment.employees ?? []),
-					...movableUsers,
-				];
-			}
-
-			parentDepartment.children = [...parentDepartment.children, ...removableDeparmentChildren];
+			OrgChartActions.moveSubordinatesToParent(nodeId);
 			await this.$nextTick();
-			parentDepartment.children = parentDepartment.children.filter((childId) => {
-				return childId !== nodeId;
-			});
-			delete removableDepartment.parentId;
-			this.departments.set(nodeId, { ...removableDepartment, prevParentId: parentId });
+			OrgChartActions.markDepartmentAsRemoved(nodeId);
 			this.focus(parentId, { expandAfterFocus: true });
 			this.moveTo(parentId);
-		},
-		onUpdateDepartment({ data }): void
-		{
-			const { id, parentId, html, heightDifference } = data;
-			this.treeNodes.set(id, html);
-
-			if (!parentId)
-			{
-				return;
-			}
-
-			const connector = this.connectors[`${parentId}-${id}`] ?? {};
-			Object.assign(connector, data);
-			if (connector.highlighted)
-			{
-				delete this.connectors[`${parentId}-${id}`];
-			}
-
-			this.connectors[`${parentId}-${id}`] = {
-				show: true,
-				highlighted: false,
-				...connector,
-			};
-
-			const { children } = this.departments.get(id);
-
-			children?.forEach((childId) => {
-				this.updateChildren(id, childId, heightDifference);
-			});
-		},
-		updateChildren(parentId: number, nodeId: number, heightDifference: number)
-		{
-			const connectorId = `${parentId}-${nodeId}`;
-
-			const childConnector = this.connectors[connectorId];
-
-			if (!childConnector)
-			{
-				return;
-			}
-
-			childConnector.startPoint.y += heightDifference;
-			childConnector.endPoint.y += heightDifference;
-
-			const connectorPath = this.$refs[connectorId][0];
-
-			connectorPath.setAttribute('d', this.getPath(connectorId));
-
-			const { children } = this.departments.get(nodeId);
-
-			children?.forEach((childId) => {
-				this.updateChildren(nodeId, childId, heightDifference);
-			});
 		},
 		toggleConnectorsVisibility(parentId: number, show: boolean): void
 		{
@@ -672,7 +558,7 @@ export const Tree = {
 			this.expandDepartmentParents(currentDepartment);
 			this.focus(currentDepartment, { expandAfterFocus: true });
 			this.moveTo(currentDepartment);
-			this.searchedUserId = this.userId;
+			OrgChartActions.searchUserInDepartment(this.userId);
 		},
 		async locateToDepartment(nodeId: number): Promise<void>
 		{
@@ -691,7 +577,13 @@ export const Tree = {
 			this.$emit('moveTo', {
 				x: centerX - treeNodeRect.x - treeNodeRect.width / 2,
 				y: centerY - treeNodeRect.y - treeNodeRect.height / 2,
+				nodeId,
 			});
+		},
+		loadHeads(departmentIds: number[]): void
+		{
+			const store = useChartStore();
+			store.loadHeads(departmentIds);
 		},
 		subscribeOnEvents(): void
 		{
@@ -700,8 +592,8 @@ export const Tree = {
 				[events.HR_DEPARTMENT_DISCONNECT]: this.onDisconnectDepartment,
 				[events.HR_DEPARTMENT_FOCUS]: this.onFocusDepartment,
 				[events.HR_DEPARTMENT_CONTROL]: this.onControlDepartment,
-				[events.HR_DEPARTMENT_UPDATE]: this.onUpdateDepartment,
 				[events.HR_DEPARTMENT_ADAPT_SIBLINGS]: this.onAdaptSiblings,
+				[events.HR_DEPARTMENT_ADAPT_CONNECTOR_HEIGHT]: this.onAdaptConnectorHeight,
 			};
 			Object.entries(this.events).forEach(([event, handle]) => {
 				EventEmitter.subscribe(event, handle);

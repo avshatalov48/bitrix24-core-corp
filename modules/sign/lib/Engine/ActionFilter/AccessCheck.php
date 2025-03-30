@@ -18,15 +18,6 @@ final class AccessCheck extends Main\Engine\ActionFilter\Base
 	public const PREFILTER_KEY = 'ACCESS_CHECK';
 	private const ERROR_INVALID_AUTHENTICATION = 'invalid_authentication';
 
-	/**
-	 * @var string[]
-	 */
-	protected array $b2c2b2eMap;
-	/**
-	 * @var int[]|string[]
-	 */
-	protected array $b2e2b2cMap;
-
 	private AccessController $accessController;
 	private readonly DocumentRepository $documentRepository;
 	/** @var array<string, RuleWithPayload>  */
@@ -39,9 +30,6 @@ final class AccessCheck extends Main\Engine\ActionFilter\Base
 	{
 		parent::__construct();
 		$this->accessController = new AccessController(Main\Engine\CurrentUser::get()->getId());
-
-		$this->b2c2b2eMap = ActionDictionary::getRepeatActionB2b2B2e();
-		$this->b2e2b2cMap = array_flip($this->b2c2b2eMap);
 
 		$this->documentRepository = Container::instance()->getDocumentRepository();
 		$this->templateRepository = Container::instance()->getDocumentTemplateRepository();
@@ -95,11 +83,7 @@ final class AccessCheck extends Main\Engine\ActionFilter\Base
 			{
 				return $this->getAuthErrorResult();
 			}
-			if ($this->checkRuleWithPayload($rule))
-			{
-				continue;
-			}
-			if (!$this->checkMirrorRule($rule))
+			if (!$this->checkRuleWithPayload($rule))
 			{
 				return $this->getAuthErrorResult();
 			}
@@ -163,16 +147,6 @@ final class AccessCheck extends Main\Engine\ActionFilter\Base
 		return $rule->passes;
 	}
 
-	private function getMirrorRule(string $accessPermission): ?RuleWithPayload
-	{
-		return $this->rules[$this->getMirrorAccessPermission($accessPermission)] ?? null;
-	}
-
-	private function getMirrorAccessPermission(string $accessPermission): ?string
-	{
-		return $this->b2c2b2eMap[$accessPermission] ?? $this->b2e2b2cMap[$accessPermission] ?? null;
-	}
-
 	private function createAccessibleItem(RuleWithPayload $rule): ?Main\Access\AccessibleItem
 	{
 		if (empty($rule->itemType) || empty($rule->itemIdOrUidRequestKey))
@@ -216,13 +190,6 @@ final class AccessCheck extends Main\Engine\ActionFilter\Base
 		}
 
 		return Container::instance()->getAccessibleItemFactory()->createFromItem($item);
-	}
-
-	private function checkMirrorRule(RuleWithPayload $rule): bool
-	{
-		$mirrorRule = $this->getMirrorRule($rule->accessPermission);
-
-		return $mirrorRule && $this->checkRuleWithPayload($mirrorRule);
 	}
 
 	private function createRuleWithPayload(string $accessPermission, ?string $itemType, ?string $itemIdOrUidRequestKey): RuleWithPayload

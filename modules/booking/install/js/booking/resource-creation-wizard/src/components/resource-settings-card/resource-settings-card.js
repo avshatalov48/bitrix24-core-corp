@@ -12,7 +12,6 @@ import type { ResourceTypeModel } from 'booking.model.resource-types';
 
 import 'ui.forms';
 import 'ui.layout-form';
-import 'ui.design-tokens';
 import 'ui.icon-set.main';
 
 import './resource-settings-card.css';
@@ -49,11 +48,11 @@ export const ResourceSettingsCard = {
 	},
 	methods: {
 		...mapActions([
+			'updateResource',
 			'setInvalidResourceName',
 			'setInvalidResourceType',
 		]),
 		...mapMutations([
-			'updateResource',
 			'setGlobalSchedule',
 		]),
 		updateResourceName(name): void
@@ -136,7 +135,7 @@ export const ResourceSettingsCard = {
 		resourceType(): Object
 		{
 			const resourceType: ?ResourceTypeModel = this.$store
-				.getters['resourceTypes/getById'](this.resource.typeId)
+				.getters[`${Model.ResourceTypes}/getById`](this.resource.typeId)
 			;
 
 			return {
@@ -176,18 +175,18 @@ export const ResourceSettingsCard = {
 	template: `
 		<div class="resource-settings-card">
 			<BaseFields
-				:data-id="'brcw-resource-settings-base'"
+				data-id="brcw-resource-settings-base"
 				:initialResourceName="resourceName"
 				:initialResourceType="resourceType"
 				@nameUpdate="updateResourceName"
 				@typeUpdate="updateResourceType"
 			/>
 			<ScheduleTypes
-				:data-id="'brcw-resource-settings-schedule-types'"
+				data-id="brcw-resource-settings-schedule-types"
 				v-model="isMain"
 			/>
 			<WorkTime
-				:data-id="'brcw-resource-settings-work-time'"
+				data-id="brcw-resource-settings-work-time"
 				:initialSlotRanges="slotRanges"
 				:defaultSlotRange="defaultSlotRange"
 				:isGlobalSchedule="isGlobalSchedule"
@@ -199,7 +198,7 @@ export const ResourceSettingsCard = {
 				@getGlobalSchedule="fetchData"
 			/>
 			<SlotLength
-				:data-id="'brcw-resource-settings-slot-length'"
+				data-id="brcw-resource-settings-slot-length"
 				:initialSelectedValue="slotSize"
 				@select="updateSlotLength"
 			/>

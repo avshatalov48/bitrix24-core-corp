@@ -4,24 +4,23 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Internals\Repository\ORM;
 
-use Bitrix\Booking\Exception\Booking\CreateBookingException;
-use Bitrix\Booking\Exception\Booking\RemoveBookingException;
-use Bitrix\Booking\Exception\Note\CreateNoteException;
-use Bitrix\Booking\Exception\Note\RemoveNoteException;
+use Bitrix\Booking\Internals\Exception\Booking\CreateBookingException;
+use Bitrix\Booking\Internals\Exception\Booking\RemoveBookingException;
+use Bitrix\Booking\Internals\Exception\Note\CreateNoteException;
+use Bitrix\Booking\Internals\Exception\Note\RemoveNoteException;
 use Bitrix\Booking\Internals\Model\BookingTable;
 use Bitrix\Booking\Internals\Model\EO_Booking;
 use Bitrix\Booking\Internals\Model\NotesTable;
-use Bitrix\Booking\Internals\Query\Booking\GetListFilter;
-use Bitrix\Booking\Internals\Query\Booking\GetListHandler;
-use Bitrix\Booking\Internals\Query\Booking\GetListRequest;
-use Bitrix\Booking\Internals\Query\Booking\GetListSelect;
-use Bitrix\Booking\Internals\Query\Booking\GetListSort;
-use Bitrix\Booking\Internals\Query\FilterInterface;
-use Bitrix\Booking\Internals\Query\SelectInterface;
-use Bitrix\Booking\Internals\Query\SortInterface;
 use Bitrix\Booking\Entity;
 use Bitrix\Booking\Internals\Repository\BookingRepositoryInterface;
 use Bitrix\Booking\Internals\Repository\ORM\Mapper\BookingMapper;
+use Bitrix\Booking\Provider\BookingProvider;
+use Bitrix\Booking\Provider\Params\Booking\BookingFilter;
+use Bitrix\Booking\Provider\Params\Booking\BookingSelect;
+use Bitrix\Booking\Provider\Params\Booking\BookingSort;
+use Bitrix\Booking\Provider\Params\FilterInterface;
+use Bitrix\Booking\Provider\Params\GridParams;
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\ORM\Query\QueryHelper;
 use DateTimeImmutable;
 use DateTimeZone;
@@ -35,16 +34,22 @@ class BookingRepository implements BookingRepositoryInterface
 		$this->mapper = $mapper;
 	}
 
+	public function getQuery(): Query
+	{
+		return BookingTable::query();
+	}
+
 	public function getList(
 		int|null $limit = null,
 		int|null $offset = null,
 		FilterInterface|null $filter = null,
-		SortInterface|null $sort = null,
-		SelectInterface|null $select = null,
+		array|null $sort = null,
+		array|null $select = null,
+		int|null $userId = null,
 	): Entity\Booking\BookingCollection
 	{
 		$query = BookingTable::query()
-			->setSelect(array_merge(['*'], $select ? $select->prepareSelect() : []))
+			->setSelect(array_merge(['*'], $select ?: []))
 		;
 
 		if ($limit !== null)
@@ -57,17 +62,15 @@ class BookingRepository implements BookingRepositoryInterface
 			$query->setOffset($offset);
 		}
 
-		$filter?->prepareQuery($query);
-		$preparedFilter = $filter?->prepareFilter();
-		if ($preparedFilter)
+		if ($filter !== null)
 		{
-			$query->where($preparedFilter);
+			$filter->prepareQuery($query);
+			$query->where($filter->prepareFilter());
 		}
 
-		$preparedSort = $sort?->prepareSort();
-		if ($preparedSort)
+		if ($sort !== null)
 		{
-			$query->setOrder($preparedSort);
+			$query->setOrder($sort);
 		}
 
 		$ormBookings = QueryHelper::decompose($query);
@@ -83,6 +86,7 @@ class BookingRepository implements BookingRepositoryInterface
 
 	public function getIntersectionsList(
 		Entity\Booking\Booking $booking,
+		int|null $userId = null,
 		int $limit = 1
 	): Entity\Booking\BookingCollection
 	{
@@ -99,7 +103,7 @@ class BookingRepository implements BookingRepositoryInterface
 		{
 			$filter['!ID'] = $booking->getId();
 		}
-		$filter = new GetListFilter($filter);
+		$filter = new BookingFilter($filter);
 
 		$query = BookingTable::query()
 			->setSelect([
@@ -114,13 +118,12 @@ class BookingRepository implements BookingRepositoryInterface
 			->where('IS_DELETED', '=', 'N')
 			->where($filter->prepareFilter())
 			->setOrder(
-				(new GetListSort([
+				(new BookingSort([
 					'DATE_FROM' => 'ASC',
 					'IS_RECURRING' => 'ASC',
 				]))->prepareSort()
 			)
 		;
-		$filter->prepareQuery($query);
 
 		$queryResult = $query->exec();
 		while ($bookingRow = $queryResult->fetchRaw())
@@ -180,29 +183,35 @@ class BookingRepository implements BookingRepositoryInterface
 
 	public function getById(int $id, int $userId = 0): Entity\Booking\Booking|null
 	{
-		return (new GetListHandler())(
-			new GetListRequest(
-				userId: $userId,
+		// todo: needs refactoring, repository should not know about providers
+		$provider = new BookingProvider();
+
+		$collection = $provider->getList(
+			gridParams: new GridParams(
 				limit: 1,
-				offset: null,
-				filter: new GetListFilter(['ID' => $id]),
-				sort: null,
-				select: new GetListSelect([
+				filter: new BookingFilter(['ID' => $id]),
+				select: new BookingSelect([
 					'CLIENTS',
 					'RESOURCES',
 					'EXTERNAL_DATA',
 					'NOTE',
-				]),
-				withCounters: $userId > 0,
-				withClientData: true,
-				withExternalData: true,
-			)
-		)->getFirstCollectionItem();
+				])
+			),
+			userId: $userId
+		);
+
+		$provider
+			->withCounters($collection, $userId)
+			->withClientsData($collection)
+			->withExternalData($collection)
+		;
+
+		return $collection->getFirstCollectionItem();
 	}
 
 	public function getByIdForManager(int $id): Entity\Booking\Booking|null
 	{
-		$select = new GetListSelect(['RESOURCES', 'NOTE']);
+		$select = new BookingSelect(['RESOURCES', 'NOTE']);
 
 		$ormBooking = BookingTable::query()
 			->setSelect(array_merge(['*'], $select->prepareSelect()))
@@ -220,7 +229,7 @@ class BookingRepository implements BookingRepositoryInterface
 		return $this->mapper->convertFromOrm($ormBooking);
 	}
 
-	public function save(Entity\Booking\Booking $booking): Entity\Booking\Booking
+	public function save(Entity\Booking\Booking $booking): int
 	{
 		$ormBooking = $this->mapper->convertToOrm($booking);
 		$result = $ormBooking->save();
@@ -231,7 +240,7 @@ class BookingRepository implements BookingRepositoryInterface
 
 		$this->handleNote($ormBooking, $booking->getNote(), $result->getId());
 
-		return $this->getById($result->getId());
+		return $result->getId();
 	}
 
 	public function remove(int $id): void

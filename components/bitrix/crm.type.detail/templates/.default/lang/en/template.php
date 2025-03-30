@@ -26,6 +26,7 @@ $MESS["CRM_TYPE_DETAIL_HIDE_DESCRIPTION"] = "Hide notification";
 $MESS["CRM_TYPE_DETAIL_IS_SET_OPEN_PERMISSIONS_DESCRIPTION"] = "When a new pipeline is created, all the roles will be granted access to this new pipeline.";
 $MESS["CRM_TYPE_DETAIL_IS_SET_OPEN_PERMISSIONS_TITLE"] = "Default access permissions for pipelines";
 $MESS["CRM_TYPE_DETAIL_IS_USE_IN_USERFIELD_ENABLED_TITLE"] = "CRM entities";
+$MESS["CRM_TYPE_DETAIL_PERMISSIONS_WILL_BE_RESET_ALERT"] = "You will have to edit this SPA's access permissions again. <a href=\"#LINK#\">View</a> current permission.";
 $MESS["CRM_TYPE_DETAIL_RECYCLE_DISABLED_HINT"] = "Delete items of this type from the Recycle Bin before disconnecting.";
 $MESS["CRM_TYPE_DETAIL_RELATION_CARD_DESCRIPTION_MSGVER_2"] = "Link an SPA to any CRM item (lead, deal, estimate), or a different SPA. When the SPA is linked to a deal, the deal view form will show the list of SPA items. Similarly, the SPA item view form will show the deals.";
 $MESS["CRM_TYPE_DETAIL_RELATION_CARD_TITLE"] = "Bind to CRM items";

@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Imopenlines\Update;
 
+use Bitrix\Im\V2\Relation\DeleteUserConfig;
 use Bitrix\ImOpenLines\Model\QueueTable;
 use Bitrix\ImOpenLines\Model\RecentTable;
 use Bitrix\ImOpenLines\Model\SessionTable;
@@ -78,7 +79,8 @@ final class FixRecentDuplicates extends Stepper
 			{
 				if (in_array($relation->getUserId(), $relationsForDelete))
 				{
-					$chat->deleteUser($relation->getUserId(), false, false, false);
+					$config = new DeleteUserConfig(false, false, false);
+					$chat->deleteUser($relation->getUserId(), $config);
 				}
 			}
 

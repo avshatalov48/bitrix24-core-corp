@@ -610,6 +610,7 @@ class Input
 	}
 
 	/**
+	 * @see \Bitrix\ImConnector\Connectors\Base::receivedError
 	 * @return Result
 	 */
 	protected function receivingError(): Result
@@ -618,6 +619,8 @@ class Input
 
 		foreach ($this->data as $error)
 		{
+			$error['line'] = $this->line;
+
 			if (!empty($error['userId']))
 			{
 				$user = Connector::initConnectorHandler($this->connector)->getUserByUserCode(['id' => $error['userId']]);
@@ -836,6 +839,7 @@ class Input
 	}
 
 	/**
+	 * @see \Bitrix\ImOpenLines\Connector::OnReceivedError
 	 * @param $data
 	 * @return Result
 	 */

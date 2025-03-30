@@ -16,13 +16,16 @@ export const UserItem = {
 		},
 	},
 
-	mounted()
+	mounted(): void
 	{
-		this.getUserAvatarEntity().renderTo(this.$refs.avatarContainer);
+		if (this.mode === 'direct')
+		{
+			this.getUserAvatarEntity().renderTo(this.$refs.avatarContainer);
+		}
 	},
 
 	methods: {
-		getUserAvatarEntity() {
+		getUserAvatarEntity(): AvatarRound {
 			return new AvatarRound({
 				size: 36,
 				userName: this.item.name,
@@ -38,7 +41,7 @@ export const UserItem = {
 			:class="{'hr-hcmlink-item-user__container_person': mode === 'reverse'}"
 			ref="container"
 		>
-			<div class="hr-hcmlink-item-user__avatar" ref="avatarContainer"></div>
+			<div v-if="this.mode === 'direct'" class="hr-hcmlink-item-user__avatar" ref="avatarContainer"></div>
 			<div class="hr-hcmlink-item-user_info">
 				<div class="hr-hcmlink-item-user__info-name">{{ item.name }}</div>
 				<div class="hr-hcmlink-item-user__info-position">{{ item.position }}</div>

@@ -16,13 +16,11 @@ final class MyCompanyDataProvider extends EntitySelector\BaseProvider
 	private const ENTITY_SELECTOR_MYCOMPANY_ENTITY_ID = 'sign-mycompany';
 
 	private CompanyProvider $crmEntitySelectorCompanyDataProvider;
-	private AccessController $accessController;
 
 	public function __construct()
 	{
 		parent::__construct();
 
-		$userId = CurrentUser::get()->getId();
 		if (Loader::includeModule('crm'))
 		{
 			$this->crmEntitySelectorCompanyDataProvider = new CompanyProvider(
@@ -30,7 +28,6 @@ final class MyCompanyDataProvider extends EntitySelector\BaseProvider
 			);
 		}
 
-		$this->accessController = new AccessController($userId);
 	}
 
 	public function isAvailable(): bool
@@ -46,7 +43,6 @@ final class MyCompanyDataProvider extends EntitySelector\BaseProvider
 			&& $storage->isB2eAvailable()
 			&& $USER->IsAuthorized()
 			&& $crmEntitySelectorExist
-			&& $this->userHasAccessToCompanySafeOrDocumentEdit()
 		;
 	}
 
@@ -110,7 +106,7 @@ final class MyCompanyDataProvider extends EntitySelector\BaseProvider
 	}
 
 	/**
-	 * All my companies is visible if user has sign access permissions
+	 * All my companies is visible
 	 *
 	 * @param array<EntitySelector\Item> $items
 	 *
@@ -127,12 +123,5 @@ final class MyCompanyDataProvider extends EntitySelector\BaseProvider
 		}
 
 		return $this;
-	}
-
-	private function userHasAccessToCompanySafeOrDocumentEdit(): bool
-	{
-		return $this->accessController->check(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT)
-			|| $this->accessController->check(ActionDictionary::ACTION_B2E_MY_SAFE)
-		;
 	}
 }

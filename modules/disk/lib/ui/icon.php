@@ -18,6 +18,8 @@ final class Icon
 	protected static $possibleIconClasses = array(
 		'pdf' => 'icon-pdf',
 		'doc' => 'icon-doc',
+		'flp' => 'icon-board',
+		'board' => 'icon-board',
 		'docx' => 'icon-doc',
 		'ppt' => 'icon-ppt',
 		'pptx' => 'icon-ppt',

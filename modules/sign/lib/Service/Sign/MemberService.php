@@ -6,6 +6,8 @@ use Bitrix\Bizproc\Error;
 use Bitrix\HumanResources\Compatibility\Utils\DepartmentBackwardAccessCode;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sign\Access\AccessController;
+use Bitrix\Sign\Access\ActionDictionary;
 use Bitrix\Sign\Config\Storage;
 use Bitrix\Sign\Connector\MemberDataPicker;
 use Bitrix\Sign\File;
@@ -50,6 +52,7 @@ class MemberService
 	];
 	private CommunicationService $communicationService;
 	private Service\Providers\ProfileProvider $profileProvider;
+	private readonly AccessController\AccessControllerFactory $accessControllerFactory;
 
 	/**
 	 * @param \Bitrix\Sign\Repository\MemberRepository|null $memberRepository
@@ -71,6 +74,7 @@ class MemberService
 		$this->communicationService = new CommunicationService(Main\Engine\CurrentUser::get()->getId());
 		$this->b2eDocumentService = $b2eDocumentService ?? $container->getB2eDocumentService();
 		$this->profileProvider = $container->getServiceProfileProvider();
+		$this->accessControllerFactory = $container->getAccessControllerFactory();
 	}
 
 	public function addForDocument(
@@ -82,7 +86,7 @@ class MemberService
 		?int $representativeId = null,
 		?string $role = null,
 		Type\Member\Notification\ReminderType $reminderType = Type\Member\Notification\ReminderType::NONE,
-		?int $employeeId = null
+		?int $employeeId = null,
 	): Main\Result
 	{
 		$document = $this->documentRepository->getByUid($documentUid);
@@ -665,9 +669,20 @@ class MemberService
 		{
 			return (new Main\Result())->addError(new Main\Error('Linked with member document doesnt exist'));
 		}
+		$accessController = $this->accessControllerFactory->createForCurrentUser();
+
+		$checkCrmPermissions = true;
+		if (
+			$document->isTemplated()
+			&& $accessController->checkByItem(ActionDictionary::ACTION_B2E_TEMPLATE_EDIT, $document)
+		)
+		{
+			// it already validated in current if condition
+			$checkCrmPermissions = false;
+		}
 
 		$presetId = $member->role === Type\Member\Role::ASSIGNEE
-			? CRM::getMyDefaultPresetId($document->entityId, $member->entityId)
+			? CRM::getMyDefaultPresetId($document->entityId, $member->entityId, checkCrmPermissions: $checkCrmPermissions)
 			: CRM::getOtherSidePresetId($document->entityId)
 		;
 

@@ -29,7 +29,7 @@ final class TextWithTranslationDto extends Dto
 		return $this->text ?? $this->getTranslatedText($this->translations ?? []);
 	}
 
-	public function jsonSerialize()
+	public function jsonSerialize(): string|array|null
 	{
 		return $this->text ?? $this->translations;
 	}

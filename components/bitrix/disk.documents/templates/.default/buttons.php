@@ -11,6 +11,8 @@ use \Bitrix\Disk;
 
 $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
 $isBitrix24Template && $this->setViewTarget('below_pagetitle');
+
+if(!isset($arResult['HIDE_BUTTONS']) || !$arResult['HIDE_BUTTONS']) {
 ?>
 <div class="disk-documents-control-panel-wrapper">
 <div class="disk-documents-control-panel" id="disk-documents-control-panel">
@@ -18,6 +20,20 @@ $isBitrix24Template && $this->setViewTarget('below_pagetitle');
 		<div class="disk-documents-control-panel-label">
 			<div class="disk-documents-control-panel-label-item"><?=Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE')?></div>
 		</div>
+		<?php
+		if (\Bitrix\Main\Config\Option::get('disk', 'boards_enabled', 'N') === 'Y')
+		{
+		?>
+			<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createBoard();">
+				<div class="disk-documents-control-panel-card disk-documents-control-panel-card--board">
+					<div class="disk-documents-control-panel-card-icon"></div>
+					<div class="disk-documents-control-panel-card-btn"></div>
+					<div class="disk-documents-control-panel-card-name"><?=Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_BOARD')?></div>
+				</div>
+			</div>
+		<?php
+		}
+		?>
 		<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createDocx();">
 			<div class="disk-documents-control-panel-card disk-documents-control-panel-card--doc">
 				<div class="disk-documents-control-panel-card-icon"></div>
@@ -101,4 +117,5 @@ if ($arResult['STORAGE'])
 </div>
 </div>
 <?
+}
 $isBitrix24Template && $this->endViewTarget();

@@ -53,6 +53,10 @@ export class Resources extends BuilderModel
 			get: (state: ResourcesState): ResourceModel[] => Object.values(state.collection),
 			/** @function resources/getById */
 			getById: (state: ResourcesState) => (id: number): ResourceModel => state.collection[id],
+			/** @function resources/getByIds */
+			getByIds: (state: ResourcesState) => (ids: number[]): ResourceModel[] => {
+				return ids.map((id: number): ResourceModel => state.collection[id]);
+			},
 		};
 	}
 

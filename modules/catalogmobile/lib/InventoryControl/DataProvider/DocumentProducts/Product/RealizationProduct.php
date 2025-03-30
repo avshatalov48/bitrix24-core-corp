@@ -38,7 +38,7 @@ final class RealizationProduct extends BaseProduct
 
 		if ($documentId === null)
 		{
-			return self::getEntityProducts($context);
+			return self::enrichEntityProducts($context);
 		}
 
 		$shipment = ShipmentRepository::getInstance()->getById($documentId);
@@ -171,10 +171,27 @@ final class RealizationProduct extends BaseProduct
 		]);
 	}
 
-	private static function getEntityProducts(array $context = []): array
+	private static function enrichEntityProducts(array $context = []): array
+	{
+		$records = [];
+		$products = self::getEntityProducts($context);
+		foreach ($products as $product)
+		{
+			$records[] = DocumentProductRecord::make($product);
+		}
+
+		return self::enrich($records, [
+			new CompleteSku(),
+			new CompleteSections(),
+			new CompleteStores(),
+			new CompleteBarcodes(),
+		]);
+	}
+
+	public static function getEntityProducts(array $context = []): array
 	{
 		$payment = null;
-		$records = [];
+		$products = [];
 
 		if ($context['paymentId'])
 		{
@@ -310,7 +327,7 @@ final class RealizationProduct extends BaseProduct
 					);
 				}
 
-				$records[] = DocumentProductRecord::make([
+				$products[] = [
 					'id' => uniqid('bx_', true),
 					'documentId' => null,
 					'productId' => (int)$deliverableProduct['PRODUCT_ID'],
@@ -334,16 +351,11 @@ final class RealizationProduct extends BaseProduct
 							'vatValue' => $vatValue,
 						],
 					],
-				]);
+				];
 			}
 		}
 
-		return self::enrich($records, [
-			new CompleteSku(),
-			new CompleteSections(),
-			new CompleteStores(),
-			new CompleteBarcodes(),
-		]);
+		return $products;
 	}
 
 	private static function getEntityProductsBasketIdFilter(Payment $payment = null): array

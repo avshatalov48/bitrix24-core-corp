@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Integrity;
 use Bitrix\Main;
+
 class DuplicateEntity
 {
 	protected $entityTypeID = 0;
@@ -152,7 +153,7 @@ class DuplicateEntity
 			'ENTITY_ID' => $this->entityID
 		);
 	}
-	public function __toString()
+	public function __toString(): string
 	{
 		$entityTypeName = \CCrmOwnerType::ResolveName($this->entityTypeID);
 		$entityCaption = \CCrmOwnerType::IsDefined($this->entityTypeID) && $this->entityID > 0

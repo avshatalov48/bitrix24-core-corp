@@ -29,6 +29,7 @@ use Bitrix\Crm\Security\Role\Manage\Entity\WebForm;
 use Bitrix\Crm\Security\Role\Manage\Entity\WebFormConfig;
 use Bitrix\Crm\Security\Role\Manage\Enum\Permission;
 use CCrmSaleHelper;
+use Bitrix\Main\Loader;
 
 final class PermissionEntityBuilder
 {
@@ -99,7 +100,7 @@ final class PermissionEntityBuilder
 	private function isPermissionAvailable(Permission $permission): bool
 	{
 		return match ($permission) {
-			Permission::Order => CCrmSaleHelper::isWithOrdersMode(),
+			Permission::Order => Loader::includeModule('sale') && CCrmSaleHelper::isWithOrdersMode(),
 			default => true,
 		};
 	}

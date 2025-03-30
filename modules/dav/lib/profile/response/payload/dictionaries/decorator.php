@@ -23,8 +23,9 @@ class Decorator extends DecoratorBase
 			{
 				$dictionary->setUser($this->getUser());
 				if ($dictionary->isAvailable())
-
+				{
 					$result .= $dictionary->prepareBodyContent();
+				}
 			}
 		}
 		return $result ?: null;

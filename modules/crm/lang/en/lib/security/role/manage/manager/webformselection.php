@@ -1,0 +1,2 @@
+<?php
+$MESS["CRM_CONFIG_PERMISSION_WEB_FORM"] = "CRM forms";

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Internals\Repository\ORM;
 
-use Bitrix\Booking\Exception\JournalAppendException;
-use Bitrix\Booking\Internals\Journal\JournalEvent;
-use Bitrix\Booking\Internals\Journal\JournalEventCollection;
-use Bitrix\Booking\Internals\Journal\JournalStatus;
-use Bitrix\Booking\Internals\Journal\JournalType;
+use Bitrix\Booking\Internals\Exception\JournalAppendException;
+use Bitrix\Booking\Internals\Service\Journal\JournalEvent;
+use Bitrix\Booking\Internals\Service\Journal\JournalEventCollection;
+use Bitrix\Booking\Internals\Service\Journal\JournalStatus;
+use Bitrix\Booking\Internals\Service\Journal\JournalType;
 use Bitrix\Booking\Internals\Model\JournalTable;
 use Bitrix\Booking\Internals\Repository\JournalRepositoryInterface;
 use Bitrix\Main\Application;

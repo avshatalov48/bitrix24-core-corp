@@ -23,6 +23,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 	const { date } = require('utils/date/formats');
 	const { Moment } = require('utils/date');
 	const { Indent, Color, Component } = require('tokens');
+	const { useCallback } = require('utils/function');
 	const { Loc } = require('loc');
 
 	const DOCUMENT_IMAGE_NAMES = { default: 'sign-doc.svg', pdf: 'pdf-doc.svg', zip: 'zip-doc.svg' };
@@ -139,7 +140,8 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 		{
 			if (!ActionStatus.isActionStatus(this.getAction()))
 			{
-				const { secondSideText, SecondSideDesign } = this.prepareSecondSideData();
+				const { secondSideText, SecondSideDesign, secondSideMemberId } = this.prepareSecondSideData();
+
 
 				return View(
 					{
@@ -147,14 +149,14 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 							flexDirection: 'row',
 							marginTop: 10,
 						},
-						onClick: this.#onSecondSideButtonClickHandler,
+						onClick: useCallback(() => this.#onSecondSideButtonClickHandler(secondSideMemberId), [secondSideMemberId]),
 					},
 					Avatar({
-						id: this.getMemberUserId(0),
+						id: secondSideMemberId,
 						testId: `USER_AVATAR_${this.getMemberId(0)}`,
 						size: 24,
 						withRedux: true,
-						onClick: this.#onSecondSideButtonClickHandler,
+						onClick: useCallback(() => this.#onSecondSideButtonClickHandler(secondSideMemberId), [secondSideMemberId]),
 					}),
 					ChipStatus({
 						text: secondSideText,
@@ -253,6 +255,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 		{
 			let secondSideText = '';
 			let SecondSideDesign = ChipStatusDesign.NEUTRAL;
+			let secondSideMemberId = this.getMemberUserId(0);
 
 			if (InitiatedByType.isInitiatedByEmployee(this.getDocumentInitiatedType())
 				&& this.isInitiatorCurrentUser()
@@ -283,7 +286,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 						break;
 				}
 
-				return { secondSideText, SecondSideDesign };
+				return { secondSideText, SecondSideDesign, secondSideMemberId };
 			}
 
 			if (MemberStatus.isCanceledStatus(this.getMemberStatus(0)) || DocumentStatus.isStopped(this.getDocumentStatus()))
@@ -296,6 +299,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 							{ '#DATE#': String(this.getDocumentCancelledDate()) },
 						),
 						SecondSideDesign: ChipStatusDesign.WARNING,
+						secondSideMemberId: this.getInitiatorUserId(),
 					};
 				}
 				if (InitiatedByType.isInitiatedByEmployee(this.getDocumentInitiatedType())
@@ -308,6 +312,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 							{ '#DATE#': String(this.getDocumentCancelledDate()) },
 						),
 						SecondSideDesign: ChipStatusDesign.WARNING,
+						secondSideMemberId,
 					};
 				}
 			}
@@ -372,7 +377,11 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 					break;
 			}
 
-			return { secondSideText, SecondSideDesign };
+			secondSideMemberId = this.isMemberCurrentUser() && MemberStatus.isDoneStatus(this.getMemberStatus(0))
+				? this.getInitiatorUserId()
+				: secondSideMemberId;
+
+			return { secondSideText, SecondSideDesign, secondSideMemberId };
 		}
 
 		renderText({ text, typography, style })
@@ -418,12 +427,10 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 			return this.props.item?.members[id]?.isStopped;
 		}
 
-		#onSecondSideButtonClickHandler = () => {
-			ProfileView.open(
-				{
-					userId: this.getMemberUserId(0),
-				},
-			);
+		#onSecondSideButtonClickHandler = (userId) => {
+			ProfileView.open({
+				userId,
+			});
 		};
 
 		#onDownloadButtonClickHandler = () => {

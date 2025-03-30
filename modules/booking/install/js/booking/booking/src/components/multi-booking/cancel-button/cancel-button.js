@@ -1,18 +1,20 @@
 import { ButtonSize, ButtonColor } from 'booking.component.button';
 import './cancel-button.css';
 
+type CancelButtonOptions = {
+	color: string,
+	size: string,
+};
+
 export const CancelButton = {
 	name: 'CancelButton',
 	emits: ['click'],
-	computed: {
-		color(): string
-		{
-			return ButtonColor.LINK;
-		},
-		size(): string
-		{
-			return ButtonSize.EXTRA_SMALL;
-		},
+	setup(): CancelButtonOptions
+	{
+		return {
+			color: ButtonColor.LINK,
+			size: ButtonSize.EXTRA_SMALL,
+		};
 	},
 	template: `
 		<button
@@ -21,8 +23,8 @@ export const CancelButton = {
 			ref="button"
 			@click="$emit('click')"
 		>
-			<i 
-				class="ui-icon-set --cross-25" 
+			<i
+				class="ui-icon-set --cross-25"
 				style="--ui-icon-set__icon-base-color: rgba(var(--ui-color-palette-white-base-rgb), 0.3);--ui-icon-set__icon-size: var(--ui-size-2xl)"></i>
 		</button>
 	`,

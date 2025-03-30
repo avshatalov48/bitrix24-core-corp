@@ -10,6 +10,7 @@ export const Dictionary = Object.freeze({
 	CATEGORY_AI_OPERATIONS: 'ai_operations',
 	CATEGORY_AUTOMATION_OPERATIONS: 'automation_operations',
 	CATEGORY_KANBAN_OPERATIONS: 'kanban_operations',
+	CATEGORY_POPUP_OPERATIONS: 'popup_operations',
 
 	// region Event const
 	EVENT_ENTITY_ADD_OPEN: 'entity_add_open',
@@ -44,6 +45,7 @@ export const Dictionary = Object.freeze({
 	TYPE_DYNAMIC: 'dynamic',
 	TYPE_CONTACT_CENTER: 'contact_center',
 	TYPE_ITEM_INDUSTRY: 'item_industry',
+	TYPE_POPUP_AI_TRANSCRIPT: 'popup_ai_transcript',
 	// endregion
 
 	// region Section const

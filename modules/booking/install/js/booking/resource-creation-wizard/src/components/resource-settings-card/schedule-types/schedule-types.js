@@ -1,6 +1,8 @@
+import { Loc } from 'main.core';
 import { Set as IconSet } from 'ui.icon-set.api.vue';
 import { TitleLayout } from '../title-layout/title-layout';
-import { ScheduleItem, type IScheduleItem } from './components/schedule-item';
+import { ScheduleItem } from './components/schedule-item';
+import type { IScheduleItem } from './components/schedule-item';
 
 import './schedule-types.css';
 
@@ -13,38 +15,36 @@ export const ScheduleTypes = {
 			default: true,
 		},
 	},
-	components: {
-		TitleLayout,
-		ScheduleItem,
+	setup(): { title: string, titleIconType: string, items: IScheduleItem[] }
+	{
+		const title = Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_TITLE');
+		const titleIconType = IconSet.COLLABORATION;
+		const items = [
+			{
+				id: 'common',
+				itemClass: 'resource-creation-wizard__form-settings-schedule-view-common',
+				title: Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_COLUMNS_TITLE'),
+				description: Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_COLUMNS_DESCRIPTION_MSGVER_1'),
+				value: true,
+			},
+			{
+				id: 'extra',
+				itemClass: 'resource-creation-wizard__form-settings-schedule-view-extra',
+				title: Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_CROSS_RESOURCING_TITLE'),
+				description: Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_CROSS_RESOURCING_DESCRIPTION_MSGVER_1'),
+				value: false,
+			},
+		];
+
+		return {
+			items,
+			title,
+			titleIconType,
+		};
 	},
-	computed: {
-		title(): string
-		{
-			return this.loc('BRCW_SETTINGS_CARD_SCHEDULE_TITLE');
-		},
-		titleIconType(): string
-		{
-			return IconSet.COLLABORATION;
-		},
-		items(): Array<IScheduleItem>
-		{
-			return [
-				{
-					id: 'common',
-					itemClass: 'resource-creation-wizard__form-settings-schedule-view-common',
-					title: this.loc('BRCW_SETTINGS_CARD_SCHEDULE_COLUMNS_TITLE'),
-					description: this.loc('BRCW_SETTINGS_CARD_SCHEDULE_COLUMNS_DESCRIPTION'),
-					value: true,
-				},
-				{
-					id: 'extra',
-					itemClass: 'resource-creation-wizard__form-settings-schedule-view-extra',
-					title: this.loc('BRCW_SETTINGS_CARD_SCHEDULE_CROSS_RESOURCING_TITLE'),
-					description: this.loc('BRCW_SETTINGS_CARD_SCHEDULE_CROSS_RESOURCING_DESCRIPTION'),
-					value: false,
-				},
-			];
-		},
+	components: {
+		ScheduleItem,
+		TitleLayout,
 	},
 	template: `
 		<div class="ui-form resource-creation-wizard__form-settings --schedule">

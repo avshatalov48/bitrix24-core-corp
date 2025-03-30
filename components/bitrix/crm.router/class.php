@@ -86,6 +86,7 @@ class CrmRouterComponent extends Bitrix\Crm\Component\Base
 		$this->arResult['customSectionRoots'] = $this->getCustomSectionRoots();
 		$this->arResult['isUseToolbar'] = $this->isUseToolbar($componentName);
 		$this->arResult['isUseBackgroundContent'] = $this->isUseBackgroundContent($componentName);
+		$this->arResult['isHideToolbar'] = $this->isHideToolbar($componentName);
 
 		$templateName = '';
 		$entityTypeId = $parseResult->getEntityTypeId();
@@ -310,5 +311,15 @@ class CrmRouterComponent extends Bitrix\Crm\Component\Base
 		}
 
 		return true;
+	}
+
+	protected function isHideToolbar(string $componentName): bool
+	{
+		static $excludedComponents = [
+			'bitrix:crm.config.perms.wrapper',
+			'bitrix:crm.automated_solution.permissions'
+		];
+
+		return in_array($componentName, $excludedComponents);
 	}
 }

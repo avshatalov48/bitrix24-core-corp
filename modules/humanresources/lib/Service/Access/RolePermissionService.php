@@ -13,6 +13,7 @@ use Bitrix\Main\UI\AccessRights\DataProvider;
 use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Access\SectionDictionary;
 use Bitrix\HumanResources\Access\Permission\PermissionDictionary;
+use Bitrix\HumanResources\Access\Role;
 use Bitrix\HumanResources\Item\Collection\Access\PermissionCollection;
 use Bitrix\HumanResources\Contract;
 use Bitrix\HumanResources\Item;
@@ -115,6 +116,13 @@ class RolePermissionService implements \Bitrix\HumanResources\Contract\Service\A
 		}
 	}
 
+	/**
+	 * @param string $name
+	 * @param int|null $roleId
+	 *
+	 * @return int
+	 * @throws SqlQueryException
+	 */
 	public function saveRole(string $name, int $roleId = null): int
 	{
 		$name = Encoding::convertEncodingToCurrent($name);
@@ -122,9 +130,17 @@ class RolePermissionService implements \Bitrix\HumanResources\Contract\Service\A
 		{
 			if ($roleId > 0)
 			{
-				$role = $this->roleRepository->updateName($roleId, $name);
+				$roleUtil = new Role\RoleUtil($roleId);
+				try
+				{
+					$roleUtil->updateTitle($name);
+				}
+				catch (\Exception $e)
+				{
+					throw new SqlQueryException(self::DB_ERROR_KEY);
+				}
 
-				return $role->getId();
+				return $roleId;
 			}
 
 			$role = $this->roleRepository->getRoleObjectByName($name);

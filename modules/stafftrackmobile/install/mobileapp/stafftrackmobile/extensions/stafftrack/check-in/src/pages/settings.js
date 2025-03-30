@@ -24,9 +24,6 @@ jn.define('stafftrack/check-in/pages/settings', (require, exports, module) => {
 	const { SettingsManager } = require('stafftrack/data-managers/settings-manager');
 	const { OptionManager, OptionEnum } = require('stafftrack/data-managers/option-manager');
 
-	/**
-	 * @class SettingsPage
-	 */
 	class SettingsPage extends PureComponent
 	{
 		constructor(props)
@@ -39,10 +36,6 @@ jn.define('stafftrack/check-in/pages/settings', (require, exports, module) => {
 				checkInEnabled: SettingsManager.isEnabledBySettings(),
 			};
 
-			this.refs = {
-				layoutWidget: null,
-			};
-
 			this.previousToast = null;
 
 			this.handleTimemanSwitcherClick = this.handleTimemanSwitcherClick.bind(this);
@@ -51,22 +44,31 @@ jn.define('stafftrack/check-in/pages/settings', (require, exports, module) => {
 			this.onTurnOffButtonClick = this.onTurnOffButtonClick.bind(this);
 		}
 
+		get layout()
+		{
+			return this.props.layout;
+		}
+
+		get isAdmin()
+		{
+			return this.props.isAdmin;
+		}
+
 		get userId()
 		{
 			return this.props.userInfo?.id || 0;
 		}
 
-		show(parentLayout = PageManager)
+		static show({ isAdmin, parentLayout = PageManager })
 		{
-			void new BottomSheet({ component: this })
+			const component = (layout) => new this({ layout, isAdmin });
+
+			void new BottomSheet({ component })
 				.setParentWidget(parentLayout)
 				.setBackgroundColor(Color.bgSecondary.toHex())
 				.disableContentSwipe()
 				.setMediumPositionHeight(HeightManager.getDefaultHeight())
 				.open()
-				.then((widget) => {
-					this.refs.layoutWidget = widget;
-				})
 			;
 		}
 
@@ -95,7 +97,7 @@ jn.define('stafftrack/check-in/pages/settings', (require, exports, module) => {
 					icon: Icon.ARROW_TO_THE_LEFT,
 					size: 24,
 					color: Color.base4,
-					onClick: () => this.refs.layoutWidget.close(),
+					onClick: this.closeLayout,
 				}),
 				H3({
 					text: Loc.getMessage('M_STAFFTRACK_CHECK_IN_SETTINGS_HEADER'),
@@ -214,7 +216,7 @@ jn.define('stafftrack/check-in/pages/settings', (require, exports, module) => {
 					border: true,
 					testId: 'stafftrack-settings-geo',
 					style: {
-						opacity: this.isUserAdmin() ? 1 : 0.5,
+						opacity: this.isAdmin ? 1 : 0.5,
 					},
 				},
 				this.renderGeoTitle(),
@@ -248,7 +250,7 @@ jn.define('stafftrack/check-in/pages/settings', (require, exports, module) => {
 					},
 					Switcher({
 						onClick: this.handleGeoSwitcherClick,
-						disabled: !this.isUserAdmin(),
+						disabled: !this.isAdmin,
 						useState: false,
 						mode: SwitcherMode.SOLID,
 						size: SwitcherSize.L,
@@ -266,7 +268,7 @@ jn.define('stafftrack/check-in/pages/settings', (require, exports, module) => {
 					border: true,
 					testId: 'stafftrack-settings-main',
 					style: {
-						opacity: this.isUserAdmin() ? 1 : 0.5,
+						opacity: this.isAdmin ? 1 : 0.5,
 					},
 				},
 				this.renderMainContent(),
@@ -322,7 +324,7 @@ jn.define('stafftrack/check-in/pages/settings', (require, exports, module) => {
 
 		handleGeoSwitcherClick()
 		{
-			if (!this.isUserAdmin())
+			if (!this.isAdmin)
 			{
 				this.showNotAdminToast();
 
@@ -357,14 +359,9 @@ jn.define('stafftrack/check-in/pages/settings', (require, exports, module) => {
 			this.showInfoToast(Loc.getMessage('M_STAFFTRACK_CHECK_IN_SETTINGS_GEO_TURNED_OFF_TOAST'));
 		}
 
-		isUserAdmin()
-		{
-			return this.props.isAdmin;
-		}
-
 		onTurnOnButtonClick()
 		{
-			if (!this.isUserAdmin())
+			if (!this.isAdmin)
 			{
 				this.showNotAdminToast();
 
@@ -379,14 +376,14 @@ jn.define('stafftrack/check-in/pages/settings', (require, exports, module) => {
 			SettingsManager.turnCheckInSettingOn();
 			this.showInfoToast(Loc.getMessage('M_STAFFTRACK_CHECK_IN_SETTINGS_TURNED_ON_TOAST'));
 
-			this.refs.layoutWidget.close();
+			this.closeLayout();
 
 			CheckIn.updateItemColor(true);
 		}
 
 		onTurnOffButtonClick()
 		{
-			if (!this.isUserAdmin())
+			if (!this.isAdmin)
 			{
 				this.showNotAdminToast();
 
@@ -406,7 +403,7 @@ jn.define('stafftrack/check-in/pages/settings', (require, exports, module) => {
 			SettingsManager.turnCheckInSettingOff();
 			this.showInfoToast(Loc.getMessage('M_STAFFTRACK_CHECK_IN_SETTINGS_TURNED_OFF_TOAST'));
 
-			this.refs.layoutWidget.close();
+			this.closeLayout();
 
 			CheckIn.updateItemColor(false);
 		}
@@ -440,6 +437,8 @@ jn.define('stafftrack/check-in/pages/settings', (require, exports, module) => {
 
 			Haptics.notifyWarning();
 		}
+
+		closeLayout = () => this.layout?.close();
 	}
 
 	module.exports = { SettingsPage };

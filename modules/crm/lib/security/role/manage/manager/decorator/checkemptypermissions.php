@@ -140,4 +140,9 @@ class CheckEmptyPermissions implements RoleSelectionManager
 	{
 		return $this->manager->getGroupCode();
 	}
+
+	public function getMenuId(): ?string
+	{
+		return $this->manager->getMenuId();
+	}
 }

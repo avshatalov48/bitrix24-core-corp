@@ -3,6 +3,7 @@
 namespace Bitrix\HumanResources\Access;
 
 use Bitrix\HumanResources\Access\Permission\PermissionDictionary;
+use Bitrix\HumanResources\Config;
 use Bitrix\Main\Localization\Loc;
 
 class SectionDictionary
@@ -17,6 +18,15 @@ class SectionDictionary
 	 */
 	public static function getMap(): array
 	{
+		$accessRights = [
+			PermissionDictionary::HUMAN_RESOURCES_USERS_ACCESS_EDIT,
+		];
+
+		if (Config\Storage::instance()->isHRInvitePermissionAvailable())
+		{
+			$accessRights[] = PermissionDictionary::HUMAN_RESOURCES_USER_INVITE;
+		}
+
 		return [
 			self::COMPANY_STRUCTURE => [
 				PermissionDictionary::HUMAN_RESOURCES_STRUCTURE_VIEW,
@@ -26,9 +36,7 @@ class SectionDictionary
 				PermissionDictionary::HUMAN_RESOURCES_EMPLOYEE_ADD_TO_DEPARTMENT,
 				PermissionDictionary::HUMAN_RESOURCES_EMPLOYEE_REMOVE_FROM_DEPARTMENT,
 			],
-			self::ACCESS_RIGHTS => [
-				PermissionDictionary::HUMAN_RESOURCES_USERS_ACCESS_EDIT,
-			]
+			self::ACCESS_RIGHTS => $accessRights,
 		];
 	}
 

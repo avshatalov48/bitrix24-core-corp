@@ -395,7 +395,7 @@ class CCrmBizProcHelper
 		return !$hideTab;
 	}
 
-	public static function getBpStarterConfig(int $entityTypeId, int $entityId = null): array
+	public static function getBpStarterConfig(int $entityTypeId, ?int $entityId = null): array
 	{
 		if (!\Bitrix\Main\Loader::includeModule('bizproc') || !CBPRuntime::isFeatureEnabled())
 		{
@@ -410,28 +410,25 @@ class CCrmBizProcHelper
 
 		$documentId = $entityId > 0 ? self::ResolveDocumentId($entityTypeId, $entityId) : null;
 
-		if (class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
-		{
-			$starterConfig = ['signedDocumentType' => CBPDocument::signDocumentType($documentType)];
-			if ($documentId)
-			{
-				$starterConfig['signedDocumentId'] = CBPDocument::signDocumentType($documentId);
-			}
-
-			return $starterConfig;
-		}
-
-		$starterConfig = [
-			'moduleId' => $documentType[0],
-			'entity' => $documentType[1],
-			'documentType' => $documentType[2],
-		];
+		$starterConfig = ['signedDocumentType' => CBPDocument::signDocumentType($documentType)];
 		if ($documentId)
 		{
-			$starterConfig['documentId'] = $documentId[2];
+			$starterConfig['signedDocumentId'] = CBPDocument::signDocumentType($documentId);
 		}
 
 		return $starterConfig;
+	}
+
+	public static function getShowTemplatesJsAction(int $entityTypeId, ?int $entityId = null, ?string $callback = null): string
+	{
+		$starterConfig = \Bitrix\Main\Web\Json::encode(self::getBpStarterConfig($entityTypeId, $entityId));
+
+		if ($callback)
+		{
+			return 'BX.Bizproc.Starter.showTemplates(' . $starterConfig . ', { callback:' . $callback . '})';
+		}
+
+		return 'BX.Bizproc.Starter.showTemplates(' . $starterConfig . ', {})';
 	}
 }
 

@@ -461,7 +461,7 @@
 				'MEASURE_CODE': null,
 				'QUANTITY': 0,
 				'VAT_ID': null,
-				'VAT_INCLUDED': false,
+				'VAT_INCLUDED': null,
 			};
 		}
 	}

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Market\Rest;
 
+use Bitrix\Landing\Manager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
@@ -20,7 +21,7 @@ if (!defined('REST_MARKETPLACE_URL'))
 class Transport
 {
 	private const VERSION = 1;
-	private const API_VERSION = 3;
+	private const API_VERSION = 4;
 
 	private string $serviceDomain;
 
@@ -116,6 +117,10 @@ class Transport
 		if (Loader::includeModule('bitrix24') && defined('BX24_HOST_NAME')) {
 			$fields['tariff'] = CBitrix24::getLicensePrefix();
 			$fields['host_name'] = BX24_HOST_NAME;
+
+			if (Loader::includeModule('landing')) {
+				$fields['landing_copilot_available'] = Manager::getOption('landing_ai_sites_available', 'N');
+			}
 		} else {
 			$fields['host_name'] = Context::getCurrent()->getRequest()->getHttpHost();
 

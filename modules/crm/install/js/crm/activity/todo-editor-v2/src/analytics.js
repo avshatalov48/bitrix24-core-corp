@@ -4,12 +4,20 @@ import type { AnalyticsOptions } from 'ui.analytics';
 import { sendData as sendAnalyticsData } from 'ui.analytics';
 
 export const EventIds = Object.freeze({
-	activityTouch: 'activity_touch',
-	activityAdd: 'activity_add',
+	activityView: 'activity_view',
+	activityCreate: 'activity_create',
+	activityEdit: 'activity_edit',
+	activityCancel: 'activity_cancel',
 	activityComplete: 'activity_complete',
 });
 
-type EventIdsType = EventIds.activityTouch | EventIds.activityAdd | EventIds.activityComplete;
+type EventIdsType =
+	EventIds.activityView
+	| EventIds.activityCreate
+	| EventIds.activityEdit
+	| EventIds.activityCancel
+	| EventIds.activityComplete
+;
 
 export const Section = Object.freeze({
 	lead: 'lead_section',
@@ -62,6 +70,7 @@ export const ElementIds = Object.freeze({
 	pingSettings: 'ping_settings',
 	addBlock: 'add_block',
 	createButton: 'create_button',
+	editButton: 'edit_button',
 	cancelButton: 'cancel_button',
 	skipPeriodButton: 'skip_period_button',
 	autoFromActivityViewMode: 'auto_from_activity_view_mode',
@@ -70,9 +79,10 @@ export const ElementIds = Object.freeze({
 	calendarSection: 'calendar_section',
 });
 
-export type ElementIdsType = ElementIds.colorSettings | ElementIds.description | ElementIds.title | ElementIds.responsibleUserId
-	| ElementIds.deadlines | ElementIds.pingSettings | ElementIds.addBlock | ElementIds.createButton | ElementIds.cancelButton
-	| ElementIds.skipPeriodButton | ElementIds.autoFromActivityViewMode | ElementIds.complexButton | ElementIds.checkbox
+export type ElementIdsType = ElementIds.colorSettings | ElementIds.description | ElementIds.title
+	| ElementIds.responsibleUserId | ElementIds.deadlines | ElementIds.pingSettings | ElementIds.addBlock
+	| ElementIds.createButton | ElementIds.editButton | ElementIds.cancelButton | ElementIds.skipPeriodButton
+	| ElementIds.autoFromActivityViewMode | ElementIds.complexButton | ElementIds.checkbox
 ;
 
 export type AnalyticParams = {
@@ -108,6 +118,8 @@ export class Analytics
 	#colorId: string;
 	#blockTypes: string;
 	#notificationSkipPeriod: string;
+	#isTitleChanged: boolean = false;
+	#isDescriptionChanged: boolean = false;
 
 	#extensionSettings: ?SettingsCollection = null;
 
@@ -181,6 +193,20 @@ export class Analytics
 		return this;
 	}
 
+	setIsTitleChanged(value: boolean = true): Analytics
+	{
+		this.#isTitleChanged = value;
+
+		return this;
+	}
+
+	setIsDescriptionChanged(value: boolean = true): Analytics
+	{
+		this.#isDescriptionChanged = value;
+
+		return this;
+	}
+
 	send(): void
 	{
 		const data = this.getData();
@@ -203,7 +229,18 @@ export class Analytics
 			p1: this.#crmMode,
 		};
 
-		if (Type.isStringFilled(this.#pingSettings))
+		if (Type.isStringFilled(this.#notificationSkipPeriod))
+		{
+			if (this.#notificationSkipPeriod === 'forever')
+			{
+				data.p2 = 'skipPeriod_custom';
+			}
+			else
+			{
+				data.p2 = 'skipPeriod_forever';
+			}
+		}
+		else if (Type.isStringFilled(this.#pingSettings))
 		{
 			data.p2 = 'ping_custom';
 		}
@@ -215,26 +252,32 @@ export class Analytics
 
 		if (Type.isArrayFilled(this.#blockTypes))
 		{
+			const p4Items = [];
+
 			if (this.#blockTypes.includes('section_calendar'))
 			{
-				data.p4 = 'addBlock_calendar';
+				p4Items.push('calendarCustom');
 			}
-			else
-			{
-				data.p4 = 'addBlock';
-			}
+
+			p4Items.push(`addBlock_${this.#blockTypes.length}`);
+
+			data.p4 = p4Items.join(',');
 		}
 
-		if (Type.isStringFilled(this.#notificationSkipPeriod))
+		const p5Items = [];
+		if (this.#isTitleChanged)
 		{
-			if (this.#notificationSkipPeriod === 'forever')
-			{
-				data.p5 = 'skipPeriod_custom';
-			}
-			else
-			{
-				data.p5 = 'skipPeriod_forever';
-			}
+			p5Items.push('title');
+		}
+
+		if (this.#isDescriptionChanged)
+		{
+			p5Items.push('description');
+		}
+
+		if (Type.isArrayFilled(p5Items))
+		{
+			data.p5 = p5Items.join(',');
 		}
 
 		return data;

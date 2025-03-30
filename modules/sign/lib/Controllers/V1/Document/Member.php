@@ -2,8 +2,8 @@
 
 namespace Bitrix\Sign\Controllers\V1\Document;
 
-use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -44,15 +44,17 @@ class Member extends \Bitrix\Sign\Engine\Controller
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'documentUid',
-	)]
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'documentUid',
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'documentUid',
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'documentUid',
+		)
 	)]
 	public function loadAction(string $documentUid): array
 	{
@@ -113,15 +115,17 @@ class Member extends \Bitrix\Sign\Engine\Controller
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'documentUid'
-	)]
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'documentUid'
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'documentUid',
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'documentUid',
+		),
 	)]
 	public function addAction(
 		string $documentUid,
@@ -150,8 +154,18 @@ class Member extends \Bitrix\Sign\Engine\Controller
 	 *
 	 * @return array
 	 */
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'uid')]
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'uid')]
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			ActionDictionary::ACTION_DOCUMENT_EDIT,
+			AccessibleItemType::DOCUMENT,
+			'uid',
+	),
+		new Attribute\ActionAccess(
+			ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			AccessibleItemType::DOCUMENT,
+			'uid'
+		)
+	)]
 	public function removeAction(string $uid)
 	{
 		$removeResult = $this->memberService->remove($uid);
@@ -171,15 +185,17 @@ class Member extends \Bitrix\Sign\Engine\Controller
 	 * @throws \Bitrix\Main\SystemException
 	 * @throws \Bitrix\Main\ArgumentException
 	 */
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'documentUid'
-	)]
-	#[Attribute\ActionAccess(
-		permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
-		itemType: AccessibleItemType::DOCUMENT,
-		itemIdOrUidRequestKey: 'documentUid'
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'documentUid',
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'documentUid',
+		),
 	)]
 	public function removeByPartAction(string $documentUid, string $entityType, int $entityId, int $party): array
 	{
@@ -209,6 +225,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 		if (!Loader::includeModule('humanresources'))
 		{
 			$this->addError(new Error('Module humanresources is not available'));
+
 			return [];
 		}
 
@@ -217,6 +234,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 		if (!$document)
 		{
 			$this->addError(new Error(Loc::getMessage('SIGN_CONTROLLER_MEMBER_DOCUMENT_NOT_FOUND')));
+
 			return [];
 		}
 
@@ -236,6 +254,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 			if (!$nodeInfo)
 			{
 				$this->addError(new Error('node info error'));
+
 				return [];
 			}
 
@@ -243,7 +262,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 				'id' => $nodeInfo->id,
 				'name' => $node->isFlat
 					? Loc::getMessage('SIGN_CONTROLLER_MEMBER_FLAT_DEPARTMENT', [
-						'#DEPARTMENT_NAME#' => $nodeInfo->name
+						'#DEPARTMENT_NAME#' => $nodeInfo->name,
 					])
 					: $nodeInfo->name
 				,
@@ -271,6 +290,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 		if (!$document)
 		{
 			$this->addError(new Error(Loc::getMessage('SIGN_CONTROLLER_MEMBER_DOCUMENT_NOT_FOUND')));
+
 			return [];
 		}
 
@@ -288,7 +308,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 				'userId' => $userId,
 				'name' => $member->name,
 				'avatar' => $avatar?->getBase64Content(),
-				'profileUrl' => $userId ? '/company/personal/user/'.$userId.'/' : '',
+				'profileUrl' => $userId ? '/company/personal/user/' . $userId . '/' : '',
 			];
 		}
 
@@ -311,6 +331,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 			if (!isset($member['entityType'], $member['entityId']))
 			{
 				$this->addError(new Error('Invalid member data'));
+
 				return [];
 			}
 
@@ -328,6 +349,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 		{
 			Logger::getInstance()->error($result->getError());
 			$this->addErrorByMessage('Error while getting unique signers count');
+
 			return [];
 		}
 
@@ -350,6 +372,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 		if (!$document)
 		{
 			$this->addError(new Error(Loc::getMessage('SIGN_CONTROLLER_MEMBER_DOCUMENT_NOT_FOUND')));
+
 			return [];
 		}
 
@@ -365,6 +388,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($result->getErrors());
+
 			return [];
 		}
 
@@ -391,6 +415,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 		if (!Main\Loader::includeModule('humanresources'))
 		{
 			$this->addError(new Main\Error('Module humanresources is not available'));
+
 			return [];
 		}
 
@@ -399,6 +424,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 		if (!$document)
 		{
 			$this->addError(new Main\Error(Loc::getMessage('SIGN_SERVICE_MEMBER_DOCUMENT_NOT_FOUND')));
+
 			return [];
 		}
 
@@ -409,6 +435,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 		{
 			Logger::getInstance()->error($result->getError());
 			$this->addErrorByMessage('Error while syncing departments');
+
 			return [];
 		}
 
@@ -420,6 +447,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 		}
 
 		$this->releaseSyncMembersLock($documentUid);
+
 		return [
 			'syncFinished' => true,
 		];
@@ -431,8 +459,10 @@ class Member extends \Bitrix\Sign\Engine\Controller
 	 * @param array $members Members data [[entityId, entityType, party], ...]
 	 * @return array
 	 */
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'documentUid')]
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'documentUid')]
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(ActionDictionary::ACTION_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'documentUid'),
+		new Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'documentUid')
+	)]
 	public function setupB2ePartiesAction(
 		string $documentUid,
 		int $representativeId,
@@ -469,6 +499,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 				$this->addError(
 					new Error('Invalid `entityId` field value'),
 				);
+
 				return [];
 			}
 
@@ -521,8 +552,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 
 			$memberEntityType = $entityType === EntitySelector\EntityType::FlatDepartment
 				? EntityType::DEPARTMENT_FLAT
-				: $member['entityType']
-			;
+				: $member['entityType'];
 
 			$memberCollection->add(
 				new \Bitrix\Sign\Item\Member(
@@ -570,8 +600,10 @@ class Member extends \Bitrix\Sign\Engine\Controller
 	 * @param string $documentUid
 	 * @return array
 	 */
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'documentUid')]
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'documentUid')]
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(ActionDictionary::ACTION_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'documentUid'),
+		new Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'documentUid')
+	)]
 	public function cleanAction(string $documentUid): array
 	{
 		$removeResult = $this->memberService->cleanByDocumentUid($documentUid);
@@ -592,8 +624,10 @@ class Member extends \Bitrix\Sign\Engine\Controller
 	 *
 	 * @return array
 	 */
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'uid')]
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'uid')]
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(ActionDictionary::ACTION_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'uid'),
+		new Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'uid')
+	)]
 	public function modifyCommunicationChannelAction(string $uid, string $channelType, string $channelValue): array
 	{
 		$modifyResult = $this->memberService->modifyCommunicationChannel(
@@ -617,8 +651,10 @@ class Member extends \Bitrix\Sign\Engine\Controller
 	 *
 	 * @return array
 	 */
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'uid')]
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'uid')]
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(ActionDictionary::ACTION_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'uid'),
+		new Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'uid')
+	)]
 	public function loadCommunicationsAction(string $uid): array
 	{
 		$member = $this->memberService->getByUid($uid);
@@ -631,13 +667,10 @@ class Member extends \Bitrix\Sign\Engine\Controller
 		return $this->memberService->getCommunications($member);
 	}
 
-	/**
-	 * @param string $uid
-	 *
-	 * @return array
-	 */
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'uid')]
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'uid')]
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(ActionDictionary::ACTION_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'uid'),
+		new Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'uid')
+	)]
 	public function loadAppliedCommunicationAction(string $uid): array
 	{
 		$member = $this->memberService->getByUid($uid);
@@ -653,8 +686,10 @@ class Member extends \Bitrix\Sign\Engine\Controller
 		];
 	}
 
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'uid')]
-	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'uid')]
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(ActionDictionary::ACTION_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'uid'),
+		new Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT, AccessibleItemType::DOCUMENT, 'uid')
+	)]
 	public function saveStampAction(string $memberUid, string $fileId): array
 	{
 		$fileController = new \Bitrix\Sign\Upload\StampUploadController();

@@ -1,4 +1,4 @@
-.hr-hcmlink-mapping-person__state-screen {
+.hr-hcmlink-mapping-person__state-screen.--flex {
 	position: fixed;
 	top: 50%;
 	left: 50%;
@@ -8,6 +8,16 @@
 	justify-content: center;
 	align-items: center;
 	padding: 40px 20px;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.hr-hcmlink-mapping-person__state-screen.--block {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	justify-content: normal;
+	align-items: center;
 	width: 100%;
 	box-sizing: border-box;
 }
@@ -26,6 +36,10 @@
 
 .hr-hcmlink-mapping-person__state-screen.--done .hr-hcmlink-mapping-person__state-screen_icon {
 	background: url(./../images/state-done.svg) no-repeat;
+}
+
+.hr-hcmlink-mapping-person__state-screen.--search-not-found .hr-hcmlink-mapping-person__state-screen_icon {
+	background: url(./../images/state-search-not-found.svg) no-repeat;
 }
 
 .hr-hcmlink-mapping-person__state-screen_title {

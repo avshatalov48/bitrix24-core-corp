@@ -15,6 +15,23 @@ export const TypesTab = {
 	externalTypesTagSelector: null,
 	crmTypesTagSelector: null,
 
+	computed: {
+		isShowPermissionsResetAlert(): boolean
+		{
+			if (!this.$store.state.isPermissionsLayoutV2Enabled)
+			{
+				return false;
+			}
+
+			const currentTypeIds: number[] = [...this.$store.state.automatedSolution.typeIds];
+			const originallyTypeIds: number[] = [...this.$store.state.automatedSolutionOrigTypeIds];
+
+			return currentTypeIds.some((id) => !originallyTypeIds.includes(id))
+				|| originallyTypeIds.some((id) => !currentTypeIds.includes(id))
+			;
+		},
+	},
+
 	mounted()
 	{
 		this.boundTypesTagSelector = new TagSelector({
@@ -79,7 +96,7 @@ export const TypesTab = {
 				},
 				events: {
 					onTagAdd: this.addTypeIdByTagAddEvent,
-					onTagRemove: this.removeTypeIdByTagRemoveEvent,
+					onTagRemove: this.removeTypeIdIfNotContainsInBoundTypes,
 				},
 
 			});
@@ -103,6 +120,17 @@ export const TypesTab = {
 			const { tag } = event.getData();
 
 			this.$store.dispatch('removeTypeId', tag.getId());
+		},
+
+		removeTypeIdIfNotContainsInBoundTypes(event: BaseEvent): void
+		{
+			const { tag } = event.getData();
+			const boundSelectedTags = this.boundTypesTagSelector.getTags();
+			const isTagContainsInBoundTags = boundSelectedTags.some((boundTag) => boundTag.getId() === tag.getId());
+			if (!isTagContainsInBoundTags)
+			{
+				this.removeTypeIdByTagRemoveEvent(event);
+			}
 		},
 
 		handleCreateTypeClick(): void
@@ -188,6 +216,11 @@ export const TypesTab = {
 				<div class="ui-form-content">
 					<div ref="externalTypesTagSelectorContainer"></div>
 				</div>
+			</div>
+			<div v-if="isShowPermissionsResetAlert" class="ui-alert ui-alert-warning">
+				<span class="ui-alert-message">
+					{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_PERMISSIONS_WILL_BE_RESET_ALERT') }}
+				</span>
 			</div>
 		</div>
 	`,

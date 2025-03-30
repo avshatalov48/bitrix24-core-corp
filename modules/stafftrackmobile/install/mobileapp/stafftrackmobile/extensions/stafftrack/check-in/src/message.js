@@ -7,7 +7,7 @@ jn.define('stafftrack/check-in/message', (require, exports, module) => {
 	const { showToast } = require('toast');
 	const { Color, Indent, Component, Corner } = require('tokens');
 	const { outline: { check } } = require('assets/icons');
-	const { Avatar } = require('layout/ui/user/avatar');
+	const { Avatar } = require('ui-system/blocks/avatar');
 	const { PureComponent } = require('layout/pure-component');
 	const { Haptics } = require('haptics');
 
@@ -211,9 +211,10 @@ jn.define('stafftrack/check-in/message', (require, exports, module) => {
 					},
 				},
 				Avatar({
-					id: this.userId,
+					testId: `stafftrack-message${this.isCancelReason ? '-cancel' : ''}-avatar`,
 					size,
-					image: this.userAvatar,
+					id: this.userId,
+					uri: this.userAvatar,
 					name: this.userName,
 				}),
 			);

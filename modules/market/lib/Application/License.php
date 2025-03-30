@@ -28,6 +28,14 @@ class License
 			$licenseInfo['TERMS_OF_SERVICE_LINK'] = Loc::getMessage('MARKET_INSTALL_TERMS_OF_SERVICE_LINK');
 			$licenseInfo['TERMS_OF_SERVICE_TEXT'] = Loc::getMessage('MARKET_INSTALL_TERMS_OF_SERVICE_TEXT', ['#LINK#' => $licenseInfo['TERMS_OF_SERVICE_LINK']]);
 		}
+		elseif (
+			Loader::IncludeModule('bitrix24')
+			&& CBitrix24::getLicensePrefix() === 'by'
+		)
+		{
+			$licenseInfo['TERMS_OF_SERVICE_LINK'] = Loc::getMessage('MARKET_INSTALL_TERMS_OF_SERVICE_LINK_BY');
+			$licenseInfo['TERMS_OF_SERVICE_TEXT'] = Loc::getMessage('MARKET_INSTALL_TERMS_OF_SERVICE_TEXT', ['#LINK#' => $licenseInfo['TERMS_OF_SERVICE_LINK']]);
+		}
 
 		return $licenseInfo;
 	}

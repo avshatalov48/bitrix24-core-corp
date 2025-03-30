@@ -57,6 +57,17 @@ class TextField extends BaseLinkedEntitiesField
 				$wasRenderedAsHtml = true;
 			}
 		}
+		elseif (str_ends_with($this->getId(), '_COMMENTS'))
+		{
+			$hasParagraph = preg_match('/\[p]/i', $value) === 1;
+			$useTypography = $hasParagraph;
+
+			$value = TextHelper::sanitizeHtml(TextHelper::convertBbCodeToHtml($value));
+			if ($useTypography && !$this->isMobileContext())
+			{
+				$value = "<div class='crm-bbcode-container'>{$value}</div>";
+			}
+		}
 		else
 		{
 			$value = TextHelper::sanitizeHtml($value);

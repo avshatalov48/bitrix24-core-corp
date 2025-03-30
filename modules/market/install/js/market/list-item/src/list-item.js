@@ -277,7 +277,27 @@ export const ListItem = {
 			}"
 		 :data-app-code="getAppCode"
 	>
-		<template v-if="!isPublishedApp">
+		<template v-if="item.IS_AI_SITES === 'Y'">
+			<a class="market-catalog__elements-item_img-link"
+			   :style="{'background-image': 'url(\\'' + item.ICON + '\\')'}"
+			   :title="item.NAME"
+			   href="/sites/ai/"
+			   target="_parent"
+			></a>
+			<div class="market-catalog__elements-item_info">
+				<div class="market-catalog__elements-item_info-head">
+					<a class="market-catalog__elements-item_info-title"
+					   :title="item.NAME"
+					   href="/sites/ai/"
+					   target="_parent"
+					>
+						{{ item.NAME }}
+					</a>
+				</div>
+			</div>
+			<div class="market-rating__container"></div>
+		</template>
+		<template v-else-if="!isPublishedApp">
 			<a class="market-catalog__elements-item_img-link" href="#">
 				<div class="ui-hint market-catalog__elements-item--hint"
 					 ref="listItemNoPublishedApp"

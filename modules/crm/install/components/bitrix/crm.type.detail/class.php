@@ -179,6 +179,8 @@ class CrmTypeDetailComponent extends Base
 			$this->arResult['activeTabId'] = $this->arResult['isExternal'] ? 'custom-section' : 'common';
 		}
 
+		$this->arResult['permissionsUrl'] = $this->router->getEntityPermissionsUrl($this->type->getEntityTypeId());
+
 		$this->includeComponentTemplate();
 	}
 

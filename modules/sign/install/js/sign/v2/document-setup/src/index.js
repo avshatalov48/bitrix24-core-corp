@@ -2,19 +2,14 @@ import { Tag, Dom, Event, Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { BlankSelector, type BlankSelectorConfig } from 'sign.v2.blank-selector';
 import { Api } from 'sign.v2.api';
-import type { DocumentModeType } from 'sign.v2.sign-settings';
 import { isTemplateMode } from 'sign.v2.sign-settings';
 import { Button } from 'ui.buttons';
 import { Alert } from 'ui.alerts';
 import type { DocumentDetails } from './type';
+import type { DocumentInitiatedType, DocumentModeType } from 'sign.type';
 import './style.css';
 
 export type { DocumentDetails };
-export type DocumentInitiatedType = 'employee' | 'company';
-export const DocumentInitiated: Readonly<Record<string, DocumentInitiatedType>> = Object.freeze({
-	employee: 'employee',
-	company: 'company',
-});
 
 export class DocumentSetup extends EventEmitter
 {

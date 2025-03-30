@@ -46,7 +46,7 @@ class Transition extends Permission
 
 	public function getDefaultSettings(): array
 	{
-		return [self::TRANSITION_ANY];
+		return [self::TRANSITION_BLOCKED];
 	}
 
 	public function getMaxSettingsValue(): array

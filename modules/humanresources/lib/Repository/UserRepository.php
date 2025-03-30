@@ -29,7 +29,7 @@ final class UserRepository implements Contract\Repository\UserRepository
 	 */
 	public function getById(int $userId): ?Item\User
 	{
-		$model = UserTable::getById($userId)->fetchObject();
+		$model = UserTable::getById($userId)->fetch();
 
 		return $model !== null ? $this->extractItemFromModel($model) : null;
 	}
@@ -47,9 +47,8 @@ final class UserRepository implements Contract\Repository\UserRepository
 		static $cachedUsers = [];
 
 		$userIds = array_filter(
-			array_map(
+			$nodeMemberCollection->map(
 				fn($nodeMember) => $nodeMember->entityType === MemberEntityType::USER ? $nodeMember->entityId : null,
-				iterator_to_array($nodeMemberCollection),
 			),
 		);
 
@@ -62,17 +61,12 @@ final class UserRepository implements Contract\Repository\UserRepository
 
 		$userIds = array_flip($userIds);
 
-		foreach ($cachedUsers as $userId => $cachedUser)
+		foreach ($userIds as $index => $userId)
 		{
-			if (empty($userIds))
+			if (isset($cachedUsers[$index]))
 			{
-				break;
-			}
-
-			if (isset($userIds[$userId]))
-			{
-				$usersCollection->add($cachedUser);
-				unset($userIds[$userId]);
+				$usersCollection->add($cachedUsers[$index]);
+				unset($userIds[$index]);
 			}
 		}
 
@@ -88,34 +82,38 @@ final class UserRepository implements Contract\Repository\UserRepository
 			'PERSONAL_PHOTO',
 			'WORK_POSITION',
 			'PERSONAL_GENDER',
+			'CONFIRM_CODE',
+			'ACTIVE',
 		];
 
 		$eoUserCollection = UserTable::query()
 			->setSelect($select)
 			->whereIn('ID', array_keys($userIds))
-			->fetchCollection()
+			->exec()
 		;
 
-		foreach ($eoUserCollection->getAll() as $model)
+		while ($model = $eoUserCollection->fetch())
 		{
 			$user = $this->extractItemFromModel($model);
-			$cachedUsers[$model->getId()] = $user;
+			$cachedUsers[$model['ID']] = $user;
 			$usersCollection->add($user);
 		}
 
 		return $usersCollection;
 	}
 
-	private function extractItemFromModel(EO_User $model): Item\User
+	private function extractItemFromModel(array $model): Item\User
 	{
 		return new Item\User(
-			$model->getId(),
-			$model->getName(),
-			$model->getLastName(),
-			$model->getSecondName(),
-			$model->getPersonalPhoto(),
-			$model->getWorkPosition(),
-			$model->getPersonalGender(),
+			$model['ID'],
+			$model['NAME'],
+			$model['LAST_NAME'],
+			$model['SECOND_NAME'],
+			$model['PERSONAL_PHOTO'],
+			$model['WORK_POSITION'],
+			$model['PERSONAL_GENDER'],
+			active: $model['ACTIVE'] === 'Y',
+			hasConfirmCode: $model['CONFIRM_CODE'] !== null && $model['CONFIRM_CODE'] !== '',
 		);
 	}
 
@@ -129,18 +127,17 @@ final class UserRepository implements Contract\Repository\UserRepository
 
 		$users = UserTable::query()
 			->whereIn('ID', $userIds)
-			->fetchCollection()
+			->fetchAll()
 		;
 
 		return $this->extractItemCollectionFromModelCollection($users);
 	}
 
 	private function extractItemCollectionFromModelCollection(
-		EO_User_Collection $userCollection
+		array $items
 	): Item\Collection\UserCollection
 	{
-		$models = $userCollection->getAll();
-		$items = array_map([$this, 'extractItemFromModel'], $models);
+		$items = array_map([$this, 'extractItemFromModel'], $items);
 
 		return new Item\Collection\UserCollection(...$items);
 	}
@@ -192,6 +189,6 @@ final class UserRepository implements Contract\Repository\UserRepository
 			),
 		);
 
-		return $this->extractItemCollectionFromModelCollection($ormQuery->fetchCollection());
+		return $this->extractItemCollectionFromModelCollection($ormQuery->fetchAll());
 	}
 }
